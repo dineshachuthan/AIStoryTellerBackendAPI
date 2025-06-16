@@ -255,9 +255,14 @@ export default function UploadStory() {
     const character = charactersWithImages[characterIndex];
     if (!character) return;
 
+    console.log("Generating image for character:", character);
+
     try {
       const imageUrl = await apiRequest('/api/characters/generate-image', {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({ 
           character,
           storyContext: analysis?.summary || storyContent.substring(0, 500)
@@ -268,9 +273,10 @@ export default function UploadStory() {
       updatedCharacters[characterIndex] = { ...character, imageUrl: imageUrl.url };
       setCharactersWithImages(updatedCharacters);
     } catch (error) {
+      console.error("Image generation error:", error);
       toast({
         title: "Image Generation Failed",
-        description: "Could not generate character image.",
+        description: error instanceof Error ? error.message : "Could not generate character image.",
         variant: "destructive",
       });
     }

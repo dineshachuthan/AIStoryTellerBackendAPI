@@ -140,16 +140,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Character image generation endpoint
   app.post("/api/characters/generate-image", async (req, res) => {
     try {
+      console.log("Received image generation request body:", req.body);
       const { character, storyContext } = req.body;
       if (!character) {
+        console.log("Character validation failed:", { character });
         return res.status(400).json({ message: "Character data is required" });
       }
 
+      console.log("Generating image for character:", character.name);
       const imageUrl = await generateCharacterImage(character, storyContext);
       res.json({ url: imageUrl });
     } catch (error) {
       console.error("Error generating character image:", error);
-      res.status(500).json({ message: "Failed to generate character image" });
+      res.status(500).json({ message: error instanceof Error ? error.message : "Failed to generate character image" });
     }
   });
 
