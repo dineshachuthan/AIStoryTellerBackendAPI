@@ -355,7 +355,7 @@ export default function UploadStory() {
         category: analysis.category || 'General',
         summary: analysis.summary || null,
         isAdultContent: analysis.isAdultContent || false,
-        authorId: 'test_user_123', // Will be set when authentication is added back
+        authorId: 'test_user_123', // TODO: Replace with actual user ID from authentication
         uploadType: 'manual',
       };
 

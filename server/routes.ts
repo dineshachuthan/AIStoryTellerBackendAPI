@@ -268,7 +268,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Main story creation endpoint for text/manual uploads
   app.post("/api/stories", async (req, res) => {
     try {
-      console.log("Received story creation request body:", req.body);
+
       const { title, content, category, uploadType, authorId, summary, isAdultContent } = req.body;
 
       // Create initial story
