@@ -35,6 +35,18 @@ export const localUsers = pgTable("local_users", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// User voice samples table for capturing emotional and sound expressions
+export const userVoiceSamples = pgTable("user_voice_samples", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id),
+  sampleType: text("sample_type").notNull(), // 'emotion', 'sound', 'description'
+  label: text("label").notNull(), // 'happy', 'sad', 'angry', 'cat_sound', 'slow_description', etc.
+  audioUrl: text("audio_url").notNull(),
+  duration: integer("duration"), // in milliseconds
+  isCompleted: boolean("is_completed").default(false),
+  recordedAt: timestamp("recorded_at").defaultNow(),
+});
+
 // Stories table for user-uploaded content
 export const stories = pgTable("stories", {
   id: serial("id").primaryKey(),
@@ -146,6 +158,11 @@ export const insertStoryEmotionSchema = createInsertSchema(storyEmotions).omit({
   createdAt: true,
 });
 
+export const insertUserVoiceSampleSchema = createInsertSchema(userVoiceSamples).omit({
+  id: true,
+  recordedAt: true,
+});
+
 // Character schemas
 export const insertCharacterSchema = createInsertSchema(characters).omit({
   id: true,
@@ -181,6 +198,9 @@ export type InsertStoryCharacter = z.infer<typeof insertStoryCharacterSchema>;
 
 export type StoryEmotion = typeof storyEmotions.$inferSelect;
 export type InsertStoryEmotion = z.infer<typeof insertStoryEmotionSchema>;
+
+export type UserVoiceSample = typeof userVoiceSamples.$inferSelect;
+export type InsertUserVoiceSample = z.infer<typeof insertUserVoiceSampleSchema>;
 
 export type Character = typeof characters.$inferSelect;
 export type InsertCharacter = z.infer<typeof insertCharacterSchema>;

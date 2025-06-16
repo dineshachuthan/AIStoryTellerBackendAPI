@@ -1,6 +1,6 @@
-import { users, localUsers, stories, storyCharacters, storyEmotions, characters, conversations, messages, type User, type UpsertUser, type Story, type InsertStory, type StoryCharacter, type InsertStoryCharacter, type StoryEmotion, type InsertStoryEmotion, type Character, type InsertCharacter, type Conversation, type InsertConversation, type Message, type InsertMessage } from "@shared/schema";
+import { users, localUsers, userVoiceSamples, stories, storyCharacters, storyEmotions, characters, conversations, messages, type User, type UpsertUser, type UserVoiceSample, type InsertUserVoiceSample, type Story, type InsertStory, type StoryCharacter, type InsertStoryCharacter, type StoryEmotion, type InsertStoryEmotion, type Character, type InsertCharacter, type Conversation, type InsertConversation, type Message, type InsertMessage } from "@shared/schema";
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -9,6 +9,14 @@ export interface IStorage {
   upsertUser(user: UpsertUser): Promise<User>;
   createLocalUser(userId: string, passwordHash: string): Promise<void>;
   getLocalUser(userId: string): Promise<{ passwordHash: string } | undefined>;
+  
+  // User Voice Samples
+  getUserVoiceSamples(userId: string): Promise<UserVoiceSample[]>;
+  getUserVoiceSample(userId: string, label: string): Promise<UserVoiceSample | undefined>;
+  createUserVoiceSample(sample: InsertUserVoiceSample): Promise<UserVoiceSample>;
+  updateUserVoiceSample(id: number, sample: Partial<InsertUserVoiceSample>): Promise<void>;
+  deleteUserVoiceSample(id: number): Promise<void>;
+  getUserVoiceProgress(userId: string): Promise<{ completed: number; total: number; percentage: number }>;
   
   // Stories
   getStories(): Promise<Story[]>;
@@ -83,6 +91,39 @@ export class DatabaseStorage implements IStorage {
   async getLocalUser(userId: string): Promise<{ passwordHash: string } | undefined> {
     const [localUser] = await db.select().from(localUsers).where(eq(localUsers.userId, userId));
     return localUser ? { passwordHash: localUser.passwordHash } : undefined;
+  }
+
+  // User Voice Samples operations
+  async getUserVoiceSamples(userId: string): Promise<UserVoiceSample[]> {
+    return await db.select().from(userVoiceSamples).where(eq(userVoiceSamples.userId, userId));
+  }
+
+  async getUserVoiceSample(userId: string, label: string): Promise<UserVoiceSample | undefined> {
+    const [sample] = await db.select().from(userVoiceSamples)
+      .where(and(eq(userVoiceSamples.userId, userId), eq(userVoiceSamples.label, label)));
+    return sample || undefined;
+  }
+
+  async createUserVoiceSample(sampleData: InsertUserVoiceSample): Promise<UserVoiceSample> {
+    const [sample] = await db.insert(userVoiceSamples).values(sampleData).returning();
+    return sample;
+  }
+
+  async updateUserVoiceSample(id: number, sampleData: Partial<InsertUserVoiceSample>): Promise<void> {
+    await db.update(userVoiceSamples).set(sampleData).where(eq(userVoiceSamples.id, id));
+  }
+
+  async deleteUserVoiceSample(id: number): Promise<void> {
+    await db.delete(userVoiceSamples).where(eq(userVoiceSamples.id, id));
+  }
+
+  async getUserVoiceProgress(userId: string): Promise<{ completed: number; total: number; percentage: number }> {
+    const userSamples = await this.getUserVoiceSamples(userId);
+    const completed = userSamples.filter(s => s.isCompleted).length;
+    const total = 24; // Total number of voice samples (8 emotions + 8 sounds + 8 descriptions)
+    const percentage = Math.round((completed / total) * 100);
+    
+    return { completed, total, percentage };
   }
 
   // Story operations
