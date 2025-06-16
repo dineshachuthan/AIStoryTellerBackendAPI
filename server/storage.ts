@@ -1,4 +1,4 @@
-import { users, localUsers, stories, characters, conversations, messages, type User, type UpsertUser, type Story, type InsertStory, type Character, type InsertCharacter, type Conversation, type InsertConversation, type Message, type InsertMessage } from "@shared/schema";
+import { users, localUsers, stories, storyCharacters, storyEmotions, characters, conversations, messages, type User, type UpsertUser, type Story, type InsertStory, type StoryCharacter, type InsertStoryCharacter, type StoryEmotion, type InsertStoryEmotion, type Character, type InsertCharacter, type Conversation, type InsertConversation, type Message, type InsertMessage } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
 
@@ -12,10 +12,23 @@ export interface IStorage {
   
   // Stories
   getStories(): Promise<Story[]>;
+  getUserStories(userId: string): Promise<Story[]>;
   getStory(id: number): Promise<Story | undefined>;
   createStory(story: InsertStory): Promise<Story>;
   updateStory(id: number, story: Partial<InsertStory>): Promise<Story | undefined>;
   deleteStory(id: number): Promise<void>;
+  
+  // Story Characters
+  getStoryCharacters(storyId: number): Promise<StoryCharacter[]>;
+  createStoryCharacter(character: InsertStoryCharacter): Promise<StoryCharacter>;
+  updateStoryCharacter(id: number, character: Partial<InsertStoryCharacter>): Promise<void>;
+  deleteStoryCharacter(id: number): Promise<void>;
+  
+  // Story Emotions
+  getStoryEmotions(storyId: number): Promise<StoryEmotion[]>;
+  createStoryEmotion(emotion: InsertStoryEmotion): Promise<StoryEmotion>;
+  updateStoryEmotion(id: number, emotion: Partial<InsertStoryEmotion>): Promise<void>;
+  deleteStoryEmotion(id: number): Promise<void>;
   
   // Characters
   getCharacters(): Promise<Character[]>;
@@ -77,6 +90,10 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(stories).where(eq(stories.isPublished, true));
   }
 
+  async getUserStories(userId: string): Promise<Story[]> {
+    return await db.select().from(stories).where(eq(stories.authorId, userId));
+  }
+
   async getStory(id: number): Promise<Story | undefined> {
     const [story] = await db.select().from(stories).where(eq(stories.id, id));
     return story || undefined;
@@ -98,6 +115,42 @@ export class DatabaseStorage implements IStorage {
 
   async deleteStory(id: number): Promise<void> {
     await db.delete(stories).where(eq(stories.id, id));
+  }
+
+  // Story Characters operations
+  async getStoryCharacters(storyId: number): Promise<StoryCharacter[]> {
+    return await db.select().from(storyCharacters).where(eq(storyCharacters.storyId, storyId));
+  }
+
+  async createStoryCharacter(characterData: InsertStoryCharacter): Promise<StoryCharacter> {
+    const [character] = await db.insert(storyCharacters).values(characterData).returning();
+    return character;
+  }
+
+  async updateStoryCharacter(id: number, characterData: Partial<InsertStoryCharacter>): Promise<void> {
+    await db.update(storyCharacters).set(characterData).where(eq(storyCharacters.id, id));
+  }
+
+  async deleteStoryCharacter(id: number): Promise<void> {
+    await db.delete(storyCharacters).where(eq(storyCharacters.id, id));
+  }
+
+  // Story Emotions operations
+  async getStoryEmotions(storyId: number): Promise<StoryEmotion[]> {
+    return await db.select().from(storyEmotions).where(eq(storyEmotions.storyId, storyId));
+  }
+
+  async createStoryEmotion(emotionData: InsertStoryEmotion): Promise<StoryEmotion> {
+    const [emotion] = await db.insert(storyEmotions).values(emotionData).returning();
+    return emotion;
+  }
+
+  async updateStoryEmotion(id: number, emotionData: Partial<InsertStoryEmotion>): Promise<void> {
+    await db.update(storyEmotions).set(emotionData).where(eq(storyEmotions.id, id));
+  }
+
+  async deleteStoryEmotion(id: number): Promise<void> {
+    await db.delete(storyEmotions).where(eq(storyEmotions.id, id));
   }
 
   // Character operations

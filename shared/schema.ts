@@ -35,7 +35,7 @@ export const localUsers = pgTable("local_users", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Stories table for admin-uploaded content
+// Stories table for user-uploaded content
 export const stories = pgTable("stories", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
@@ -43,19 +43,46 @@ export const stories = pgTable("stories", {
   summary: text("summary"),
   category: text("category").notNull(),
   tags: text("tags").array().default([]),
-  characterTags: text("character_tags").array().default([]),
-  emotionTags: text("emotion_tags").array().default([]),
-  voiceSampleUrl: text("voice_sample_url"),
+  extractedCharacters: jsonb("extracted_characters").default([]), // AI-extracted character data
+  extractedEmotions: jsonb("extracted_emotions").default([]), // AI-extracted emotion data
+  voiceSampleUrl: text("voice_sample_url"), // Original voice upload if any
   coverImageUrl: text("cover_image_url"),
   authorId: varchar("author_id").references(() => users.id),
+  uploadType: text("upload_type").notNull(), // 'text', 'voice', 'manual'
+  originalAudioUrl: text("original_audio_url"), // For voice uploads
+  processingStatus: text("processing_status").default("pending"), // 'pending', 'processing', 'completed', 'failed'
   copyrightInfo: text("copyright_info"),
-  licenseType: text("license_type"), // 'all_rights_reserved', 'creative_commons', 'public_domain'
+  licenseType: text("license_type").default("all_rights_reserved"),
   isPublished: boolean("is_published").default(false),
   isAdultContent: boolean("is_adult_content").default(false),
   viewCount: integer("view_count").default(0),
   likes: integer("likes").default(0),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Story characters table for extracted/assigned characters
+export const storyCharacters = pgTable("story_characters", {
+  id: serial("id").primaryKey(),
+  storyId: integer("story_id").references(() => stories.id),
+  name: text("name").notNull(),
+  description: text("description"),
+  personality: text("personality"),
+  role: text("role"), // 'protagonist', 'antagonist', 'supporting', etc.
+  imageUrl: text("image_url"), // Generated or user-assigned image
+  isGenerated: boolean("is_generated").default(true), // Whether image was AI-generated
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Story emotions table for extracted emotions with voice samples
+export const storyEmotions = pgTable("story_emotions", {
+  id: serial("id").primaryKey(),
+  storyId: integer("story_id").references(() => stories.id),
+  emotion: text("emotion").notNull(), // 'happy', 'sad', 'angry', 'fear', etc.
+  intensity: integer("intensity").default(5), // 1-10 scale
+  context: text("context"), // Where this emotion appears in the story
+  voiceUrl: text("voice_url"), // User-recorded voice sample for this emotion
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const characters = pgTable("characters", {
@@ -109,6 +136,16 @@ export const insertStorySchema = createInsertSchema(stories).omit({
   updatedAt: true,
 });
 
+export const insertStoryCharacterSchema = createInsertSchema(storyCharacters).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertStoryEmotionSchema = createInsertSchema(storyEmotions).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Character schemas
 export const insertCharacterSchema = createInsertSchema(characters).omit({
   id: true,
@@ -138,6 +175,12 @@ export type UpsertUser = z.infer<typeof upsertUserSchema>;
 
 export type Story = typeof stories.$inferSelect;
 export type InsertStory = z.infer<typeof insertStorySchema>;
+
+export type StoryCharacter = typeof storyCharacters.$inferSelect;
+export type InsertStoryCharacter = z.infer<typeof insertStoryCharacterSchema>;
+
+export type StoryEmotion = typeof storyEmotions.$inferSelect;
+export type InsertStoryEmotion = z.infer<typeof insertStoryEmotionSchema>;
 
 export type Character = typeof characters.$inferSelect;
 export type InsertCharacter = z.infer<typeof insertCharacterSchema>;
