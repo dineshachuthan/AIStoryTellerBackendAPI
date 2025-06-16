@@ -6,6 +6,10 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Home from "@/pages/home";
 import Chat from "@/pages/chat";
 import CreateCharacter from "@/pages/create-character";
+import UploadStory from "@/pages/upload-story";
+import VoiceSetup from "@/pages/voice-setup";
+import StoryPlayer from "@/pages/story-player";
+import StoryCollaboration from "@/pages/story-collaboration";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -14,6 +18,10 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/chat/:conversationId" component={Chat} />
       <Route path="/create" component={CreateCharacter} />
+      <Route path="/upload-story" component={UploadStory} />
+      <Route path="/voice-setup" component={VoiceSetup} />
+      <Route path="/story/:storyId/play" component={StoryPlayer} />
+      <Route path="/story/:storyId/collaborate" component={StoryCollaboration} />
       <Route component={NotFound} />
     </Switch>
   );
