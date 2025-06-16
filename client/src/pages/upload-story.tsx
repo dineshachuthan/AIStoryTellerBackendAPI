@@ -307,10 +307,7 @@ export default function UploadStory() {
 
   // Step 4: Create and Test Story
   const createStory = async () => {
-    console.log("createStory called with:", { analysis: !!analysis, storyTitle, storyContent });
-    
     if (!analysis || !storyTitle || !storyContent) {
-      console.log("Validation failed:", { analysis: !!analysis, storyTitle, storyContent });
       toast({
         title: "Missing Information",
         description: "Please ensure you have entered a title and content for your story.",
@@ -362,7 +359,7 @@ export default function UploadStory() {
         uploadType: 'manual',
       };
 
-      console.log("Sending story data:", storyData);
+
 
       const story = await apiRequest('/api/stories', {
         method: 'POST',

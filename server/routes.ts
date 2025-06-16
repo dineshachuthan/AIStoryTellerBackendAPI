@@ -212,36 +212,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/stories", upload.single('audio'), async (req, res) => {
+  // Separate endpoint for audio story uploads
+  app.post("/api/stories/upload-audio", upload.single('audio'), async (req, res) => {
+    try {
+      console.log("Received audio story upload:", req.body);
+      const { title, category, authorId } = req.body;
+      
+      if (!req.file) {
+        return res.status(400).json({ message: "Audio file is required" });
+      }
+
+      const filename = `story_audio_${Date.now()}.${req.file.originalname.split('.').pop()}`;
+      const originalAudioUrl = `/uploads/audio/${filename}`;
+      
+      await fs.mkdir('./uploads/audio', { recursive: true });
+      await fs.writeFile(`./uploads/audio/${filename}`, req.file.buffer);
+
+      // Transcribe audio to text
+      let processedContent;
+      try {
+        processedContent = await transcribeAudio(req.file.buffer);
+      } catch (transcriptionError) {
+        console.error("Transcription failed:", transcriptionError);
+        return res.status(400).json({ message: "Failed to transcribe audio" });
+      }
+
+      // Create story with transcribed content
+      const story = await storage.createStory({
+        title: title || 'Untitled Voice Story',
+        content: processedContent,
+        summary: null,
+        category: category || 'General',
+        tags: [],
+        extractedCharacters: [],
+        extractedEmotions: [],
+        voiceSampleUrl: null,
+        coverImageUrl: null,
+        authorId: authorId || 'test_user_123',
+        uploadType: 'voice',
+        originalAudioUrl,
+        processingStatus: 'completed',
+        copyrightInfo: null,
+        licenseType: 'all_rights_reserved',
+        isPublished: false,
+        isAdultContent: false,
+      });
+
+      res.status(201).json(story);
+    } catch (error) {
+      console.error("Audio story creation error:", error);
+      res.status(500).json({ message: "Failed to create story from audio" });
+    }
+  });
+
+  // Main story creation endpoint for text/manual uploads
+  app.post("/api/stories", async (req, res) => {
     try {
       console.log("Received story creation request body:", req.body);
-      const { title, content, category, uploadType, authorId } = req.body;
-      
-      let processedContent = content;
-      let originalAudioUrl = null;
-
-      // Handle voice upload
-      if (uploadType === 'voice' && req.file) {
-        const filename = `story_audio_${Date.now()}.${req.file.originalname.split('.').pop()}`;
-        originalAudioUrl = `/uploads/audio/${filename}`;
-        
-        await fs.mkdir('./uploads/audio', { recursive: true });
-        await fs.writeFile(`./uploads/audio/${filename}`, req.file.buffer);
-
-        // Transcribe audio to text
-        try {
-          processedContent = await transcribeAudio(req.file.buffer);
-        } catch (transcriptionError) {
-          console.error("Transcription failed:", transcriptionError);
-          return res.status(400).json({ message: "Failed to transcribe audio" });
-        }
-      }
+      const { title, content, category, uploadType, authorId, summary, isAdultContent } = req.body;
 
       // Create initial story
       const story = await storage.createStory({
         title,
-        content: processedContent,
-        summary: null,
+        content,
+        summary,
         category,
         tags: [],
         extractedCharacters: [],
@@ -249,18 +283,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         voiceSampleUrl: null,
         coverImageUrl: null,
         authorId,
-        uploadType,
-        originalAudioUrl,
+        uploadType: uploadType || 'manual',
+        originalAudioUrl: null,
         processingStatus: 'processing',
         copyrightInfo: null,
         licenseType: 'all_rights_reserved',
         isPublished: false,
-        isAdultContent: false,
+        isAdultContent: isAdultContent || false,
       });
 
       // Analyze story content in background
       try {
-        const analysis = await analyzeStoryContent(processedContent);
+        const analysis = await analyzeStoryContent(content);
         
         // Update story with analysis results
         await storage.updateStory(story.id, {
