@@ -307,7 +307,17 @@ export default function UploadStory() {
 
   // Step 4: Create and Test Story
   const createStory = async () => {
-    if (!analysis || !storyTitle || !storyContent) return;
+    console.log("createStory called with:", { analysis: !!analysis, storyTitle, storyContent });
+    
+    if (!analysis || !storyTitle || !storyContent) {
+      console.log("Validation failed:", { analysis: !!analysis, storyTitle, storyContent });
+      toast({
+        title: "Missing Information",
+        description: "Please ensure you have entered a title and content for your story.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setIsCreatingStory(true);
 
@@ -351,6 +361,8 @@ export default function UploadStory() {
         authorId: 'test_user_123', // Will be set when authentication is added back
         uploadType: 'manual',
       };
+
+      console.log("Sending story data:", storyData);
 
       const story = await apiRequest('/api/stories', {
         method: 'POST',

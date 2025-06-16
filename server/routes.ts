@@ -214,6 +214,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/stories", upload.single('audio'), async (req, res) => {
     try {
+      console.log("Received story creation request body:", req.body);
       const { title, content, category, uploadType, authorId } = req.body;
       
       let processedContent = content;
