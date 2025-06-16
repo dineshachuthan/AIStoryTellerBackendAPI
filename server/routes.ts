@@ -106,6 +106,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Story analysis endpoint
+  app.post("/api/stories/analyze", async (req, res) => {
+    try {
+      const { content } = req.body;
+      if (!content) {
+        return res.status(400).json({ message: "Content is required" });
+      }
+
+      const analysis = await analyzeStoryContent(content);
+      res.json(analysis);
+    } catch (error) {
+      console.error("Error analyzing story:", error);
+      res.status(500).json({ message: "Failed to analyze story" });
+    }
+  });
+
+  // Audio transcription endpoint
+  app.post("/api/transcribe", upload.single('audio'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "Audio file is required" });
+      }
+
+      const transcription = await transcribeAudio(req.file.buffer);
+      res.json({ text: transcription });
+    } catch (error) {
+      console.error("Error transcribing audio:", error);
+      res.status(500).json({ message: "Failed to transcribe audio" });
+    }
+  });
+
+  // Character image generation endpoint
+  app.post("/api/characters/generate-image", async (req, res) => {
+    try {
+      const { character, storyContext } = req.body;
+      if (!character) {
+        return res.status(400).json({ message: "Character data is required" });
+      }
+
+      const imageUrl = await generateCharacterImage(character, storyContext);
+      res.json({ url: imageUrl });
+    } catch (error) {
+      console.error("Error generating character image:", error);
+      res.status(500).json({ message: "Failed to generate character image" });
+    }
+  });
+
+  // Default character image endpoint
+  app.get("/api/characters/default-image", (req, res) => {
+    const { name, role } = req.query;
+    // Generate a default avatar URL based on character name and role
+    const defaultImageUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name as string)}&backgroundColor=b6e3f4,c0aede,d1d4f9`;
+    res.json({ url: defaultImageUrl });
+  });
+
+  // Default emotion sound endpoint
+  app.get("/api/emotions/default-sound", (req, res) => {
+    const { emotion, intensity } = req.query;
+    // Return a placeholder sound URL - in production this would be actual sound files
+    const defaultSoundUrl = `/sounds/${emotion}-${intensity}.mp3`;
+    res.json({ url: defaultSoundUrl });
+  });
+
   // Stories routes
   app.get("/api/stories", async (req, res) => {
     try {
@@ -244,6 +307,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/stories/:id/characters", async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.id);
+      const characterData = {
+        storyId,
+        ...req.body,
+        isGenerated: true,
+      };
+
+      const character = await storage.createStoryCharacter(characterData);
+      res.json(character);
+    } catch (error) {
+      console.error("Error creating story character:", error);
+      res.status(500).json({ message: "Failed to create story character" });
+    }
+  });
+
   app.get("/api/stories/:id/emotions", async (req, res) => {
     try {
       const storyId = parseInt(req.params.id);
@@ -251,6 +331,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(emotions);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch story emotions" });
+    }
+  });
+
+  app.post("/api/stories/:id/emotions", async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.id);
+      const emotionData = {
+        storyId,
+        ...req.body,
+      };
+
+      const emotion = await storage.createStoryEmotion(emotionData);
+      res.json(emotion);
+    } catch (error) {
+      console.error("Error creating story emotion:", error);
+      res.status(500).json({ message: "Failed to create story emotion" });
     }
   });
 

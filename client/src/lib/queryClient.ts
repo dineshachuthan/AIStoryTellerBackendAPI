@@ -8,18 +8,38 @@ async function throwIfResNotOk(res: Response) {
 }
 
 export async function apiRequest(
-  method: string,
   url: string,
-  data?: unknown | undefined,
-): Promise<Response> {
-  const res = await fetch(url, {
-    method,
-    headers: data ? { "Content-Type": "application/json" } : {},
-    body: data ? JSON.stringify(data) : undefined,
+  options?: RequestInit,
+): Promise<any> {
+  const defaultOptions: RequestInit = {
+    method: 'GET',
     credentials: "include",
-  });
+  };
 
+  const finalOptions = { ...defaultOptions, ...options };
+
+  // Handle FormData - don't set Content-Type header for FormData
+  if (finalOptions.body instanceof FormData) {
+    // Remove Content-Type header for FormData - browser will set it automatically
+    if (finalOptions.headers && 'Content-Type' in (finalOptions.headers as any)) {
+      delete (finalOptions.headers as any)['Content-Type'];
+    }
+  } else if (finalOptions.body && typeof finalOptions.body === 'object') {
+    // For JSON data, ensure Content-Type is set
+    finalOptions.headers = {
+      'Content-Type': 'application/json',
+      ...finalOptions.headers,
+    };
+  }
+
+  const res = await fetch(url, finalOptions);
   await throwIfResNotOk(res);
+  
+  const contentType = res.headers.get('content-type');
+  if (contentType && contentType.includes('application/json')) {
+    return await res.json();
+  }
+  
   return res;
 }
 

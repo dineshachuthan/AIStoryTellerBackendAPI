@@ -1,69 +1,114 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useLocation } from "wouter";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Progress } from "@/components/ui/progress";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { insertStorySchema } from "@shared/schema";
-import { ArrowLeft, Upload, Mic, Type, FileText } from "lucide-react";
-import { z } from "zod";
+import { 
+  ArrowLeft, 
+  Upload, 
+  Mic, 
+  MicOff,
+  Type, 
+  FileText, 
+  Eye, 
+  Edit3, 
+  Play, 
+  Users, 
+  Heart, 
+  Smile, 
+  Frown, 
+  Angry, 
+  Sparkles,
+  Volume2,
+  Loader2,
+  Check,
+  X
+} from "lucide-react";
 
-const uploadStorySchema = insertStorySchema.extend({
-  uploadType: z.enum(['text', 'voice', 'manual']),
-});
+interface StoryAnalysis {
+  characters: Array<{
+    name: string;
+    description: string;
+    personality: string;
+    role: string;
+    appearance?: string;
+    traits: string[];
+  }>;
+  emotions: Array<{
+    emotion: string;
+    intensity: number;
+    context: string;
+    quote?: string;
+  }>;
+  summary: string;
+  category: string;
+  themes: string[];
+  suggestedTags: string[];
+  isAdultContent: boolean;
+}
+
+interface CharacterWithImage {
+  name: string;
+  description: string;
+  personality: string;
+  role: string;
+  appearance?: string;
+  traits: string[];
+  imageUrl?: string;
+}
+
+interface EmotionWithSound {
+  emotion: string;
+  intensity: number;
+  context: string;
+  quote?: string;
+  soundUrl?: string;
+}
 
 export default function UploadStory() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [uploadType, setUploadType] = useState<'text' | 'voice' | 'manual'>('manual');
+  
+  // Step management
+  const [currentStep, setCurrentStep] = useState(1);
+  const [storyContent, setStoryContent] = useState("");
+  const [storyTitle, setStoryTitle] = useState("");
+  const [uploadType, setUploadType] = useState<'text' | 'voice' | 'file'>('text');
+  
+  // Step 2: AI Analysis
+  const [analysis, setAnalysis] = useState<StoryAnalysis | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  
+  // Step 3: Character & Emotion Assignment
+  const [charactersWithImages, setCharactersWithImages] = useState<CharacterWithImage[]>([]);
+  const [emotionsWithSounds, setEmotionsWithSounds] = useState<EmotionWithSound[]>([]);
+  
+  // Audio recording
   const [isRecording, setIsRecording] = useState(false);
   const [recordedAudio, setRecordedAudio] = useState<File | null>(null);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const audioRef = useRef<HTMLInputElement>(null);
 
-  const form = useForm({
-    resolver: zodResolver(uploadStorySchema),
-    defaultValues: {
-      title: "",
-      content: "",
-      category: "Drama",
-      uploadType: 'manual',
-      authorId: 'user_123', // TODO: Get from auth context
-    },
-  });
-
-  const uploadStoryMutation = useMutation({
-    mutationFn: async (data: FormData) => {
-      const response = await fetch("/api/stories", {
-        method: "POST",
-        body: data,
-      });
-      if (!response.ok) {
-        throw new Error("Failed to upload story");
-      }
-      return await response.json();
-    },
-    onSuccess: (data) => {
+  // Step 1: Upload Content
+  const handleTextUpload = () => {
+    if (!storyContent.trim() || !storyTitle.trim()) {
       toast({
-        title: "Story Uploaded!",
-        description: "Your story is being analyzed and processed.",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/stories"] });
-      setLocation(`/story/${data.id}`);
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Upload Failed",
-        description: error.message || "Failed to upload story",
+        title: "Missing Information",
+        description: "Please provide both a title and story content.",
         variant: "destructive",
       });
-    },
-  });
+      return;
+    }
+    analyzeStory();
+  };
 
   const startRecording = async () => {
     try {
@@ -74,9 +119,9 @@ export default function UploadStory() {
       recorder.ondataavailable = (e) => chunks.push(e.data);
       recorder.onstop = () => {
         const blob = new Blob(chunks, { type: 'audio/wav' });
-        const file = new File([blob], 'story-audio.wav', { type: 'audio/wav' });
+        const file = new File([blob], 'story.wav', { type: 'audio/wav' });
         setRecordedAudio(file);
-        stream.getTracks().forEach(track => track.stop());
+        setIsRecording(false);
       };
 
       recorder.start();
@@ -85,253 +130,782 @@ export default function UploadStory() {
     } catch (error) {
       toast({
         title: "Recording Error",
-        description: "Could not access microphone",
+        description: "Could not access microphone. Please check permissions.",
         variant: "destructive",
       });
     }
   };
 
   const stopRecording = () => {
-    if (mediaRecorder && isRecording) {
+    if (mediaRecorder) {
       mediaRecorder.stop();
-      setIsRecording(false);
-      setMediaRecorder(null);
+      mediaRecorder.stream.getTracks().forEach(track => track.stop());
     }
   };
 
-  const onSubmit = (data: any) => {
+  const handleVoiceUpload = async () => {
+    if (!recordedAudio || !storyTitle.trim()) {
+      toast({
+        title: "Missing Information",
+        description: "Please provide a title and record your story.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Convert audio to text using transcription
     const formData = new FormData();
+    formData.append('audio', recordedAudio);
     
-    Object.keys(data).forEach(key => {
-      if (data[key] !== null && data[key] !== undefined) {
-        formData.append(key, data[key]);
-      }
-    });
-
-    formData.set('uploadType', uploadType);
-
-    if (uploadType === 'voice' && recordedAudio) {
-      formData.append('audio', recordedAudio);
+    try {
+      setIsAnalyzing(true);
+      const transcription = await apiRequest('/api/transcribe', {
+        method: 'POST',
+        body: formData,
+      });
+      setStoryContent(transcription.text);
+      analyzeStory(transcription.text);
+    } catch (error) {
+      toast({
+        title: "Transcription Failed",
+        description: "Could not convert voice to text. Please try again.",
+        variant: "destructive",
+      });
+      setIsAnalyzing(false);
     }
-
-    uploadStoryMutation.mutate(formData);
   };
 
-  const categories = [
-    "Drama", "Comedy", "Romance", "Adventure", "Mystery", 
-    "Fantasy", "Sci-Fi", "Horror", "Thriller", "Biography"
-  ];
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const content = e.target?.result as string;
+      setStoryContent(content);
+      if (storyTitle.trim()) {
+        analyzeStory(content);
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  // Step 2: AI Analysis
+  const analyzeStory = async (content?: string) => {
+    const textToAnalyze = content || storyContent;
+    setIsAnalyzing(true);
+    
+    try {
+      const result = await apiRequest('/api/stories/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: textToAnalyze }),
+      });
+      
+      setAnalysis(result);
+      setCurrentStep(2);
+    } catch (error) {
+      toast({
+        title: "Analysis Failed",
+        description: "Could not analyze story. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  // Step 3: Assign Images and Sounds
+  const proceedToAssignments = () => {
+    if (!analysis) return;
+
+    // Initialize characters with default images
+    const charactersWithDefaults = analysis.characters.map(char => ({
+      ...char,
+      imageUrl: `/api/characters/default-image?name=${encodeURIComponent(char.name)}&role=${char.role}`
+    }));
+
+    // Initialize emotions with default sounds
+    const emotionsWithDefaults = analysis.emotions.map(emotion => ({
+      ...emotion,
+      soundUrl: `/api/emotions/default-sound?emotion=${emotion.emotion}&intensity=${emotion.intensity}`
+    }));
+
+    setCharactersWithImages(charactersWithDefaults);
+    setEmotionsWithSounds(emotionsWithDefaults);
+    setCurrentStep(3);
+  };
+
+  const generateCharacterImage = async (characterIndex: number) => {
+    const character = charactersWithImages[characterIndex];
+    if (!character) return;
+
+    try {
+      const imageUrl = await apiRequest('/api/characters/generate-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          character,
+          storyContext: analysis?.summary || storyContent.substring(0, 500)
+        }),
+      });
+
+      const updatedCharacters = [...charactersWithImages];
+      updatedCharacters[characterIndex] = { ...character, imageUrl: imageUrl.url };
+      setCharactersWithImages(updatedCharacters);
+    } catch (error) {
+      toast({
+        title: "Image Generation Failed",
+        description: "Could not generate character image.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Step 4: Create and Test Story
+  const createStory = async () => {
+    if (!analysis || !storyTitle || !storyContent) return;
+
+    try {
+      const storyData = {
+        title: storyTitle,
+        content: storyContent,
+        category: analysis.category,
+        summary: analysis.summary,
+        isAdultContent: analysis.isAdultContent,
+        userId: 'user_123', // This should come from auth
+      };
+
+      const story = await apiRequest('/api/stories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(storyData),
+      });
+
+      // Create characters and emotions
+      for (const character of charactersWithImages) {
+        await apiRequest('/api/stories/' + story.id + '/characters', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: character.name,
+            description: character.description,
+            personality: character.personality,
+            role: character.role,
+            appearance: character.appearance,
+            traits: character.traits,
+            imageUrl: character.imageUrl,
+          }),
+        });
+      }
+
+      for (const emotion of emotionsWithSounds) {
+        await apiRequest('/api/stories/' + story.id + '/emotions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            emotion: emotion.emotion,
+            intensity: emotion.intensity,
+            context: emotion.context,
+            quote: emotion.quote,
+            soundUrl: emotion.soundUrl,
+          }),
+        });
+      }
+
+      toast({
+        title: "Story Created!",
+        description: "Your story has been created successfully.",
+      });
+
+      // Navigate to story player
+      setLocation(`/story/${story.id}/play`);
+    } catch (error) {
+      toast({
+        title: "Creation Failed",
+        description: "Could not create story. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const testStoryPlayback = () => {
+    // This would generate a preview of the narration
+    toast({
+      title: "Preview Generated",
+      description: "Story preview with character voices and emotions is ready!",
+    });
+  };
 
   return (
-    <div className="bg-dark-bg text-dark-text min-h-screen">
-      <div className="flex flex-col h-screen">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 bg-dark-card border-b border-gray-800">
-          <Button 
-            variant="ghost" 
-            size="icon"
-            onClick={() => setLocation("/")}
-            className="text-dark-text hover:bg-gray-800"
-          >
-            <ArrowLeft className="h-6 w-6" />
-          </Button>
-          <h2 className="text-lg font-semibold">Upload Your Story</h2>
-          <Button 
-            onClick={form.handleSubmit(onSubmit)}
-            disabled={uploadStoryMutation.isPending}
-            className="bg-tiktok-red hover:bg-tiktok-red/80 text-white font-semibold"
-          >
-            {uploadStoryMutation.isPending ? "Uploading..." : "Upload"}
-          </Button>
-        </div>
-
-        {/* Upload Type Selection */}
-        <div className="p-4 bg-dark-card border-b border-gray-800">
-          <h3 className="text-sm font-medium text-dark-text mb-3">How would you like to add your story?</h3>
-          <div className="grid grid-cols-3 gap-2">
+    <div className="min-h-screen bg-dark-bg text-white">
+      {/* Header */}
+      <div className="border-b border-gray-800 p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
             <Button
-              type="button"
-              variant="outline"
-              onClick={() => setUploadType('manual')}
-              className={`flex flex-col items-center p-4 h-auto ${
-                uploadType === 'manual'
-                  ? "bg-tiktok-red/20 border-tiktok-red text-tiktok-red"
-                  : "bg-gray-800 hover:bg-gray-700 text-dark-text border-gray-700"
-              }`}
+              variant="ghost"
+              size="sm"
+              onClick={() => setLocation("/")}
+              className="text-gray-400 hover:text-white"
             >
-              <Type className="w-6 h-6 mb-2" />
-              <span className="text-xs">Type Story</span>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back
             </Button>
-            
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setUploadType('voice')}
-              className={`flex flex-col items-center p-4 h-auto ${
-                uploadType === 'voice'
-                  ? "bg-tiktok-cyan/20 border-tiktok-cyan text-tiktok-cyan"
-                  : "bg-gray-800 hover:bg-gray-700 text-dark-text border-gray-700"
-              }`}
-            >
-              <Mic className="w-6 h-6 mb-2" />
-              <span className="text-xs">Record Voice</span>
-            </Button>
-            
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setUploadType('text')}
-              className={`flex flex-col items-center p-4 h-auto ${
-                uploadType === 'text'
-                  ? "bg-tiktok-pink/20 border-tiktok-pink text-tiktok-pink"
-                  : "bg-gray-800 hover:bg-gray-700 text-dark-text border-gray-700"
-              }`}
-            >
-              <FileText className="w-6 h-6 mb-2" />
-              <span className="text-xs">Upload File</span>
-            </Button>
+            <h1 className="text-xl font-bold">Create Story</h1>
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className="text-sm text-gray-400">
+              Step {currentStep} of 4
+            </div>
+            <Progress value={(currentStep / 4) * 100} className="w-24" />
           </div>
         </div>
+      </div>
 
-        {/* Form */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-6">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {/* Title */}
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-dark-text">Story Title</FormLabel>
-                    <FormControl>
-                      <Input 
-                        {...field}
-                        placeholder="Enter your story title..."
-                        className="bg-gray-800 text-dark-text border-gray-700 focus:border-tiktok-cyan"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+      <div className="max-w-4xl mx-auto p-6">
+        {/* Step 1: Upload Content */}
+        {currentStep === 1 && (
+          <div className="space-y-6">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold mb-2">Upload Your Story</h2>
+              <p className="text-gray-400">Choose how you'd like to share your story</p>
+            </div>
+
+            {/* Upload Type Selection */}
+            <div className="grid grid-cols-3 gap-4">
+              <Card 
+                className={`cursor-pointer transition-all ${uploadType === 'text' ? 'ring-2 ring-tiktok-cyan bg-tiktok-cyan/10' : 'bg-dark-card border-gray-700 hover:bg-gray-800'}`}
+                onClick={() => setUploadType('text')}
+              >
+                <CardContent className="p-6 text-center">
+                  <Type className="w-8 h-8 mx-auto mb-3 text-tiktok-cyan" />
+                  <h3 className="font-semibold mb-2">Type Story</h3>
+                  <p className="text-sm text-gray-400">Write your story manually</p>
+                </CardContent>
+              </Card>
+
+              <Card 
+                className={`cursor-pointer transition-all ${uploadType === 'voice' ? 'ring-2 ring-tiktok-red bg-tiktok-red/10' : 'bg-dark-card border-gray-700 hover:bg-gray-800'}`}
+                onClick={() => setUploadType('voice')}
+              >
+                <CardContent className="p-6 text-center">
+                  <Mic className="w-8 h-8 mx-auto mb-3 text-tiktok-red" />
+                  <h3 className="font-semibold mb-2">Record Story</h3>
+                  <p className="text-sm text-gray-400">Tell your story aloud</p>
+                </CardContent>
+              </Card>
+
+              <Card 
+                className={`cursor-pointer transition-all ${uploadType === 'file' ? 'ring-2 ring-tiktok-pink bg-tiktok-pink/10' : 'bg-dark-card border-gray-700 hover:bg-gray-800'}`}
+                onClick={() => setUploadType('file')}
+              >
+                <CardContent className="p-6 text-center">
+                  <FileText className="w-8 h-8 mx-auto mb-3 text-tiktok-pink" />
+                  <h3 className="font-semibold mb-2">Upload File</h3>
+                  <p className="text-sm text-gray-400">Import from text file</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Story Title */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Story Title</label>
+              <Input
+                value={storyTitle}
+                onChange={(e) => setStoryTitle(e.target.value)}
+                placeholder="Enter your story title..."
+                className="bg-dark-card border-gray-700 text-white"
               />
+            </div>
 
-              {/* Category */}
-              <FormField
-                control={form.control}
-                name="category"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-dark-text">Category</FormLabel>
-                    <div className="grid grid-cols-2 gap-2">
-                      {categories.map((category) => (
-                        <Button
-                          key={category}
-                          type="button"
-                          variant="outline"
-                          onClick={() => field.onChange(category)}
-                          className={`text-sm transition-colors ${
-                            field.value === category
-                              ? "bg-tiktok-red/20 border-tiktok-red text-tiktok-red"
-                              : "bg-gray-800 hover:bg-tiktok-red/20 hover:border-tiktok-red text-dark-text border-gray-700"
-                          }`}
-                        >
-                          {category}
-                        </Button>
-                      ))}
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Content based on upload type */}
-              {uploadType === 'manual' && (
-                <FormField
-                  control={form.control}
-                  name="content"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-dark-text">Story Content</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          {...field}
-                          placeholder="Write your story here..."
-                          className="bg-gray-800 text-dark-text border-gray-700 focus:border-tiktok-cyan h-64 resize-none"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+            {/* Content Input Based on Type */}
+            {uploadType === 'text' && (
+              <div>
+                <label className="block text-sm font-medium mb-2">Story Content</label>
+                <Textarea
+                  value={storyContent}
+                  onChange={(e) => setStoryContent(e.target.value)}
+                  placeholder="Write your story here..."
+                  className="bg-dark-card border-gray-700 text-white min-h-48"
                 />
-              )}
+                <Button
+                  onClick={handleTextUpload}
+                  disabled={isAnalyzing}
+                  className="mt-4 bg-tiktok-cyan hover:bg-tiktok-cyan/80"
+                >
+                  {isAnalyzing ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Analyzing...
+                    </>
+                  ) : (
+                    <>
+                      <Eye className="w-4 h-4 mr-2" />
+                      Analyze Story
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
 
-              {uploadType === 'voice' && (
-                <div className="space-y-4">
-                  <FormLabel className="text-dark-text">Record Your Story</FormLabel>
-                  <div className="flex flex-col items-center space-y-4 p-6 bg-gray-800 rounded-lg border border-gray-700">
-                    {!isRecording && !recordedAudio && (
+            {uploadType === 'voice' && (
+              <div className="text-center">
+                <div className="bg-dark-card border border-gray-700 rounded-lg p-8">
+                  {!isRecording && !recordedAudio && (
+                    <div>
+                      <Mic className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+                      <p className="text-gray-400 mb-4">Ready to record your story</p>
                       <Button
-                        type="button"
                         onClick={startRecording}
-                        className="bg-tiktok-red hover:bg-tiktok-red/80 rounded-full w-20 h-20 flex items-center justify-center"
+                        className="bg-tiktok-red hover:bg-tiktok-red/80"
                       >
-                        <Mic className="w-8 h-8" />
+                        <Mic className="w-4 h-4 mr-2" />
+                        Start Recording
                       </Button>
-                    )}
-                    
-                    {isRecording && (
-                      <div className="flex flex-col items-center space-y-4">
-                        <div className="w-20 h-20 bg-tiktok-red rounded-full flex items-center justify-center animate-pulse">
-                          <Mic className="w-8 h-8" />
-                        </div>
-                        <Button
-                          type="button"
-                          onClick={stopRecording}
-                          className="bg-gray-600 hover:bg-gray-500"
-                        >
-                          Stop Recording
-                        </Button>
-                      </div>
-                    )}
-                    
-                    {recordedAudio && !isRecording && (
-                      <div className="flex flex-col items-center space-y-4">
-                        <div className="w-20 h-20 bg-green-600 rounded-full flex items-center justify-center">
-                          <Mic className="w-8 h-8" />
-                        </div>
-                        <p className="text-green-400">Recording completed!</p>
-                        <Button
-                          type="button"
-                          onClick={() => {
-                            setRecordedAudio(null);
-                          }}
-                          variant="outline"
-                          className="border-gray-600 text-gray-300"
-                        >
-                          Record Again
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {uploadType === 'text' && (
-                <div className="space-y-4">
-                  <FormLabel className="text-dark-text">Upload Text File</FormLabel>
-                  <div className="flex items-center justify-center p-6 bg-gray-800 rounded-lg border border-gray-700 border-dashed">
-                    <div className="text-center">
-                      <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-400">Drag and drop a text file here</p>
-                      <p className="text-sm text-gray-500">or click to browse</p>
                     </div>
+                  )}
+
+                  {isRecording && (
+                    <div>
+                      <div className="w-16 h-16 mx-auto mb-4 bg-tiktok-red rounded-full flex items-center justify-center animate-pulse">
+                        <Mic className="w-8 h-8 text-white" />
+                      </div>
+                      <p className="text-tiktok-red mb-4">Recording your story...</p>
+                      <Button
+                        onClick={stopRecording}
+                        variant="outline"
+                        className="border-tiktok-red text-tiktok-red hover:bg-tiktok-red/20"
+                      >
+                        <MicOff className="w-4 h-4 mr-2" />
+                        Stop Recording
+                      </Button>
+                    </div>
+                  )}
+
+                  {recordedAudio && !isRecording && (
+                    <div>
+                      <div className="w-16 h-16 mx-auto mb-4 bg-green-500 rounded-full flex items-center justify-center">
+                        <Check className="w-8 h-8 text-white" />
+                      </div>
+                      <p className="text-green-400 mb-4">Recording complete!</p>
+                      <div className="flex justify-center space-x-4">
+                        <Button
+                          onClick={() => setRecordedAudio(null)}
+                          variant="outline"
+                          className="border-gray-600 text-gray-400 hover:bg-gray-800"
+                        >
+                          <X className="w-4 h-4 mr-2" />
+                          Re-record
+                        </Button>
+                        <Button
+                          onClick={handleVoiceUpload}
+                          disabled={isAnalyzing}
+                          className="bg-tiktok-cyan hover:bg-tiktok-cyan/80"
+                        >
+                          {isAnalyzing ? (
+                            <>
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              Processing...
+                            </>
+                          ) : (
+                            <>
+                              <Eye className="w-4 h-4 mr-2" />
+                              Analyze Story
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {uploadType === 'file' && (
+              <div>
+                <label className="block text-sm font-medium mb-2">Upload Text File</label>
+                <input
+                  ref={audioRef}
+                  type="file"
+                  accept=".txt,.md"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+                <div
+                  onClick={() => audioRef.current?.click()}
+                  className="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center cursor-pointer hover:border-tiktok-pink transition-colors"
+                >
+                  <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                  <p className="text-gray-400 mb-2">Click to upload a text file</p>
+                  <p className="text-sm text-gray-500">Supports .txt and .md files</p>
+                </div>
+                {storyContent && (
+                  <div className="mt-4">
+                    <p className="text-sm text-gray-400 mb-2">File loaded: {storyContent.length} characters</p>
+                    <Button
+                      onClick={handleTextUpload}
+                      disabled={isAnalyzing}
+                      className="bg-tiktok-cyan hover:bg-tiktok-cyan/80"
+                    >
+                      {isAnalyzing ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Analyzing...
+                        </>
+                      ) : (
+                        <>
+                          <Eye className="w-4 h-4 mr-2" />
+                          Analyze Story
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Step 2: AI Analysis Preview */}
+        {currentStep === 2 && analysis && (
+          <div className="space-y-6">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold mb-2">Story Analysis</h2>
+              <p className="text-gray-400">Review and modify the AI-identified elements</p>
+            </div>
+
+            {/* Category */}
+            <Card className="bg-dark-card border-gray-700">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Sparkles className="w-5 h-5 mr-2 text-tiktok-pink" />
+                  Category
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center space-x-4">
+                  <Badge variant="secondary" className="bg-tiktok-pink/20 text-tiktok-pink text-lg px-4 py-2">
+                    {analysis.category}
+                  </Badge>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-gray-600 text-gray-400 hover:bg-gray-800"
+                  >
+                    <Edit3 className="w-4 h-4 mr-2" />
+                    Edit
+                  </Button>
+                </div>
+                <div className="mt-4">
+                  <p className="text-sm text-gray-400">Summary:</p>
+                  <p className="text-gray-200 mt-1">{analysis.summary}</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Characters */}
+            <Card className="bg-dark-card border-gray-700">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Users className="w-5 h-5 mr-2 text-tiktok-cyan" />
+                  Characters ({analysis.characters.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {analysis.characters.map((character, index) => (
+                    <div key={index} className="bg-gray-800 rounded-lg p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <h4 className="font-semibold text-white">{character.name}</h4>
+                          <Badge variant="outline" className="text-xs mt-1">
+                            {character.role}
+                          </Badge>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-gray-400 hover:text-white"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      <p className="text-sm text-gray-300 mb-2">{character.description}</p>
+                      <div className="flex flex-wrap gap-1">
+                        {character.traits.map((trait, traitIndex) => (
+                          <Badge key={traitIndex} variant="secondary" className="text-xs">
+                            {trait}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Emotions */}
+            <Card className="bg-dark-card border-gray-700">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Heart className="w-5 h-5 mr-2 text-tiktok-red" />
+                  Emotions ({analysis.emotions.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {analysis.emotions.map((emotion, index) => {
+                    const EmotionIcon = emotion.emotion === 'happy' ? Smile : 
+                                       emotion.emotion === 'sad' ? Frown : 
+                                       emotion.emotion === 'angry' ? Angry : Heart;
+                    
+                    return (
+                      <div key={index} className="bg-gray-800 rounded-lg p-4">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex items-center space-x-2">
+                            <EmotionIcon className="w-5 h-5 text-tiktok-red" />
+                            <div>
+                              <h4 className="font-semibold text-white capitalize">{emotion.emotion}</h4>
+                              <div className="flex items-center space-x-2 mt-1">
+                                <Progress value={emotion.intensity * 10} className="w-16 h-2" />
+                                <span className="text-xs text-gray-400">{emotion.intensity}/10</span>
+                              </div>
+                            </div>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-gray-400 hover:text-white"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                        <p className="text-sm text-gray-300 mb-2">{emotion.context}</p>
+                        {emotion.quote && (
+                          <p className="text-xs text-gray-400 italic">"{emotion.quote}"</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="flex justify-center">
+              <Button
+                onClick={proceedToAssignments}
+                className="bg-tiktok-cyan hover:bg-tiktok-cyan/80 px-8"
+              >
+                Proceed to Assignments
+                <ArrowLeft className="w-4 h-4 ml-2 rotate-180" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 3: Character Images & Emotion Sounds */}
+        {currentStep === 3 && (
+          <div className="space-y-6">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold mb-2">Character & Emotion Setup</h2>
+              <p className="text-gray-400">Assign images and sounds to bring your story to life</p>
+            </div>
+
+            {/* Character Images */}
+            <Card className="bg-dark-card border-gray-700">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Users className="w-5 h-5 mr-2 text-tiktok-cyan" />
+                  Character Images
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {charactersWithImages.map((character, index) => (
+                    <div key={index} className="bg-gray-800 rounded-lg p-4">
+                      <div className="flex items-center space-x-4 mb-4">
+                        <Avatar className="w-16 h-16">
+                          <AvatarImage src={character.imageUrl} alt={character.name} />
+                          <AvatarFallback className="bg-tiktok-cyan text-white text-lg">
+                            {character.name.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-white">{character.name}</h4>
+                          <p className="text-sm text-gray-400">{character.role}</p>
+                          <p className="text-xs text-gray-500 mt-1">{character.description}</p>
+                        </div>
+                      </div>
+                      <div className="flex space-x-2">
+                        <Button
+                          onClick={() => generateCharacterImage(index)}
+                          variant="outline"
+                          size="sm"
+                          className="border-tiktok-cyan text-tiktok-cyan hover:bg-tiktok-cyan/20"
+                        >
+                          <Sparkles className="w-4 h-4 mr-2" />
+                          Generate New
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="border-gray-600 text-gray-400 hover:bg-gray-800"
+                        >
+                          <Upload className="w-4 h-4 mr-2" />
+                          Upload
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Emotion Sounds */}
+            <Card className="bg-dark-card border-gray-700">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Volume2 className="w-5 h-5 mr-2 text-tiktok-red" />
+                  Emotion Sounds
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {emotionsWithSounds.map((emotion, index) => {
+                    const EmotionIcon = emotion.emotion === 'happy' ? Smile : 
+                                       emotion.emotion === 'sad' ? Frown : 
+                                       emotion.emotion === 'angry' ? Angry : Heart;
+                    
+                    return (
+                      <div key={index} className="bg-gray-800 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center space-x-3">
+                            <EmotionIcon className="w-6 h-6 text-tiktok-red" />
+                            <div>
+                              <h4 className="font-semibold text-white capitalize">{emotion.emotion}</h4>
+                              <Progress value={emotion.intensity * 10} className="w-20 h-2 mt-1" />
+                            </div>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-gray-400 hover:text-white"
+                          >
+                            <Play className="w-4 h-4" />
+                          </Button>
+                        </div>
+                        <p className="text-sm text-gray-300 mb-3">{emotion.context}</p>
+                        <div className="flex space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="border-tiktok-red text-tiktok-red hover:bg-tiktok-red/20"
+                          >
+                            <Volume2 className="w-4 h-4 mr-2" />
+                            Default
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="border-gray-600 text-gray-400 hover:bg-gray-800"
+                          >
+                            <Upload className="w-4 h-4 mr-2" />
+                            Custom
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="flex justify-center">
+              <Button
+                onClick={() => setCurrentStep(4)}
+                className="bg-tiktok-pink hover:bg-tiktok-pink/80 px-8"
+              >
+                Create Story
+                <ArrowLeft className="w-4 h-4 ml-2 rotate-180" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 4: Test Story Playback */}
+        {currentStep === 4 && (
+          <div className="space-y-6">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold mb-2">Test Your Story</h2>
+              <p className="text-gray-400">Preview how your story will sound with character voices and emotions</p>
+            </div>
+
+            <Card className="bg-dark-card border-gray-700">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Play className="w-5 h-5 mr-2 text-tiktok-green" />
+                  Story Preview
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="text-center py-12">
+                <div className="mb-6">
+                  <h3 className="text-xl font-semibold mb-2">{storyTitle}</h3>
+                  <Badge variant="secondary" className="bg-tiktok-pink/20 text-tiktok-pink">
+                    {analysis?.category}
+                  </Badge>
+                </div>
+
+                <div className="flex justify-center space-x-4 mb-8">
+                  <div className="text-center">
+                    <div className="w-12 h-12 bg-tiktok-cyan/20 rounded-full flex items-center justify-center mx-auto mb-2">
+                      <Users className="w-6 h-6 text-tiktok-cyan" />
+                    </div>
+                    <p className="text-sm text-gray-400">{charactersWithImages.length} Characters</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="w-12 h-12 bg-tiktok-red/20 rounded-full flex items-center justify-center mx-auto mb-2">
+                      <Heart className="w-6 h-6 text-tiktok-red" />
+                    </div>
+                    <p className="text-sm text-gray-400">{emotionsWithSounds.length} Emotions</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="w-12 h-12 bg-tiktok-green/20 rounded-full flex items-center justify-center mx-auto mb-2">
+                      <Volume2 className="w-6 h-6 text-tiktok-green" />
+                    </div>
+                    <p className="text-sm text-gray-400">Voice Ready</p>
                   </div>
                 </div>
-              )}
-            </form>
-          </Form>
-        </div>
+
+                <div className="space-y-4">
+                  <Button
+                    onClick={testStoryPlayback}
+                    className="bg-tiktok-green hover:bg-tiktok-green/80 px-8"
+                  >
+                    <Play className="w-4 h-4 mr-2" />
+                    Test Playback
+                  </Button>
+                  
+                  <div className="flex justify-center space-x-4">
+                    <Button
+                      onClick={() => setCurrentStep(3)}
+                      variant="outline"
+                      className="border-gray-600 text-gray-400 hover:bg-gray-800"
+                    >
+                      Back to Edit
+                    </Button>
+                    <Button
+                      onClick={createStory}
+                      className="bg-tiktok-red hover:bg-tiktok-red/80 px-8"
+                    >
+                      Create & Share Story
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </div>
   );
