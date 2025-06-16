@@ -179,6 +179,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Story analysis endpoint
+  app.post("/api/stories/analyze", async (req, res) => {
+    try {
+      const { content } = req.body;
+      
+      if (!content || typeof content !== 'string' || !content.trim()) {
+        return res.status(400).json({ message: "Content is required" });
+      }
+
+      const analysis = await analyzeStoryContent(content.trim());
+      res.json(analysis);
+    } catch (error) {
+      console.error("Story analysis error:", error);
+      res.status(500).json({ message: "Failed to analyze story content" });
+    }
+  });
+
   app.get("/api/users/:userId/stories", requireAuth, async (req, res) => {
     try {
       const userId = req.params.userId;

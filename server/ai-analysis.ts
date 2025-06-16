@@ -97,30 +97,18 @@ export async function analyzeStoryContent(content: string): Promise<StoryAnalysi
   } catch (error) {
     console.error("Story analysis error:", error);
     
-    // Return minimal fallback analysis
-    return {
-      characters: [
-        {
-          name: "Main Character",
-          description: "The central figure of the story",
-          personality: "To be determined",
-          role: "protagonist",
-          traits: ["determined"]
-        }
-      ],
-      emotions: [
-        {
-          emotion: "other",
-          intensity: 5,
-          context: "Throughout the story"
-        }
-      ],
-      summary: "A story that needs further analysis.",
-      category: "Drama",
-      themes: ["human experience"],
-      suggestedTags: ["story"],
-      isAdultContent: false
-    };
+    // Check if it's a quota/rate limit error
+    if ((error as any)?.status === 429 || (error as any)?.code === 'insufficient_quota') {
+      throw new Error("OpenAI API quota exceeded. Please check your billing details or try again later.");
+    }
+    
+    // Check if it's an authentication error
+    if ((error as any)?.status === 401) {
+      throw new Error("OpenAI API key is invalid. Please check your API key configuration.");
+    }
+    
+    // For other errors, throw a generic message
+    throw new Error("Story analysis failed. Please try again or contact support.");
   }
 }
 
