@@ -212,7 +212,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/stories", requireAuth, upload.single('audio'), async (req, res) => {
+  app.post("/api/stories", upload.single('audio'), async (req, res) => {
     try {
       const { title, content, category, uploadType, authorId } = req.body;
       
