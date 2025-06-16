@@ -1,6 +1,6 @@
-import { users, localUsers, userVoiceSamples, stories, storyCharacters, storyEmotions, characters, conversations, messages, type User, type UpsertUser, type UserVoiceSample, type InsertUserVoiceSample, type Story, type InsertStory, type StoryCharacter, type InsertStoryCharacter, type StoryEmotion, type InsertStoryEmotion, type Character, type InsertCharacter, type Conversation, type InsertConversation, type Message, type InsertMessage } from "@shared/schema";
+import { users, localUsers, userVoiceSamples, stories, storyCharacters, storyEmotions, characters, conversations, messages, storyCollaborations, storyGroups, storyGroupMembers, characterVoiceAssignments, storyPlaybacks, type User, type UpsertUser, type UserVoiceSample, type InsertUserVoiceSample, type Story, type InsertStory, type StoryCharacter, type InsertStoryCharacter, type StoryEmotion, type InsertStoryEmotion, type Character, type InsertCharacter, type Conversation, type InsertConversation, type Message, type InsertMessage, type StoryCollaboration, type InsertStoryCollaboration, type StoryGroup, type InsertStoryGroup, type StoryGroupMember, type InsertStoryGroupMember, type CharacterVoiceAssignment, type InsertCharacterVoiceAssignment, type StoryPlayback, type InsertStoryPlayback } from "@shared/schema";
 import { db } from "./db";
-import { eq, and } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -52,6 +52,41 @@ export interface IStorage {
   // Messages
   getMessages(conversationId: number): Promise<Message[]>;
   createMessage(message: InsertMessage): Promise<Message>;
+  
+  // Story Collaborations
+  getStoryCollaborations(storyId: number): Promise<StoryCollaboration[]>;
+  getUserCollaborations(userId: string): Promise<StoryCollaboration[]>;
+  createStoryCollaboration(collaboration: InsertStoryCollaboration): Promise<StoryCollaboration>;
+  updateStoryCollaboration(id: number, collaboration: Partial<InsertStoryCollaboration>): Promise<void>;
+  deleteStoryCollaboration(id: number): Promise<void>;
+  
+  // Story Groups
+  getStoryGroups(storyId: number): Promise<StoryGroup[]>;
+  getStoryGroup(id: number): Promise<StoryGroup | undefined>;
+  createStoryGroup(group: InsertStoryGroup): Promise<StoryGroup>;
+  updateStoryGroup(id: number, group: Partial<InsertStoryGroup>): Promise<void>;
+  deleteStoryGroup(id: number): Promise<void>;
+  getStoryGroupByInviteCode(inviteCode: string): Promise<StoryGroup | undefined>;
+  
+  // Story Group Members
+  getStoryGroupMembers(groupId: number): Promise<StoryGroupMember[]>;
+  createStoryGroupMember(member: InsertStoryGroupMember): Promise<StoryGroupMember>;
+  updateStoryGroupMember(id: number, member: Partial<InsertStoryGroupMember>): Promise<void>;
+  deleteStoryGroupMember(id: number): Promise<void>;
+  
+  // Character Voice Assignments
+  getCharacterVoiceAssignments(storyId: number): Promise<CharacterVoiceAssignment[]>;
+  getUserCharacterVoiceAssignment(storyId: number, userId: string): Promise<CharacterVoiceAssignment | undefined>;
+  createCharacterVoiceAssignment(assignment: InsertCharacterVoiceAssignment): Promise<CharacterVoiceAssignment>;
+  updateCharacterVoiceAssignment(id: number, assignment: Partial<InsertCharacterVoiceAssignment>): Promise<void>;
+  deleteCharacterVoiceAssignment(id: number): Promise<void>;
+  
+  // Story Playbacks
+  getStoryPlaybacks(storyId: number): Promise<StoryPlayback[]>;
+  getStoryPlayback(id: number): Promise<StoryPlayback | undefined>;
+  createStoryPlayback(playback: InsertStoryPlayback): Promise<StoryPlayback>;
+  updateStoryPlayback(id: number, playback: Partial<InsertStoryPlayback>): Promise<void>;
+  deleteStoryPlayback(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -245,6 +280,156 @@ export class DatabaseStorage implements IStorage {
   async createMessage(messageData: InsertMessage): Promise<Message> {
     const [message] = await db.insert(messages).values(messageData).returning();
     return message;
+  }
+
+  // Story Collaborations
+  async getStoryCollaborations(storyId: number): Promise<StoryCollaboration[]> {
+    return await db.select().from(storyCollaborations).where(eq(storyCollaborations.storyId, storyId));
+  }
+
+  async getUserCollaborations(userId: string): Promise<StoryCollaboration[]> {
+    return await db.select().from(storyCollaborations).where(eq(storyCollaborations.invitedUserId, userId));
+  }
+
+  async createStoryCollaboration(collaborationData: InsertStoryCollaboration): Promise<StoryCollaboration> {
+    const [collaboration] = await db
+      .insert(storyCollaborations)
+      .values(collaborationData)
+      .returning();
+    return collaboration;
+  }
+
+  async updateStoryCollaboration(id: number, collaborationData: Partial<InsertStoryCollaboration>): Promise<void> {
+    await db
+      .update(storyCollaborations)
+      .set(collaborationData)
+      .where(eq(storyCollaborations.id, id));
+  }
+
+  async deleteStoryCollaboration(id: number): Promise<void> {
+    await db.delete(storyCollaborations).where(eq(storyCollaborations.id, id));
+  }
+
+  // Story Groups
+  async getStoryGroups(storyId: number): Promise<StoryGroup[]> {
+    return await db.select().from(storyGroups).where(eq(storyGroups.storyId, storyId));
+  }
+
+  async getStoryGroup(id: number): Promise<StoryGroup | undefined> {
+    const [group] = await db.select().from(storyGroups).where(eq(storyGroups.id, id));
+    return group;
+  }
+
+  async createStoryGroup(groupData: InsertStoryGroup): Promise<StoryGroup> {
+    const [group] = await db
+      .insert(storyGroups)
+      .values(groupData)
+      .returning();
+    return group;
+  }
+
+  async updateStoryGroup(id: number, groupData: Partial<InsertStoryGroup>): Promise<void> {
+    await db
+      .update(storyGroups)
+      .set(groupData)
+      .where(eq(storyGroups.id, id));
+  }
+
+  async deleteStoryGroup(id: number): Promise<void> {
+    await db.delete(storyGroups).where(eq(storyGroups.id, id));
+  }
+
+  async getStoryGroupByInviteCode(inviteCode: string): Promise<StoryGroup | undefined> {
+    const [group] = await db.select().from(storyGroups).where(eq(storyGroups.inviteCode, inviteCode));
+    return group;
+  }
+
+  // Story Group Members
+  async getStoryGroupMembers(groupId: number): Promise<StoryGroupMember[]> {
+    return await db.select().from(storyGroupMembers).where(eq(storyGroupMembers.groupId, groupId));
+  }
+
+  async createStoryGroupMember(memberData: InsertStoryGroupMember): Promise<StoryGroupMember> {
+    const [member] = await db
+      .insert(storyGroupMembers)
+      .values(memberData)
+      .returning();
+    return member;
+  }
+
+  async updateStoryGroupMember(id: number, memberData: Partial<InsertStoryGroupMember>): Promise<void> {
+    await db
+      .update(storyGroupMembers)
+      .set(memberData)
+      .where(eq(storyGroupMembers.id, id));
+  }
+
+  async deleteStoryGroupMember(id: number): Promise<void> {
+    await db.delete(storyGroupMembers).where(eq(storyGroupMembers.id, id));
+  }
+
+  // Character Voice Assignments
+  async getCharacterVoiceAssignments(storyId: number): Promise<CharacterVoiceAssignment[]> {
+    return await db.select().from(characterVoiceAssignments).where(eq(characterVoiceAssignments.storyId, storyId));
+  }
+
+  async getUserCharacterVoiceAssignment(storyId: number, userId: string): Promise<CharacterVoiceAssignment | undefined> {
+    const [assignment] = await db
+      .select()
+      .from(characterVoiceAssignments)
+      .where(and(
+        eq(characterVoiceAssignments.storyId, storyId),
+        eq(characterVoiceAssignments.userId, userId)
+      ));
+    return assignment;
+  }
+
+  async createCharacterVoiceAssignment(assignmentData: InsertCharacterVoiceAssignment): Promise<CharacterVoiceAssignment> {
+    const [assignment] = await db
+      .insert(characterVoiceAssignments)
+      .values(assignmentData)
+      .returning();
+    return assignment;
+  }
+
+  async updateCharacterVoiceAssignment(id: number, assignmentData: Partial<InsertCharacterVoiceAssignment>): Promise<void> {
+    await db
+      .update(characterVoiceAssignments)
+      .set(assignmentData)
+      .where(eq(characterVoiceAssignments.id, id));
+  }
+
+  async deleteCharacterVoiceAssignment(id: number): Promise<void> {
+    await db.delete(characterVoiceAssignments).where(eq(characterVoiceAssignments.id, id));
+  }
+
+  // Story Playbacks
+  async getStoryPlaybacks(storyId: number): Promise<StoryPlayback[]> {
+    return await db.select().from(storyPlaybacks).where(eq(storyPlaybacks.storyId, storyId)).orderBy(desc(storyPlaybacks.createdAt));
+  }
+
+  async getStoryPlayback(id: number): Promise<StoryPlayback | undefined> {
+    const [playback] = await db.select().from(storyPlaybacks).where(eq(storyPlaybacks.id, id));
+    return playback;
+  }
+
+  async createStoryPlayback(playbackData: InsertStoryPlayback): Promise<StoryPlayback> {
+    const [playback] = await db
+      .insert(storyPlaybacks)
+      .values(playbackData)
+      .returning();
+    return playback;
+  }
+
+  async updateStoryPlayback(id: number, playbackData: Partial<InsertStoryPlayback>): Promise<void> {
+    await db
+      .update(storyPlaybacks)
+      .set(playbackData)
+      .where(eq(storyPlaybacks.id, id));
+  }
+
+  async deleteStoryPlayback(id: number): Promise<void> {
+    await db.delete(storyPlaybacks).where(eq(storyPlaybacks.id, id));
   }
 }
 

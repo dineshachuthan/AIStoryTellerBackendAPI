@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertCharacterSchema, insertConversationSchema, insertMessageSchema, insertStorySchema, insertUserVoiceSampleSchema } from "@shared/schema";
+import { insertCharacterSchema, insertConversationSchema, insertMessageSchema, insertStorySchema, insertUserVoiceSampleSchema, insertStoryCollaborationSchema, insertStoryGroupSchema, insertCharacterVoiceAssignmentSchema } from "@shared/schema";
 import { generateAIResponse } from "./openai";
 import { setupAuth, requireAuth, requireAdmin } from "./auth";
 import { analyzeStoryContent, generateCharacterImage, transcribeAudio } from "./ai-analysis";
@@ -342,6 +342,332 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true, message: "Voice assignments updated" });
     } catch (error) {
       res.status(500).json({ message: "Failed to assign voices" });
+    }
+  });
+
+  // Story Collaboration routes
+  app.post("/api/stories/:id/invite", requireAuth, async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.id);
+      const invitedByUserId = (req.user as any)?.id;
+      const { invitedUserEmail, assignedCharacterId, permissions } = req.body;
+
+      if (!invitedByUserId) {
+        return res.status(401).json({ message: "User authentication required" });
+      }
+
+      // Find invited user by email
+      const invitedUser = await storage.getUserByEmail(invitedUserEmail);
+      if (!invitedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Check if already invited
+      const existingCollaborations = await storage.getStoryCollaborations(storyId);
+      const existingInvite = existingCollaborations.find(c => c.invitedUserId === invitedUser.id);
+      
+      if (existingInvite) {
+        return res.status(400).json({ message: "User already invited to this story" });
+      }
+
+      const collaboration = await storage.createStoryCollaboration({
+        storyId,
+        invitedUserId: invitedUser.id,
+        invitedByUserId,
+        assignedCharacterId: assignedCharacterId || null,
+        permissions: permissions || 'voice_only',
+        status: 'pending',
+      });
+
+      res.status(201).json(collaboration);
+    } catch (error) {
+      console.error("Story invitation error:", error);
+      res.status(500).json({ message: "Failed to send story invitation" });
+    }
+  });
+
+  app.get("/api/stories/:id/collaborations", requireAuth, async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.id);
+      const collaborations = await storage.getStoryCollaborations(storyId);
+      res.json(collaborations);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch collaborations" });
+    }
+  });
+
+  app.put("/api/collaborations/:id/respond", requireAuth, async (req, res) => {
+    try {
+      const collaborationId = parseInt(req.params.id);
+      const userId = (req.user as any)?.id;
+      const { status } = req.body; // 'accepted' or 'declined'
+
+      if (!userId) {
+        return res.status(401).json({ message: "User authentication required" });
+      }
+
+      await storage.updateStoryCollaboration(collaborationId, {
+        status,
+        respondedAt: new Date(),
+      });
+
+      // If accepted, create character voice assignment
+      if (status === 'accepted') {
+        const collaborations = await storage.getStoryCollaborations(0); // Get all to find this one
+        const collaboration = collaborations.find(c => c.id === collaborationId);
+        
+        if (collaboration && collaboration.assignedCharacterId) {
+          await storage.createCharacterVoiceAssignment({
+            storyId: collaboration.storyId,
+            characterId: collaboration.assignedCharacterId,
+            userId,
+            voiceSampleUrl: null,
+            emotionMappings: {},
+            isCompleted: false,
+          });
+        }
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to respond to collaboration" });
+    }
+  });
+
+  app.get("/api/users/:userId/collaborations", requireAuth, async (req, res) => {
+    try {
+      const userId = req.params.userId;
+      const collaborations = await storage.getUserCollaborations(userId);
+      res.json(collaborations);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch user collaborations" });
+    }
+  });
+
+  // Story Groups routes
+  app.post("/api/stories/:id/groups", requireAuth, async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.id);
+      const createdByUserId = (req.user as any)?.id;
+      const { name, description, visibility, maxMembers } = req.body;
+
+      if (!createdByUserId) {
+        return res.status(401).json({ message: "User authentication required" });
+      }
+
+      // Generate unique invite code
+      const inviteCode = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+
+      const group = await storage.createStoryGroup({
+        storyId,
+        name,
+        description: description || null,
+        visibility: visibility || 'private',
+        createdByUserId,
+        inviteCode,
+        maxMembers: maxMembers || 10,
+      });
+
+      // Add creator as admin member
+      await storage.createStoryGroupMember({
+        groupId: group.id,
+        userId: createdByUserId,
+        assignedCharacterId: null,
+        role: 'admin',
+      });
+
+      res.status(201).json(group);
+    } catch (error) {
+      console.error("Story group creation error:", error);
+      res.status(500).json({ message: "Failed to create story group" });
+    }
+  });
+
+  app.get("/api/stories/:id/groups", async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.id);
+      const groups = await storage.getStoryGroups(storyId);
+      res.json(groups);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch story groups" });
+    }
+  });
+
+  app.post("/api/groups/join/:inviteCode", requireAuth, async (req, res) => {
+    try {
+      const { inviteCode } = req.params;
+      const userId = (req.user as any)?.id;
+
+      if (!userId) {
+        return res.status(401).json({ message: "User authentication required" });
+      }
+
+      const group = await storage.getStoryGroupByInviteCode(inviteCode);
+      if (!group) {
+        return res.status(404).json({ message: "Invalid invite code" });
+      }
+
+      // Check if already a member
+      const members = await storage.getStoryGroupMembers(group.id);
+      const existingMember = members.find(m => m.userId === userId);
+      
+      if (existingMember) {
+        return res.status(400).json({ message: "Already a member of this group" });
+      }
+
+      // Check if group is full
+      if (members.length >= (group.maxMembers || 10)) {
+        return res.status(400).json({ message: "Group is full" });
+      }
+
+      const member = await storage.createStoryGroupMember({
+        groupId: group.id,
+        userId,
+        assignedCharacterId: null,
+        role: 'member',
+      });
+
+      res.status(201).json({ group, member });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to join group" });
+    }
+  });
+
+  app.get("/api/groups/:id/members", async (req, res) => {
+    try {
+      const groupId = parseInt(req.params.id);
+      const members = await storage.getStoryGroupMembers(groupId);
+      res.json(members);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch group members" });
+    }
+  });
+
+  app.post("/api/groups/:id/assign-character", requireAuth, async (req, res) => {
+    try {
+      const groupId = parseInt(req.params.id);
+      const { userId, characterId } = req.body;
+      const requestingUserId = (req.user as any)?.id;
+
+      if (!requestingUserId) {
+        return res.status(401).json({ message: "User authentication required" });
+      }
+
+      // Check if requesting user is admin
+      const members = await storage.getStoryGroupMembers(groupId);
+      const requestingMember = members.find(m => m.userId === requestingUserId);
+      
+      if (!requestingMember || requestingMember.role !== 'admin') {
+        return res.status(403).json({ message: "Only group admins can assign characters" });
+      }
+
+      // Update member's character assignment
+      const targetMember = members.find(m => m.userId === userId);
+      if (!targetMember) {
+        return res.status(404).json({ message: "User not found in group" });
+      }
+
+      await storage.updateStoryGroupMember(targetMember.id, {
+        assignedCharacterId: characterId,
+      });
+
+      // Create character voice assignment
+      const group = await storage.getStoryGroup(groupId);
+      if (group && characterId) {
+        await storage.createCharacterVoiceAssignment({
+          storyId: group.storyId,
+          characterId,
+          userId,
+          voiceSampleUrl: null,
+          emotionMappings: {},
+          isCompleted: false,
+        });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to assign character" });
+    }
+  });
+
+  // Character Voice Assignment routes
+  app.get("/api/stories/:id/voice-assignments", requireAuth, async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.id);
+      const assignments = await storage.getCharacterVoiceAssignments(storyId);
+      res.json(assignments);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch voice assignments" });
+    }
+  });
+
+  app.get("/api/stories/:id/my-voice-assignment", requireAuth, async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.id);
+      const userId = (req.user as any)?.id;
+
+      if (!userId) {
+        return res.status(401).json({ message: "User authentication required" });
+      }
+
+      const assignment = await storage.getUserCharacterVoiceAssignment(storyId, userId);
+      res.json(assignment);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch voice assignment" });
+    }
+  });
+
+  app.post("/api/voice-assignments/:id/record", requireAuth, upload.single('audio'), async (req, res) => {
+    try {
+      const assignmentId = parseInt(req.params.id);
+      const { emotion, intensity } = req.body;
+      
+      if (!req.file) {
+        return res.status(400).json({ message: "Audio file is required" });
+      }
+
+      const filename = `character_voice_${assignmentId}_${emotion}_${Date.now()}.${req.file.originalname.split('.').pop()}`;
+      const voiceUrl = `/uploads/character-voices/${filename}`;
+      
+      await fs.mkdir('./uploads/character-voices', { recursive: true });
+      await fs.writeFile(`./uploads/character-voices/${filename}`, req.file.buffer);
+
+      // Update emotion mappings
+      const assignment = await storage.getCharacterVoiceAssignments(0); // Get all and find this one
+      const currentAssignment = assignment.find(a => a.id === assignmentId);
+      
+      if (currentAssignment) {
+        const emotionMappings = currentAssignment.emotionMappings || {};
+        emotionMappings[emotion] = {
+          voiceUrl,
+          intensity: parseInt(intensity) || 5,
+          recordedAt: new Date().toISOString(),
+        };
+
+        await storage.updateCharacterVoiceAssignment(assignmentId, {
+          emotionMappings,
+          voiceSampleUrl: voiceUrl, // Latest recorded sample
+        });
+      }
+
+      res.json({ success: true, voiceUrl });
+    } catch (error) {
+      console.error("Character voice recording error:", error);
+      res.status(500).json({ message: "Failed to record character voice" });
+    }
+  });
+
+  app.put("/api/voice-assignments/:id/complete", requireAuth, async (req, res) => {
+    try {
+      const assignmentId = parseInt(req.params.id);
+      
+      await storage.updateCharacterVoiceAssignment(assignmentId, {
+        isCompleted: true,
+      });
+
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to mark voice assignment as complete" });
     }
   });
 
