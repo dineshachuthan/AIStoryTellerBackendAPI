@@ -343,12 +343,12 @@ export default function UploadStory() {
       const finalCharacters = await Promise.all(imagePromises);
 
       const storyData = {
-        title: storyTitle,
-        content: storyContent,
-        category: analysis.category,
-        summary: analysis.summary,
-        isAdultContent: analysis.isAdultContent,
-        authorId: 'user_123', // This should come from auth
+        title: storyTitle || 'Untitled Story',
+        content: storyContent || 'No content provided',
+        category: analysis.category || 'General',
+        summary: analysis.summary || null,
+        isAdultContent: analysis.isAdultContent || false,
+        authorId: null, // Will be set when authentication is added back
         uploadType: 'manual',
       };
 
