@@ -348,7 +348,7 @@ export default function UploadStory() {
         category: analysis.category || 'General',
         summary: analysis.summary || null,
         isAdultContent: analysis.isAdultContent || false,
-        authorId: null, // Will be set when authentication is added back
+        authorId: 'test_user_123', // Will be set when authentication is added back
         uploadType: 'manual',
       };
 
@@ -927,7 +927,10 @@ export default function UploadStory() {
 
             <div className="flex justify-center">
               <Button
-                onClick={() => setCurrentStep(4)}
+                onClick={() => {
+                  setCurrentStep(4);
+                  createStory();
+                }}
                 className="bg-tiktok-pink hover:bg-tiktok-pink/80 px-8"
               >
                 Create Story
