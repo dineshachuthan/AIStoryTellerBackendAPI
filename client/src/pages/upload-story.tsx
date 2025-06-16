@@ -90,6 +90,7 @@ export default function UploadStory() {
   // Step 3: Character & Emotion Assignment
   const [charactersWithImages, setCharactersWithImages] = useState<CharacterWithImage[]>([]);
   const [emotionsWithSounds, setEmotionsWithSounds] = useState<EmotionWithSound[]>([]);
+  const [generatingImages, setGeneratingImages] = useState<Set<number>>(new Set());
   
   // Audio recording
   const [isRecording, setIsRecording] = useState(false);
@@ -231,7 +232,7 @@ export default function UploadStory() {
   };
 
   // Step 3: Assign Images and Sounds
-  const proceedToAssignments = () => {
+  const proceedToAssignments = async () => {
     if (!analysis) return;
 
     // Initialize characters with default images
@@ -249,13 +250,24 @@ export default function UploadStory() {
     setCharactersWithImages(charactersWithDefaults);
     setEmotionsWithSounds(emotionsWithDefaults);
     setCurrentStep(3);
+
+    // Automatically generate AI images for all characters
+    charactersWithDefaults.forEach((_, index) => {
+      setTimeout(() => generateCharacterImage(index), index * 1000); // Stagger requests
+    });
   };
 
   const generateCharacterImage = async (characterIndex: number) => {
     const character = charactersWithImages[characterIndex];
     if (!character) return;
 
+    // Prevent multiple simultaneous requests for the same character
+    if (generatingImages.has(characterIndex)) return;
+
     console.log("Generating image for character:", character);
+
+    // Add to generating set
+    setGeneratingImages(prev => new Set(prev).add(characterIndex));
 
     try {
       const imageUrl = await apiRequest('/api/characters/generate-image', {
@@ -278,6 +290,13 @@ export default function UploadStory() {
         title: "Image Generation Failed",
         description: error instanceof Error ? error.message : "Could not generate character image.",
         variant: "destructive",
+      });
+    } finally {
+      // Remove from generating set
+      setGeneratingImages(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(characterIndex);
+        return newSet;
       });
     }
   };
@@ -743,16 +762,28 @@ export default function UploadStory() {
                   {charactersWithImages.map((character, index) => (
                     <div key={index} className="bg-gray-800 rounded-lg p-4">
                       <div className="flex items-center space-x-4 mb-4">
-                        <Avatar className="w-16 h-16">
-                          <AvatarImage src={character.imageUrl} alt={character.name} />
-                          <AvatarFallback className="bg-tiktok-cyan text-white text-lg">
-                            {character.name.charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
+                        <div className="relative">
+                          <Avatar className="w-16 h-16">
+                            <AvatarImage src={character.imageUrl} alt={character.name} />
+                            <AvatarFallback className="bg-tiktok-cyan text-white text-lg">
+                              {character.name.charAt(0)}
+                            </AvatarFallback>
+                          </Avatar>
+                          {generatingImages.has(index) && (
+                            <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
+                              <Loader2 className="w-6 h-6 text-white animate-spin" />
+                            </div>
+                          )}
+                        </div>
                         <div className="flex-1">
                           <h4 className="font-semibold text-white">{character.name}</h4>
                           <p className="text-sm text-gray-400">{character.role}</p>
                           <p className="text-xs text-gray-500 mt-1">{character.description}</p>
+                          {generatingImages.has(index) && (
+                            <p className="text-xs text-tiktok-cyan mt-1 animate-pulse">
+                              Creating AI image...
+                            </p>
+                          )}
                         </div>
                       </div>
                       <div className="flex space-x-2">
@@ -761,14 +792,25 @@ export default function UploadStory() {
                           variant="outline"
                           size="sm"
                           className="border-tiktok-cyan text-tiktok-cyan hover:bg-tiktok-cyan/20"
+                          disabled={generatingImages.has(index)}
                         >
-                          <Sparkles className="w-4 h-4 mr-2" />
-                          Generate New
+                          {generatingImages.has(index) ? (
+                            <>
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              Generating...
+                            </>
+                          ) : (
+                            <>
+                              <Sparkles className="w-4 h-4 mr-2" />
+                              Generate New
+                            </>
+                          )}
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
                           className="border-gray-600 text-gray-400 hover:bg-gray-800"
+                          disabled={generatingImages.has(index)}
                         >
                           <Upload className="w-4 h-4 mr-2" />
                           Upload
