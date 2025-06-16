@@ -198,7 +198,6 @@ export default function UploadStory() {
     try {
       const result = await apiRequest('/api/stories/analyze', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: textToAnalyze }),
       });
       
@@ -243,7 +242,6 @@ export default function UploadStory() {
     try {
       const imageUrl = await apiRequest('/api/characters/generate-image', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           character,
           storyContext: analysis?.summary || storyContent.substring(0, 500)
@@ -273,20 +271,19 @@ export default function UploadStory() {
         category: analysis.category,
         summary: analysis.summary,
         isAdultContent: analysis.isAdultContent,
-        userId: 'user_123', // This should come from auth
+        authorId: 'user_123', // This should come from auth
+        uploadType: 'manual',
       };
 
       const story = await apiRequest('/api/stories', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(storyData),
       });
 
       // Create characters and emotions
       for (const character of charactersWithImages) {
-        await apiRequest('/api/stories/' + story.id + '/characters', {
+        await apiRequest(`/api/stories/${story.id}/characters`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             name: character.name,
             description: character.description,
@@ -300,9 +297,8 @@ export default function UploadStory() {
       }
 
       for (const emotion of emotionsWithSounds) {
-        await apiRequest('/api/stories/' + story.id + '/emotions', {
+        await apiRequest(`/api/stories/${story.id}/emotions`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             emotion: emotion.emotion,
             intensity: emotion.intensity,
