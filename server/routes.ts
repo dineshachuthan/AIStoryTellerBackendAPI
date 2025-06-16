@@ -6,6 +6,7 @@ import { generateAIResponse } from "./openai";
 import { setupAuth, requireAuth, requireAdmin } from "./auth";
 import { analyzeStoryContent, generateCharacterImage, transcribeAudio } from "./ai-analysis";
 import { getAllVoiceSamples, getVoiceSampleProgress } from "./voice-samples";
+import { storyNarrator } from "./story-narrator";
 import multer from "multer";
 import path from "path";
 import fs from "fs/promises";
@@ -271,6 +272,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true, voiceUrl });
     } catch (error) {
       res.status(500).json({ message: "Failed to upload emotion voice" });
+    }
+  });
+
+  // Story Narration routes
+  app.post("/api/stories/:id/narration", requireAuth, async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.id);
+      const userId = (req.user as any)?.id;
+      const { pacing, includeCharacterVoices } = req.body;
+
+      if (!userId) {
+        return res.status(401).json({ message: "User authentication required" });
+      }
+
+      const narration = await storyNarrator.generateNarration(storyId, userId, {
+        pacing: pacing || 'normal',
+        includeCharacterVoices: includeCharacterVoices || false,
+      });
+
+      res.json(narration);
+    } catch (error) {
+      console.error("Narration generation error:", error);
+      res.status(500).json({ message: "Failed to generate story narration" });
+    }
+  });
+
+  app.get("/api/stories/:id/narration/instructions", requireAuth, async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.id);
+      const userId = (req.user as any)?.id;
+
+      if (!userId) {
+        return res.status(401).json({ message: "User authentication required" });
+      }
+
+      const narration = await storyNarrator.generateNarration(storyId, userId);
+      const instructions = await storyNarrator.generateAudioInstructions(narration);
+
+      res.json({ instructions: instructions.join('\n') });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to generate narration instructions" });
+    }
+  });
+
+  // Route to assign user voice samples to story emotions
+  app.post("/api/stories/:id/assign-voices", requireAuth, async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.id);
+      const userId = (req.user as any)?.id;
+      const { emotionVoiceMapping } = req.body; // { emotionId: voiceSampleId }
+
+      if (!userId) {
+        return res.status(401).json({ message: "User authentication required" });
+      }
+
+      const userVoiceSamples = await storage.getUserVoiceSamples(userId);
+      const storyEmotions = await storage.getStoryEmotions(storyId);
+
+      for (const [emotionId, voiceSampleId] of Object.entries(emotionVoiceMapping)) {
+        const voiceSample = userVoiceSamples.find(s => s.id === parseInt(voiceSampleId as string));
+        if (voiceSample) {
+          await storage.updateStoryEmotion(parseInt(emotionId), {
+            voiceUrl: voiceSample.audioUrl,
+          });
+        }
+      }
+
+      res.json({ success: true, message: "Voice assignments updated" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to assign voices" });
     }
   });
 

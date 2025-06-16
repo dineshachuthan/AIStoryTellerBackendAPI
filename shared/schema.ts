@@ -129,6 +129,65 @@ export const messages = pgTable("messages", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Story collaboration tables
+export const storyCollaborations = pgTable("story_collaborations", {
+  id: serial("id").primaryKey(),
+  storyId: integer("story_id").references(() => stories.id).notNull(),
+  invitedUserId: varchar("invited_user_id").references(() => users.id).notNull(),
+  invitedByUserId: varchar("invited_by_user_id").references(() => users.id).notNull(),
+  assignedCharacterId: integer("assigned_character_id").references(() => storyCharacters.id),
+  status: varchar("status").notNull().default("pending"), // pending, accepted, declined
+  permissions: varchar("permissions").notNull().default("voice_only"), // voice_only, edit, view
+  invitedAt: timestamp("invited_at").defaultNow(),
+  respondedAt: timestamp("responded_at"),
+});
+
+export const storyGroups = pgTable("story_groups", {
+  id: serial("id").primaryKey(),
+  storyId: integer("story_id").references(() => stories.id).notNull(),
+  name: varchar("name").notNull(),
+  description: text("description"),
+  visibility: varchar("visibility").notNull().default("private"), // private, public, friends
+  createdByUserId: varchar("created_by_user_id").references(() => users.id).notNull(),
+  inviteCode: varchar("invite_code").unique(),
+  maxMembers: integer("max_members").default(10),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const storyGroupMembers = pgTable("story_group_members", {
+  id: serial("id").primaryKey(),
+  groupId: integer("group_id").references(() => storyGroups.id).notNull(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  assignedCharacterId: integer("assigned_character_id").references(() => storyCharacters.id),
+  role: varchar("role").notNull().default("member"), // admin, member, viewer
+  joinedAt: timestamp("joined_at").defaultNow(),
+});
+
+export const characterVoiceAssignments = pgTable("character_voice_assignments", {
+  id: serial("id").primaryKey(),
+  storyId: integer("story_id").references(() => stories.id).notNull(),
+  characterId: integer("character_id").references(() => storyCharacters.id).notNull(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  voiceSampleUrl: text("voice_sample_url"),
+  emotionMappings: jsonb("emotion_mappings"), // Maps emotions to specific voice recordings
+  isCompleted: boolean("is_completed").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const storyPlaybacks = pgTable("story_playbacks", {
+  id: serial("id").primaryKey(),
+  storyId: integer("story_id").references(() => stories.id).notNull(),
+  narrationData: jsonb("narration_data").notNull(), // Complete narration segments with voice assignments
+  createdByUserId: varchar("created_by_user_id").references(() => users.id).notNull(),
+  visibility: varchar("visibility").notNull().default("private"), // private, public, group
+  playCount: integer("play_count").default(0),
+  likeCount: integer("like_count").default(0),
+  shareCount: integer("share_count").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // User schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   createdAt: true,
@@ -210,3 +269,51 @@ export type InsertConversation = z.infer<typeof insertConversationSchema>;
 
 export type Message = typeof messages.$inferSelect;
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
+
+// Collaboration schemas
+export const insertStoryCollaborationSchema = createInsertSchema(storyCollaborations).omit({
+  id: true,
+  invitedAt: true,
+  respondedAt: true,
+});
+
+export const insertStoryGroupSchema = createInsertSchema(storyGroups).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertStoryGroupMemberSchema = createInsertSchema(storyGroupMembers).omit({
+  id: true,
+  joinedAt: true,
+});
+
+export const insertCharacterVoiceAssignmentSchema = createInsertSchema(characterVoiceAssignments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertStoryPlaybackSchema = createInsertSchema(storyPlaybacks).omit({
+  id: true,
+  playCount: true,
+  likeCount: true,
+  shareCount: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Collaboration type exports
+export type StoryCollaboration = typeof storyCollaborations.$inferSelect;
+export type InsertStoryCollaboration = z.infer<typeof insertStoryCollaborationSchema>;
+
+export type StoryGroup = typeof storyGroups.$inferSelect;
+export type InsertStoryGroup = z.infer<typeof insertStoryGroupSchema>;
+
+export type StoryGroupMember = typeof storyGroupMembers.$inferSelect;
+export type InsertStoryGroupMember = z.infer<typeof insertStoryGroupMemberSchema>;
+
+export type CharacterVoiceAssignment = typeof characterVoiceAssignments.$inferSelect;
+export type InsertCharacterVoiceAssignment = z.infer<typeof insertCharacterVoiceAssignmentSchema>;
+
+export type StoryPlayback = typeof storyPlaybacks.$inferSelect;
+export type InsertStoryPlayback = z.infer<typeof insertStoryPlaybackSchema>;
