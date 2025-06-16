@@ -86,6 +86,7 @@ export default function UploadStory() {
   // Step 2: AI Analysis
   const [analysis, setAnalysis] = useState<StoryAnalysis | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isCreatingStory, setIsCreatingStory] = useState(false);
   
   // Step 3: Character & Emotion Assignment
   const [charactersWithImages, setCharactersWithImages] = useState<CharacterWithImage[]>([]);
@@ -251,10 +252,13 @@ export default function UploadStory() {
     setEmotionsWithSounds(emotionsWithDefaults);
     setCurrentStep(3);
 
-    // Automatically generate AI images for all characters
-    charactersWithDefaults.forEach((_, index) => {
-      setTimeout(() => generateCharacterImage(index), index * 1000); // Stagger requests
-    });
+    // Show character images briefly, then automatically proceed to create story
+    setTimeout(() => {
+      setCurrentStep(4); // Skip manual assignment step
+      setTimeout(() => {
+        createStory(); // Automatically create the story
+      }, 500); // Small delay to show step 4 briefly
+    }, 2000); // Give users 2 seconds to see the characters
   };
 
   const generateCharacterImage = async (characterIndex: number) => {
@@ -305,7 +309,39 @@ export default function UploadStory() {
   const createStory = async () => {
     if (!analysis || !storyTitle || !storyContent) return;
 
+    setIsCreatingStory(true);
+
     try {
+      // Generate AI images for all characters before creating the story
+      const charactersWithAIImages = [...charactersWithImages];
+      
+      // Generate images for all characters in parallel
+      const imagePromises = charactersWithAIImages.map(async (character, index) => {
+        if (character.imageUrl?.includes('dicebear.com')) {
+          // Only generate AI image if it's still using default avatar
+          try {
+            const imageResponse = await apiRequest('/api/characters/generate-image', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ 
+                character,
+                storyContext: analysis.summary || storyContent.substring(0, 500)
+              }),
+            });
+            return { ...character, imageUrl: imageResponse.url };
+          } catch (error) {
+            console.error(`Failed to generate image for ${character.name}:`, error);
+            return character; // Keep default image on error
+          }
+        }
+        return character;
+      });
+
+      // Wait for all images to be generated
+      const finalCharacters = await Promise.all(imagePromises);
+
       const storyData = {
         title: storyTitle,
         content: storyContent,
@@ -321,8 +357,8 @@ export default function UploadStory() {
         body: JSON.stringify(storyData),
       });
 
-      // Create characters and emotions
-      for (const character of charactersWithImages) {
+      // Create characters with AI-generated images
+      for (const character of finalCharacters) {
         await apiRequest(`/api/stories/${story.id}/characters`, {
           method: 'POST',
           body: JSON.stringify({
@@ -352,17 +388,25 @@ export default function UploadStory() {
 
       toast({
         title: "Story Created!",
-        description: "Your story has been created successfully.",
+        description: "Your story has been created successfully with AI-generated character images.",
       });
 
-      // Navigate to story player
-      setLocation(`/story/${story.id}/play`);
+      // Move to completion step
+      setCurrentStep(5);
+
+      // Auto-navigate after showing success
+      setTimeout(() => {
+        setLocation(`/story/${story.id}/play`);
+      }, 3000);
     } catch (error) {
+      console.error("Story creation error:", error);
       toast({
         title: "Creation Failed",
-        description: "Could not create story. Please try again.",
+        description: error instanceof Error ? error.message : "Could not create story. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsCreatingStory(false);
     }
   };
 
@@ -893,8 +937,100 @@ export default function UploadStory() {
           </div>
         )}
 
-        {/* Step 4: Test Story Playback */}
+        {/* Step 4: Creating Story */}
         {currentStep === 4 && (
+          <div className="space-y-6">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold mb-2">Creating Your Story</h2>
+              <p className="text-gray-400">Generating AI character images and setting up your story...</p>
+            </div>
+
+            <Card className="bg-dark-card border-gray-700">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-center">
+                  <Loader2 className="w-6 h-6 mr-3 animate-spin text-tiktok-cyan" />
+                  Processing Story
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="text-center space-y-4">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-center space-x-2">
+                    <Check className="w-5 h-5 text-green-500" />
+                    <span className="text-gray-300">Story analyzed and characters extracted</span>
+                  </div>
+                  <div className="flex items-center justify-center space-x-2">
+                    {isCreatingStory ? (
+                      <Loader2 className="w-5 h-5 animate-spin text-tiktok-cyan" />
+                    ) : (
+                      <Check className="w-5 h-5 text-green-500" />
+                    )}
+                    <span className="text-gray-300">Generating AI character images</span>
+                  </div>
+                  <div className="flex items-center justify-center space-x-2">
+                    {isCreatingStory ? (
+                      <Loader2 className="w-5 h-5 animate-spin text-tiktok-cyan" />
+                    ) : (
+                      <Check className="w-5 h-5 text-green-500" />
+                    )}
+                    <span className="text-gray-300">Creating story database entries</span>
+                  </div>
+                </div>
+                <Progress value={isCreatingStory ? 50 : 100} className="w-full max-w-md mx-auto" />
+                <p className="text-sm text-gray-500">This may take a few moments...</p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Step 5: Story Complete */}
+        {currentStep === 5 && (
+          <div className="space-y-6">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold mb-2 text-green-400">Story Created Successfully!</h2>
+              <p className="text-gray-400">Your story has been created with AI-generated character images</p>
+            </div>
+
+            <Card className="bg-dark-card border-gray-700">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-center text-green-400">
+                  <Check className="w-6 h-6 mr-3" />
+                  Ready to Experience
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="text-center space-y-4">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-center space-x-2">
+                    <Check className="w-5 h-5 text-green-500" />
+                    <span className="text-gray-300">Characters created with AI images</span>
+                  </div>
+                  <div className="flex items-center justify-center space-x-2">
+                    <Check className="w-5 h-5 text-green-500" />
+                    <span className="text-gray-300">Emotions and themes mapped</span>
+                  </div>
+                  <div className="flex items-center justify-center space-x-2">
+                    <Check className="w-5 h-5 text-green-500" />
+                    <span className="text-gray-300">Story ready for playback</span>
+                  </div>
+                </div>
+                <div className="pt-4">
+                  <p className="text-sm text-gray-400 mb-4">Redirecting to story player in a few seconds...</p>
+                  <div className="flex justify-center">
+                    <Button 
+                      onClick={() => setLocation('/')}
+                      variant="outline"
+                      className="border-gray-600 text-gray-400 hover:bg-gray-800"
+                    >
+                      Return to Home
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Legacy Step 4: Test Story Playback (hidden) */}
+        {false && currentStep === 99 && (
           <div className="space-y-6">
             <div className="text-center">
               <h2 className="text-2xl font-bold mb-2">Test Your Story</h2>
