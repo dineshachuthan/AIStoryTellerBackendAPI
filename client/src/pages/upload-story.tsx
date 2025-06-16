@@ -195,18 +195,34 @@ export default function UploadStory() {
     const textToAnalyze = content || storyContent;
     setIsAnalyzing(true);
     
+    console.log("Analyzing story with content:", textToAnalyze);
+    
+    if (!textToAnalyze || !textToAnalyze.trim()) {
+      toast({
+        title: "No Content",
+        description: "Please provide story content to analyze.",
+        variant: "destructive",
+      });
+      setIsAnalyzing(false);
+      return;
+    }
+    
     try {
       const result = await apiRequest('/api/stories/analyze', {
         method: 'POST',
-        body: JSON.stringify({ content: textToAnalyze }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content: textToAnalyze.trim() }),
       });
       
       setAnalysis(result);
       setCurrentStep(2);
     } catch (error) {
+      console.error("Analysis error:", error);
       toast({
         title: "Analysis Failed",
-        description: "Could not analyze story. Please try again.",
+        description: error instanceof Error ? error.message : "Could not analyze story. Please try again.",
         variant: "destructive",
       });
     } finally {

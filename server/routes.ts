@@ -182,17 +182,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Story analysis endpoint
   app.post("/api/stories/analyze", async (req, res) => {
     try {
+      console.log("Received analysis request body:", req.body);
       const { content } = req.body;
       
       if (!content || typeof content !== 'string' || !content.trim()) {
+        console.log("Content validation failed:", { content, type: typeof content, trimmed: content?.trim() });
         return res.status(400).json({ message: "Content is required" });
       }
 
+      console.log("Analyzing content of length:", content.trim().length);
       const analysis = await analyzeStoryContent(content.trim());
       res.json(analysis);
     } catch (error) {
       console.error("Story analysis error:", error);
-      res.status(500).json({ message: "Failed to analyze story content" });
+      res.status(500).json({ message: error instanceof Error ? error.message : "Failed to analyze story content" });
     }
   });
 
