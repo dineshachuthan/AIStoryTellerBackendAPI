@@ -135,8 +135,9 @@ export async function generateCharacterImage(character: ExtractedCharacter, stor
     return response.data[0].url || "";
   } catch (error) {
     console.error("Character image generation error:", error);
-    // Return a default placeholder image URL
-    return "https://images.unsplash.com/photo-1569913486515-b74bf7751574?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400";
+    // Return a default avatar based on character name and role when API fails
+    const defaultImageUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(character.name)}&backgroundColor=b6e3f4,c0aede,d1d4f9`;
+    return defaultImageUrl;
   }
 }
 

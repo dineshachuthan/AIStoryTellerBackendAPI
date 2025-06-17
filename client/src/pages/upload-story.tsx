@@ -373,6 +373,9 @@ export default function UploadStory() {
       for (const character of finalCharacters) {
         await apiRequest(`/api/stories/${story.id}/characters`, {
           method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
           body: JSON.stringify({
             name: character.name,
             description: character.description,
@@ -388,6 +391,9 @@ export default function UploadStory() {
       for (const emotion of emotionsWithSounds) {
         await apiRequest(`/api/stories/${story.id}/emotions`, {
           method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
           body: JSON.stringify({
             emotion: emotion.emotion,
             intensity: emotion.intensity,
