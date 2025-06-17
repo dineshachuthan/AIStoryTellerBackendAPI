@@ -112,33 +112,98 @@ export async function analyzeStoryContent(content: string): Promise<StoryAnalysi
   }
 }
 
-export async function generateCharacterImage(character: ExtractedCharacter, storyContext: string): Promise<string> {
-  try {
-    const prompt = `Create a high-quality digital portrait of ${character.name}, a ${character.role} character from a story. 
-    
-    Character details:
-    - Description: ${character.description}
-    - Personality: ${character.personality}
-    - Appearance: ${character.appearance || "To be imagined based on personality"}
-    - Story context: ${storyContext}
-    
-    Style: Digital art, portrait orientation, detailed and expressive, suitable for character representation in a story app. Professional quality, clean background.`;
+// Rate limiting queue to handle DALL-E API limits
+class ImageGenerationQueue {
+  private queue: Array<() => Promise<void>> = [];
+  private processing = false;
+  private lastRequestTime = 0;
+  private readonly minInterval = 3000; // 3 seconds between requests
+  private readonly maxRetries = 2;
 
-    const response = await openai.images.generate({
-      model: "dall-e-3",
-      prompt: prompt,
-      n: 1,
-      size: "1024x1024",
-      quality: "standard",
+  async add<T>(fn: () => Promise<T>): Promise<T> {
+    return new Promise((resolve, reject) => {
+      this.queue.push(async () => {
+        try {
+          const result = await fn();
+          resolve(result);
+        } catch (error) {
+          reject(error);
+        }
+      });
+      this.process();
     });
-
-    return response.data[0].url || "";
-  } catch (error) {
-    console.error("Character image generation error:", error);
-    // Return a default avatar based on character name and role when API fails
-    const defaultImageUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(character.name)}&backgroundColor=b6e3f4,c0aede,d1d4f9`;
-    return defaultImageUrl;
   }
+
+  private async process() {
+    if (this.processing || this.queue.length === 0) return;
+    
+    this.processing = true;
+    
+    while (this.queue.length > 0) {
+      const now = Date.now();
+      const timeSinceLastRequest = now - this.lastRequestTime;
+      
+      if (timeSinceLastRequest < this.minInterval) {
+        await new Promise(resolve => setTimeout(resolve, this.minInterval - timeSinceLastRequest));
+      }
+      
+      const task = this.queue.shift();
+      if (task) {
+        await task();
+        this.lastRequestTime = Date.now();
+      }
+    }
+    
+    this.processing = false;
+  }
+}
+
+const imageQueue = new ImageGenerationQueue();
+
+function generateRoleBasedAvatar(character: ExtractedCharacter): string {
+  const roleColors = {
+    protagonist: 'b6e3f4',
+    antagonist: 'fecaca', 
+    supporting: 'c0aede',
+    narrator: 'd1d4f9',
+    other: 'fed7aa'
+  };
+  
+  const backgroundColor = roleColors[character.role] || 'e5e7eb';
+  const seed = encodeURIComponent(character.name + character.role);
+  
+  return `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}&backgroundColor=${backgroundColor}&style=circle`;
+}
+
+export async function generateCharacterImage(character: ExtractedCharacter, storyContext: string): Promise<string> {
+  return imageQueue.add(async () => {
+    try {
+      const prompt = `Create a high-quality digital portrait of ${character.name}, a ${character.role} character from a story. 
+      
+      Character details:
+      - Description: ${character.description}
+      - Personality: ${character.personality}
+      - Appearance: ${character.appearance || "To be imagined based on personality"}
+      - Story context: ${storyContext}
+      
+      Style: Digital art, portrait orientation, detailed and expressive, suitable for character representation in a story app. Professional quality, clean background.`;
+
+      const response = await openai.images.generate({
+        model: "dall-e-3",
+        prompt: prompt,
+        n: 1,
+        size: "1024x1024",
+        quality: "standard",
+      });
+
+      return response.data?.[0]?.url || generateRoleBasedAvatar(character);
+    } catch (error: any) {
+      console.error("Character image generation error:", error);
+      
+      // Always use avatar fallback for any API error to prevent blocking story creation
+      return generateRoleBasedAvatar(character);
+    }
+  });
 }
 
 export async function transcribeAudio(audioBuffer: Buffer): Promise<string> {

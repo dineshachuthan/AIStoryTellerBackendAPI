@@ -356,6 +356,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get individual story by ID (no auth required for viewing)
+  app.get("/api/stories/:id", async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.id);
+      const story = await storage.getStory(storyId);
+      
+      if (!story) {
+        return res.status(404).json({ message: "Story not found" });
+      }
+      
+      res.json(story);
+    } catch (error) {
+      console.error("Error fetching story:", error);
+      res.status(500).json({ message: "Failed to fetch story" });
+    }
+  });
+
   app.get("/api/stories/:id/characters", async (req, res) => {
     try {
       const storyId = parseInt(req.params.id);
