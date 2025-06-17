@@ -763,7 +763,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Character Voice Assignment routes
-  app.get("/api/stories/:id/voice-assignments", requireAuth, async (req, res) => {
+  app.get("/api/stories/:id/voice-assignments", async (req, res) => {
     try {
       const storyId = parseInt(req.params.id);
       const assignments = await storage.getCharacterVoiceAssignments(storyId);
