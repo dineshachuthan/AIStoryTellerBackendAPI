@@ -269,6 +269,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/stories", async (req, res) => {
     try {
 
+
       const { title, content, category, uploadType, authorId, summary, isAdultContent } = req.body;
 
       // Create initial story
