@@ -363,17 +363,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (characters.length > 0) {
         // Detect which character is speaking in this text
         const detectedCharacter = detectCharacterInText(text, characters);
+        console.log(`Character detection result: ${detectedCharacter ? detectedCharacter.name : 'none'}`);
         if (detectedCharacter && detectedCharacter.assignedVoice) {
           selectedVoice = detectedCharacter.assignedVoice;
+          console.log(`Selected voice: ${selectedVoice} for ${detectedCharacter.name}`);
+        } else {
+          console.log(`No character detected or no voice assigned, using default: ${selectedVoice}`);
         }
       }
 
       // Check cache first with character-specific voice
       const cachedAudio = getCachedAudio(text, selectedVoice, emotion, intensity);
       if (cachedAudio) {
-        console.log("Using cached emotion audio for:", emotion);
+        console.log(`Using cached emotion audio for: ${emotion} with voice: ${selectedVoice}`);
         return res.json({ url: cachedAudio });
       }
+      
+      console.log(`Generating new emotion audio for: ${emotion} with voice: ${selectedVoice}`);
 
       // Generate audio using OpenAI TTS
       const openai = new OpenAI({
