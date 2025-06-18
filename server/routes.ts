@@ -5,7 +5,7 @@ import { insertCharacterSchema, insertConversationSchema, insertMessageSchema, i
 import { generateAIResponse } from "./openai";
 import { setupAuth, requireAuth, requireAdmin } from "./auth";
 import { analyzeStoryContent, generateCharacterImage, transcribeAudio } from "./ai-analysis";
-import { getCachedCharacterImage, cacheCharacterImage, getCachedAudio, cacheAudio, getAllCacheStats, cleanOldCacheFiles } from "./content-cache";
+import { getCachedCharacterImage, cacheCharacterImage, getCachedAudio, cacheAudio, getCachedAnalysis, cacheAnalysis, getAllCacheStats, cleanOldCacheFiles } from "./content-cache";
 import { getAllVoiceSamples, getVoiceSampleProgress } from "./voice-samples";
 import { storyNarrator } from "./story-narrator";
 import { grandmaVoiceNarrator } from "./voice-narrator";
@@ -116,7 +116,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Content is required" });
       }
 
+      // Check cache first to ensure consistent results
+      const cachedAnalysis = getCachedAnalysis(content);
+      if (cachedAnalysis) {
+        return res.json(cachedAnalysis);
+      }
+
+      // Generate new analysis if not cached
       const analysis = await analyzeStoryContent(content);
+      
+      // Cache the analysis for future use
+      cacheAnalysis(content, analysis);
+      
       res.json(analysis);
     } catch (error) {
       console.error("Error analyzing story:", error);
@@ -176,10 +187,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ url: defaultImageUrl });
   });
 
-  // Image cache management endpoints
+  // Content cache management endpoints
   app.get("/api/admin/cache/stats", (req, res) => {
     try {
-      const stats = getCacheStats();
+      const stats = getAllCacheStats();
       res.json(stats);
     } catch (error) {
       res.status(500).json({ message: "Failed to get cache stats" });
@@ -188,8 +199,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/admin/cache/clean", (req, res) => {
     try {
-      const cleaned = cleanOldCache();
-      res.json({ message: `Cleaned ${cleaned} old cache files` });
+      const result = cleanOldCacheFiles();
+      res.json({ message: `Cleaned ${result.cleaned} old cache files, freed ${result.freedKB}KB` });
     } catch (error) {
       res.status(500).json({ message: "Failed to clean cache" });
     }

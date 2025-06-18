@@ -40,6 +40,13 @@ interface CachedAudio {
   fileSize: number;
 }
 
+interface CachedAnalysis {
+  id: string;
+  content: string;
+  analysis: any;
+  timestamp: number;
+}
+
 // Generate unique content hash
 function generateContentHash(data: any): string {
   const contentString = JSON.stringify(data, Object.keys(data).sort());
@@ -322,6 +329,58 @@ export function cleanOldCacheFiles(): { cleaned: number; freedKB: number } {
   }
 
   return { cleaned, freedKB: Math.round(freedKB) };
+}
+
+// ANALYSIS CACHING FUNCTIONS
+
+export function getCachedAnalysis(content: string): any | null {
+  const hash = generateContentHash({ content: content.trim() });
+  const metadataPath = path.join(METADATA_DIR, `analysis_${hash}.json`);
+  
+  if (fs.existsSync(metadataPath)) {
+    try {
+      const metadata: CachedAnalysis = JSON.parse(fs.readFileSync(metadataPath, 'utf8'));
+      
+      // Check age (7 days max for analysis cache)
+      const age = Date.now() - metadata.timestamp;
+      const maxAge = 7 * 24 * 60 * 60 * 1000;
+      
+      if (age < maxAge) {
+        console.log(`Using cached analysis for story content: "${content.substring(0, 50)}..."`);
+        return metadata.analysis;
+      } else {
+        // Remove old cache
+        fs.unlinkSync(metadataPath);
+      }
+    } catch (error) {
+      console.error('Error reading analysis cache:', error);
+      // Remove corrupted cache file
+      if (fs.existsSync(metadataPath)) {
+        fs.unlinkSync(metadataPath);
+      }
+    }
+  }
+  
+  return null;
+}
+
+export function cacheAnalysis(content: string, analysis: any): void {
+  const hash = generateContentHash({ content: content.trim() });
+  const metadataPath = path.join(METADATA_DIR, `analysis_${hash}.json`);
+
+  try {
+    const metadata: CachedAnalysis = {
+      id: hash,
+      content: content.trim(),
+      analysis,
+      timestamp: Date.now()
+    };
+
+    fs.writeFileSync(metadataPath, JSON.stringify(metadata, null, 2));
+    console.log(`Cached analysis for story: "${content.substring(0, 30)}..."`);
+  } catch (error) {
+    console.error('Error caching analysis:', error);
+  }
 }
 
 // Initialize cache system
