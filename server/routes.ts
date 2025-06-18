@@ -392,9 +392,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (characters.length > 0) {
         // Detect which character is speaking in this text
+        console.log("DEBUG: Emotion text:", text);
+        console.log("DEBUG: Available characters:", characters.map(c => ({ name: c.name, voice: c.assignedVoice })));
+        
         const detectedCharacter = detectCharacterInText(text, characters);
+        console.log("DEBUG: Detected character:", detectedCharacter?.name || "none");
+        
         if (detectedCharacter && detectedCharacter.assignedVoice) {
           selectedVoice = detectedCharacter.assignedVoice;
+          console.log("DEBUG: Using character voice:", selectedVoice);
+        } else {
+          console.log("DEBUG: No character detected, using default voice:", selectedVoice);
         }
       }
 
