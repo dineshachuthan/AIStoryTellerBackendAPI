@@ -32,19 +32,23 @@ export default function Login() {
       if (event.origin !== window.location.origin) return;
       
       if (event.data.type === 'OAUTH_SUCCESS') {
+        console.log('OAuth success received from popup');
+        setOauthLoading(null);
         toast({
           title: "Login Successful",
           description: `Signed in with ${event.data.provider}`,
         });
-        setOauthLoading(null);
-        // Refresh the page to update auth state
-        window.location.reload();
+        
+        // Small delay to ensure toast shows, then redirect
+        setTimeout(() => {
+          setLocation('/');
+        }, 1000);
       }
     };
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [toast]);
+  }, [toast, setLocation]);
 
   const handleOAuthLogin = (provider: string) => {
     setOauthLoading(provider);
@@ -69,12 +73,23 @@ export default function Login() {
       if (popup.closed) {
         setOauthLoading(null);
         clearInterval(checkClosed);
+        // Only show timeout if popup was closed without success message
+        setTimeout(() => {
+          if (oauthLoading === provider) {
+            toast({
+              title: "Login Cancelled",
+              description: "OAuth login was cancelled or failed.",
+              variant: "destructive",
+            });
+            setOauthLoading(null);
+          }
+        }, 1000);
       }
     }, 1000);
 
-    // Timeout after 60 seconds
+    // Extended timeout - give user 5 minutes to complete OAuth
     setTimeout(() => {
-      if (!popup.closed) {
+      if (!popup.closed && oauthLoading === provider) {
         popup.close();
         setOauthLoading(null);
         toast({
@@ -84,7 +99,7 @@ export default function Login() {
         });
       }
       clearInterval(checkClosed);
-    }, 60000);
+    }, 300000); // 5 minutes instead of 1 minute
   };
 
   const form = useForm<LoginForm>({
