@@ -7,6 +7,7 @@ import { setupAuth, requireAuth, requireAdmin } from "./auth";
 import { analyzeStoryContent, generateCharacterImage, transcribeAudio } from "./ai-analysis";
 import { getAllVoiceSamples, getVoiceSampleProgress } from "./voice-samples";
 import { storyNarrator } from "./story-narrator";
+import { grandmaVoiceNarrator } from "./voice-narrator";
 import multer from "multer";
 import path from "path";
 import fs from "fs/promises";
@@ -469,6 +470,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching story narration:", error);
       res.status(500).json({ message: "Failed to fetch story narration" });
+    }
+  });
+
+  // Grandma voice narration endpoint
+  app.post('/api/stories/:id/grandma-narration', async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.id);
+      
+      const narration = await grandmaVoiceNarrator.generateGrandmaNarration(storyId);
+      
+      res.json(narration);
+    } catch (error) {
+      console.error('Grandma narration generation error:', error);
+      res.status(500).json({ message: 'Failed to generate grandma narration' });
     }
   });
 
