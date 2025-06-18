@@ -854,13 +854,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Save the generated narration as playback
+      const narrationData = {
+        segments: narration.segments,
+        totalDuration: narration.totalDuration,
+        pacing: narration.pacing
+      };
+      
       await storage.createStoryPlayback({
         storyId: storyId,
-        userId: 'user_123',
-        segments: JSON.stringify(narration.segments),
-        totalDuration: narration.totalDuration,
-        pacing: narration.pacing,
-        status: 'completed'
+        createdByUserId: 'user_123',
+        narrationData: narrationData
       });
 
       res.json(narration);
@@ -879,12 +882,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const existingPlayback = await storage.getStoryPlaybacks(storyId);
       if (existingPlayback.length > 0) {
         const playback = existingPlayback[0];
-        if (playback.segments) {
+        if (playback.narrationData) {
+          const narrationData = playback.narrationData as any;
           return res.json({
             storyId: storyId,
-            totalDuration: playback.totalDuration || 0,
-            segments: JSON.parse(playback.segments as string),
-            pacing: playback.pacing || 'normal'
+            totalDuration: narrationData.totalDuration || 0,
+            segments: narrationData.segments || [],
+            pacing: narrationData.pacing || 'normal'
           });
         }
       }
