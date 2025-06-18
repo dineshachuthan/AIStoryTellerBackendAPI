@@ -108,6 +108,7 @@ export default function UploadStory() {
   const [emotionRecorders, setEmotionRecorders] = useState<Record<string, MediaRecorder>>({});
   const [playingEmotions, setPlayingEmotions] = useState<Record<string, boolean>>({});
   const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
+  const [recordingStartTimes, setRecordingStartTimes] = useState<Record<string, number>>({});
 
   // Confidence tracking
   const userId = 'user_123'; // Using test user ID
@@ -627,6 +628,10 @@ export default function UploadStory() {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const recorder = new MediaRecorder(stream);
       const chunks: BlobPart[] = [];
+      const startTime = Date.now();
+
+      // Track recording start time
+      setRecordingStartTimes(prev => ({ ...prev, [emotionKey]: startTime }));
 
       recorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
@@ -635,8 +640,19 @@ export default function UploadStory() {
       };
 
       recorder.onstop = async () => {
-        const audioBlob = new Blob(chunks, { type: 'audio/webm' });
-        await saveEmotionVoiceRecording(emotionKey, emotion, audioBlob);
+        const recordingDuration = Date.now() - startTime;
+        
+        // Only process recordings that are at least 500ms long
+        if (recordingDuration >= 500) {
+          const audioBlob = new Blob(chunks, { type: 'audio/webm' });
+          await saveEmotionVoiceRecording(emotionKey, emotion, audioBlob);
+        } else {
+          toast({
+            title: "Recording Too Short",
+            description: "Please hold the button for at least half a second to record.",
+            variant: "destructive",
+          });
+        }
         
         // Clean up
         stream.getTracks().forEach(track => track.stop());
@@ -644,6 +660,11 @@ export default function UploadStory() {
           const newRecorders = { ...prev };
           delete newRecorders[emotionKey];
           return newRecorders;
+        });
+        setRecordingStartTimes(prev => {
+          const newTimes = { ...prev };
+          delete newTimes[emotionKey];
+          return newTimes;
         });
       };
 
@@ -669,9 +690,22 @@ export default function UploadStory() {
 
   const stopEmotionRecording = (emotionKey: string) => {
     const recorder = emotionRecorders[emotionKey];
+    const startTime = recordingStartTimes[emotionKey];
+    
     if (recorder && recorder.state === 'recording') {
-      recorder.stop();
-      setRecordingEmotions(prev => ({ ...prev, [emotionKey]: false }));
+      // Check if minimum recording time has passed
+      if (startTime && (Date.now() - startTime) < 500) {
+        // If less than 500ms, continue recording briefly to reach minimum
+        setTimeout(() => {
+          if (recorder.state === 'recording') {
+            recorder.stop();
+            setRecordingEmotions(prev => ({ ...prev, [emotionKey]: false }));
+          }
+        }, 500 - (Date.now() - startTime));
+      } else {
+        recorder.stop();
+        setRecordingEmotions(prev => ({ ...prev, [emotionKey]: false }));
+      }
     }
   };
 
@@ -1481,17 +1515,39 @@ export default function UploadStory() {
                                   
                                   {/* Press and Hold Record Voice Button */}
                                   <Button
-                                    onMouseDown={() => !isRecording && !isPlaying && startEmotionRecording(emotionKey, emotion)}
-                                    onMouseUp={() => isRecording && stopEmotionRecording(emotionKey)}
-                                    onMouseLeave={() => isRecording && stopEmotionRecording(emotionKey)}
-                                    onTouchStart={() => !isRecording && !isPlaying && startEmotionRecording(emotionKey, emotion)}
-                                    onTouchEnd={() => isRecording && stopEmotionRecording(emotionKey)}
+                                    onMouseDown={(e) => {
+                                      e.preventDefault();
+                                      if (!isRecording && !isPlaying) {
+                                        startEmotionRecording(emotionKey, emotion);
+                                      }
+                                    }}
+                                    onMouseUp={(e) => {
+                                      e.preventDefault();
+                                      if (isRecording) {
+                                        stopEmotionRecording(emotionKey);
+                                      }
+                                    }}
+                                    onContextMenu={(e) => e.preventDefault()}
+                                    onTouchStart={(e) => {
+                                      e.preventDefault();
+                                      if (!isRecording && !isPlaying) {
+                                        startEmotionRecording(emotionKey, emotion);
+                                      }
+                                    }}
+                                    onTouchEnd={(e) => {
+                                      e.preventDefault();
+                                      if (isRecording) {
+                                        stopEmotionRecording(emotionKey);
+                                      }
+                                    }}
+                                    onDragStart={(e) => e.preventDefault()}
                                     className={`w-full ${
                                       isRecording 
                                         ? 'bg-red-600 hover:bg-red-700 animate-pulse shadow-lg shadow-red-500/50' 
                                         : 'bg-tiktok-pink hover:bg-tiktok-pink/80'
-                                    } text-white font-medium py-3 select-none transition-all duration-200`}
+                                    } text-white font-medium py-3 select-none transition-all duration-200 cursor-pointer`}
                                     disabled={isPlaying}
+                                    style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
                                   >
                                     {isRecording ? (
                                       <>
@@ -1515,7 +1571,7 @@ export default function UploadStory() {
                                   
                                   {!isRecording && (
                                     <div className="mt-2 text-xs text-gray-400 text-center">
-                                      Press and hold to record - will auto-play when done
+                                      Click and hold for at least 1 second - will auto-play when done
                                     </div>
                                   )}
                                 </div>
