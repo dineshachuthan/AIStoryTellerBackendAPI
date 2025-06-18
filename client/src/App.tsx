@@ -9,6 +9,7 @@ import CreateCharacter from "@/pages/create-character";
 import UploadStory from "@/pages/upload-story";
 import VoiceSetup from "@/pages/voice-setup";
 import StoryPlayer from "@/pages/story-player";
+import StoryLibrary from "@/pages/story-library";
 import StoryCollaboration from "@/pages/story-collaboration";
 import NotFound from "@/pages/not-found";
 
@@ -16,6 +17,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/stories" component={StoryLibrary} />
       <Route path="/chat/:conversationId" component={Chat} />
       <Route path="/create" component={CreateCharacter} />
       <Route path="/upload-story" component={UploadStory} />

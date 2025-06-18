@@ -1,14 +1,14 @@
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Home, Search, Plus, MessageCircle, User } from "lucide-react";
+import { Home, Book, Plus, MessageCircle, User } from "lucide-react";
 
 export function BottomNavigation() {
   const [location, setLocation] = useLocation();
 
   const navItems = [
     { icon: Home, label: "Home", path: "/", active: location === "/" },
-    { icon: Search, label: "Discover", path: "/discover", active: location === "/discover" },
-    { icon: Plus, label: "Create", path: "/create", active: location === "/create", special: true },
+    { icon: Book, label: "Stories", path: "/stories", active: location === "/stories" },
+    { icon: Plus, label: "Create", path: "/upload-story", active: location === "/upload-story", special: true },
     { icon: MessageCircle, label: "Chats", path: "/chats", active: location === "/chats" },
     { icon: User, label: "Profile", path: "/profile", active: location === "/profile" },
   ];
