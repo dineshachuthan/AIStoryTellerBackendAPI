@@ -386,33 +386,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Fall back to default voice selection
         }
       } else if (analysisCharacters && analysisCharacters.length > 0) {
-        characters = analysisCharacters.map(char => ({
-          ...char,
-          assignedVoice: char.assignedVoice || (
-            char.name.toLowerCase().includes('mother') ? 'nova' :
-            char.name.toLowerCase().includes('boy') ? 'echo' :
-            'alloy'
-          )
-        }));
+        characters = analysisCharacters;
       }
       
+      // Find which character this emotion belongs to based on the emotion text/context
       if (characters.length > 0) {
-        // Detect which character is speaking in this text
-        console.log("DEBUG: Emotion text:", text);
-        console.log("DEBUG: Available characters:", characters.map(c => ({ name: c.name, voice: c.assignedVoice })));
+        // Simple pattern matching to identify the speaking character
+        const lowerText = text.toLowerCase();
         
-        // Simple direct assignment for this story
-        if (text.includes('My boy') || text.includes('be satisfied') || text.includes('half the nuts')) {
-          // This is clearly the Mother speaking
-          selectedVoice = 'nova';
-          console.log("DEBUG: Mother speaking, using nova voice");
-        } else if (text.includes('disappointed') || text.includes('cry') || text.includes('Vexed')) {
-          // This is the Boy's emotion
-          selectedVoice = 'echo';
-          console.log("DEBUG: Boy emotion, using echo voice");
-        } else {
-          selectedVoice = 'alloy';
-          console.log("DEBUG: Using default narrator voice");
+        // Find character by matching emotion text patterns
+        for (const character of characters) {
+          const charName = character.name.toLowerCase();
+          
+          // Direct name mention in text
+          if (lowerText.includes(charName.replace('the ', ''))) {
+            selectedVoice = character.assignedVoice || 'alloy';
+            console.log(`Using voice ${selectedVoice} for character ${character.name}`);
+            break;
+          }
+          
+          // Mother's dialogue patterns
+          if ((lowerText.includes('my boy') || lowerText.includes('be satisfied') || 
+               lowerText.includes('half the nuts')) && 
+              charName.includes('mother')) {
+            selectedVoice = character.assignedVoice || 'nova';
+            console.log(`Using voice ${selectedVoice} for Mother character`);
+            break;
+          }
+          
+          // Boy's emotional expressions
+          if ((lowerText.includes('disappointed') || lowerText.includes('frustrated') || 
+               lowerText.includes('vexed')) && 
+              charName.includes('boy')) {
+            selectedVoice = character.assignedVoice || 'echo';
+            console.log(`Using voice ${selectedVoice} for Boy character`);
+            break;
+          }
         }
       }
 
