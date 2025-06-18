@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation, useParams } from "wouter";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Play, Pause, SkipBack, SkipForward, Volume2, Share2, Users, Settings } from "lucide-react";
+import { ArrowLeft, Play, Pause, SkipBack, SkipForward, Volume2, Share2, Users, Settings, Mic, Loader2 } from "lucide-react";
+import { apiRequest } from "@/lib/queryClient";
 
 interface NarrationSegment {
   text: string;
@@ -29,10 +30,12 @@ export default function StoryPlayer() {
   const { storyId } = useParams();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentSegmentIndex, setCurrentSegmentIndex] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [volume, setVolume] = useState(1);
+  const [grandmaNarration, setGrandmaNarration] = useState(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
 

@@ -43,7 +43,7 @@ export class GrandmaVoiceNarrator {
     const segments = await this.createGrandmaSegments(story, characters, emotions, narrativeContext);
     
     // Generate voice audio for each segment
-    const voiceSegments = await this.generateVoiceSegments(segments);
+    const voiceSegments = await this.generateVoiceSegments(segments, narrativeContext);
 
     const totalDuration = voiceSegments.reduce((total, segment) => total + segment.duration, 0);
 
@@ -182,9 +182,13 @@ export class GrandmaVoiceNarrator {
     const sentences = this.splitIntoSentences(content);
     const segments = [];
 
-    // Add a warm grandmother opening
+    // Add personalized opening based on narrator
+    const openingText = narrativeContext.gender === 'grandpa' 
+      ? `Come sit here beside me, ${narrativeContext.audience}. Your old ${narrativeContext.narrator} has a wonderful story to share with you...`
+      : `Come gather around, ${narrativeContext.audience}. Let ${narrativeContext.narrator} tell you a wonderful story...`;
+    
     segments.push({
-      text: "Come gather around, my dear little ones. Let me tell you a wonderful story...",
+      text: openingText,
       emotion: 'warm',
       intensity: 7,
     });
@@ -210,9 +214,13 @@ export class GrandmaVoiceNarrator {
       });
     }
 
-    // Add a warm grandmother closing
+    // Add personalized closing based on narrator
+    const closingText = narrativeContext.gender === 'grandpa' 
+      ? `And that, ${narrativeContext.audience}, is the end of our story. What did you learn from that adventure? ${narrativeContext.narrator} hopes you enjoyed it.`
+      : `And that, my precious ones, is the end of our story. What did you think? Wasn't that lovely?`;
+    
     segments.push({
-      text: "And that, my precious ones, is the end of our story. What did you think? Wasn't that lovely?",
+      text: closingText,
       emotion: 'warm',
       intensity: 8,
     });
@@ -273,7 +281,8 @@ export class GrandmaVoiceNarrator {
       characterName?: string;
       emotion: string;
       intensity: number;
-    }>
+    }>,
+    narrativeContext: { narrator: string; audience: string; relationship: string; tone: string; gender: 'grandma' | 'grandpa' }
   ): Promise<VoiceSegment[]> {
     const voiceSegments: VoiceSegment[] = [];
     let currentTime = 0;
@@ -283,7 +292,7 @@ export class GrandmaVoiceNarrator {
         // Generate audio using OpenAI TTS
         const audioResponse = await openai.audio.speech.create({
           model: 'tts-1',
-          voice: this.selectGrandmaVoice(segment.emotion, segment.intensity),
+          voice: this.selectNarratorVoice(segment.emotion, segment.intensity, narrativeContext.gender),
           input: segment.text,
           speed: this.calculateSpeechSpeed(segment.emotion),
         });
@@ -332,24 +341,51 @@ export class GrandmaVoiceNarrator {
     return voiceSegments;
   }
 
-  private selectGrandmaVoice(emotion: string, intensity: number): 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer' {
-    // Select voice based on emotion to add character
-    switch (emotion) {
-      case 'warm':
-      case 'happy':
-      case 'joy':
-        return 'nova'; // Warm, nurturing voice
-      case 'sad':
-      case 'gentle':
-        return 'alloy'; // Soft, comforting voice
-      case 'excited':
-      case 'surprise':
-        return 'shimmer'; // More animated voice
-      case 'serious':
-      case 'angry':
-        return 'fable'; // More authoritative but still kind
-      default:
-        return 'nova'; // Default grandmother voice
+  private selectNarratorVoice(emotion: string, intensity: number, gender: 'grandma' | 'grandpa'): 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer' {
+    if (gender === 'grandpa') {
+      // Grandpa voice selection - deeper, more authoritative
+      switch (emotion) {
+        case 'warm':
+        case 'happy':
+        case 'joy':
+          return 'fable'; // Warm but authoritative grandfather voice
+        case 'sad':
+        case 'gentle':
+          return 'onyx'; // Deep, comforting grandfather voice
+        case 'excited':
+        case 'surprise':
+          return 'echo'; // More animated grandfather voice
+        case 'serious':
+        case 'angry':
+          return 'onyx'; // Strong, serious grandfather voice
+        case 'inspiring':
+        case 'brave':
+          return 'fable'; // Inspiring grandfather voice
+        default:
+          return 'fable'; // Default grandfather voice
+      }
+    } else {
+      // Grandma voice selection - warmer, more nurturing
+      switch (emotion) {
+        case 'warm':
+        case 'happy':
+        case 'joy':
+          return 'nova'; // Warm, nurturing grandmother voice
+        case 'sad':
+        case 'gentle':
+          return 'alloy'; // Soft, comforting grandmother voice
+        case 'excited':
+        case 'surprise':
+          return 'shimmer'; // More animated grandmother voice
+        case 'serious':
+        case 'angry':
+          return 'fable'; // More authoritative but still kind grandmother
+        case 'magical':
+        case 'mystical':
+          return 'shimmer'; // Enchanting grandmother voice
+        default:
+          return 'nova'; // Default grandmother voice
+      }
     }
   }
 
