@@ -12,6 +12,82 @@ import { grandmaVoiceNarrator } from "./voice-narrator";
 import multer from "multer";
 import path from "path";
 import fs from "fs/promises";
+import OpenAI from "openai";
+
+// Helper functions for emotion audio generation
+function selectEmotionVoice(emotion: string, intensity: number): 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer' {
+  const emotionVoiceMap: Record<string, 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer'> = {
+    'happy': 'nova',
+    'excited': 'shimmer',
+    'sad': 'echo',
+    'angry': 'onyx',
+    'fear': 'fable',
+    'surprise': 'nova',
+    'love': 'shimmer',
+    'anxiety': 'echo',
+    'frustration': 'onyx',
+    'wisdom': 'fable',
+    'patience': 'alloy',
+    'understanding': 'alloy',
+    'compassion': 'nova',
+    'greed': 'onyx',
+    'disappointment': 'echo',
+    'realization': 'fable',
+  };
+  
+  return emotionVoiceMap[emotion] || 'alloy';
+}
+
+function createEmotionText(originalText: string, emotion: string, intensity: number): string {
+  // Shorten text for audio sample (max 100 characters)
+  const text = originalText.length > 100 ? originalText.substring(0, 97) + "..." : originalText;
+  
+  // Add emotion context for better TTS expression
+  const emotionPrefixes: Record<string, string> = {
+    'happy': 'With joy: ',
+    'sad': 'With sorrow: ',
+    'angry': 'With anger: ',
+    'excited': 'With excitement: ',
+    'fear': 'With fear: ',
+    'wisdom': 'With wisdom: ',
+    'frustration': 'With frustration: ',
+    'patience': 'Patiently: ',
+    'understanding': 'With understanding: ',
+    'compassion': 'Compassionately: ',
+    'greed': 'Greedily: ',
+    'disappointment': 'With disappointment: ',
+    'realization': 'With realization: ',
+  };
+  
+  const prefix = emotionPrefixes[emotion] || '';
+  return prefix + text;
+}
+
+function getEmotionSpeed(emotion: string, intensity: number): number {
+  const baseSpeed = 1.0;
+  
+  // Adjust speed based on emotion
+  const speedMap: Record<string, number> = {
+    'excited': 1.2,
+    'happy': 1.1,
+    'angry': 1.3,
+    'frustration': 1.2,
+    'fear': 0.9,
+    'sad': 0.8,
+    'wisdom': 0.9,
+    'patience': 0.8,
+    'understanding': 0.9,
+    'compassion': 0.9,
+    'disappointment': 0.8,
+  };
+  
+  const emotionSpeed = speedMap[emotion] || baseSpeed;
+  
+  // Adjust based on intensity (1-10 scale)
+  const intensityMultiplier = 0.8 + (intensity / 10) * 0.4; // Range: 0.8 to 1.2
+  
+  return Math.min(Math.max(emotionSpeed * intensityMultiplier, 0.5), 2.0);
+}
 
 // Configure multer for file uploads
 const upload = multer({
@@ -212,6 +288,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Return a placeholder sound URL - in production this would be actual sound files
     const defaultSoundUrl = `/sounds/${emotion}-${intensity}.mp3`;
     res.json({ url: defaultSoundUrl });
+  });
+
+  // Generate emotion audio sample
+  app.post("/api/emotions/generate-sample", async (req, res) => {
+    try {
+      console.log("Received emotion sample request body:", req.body);
+      const { emotion, intensity, text } = req.body;
+      
+      if (!emotion || !text) {
+        return res.status(400).json({ message: "Emotion and text are required" });
+      }
+
+      // Check cache first
+      const cachedAudio = getCachedAudio(text, 'alloy', emotion, intensity);
+      if (cachedAudio) {
+        console.log("Using cached emotion audio for:", emotion);
+        return res.json({ url: cachedAudio });
+      }
+
+      // Generate audio using OpenAI TTS
+      const openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+      });
+
+      // Select voice based on emotion
+      const voice = selectEmotionVoice(emotion, intensity);
+      
+      // Create emotion-appropriate text
+      const emotionText = createEmotionText(text, emotion, intensity);
+      
+      const response = await openai.audio.speech.create({
+        model: "tts-1",
+        voice: voice,
+        input: emotionText,
+        speed: getEmotionSpeed(emotion, intensity),
+      });
+
+      const buffer = Buffer.from(await response.arrayBuffer());
+      
+      // Create a temporary file URL for the audio
+      const timestamp = Date.now();
+      const audioUrl = `data:audio/mpeg;base64,${buffer.toString('base64')}`;
+      
+      // Cache the audio
+      await cacheAudio(text, voice, audioUrl, emotion, intensity);
+      
+      console.log("Generated emotion audio sample for:", emotion);
+      res.json({ url: audioUrl });
+    } catch (error) {
+      console.error("Emotion sample generation error:", error);
+      res.status(500).json({ message: error instanceof Error ? error.message : "Failed to generate emotion sample" });
+    }
   });
 
   // Stories routes

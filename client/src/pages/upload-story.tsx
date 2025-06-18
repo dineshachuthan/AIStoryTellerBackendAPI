@@ -476,6 +476,42 @@ export default function UploadStory() {
     });
   };
 
+  const playEmotionSample = async (emotion: any) => {
+    try {
+      // Generate a sample audio for the emotion
+      const audioResponse = await apiRequest('/api/emotions/generate-sample', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          emotion: emotion.emotion,
+          intensity: emotion.intensity,
+          text: emotion.quote || emotion.context,
+        }),
+      });
+
+      // Play the audio
+      const audio = new Audio(audioResponse.url);
+      audio.play().catch(error => {
+        console.error("Audio playback failed:", error);
+        toast({
+          title: "Playback Failed",
+          description: "Could not play emotion sample.",
+          variant: "destructive",
+        });
+      });
+
+    } catch (error) {
+      console.error("Emotion sample generation error:", error);
+      toast({
+        title: "Sample Generation Failed",
+        description: error instanceof Error ? error.message : "Could not generate emotion sample.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const generateCharacterImage = async (characterIndex: number) => {
     const character = charactersWithImages[characterIndex];
     if (!character) return;
@@ -1209,6 +1245,7 @@ export default function UploadStory() {
                                     variant="ghost"
                                     size="sm"
                                     className="text-gray-400 hover:text-white h-8 w-8 p-0"
+                                    onClick={() => playEmotionSample(emotion)}
                                   >
                                     <Play className="w-4 h-4" />
                                   </Button>
