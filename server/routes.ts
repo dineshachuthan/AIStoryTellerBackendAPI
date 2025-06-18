@@ -5,7 +5,7 @@ import { insertCharacterSchema, insertConversationSchema, insertMessageSchema, i
 import { generateAIResponse } from "./openai";
 import { setupAuth, requireAuth, requireAdmin } from "./auth";
 import { analyzeStoryContent, generateCharacterImage, transcribeAudio } from "./ai-analysis";
-import { getCachedImage, cacheImage, getCacheStats, cleanOldCache } from "./image-cache";
+import { getCachedCharacterImage, cacheCharacterImage, getCachedAudio, cacheAudio, getAllCacheStats, cleanOldCacheFiles } from "./content-cache";
 import { getAllVoiceSamples, getVoiceSampleProgress } from "./voice-samples";
 import { storyNarrator } from "./story-narrator";
 import { grandmaVoiceNarrator } from "./voice-narrator";
@@ -150,17 +150,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check cache first
-      const cachedImage = getCachedImage(character, storyContext || "");
+      const cachedImage = getCachedCharacterImage(character, storyContext || "");
       if (cachedImage) {
-        console.log(`Using cached image for character: ${character.name}`);
         return res.json({ url: cachedImage });
       }
 
       console.log("Generating new image for character:", character.name);
       const imageUrl = await generateCharacterImage(character, storyContext);
       
-      // Cache the generated image
-      cacheImage(character, storyContext || "", imageUrl);
+      // Cache the generated image locally
+      await cacheCharacterImage(character, storyContext || "", imageUrl);
       
       res.json({ url: imageUrl });
     } catch (error) {
