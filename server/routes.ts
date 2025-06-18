@@ -458,6 +458,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Basic text-to-speech for story content
+  app.post("/api/stories/text-to-speech", async (req, res) => {
+    try {
+      const { text, voice = 'alloy' } = req.body;
+      
+      if (!text) {
+        return res.status(400).json({ message: "Text is required" });
+      }
+
+      // Check cache first
+      const cachedAudio = getCachedAudio(text, voice);
+      if (cachedAudio) {
+        console.log("Using cached text-to-speech audio");
+        return res.json({ url: cachedAudio });
+      }
+
+      // Generate audio using OpenAI TTS
+      const openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+      });
+
+      const response = await openai.audio.speech.create({
+        model: "tts-1",
+        voice: voice as any,
+        input: text.length > 4000 ? text.substring(0, 4000) : text,
+        speed: 1.0,
+      });
+
+      const buffer = Buffer.from(await response.arrayBuffer());
+      
+      // Save audio to cache directory
+      const cacheDir = path.join(process.cwd(), 'persistent-cache', 'audio');
+      await fs.mkdir(cacheDir, { recursive: true });
+      
+      const fileName = `story-tts-${Date.now()}.mp3`;
+      const filePath = path.join(cacheDir, fileName);
+      
+      // Write audio file
+      await fs.writeFile(filePath, buffer);
+      
+      const audioUrl = `/api/cached-audio/${fileName}`;
+      
+      console.log("Generated text-to-speech audio for story content");
+      res.json({ url: audioUrl });
+    } catch (error) {
+      console.error("Text-to-speech error:", error);
+      res.status(500).json({ message: error instanceof Error ? error.message : "Failed to generate speech" });
+    }
+  });
+
   // Stories routes
   app.get("/api/stories", async (req, res) => {
     try {
