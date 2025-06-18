@@ -10,7 +10,6 @@ export function BottomNavigation() {
     { icon: Book, label: "Stories", path: "/stories", active: location === "/stories" },
     { icon: Plus, label: "Create", path: "/upload-story", active: location === "/upload-story", special: true },
     { icon: MessageCircle, label: "Chats", path: "/chats", active: location === "/chats" },
-    { icon: User, label: "Profile", path: "/profile", active: location === "/profile" },
   ];
 
   return (

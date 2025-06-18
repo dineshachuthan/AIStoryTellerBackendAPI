@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppHeader } from "@/components/app-header";
+import { AppTopNavigation } from "@/components/app-top-navigation";
 import { useAuth } from "@/hooks/useAuth";
 import Home from "@/pages/home";
 import Chat from "@/pages/chat";
@@ -40,6 +41,7 @@ function Router() {
         <Route path="/oauth-test" component={OAuthTest} />
         {isAuthenticated ? (
           <>
+            {/* Top Navigation for all authenticated pages except Home */}
             <Route path="/" component={Home} />
             <Route path="/stories" component={StoryLibrary} />
             <Route path="/chat/:conversationId" component={Chat} />
