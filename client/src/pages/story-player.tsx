@@ -88,7 +88,12 @@ export default function StoryPlayer() {
 
   const currentNarration = grandmaNarration || narration;
   const currentSegment = currentNarration?.segments?.[currentSegmentIndex];
-  const progress = currentNarration && currentNarration.totalDuration > 0 ? (currentTime / currentNarration.totalDuration) * 100 : 0;
+  
+  // Calculate total duration from segments if backend didn't provide it
+  const computedTotalDuration = currentNarration?.segments?.reduce((total, segment) => 
+    total + (segment.duration || 0), 0) || 0;
+  const effectiveTotalDuration = currentNarration?.totalDuration || computedTotalDuration;
+  const progress = currentNarration && effectiveTotalDuration > 0 ? (currentTime / effectiveTotalDuration) * 100 : 0;
 
   // Auto-start story playback when component loads
   useEffect(() => {
@@ -439,7 +444,7 @@ export default function StoryPlayer() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between text-sm text-gray-text">
                   <span>{formatTime(currentTime)}</span>
-                  <span>{formatTime(narration.totalDuration)}</span>
+                  <span>{formatTime(effectiveTotalDuration)}</span>
                 </div>
                 
                 <div 
@@ -453,12 +458,12 @@ export default function StoryPlayer() {
                   />
                   
                   {/* Segment markers */}
-                  {narration.segments.map((segment, index) => (
+                  {currentNarration?.segments?.map((segment, index) => (
                     <div
                       key={index}
                       className="absolute top-0 w-0.5 h-full bg-gray-500 opacity-50"
                       style={{ 
-                        left: `${(segment.startTime / narration.totalDuration) * 100}%` 
+                        left: `${effectiveTotalDuration > 0 ? (segment.startTime / effectiveTotalDuration) * 100 : 0}%` 
                       }}
                     />
                   ))}
