@@ -402,7 +402,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Step 7: Generate emotion audio sample for story playback (no new metadata)
   app.post("/api/emotions/generate-sample", async (req, res) => {
     try {
-      const { emotion, intensity, text } = req.body;
+      const { emotion, intensity, text, userId } = req.body;
       
       if (!emotion || !text) {
         return res.status(400).json({ message: "Emotion and text are required" });
@@ -410,7 +410,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log("Step 7: Playing story with character voice and emotions (no new metadata)");
       
-      // Use emotion-based voice selection only
+      // First check if user has recorded their own voice for this emotion
+      if (userId) {
+        const userVoiceDir = path.join(process.cwd(), 'persistent-cache', 'user-voice-samples');
+        try {
+          const files = await fs.readdir(userVoiceDir);
+          const userVoiceFile = files.find(file => 
+            file.startsWith(`${userId}-${emotion}-${intensity}-`) && 
+            file.endsWith('.webm')
+          );
+          
+          if (userVoiceFile) {
+            const userVoiceUrl = `/api/emotions/user-voice-sample/${userVoiceFile}`;
+            console.log("Using user-recorded voice override:", userVoiceFile);
+            return res.json({ url: userVoiceUrl });
+          }
+        } catch (error) {
+          console.log("No user voice samples found, using AI generation");
+        }
+      }
+      
+      // Use emotion-based voice selection for AI generation
       const selectedVoice = selectEmotionVoice(emotion, intensity);
 
       // Check cache first

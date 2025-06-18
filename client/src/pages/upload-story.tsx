@@ -489,8 +489,9 @@ export default function UploadStory() {
           emotion: emotion.emotion,
           intensity: emotion.intensity,
           text: emotion.quote || emotion.context,
-          storyId: createdStory?.id, // Pass story ID so backend can use character-specific voices
-          analysisCharacters: createdStory ? undefined : charactersWithImages, // Pass characters from analysis if story not created yet
+          userId: 'user_123', // Pass userId to check for user voice overrides
+          storyId: createdStory?.id,
+          analysisCharacters: createdStory ? undefined : charactersWithImages,
         }),
       });
 
