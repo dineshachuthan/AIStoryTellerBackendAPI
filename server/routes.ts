@@ -448,6 +448,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Story Narration routes
+  app.get("/api/stories/:id/narration", async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.id);
+      const story = await storage.getStory(storyId);
+      
+      if (!story) {
+        return res.status(404).json({ message: "Story not found" });
+      }
+
+      // Return a basic narration structure for the story
+      const basicNarration = {
+        storyId: story.id,
+        totalDuration: 0,
+        segments: [],
+        pacing: 'normal' as const,
+      };
+
+      res.json(basicNarration);
+    } catch (error) {
+      console.error("Error fetching story narration:", error);
+      res.status(500).json({ message: "Failed to fetch story narration" });
+    }
+  });
+
   app.post("/api/stories/:id/narration", requireAuth, async (req, res) => {
     try {
       const storyId = parseInt(req.params.id);
