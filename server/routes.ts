@@ -1091,28 +1091,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Publish/unpublish story endpoint - ONLY original author
+  // Publish story endpoint - ONLY original author (one-way operation)
   app.patch("/api/stories/:userId/:storyId/publish", requireAuth, async (req, res) => {
     try {
       const { userId, storyId } = req.params;
-      const { isPublished } = req.body;
       const authenticatedUserId = (req.user as any)?.id;
       
       // Users can only publish their own stories
       if (userId !== authenticatedUserId) {
-        return res.status(403).json({ message: "Only the original author can modify this story" });
+        return res.status(403).json({ message: "Only the original author can publish this story" });
       }
       
       // Verify the user is the original author
       const story = await storage.getStory(parseInt(storyId));
       if (!story || story.authorId !== authenticatedUserId) {
-        return res.status(403).json({ message: "Only the original author can modify this story" });
+        return res.status(403).json({ message: "Only the original author can publish this story" });
       }
       
-      const updatedStory = await storage.updateStory(parseInt(storyId), { isPublished });
+      // Check if story is already published
+      if (story.isPublished) {
+        return res.status(400).json({ message: "Story is already published and cannot be made private" });
+      }
+      
+      // One-way operation: once published, cannot be unpublished
+      const updatedStory = await storage.updateStory(parseInt(storyId), { 
+        isPublished: true,
+        publishedAt: new Date()
+      });
+      
       res.json(updatedStory);
     } catch (error) {
-      res.status(500).json({ message: "Failed to update story visibility" });
+      res.status(500).json({ message: "Failed to publish story" });
     }
   });
 

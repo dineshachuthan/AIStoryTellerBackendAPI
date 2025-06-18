@@ -1,22 +1,61 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useLocation } from "wouter";
-import { Play, Users, Clock, Book, Edit, Trash2, Share } from "lucide-react";
+import { Play, Users, Clock, Book, Edit, Trash2, Share, Globe, Lock, AlertTriangle } from "lucide-react";
 import { BottomNavigation } from "@/components/bottom-navigation";
 import { AppTopNavigation } from "@/components/app-top-navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { formatDistanceToNow } from "date-fns";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import type { Story } from "@shared/schema";
 
 export default function StoryLibrary() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   const { data: stories = [], isLoading } = useQuery<Story[]>({
     queryKey: ["/api/stories", user?.id],
     enabled: !!user?.id,
+  });
+
+  const publishStoryMutation = useMutation({
+    mutationFn: async (storyId: number) => {
+      return await apiRequest(`/api/stories/${user?.id}/${storyId}/publish`, {
+        method: "PATCH",
+        body: JSON.stringify({}),
+        headers: { "Content-Type": "application/json" }
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/stories", user?.id] });
+      toast({
+        title: "Story Published",
+        description: "Your story is now public and available to all users. This action cannot be undone.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Publishing Failed",
+        description: error.message || "Failed to publish story",
+        variant: "destructive",
+      });
+    },
   });
 
   const handlePlayStory = (storyId: number) => {
@@ -29,6 +68,10 @@ export default function StoryLibrary() {
 
   const handleCollaborateStory = (storyId: number) => {
     setLocation(`/story/${storyId}/collaborate`);
+  };
+
+  const handlePublishStory = (storyId: number) => {
+    publishStoryMutation.mutate(storyId);
   };
 
   if (isLoading) {
@@ -90,6 +133,17 @@ export default function StoryLibrary() {
                         >
                           {story.uploadType}
                         </Badge>
+                        {story.isPublished ? (
+                          <Badge className="bg-green-600/20 text-green-400 border-green-600/30">
+                            <Globe className="w-3 h-3 mr-1" />
+                            Public
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="border-gray-600 text-gray-400">
+                            <Lock className="w-3 h-3 mr-1" />
+                            Private
+                          </Badge>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -123,7 +177,7 @@ export default function StoryLibrary() {
                     </div>
                   )}
                   
-                  <div className="flex space-x-2">
+                  <div className="flex space-x-2 mb-3">
                     <Button
                       onClick={() => handlePlayStory(story.id)}
                       className="bg-tiktok-cyan hover:bg-tiktok-cyan/80 flex-1"
@@ -149,6 +203,55 @@ export default function StoryLibrary() {
                       <Edit className="w-4 h-4" />
                     </Button>
                   </div>
+
+                  {/* Publishing Controls */}
+                  {!story.isPublished ? (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-full border-green-600 text-green-400 hover:bg-green-600/20"
+                          size="sm"
+                        >
+                          <Globe className="w-4 h-4 mr-2" />
+                          Make Public
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent className="bg-dark-card border-gray-800">
+                        <AlertDialogHeader>
+                          <AlertDialogTitle className="text-white flex items-center">
+                            <AlertTriangle className="w-5 h-5 mr-2 text-yellow-500" />
+                            Publish Story
+                          </AlertDialogTitle>
+                          <AlertDialogDescription className="text-gray-400">
+                            Once you make this story public, it will be available to all users and they can create their own customized versions with personal voices and character images. 
+                            <br /><br />
+                            <strong className="text-yellow-400">This action cannot be undone.</strong> You will not be able to make it private again.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel className="bg-gray-800 border-gray-700 text-gray-300">
+                            Cancel
+                          </AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handlePublishStory(story.id)}
+                            className="bg-green-600 hover:bg-green-700 text-white"
+                            disabled={publishStoryMutation.isPending}
+                          >
+                            {publishStoryMutation.isPending ? "Publishing..." : "Publish Story"}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  ) : (
+                    <div className="text-center py-2">
+                      <div className="text-sm text-green-400 flex items-center justify-center">
+                        <Globe className="w-4 h-4 mr-1" />
+                        Published {story.publishedAt && formatDistanceToNow(new Date(story.publishedAt), { addSuffix: true })}
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">Available to all users</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))}

@@ -98,6 +98,7 @@ export const stories = pgTable("stories", {
   copyrightInfo: text("copyright_info"),
   licenseType: text("license_type").default("all_rights_reserved"),
   isPublished: boolean("is_published").default(false),
+  publishedAt: timestamp("published_at"),
   isAdultContent: boolean("is_adult_content").default(false),
   viewCount: integer("view_count").default(0),
   likes: integer("likes").default(0),
