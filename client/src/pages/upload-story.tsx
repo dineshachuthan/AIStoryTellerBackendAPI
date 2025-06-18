@@ -479,24 +479,30 @@ export default function UploadStory() {
       // Set playing state
       setPlayingEmotions(prev => ({ ...prev, [emotionKey]: true }));
 
-      // Generate a sample audio for the emotion with story context for character voice detection
-      const audioResponse = await apiRequest('/api/emotions/generate-sample', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          emotion: emotion.emotion,
-          intensity: emotion.intensity,
-          text: emotion.quote || emotion.context,
-          userId: 'user_123', // Pass userId to check for user voice overrides
-          storyId: createdStory?.id,
-          analysisCharacters: createdStory ? undefined : charactersWithImages,
-        }),
-      });
+      // Check if emotion already has a user-recorded soundUrl, otherwise generate one
+      let audioUrl = emotion.soundUrl;
+      
+      if (!audioUrl) {
+        // Generate a sample audio for the emotion with story context for character voice detection
+        const audioResponse = await apiRequest('/api/emotions/generate-sample', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            emotion: emotion.emotion,
+            intensity: emotion.intensity,
+            text: emotion.quote || emotion.context,
+            userId: 'user_123', // Pass userId to check for user voice overrides
+            storyId: createdStory?.id,
+            analysisCharacters: createdStory ? undefined : charactersWithImages,
+          }),
+        });
 
-      // Store the generated audio URL in the emotion object for later use in story creation
-      emotion.soundUrl = audioResponse.url;
+        audioUrl = audioResponse.url;
+        // Store the generated audio URL in the emotion object for later use in story creation
+        emotion.soundUrl = audioUrl;
+      }
 
       // Create and play the audio
       console.log("Attempting to play audio from URL:", audioResponse.url);
@@ -654,9 +660,17 @@ export default function UploadStory() {
         body: formData,
       });
 
+      // Update the emotion object with the new audio URL immediately
+      emotion.soundUrl = response.url;
+      
+      // Force re-render to update the UI with the new audio URL
+      setEmotionsWithSounds(prev => 
+        prev.map(e => e.emotion === emotion.emotion && e.intensity === emotion.intensity ? emotion : e)
+      );
+
       toast({
         title: "Voice Recorded",
-        description: `Your voice sample for ${emotion.emotion} has been saved.`,
+        description: `Your voice sample for ${emotion.emotion} has been saved and ready for playback.`,
       });
 
     } catch (error) {

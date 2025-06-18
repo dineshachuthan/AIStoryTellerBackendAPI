@@ -517,10 +517,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Audio file, emotion, text, and userId are required" });
       }
 
-      // Save audio file to persistent cache
+      // Delete any existing recordings for this emotion/intensity combination
       const cacheDir = path.join(process.cwd(), 'persistent-cache', 'user-voice-samples');
       await fs.mkdir(cacheDir, { recursive: true });
       
+      try {
+        const files = await fs.readdir(cacheDir);
+        const existingFiles = files.filter(file => 
+          file.startsWith(`${userId}-${emotion}-${intensity}-`) && 
+          (file.endsWith('.mp3') || file.endsWith('.json'))
+        );
+        
+        for (const file of existingFiles) {
+          await fs.unlink(path.join(cacheDir, file));
+          console.log("Deleted old voice sample:", file);
+        }
+      } catch (cleanupError) {
+        console.log("No existing files to clean up");
+      }
+      
+      // Use a consistent filename pattern for easier caching
       const timestamp = Date.now();
       let fileName: string;
       let filePath: string;
@@ -607,7 +623,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ 
         message: "Voice sample saved successfully",
         fileName,
-        url: `/api/emotions/user-voice-sample/${fileName}`
+        url: `/api/emotions/user-voice-sample/${fileName}`,
+        timestamp: timestamp // Include timestamp for cache busting
       });
     } catch (error) {
       console.error("Voice sample save error:", error);
