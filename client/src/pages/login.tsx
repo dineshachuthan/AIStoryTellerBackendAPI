@@ -57,14 +57,11 @@ export default function Login() {
       return;
     }
 
-    // Monitor popup for closure as backup
+    // Only monitor for closure without refreshing - message handler will handle success
     const checkClosed = setInterval(() => {
       if (popup.closed) {
         clearInterval(checkClosed);
-        // Small delay then check auth state
-        setTimeout(() => {
-          window.location.reload();
-        }, 500);
+        // Don't refresh here - let the message handler do it
       }
     }, 1000);
   };
