@@ -83,6 +83,14 @@ export default function StoryPlayer() {
   const currentSegment = narration?.segments?.[currentSegmentIndex];
   const progress = narration && narration.totalDuration > 0 ? (currentTime / narration.totalDuration) * 100 : 0;
 
+  // Auto-start story playback when component loads
+  useEffect(() => {
+    if (story && !narration && !grandmaNarration && !generateNarrationMutation.isPending && !isPlaying) {
+      // Automatically generate and start character-based narration
+      playCharacterNarration();
+    }
+  }, [story, narration, grandmaNarration]);
+
   // Generate character-based narration with user voice samples
   const playCharacterNarration = async () => {
     if (!story) return;
