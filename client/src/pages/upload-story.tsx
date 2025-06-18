@@ -342,8 +342,44 @@ export default function UploadStory() {
         setStoryContent(textToAnalyze); // Ensure content is set
         setCurrentStep(3);
 
-        // Only generate AI images if not already generated (user hasn't clicked generate yet)
-        // Skip automatic generation to prevent duplicate API calls
+        // Check if we already have AI-generated images for these characters
+        const needsImageGeneration = charactersWithImages.length === 0 || 
+          charactersWithImages.some(char => char.imageUrl?.includes('dicebear.com'));
+        
+        // Only generate AI images if characters don't already have them
+        if (needsImageGeneration) {
+          setTimeout(async () => {
+            const updatedCharacters = [...charactersWithDefaults];
+            
+            for (let i = 0; i < updatedCharacters.length; i++) {
+              const character = updatedCharacters[i];
+              // Only generate if using dicebear placeholder (not already AI-generated)
+              if (character.imageUrl?.includes('dicebear.com')) {
+                setGeneratingImages(prev => [...prev, i]);
+                
+                try {
+                  const imageResponse = await apiRequest('/api/characters/generate-image', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                      character,
+                      storyContext: result.summary || textToAnalyze.substring(0, 500)
+                    }),
+                  });
+                  
+                  updatedCharacters[i] = { ...character, imageUrl: imageResponse.url };
+                  setCharactersWithImages([...updatedCharacters]);
+                } catch (error) {
+                  console.error(`Failed to generate image for ${character.name}:`, error);
+                } finally {
+                  setGeneratingImages(prev => prev.filter(index => index !== i));
+                }
+              }
+            }
+          }, 1500);
+        }
       }, 1000);
     } catch (error) {
       console.error("Analysis error:", error);
