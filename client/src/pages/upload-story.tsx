@@ -338,10 +338,11 @@ export default function UploadStory() {
       
       // Automatically proceed through all steps without stopping
       setTimeout(() => {
-        // Initialize characters and emotions with defaults
+        // Initialize characters and emotions with defaults (keeping assigned voices from analysis)
         const charactersWithDefaults = result.characters.map((char: any) => ({
           ...char,
-          imageUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(char.name)}&backgroundColor=b6e3f4,c0aede,d1d4f9`
+          imageUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(char.name)}&backgroundColor=b6e3f4,c0aede,d1d4f9`,
+          assignedVoice: char.assignedVoice // Ensure assigned voice is preserved
         }));
 
         const emotionsWithDefaults = result.emotions.map((emotion: any) => ({
