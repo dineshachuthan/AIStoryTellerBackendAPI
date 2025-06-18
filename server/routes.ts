@@ -418,7 +418,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const files = await fs.readdir(userVoiceDir);
           const matchingFiles = files.filter(file => 
             file.startsWith(`${userId}-${emotion}-${intensity}-`) && 
-            (file.endsWith('.mp3') || file.endsWith('.webm') || file.endsWith('.m4a') || file.endsWith('.wav'))
+            file.endsWith('.mp3')
           );
           
           if (matchingFiles.length > 0) {
@@ -517,16 +517,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const cacheDir = path.join(process.cwd(), 'persistent-cache', 'user-voice-samples');
       await fs.mkdir(cacheDir, { recursive: true });
       
-      // Use correct file extension based on mime type
-      const fileExtension = audioFile.mimetype === 'audio/webm' ? 'webm' : 
-                           audioFile.mimetype === 'audio/mp4' ? 'm4a' :
-                           audioFile.mimetype === 'audio/wav' ? 'wav' : 'mp3';
+      const timestamp = Date.now();
+      let fileName: string;
+      let filePath: string;
       
-      const fileName = `${userId}-${emotion}-${intensity}-${Date.now()}.${fileExtension}`;
-      const filePath = path.join(cacheDir, fileName);
-      
-      // Write audio file (convert webm to mp3 for better compatibility)
-      await fs.writeFile(filePath, audioFile.buffer);
+      // Always convert to MP3 for better browser compatibility
+      if (audioFile.mimetype === 'audio/webm' || audioFile.mimetype === 'audio/mp4' || audioFile.mimetype === 'audio/wav') {
+        // Save temporary file first
+        const tempFileName = `temp_${userId}-${emotion}-${intensity}-${timestamp}.${audioFile.mimetype === 'audio/webm' ? 'webm' : audioFile.mimetype === 'audio/mp4' ? 'm4a' : 'wav'}`;
+        const tempFilePath = path.join(cacheDir, tempFileName);
+        await fs.writeFile(tempFilePath, audioFile.buffer);
+        
+        // Convert to MP3 using FFmpeg
+        fileName = `${userId}-${emotion}-${intensity}-${timestamp}.mp3`;
+        filePath = path.join(cacheDir, fileName);
+        
+        const { exec } = require('child_process');
+        const { promisify } = require('util');
+        const execAsync = promisify(exec);
+        
+        try {
+          await execAsync(`ffmpeg -i "${tempFilePath}" -acodec mp3 -y "${filePath}"`);
+          // Clean up temporary file
+          await fs.unlink(tempFilePath);
+        } catch (conversionError) {
+          console.error("Audio conversion failed, saving original format:", conversionError);
+          // Fallback: save original file if conversion fails
+          await fs.copyFile(tempFilePath, filePath);
+          await fs.unlink(tempFilePath);
+        }
+      } else {
+        // Direct save for MP3 files
+        fileName = `${userId}-${emotion}-${intensity}-${timestamp}.mp3`;
+        filePath = path.join(cacheDir, fileName);
+        await fs.writeFile(filePath, audioFile.buffer);
+      }
       
       // Create metadata
       const metadata = {
@@ -538,8 +563,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fileName,
         filePath,
         fileSize: audioFile.size,
-        timestamp: Date.now(),
-        mimeType: audioFile.mimetype,
+        timestamp,
+        mimeType: 'audio/mpeg', // All files are converted to MP3
+        originalMimeType: audioFile.mimetype, // Keep track of original format
       };
       
       // Save metadata
@@ -581,7 +607,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Serve user voice samples
+  // Serve user voice samples (all converted to MP3)
   app.get("/api/emotions/user-voice-sample/:fileName", async (req, res) => {
     try {
       const { fileName } = req.params;
@@ -594,20 +620,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Voice sample not found" });
       }
       
-      // Set correct content type based on file extension
-      const fileExtension = path.extname(fileName).toLowerCase();
-      let contentType = 'audio/mpeg'; // default
-      
-      if (fileExtension === '.webm') {
-        contentType = 'audio/webm';
-      } else if (fileExtension === '.m4a') {
-        contentType = 'audio/mp4';
-      } else if (fileExtension === '.wav') {
-        contentType = 'audio/wav';
-      }
-      
-      // Serve the audio file
-      res.setHeader('Content-Type', contentType);
+      // All user voice samples are now MP3 format
+      res.setHeader('Content-Type', 'audio/mpeg');
       res.sendFile(path.resolve(filePath));
     } catch (error) {
       console.error("Voice sample serve error:", error);
