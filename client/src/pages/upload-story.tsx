@@ -416,20 +416,62 @@ export default function UploadStory() {
   // Create character-emotion associations for display
   const getCharacterEmotionGroups = () => {
     return charactersWithImages.map(character => {
-      const characterEmotions = emotionsWithSounds.filter(emotion => 
-        emotion.quote?.toLowerCase().includes(character.name.toLowerCase()) ||
-        emotion.context.toLowerCase().includes(character.name.toLowerCase()) ||
-        emotion.context.toLowerCase().includes('boy') && character.name.toLowerCase().includes('boy') ||
-        emotion.context.toLowerCase().includes('mother') && character.name.toLowerCase().includes('mother')
-      );
-      
-      // If no specific emotions found for character, assign general emotions
-      const finalEmotions = characterEmotions.length > 0 ? characterEmotions : 
-        emotionsWithSounds.slice(0, Math.max(1, Math.floor(emotionsWithSounds.length / charactersWithImages.length)));
+      const characterEmotions = emotionsWithSounds.filter(emotion => {
+        const context = emotion.context.toLowerCase();
+        const quote = (emotion.quote || '').toLowerCase();
+        const characterName = character.name.toLowerCase();
+        
+        // Primary: Check if emotion context explicitly mentions this character as the one experiencing it
+        if (context.includes(`${characterName} feels`) || 
+            context.includes(`${characterName} is`) ||
+            context.includes(`${characterName}'s`) ||
+            context.includes(`${characterName} experiences`)) {
+          return true;
+        }
+        
+        // Secondary: Check if the quote is directly from this character
+        if (emotion.quote && context.includes(`${characterName} says`) || 
+            context.includes(`${characterName} speaks`) ||
+            context.includes(`${characterName} tells`)) {
+          return true;
+        }
+        
+        // Tertiary: Analyze quote content for speaker identification
+        if (emotion.quote) {
+          // Mother's advice/wisdom quotes
+          if ((quote.includes('take fewer') || quote.includes('be content') || 
+               quote.includes('advice') || quote.includes('wisdom')) && 
+              characterName.includes('mother')) {
+            return true;
+          }
+          
+          // Boy's frustrated/greedy statements
+          if ((quote.includes('my hand') || quote.includes('i want') || 
+               quote.includes('i need') || quote.includes('stuck')) && 
+              characterName.includes('boy')) {
+            return true;
+          }
+        }
+        
+        // Fallback: Match by character role and emotion type
+        if (character.role === 'protagonist') {
+          // Protagonist typically has action-based emotions
+          return emotion.emotion === 'frustration' || emotion.emotion === 'greed' || 
+                 emotion.emotion === 'disappointment' || emotion.emotion === 'realization';
+        }
+        
+        if (character.role === 'supporting') {
+          // Supporting characters (like mother) typically have wisdom/guidance emotions
+          return emotion.emotion === 'wisdom' || emotion.emotion === 'patience' || 
+                 emotion.emotion === 'understanding' || emotion.emotion === 'compassion';
+        }
+        
+        return false;
+      });
       
       return {
         character,
-        emotions: finalEmotions
+        emotions: characterEmotions
       };
     });
   };
