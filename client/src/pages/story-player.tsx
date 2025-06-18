@@ -86,8 +86,9 @@ export default function StoryPlayer() {
     },
   });
 
-  const currentSegment = narration?.segments?.[currentSegmentIndex];
-  const progress = narration && narration.totalDuration > 0 ? (currentTime / narration.totalDuration) * 100 : 0;
+  const currentNarration = grandmaNarration || narration;
+  const currentSegment = currentNarration?.segments?.[currentSegmentIndex];
+  const progress = currentNarration && currentNarration.totalDuration > 0 ? (currentTime / currentNarration.totalDuration) * 100 : 0;
 
   // Auto-start story playback when component loads
   useEffect(() => {
@@ -96,6 +97,15 @@ export default function StoryPlayer() {
       playCharacterNarration();
     }
   }, [story, narration, grandmaNarration]);
+
+  // Auto-play when grandma narration is loaded
+  useEffect(() => {
+    if (grandmaNarration && grandmaNarration.segments && grandmaNarration.segments.length > 0 && !isPlaying) {
+      setCurrentSegmentIndex(0);
+      playSegmentAudio(grandmaNarration.segments[0]);
+      setIsPlaying(true);
+    }
+  }, [grandmaNarration]);
 
   // Generate character-based narration with user voice samples
   const playCharacterNarration = async () => {
@@ -177,9 +187,28 @@ export default function StoryPlayer() {
 
   const playSegmentAudio = (segment: NarrationSegment) => {
     if (segment.voiceUrl && audioRef.current) {
+      console.log("Playing segment:", segment.text, "URL:", segment.voiceUrl);
       audioRef.current.src = segment.voiceUrl;
       audioRef.current.volume = volume;
-      audioRef.current.play().catch(console.error);
+      
+      audioRef.current.onended = () => {
+        // Auto-advance to next segment
+        const currentNarration = grandmaNarration || narration;
+        if (currentNarration && currentSegmentIndex < currentNarration.segments.length - 1) {
+          const nextIndex = currentSegmentIndex + 1;
+          setCurrentSegmentIndex(nextIndex);
+          playSegmentAudio(currentNarration.segments[nextIndex]);
+        } else {
+          // End of story
+          setIsPlaying(false);
+          console.log("Story playback completed");
+        }
+      };
+      
+      audioRef.current.play().catch(error => {
+        console.error("Audio playback error:", error);
+        setIsPlaying(false);
+      });
     }
   };
 
@@ -210,7 +239,7 @@ export default function StoryPlayer() {
   const skipToPrevious = () => {
     if (currentSegmentIndex > 0) {
       const prevIndex = currentSegmentIndex - 1;
-      const prevSegment = narration?.segments[prevIndex];
+      const prevSegment = currentNarration?.segments[prevIndex];
       if (prevSegment) {
         setCurrentSegmentIndex(prevIndex);
         setCurrentTime(prevSegment.startTime);
@@ -222,9 +251,9 @@ export default function StoryPlayer() {
   };
 
   const skipToNext = () => {
-    if (narration && currentSegmentIndex < narration.segments.length - 1) {
+    if (currentNarration && currentSegmentIndex < currentNarration.segments.length - 1) {
       const nextIndex = currentSegmentIndex + 1;
-      const nextSegment = narration.segments[nextIndex];
+      const nextSegment = currentNarration.segments[nextIndex];
       setCurrentSegmentIndex(nextIndex);
       setCurrentTime(nextSegment.startTime);
       if (isPlaying) {
