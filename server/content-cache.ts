@@ -141,8 +141,8 @@ export async function cacheCharacterImage(character: any, storyContext: string, 
   });
 
   const filename = `${hash}.png`;
-  const localPath = path.join(IMAGES_DIR, filename);
-  const metadataPath = path.join(METADATA_DIR, `image_${hash}.json`);
+  const localPath = path.join(imagesDir, filename);
+  const metadataPath = path.join(metadataDir, `image_${hash}.json`);
 
   try {
     // Download and save the image locally
@@ -184,7 +184,7 @@ export function getCachedAudio(text: string, voice: string, emotion?: string, in
     intensity
   });
 
-  const metadataPath = path.join(METADATA_DIR, `audio_${hash}.json`);
+  const metadataPath = path.join(metadataDir, `audio_${hash}.json`);
   
   if (fs.existsSync(metadataPath)) {
     try {
@@ -225,8 +225,8 @@ export async function cacheAudio(text: string, voice: string, audioUrl: string, 
   });
 
   const filename = `${hash}.mp3`;
-  const localPath = path.join(AUDIO_DIR, filename);
-  const metadataPath = path.join(METADATA_DIR, `audio_${hash}.json`);
+  const localPath = path.join(audioDir, filename);
+  const metadataPath = path.join(metadataDir, `audio_${hash}.json`);
 
   try {
     // Download and save the audio locally
@@ -263,21 +263,21 @@ export function getAllCacheStats(): {
   total: { count: number; totalSizeKB: number };
 } {
   try {
-    const imageFiles = fs.readdirSync(IMAGES_DIR).filter(f => f.endsWith('.png'));
-    const audioFiles = fs.readdirSync(AUDIO_DIR).filter(f => f.endsWith('.mp3'));
+    const imageFiles = fs.readdirSync(imagesDir).filter(f => f.endsWith('.png'));
+    const audioFiles = fs.readdirSync(audioDir).filter(f => f.endsWith('.mp3'));
     
     let imageSizeKB = 0;
     let audioSizeKB = 0;
     
     imageFiles.forEach(file => {
-      const filePath = path.join(IMAGES_DIR, file);
+      const filePath = path.join(imagesDir, file);
       if (fs.existsSync(filePath)) {
         imageSizeKB += fs.statSync(filePath).size / 1024;
       }
     });
     
     audioFiles.forEach(file => {
-      const filePath = path.join(AUDIO_DIR, file);
+      const filePath = path.join(audioDir, file);
       if (fs.existsSync(filePath)) {
         audioSizeKB += fs.statSync(filePath).size / 1024;
       }
@@ -303,10 +303,10 @@ export function cleanOldCacheFiles(): { cleaned: number; freedKB: number } {
   const maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days
 
   try {
-    const metadataFiles = fs.readdirSync(METADATA_DIR).filter(f => f.endsWith('.json'));
+    const metadataFiles = fs.readdirSync(metadataDir).filter(f => f.endsWith('.json'));
     
     metadataFiles.forEach(file => {
-      const metadataPath = path.join(METADATA_DIR, file);
+      const metadataPath = path.join(metadataDir, file);
       try {
         const metadata = JSON.parse(fs.readFileSync(metadataPath, 'utf8'));
         const age = Date.now() - metadata.timestamp;
@@ -339,7 +339,7 @@ export function cleanOldCacheFiles(): { cleaned: number; freedKB: number } {
 
 export function getCachedAnalysis(content: string): any | null {
   const hash = generateContentHash({ content: content.trim() });
-  const metadataPath = path.join(METADATA_DIR, `analysis_${hash}.json`);
+  const metadataPath = path.join(metadataDir, `analysis_${hash}.json`);
   
   if (fs.existsSync(metadataPath)) {
     try {
@@ -370,7 +370,7 @@ export function getCachedAnalysis(content: string): any | null {
 
 export function cacheAnalysis(content: string, analysis: any): void {
   const hash = generateContentHash({ content: content.trim() });
-  const metadataPath = path.join(METADATA_DIR, `analysis_${hash}.json`);
+  const metadataPath = path.join(metadataDir, `analysis_${hash}.json`);
 
   try {
     const metadata: CachedAnalysis = {
@@ -388,5 +388,5 @@ export function cacheAnalysis(content: string, analysis: any): void {
 }
 
 // Initialize cache system
-console.log(`Content cache initialized at: ${CACHE_BASE_DIR}`);
+console.log(`Content cache initialized at: ${cacheDir}`);
 console.log(`Cache stats:`, getAllCacheStats());

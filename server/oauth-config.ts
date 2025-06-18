@@ -56,6 +56,7 @@ export function getOAuthConfig() {
       clientSecret: getEnvSpecificSecret('GOOGLE_CLIENT_SECRET'), 
       callbackURL: `${baseUrl}/api/auth/google/callback`,
       scope: ['profile', 'email'],
+      passReqToCallback: false,
     },
     facebook: {
       clientID: getEnvSpecificSecret('FACEBOOK_APP_ID'),
