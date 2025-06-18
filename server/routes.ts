@@ -271,8 +271,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Social login routes with error handling
   app.get("/api/auth/google", (req, res, next) => {
     console.log('[OAuth] Initiating Google authentication');
+    console.log('[OAuth] Query params:', req.query);
     console.log('[OAuth] User-Agent:', req.get('User-Agent')?.substring(0, 50) + '...');
     console.log('[OAuth] Referer:', req.get('Referer'));
+    
+    // Store popup parameter in session to persist through OAuth flow
+    if (req.query.popup === 'true') {
+      (req.session as any).isPopupAuth = true;
+      console.log('[OAuth] Popup flow detected');
+    }
+    
     passport.authenticate('google', { 
       scope: ['profile', 'email'],
       prompt: 'select_account'
@@ -283,22 +291,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     passport.authenticate('google', { failureRedirect: '/login' }),
     (req, res) => {
       console.log('[OAuth] Google callback successful');
-      // Check if this is a popup window
-      const isPopup = req.query.popup === 'true';
+      
+      // Check if this was initiated as a popup flow
+      const isPopup = (req.session as any)?.isPopupAuth;
+      console.log('[OAuth] Is popup flow:', isPopup);
+      
+      // Clear the popup flag from session
+      if ((req.session as any)?.isPopupAuth) {
+        delete (req.session as any).isPopupAuth;
+      }
+      
       if (isPopup) {
-        // For popup windows, close the popup and notify parent
+        // For popup windows, send script to close popup and notify parent
+        console.log('[OAuth] Popup flow - sending close script');
         res.send(`
-          <script>
-            if (window.opener) {
-              window.opener.postMessage({ type: 'OAUTH_SUCCESS', provider: 'google' }, window.location.origin);
-              window.close();
-            } else {
-              window.location.href = '/';
-            }
-          </script>
+          <!DOCTYPE html>
+          <html>
+          <head><title>Login Success</title></head>
+          <body>
+            <script>
+              console.log('OAuth popup callback - closing window');
+              if (window.opener) {
+                console.log('Notifying parent window of success');
+                window.opener.postMessage({ 
+                  type: 'OAUTH_SUCCESS', 
+                  provider: 'google' 
+                }, window.location.origin);
+                window.close();
+              } else {
+                console.log('No opener found, redirecting');
+                window.location.href = '/';
+              }
+            </script>
+            <p>Login successful! This window should close automatically.</p>
+          </body>
+          </html>
         `);
       } else {
         // Regular redirect for same-tab flow
+        console.log('[OAuth] Same-tab flow - redirecting');
         res.redirect('/');
       }
     }
