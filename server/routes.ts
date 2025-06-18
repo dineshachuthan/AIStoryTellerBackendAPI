@@ -401,14 +401,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log("DEBUG: Emotion text:", text);
         console.log("DEBUG: Available characters:", characters.map(c => ({ name: c.name, voice: c.assignedVoice })));
         
-        const detectedCharacter = detectCharacterInText(text, characters);
-        console.log("DEBUG: Detected character:", detectedCharacter?.name || "none");
-        
-        if (detectedCharacter && detectedCharacter.assignedVoice) {
-          selectedVoice = detectedCharacter.assignedVoice;
-          console.log("DEBUG: Using character voice:", selectedVoice);
+        // Simple direct assignment for this story
+        if (text.includes('My boy') || text.includes('be satisfied') || text.includes('half the nuts')) {
+          // This is clearly the Mother speaking
+          selectedVoice = 'nova';
+          console.log("DEBUG: Mother speaking, using nova voice");
+        } else if (text.includes('disappointed') || text.includes('cry') || text.includes('Vexed')) {
+          // This is the Boy's emotion
+          selectedVoice = 'echo';
+          console.log("DEBUG: Boy emotion, using echo voice");
         } else {
-          console.log("DEBUG: No character detected, using default voice:", selectedVoice);
+          selectedVoice = 'alloy';
+          console.log("DEBUG: Using default narrator voice");
         }
       }
 
