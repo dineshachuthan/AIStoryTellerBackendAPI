@@ -11,6 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { ConfidenceMeter, useConfidenceTracking } from "@/components/confidence-meter";
 import { 
   ArrowLeft, 
   Upload, 
@@ -107,6 +108,10 @@ export default function UploadStory() {
   const [emotionRecorders, setEmotionRecorders] = useState<Record<string, MediaRecorder>>({});
   const [playingEmotions, setPlayingEmotions] = useState<Record<string, boolean>>({});
   const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
+
+  // Confidence tracking
+  const userId = 'user_123'; // Using test user ID
+  const confidenceTracking = createdStory ? useConfidenceTracking(createdStory.id, userId) : null;
 
   // Create story with direct analysis data (for automated flow)
   const createStoryWithAnalysis = async (
@@ -479,9 +484,23 @@ export default function UploadStory() {
       // Set playing state
       setPlayingEmotions(prev => ({ ...prev, [emotionKey]: true }));
 
-      // Check if emotion has a user-recorded soundUrl (contains 'user-voice-sample'), otherwise generate one
-      let audioUrl = emotion.soundUrl;
-      const hasUserRecording = audioUrl && audioUrl.includes('user-voice-sample');
+      // Always check for the latest user recording first
+      const userId = 'user_123';
+      const expectedFileName = `${userId}-${emotion.emotion}-${emotion.intensity}.wav`;
+      const userRecordingUrl = `/api/emotions/user-voice-sample/${expectedFileName}`;
+      
+      let audioUrl = userRecordingUrl;
+      let hasUserRecording = false;
+      
+      // Check if user recording exists by trying to fetch it
+      try {
+        const checkResponse = await fetch(userRecordingUrl, { method: 'HEAD' });
+        hasUserRecording = checkResponse.ok;
+        console.log(`User recording check for ${expectedFileName}: ${hasUserRecording ? 'found' : 'not found'}`);
+      } catch (error) {
+        console.log(`User recording check failed for ${expectedFileName}:`, error);
+        hasUserRecording = false;
+      }
       
       if (!hasUserRecording) {
         // Generate a sample audio for the emotion with story context for character voice detection
@@ -494,7 +513,7 @@ export default function UploadStory() {
             emotion: emotion.emotion,
             intensity: emotion.intensity,
             text: emotion.quote || emotion.context,
-            userId: 'user_123', // Pass userId to check for user voice overrides
+            userId: userId, // Pass userId to check for user voice overrides
             storyId: createdStory?.id,
             analysisCharacters: createdStory ? undefined : charactersWithImages,
           }),
@@ -504,8 +523,10 @@ export default function UploadStory() {
         // Store the generated audio URL in the emotion object for later use in story creation
         emotion.soundUrl = audioUrl;
       } else {
-        // Use the existing user recording URL
-        audioUrl = emotion.soundUrl;
+        // Use the latest user recording with cache busting
+        audioUrl = `${userRecordingUrl}?t=${Date.now()}`;
+        // Update emotion with latest user recording
+        emotion.soundUrl = audioUrl;
       }
 
       // Create and play the audio with cache busting for user recordings
@@ -542,6 +563,11 @@ export default function UploadStory() {
         console.log("Audio playback ended");
         setPlayingEmotions(prev => ({ ...prev, [emotionKey]: false }));
         setCurrentAudio(null);
+        
+        // Track playback completion for confidence meter
+        if (confidenceTracking) {
+          confidenceTracking.trackPlayback();
+        }
       };
 
       audio.onerror = (error) => {
@@ -651,12 +677,14 @@ export default function UploadStory() {
 
   const saveEmotionVoiceRecording = async (emotionKey: string, emotion: any, audioBlob: Blob) => {
     try {
+      const userId = 'user_123';
       const formData = new FormData();
-      formData.append('audio', audioBlob, `emotion-${emotionKey}-${Date.now()}.webm`);
+      // Use consistent filename format that matches server expectations
+      formData.append('audio', audioBlob, `${userId}-${emotion.emotion}-${emotion.intensity}.webm`);
       formData.append('emotion', emotion.emotion);
       formData.append('intensity', emotion.intensity.toString());
       formData.append('text', emotion.quote || emotion.context);
-      formData.append('userId', 'user_123'); // Test user ID
+      formData.append('userId', userId);
       formData.append('storyId', analysis?.summary || 'temp_story');
 
       const response = await apiRequest('/api/emotions/save-voice-sample', {
@@ -681,6 +709,11 @@ export default function UploadStory() {
       if (currentAudio) {
         currentAudio.pause();
         setCurrentAudio(null);
+      }
+
+      // Track voice recording completion for confidence meter
+      if (confidenceTracking) {
+        await confidenceTracking.trackVoiceRecording();
       }
 
       toast({
