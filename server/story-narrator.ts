@@ -161,8 +161,8 @@ export class StoryNarrator {
           apiKey: process.env.OPENAI_API_KEY,
         });
 
-        const selectedVoice = this.selectVoiceForCharacter(speakingCharacter, detectedEmotion.emotion);
-        console.log("Selected voice:", selectedVoice, "for character:", speakingCharacter?.name || 'narrator');
+        const selectedVoice = this.getStoredVoiceForCharacter(speakingCharacter, characters);
+        console.log("Using stored voice:", selectedVoice, "for character:", speakingCharacter?.name || 'narrator');
         
         // Enhance text with emotional expressions and sound effects
         const enhancedText = this.addEmotionalExpressions(sentence, detectedEmotion.emotion, detectedEmotion.intensity);

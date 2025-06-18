@@ -16,6 +16,8 @@ export interface ExtractedCharacter {
   role: 'protagonist' | 'antagonist' | 'supporting' | 'narrator' | 'other';
   appearance?: string;
   traits: string[];
+  assignedVoice?: string; // OpenAI voice assignment (alloy, echo, fable, nova, onyx, shimmer)
+  voiceSampleId?: number; // User voice sample ID if assigned
 }
 
 export interface ExtractedEmotion {
@@ -97,6 +99,13 @@ export async function analyzeStoryContent(content: string): Promise<StoryAnalysi
     }
 
     const analysis: StoryAnalysis = JSON.parse(analysisText);
+    
+    // Assign voices to characters during analysis phase
+    analysis.characters = analysis.characters.map(character => ({
+      ...character,
+      assignedVoice: assignVoiceToCharacter(character)
+    }));
+    
     return analysis;
   } catch (error) {
     console.error("Story analysis error:", error);
@@ -226,4 +235,35 @@ export async function transcribeAudio(audioBuffer: Buffer): Promise<string> {
     console.error("Audio transcription error:", error);
     throw new Error("Failed to transcribe audio");
   }
+}
+
+// Voice assignment function for analysis phase
+function assignVoiceToCharacter(character: ExtractedCharacter): string {
+  // Map character names and roles to specific voices for maximum distinction
+  const characterVoiceMap: { [key: string]: string } = {
+    'Boy': 'echo',        // Higher, younger male voice
+    'Mother': 'fable',    // Mature, warmer female voice (more aged sounding)
+    'Father': 'onyx',     // Deep, authoritative male voice
+    'Girl': 'shimmer',    // Light, young female voice
+    'Narrator': 'alloy',  // Neutral narrator voice
+  };
+
+  // First check for character name match (case insensitive)
+  const nameKey = Object.keys(characterVoiceMap).find(key => 
+    key.toLowerCase() === character.name.toLowerCase()
+  );
+  if (nameKey) {
+    return characterVoiceMap[nameKey];
+  }
+
+  // Map character roles to voices as fallback
+  const roleVoiceMap: { [key: string]: string } = {
+    'protagonist': 'echo',     // Young voice for main character
+    'antagonist': 'onyx',      // Deeper, more intense voice
+    'supporting': 'fable',     // Supporting character voice (changed to fable for Mother)
+    'narrator': 'alloy',       // Neutral narrator voice
+    'other': 'shimmer'         // Alternative voice for others
+  };
+
+  return roleVoiceMap[character.role] || 'alloy';
 }
