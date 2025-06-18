@@ -301,7 +301,6 @@ export const emotionVoiceProfiles = pgTable("emotion_voice_profiles", {
 export const insertUserSchema = createInsertSchema(users).omit({
   createdAt: true,
   updatedAt: true,
-  lastLoginAt: true,
 });
 
 export const upsertUserSchema = insertUserSchema.extend({

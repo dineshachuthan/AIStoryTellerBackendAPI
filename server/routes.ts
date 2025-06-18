@@ -3,7 +3,9 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertCharacterSchema, insertConversationSchema, insertMessageSchema, insertStorySchema, insertUserVoiceSampleSchema, insertStoryCollaborationSchema, insertStoryGroupSchema, insertCharacterVoiceAssignmentSchema } from "@shared/schema";
 import { generateAIResponse } from "./openai";
-import { setupAuth, requireAuth, requireAdmin } from "./auth";
+import { setupAuth, requireAuth, requireAdmin, hashPassword } from "./auth";
+import passport from 'passport';
+import { insertUserSchema, insertLocalUserSchema } from "@shared/schema";
 import { analyzeStoryContent, generateCharacterImage, transcribeAudio } from "./ai-analysis";
 import { getCachedCharacterImage, cacheCharacterImage, getCachedAudio, cacheAudio, getCachedAnalysis, cacheAnalysis, getAllCacheStats, cleanOldCacheFiles } from "./content-cache";
 import { getAllVoiceSamples, getVoiceSampleProgress } from "./voice-samples";
@@ -188,6 +190,116 @@ const upload = multer({
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
   await setupAuth(app);
+
+  // Authentication routes
+  app.post("/api/auth/register", async (req, res) => {
+    try {
+      const { email, password, firstName, lastName, displayName } = req.body;
+      
+      if (!email || !password) {
+        return res.status(400).json({ message: "Email and password are required" });
+      }
+
+      // Check if user already exists
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ message: "User with this email already exists" });
+      }
+
+      // Create user
+      const userId = `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const user = await storage.createUser({
+        id: userId,
+        email,
+        firstName: firstName || null,
+        lastName: lastName || null,
+        displayName: displayName || null,
+        isEmailVerified: false,
+        lastLoginAt: new Date(),
+      });
+
+      // Create local user with hashed password
+      const hashedPassword = await hashPassword(password);
+      await storage.createLocalUser({
+        userId: user.id,
+        passwordHash: hashedPassword,
+      });
+
+      // Create provider link
+      await storage.createUserProvider({
+        userId: user.id,
+        provider: 'local',
+        providerId: user.id,
+      });
+
+      // Log user in
+      req.login(user, (err) => {
+        if (err) {
+          console.error('Login error:', err);
+          return res.status(500).json({ message: "Registration successful but login failed" });
+        }
+        res.status(201).json({ user, message: "Registration successful" });
+      });
+    } catch (error) {
+      console.error("Registration error:", error);
+      res.status(500).json({ message: "Failed to register user" });
+    }
+  });
+
+  app.post("/api/auth/login", passport.authenticate('local'), async (req, res) => {
+    res.json({ user: req.user, message: "Login successful" });
+  });
+
+  app.post("/api/auth/logout", (req, res) => {
+    req.logout((err) => {
+      if (err) {
+        return res.status(500).json({ message: "Logout failed" });
+      }
+      res.json({ message: "Logout successful" });
+    });
+  });
+
+  app.get("/api/auth/user", (req, res) => {
+    if (req.isAuthenticated()) {
+      res.json(req.user);
+    } else {
+      res.status(401).json({ message: "Not authenticated" });
+    }
+  });
+
+  // Social login routes
+  app.get("/api/auth/google", 
+    passport.authenticate('google', { scope: ['profile', 'email'] })
+  );
+
+  app.get("/api/auth/google/callback",
+    passport.authenticate('google', { failureRedirect: '/login' }),
+    (req, res) => {
+      res.redirect('/');
+    }
+  );
+
+  app.get("/api/auth/facebook",
+    passport.authenticate('facebook', { scope: ['email'] })
+  );
+
+  app.get("/api/auth/facebook/callback",
+    passport.authenticate('facebook', { failureRedirect: '/login' }),
+    (req, res) => {
+      res.redirect('/');
+    }
+  );
+
+  app.get("/api/auth/microsoft",
+    passport.authenticate('microsoft', { scope: ['user.read'] })
+  );
+
+  app.get("/api/auth/microsoft/callback",
+    passport.authenticate('microsoft', { failureRedirect: '/login' }),
+    (req, res) => {
+      res.redirect('/');
+    }
+  );
 
   // Voice Samples routes
   app.get("/api/voice-samples/templates", (req, res) => {
