@@ -101,10 +101,14 @@ export async function analyzeStoryContent(content: string): Promise<StoryAnalysi
     const analysis: StoryAnalysis = JSON.parse(analysisText);
     
     // Assign voices to characters during analysis phase
-    analysis.characters = analysis.characters.map(character => ({
-      ...character,
-      assignedVoice: assignVoiceToCharacter(character)
-    }));
+    analysis.characters = analysis.characters.map(character => {
+      const assignedVoice = assignVoiceToCharacter(character);
+      console.log(`Assigning voice "${assignedVoice}" to character "${character.name}"`);
+      return {
+        ...character,
+        assignedVoice
+      };
+    });
     
     return analysis;
   } catch (error) {
