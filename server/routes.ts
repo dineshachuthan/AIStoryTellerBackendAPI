@@ -269,16 +269,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Social login routes
-  app.get("/api/auth/google", 
+  app.get("/api/auth/google", (req, res, next) => {
+    console.log('[OAuth] Initiating Google authentication');
     passport.authenticate('google', { 
       scope: ['profile', 'email'],
       prompt: 'select_account'
-    })
-  );
+    })(req, res, next);
+  });
 
   app.get("/api/auth/google/callback",
     passport.authenticate('google', { failureRedirect: '/login' }),
     (req, res) => {
+      console.log('[OAuth] Google callback successful');
       res.redirect('/');
     }
   );
