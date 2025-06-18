@@ -403,7 +403,14 @@ export default function UploadStory() {
   const proceedToAssignments = async () => {
     if (!analysis) return;
 
-    // Initialize characters with default images
+    // Check if we already have characters with generated images
+    if (charactersWithImages.length > 0) {
+      // Use existing characters with their generated images
+      setCurrentStep(3);
+      return;
+    }
+
+    // Initialize characters with default images only if not already generated
     const charactersWithDefaults = analysis.characters.map(char => ({
       ...char,
       imageUrl: `/api/characters/default-image?name=${encodeURIComponent(char.name)}&role=${char.role}`
@@ -637,6 +644,14 @@ export default function UploadStory() {
 
     // Prevent multiple simultaneous requests for the same character
     if (generatingImages.includes(characterIndex)) return;
+
+    // Skip if already has a generated AI image (not a placeholder)
+    if (character.imageUrl && 
+        !character.imageUrl.includes('dicebear.com') && 
+        !character.imageUrl.includes('/api/characters/default-image')) {
+      console.log("Character already has AI-generated image, skipping:", character.name);
+      return;
+    }
 
     console.log("Generating image for character:", character);
 
