@@ -28,7 +28,7 @@ export interface IStorage {
   getUserVoiceProgress(userId: string): Promise<{ completed: number; total: number; percentage: number }>;
   
   // Stories
-  getStories(): Promise<Story[]>;
+  getPublicStories(): Promise<Story[]>;
   getUserStories(userId: string): Promise<Story[]>;
   getStory(id: number): Promise<Story | undefined>;
   createStory(story: InsertStory): Promise<Story>;
@@ -235,7 +235,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Story operations
-  async getStories(): Promise<Story[]> {
+  async getPublicStories(): Promise<Story[]> {
     return await db.select().from(stories).where(eq(stories.isPublished, true));
   }
 

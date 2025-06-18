@@ -989,13 +989,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Stories routes
+  // Public stories routes - only published stories
   app.get("/api/stories", async (req, res) => {
     try {
-      const stories = await storage.getStories();
+      const stories = await storage.getPublicStories();
       res.json(stories);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch stories" });
+      res.status(500).json({ message: "Failed to fetch public stories" });
     }
   });
 
@@ -1019,13 +1019,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/users/:userId/stories", requireAuth, async (req, res) => {
+  // User-specific stories routes (private by default)
+  app.get("/api/stories/:userId", requireAuth, async (req, res) => {
     try {
       const userId = req.params.userId;
+      const authenticatedUserId = (req.user as any)?.id;
+      
+      // Users can only access their own private stories
+      if (userId !== authenticatedUserId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
       const stories = await storage.getUserStories(userId);
       res.json(stories);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch user stories" });
+    }
+  });
+
+  // Legacy endpoint for backward compatibility
+  app.get("/api/users/:userId/stories", requireAuth, async (req, res) => {
+    try {
+      const userId = req.params.userId;
+      const authenticatedUserId = (req.user as any)?.id;
+      
+      // Users can only access their own private stories
+      if (userId !== authenticatedUserId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const stories = await storage.getUserStories(userId);
+      res.json(stories);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch user stories" });
+    }
+  });
+
+  // Publish/unpublish story endpoint
+  app.patch("/api/stories/:userId/:storyId/publish", requireAuth, async (req, res) => {
+    try {
+      const { userId, storyId } = req.params;
+      const { isPublished } = req.body;
+      const authenticatedUserId = (req.user as any)?.id;
+      
+      // Users can only publish their own stories
+      if (userId !== authenticatedUserId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const story = await storage.updateStory(parseInt(storyId), { isPublished });
+      res.json(story);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update story visibility" });
     }
   });
 
@@ -1082,7 +1127,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Step 4: Store story as baseline if possible
+  // Store story under user's private collection
+  app.post("/api/stories/:userId", requireAuth, async (req, res) => {
+    try {
+      const userId = req.params.userId;
+      const authenticatedUserId = (req.user as any)?.id;
+      
+      // Users can only create stories in their own collection
+      if (userId !== authenticatedUserId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const { title, content, category, analysis } = req.body;
+      
+      console.log("Storing story in user's private collection");
+      
+      // Create story in user's private collection (isPublished: false by default)
+      const story = await storage.createStory({
+        title,
+        content,
+        summary: analysis.summary,
+        category: analysis.category,
+        tags: analysis.suggestedTags,
+        extractedCharacters: analysis.characters,
+        extractedEmotions: analysis.emotions,
+        voiceSampleUrl: null,
+        coverImageUrl: null,
+        authorId: userId,
+        uploadType: 'user_created',
+        originalAudioUrl: null,
+        processingStatus: 'completed',
+        copyrightInfo: null,
+        licenseType: 'all_rights_reserved',
+        isPublished: false, // Private by default
+        isAdultContent: analysis.isAdultContent,
+      });
+
+      console.log("Story stored in user's private collection");
+      res.status(201).json(story);
+    } catch (error) {
+      console.error("Error storing user story:", error);
+      res.status(500).json({ message: "Failed to store story" });
+    }
+  });
+
+  // Legacy baseline endpoint for backward compatibility
   app.post("/api/stories/baseline", async (req, res) => {
     try {
       const { title, content, category, authorId, analysis } = req.body;

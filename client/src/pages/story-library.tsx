@@ -15,7 +15,7 @@ export default function StoryLibrary() {
   const { user } = useAuth();
   
   const { data: stories = [], isLoading } = useQuery<Story[]>({
-    queryKey: ["/api/users", user?.id, "stories"],
+    queryKey: ["/api/stories", user?.id],
     enabled: !!user?.id,
   });
 
