@@ -30,7 +30,8 @@ import {
   Volume2,
   Loader2,
   Check,
-  X
+  X,
+  Square
 } from "lucide-react";
 
 interface StoryAnalysis {
@@ -99,6 +100,10 @@ export default function UploadStory() {
   const [recordedAudio, setRecordedAudio] = useState<File | null>(null);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const audioRef = useRef<HTMLInputElement>(null);
+  
+  // Emotion voice recording
+  const [recordingEmotions, setRecordingEmotions] = useState<Record<string, boolean>>({});
+  const [emotionRecorders, setEmotionRecorders] = useState<Record<string, MediaRecorder>>({});
 
   // Create story with direct analysis data (for automated flow)
   const createStoryWithAnalysis = async (
@@ -507,6 +512,89 @@ export default function UploadStory() {
       toast({
         title: "Sample Generation Failed",
         description: error instanceof Error ? error.message : "Could not generate emotion sample.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const startEmotionRecording = async (emotionKey: string, emotion: any) => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      const chunks: BlobPart[] = [];
+
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          chunks.push(event.data);
+        }
+      };
+
+      recorder.onstop = async () => {
+        const audioBlob = new Blob(chunks, { type: 'audio/webm' });
+        await saveEmotionVoiceRecording(emotionKey, emotion, audioBlob);
+        
+        // Clean up
+        stream.getTracks().forEach(track => track.stop());
+        setEmotionRecorders(prev => {
+          const newRecorders = { ...prev };
+          delete newRecorders[emotionKey];
+          return newRecorders;
+        });
+      };
+
+      recorder.start();
+      
+      setEmotionRecorders(prev => ({ ...prev, [emotionKey]: recorder }));
+      setRecordingEmotions(prev => ({ ...prev, [emotionKey]: true }));
+
+      toast({
+        title: "Recording Started",
+        description: `Recording voice for ${emotion.emotion} emotion. Click stop when finished.`,
+      });
+
+    } catch (error) {
+      console.error("Failed to start recording:", error);
+      toast({
+        title: "Recording Failed",
+        description: "Could not access microphone. Please check permissions.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const stopEmotionRecording = (emotionKey: string) => {
+    const recorder = emotionRecorders[emotionKey];
+    if (recorder && recorder.state === 'recording') {
+      recorder.stop();
+      setRecordingEmotions(prev => ({ ...prev, [emotionKey]: false }));
+    }
+  };
+
+  const saveEmotionVoiceRecording = async (emotionKey: string, emotion: any, audioBlob: Blob) => {
+    try {
+      const formData = new FormData();
+      formData.append('audio', audioBlob, `emotion-${emotionKey}-${Date.now()}.webm`);
+      formData.append('emotion', emotion.emotion);
+      formData.append('intensity', emotion.intensity.toString());
+      formData.append('text', emotion.quote || emotion.context);
+      formData.append('userId', 'user_123'); // Test user ID
+      formData.append('storyId', analysis?.summary || 'temp_story');
+
+      const response = await apiRequest('/api/emotions/save-voice-sample', {
+        method: 'POST',
+        body: formData,
+      });
+
+      toast({
+        title: "Voice Recorded",
+        description: `Your voice sample for ${emotion.emotion} has been saved.`,
+      });
+
+    } catch (error) {
+      console.error("Failed to save voice recording:", error);
+      toast({
+        title: "Save Failed",
+        description: "Could not save voice recording.",
         variant: "destructive",
       });
     }
@@ -1231,6 +1319,9 @@ export default function UploadStory() {
                                                emotion.emotion === 'disappointment' ? Frown :
                                                Heart;
                             
+                            const emotionKey = `${groupIndex}-${emotionIndex}`;
+                            const isRecording = recordingEmotions[emotionKey];
+                            
                             return (
                               <div key={emotionIndex} className="bg-gray-700 rounded-lg p-4 border border-gray-500">
                                 <div className="flex items-center justify-between mb-2">
@@ -1241,20 +1332,36 @@ export default function UploadStory() {
                                       {emotion.intensity}/10
                                     </span>
                                   </div>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="text-gray-400 hover:text-white h-8 w-8 p-0"
-                                    onClick={() => playEmotionSample(emotion)}
-                                  >
-                                    <Play className="w-4 h-4" />
-                                  </Button>
+                                  <div className="flex items-center space-x-1">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="text-gray-400 hover:text-white h-8 w-8 p-0"
+                                      onClick={() => playEmotionSample(emotion)}
+                                    >
+                                      <Play className="w-4 h-4" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className={`h-8 w-8 p-0 ${isRecording ? 'text-red-500 animate-pulse' : 'text-gray-400 hover:text-white'}`}
+                                      onClick={() => isRecording ? stopEmotionRecording(emotionKey) : startEmotionRecording(emotionKey, emotion)}
+                                    >
+                                      {isRecording ? <Square className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                                    </Button>
+                                  </div>
                                 </div>
                                 <p className="text-sm text-gray-300 mb-2">{emotion.context}</p>
                                 {emotion.quote && (
                                   <p className="text-xs text-gray-400 italic bg-gray-600 p-2 rounded">
                                     "{emotion.quote}"
                                   </p>
+                                )}
+                                {isRecording && (
+                                  <div className="mt-2 text-xs text-red-400 flex items-center">
+                                    <div className="w-2 h-2 bg-red-500 rounded-full mr-2 animate-pulse"></div>
+                                    Recording your voice for grandma storytelling...
+                                  </div>
                                 )}
                               </div>
                             );
