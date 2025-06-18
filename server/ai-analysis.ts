@@ -339,12 +339,16 @@ function assignVoiceToCharacter(character: ExtractedCharacter): string {
   // Voice selection logic based on character attributes
   if (isFemale) {
     if (isMature || hasAuthority || name.includes('mother') || name.includes('queen')) {
+      console.log(`Selected nova for mature/authority female`);
       return 'nova';     // Mature, clear female voice for mothers, queens, mature women
     } else if (isYoung) {
+      console.log(`Selected shimmer for young female`);
       return 'shimmer';  // Young, bright female voice for girls
     } else if (isGentle) {
+      console.log(`Selected nova for gentle female`);
       return 'nova';     // Warm, nurturing female voice
     } else {
+      console.log(`Selected nova as default female voice`);
       return 'nova';     // Default female voice
     }
   } else if (isMale) {
