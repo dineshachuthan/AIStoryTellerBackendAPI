@@ -215,11 +215,7 @@ export default function StoryPlayer() {
           setIsPlaying(false);
           console.log("Story playback completed - reached end");
           
-          // Show completion notification
-          toast({
-            title: "Story Complete!",
-            description: "Your story has finished playing. You can replay or return to your stories.",
-          });
+          // Story completed - no intrusive notifications
           
           // Track completion for confidence meter
           if (confidenceTracking) {
@@ -232,22 +228,6 @@ export default function StoryPlayer() {
         console.error("Audio loading error:", error);
         setIsPlaying(false);
       };
-
-      audioRef.current.onloadstart = () => {
-        console.log("Audio loading started for:", segment.voiceUrl);
-      };
-
-      audioRef.current.oncanplay = () => {
-        console.log("Audio ready to play:", segment.voiceUrl, "Duration:", audioRef.current?.duration);
-      };
-
-      audioRef.current.onplaying = () => {
-        console.log("Audio is now playing:", segment.voiceUrl);
-      };
-
-      audioRef.current.onpause = () => {
-        console.log("Audio paused:", segment.voiceUrl);
-      };
       
       const playPromise = audioRef.current.play();
       if (playPromise) {
@@ -257,13 +237,6 @@ export default function StoryPlayer() {
           })
           .catch(error => {
             console.error("Audio playback error:", error);
-            if (error.name === 'NotAllowedError') {
-              toast({
-                title: "Audio Blocked",
-                description: "Please click the play button to enable audio playback.",
-                variant: "destructive",
-              });
-            }
             setIsPlaying(false);
           });
       }
@@ -479,131 +452,89 @@ export default function StoryPlayer() {
             </Card>
           )}
 
-          {/* Timeline */}
+          {/* Compact Player Controls */}
           <Card className="bg-dark-card border-gray-800">
-            <CardContent className="p-6">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between text-sm text-gray-text">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-3">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={skipToPrevious}
+                  disabled={currentSegmentIndex === 0}
+                  className="text-dark-text hover:bg-gray-800"
+                >
+                  <SkipBack className="h-5 w-5" />
+                </Button>
+                
+                <Button
+                  onClick={togglePlayPause}
+                  className="bg-tiktok-red hover:bg-tiktok-red/80 rounded-full w-12 h-12 flex items-center justify-center"
+                >
+                  {isPlaying ? (
+                    <Pause className="h-6 w-6" />
+                  ) : (
+                    <Play className="h-6 w-6 ml-0.5" />
+                  )}
+                </Button>
+                
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={skipToNext}
+                  disabled={!currentNarration || currentSegmentIndex === (currentNarration?.segments?.length || 0) - 1}
+                  className="text-dark-text hover:bg-gray-800"
+                >
+                  <SkipForward className="h-5 w-5" />
+                </Button>
+                
+                <div className="flex items-center space-x-2 text-xs text-gray-text">
                   <span>{formatTime(currentTime)}</span>
+                  <span>/</span>
                   <span>{formatTime(effectiveTotalDuration)}</span>
                 </div>
-                
-                <div 
-                  ref={timelineRef}
-                  className="relative h-2 bg-gray-700 rounded-full cursor-pointer"
-                  onClick={handleTimelineClick}
-                >
-                  <div 
-                    className="absolute top-0 left-0 h-full bg-tiktok-red rounded-full transition-all duration-100"
-                    style={{ width: `${progress}%` }}
-                  />
-                  
-                  {/* Segment markers */}
-                  {currentNarration?.segments?.map((segment, index) => (
-                    <div
-                      key={index}
-                      className="absolute top-0 w-0.5 h-full bg-gray-500 opacity-50"
-                      style={{ 
-                        left: `${effectiveTotalDuration > 0 ? (segment.startTime / effectiveTotalDuration) * 100 : 0}%` 
-                      }}
-                    />
-                  ))}
-                </div>
-                
-                <Progress value={progress} className="h-1" />
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Voice Cast */}
-          <Card className="bg-dark-card border-gray-800">
-            <CardHeader>
-              <CardTitle className="text-dark-text flex items-center">
-                <Users className="w-5 h-5 mr-2" />
-                Voice Cast
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {voiceAssignments.map((assignment: any) => (
-                  <div key={assignment.id} className="flex items-center space-x-3 p-3 bg-gray-800 rounded-lg">
-                    <div className="w-10 h-10 bg-tiktok-red rounded-full flex items-center justify-center">
-                      <span className="text-white font-semibold">
-                        {assignment.character?.name?.charAt(0) || 'C'}
-                      </span>
-                    </div>
-                    <div>
-                      <p className="text-dark-text font-medium">
-                        {assignment.character?.name || 'Character'}
-                      </p>
-                      <p className="text-gray-text text-sm">
-                        {assignment.user?.firstName || 'Anonymous'} {assignment.user?.lastName || ''}
-                      </p>
-                    </div>
-                    <div className="ml-auto">
-                      {assignment.isCompleted ? (
-                        <Badge className="bg-green-600 text-white">Complete</Badge>
-                      ) : (
-                        <Badge variant="outline" className="text-gray-400 border-gray-600">
-                          Pending
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
+              
+              <div 
+                ref={timelineRef}
+                className="relative h-2 bg-gray-700 rounded-full cursor-pointer mb-2"
+                onClick={handleTimelineClick}
+              >
+                <div 
+                  className="absolute top-0 left-0 h-full bg-tiktok-red rounded-full transition-all duration-100"
+                  style={{ width: `${progress}%` }}
+                />
+                
+                {/* Segment markers */}
+                {currentNarration?.segments?.map((segment, index) => (
+                  <div
+                    key={index}
+                    className="absolute top-0 w-0.5 h-full bg-gray-500 opacity-50"
+                    style={{ 
+                      left: `${effectiveTotalDuration > 0 ? (segment.startTime / effectiveTotalDuration) * 100 : 0}%` 
+                    }}
+                  />
                 ))}
               </div>
+              
+              <div className="flex items-center justify-center space-x-2">
+                <Volume2 className="h-4 w-4 text-gray-text" />
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.1"
+                  value={volume}
+                  onChange={(e) => setVolume(parseFloat(e.target.value))}
+                  className="w-20 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                />
+              </div>
             </CardContent>
           </Card>
+
+
         </div>
 
-        {/* Player Controls */}
-        <div className="bg-dark-card border-t border-gray-800 p-4">
-          <div className="flex items-center justify-center space-x-6">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={skipToPrevious}
-              disabled={currentSegmentIndex === 0}
-              className="text-dark-text hover:bg-gray-800"
-            >
-              <SkipBack className="h-6 w-6" />
-            </Button>
-            
-            <Button
-              onClick={togglePlayPause}
-              className="bg-tiktok-red hover:bg-tiktok-red/80 rounded-full w-16 h-16 flex items-center justify-center"
-            >
-              {isPlaying ? (
-                <Pause className="h-8 w-8" />
-              ) : (
-                <Play className="h-8 w-8 ml-1" />
-              )}
-            </Button>
-            
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={skipToNext}
-              disabled={!narration || currentSegmentIndex === narration.segments.length - 1}
-              className="text-dark-text hover:bg-gray-800"
-            >
-              <SkipForward className="h-6 w-6" />
-            </Button>
-          </div>
-          
-          <div className="flex items-center justify-center mt-4 space-x-2">
-            <Volume2 className="h-4 w-4 text-gray-text" />
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.1"
-              value={volume}
-              onChange={(e) => setVolume(parseFloat(e.target.value))}
-              className="w-24 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer"
-            />
-          </div>
-        </div>
+
       </div>
     </div>
   );
