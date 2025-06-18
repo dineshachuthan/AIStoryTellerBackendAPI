@@ -2,8 +2,8 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 
-// Directory to store cached images
-const CACHE_DIR = path.join(process.cwd(), 'cached-images');
+// Directory to store cached images - use persistent storage
+const CACHE_DIR = process.env.CACHE_DIR || path.join(process.cwd(), 'persistent-cache', 'images');
 
 // Ensure cache directory exists
 if (!fs.existsSync(CACHE_DIR)) {
