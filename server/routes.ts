@@ -536,105 +536,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log("No existing files to clean up");
       }
       
-      // Use a consistent filename pattern for easier caching
-      const timestamp = Date.now();
+      // Use constant filename to override previous recordings
       let fileName: string;
       let filePath: string;
       
-      // Convert WebM to MP3 with enhanced compatibility
+      // Save WebM files directly without conversion for testing
       if (audioFile.mimetype === 'audio/webm') {
-        // Save temporary WebM file with proper binary data handling
-        const tempWebmFile = `temp_${userId}-${emotion}-${intensity}-${timestamp}.webm`;
-        const tempWebmPath = path.join(cacheDir, tempWebmFile);
-        
-        // Ensure buffer is properly written as binary data
-        console.log(`Writing WebM buffer: ${audioFile.buffer.length} bytes`);
-        await fs.writeFile(tempWebmPath, audioFile.buffer, { flag: 'w' });
-        
-        fileName = `${userId}-${emotion}-${intensity}-${timestamp}.mp3`;
+        fileName = `${userId}-${emotion}-${intensity}.webm`;
         filePath = path.join(cacheDir, fileName);
         
-        try {
-          // Verify the WebM file was written properly
-          const stats = await fs.stat(tempWebmPath);
-          console.log(`WebM file size: ${stats.size} bytes`);
-          
-          if (stats.size === 0) {
-            throw new Error("WebM file is empty");
-          }
-          
-          // Direct conversion preserving original audio characteristics
-          await execAsync(`ffmpeg -i "${tempWebmPath}" -map 0:a -c:a libmp3lame -q:a 2 -ar 48000 -ac 1 -y "${filePath}"`);
-          
-          // Verify output file
-          const outputStats = await fs.stat(filePath);
-          console.log(`MP3 file size: ${outputStats.size} bytes`);
-          
-          // Clean up temporary file
-          await fs.unlink(tempWebmPath);
-        } catch (conversionError) {
-          console.error("Primary conversion failed:", conversionError);
-          // Fallback: Save original WebM file with correct extension for direct browser playback
-          const webmFilePath = filePath.replace('.mp3', '.webm');
-          await fs.copyFile(tempWebmPath, webmFilePath);
-          
-          // Update metadata to point to WebM file
-          fileName = fileName.replace('.mp3', '.webm');
-          filePath = webmFilePath;
-          
-          await fs.unlink(tempWebmPath);
-          console.log("Saved original WebM file as fallback");
-        }
-      } else if (audioFile.mimetype === 'audio/mp4' || audioFile.mimetype === 'audio/wav') {
-        // Convert other formats directly to MP3
-        const tempFileName = `temp_${userId}-${emotion}-${intensity}-${timestamp}.${audioFile.mimetype === 'audio/mp4' ? 'm4a' : 'wav'}`;
-        const tempFilePath = path.join(cacheDir, tempFileName);
-        await fs.writeFile(tempFilePath, audioFile.buffer);
+        console.log(`Saving WebM directly: ${audioFile.buffer.length} bytes`);
+        await fs.writeFile(filePath, audioFile.buffer);
         
-        fileName = `${userId}-${emotion}-${intensity}-${timestamp}.mp3`;
-        filePath = path.join(cacheDir, fileName);
+        const stats = await fs.stat(filePath);
+        console.log(`WebM file saved: ${stats.size} bytes`);
         
-        try {
-          await execAsync(`ffmpeg -i "${tempFilePath}" -acodec libmp3lame -b:a 128k -ar 44100 -ac 2 -y "${filePath}"`);
-          await fs.unlink(tempFilePath);
-        } catch (conversionError) {
-          console.error("Audio conversion failed, saving original format:", conversionError);
-          await fs.copyFile(tempFilePath, filePath);
-          await fs.unlink(tempFilePath);
-        }
+        // Update metadata to use WebM format
+        const metadata = {
+          userId,
+          storyId,
+          emotion,
+          intensity: parseInt(intensity),
+          text,
+          fileName,
+          filePath,
+          fileSize: audioFile.size,
+          timestamp: Date.now(),
+          mimeType: 'audio/webm',
+          originalMimeType: audioFile.mimetype,
+        };
+        
+        // Save metadata
+        const metadataPath = path.join(cacheDir, `${fileName}.json`);
+        await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2));
       } else {
-        // Direct save for MP3 files
-        fileName = `${userId}-${emotion}-${intensity}-${timestamp}.mp3`;
+        // Handle other audio formats with constant filename
+        fileName = `${userId}-${emotion}-${intensity}.mp3`;
         filePath = path.join(cacheDir, fileName);
         await fs.writeFile(filePath, audioFile.buffer);
+        
+        // Create metadata for non-WebM files
+        const metadata = {
+          userId,
+          storyId,
+          emotion,
+          intensity: parseInt(intensity),
+          text,
+          fileName,
+          filePath,
+          fileSize: audioFile.size,
+          timestamp: Date.now(),
+          mimeType: 'audio/mpeg',
+          originalMimeType: audioFile.mimetype,
+        };
+        
+        // Save metadata
+        const metadataPath = path.join(cacheDir, `${fileName}.json`);
+        await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2));
       }
-      
-      // Create metadata
-      const metadata = {
-        userId,
-        storyId,
-        emotion,
-        intensity: parseInt(intensity),
-        text,
-        fileName,
-        filePath,
-        fileSize: audioFile.size,
-        timestamp,
-        mimeType: 'audio/mpeg', // All files are converted to MP3
-        originalMimeType: audioFile.mimetype, // Keep track of original format
-      };
-      
-      // Save metadata
-      const metadataPath = path.join(cacheDir, `${fileName}.json`);
-      await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2));
       
       console.log(`Saved user voice sample: ${fileName} (${audioFile.size} bytes)`);
       
       res.json({ 
         message: "Voice sample saved successfully",
         fileName,
-        url: `/api/emotions/user-voice-sample/${fileName}`,
-        timestamp: timestamp // Include timestamp for cache busting
+        url: `/api/emotions/user-voice-sample/${fileName}`
       });
     } catch (error) {
       console.error("Voice sample save error:", error);
@@ -677,9 +643,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Voice sample not found" });
       }
       
-      // Set appropriate MIME type based on file extension
+      // Set appropriate MIME type and disable caching
       const isWebM = fileName.endsWith('.webm');
       res.setHeader('Content-Type', isWebM ? 'audio/webm' : 'audio/mpeg');
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
       res.sendFile(path.resolve(filePath));
     } catch (error) {
       console.error("Voice sample serve error:", error);

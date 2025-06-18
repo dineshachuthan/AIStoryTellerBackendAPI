@@ -664,8 +664,8 @@ export default function UploadStory() {
         body: formData,
       });
 
-      // Clear any cached audio URL and update with new recording URL
-      emotion.soundUrl = response.url + `?t=${Date.now()}`; // Add cache-busting timestamp
+      // Update with new recording URL (server handles cache prevention)
+      emotion.soundUrl = response.url;
       
       // Force re-render and clear any cached audio objects
       setEmotionsWithSounds(prev => 
