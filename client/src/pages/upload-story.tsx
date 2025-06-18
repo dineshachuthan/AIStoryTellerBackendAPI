@@ -518,6 +518,14 @@ export default function UploadStory() {
           readyState: audio.readyState,
           networkState: audio.networkState
         });
+        
+        // Additional debugging for audio context
+        console.log("Browser audio context state:", {
+          userInteracted: document.hasStoredUserActivation || true,
+          audioContextState: typeof AudioContext !== 'undefined' ? 'available' : 'unavailable',
+          srcUrl: audio.src,
+          currentSrc: audio.currentSrc
+        });
       };
 
       audio.onended = () => {
@@ -542,6 +550,19 @@ export default function UploadStory() {
         await audio.play();
         console.log("Audio play() completed successfully");
         console.log("Audio is now playing:", !audio.paused, "Current time:", audio.currentTime);
+        
+        // Check audio levels during playback
+        setTimeout(() => {
+          if (!audio.paused) {
+            console.log("Mid-playback check:", {
+              currentTime: audio.currentTime,
+              duration: audio.duration,
+              volume: audio.volume,
+              muted: audio.muted,
+              paused: audio.paused
+            });
+          }
+        }, 1000);
       } catch (playError: any) {
         console.error("Audio play() promise rejected:", playError);
         setPlayingEmotions(prev => ({ ...prev, [emotionKey]: false }));

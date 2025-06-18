@@ -525,24 +525,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let fileName: string;
       let filePath: string;
       
-      // Always convert to MP3 for better browser compatibility
-      if (audioFile.mimetype === 'audio/webm' || audioFile.mimetype === 'audio/mp4' || audioFile.mimetype === 'audio/wav') {
-        // Save temporary file first
-        const tempFileName = `temp_${userId}-${emotion}-${intensity}-${timestamp}.${audioFile.mimetype === 'audio/webm' ? 'webm' : audioFile.mimetype === 'audio/mp4' ? 'm4a' : 'wav'}`;
-        const tempFilePath = path.join(cacheDir, tempFileName);
-        await fs.writeFile(tempFilePath, audioFile.buffer);
+      // Convert WebM to WAV first, then to MP3 for better compatibility
+      if (audioFile.mimetype === 'audio/webm') {
+        // Save temporary WebM file
+        const tempWebmFile = `temp_${userId}-${emotion}-${intensity}-${timestamp}.webm`;
+        const tempWebmPath = path.join(cacheDir, tempWebmFile);
+        await fs.writeFile(tempWebmPath, audioFile.buffer);
         
-        // Convert to MP3 using FFmpeg
+        // Convert WebM to WAV first (better for preserving audio quality)
+        const tempWavFile = `temp_${userId}-${emotion}-${intensity}-${timestamp}.wav`;
+        const tempWavPath = path.join(cacheDir, tempWavFile);
+        
         fileName = `${userId}-${emotion}-${intensity}-${timestamp}.mp3`;
         filePath = path.join(cacheDir, fileName);
         
         try {
-          await execAsync(`ffmpeg -i "${tempFilePath}" -acodec mp3 -y "${filePath}"`);
-          // Clean up temporary file
+          // Two-step conversion: WebM -> WAV -> MP3 for best quality
+          await execAsync(`ffmpeg -i "${tempWebmPath}" -ar 44100 -ac 2 -y "${tempWavPath}"`);
+          await execAsync(`ffmpeg -i "${tempWavPath}" -acodec libmp3lame -b:a 128k -ar 44100 -ac 2 -y "${filePath}"`);
+          
+          // Clean up temporary files
+          await fs.unlink(tempWebmPath);
+          await fs.unlink(tempWavPath);
+        } catch (conversionError) {
+          console.error("Audio conversion failed:", conversionError);
+          // Fallback: try direct conversion
+          try {
+            await execAsync(`ffmpeg -i "${tempWebmPath}" -acodec libmp3lame -b:a 96k -ar 22050 -ac 1 -y "${filePath}"`);
+            await fs.unlink(tempWebmPath);
+          } catch (fallbackError) {
+            console.error("Fallback conversion also failed, saving original:", fallbackError);
+            await fs.copyFile(tempWebmPath, filePath);
+            await fs.unlink(tempWebmPath);
+          }
+        }
+      } else if (audioFile.mimetype === 'audio/mp4' || audioFile.mimetype === 'audio/wav') {
+        // Convert other formats directly to MP3
+        const tempFileName = `temp_${userId}-${emotion}-${intensity}-${timestamp}.${audioFile.mimetype === 'audio/mp4' ? 'm4a' : 'wav'}`;
+        const tempFilePath = path.join(cacheDir, tempFileName);
+        await fs.writeFile(tempFilePath, audioFile.buffer);
+        
+        fileName = `${userId}-${emotion}-${intensity}-${timestamp}.mp3`;
+        filePath = path.join(cacheDir, fileName);
+        
+        try {
+          await execAsync(`ffmpeg -i "${tempFilePath}" -acodec libmp3lame -b:a 128k -ar 44100 -ac 2 -y "${filePath}"`);
           await fs.unlink(tempFilePath);
         } catch (conversionError) {
           console.error("Audio conversion failed, saving original format:", conversionError);
-          // Fallback: save original file if conversion fails
           await fs.copyFile(tempFilePath, filePath);
           await fs.unlink(tempFilePath);
         }
