@@ -191,8 +191,14 @@ export default function StoryPlayer() {
   }, [isPlaying, narration, currentSegmentIndex]);
 
   const playSegmentAudio = (segment: NarrationSegment, segmentIndex: number) => {
-    if (segment.voiceUrl && audioRef.current) {
+    if (segment.voiceUrl) {
       console.log("Playing segment:", segment.text, "URL:", segment.voiceUrl, "Index:", segmentIndex);
+      
+      // Create new audio element if needed
+      if (!audioRef.current) {
+        audioRef.current = new Audio();
+      }
+      
       audioRef.current.src = segment.voiceUrl;
       audioRef.current.volume = volume;
       
@@ -222,10 +228,45 @@ export default function StoryPlayer() {
         }
       };
       
-      audioRef.current.play().catch(error => {
-        console.error("Audio playback error:", error);
+      audioRef.current.onerror = (error) => {
+        console.error("Audio loading error:", error);
         setIsPlaying(false);
-      });
+      };
+
+      audioRef.current.onloadstart = () => {
+        console.log("Audio loading started for:", segment.voiceUrl);
+      };
+
+      audioRef.current.oncanplay = () => {
+        console.log("Audio ready to play:", segment.voiceUrl, "Duration:", audioRef.current?.duration);
+      };
+
+      audioRef.current.onplaying = () => {
+        console.log("Audio is now playing:", segment.voiceUrl);
+      };
+
+      audioRef.current.onpause = () => {
+        console.log("Audio paused:", segment.voiceUrl);
+      };
+      
+      const playPromise = audioRef.current.play();
+      if (playPromise) {
+        playPromise
+          .then(() => {
+            console.log("Audio playback started successfully");
+          })
+          .catch(error => {
+            console.error("Audio playback error:", error);
+            if (error.name === 'NotAllowedError') {
+              toast({
+                title: "Audio Blocked",
+                description: "Please click the play button to enable audio playback.",
+                variant: "destructive",
+              });
+            }
+            setIsPlaying(false);
+          });
+      }
     }
   };
 

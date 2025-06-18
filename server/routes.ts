@@ -901,7 +901,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/stories/:id/character-narration", async (req, res) => {
     try {
       const storyId = parseInt(req.params.id);
-      const { useUserVoices = true, userId = 'user_123' } = req.body;
+      const { useUserVoices = false, userId = 'user_123' } = req.body;
 
       if (!storyId) {
         return res.status(400).json({ message: "Story ID is required" });
