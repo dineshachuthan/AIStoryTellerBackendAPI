@@ -67,18 +67,18 @@ function selectEmotionVoice(emotion: string, intensity: number): 'alloy' | 'echo
     'excited': 'shimmer',
     'sad': 'echo',
     'angry': 'onyx',
-    'fear': 'fable',
+    'fear': 'nova',
     'surprise': 'nova',
     'love': 'shimmer',
     'anxiety': 'echo',
     'frustration': 'onyx',
-    'wisdom': 'fable',
-    'patience': 'alloy',
-    'understanding': 'alloy',
+    'wisdom': 'nova',  // Changed to nova for clearer female voice
+    'patience': 'nova',
+    'understanding': 'nova',
     'compassion': 'nova',
     'greed': 'onyx',
     'disappointment': 'echo',
-    'realization': 'fable',
+    'realization': 'nova',
   };
   
   return emotionVoiceMap[emotion] || 'alloy';

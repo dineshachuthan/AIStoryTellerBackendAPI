@@ -237,30 +237,79 @@ export async function transcribeAudio(audioBuffer: Buffer): Promise<string> {
   }
 }
 
-// Voice assignment function for analysis phase
+// Advanced voice assignment function that considers multiple character attributes
 function assignVoiceToCharacter(character: ExtractedCharacter): string {
-  // Map character names and roles to specific voices for maximum distinction
-  const characterVoiceMap: { [key: string]: string } = {
-    'Boy': 'echo',        // Higher, younger male voice
-    'Mother': 'fable',    // Mature, warmer female voice (more aged sounding)
-    'Father': 'onyx',     // Deep, authoritative male voice
-    'Girl': 'shimmer',    // Light, young female voice
-    'Narrator': 'alloy',  // Neutral narrator voice
-  };
-
-  // First check for character name match (case insensitive)
-  const nameKey = Object.keys(characterVoiceMap).find(key => 
-    key.toLowerCase() === character.name.toLowerCase()
+  // Analyze character traits and description for voice selection
+  const description = character.description.toLowerCase();
+  const personality = character.personality.toLowerCase();
+  const traits = character.traits.map(t => t.toLowerCase());
+  const name = character.name.toLowerCase();
+  
+  // Gender detection from name and description
+  const femaleIndicators = ['mother', 'girl', 'woman', 'female', 'she', 'her', 'mrs', 'miss', 'lady'];
+  const maleIndicators = ['boy', 'man', 'male', 'he', 'him', 'mr', 'father', 'sir'];
+  
+  const isFemale = femaleIndicators.some(indicator => 
+    name.includes(indicator) || description.includes(indicator) || personality.includes(indicator)
   );
-  if (nameKey) {
-    return characterVoiceMap[nameKey];
+  const isMale = maleIndicators.some(indicator => 
+    name.includes(indicator) || description.includes(indicator) || personality.includes(indicator)
+  );
+  
+  // Age detection from traits and description
+  const youngIndicators = ['young', 'child', 'kid', 'little', 'small', 'boy', 'girl'];
+  const matureIndicators = ['old', 'elderly', 'wise', 'experienced', 'mother', 'father', 'mature'];
+  
+  const isYoung = youngIndicators.some(indicator => 
+    description.includes(indicator) || personality.includes(indicator) || traits.includes(indicator)
+  );
+  const isMature = matureIndicators.some(indicator => 
+    description.includes(indicator) || personality.includes(indicator) || traits.includes(indicator)
+  );
+  
+  // Authority/role detection
+  const authorityIndicators = ['wise', 'leader', 'teacher', 'mentor', 'authoritative', 'commanding'];
+  const gentleIndicators = ['kind', 'gentle', 'soft', 'caring', 'nurturing', 'supportive'];
+  const dramaticIndicators = ['dramatic', 'intense', 'passionate', 'emotional', 'expressive'];
+  
+  const hasAuthority = authorityIndicators.some(indicator => 
+    personality.includes(indicator) || traits.includes(indicator)
+  );
+  const isGentle = gentleIndicators.some(indicator => 
+    personality.includes(indicator) || traits.includes(indicator)
+  );
+  const isDramatic = dramaticIndicators.some(indicator => 
+    personality.includes(indicator) || traits.includes(indicator)
+  );
+  
+  // Voice selection logic based on character attributes
+  if (isFemale) {
+    if (isMature || hasAuthority) {
+      return 'nova';     // Mature, clear female voice
+    } else if (isYoung) {
+      return 'shimmer';  // Young, bright female voice
+    } else if (isGentle) {
+      return 'nova';     // Warm, nurturing female voice
+    } else {
+      return 'nova';     // Default female voice
+    }
+  } else if (isMale) {
+    if (isYoung) {
+      return 'echo';     // Young male voice
+    } else if (hasAuthority || isMature) {
+      return 'onyx';     // Deep, authoritative male voice
+    } else if (isDramatic) {
+      return 'fable';    // Expressive male voice
+    } else {
+      return 'echo';     // Default male voice
+    }
   }
-
-  // Map character roles to voices as fallback
+  
+  // Role-based fallback for ambiguous cases
   const roleVoiceMap: { [key: string]: string } = {
     'protagonist': 'echo',     // Young voice for main character
     'antagonist': 'onyx',      // Deeper, more intense voice
-    'supporting': 'fable',     // Supporting character voice (changed to fable for Mother)
+    'supporting': 'nova',      // Default to female for supporting characters
     'narrator': 'alloy',       // Neutral narrator voice
     'other': 'shimmer'         // Alternative voice for others
   };
