@@ -415,14 +415,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const userVoiceDir = path.join(process.cwd(), 'persistent-cache', 'user-voice-samples');
         try {
           const files = await fs.readdir(userVoiceDir);
-          const userVoiceFile = files.find(file => 
+          const matchingFiles = files.filter(file => 
             file.startsWith(`${userId}-${emotion}-${intensity}-`) && 
             file.endsWith('.mp3')
           );
           
-          if (userVoiceFile) {
-            const userVoiceUrl = `/api/emotions/user-voice-sample/${userVoiceFile}`;
-            console.log("Using user-recorded voice override:", userVoiceFile);
+          if (matchingFiles.length > 0) {
+            // Get the most recent file by timestamp (last part of filename before .mp3)
+            const latestFile = matchingFiles.sort((a, b) => {
+              const timestampA = parseInt(a.split('-').pop()?.replace('.mp3', '') || '0');
+              const timestampB = parseInt(b.split('-').pop()?.replace('.mp3', '') || '0');
+              return timestampB - timestampA; // Sort descending (newest first)
+            })[0];
+            
+            const userVoiceUrl = `/api/emotions/user-voice-sample/${latestFile}`;
+            console.log("Using user-recorded voice override:", latestFile);
             return res.json({ url: userVoiceUrl });
           }
         } catch (error) {
