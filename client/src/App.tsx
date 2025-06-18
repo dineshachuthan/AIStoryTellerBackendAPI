@@ -34,7 +34,6 @@ function Router() {
 
   return (
     <>
-      {isAuthenticated && <AppHeader />}
       <Switch>
         <Route path="/login" component={Login} />
         <Route path="/register" component={Register} />
