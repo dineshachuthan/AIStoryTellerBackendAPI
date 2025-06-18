@@ -35,6 +35,21 @@ export const localUsers = pgTable("local_users", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// User session metadata table for browser/device detection and configuration
+export const userSessionMetadata = pgTable("user_session_metadata", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id),
+  sessionId: varchar("session_id").notNull(),
+  deviceInfo: jsonb("device_info").notNull(), // DeviceInfo object
+  browserInfo: jsonb("browser_info").notNull(), // BrowserInfo object
+  networkInfo: jsonb("network_info").notNull(), // NetworkInfo object
+  capabilities: jsonb("capabilities").notNull(), // Capabilities object
+  preferences: jsonb("preferences").notNull(), // User preferences
+  sessionConfig: jsonb("session_config"), // Generated configuration for this session
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // User voice samples table for capturing emotional and sound expressions
 export const userVoiceSamples = pgTable("user_voice_samples", {
   id: serial("id").primaryKey(),
