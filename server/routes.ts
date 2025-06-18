@@ -12,7 +12,11 @@ import { grandmaVoiceNarrator } from "./voice-narrator";
 import multer from "multer";
 import path from "path";
 import fs from "fs/promises";
+import { exec } from "child_process";
+import { promisify } from "util";
 import OpenAI from "openai";
+
+const execAsync = promisify(exec);
 
 // Character detection function for emotion samples
 function detectCharacterInText(text: string, characters: any[]): any | null {
@@ -531,10 +535,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Convert to MP3 using FFmpeg
         fileName = `${userId}-${emotion}-${intensity}-${timestamp}.mp3`;
         filePath = path.join(cacheDir, fileName);
-        
-        const { exec } = require('child_process');
-        const { promisify } = require('util');
-        const execAsync = promisify(exec);
         
         try {
           await execAsync(`ffmpeg -i "${tempFilePath}" -acodec mp3 -y "${filePath}"`);
