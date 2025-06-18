@@ -219,11 +219,31 @@ export default function UploadStory() {
       });
       
       setAnalysis(result);
-      setCurrentStep(2);
       
-      // Automatically proceed to assignments and story creation
+      // Automatically proceed through all steps without stopping
       setTimeout(() => {
-        proceedToAssignments(result);
+        // Initialize characters and emotions with defaults
+        const charactersWithDefaults = result.characters.map(char => ({
+          ...char,
+          imageUrl: `/api/characters/default-image?name=${encodeURIComponent(char.name)}&role=${char.role}`
+        }));
+
+        const emotionsWithDefaults = result.emotions.map(emotion => ({
+          ...emotion,
+          soundUrl: `/api/emotions/default-sound?emotion=${emotion.emotion}&intensity=${emotion.intensity}`
+        }));
+
+        setCharactersWithImages(charactersWithDefaults);
+        setEmotionsWithSounds(emotionsWithDefaults);
+        setCurrentStep(3);
+
+        // Skip to story creation automatically
+        setTimeout(() => {
+          setCurrentStep(4);
+          setTimeout(() => {
+            createStory();
+          }, 500);
+        }, 1000);
       }, 1000);
     } catch (error) {
       console.error("Analysis error:", error);
@@ -237,19 +257,18 @@ export default function UploadStory() {
     }
   };
 
-  // Step 3: Assign Images and Sounds
-  const proceedToAssignments = async (analysisData?: StoryAnalysis) => {
-    const currentAnalysis = analysisData || analysis;
-    if (!currentAnalysis) return;
+  // Step 3: Manual assignment flow (for button clicks)
+  const proceedToAssignments = async () => {
+    if (!analysis) return;
 
     // Initialize characters with default images
-    const charactersWithDefaults = currentAnalysis.characters.map(char => ({
+    const charactersWithDefaults = analysis.characters.map(char => ({
       ...char,
       imageUrl: `/api/characters/default-image?name=${encodeURIComponent(char.name)}&role=${char.role}`
     }));
 
     // Initialize emotions with default sounds
-    const emotionsWithDefaults = currentAnalysis.emotions.map(emotion => ({
+    const emotionsWithDefaults = analysis.emotions.map(emotion => ({
       ...emotion,
       soundUrl: `/api/emotions/default-sound?emotion=${emotion.emotion}&intensity=${emotion.intensity}`
     }));
@@ -257,30 +276,6 @@ export default function UploadStory() {
     setCharactersWithImages(charactersWithDefaults);
     setEmotionsWithSounds(emotionsWithDefaults);
     setCurrentStep(3);
-
-    // Automatically proceed to story creation when called from analysis
-    if (analysisData) {
-      setTimeout(() => {
-        createStoryAutomatically(currentAnalysis, charactersWithDefaults, emotionsWithDefaults);
-      }, 1000);
-    }
-  };
-
-  // Wrapper for manual button clicks
-  const handleProceedToAssignments = () => {
-    proceedToAssignments();
-  };
-
-  // Automated story creation function
-  const createStoryAutomatically = async (
-    currentAnalysis: StoryAnalysis, 
-    charactersWithDefaults: CharacterWithImage[], 
-    emotionsWithDefaults: EmotionWithSound[]
-  ) => {
-    setCurrentStep(4);
-    setTimeout(() => {
-      createStory();
-    }, 1000);
   };
 
   const generateCharacterImage = async (characterIndex: number) => {
@@ -329,14 +324,17 @@ export default function UploadStory() {
 
   // Step 4: Create and Test Story
   const createStory = async () => {
-    if (!analysis || !storyTitle || !storyContent) {
+    if (!analysis || !storyContent) {
       toast({
         title: "Missing Information",
-        description: "Please ensure you have entered a title and content for your story.",
+        description: "Please ensure you have entered content for your story.",
         variant: "destructive",
       });
       return;
     }
+
+    // Auto-generate title if not provided
+    const finalTitle = storyTitle.trim() || generateTitleFromContent(storyContent, analysis) || "Untitled Story";
 
     setIsCreatingStory(true);
 
@@ -372,8 +370,8 @@ export default function UploadStory() {
       const finalCharacters = await Promise.all(imagePromises);
 
       const storyData = {
-        title: storyTitle || 'Untitled Story',
-        content: storyContent || 'No content provided',
+        title: finalTitle,
+        content: storyContent,
         category: analysis.category || 'General',
         summary: analysis.summary || null,
         isAdultContent: analysis.isAdultContent || false,
