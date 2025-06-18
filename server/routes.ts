@@ -635,6 +635,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`Saved user voice sample: ${fileName} (${audioFile.size} bytes)`);
       
+      // Create database record for the voice sample
+      try {
+        const audioUrl = `/api/emotions/user-voice-sample/${fileName}`;
+        await storage.createUserVoiceSample({
+          userId,
+          sampleType: 'emotion',
+          label: emotion,
+          audioUrl,
+          duration: null, // Will be determined when played
+          isCompleted: true,
+        });
+        console.log(`Created database record for voice sample: ${emotion}`);
+      } catch (dbError) {
+        console.error("Failed to create database record:", dbError);
+        // Continue even if DB creation fails - file is saved
+      }
+      
       res.json({ 
         message: "Voice sample saved successfully",
         fileName,
