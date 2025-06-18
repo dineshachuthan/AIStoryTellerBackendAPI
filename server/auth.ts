@@ -1,174 +1,49 @@
-import passport from "passport";
-import { Strategy as GoogleStrategy } from "passport-google-oauth20";
-import { Strategy as MicrosoftStrategy } from "passport-microsoft";
-import { Strategy as FacebookStrategy } from "passport-facebook";
-import { Strategy as LocalStrategy } from "passport-local";
-import bcrypt from "bcryptjs";
-import session from "express-session";
-import connectPg from "connect-pg-simple";
-import type { Express, RequestHandler } from "express";
-import { storage } from "./storage";
-import type { User } from "@shared/schema";
+import passport from 'passport';
+import { Strategy as LocalStrategy } from 'passport-local';
+import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
+import { Strategy as FacebookStrategy } from 'passport-facebook';
+import { Strategy as MicrosoftStrategy } from 'passport-microsoft';
+import bcrypt from 'bcryptjs';
+import session from 'express-session';
+import ConnectPgSimple from 'connect-pg-simple';
+import type { Express, RequestHandler } from 'express';
+import { storage } from './storage';
+import { pool } from './db';
 
+// Session configuration
 export function getSession() {
-  const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
-  const pgStore = connectPg(session);
-  const sessionStore = new pgStore({
-    conString: process.env.DATABASE_URL,
-    createTableIfMissing: false,
-    ttl: sessionTtl,
-    tableName: "sessions",
+  const PgSession = ConnectPgSimple(session);
+  const sessionStore = new PgSession({
+    pool: pool,
+    createTableIfMissing: true,
+    tableName: 'sessions',
   });
-  
+
   return session({
-    secret: process.env.SESSION_SECRET || "deevee-secret-key-dev",
     store: sessionStore,
+    secret: process.env.SESSION_SECRET || 'your-session-secret-key',
     resave: false,
     saveUninitialized: false,
     cookie: {
+      secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      maxAge: sessionTtl,
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
     },
   });
 }
 
+// Passport configuration
 export async function setupAuth(app: Express) {
   app.use(getSession());
   app.use(passport.initialize());
   app.use(passport.session());
 
-  // Google OAuth Strategy
-  if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
-    passport.use(
-      new GoogleStrategy(
-        {
-          clientID: process.env.GOOGLE_CLIENT_ID,
-          clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-          callbackURL: "/api/auth/google/callback",
-        },
-        async (accessToken, refreshToken, profile, done) => {
-          try {
-            const user = await storage.upsertUser({
-              id: `google_${profile.id}`,
-              email: profile.emails?.[0]?.value || null,
-              firstName: profile.name?.givenName || null,
-              lastName: profile.name?.familyName || null,
-              displayName: profile.displayName,
-              profileImageUrl: profile.photos?.[0]?.value || null,
-              provider: "google",
-              providerId: profile.id,
-              isAdmin: false,
-            });
-            return done(null, user);
-          } catch (error) {
-            return done(error, null);
-          }
-        }
-      )
-    );
-  }
-
-  // Microsoft OAuth Strategy  
-  if (process.env.MICROSOFT_CLIENT_ID && process.env.MICROSOFT_CLIENT_SECRET) {
-    passport.use(
-      new MicrosoftStrategy(
-        {
-          clientID: process.env.MICROSOFT_CLIENT_ID,
-          clientSecret: process.env.MICROSOFT_CLIENT_SECRET,
-          callbackURL: "/api/auth/microsoft/callback",
-          scope: ["user.read"],
-        },
-        async (accessToken, refreshToken, profile, done) => {
-          try {
-            const user = await storage.upsertUser({
-              id: `microsoft_${profile.id}`,
-              email: profile.emails?.[0]?.value || null,
-              firstName: profile.name?.givenName || null,
-              lastName: profile.name?.familyName || null,
-              displayName: profile.displayName,
-              profileImageUrl: profile.photos?.[0]?.value || null,
-              provider: "microsoft",
-              providerId: profile.id,
-              isAdmin: false,
-            });
-            return done(null, user);
-          } catch (error) {
-            return done(error, null);
-          }
-        }
-      )
-    );
-  }
-
-  // Facebook OAuth Strategy
-  if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
-    passport.use(
-      new FacebookStrategy(
-        {
-          clientID: process.env.FACEBOOK_APP_ID,
-          clientSecret: process.env.FACEBOOK_APP_SECRET,
-          callbackURL: "/api/auth/facebook/callback",
-          profileFields: ["id", "emails", "name", "photos"],
-        },
-        async (accessToken, refreshToken, profile, done) => {
-          try {
-            const user = await storage.upsertUser({
-              id: `facebook_${profile.id}`,
-              email: profile.emails?.[0]?.value || null,
-              firstName: profile.name?.givenName || null,
-              lastName: profile.name?.familyName || null,
-              displayName: profile.displayName,
-              profileImageUrl: profile.photos?.[0]?.value || null,
-              provider: "facebook",
-              providerId: profile.id,
-              isAdmin: false,
-            });
-            return done(null, user);
-          } catch (error) {
-            return done(error, null);
-          }
-        }
-      )
-    );
-  }
-
-  // Local Strategy for email/password login
-  passport.use(
-    new LocalStrategy(
-      {
-        usernameField: "email",
-        passwordField: "password",
-      },
-      async (email, password, done) => {
-        try {
-          const user = await storage.getUserByEmail(email);
-          if (!user || user.provider !== "local") {
-            return done(null, false, { message: "Invalid credentials" });
-          }
-
-          const localUser = await storage.getLocalUser(user.id);
-          if (!localUser || !localUser.passwordHash) {
-            return done(null, false, { message: "Invalid credentials" });
-          }
-
-          const isValidPassword = await bcrypt.compare(password, localUser.passwordHash);
-          if (!isValidPassword) {
-            return done(null, false, { message: "Invalid credentials" });
-          }
-
-          return done(null, user);
-        } catch (error) {
-          return done(error);
-        }
-      }
-    )
-  );
-
+  // Serialize user for session
   passport.serializeUser((user: any, done) => {
     done(null, user.id);
   });
 
+  // Deserialize user from session
   passport.deserializeUser(async (id: string, done) => {
     try {
       const user = await storage.getUser(id);
@@ -178,96 +53,252 @@ export async function setupAuth(app: Express) {
     }
   });
 
-  // Auth routes
-  app.get("/api/auth/google", passport.authenticate("google", { scope: ["profile", "email"] }));
-  app.get("/api/auth/google/callback", passport.authenticate("google", { failureRedirect: "/login" }), (req, res) => {
-    res.redirect("/");
-  });
-
-  app.get("/api/auth/microsoft", passport.authenticate("microsoft"));
-  app.get("/api/auth/microsoft/callback", passport.authenticate("microsoft", { failureRedirect: "/login" }), (req, res) => {
-    res.redirect("/");
-  });
-
-  app.get("/api/auth/facebook", passport.authenticate("facebook", { scope: ["email"] }));
-  app.get("/api/auth/facebook/callback", passport.authenticate("facebook", { failureRedirect: "/login" }), (req, res) => {
-    res.redirect("/");
-  });
-
-  app.post("/api/auth/login", passport.authenticate("local"), (req, res) => {
-    res.json({ success: true, user: req.user });
-  });
-
-  app.post("/api/auth/register", async (req, res) => {
-    try {
-      const { email, password, firstName, lastName, displayName } = req.body;
-      
-      if (!email || !password) {
-        return res.status(400).json({ message: "Email and password are required" });
-      }
-
-      const existingUser = await storage.getUserByEmail(email);
-      if (existingUser) {
-        return res.status(400).json({ message: "User already exists" });
-      }
-
-      const hashedPassword = await bcrypt.hash(password, 12);
-      const userId = `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
-      const user = await storage.upsertUser({
-        id: userId,
-        email,
-        firstName: firstName || null,
-        lastName: lastName || null,
-        displayName: displayName || `${firstName || ""} ${lastName || ""}`.trim() || email,
-        profileImageUrl: null,
-        provider: "local",
-        providerId: userId,
-        isAdmin: false,
-      });
-
-      await storage.createLocalUser(userId, hashedPassword);
-
-      req.login(user, (err) => {
-        if (err) {
-          return res.status(500).json({ message: "Login failed after registration" });
+  // Local strategy for email/password authentication
+  passport.use(new LocalStrategy(
+    {
+      usernameField: 'email',
+      passwordField: 'password',
+    },
+    async (email, password, done) => {
+      try {
+        const user = await storage.getUserByEmail(email);
+        if (!user) {
+          return done(null, false, { message: 'Invalid email or password' });
         }
-        res.json({ success: true, user });
-      });
-    } catch (error) {
-      console.error("Registration error:", error);
-      res.status(500).json({ message: "Registration failed" });
-    }
-  });
 
-  app.post("/api/auth/logout", (req, res) => {
-    req.logout((err) => {
-      if (err) {
-        return res.status(500).json({ message: "Logout failed" });
+        const localUser = await storage.getLocalUser(user.id);
+        if (!localUser) {
+          return done(null, false, { message: 'Invalid email or password' });
+        }
+
+        const isValidPassword = await bcrypt.compare(password, localUser.passwordHash);
+        if (!isValidPassword) {
+          return done(null, false, { message: 'Invalid email or password' });
+        }
+
+        // Update last login time
+        await storage.updateUser(user.id, { lastLoginAt: new Date() });
+
+        return done(null, user);
+      } catch (error) {
+        return done(error);
       }
-      res.json({ success: true });
-    });
-  });
-
-  app.get("/api/auth/user", (req, res) => {
-    if (req.isAuthenticated()) {
-      res.json(req.user);
-    } else {
-      res.status(401).json({ message: "Not authenticated" });
     }
-  });
+  ));
+
+  // Google OAuth strategy
+  if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+    passport.use(new GoogleStrategy(
+      {
+        clientID: process.env.GOOGLE_CLIENT_ID,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        callbackURL: '/api/auth/google/callback',
+      },
+      async (accessToken, refreshToken, profile, done) => {
+        try {
+          // Check if user exists with this Google provider
+          let user = await storage.getUserByProvider('google', profile.id);
+          
+          if (user) {
+            // Update last login time
+            await storage.updateUser(user.id, { lastLoginAt: new Date() });
+            return done(null, user);
+          }
+
+          // Check if user exists with same email
+          const email = profile.emails?.[0]?.value;
+          if (email) {
+            user = await storage.getUserByEmail(email);
+            if (user) {
+              // Link Google account to existing user
+              await storage.createUserProvider({
+                userId: user.id,
+                provider: 'google',
+                providerId: profile.id,
+                providerData: profile._json,
+              });
+              await storage.updateUser(user.id, { lastLoginAt: new Date() });
+              return done(null, user);
+            }
+          }
+
+          // Create new user
+          const newUser = await storage.createUser({
+            id: `google_${profile.id}`,
+            email: email || null,
+            firstName: profile.name?.givenName || null,
+            lastName: profile.name?.familyName || null,
+            displayName: profile.displayName || null,
+            profileImageUrl: profile.photos?.[0]?.value || null,
+            isEmailVerified: email ? true : false,
+            lastLoginAt: new Date(),
+          });
+
+          // Create provider link
+          await storage.createUserProvider({
+            userId: newUser.id,
+            provider: 'google',
+            providerId: profile.id,
+            providerData: profile._json,
+          });
+
+          return done(null, newUser);
+        } catch (error) {
+          return done(error);
+        }
+      }
+    ));
+  }
+
+  // Facebook OAuth strategy
+  if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
+    passport.use(new FacebookStrategy(
+      {
+        clientID: process.env.FACEBOOK_APP_ID,
+        clientSecret: process.env.FACEBOOK_APP_SECRET,
+        callbackURL: '/api/auth/facebook/callback',
+        profileFields: ['id', 'emails', 'name', 'picture'],
+      },
+      async (accessToken, refreshToken, profile, done) => {
+        try {
+          // Check if user exists with this Facebook provider
+          let user = await storage.getUserByProvider('facebook', profile.id);
+          
+          if (user) {
+            // Update last login time
+            await storage.updateUser(user.id, { lastLoginAt: new Date() });
+            return done(null, user);
+          }
+
+          // Check if user exists with same email
+          const email = profile.emails?.[0]?.value;
+          if (email) {
+            user = await storage.getUserByEmail(email);
+            if (user) {
+              // Link Facebook account to existing user
+              await storage.createUserProvider({
+                userId: user.id,
+                provider: 'facebook',
+                providerId: profile.id,
+                providerData: profile._json,
+              });
+              await storage.updateUser(user.id, { lastLoginAt: new Date() });
+              return done(null, user);
+            }
+          }
+
+          // Create new user
+          const newUser = await storage.createUser({
+            id: `facebook_${profile.id}`,
+            email: email || null,
+            firstName: profile.name?.givenName || null,
+            lastName: profile.name?.familyName || null,
+            displayName: profile.displayName || null,
+            profileImageUrl: profile.photos?.[0]?.value || null,
+            isEmailVerified: email ? true : false,
+            lastLoginAt: new Date(),
+          });
+
+          // Create provider link
+          await storage.createUserProvider({
+            userId: newUser.id,
+            provider: 'facebook',
+            providerId: profile.id,
+            providerData: profile._json,
+          });
+
+          return done(null, newUser);
+        } catch (error) {
+          return done(error);
+        }
+      }
+    ));
+  }
+
+  // Microsoft OAuth strategy
+  if (process.env.MICROSOFT_CLIENT_ID && process.env.MICROSOFT_CLIENT_SECRET) {
+    passport.use(new MicrosoftStrategy(
+      {
+        clientID: process.env.MICROSOFT_CLIENT_ID,
+        clientSecret: process.env.MICROSOFT_CLIENT_SECRET,
+        callbackURL: '/api/auth/microsoft/callback',
+        scope: ['user.read'],
+      },
+      async (accessToken, refreshToken, profile, done) => {
+        try {
+          // Check if user exists with this Microsoft provider
+          let user = await storage.getUserByProvider('microsoft', profile.id);
+          
+          if (user) {
+            // Update last login time
+            await storage.updateUser(user.id, { lastLoginAt: new Date() });
+            return done(null, user);
+          }
+
+          // Check if user exists with same email
+          const email = profile.emails?.[0]?.value;
+          if (email) {
+            user = await storage.getUserByEmail(email);
+            if (user) {
+              // Link Microsoft account to existing user
+              await storage.createUserProvider({
+                userId: user.id,
+                provider: 'microsoft',
+                providerId: profile.id,
+                providerData: profile._json,
+              });
+              await storage.updateUser(user.id, { lastLoginAt: new Date() });
+              return done(null, user);
+            }
+          }
+
+          // Create new user
+          const newUser = await storage.createUser({
+            id: `microsoft_${profile.id}`,
+            email: email || null,
+            firstName: profile.name?.givenName || null,
+            lastName: profile.name?.familyName || null,
+            displayName: profile.displayName || null,
+            profileImageUrl: profile.photos?.[0]?.value || null,
+            isEmailVerified: email ? true : false,
+            lastLoginAt: new Date(),
+          });
+
+          // Create provider link
+          await storage.createUserProvider({
+            userId: newUser.id,
+            provider: 'microsoft',
+            providerId: profile.id,
+            providerData: profile._json,
+          });
+
+          return done(null, newUser);
+        } catch (error) {
+          return done(error);
+        }
+      }
+    ));
+  }
 }
 
+// Authentication middleware
 export const requireAuth: RequestHandler = (req, res, next) => {
   if (req.isAuthenticated()) {
     return next();
   }
-  res.status(401).json({ message: "Authentication required" });
+  res.status(401).json({ message: 'Authentication required' });
 };
 
+// Admin middleware
 export const requireAdmin: RequestHandler = (req, res, next) => {
-  if (req.isAuthenticated() && (req.user as User)?.isAdmin) {
+  if (req.isAuthenticated() && (req.user as any)?.isAdmin) {
     return next();
   }
-  res.status(403).json({ message: "Admin access required" });
+  res.status(403).json({ message: 'Admin access required' });
 };
+
+// Helper function to hash passwords
+export async function hashPassword(password: string): Promise<string> {
+  const saltRounds = 12;
+  return bcrypt.hash(password, saltRounds);
+}

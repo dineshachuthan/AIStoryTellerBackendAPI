@@ -1,4 +1,4 @@
-import { users, localUsers, userVoiceSamples, stories, storyCharacters, storyEmotions, characters, conversations, messages, storyCollaborations, storyGroups, storyGroupMembers, characterVoiceAssignments, storyPlaybacks, storyUserConfidence, type User, type UpsertUser, type UserVoiceSample, type InsertUserVoiceSample, type Story, type InsertStory, type StoryCharacter, type InsertStoryCharacter, type StoryEmotion, type InsertStoryEmotion, type Character, type InsertCharacter, type Conversation, type InsertConversation, type Message, type InsertMessage, type StoryCollaboration, type InsertStoryCollaboration, type StoryGroup, type InsertStoryGroup, type StoryGroupMember, type InsertStoryGroupMember, type CharacterVoiceAssignment, type InsertCharacterVoiceAssignment, type StoryPlayback, type InsertStoryPlayback, type StoryUserConfidence, type InsertStoryUserConfidence } from "@shared/schema";
+import { users, localUsers, userProviders, userVoiceSamples, stories, storyCharacters, storyEmotions, characters, conversations, messages, storyCollaborations, storyGroups, storyGroupMembers, characterVoiceAssignments, storyPlaybacks, storyUserConfidence, type User, type InsertUser, type UpsertUser, type UserProvider, type InsertUserProvider, type LocalUser, type InsertLocalUser, type UserVoiceSample, type InsertUserVoiceSample, type Story, type InsertStory, type StoryCharacter, type InsertStoryCharacter, type StoryEmotion, type InsertStoryEmotion, type Character, type InsertCharacter, type Conversation, type InsertConversation, type Message, type InsertMessage, type StoryCollaboration, type InsertStoryCollaboration, type StoryGroup, type InsertStoryGroup, type StoryGroupMember, type InsertStoryGroupMember, type CharacterVoiceAssignment, type InsertCharacterVoiceAssignment, type StoryPlayback, type InsertStoryPlayback, type StoryUserConfidence, type InsertStoryUserConfidence } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc } from "drizzle-orm";
 
@@ -6,9 +6,18 @@ export interface IStorage {
   // Users
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  createUser(user: InsertUser): Promise<User>;
   upsertUser(user: UpsertUser): Promise<User>;
-  createLocalUser(userId: string, passwordHash: string): Promise<void>;
-  getLocalUser(userId: string): Promise<{ passwordHash: string } | undefined>;
+  updateUser(id: string, user: Partial<InsertUser>): Promise<User | undefined>;
+  
+  // Authentication Providers
+  getUserProvider(userId: string, provider: string): Promise<UserProvider | undefined>;
+  getUserByProvider(provider: string, providerId: string): Promise<User | undefined>;
+  createUserProvider(userProvider: InsertUserProvider): Promise<UserProvider>;
+  
+  // Local Authentication
+  createLocalUser(localUser: InsertLocalUser): Promise<LocalUser>;
+  getLocalUser(userId: string): Promise<LocalUser | undefined>;
   
   // User Voice Samples
   getUserVoiceSamples(userId: string): Promise<UserVoiceSample[]>;
@@ -107,6 +116,14 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
+  async createUser(userData: InsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(userData)
+      .returning();
+    return user;
+  }
+
   async upsertUser(userData: UpsertUser): Promise<User> {
     const [user] = await db
       .insert(users)
@@ -122,16 +139,66 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async createLocalUser(userId: string, passwordHash: string): Promise<void> {
-    await db.insert(localUsers).values({
-      userId,
-      passwordHash,
-    });
+  async updateUser(id: string, userData: Partial<InsertUser>): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set({ ...userData, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return user || undefined;
   }
 
-  async getLocalUser(userId: string): Promise<{ passwordHash: string } | undefined> {
+  // Authentication Provider operations
+  async getUserProvider(userId: string, provider: string): Promise<UserProvider | undefined> {
+    const [userProvider] = await db
+      .select()
+      .from(userProviders)
+      .where(and(eq(userProviders.userId, userId), eq(userProviders.provider, provider)));
+    return userProvider || undefined;
+  }
+
+  async getUserByProvider(provider: string, providerId: string): Promise<User | undefined> {
+    const [result] = await db
+      .select({
+        id: users.id,
+        email: users.email,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        displayName: users.displayName,
+        profileImageUrl: users.profileImageUrl,
+        isEmailVerified: users.isEmailVerified,
+        isAdmin: users.isAdmin,
+        isActive: users.isActive,
+        lastLoginAt: users.lastLoginAt,
+        createdAt: users.createdAt,
+        updatedAt: users.updatedAt,
+      })
+      .from(users)
+      .innerJoin(userProviders, eq(users.id, userProviders.userId))
+      .where(and(eq(userProviders.provider, provider), eq(userProviders.providerId, providerId)));
+    return result || undefined;
+  }
+
+  async createUserProvider(userProvider: InsertUserProvider): Promise<UserProvider> {
+    const [provider] = await db
+      .insert(userProviders)
+      .values(userProvider)
+      .returning();
+    return provider;
+  }
+
+  // Local Authentication operations
+  async createLocalUser(localUser: InsertLocalUser): Promise<LocalUser> {
+    const [user] = await db
+      .insert(localUsers)
+      .values(localUser)
+      .returning();
+    return user;
+  }
+
+  async getLocalUser(userId: string): Promise<LocalUser | undefined> {
     const [localUser] = await db.select().from(localUsers).where(eq(localUsers.userId, userId));
-    return localUser ? { passwordHash: localUser.passwordHash } : undefined;
+    return localUser || undefined;
   }
 
   // User Voice Samples operations
