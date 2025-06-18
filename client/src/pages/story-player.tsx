@@ -57,6 +57,29 @@ export default function StoryPlayer() {
     enabled: !!storyId,
   });
 
+  // Generate grandma/grandpa narration
+  const generateNarrationMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest(`/api/stories/${storyId}/grandma-narration`, {
+        method: 'POST',
+      });
+    },
+    onSuccess: (data) => {
+      setGrandmaNarration(data);
+      toast({
+        title: "Narration Generated!",
+        description: "Your personalized story narration is ready to play.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Generation Failed",
+        description: "Could not generate narration. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const currentSegment = narration?.segments[currentSegmentIndex];
   const progress = narration ? (currentTime / narration.totalDuration) * 100 : 0;
 
