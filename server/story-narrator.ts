@@ -164,11 +164,17 @@ export class StoryNarrator {
         const selectedVoice = this.selectVoiceForCharacter(speakingCharacter, detectedEmotion.emotion);
         console.log("Selected voice:", selectedVoice, "for character:", speakingCharacter?.name || 'narrator');
         
+        // Enhance text with emotional expressions and sound effects
+        const enhancedText = this.addEmotionalExpressions(sentence, detectedEmotion.emotion, detectedEmotion.intensity);
+        const emotionalSpeed = this.getEmotionalSpeed(detectedEmotion.emotion, detectedEmotion.intensity);
+        
+        console.log("Enhanced text for emotion:", enhancedText.substring(0, 100) + "...");
+        
         const response = await openai.audio.speech.create({
           model: "tts-1",
           voice: selectedVoice as any,
-          input: sentence.length > 4000 ? sentence.substring(0, 4000) : sentence,
-          speed: 1.0,
+          input: enhancedText.length > 4000 ? enhancedText.substring(0, 4000) : enhancedText,
+          speed: emotionalSpeed,
         });
 
         const buffer = Buffer.from(await response.arrayBuffer());
@@ -407,6 +413,111 @@ export class StoryNarrator {
     }
 
     return undefined;
+  }
+
+  private addEmotionalExpressions(text: string, emotion: string, intensity: number): string {
+    let enhancedText = text;
+    
+    // Add emotional expressions based on emotion type and intensity
+    switch (emotion) {
+      case 'sad':
+        if (text.toLowerCase().includes('cry') || text.toLowerCase().includes('crying')) {
+          // Add crying sounds with varying intensity
+          if (intensity >= 8) {
+            enhancedText = enhancedText.replace(/cry/gi, 'cry... *sob* *sob*');
+            enhancedText = enhancedText.replace(/crying/gi, 'crying... *waaah* *sniff*');
+          } else if (intensity >= 6) {
+            enhancedText = enhancedText.replace(/cry/gi, 'cry... *sniff*');
+            enhancedText = enhancedText.replace(/crying/gi, 'crying... *sob*');
+          } else {
+            enhancedText = enhancedText.replace(/cry/gi, 'cry softly');
+          }
+        }
+        // Add sighs and pauses for general sadness
+        if (intensity >= 7) {
+          enhancedText = `*sigh* ${enhancedText}`;
+        }
+        break;
+        
+      case 'angry':
+        if (intensity >= 7) {
+          enhancedText = enhancedText.replace(/!/g, '! *grumble*');
+          enhancedText = `*frustrated growl* ${enhancedText}`;
+        } else if (intensity >= 5) {
+          enhancedText = enhancedText.replace(/\./g, '... *huff*');
+        }
+        break;
+        
+      case 'fear':
+        if (intensity >= 7) {
+          enhancedText = `*gasp* ${enhancedText} *nervous breathing*`;
+        } else if (intensity >= 5) {
+          enhancedText = `${enhancedText} *worried sigh*`;
+        }
+        break;
+        
+      case 'excitement':
+      case 'happy':
+        if (intensity >= 7) {
+          enhancedText = enhancedText.replace(/!/g, '! *giggle*');
+          enhancedText = `*cheerfully* ${enhancedText}`;
+        } else if (intensity >= 5) {
+          enhancedText = `*happily* ${enhancedText}`;
+        }
+        break;
+        
+      case 'surprise':
+        if (intensity >= 6) {
+          enhancedText = `*gasp* Oh! ${enhancedText}`;
+        } else {
+          enhancedText = `Oh... ${enhancedText}`;
+        }
+        break;
+    }
+    
+    // Add character-specific expressions
+    if (text.includes('mother') || text.includes('Mother')) {
+      enhancedText = enhancedText.replace(/said/g, 'said gently');
+    }
+    
+    // Add dramatic pauses for high-intensity emotions
+    if (intensity >= 8) {
+      enhancedText = enhancedText.replace(/\./g, '... *pause* .');
+    }
+    
+    return enhancedText;
+  }
+
+  private getEmotionalSpeed(emotion: string, intensity: number): number {
+    let baseSpeed = 1.0;
+    
+    switch (emotion) {
+      case 'sad':
+        // Slower speech when sad
+        baseSpeed = intensity >= 7 ? 0.7 : 0.85;
+        break;
+      case 'angry':
+        // Faster, more intense speech when angry
+        baseSpeed = intensity >= 7 ? 1.3 : 1.15;
+        break;
+      case 'fear':
+        // Rapid, nervous speech when scared
+        baseSpeed = intensity >= 7 ? 1.4 : 1.2;
+        break;
+      case 'excitement':
+      case 'happy':
+        // Slightly faster, energetic speech
+        baseSpeed = intensity >= 7 ? 1.2 : 1.1;
+        break;
+      case 'surprise':
+        // Quick, startled speech
+        baseSpeed = intensity >= 6 ? 1.3 : 1.1;
+        break;
+      default:
+        baseSpeed = 1.0;
+    }
+    
+    return Math.max(0.5, Math.min(2.0, baseSpeed)); // Clamp between 0.5x and 2.0x
   }
 
   async generateAudioInstructions(narration: StoryNarration): Promise<string[]> {
