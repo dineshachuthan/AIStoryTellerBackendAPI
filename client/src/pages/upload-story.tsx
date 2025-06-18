@@ -1188,64 +1188,7 @@ export default function UploadStory() {
               </CardContent>
             </Card>
 
-            {/* Emotion Sounds */}
-            <Card className="bg-dark-card border-gray-700">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Volume2 className="w-5 h-5 mr-2 text-tiktok-red" />
-                  Emotion Sounds
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {emotionsWithSounds.map((emotion, index) => {
-                    const EmotionIcon = emotion.emotion === 'happy' ? Smile : 
-                                       emotion.emotion === 'sad' ? Frown : 
-                                       emotion.emotion === 'angry' ? Angry : Heart;
-                    
-                    return (
-                      <div key={index} className="bg-gray-800 rounded-lg p-4">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center space-x-3">
-                            <EmotionIcon className="w-6 h-6 text-tiktok-red" />
-                            <div>
-                              <h4 className="font-semibold text-white capitalize">{emotion.emotion}</h4>
-                              <Progress value={emotion.intensity * 10} className="w-20 h-2 mt-1" />
-                            </div>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-gray-400 hover:text-white"
-                          >
-                            <Play className="w-4 h-4" />
-                          </Button>
-                        </div>
-                        <p className="text-sm text-gray-300 mb-3">{emotion.context}</p>
-                        <div className="flex space-x-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="border-tiktok-red text-tiktok-red hover:bg-tiktok-red/20"
-                          >
-                            <Volume2 className="w-4 h-4 mr-2" />
-                            Default
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="border-gray-600 text-gray-400 hover:bg-gray-800"
-                          >
-                            <Upload className="w-4 h-4 mr-2" />
-                            Custom
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
+
 
             <div className="flex justify-center">
               <Button
