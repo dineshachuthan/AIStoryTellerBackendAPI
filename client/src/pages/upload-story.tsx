@@ -1259,140 +1259,146 @@ export default function UploadStory() {
                 <div className="space-y-8">
                   {getCharacterEmotionGroups().map((group, groupIndex) => (
                     <div key={groupIndex} className="bg-gray-800 rounded-lg p-6 border border-gray-600">
-                      {/* Character Info */}
-                      <div className="flex items-center space-x-4 mb-6">
-                        <div className="relative">
-                          <Avatar className="w-20 h-20">
-                            <AvatarImage src={group.character.imageUrl} alt={group.character.name} />
-                            <AvatarFallback className="bg-tiktok-cyan text-white text-xl">
-                              {group.character.name.charAt(0)}
-                            </AvatarFallback>
-                          </Avatar>
-                          {generatingImages.includes(groupIndex) && (
-                            <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
-                              <Loader2 className="w-8 h-8 text-white animate-spin" />
+                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        {/* Left Column - Character Info */}
+                        <div className="lg:col-span-1">
+                          <div className="flex flex-col items-center text-center space-y-4">
+                            <div className="relative">
+                              <Avatar className="w-24 h-24">
+                                <AvatarImage src={group.character.imageUrl} alt={group.character.name} />
+                                <AvatarFallback className="bg-tiktok-cyan text-white text-2xl">
+                                  {group.character.name.charAt(0)}
+                                </AvatarFallback>
+                              </Avatar>
+                              {generatingImages.includes(groupIndex) && (
+                                <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
+                                  <Loader2 className="w-8 h-8 text-white animate-spin" />
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="text-xl font-bold text-white">{group.character.name}</h3>
-                          <p className="text-sm text-gray-400 capitalize">{group.character.role}</p>
-                          <p className="text-sm text-gray-500 mt-1">{group.character.description}</p>
-                          {generatingImages.includes(groupIndex) && (
-                            <p className="text-xs text-tiktok-cyan mt-2 animate-pulse">
-                              Creating AI image...
-                            </p>
-                          )}
-                        </div>
-                        <div className="flex flex-col space-y-2">
-                          <Button
-                            onClick={() => generateCharacterImage(groupIndex)}
-                            variant="outline"
-                            size="sm"
-                            className="border-tiktok-cyan text-tiktok-cyan hover:bg-tiktok-cyan/20"
-                            disabled={generatingImages.includes(groupIndex)}
-                          >
-                            {generatingImages.includes(groupIndex) ? (
-                              <>
-                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                Generating...
-                              </>
-                            ) : (
-                              <>
-                                <Sparkles className="w-4 h-4 mr-2" />
-                                {group.character.imageUrl?.includes('dicebear.com') ? 'Generate AI Image' : 'Generate New'}
-                              </>
-                            )}
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="border-gray-600 text-gray-400 hover:bg-gray-800"
-                          >
-                            <Upload className="w-4 h-4 mr-2" />
-                            Upload
-                          </Button>
-                        </div>
-                      </div>
-                      
-                      {/* Character's Emotions */}
-                      <div className="border-t border-gray-600 pt-4">
-                        <h4 className="text-lg font-semibold text-white mb-3 flex items-center">
-                          <Heart className="w-5 h-5 mr-2 text-tiktok-red" />
-                          {group.character.name}'s Emotions
-                        </h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {group.emotions.map((emotion, emotionIndex) => {
-                            const EmotionIcon = emotion.emotion === 'happy' ? Smile : 
-                                               emotion.emotion === 'sad' ? Frown : 
-                                               emotion.emotion === 'angry' ? Angry : 
-                                               emotion.emotion === 'vexed' ? Angry :
-                                               emotion.emotion === 'disappointment' ? Frown :
-                                               Heart;
                             
-                            const emotionKey = `${groupIndex}-${emotionIndex}`;
-                            const isRecording = recordingEmotions[emotionKey];
-                            const isPlaying = playingEmotions[emotionKey];
+                            <div>
+                              <h3 className="text-xl font-bold text-white mb-1">{group.character.name}</h3>
+                              <p className="text-sm text-gray-400 capitalize mb-2">{group.character.role}</p>
+                              <p className="text-sm text-gray-500 mb-3">{group.character.description}</p>
+                              {generatingImages.includes(groupIndex) && (
+                                <p className="text-xs text-tiktok-cyan animate-pulse">
+                                  Creating AI image...
+                                </p>
+                              )}
+                            </div>
                             
-                            return (
-                              <div key={emotionIndex} className="bg-gray-700 rounded-lg p-4 border border-gray-500">
-                                <div className="flex items-center justify-between mb-3">
-                                  <div className="flex items-center space-x-2">
-                                    <EmotionIcon className="w-5 h-5 text-tiktok-red" />
-                                    <h5 className="font-semibold text-white capitalize">{emotion.emotion}</h5>
-                                    <span className="text-xs bg-tiktok-red/20 text-tiktok-red px-2 py-1 rounded">
-                                      {emotion.intensity}/10
-                                    </span>
+                            <div className="flex flex-col space-y-2 w-full">
+                              <Button
+                                onClick={() => generateCharacterImage(groupIndex)}
+                                variant="outline"
+                                size="sm"
+                                className="border-tiktok-cyan text-tiktok-cyan hover:bg-tiktok-cyan/20"
+                                disabled={generatingImages.includes(groupIndex)}
+                              >
+                                {generatingImages.includes(groupIndex) ? (
+                                  <>
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    Generating...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Sparkles className="w-4 h-4 mr-2" />
+                                    {group.character.imageUrl?.includes('dicebear.com') ? 'Generate AI Image' : 'Generate New'}
+                                  </>
+                                )}
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="border-gray-600 text-gray-400 hover:bg-gray-800"
+                              >
+                                <Upload className="w-4 h-4 mr-2" />
+                                Upload
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* Right Column - Character's Emotions */}
+                        <div className="lg:col-span-2">
+                          <h4 className="text-lg font-semibold text-white mb-4 flex items-center">
+                            <Heart className="w-5 h-5 mr-2 text-tiktok-red" />
+                            {group.character.name}'s Emotions
+                          </h4>
+                          <div className="grid grid-cols-1 gap-4">
+                            {group.emotions.map((emotion, emotionIndex) => {
+                              const EmotionIcon = emotion.emotion === 'happy' ? Smile : 
+                                                 emotion.emotion === 'sad' ? Frown : 
+                                                 emotion.emotion === 'angry' ? Angry : 
+                                                 emotion.emotion === 'vexed' ? Angry :
+                                                 emotion.emotion === 'disappointment' ? Frown :
+                                                 Heart;
+                              
+                              const emotionKey = `${groupIndex}-${emotionIndex}`;
+                              const isRecording = recordingEmotions[emotionKey];
+                              const isPlaying = playingEmotions[emotionKey];
+                              
+                              return (
+                                <div key={emotionIndex} className="bg-gray-700 rounded-lg p-4 border border-gray-500">
+                                  <div className="flex items-center justify-between mb-3">
+                                    <div className="flex items-center space-x-2">
+                                      <EmotionIcon className="w-5 h-5 text-tiktok-red" />
+                                      <h5 className="font-semibold text-white capitalize">{emotion.emotion}</h5>
+                                      <span className="text-xs bg-tiktok-red/20 text-tiktok-red px-2 py-1 rounded">
+                                        {emotion.intensity}/10
+                                      </span>
+                                    </div>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className={`h-8 w-8 p-0 ${isPlaying ? 'text-tiktok-cyan animate-pulse' : 'text-gray-400 hover:text-white'}`}
+                                      onClick={() => playEmotionSample(emotion, emotionKey)}
+                                      disabled={isPlaying}
+                                    >
+                                      <Play className="w-4 h-4" />
+                                    </Button>
                                   </div>
+                                  <p className="text-sm text-gray-300 mb-3">{emotion.context}</p>
+                                  {emotion.quote && (
+                                    <p className="text-xs text-gray-400 italic bg-gray-600 p-2 rounded mb-3">
+                                      "{emotion.quote}"
+                                    </p>
+                                  )}
+                                  
+                                  {/* Prominent Record Voice Button */}
                                   <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className={`h-8 w-8 p-0 ${isPlaying ? 'text-tiktok-cyan animate-pulse' : 'text-gray-400 hover:text-white'}`}
-                                    onClick={() => playEmotionSample(emotion, emotionKey)}
+                                    onClick={() => isRecording ? stopEmotionRecording(emotionKey) : startEmotionRecording(emotionKey, emotion)}
+                                    className={`w-full ${
+                                      isRecording 
+                                        ? 'bg-red-600 hover:bg-red-700 animate-pulse' 
+                                        : 'bg-tiktok-pink hover:bg-tiktok-pink/80'
+                                    } text-white font-medium py-3`}
                                     disabled={isPlaying}
                                   >
-                                    <Play className="w-4 h-4" />
+                                    {isRecording ? (
+                                      <>
+                                        <Square className="w-5 h-5 mr-2" />
+                                        Stop Recording
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Mic className="w-5 h-5 mr-2" />
+                                        Record your own voice
+                                      </>
+                                    )}
                                   </Button>
-                                </div>
-                                <p className="text-sm text-gray-300 mb-3">{emotion.context}</p>
-                                {emotion.quote && (
-                                  <p className="text-xs text-gray-400 italic bg-gray-600 p-2 rounded mb-3">
-                                    "{emotion.quote}"
-                                  </p>
-                                )}
-                                
-                                {/* Prominent Record Voice Button */}
-                                <Button
-                                  onClick={() => isRecording ? stopEmotionRecording(emotionKey) : startEmotionRecording(emotionKey, emotion)}
-                                  className={`w-full ${
-                                    isRecording 
-                                      ? 'bg-red-600 hover:bg-red-700 animate-pulse' 
-                                      : 'bg-tiktok-pink hover:bg-tiktok-pink/80'
-                                  } text-white font-medium py-3`}
-                                  disabled={isPlaying}
-                                >
-                                  {isRecording ? (
-                                    <>
-                                      <Square className="w-5 h-5 mr-2" />
-                                      Stop Recording
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Mic className="w-5 h-5 mr-2" />
-                                      Record your own voice
-                                    </>
+                                  
+                                  {isRecording && (
+                                    <div className="mt-2 text-xs text-red-400 flex items-center justify-center">
+                                      <div className="w-2 h-2 bg-red-500 rounded-full mr-2 animate-pulse"></div>
+                                      Recording your voice for grandma storytelling...
+                                    </div>
                                   )}
-                                </Button>
-                                
-                                {isRecording && (
-                                  <div className="mt-2 text-xs text-red-400 flex items-center justify-center">
-                                    <div className="w-2 h-2 bg-red-500 rounded-full mr-2 animate-pulse"></div>
-                                    Recording your voice for grandma storytelling...
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })}
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
                       </div>
                     </div>
