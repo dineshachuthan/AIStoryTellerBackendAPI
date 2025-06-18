@@ -499,25 +499,49 @@ export default function UploadStory() {
       emotion.soundUrl = audioResponse.url;
 
       // Create and play the audio
+      console.log("Attempting to play audio from URL:", audioResponse.url);
       const audio = new Audio(audioResponse.url);
       setCurrentAudio(audio);
 
+      audio.onloadstart = () => {
+        console.log("Audio loading started");
+      };
+
+      audio.oncanplay = () => {
+        console.log("Audio can start playing");
+      };
+
       audio.onended = () => {
+        console.log("Audio playback ended");
         setPlayingEmotions(prev => ({ ...prev, [emotionKey]: false }));
         setCurrentAudio(null);
       };
 
-      audio.onerror = () => {
+      audio.onerror = (error) => {
+        console.error("Audio playback error:", error, "URL:", audioResponse.url);
+        console.error("Audio error details:", audio.error);
         setPlayingEmotions(prev => ({ ...prev, [emotionKey]: false }));
         setCurrentAudio(null);
         toast({
           title: "Playback Failed",
-          description: "Could not play emotion sample.",
+          description: `Could not play emotion sample. Error: ${audio.error?.message || 'Unknown error'}`,
           variant: "destructive",
         });
       };
 
-      await audio.play();
+      try {
+        await audio.play();
+        console.log("Audio play() completed successfully");
+      } catch (playError) {
+        console.error("Audio play() promise rejected:", playError);
+        setPlayingEmotions(prev => ({ ...prev, [emotionKey]: false }));
+        setCurrentAudio(null);
+        toast({
+          title: "Playback Failed",
+          description: `Audio play failed: ${playError.message}`,
+          variant: "destructive",
+        });
+      }
 
     } catch (error) {
       console.error("Emotion sample generation error:", error);
