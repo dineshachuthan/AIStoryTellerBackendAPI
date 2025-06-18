@@ -501,6 +501,8 @@ export default function UploadStory() {
       // Create and play the audio
       console.log("Attempting to play audio from URL:", audioResponse.url);
       const audio = new Audio(audioResponse.url);
+      audio.volume = 1.0; // Ensure volume is at maximum
+      audio.muted = false; // Ensure not muted
       setCurrentAudio(audio);
 
       audio.onloadstart = () => {
@@ -509,6 +511,13 @@ export default function UploadStory() {
 
       audio.oncanplay = () => {
         console.log("Audio can start playing");
+        console.log("Audio properties:", {
+          duration: audio.duration,
+          volume: audio.volume,
+          muted: audio.muted,
+          readyState: audio.readyState,
+          networkState: audio.networkState
+        });
       };
 
       audio.onended = () => {
@@ -532,13 +541,14 @@ export default function UploadStory() {
       try {
         await audio.play();
         console.log("Audio play() completed successfully");
-      } catch (playError) {
+        console.log("Audio is now playing:", !audio.paused, "Current time:", audio.currentTime);
+      } catch (playError: any) {
         console.error("Audio play() promise rejected:", playError);
         setPlayingEmotions(prev => ({ ...prev, [emotionKey]: false }));
         setCurrentAudio(null);
         toast({
           title: "Playback Failed",
-          description: `Audio play failed: ${playError.message}`,
+          description: `Audio play failed: ${playError?.message || 'Unknown error'}`,
           variant: "destructive",
         });
       }
