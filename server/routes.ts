@@ -1409,6 +1409,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Serve cached audio files
+  app.get("/api/cached-audio/:filename", (req, res) => {
+    try {
+      const filename = req.params.filename;
+      const path = require('path');
+      const fs = require('fs');
+      
+      const filePath = path.join(process.cwd(), 'persistent-cache', 'audio', filename);
+      
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ message: "Audio file not found" });
+      }
+      
+      res.setHeader('Content-Type', 'audio/mpeg');
+      res.sendFile(filePath);
+    } catch (error) {
+      console.error("Error serving cached audio:", error);
+      res.status(500).json({ message: "Failed to serve audio file" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
