@@ -37,8 +37,8 @@ export const defaultStoryConfig: StoryConfig = {
     supportedFormats: ['.txt', '.pdf', '.doc', '.docx']
   },
   uploadAudio: {
-    maxDurationMinutes: 5,
-    label: "Upload Audio",
+    maxDurationMinutes: 7, // ~1000 words at average speaking pace (140-150 words/minute)
+    label: "Upload Audio (<7 min)",
     supportedFormats: ['.mp3', '.wav', '.m4a', '.ogg']
   }
 };
@@ -86,4 +86,21 @@ export const validateUploadLength = (text: string, config: StoryConfig['uploadTe
   }
   
   return { isValid: true };
+};
+
+export const validateAudioDuration = (durationMinutes: number, config: StoryConfig['uploadAudio']): { isValid: boolean; message?: string } => {
+  if (durationMinutes > config.maxDurationMinutes) {
+    return {
+      isValid: false,
+      message: `Audio duration exceeds maximum ${config.maxDurationMinutes} minutes. Current: ${Math.round(durationMinutes * 10) / 10} minutes.`
+    };
+  }
+  
+  return { isValid: true };
+};
+
+export const estimateWordsFromAudioDuration = (durationMinutes: number): number => {
+  // Average speaking pace is 140-150 words per minute
+  const averageWordsPerMinute = 145;
+  return Math.round(durationMinutes * averageWordsPerMinute);
 };
