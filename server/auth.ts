@@ -97,11 +97,15 @@ export async function setupAuth(app: Express) {
 
   // Google OAuth strategy
   if (oauthConfig.google.clientID && oauthConfig.google.clientSecret) {
+    console.log(`[Auth] Google Client ID: ${oauthConfig.google.clientID.substring(0, 20)}...`);
+    console.log(`[Auth] Google Callback URL: ${oauthConfig.google.callbackURL}`);
+    
     passport.use(new GoogleStrategy(
       {
         clientID: oauthConfig.google.clientID,
         clientSecret: oauthConfig.google.clientSecret,
         callbackURL: oauthConfig.google.callbackURL,
+        scope: ['profile', 'email'],
       },
       async (accessToken: any, refreshToken: any, profile: any, done: any) => {
         try {
