@@ -342,8 +342,41 @@ export default function UploadStory() {
         setStoryContent(textToAnalyze); // Ensure content is set
         setCurrentStep(3);
 
-        // Stop at analysis step for user review
-        // User will need to click "Create Story" to proceed
+        // Generate AI images for characters in the background
+        setTimeout(async () => {
+          const updatedCharacters = [...charactersWithDefaults];
+          
+          for (let i = 0; i < updatedCharacters.length; i++) {
+            const character = updatedCharacters[i];
+            if (character.imageUrl?.includes('dicebear.com')) {
+              setGeneratingImages(prev => new Set([...prev, i]));
+              
+              try {
+                const imageResponse = await apiRequest('/api/characters/generate-image', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({ 
+                    character,
+                    storyContext: result.summary || textToAnalyze.substring(0, 500)
+                  }),
+                });
+                
+                updatedCharacters[i] = { ...character, imageUrl: imageResponse.url };
+                setCharactersWithImages([...updatedCharacters]);
+              } catch (error) {
+                console.error(`Failed to generate image for ${character.name}:`, error);
+              } finally {
+                setGeneratingImages(prev => {
+                  const newSet = new Set(prev);
+                  newSet.delete(i);
+                  return newSet;
+                });
+              }
+            }
+          }
+        }, 1500);
       }, 1000);
     } catch (error) {
       console.error("Analysis error:", error);
