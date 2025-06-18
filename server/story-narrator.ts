@@ -121,15 +121,25 @@ export class StoryNarrator {
     
     // Detect if it's dialogue and which character is speaking
     const isDialogue = sentence.includes('"') || sentence.includes("'");
-    const characterName = isDialogue ? this.extractCharacterName(sentence) : undefined;
+    const characterName = this.extractCharacterName(sentence); // Extract from any sentence
     
-    // Find the character who should voice this segment
+    console.log("Processing sentence:", sentence.substring(0, 60) + "...", "Detected character:", characterName);
+    
+    // Find the character who should voice this segment or create one
     let speakingCharacter = null;
     if (characterName) {
       speakingCharacter = characters.find(char => 
         char.name.toLowerCase().includes(characterName.toLowerCase()) ||
         characterName.toLowerCase().includes(char.name.toLowerCase())
       );
+      
+      // If no existing character found, create a temporary one for voice selection
+      if (!speakingCharacter) {
+        speakingCharacter = {
+          name: characterName,
+          role: characterName.toLowerCase() === 'mother' ? 'supporting' : 'protagonist'
+        };
+      }
     }
     
     // Find matching voice sample for the emotion
@@ -278,25 +288,43 @@ export class StoryNarrator {
       return 'alloy'; // Default narrator voice
     }
 
-    // Map character roles to voices
-    const roleVoiceMap: { [key: string]: string } = {
-      'protagonist': 'nova',
-      'antagonist': 'onyx',
-      'supporting': 'shimmer',
-      'narrator': 'alloy',
-      'other': 'echo'
+    // Map character names and roles to specific voices
+    const characterVoiceMap: { [key: string]: string } = {
+      'Boy': 'echo',        // Younger, higher voice for the boy
+      'Mother': 'nova',     // Warm, maternal voice for the mother
+      'Father': 'onyx',     // Deeper, paternal voice
+      'Girl': 'shimmer',    // Light, young female voice
+      'Narrator': 'alloy',  // Neutral narrator voice
     };
 
-    // Adjust voice based on emotion
-    if (emotion === 'angry' || emotion === 'fear') {
-      return 'onyx'; // Deeper, more intense voice
-    } else if (emotion === 'happy' || emotion === 'excitement') {
-      return 'nova'; // Brighter, more energetic voice
-    } else if (emotion === 'sad') {
-      return 'fable'; // Softer, more gentle voice
+    // First check for character name match
+    if (character.name && characterVoiceMap[character.name]) {
+      return characterVoiceMap[character.name];
     }
 
-    return roleVoiceMap[character.role] || 'alloy';
+    // Map character roles to voices as fallback
+    const roleVoiceMap: { [key: string]: string } = {
+      'protagonist': 'echo',     // Young voice for main character
+      'antagonist': 'onyx',      // Deeper, more intense voice
+      'supporting': 'shimmer',   // Supporting character voice
+      'narrator': 'alloy',       // Neutral narrator voice
+      'other': 'fable'          // Alternative voice for others
+    };
+
+    // Emotion-based voice modulation (but keep character consistency)
+    let baseVoice = roleVoiceMap[character.role] || 'alloy';
+    
+    // For the Boy character, always use echo regardless of emotion
+    if (character.name === 'Boy' || character.name === 'boy') {
+      return 'echo';
+    }
+    
+    // For the Mother character, always use nova regardless of emotion
+    if (character.name === 'Mother' || character.name === 'mother') {
+      return 'nova';
+    }
+
+    return baseVoice;
   }
 
   private calculateBaseDuration(wordCount: number, pacing: string): number {
@@ -318,20 +346,35 @@ export class StoryNarrator {
   }
 
   private extractCharacterName(sentence: string): string | undefined {
-    // Simple pattern to extract character names from dialogue
+    // Enhanced pattern to extract character names from dialogue
     const patterns = [
-      /(\w+)\s+said/i,
-      /(\w+)\s+replied/i,
-      /(\w+)\s+asked/i,
-      /(\w+)\s+whispered/i,
-      /(\w+)\s+shouted/i,
+      /said\s+his\s+(\w+)/i,           // "said his mother"
+      /(\w+)\s+said/i,                 // "mother said"
+      /(\w+)\s+replied/i,              // "mother replied"
+      /(\w+)\s+asked/i,                // "mother asked"
+      /(\w+)\s+whispered/i,            // "mother whispered"
+      /(\w+)\s+shouted/i,              // "mother shouted"
+      /"[^"]*",?\s*said\s+his\s+(\w+)/i, // "text", said his mother
+      /"[^"]*",?\s*(\w+)\s+said/i,     // "text", mother said
     ];
 
     for (const pattern of patterns) {
       const match = sentence.match(pattern);
-      if (match) {
+      if (match && match[1]) {
+        const name = match[1].toLowerCase();
+        // Map common story roles to proper character names
+        if (name === 'mother') return 'Mother';
+        if (name === 'boy') return 'Boy';
+        if (name === 'father') return 'Father';
+        if (name === 'girl') return 'Girl';
         return match[1];
       }
+    }
+
+    // Check for dialogue without explicit "said" patterns
+    if (sentence.includes('"')) {
+      if (sentence.toLowerCase().includes('mother')) return 'Mother';
+      if (sentence.toLowerCase().includes('boy')) return 'Boy';
     }
 
     return undefined;
