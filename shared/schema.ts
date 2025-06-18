@@ -83,6 +83,8 @@ export const storyCharacters = pgTable("story_characters", {
   role: text("role"), // 'protagonist', 'antagonist', 'supporting', etc.
   imageUrl: text("image_url"), // Generated or user-assigned image
   isGenerated: boolean("is_generated").default(true), // Whether image was AI-generated
+  assignedVoice: text("assigned_voice"), // OpenAI voice (alloy, echo, fable, nova, onyx, shimmer)
+  voiceSampleId: integer("voice_sample_id"), // User voice sample ID if assigned
   createdAt: timestamp("created_at").defaultNow(),
 });
 

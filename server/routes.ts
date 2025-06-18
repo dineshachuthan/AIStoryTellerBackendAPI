@@ -825,8 +825,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Story Narration routes
-  app.get("/api/stories/:id/narration", async (req, res) => {
+  // Story Narration routes - POST to generate narration with stored voice assignments
+  app.post("/api/stories/:id/narration", async (req, res) => {
     try {
       const storyId = parseInt(req.params.id);
       const story = await storage.getStory(storyId);
@@ -835,24 +835,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Story not found" });
       }
 
-      // Generate character-based narration using the story narrator
+      // Get pre-analyzed data with voice assignments
       const characters = await storage.getStoryCharacters(storyId);
       const emotions = await storage.getStoryEmotions(storyId);
-      const userVoiceSamples = await storage.getUserVoiceSamples('user_123'); // Test user
-
+      
+      console.log("Using stored characters with voice assignments:", characters.map(c => ({ name: c.name, voice: c.assignedVoice })));
+      
+      // Generate narration using stored analysis data and voice assignments
       const narration = await storyNarrator.generateNarration(storyId, 'user_123', {
         pacing: 'normal',
         includeCharacterVoices: true,
-        useUserVoices: true,
+        useUserVoices: false,
         characters,
         emotions,
-        userVoiceSamples
+        userVoiceSamples: []
+      });
+
+      // Save the generated narration as playback
+      await storage.createStoryPlayback({
+        storyId: storyId,
+        userId: 'user_123',
+        segments: JSON.stringify(narration.segments),
+        totalDuration: narration.totalDuration,
+        pacing: narration.pacing,
+        status: 'completed'
       });
 
       res.json(narration);
     } catch (error) {
       console.error("Error generating story narration:", error);
       res.status(500).json({ message: "Failed to generate story narration" });
+    }
+  });
+
+  // Story Narration routes - GET to retrieve existing narration
+  app.get("/api/stories/:id/narration", async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.id);
+      
+      // Check if we have a cached narration
+      const existingPlayback = await storage.getStoryPlaybacks(storyId);
+      if (existingPlayback.length > 0) {
+        const playback = existingPlayback[0];
+        if (playback.segments) {
+          return res.json({
+            storyId: storyId,
+            totalDuration: playback.totalDuration || 0,
+            segments: JSON.parse(playback.segments as string),
+            pacing: playback.pacing || 'normal'
+          });
+        }
+      }
+
+      // Return empty narration if none exists
+      res.json({
+        storyId: storyId,
+        totalDuration: 0,
+        segments: [],
+        pacing: 'normal'
+      });
+    } catch (error) {
+      console.error("Error fetching story narration:", error);
+      res.status(500).json({ message: "Failed to fetch story narration" });
     }
   });
 

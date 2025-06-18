@@ -520,6 +520,39 @@ export class StoryNarrator {
     return Math.max(0.5, Math.min(2.0, baseSpeed)); // Clamp between 0.5x and 2.0x
   }
 
+  private getStoredVoiceForCharacter(speakingCharacter: any, storyCharacters: any[]): string {
+    // Use stored voice assignment from analysis if available
+    if (speakingCharacter && speakingCharacter.name) {
+      const storedCharacter = storyCharacters.find(char => 
+        char.name.toLowerCase() === speakingCharacter.name.toLowerCase()
+      );
+      
+      if (storedCharacter && storedCharacter.assignedVoice) {
+        return storedCharacter.assignedVoice;
+      }
+    }
+    
+    // Fallback to character-specific voice mapping
+    if (speakingCharacter && speakingCharacter.name) {
+      const characterVoiceMap: { [key: string]: string } = {
+        'Boy': 'echo',        // Higher, younger male voice
+        'Mother': 'fable',    // Mature, warmer female voice
+        'Father': 'onyx',     // Deep, authoritative male voice
+        'Girl': 'shimmer',    // Light, young female voice
+      };
+      
+      const nameKey = Object.keys(characterVoiceMap).find(key => 
+        key.toLowerCase() === speakingCharacter.name.toLowerCase()
+      );
+      if (nameKey) {
+        return characterVoiceMap[nameKey];
+      }
+    }
+    
+    // Default narrator voice
+    return 'alloy';
+  }
+
   async generateAudioInstructions(narration: StoryNarration): Promise<string[]> {
     const instructions: string[] = [];
     
