@@ -17,13 +17,13 @@ export default function Home() {
           <h1 className="text-2xl font-bold text-white">DeeVee</h1>
           <div className="flex space-x-2">
             <Button
-              onClick={() => setLocation("/create")}
+              onClick={() => setLocation("/voice-setup")}
               variant="outline"
               size="sm"
-              className="border-tiktok-pink text-tiktok-pink hover:bg-tiktok-pink/20"
+              className="border-tiktok-cyan text-tiktok-cyan hover:bg-tiktok-cyan/20"
             >
-              <Users className="w-4 h-4 mr-2" />
-              Character
+              <Mic className="w-4 h-4 mr-2" />
+              Voice Setup
             </Button>
             <Button
               onClick={() => setLocation("/upload-story")}
