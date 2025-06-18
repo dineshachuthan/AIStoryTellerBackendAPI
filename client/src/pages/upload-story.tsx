@@ -342,14 +342,8 @@ export default function UploadStory() {
         setStoryContent(textToAnalyze); // Ensure content is set
         setCurrentStep(3);
 
-        // Skip to story creation automatically with proper data
-        setTimeout(() => {
-          setCurrentStep(4);
-          setTimeout(() => {
-            // Create story directly with the analysis data we have
-            createStoryWithAnalysis(textToAnalyze, result, charactersWithDefaults, emotionsWithDefaults);
-          }, 500);
-        }, 1000);
+        // Stop at analysis step for user review
+        // User will need to click "Create Story" to proceed
       }, 1000);
     } catch (error) {
       console.error("Analysis error:", error);
@@ -1159,7 +1153,11 @@ export default function UploadStory() {
               <Button
                 onClick={() => {
                   setCurrentStep(4);
-                  createStory();
+                  if (analysis && storyContent) {
+                    createStoryWithAnalysis(storyContent, analysis, charactersWithImages, emotionsWithSounds);
+                  } else {
+                    createStory();
+                  }
                 }}
                 className="bg-tiktok-pink hover:bg-tiktok-pink/80 px-8"
               >
