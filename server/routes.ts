@@ -327,18 +327,134 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const buffer = Buffer.from(await response.arrayBuffer());
       
-      // Create a temporary file URL for the audio
-      const timestamp = Date.now();
-      const audioUrl = `data:audio/mpeg;base64,${buffer.toString('base64')}`;
+      // Save audio to cache directory and get file URL
+      const cacheDir = path.join(process.cwd(), 'persistent-cache', 'audio');
+      await fs.mkdir(cacheDir, { recursive: true });
       
-      // Cache the audio
-      await cacheAudio(text, voice, audioUrl, emotion, intensity);
+      const fileName = `emotion-${emotion}-${intensity}-${Date.now()}.mp3`;
+      const filePath = path.join(cacheDir, fileName);
+      
+      // Write audio file
+      await fs.writeFile(filePath, buffer);
+      
+      // Create file URL
+      const audioUrl = `/api/cached-audio/${fileName}`;
+      
+      // Save metadata for caching
+      const metadata = {
+        text,
+        voice,
+        emotion,
+        intensity,
+        fileName,
+        timestamp: Date.now(),
+        fileSize: buffer.length,
+      };
+      
+      const metadataPath = path.join(cacheDir, `${fileName}.json`);
+      await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2));
       
       console.log("Generated emotion audio sample for:", emotion);
       res.json({ url: audioUrl });
     } catch (error) {
       console.error("Emotion sample generation error:", error);
       res.status(500).json({ message: error instanceof Error ? error.message : "Failed to generate emotion sample" });
+    }
+  });
+
+  // Save user voice recording for emotion
+  app.post("/api/emotions/save-voice-sample", upload.single('audio'), async (req, res) => {
+    try {
+      console.log("Received voice sample save request:", req.body);
+      const { emotion, intensity, text, userId, storyId } = req.body;
+      const audioFile = req.file;
+      
+      if (!audioFile || !emotion || !text || !userId) {
+        return res.status(400).json({ message: "Audio file, emotion, text, and userId are required" });
+      }
+
+      // Save audio file to persistent cache
+      const cacheDir = path.join(process.cwd(), 'persistent-cache', 'user-voice-samples');
+      await fs.mkdir(cacheDir, { recursive: true });
+      
+      const fileName = `${userId}-${emotion}-${intensity}-${Date.now()}.webm`;
+      const filePath = path.join(cacheDir, fileName);
+      
+      // Write audio file
+      await fs.writeFile(filePath, audioFile.buffer);
+      
+      // Create metadata
+      const metadata = {
+        userId,
+        storyId,
+        emotion,
+        intensity: parseInt(intensity),
+        text,
+        fileName,
+        filePath,
+        fileSize: audioFile.size,
+        timestamp: Date.now(),
+        mimeType: audioFile.mimetype,
+      };
+      
+      // Save metadata
+      const metadataPath = path.join(cacheDir, `${fileName}.json`);
+      await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2));
+      
+      console.log(`Saved user voice sample: ${fileName} (${audioFile.size} bytes)`);
+      
+      res.json({ 
+        message: "Voice sample saved successfully",
+        fileName,
+        url: `/api/emotions/user-voice-sample/${fileName}`
+      });
+    } catch (error) {
+      console.error("Voice sample save error:", error);
+      res.status(500).json({ message: error instanceof Error ? error.message : "Failed to save voice sample" });
+    }
+  });
+
+  // Serve cached audio files
+  app.get("/api/cached-audio/:fileName", async (req, res) => {
+    try {
+      const { fileName } = req.params;
+      const filePath = path.join(process.cwd(), 'persistent-cache', 'audio', fileName);
+      
+      // Check if file exists
+      try {
+        await fs.access(filePath);
+      } catch {
+        return res.status(404).json({ message: "Audio file not found" });
+      }
+      
+      // Serve the audio file
+      res.setHeader('Content-Type', 'audio/mpeg');
+      res.sendFile(path.resolve(filePath));
+    } catch (error) {
+      console.error("Audio serve error:", error);
+      res.status(500).json({ message: "Failed to serve audio file" });
+    }
+  });
+
+  // Serve user voice samples
+  app.get("/api/emotions/user-voice-sample/:fileName", async (req, res) => {
+    try {
+      const { fileName } = req.params;
+      const filePath = path.join(process.cwd(), 'persistent-cache', 'user-voice-samples', fileName);
+      
+      // Check if file exists
+      try {
+        await fs.access(filePath);
+      } catch {
+        return res.status(404).json({ message: "Voice sample not found" });
+      }
+      
+      // Serve the audio file
+      res.setHeader('Content-Type', 'audio/webm');
+      res.sendFile(path.resolve(filePath));
+    } catch (error) {
+      console.error("Voice sample serve error:", error);
+      res.status(500).json({ message: "Failed to serve voice sample" });
     }
   });
 
