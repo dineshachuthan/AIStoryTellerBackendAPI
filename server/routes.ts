@@ -992,7 +992,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         for (const emotion of analysis.emotions) {
           await storage.createStoryEmotion({
             storyId: story.id,
-            emotionType: emotion.emotion,
+            emotion: emotion.emotion,
             intensity: emotion.intensity,
             context: emotion.context,
             voiceUrl: null, // Will be populated when user assigns voice

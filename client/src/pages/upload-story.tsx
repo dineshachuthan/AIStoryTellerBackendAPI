@@ -178,8 +178,7 @@ export default function UploadStory() {
             emotion: emotion.emotion,
             intensity: emotion.intensity,
             context: emotion.context,
-            quote: emotion.quote,
-            soundUrl: emotion.soundUrl,
+            voiceUrl: emotion.soundUrl,
           }),
         });
       }

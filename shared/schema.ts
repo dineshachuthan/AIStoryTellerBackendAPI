@@ -119,8 +119,9 @@ export const emotions = pgTable("emotions", {
 export const storyEmotions = pgTable("story_emotions", {
   id: serial("id").primaryKey(),
   storyId: integer("story_id").references(() => stories.id),
-  emotionId: integer("emotion_id").references(() => emotions.id),
-  characterId: integer("character_id").references(() => storyCharacters.id), // Which character experiences this emotion
+  emotion: text("emotion").notNull(), // Direct emotion storage instead of reference
+  intensity: integer("intensity").notNull(),
+  context: text("context").notNull(),
   voiceUrl: text("voice_url"), // User-recorded voice sample for this emotion (optional)
   createdAt: timestamp("created_at").defaultNow(),
 });
