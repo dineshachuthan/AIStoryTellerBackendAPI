@@ -413,6 +413,27 @@ export default function UploadStory() {
     setCurrentStep(3);
   };
 
+  // Create character-emotion associations for display
+  const getCharacterEmotionGroups = () => {
+    return charactersWithImages.map(character => {
+      const characterEmotions = emotionsWithSounds.filter(emotion => 
+        emotion.quote?.toLowerCase().includes(character.name.toLowerCase()) ||
+        emotion.context.toLowerCase().includes(character.name.toLowerCase()) ||
+        emotion.context.toLowerCase().includes('boy') && character.name.toLowerCase().includes('boy') ||
+        emotion.context.toLowerCase().includes('mother') && character.name.toLowerCase().includes('mother')
+      );
+      
+      // If no specific emotions found for character, assign general emotions
+      const finalEmotions = characterEmotions.length > 0 ? characterEmotions : 
+        emotionsWithSounds.slice(0, Math.max(1, Math.floor(emotionsWithSounds.length / charactersWithImages.length)));
+      
+      return {
+        character,
+        emotions: finalEmotions
+      };
+    });
+  };
+
   const generateCharacterImage = async (characterIndex: number) => {
     const character = charactersWithImages[characterIndex];
     if (!character) return;
@@ -1048,72 +1069,118 @@ export default function UploadStory() {
               <p className="text-gray-400">Assign images and sounds to bring your story to life</p>
             </div>
 
-            {/* Character Images */}
+            {/* Character & Emotion Groups */}
             <Card className="bg-dark-card border-gray-700">
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <Users className="w-5 h-5 mr-2 text-tiktok-cyan" />
-                  Character Images
+                  Characters & Their Emotions
                 </CardTitle>
+                <p className="text-sm text-gray-400 mt-1">Each character is grouped with their associated emotions</p>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {charactersWithImages.map((character, index) => (
-                    <div key={index} className="bg-gray-800 rounded-lg p-4">
-                      <div className="flex items-center space-x-4 mb-4">
+                <div className="space-y-8">
+                  {getCharacterEmotionGroups().map((group, groupIndex) => (
+                    <div key={groupIndex} className="bg-gray-800 rounded-lg p-6 border border-gray-600">
+                      {/* Character Info */}
+                      <div className="flex items-center space-x-4 mb-6">
                         <div className="relative">
-                          <Avatar className="w-16 h-16">
-                            <AvatarImage src={character.imageUrl} alt={character.name} />
-                            <AvatarFallback className="bg-tiktok-cyan text-white text-lg">
-                              {character.name.charAt(0)}
+                          <Avatar className="w-20 h-20">
+                            <AvatarImage src={group.character.imageUrl} alt={group.character.name} />
+                            <AvatarFallback className="bg-tiktok-cyan text-white text-xl">
+                              {group.character.name.charAt(0)}
                             </AvatarFallback>
                           </Avatar>
-                          {generatingImages.includes(index) && (
+                          {generatingImages.includes(groupIndex) && (
                             <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
-                              <Loader2 className="w-6 h-6 text-white animate-spin" />
+                              <Loader2 className="w-8 h-8 text-white animate-spin" />
                             </div>
                           )}
                         </div>
                         <div className="flex-1">
-                          <h4 className="font-semibold text-white">{character.name}</h4>
-                          <p className="text-sm text-gray-400">{character.role}</p>
-                          <p className="text-xs text-gray-500 mt-1">{character.description}</p>
-                          {generatingImages.includes(index) && (
-                            <p className="text-xs text-tiktok-cyan mt-1 animate-pulse">
+                          <h3 className="text-xl font-bold text-white">{group.character.name}</h3>
+                          <p className="text-sm text-gray-400 capitalize">{group.character.role}</p>
+                          <p className="text-sm text-gray-500 mt-1">{group.character.description}</p>
+                          {generatingImages.includes(groupIndex) && (
+                            <p className="text-xs text-tiktok-cyan mt-2 animate-pulse">
                               Creating AI image...
                             </p>
                           )}
                         </div>
+                        <div className="flex flex-col space-y-2">
+                          <Button
+                            onClick={() => generateCharacterImage(groupIndex)}
+                            variant="outline"
+                            size="sm"
+                            className="border-tiktok-cyan text-tiktok-cyan hover:bg-tiktok-cyan/20"
+                            disabled={generatingImages.includes(groupIndex)}
+                          >
+                            {generatingImages.includes(groupIndex) ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                Generating...
+                              </>
+                            ) : (
+                              <>
+                                <Sparkles className="w-4 h-4 mr-2" />
+                                {group.character.imageUrl?.includes('dicebear.com') ? 'Generate AI Image' : 'Generate New'}
+                              </>
+                            )}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="border-gray-600 text-gray-400 hover:bg-gray-800"
+                          >
+                            <Upload className="w-4 h-4 mr-2" />
+                            Upload
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex space-x-2">
-                        <Button
-                          onClick={() => generateCharacterImage(index)}
-                          variant="outline"
-                          size="sm"
-                          className="border-tiktok-cyan text-tiktok-cyan hover:bg-tiktok-cyan/20"
-                          disabled={generatingImages.includes(index)}
-                        >
-                          {generatingImages.includes(index) ? (
-                            <>
-                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                              Generating...
-                            </>
-                          ) : (
-                            <>
-                              <Sparkles className="w-4 h-4 mr-2" />
-                              {character.imageUrl?.includes('dicebear.com') ? 'Generate AI Image' : 'Generate New'}
-                            </>
-                          )}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="border-gray-600 text-gray-400 hover:bg-gray-800"
-                          disabled={generatingImages.includes(index)}
-                        >
-                          <Upload className="w-4 h-4 mr-2" />
-                          Upload
-                        </Button>
+                      
+                      {/* Character's Emotions */}
+                      <div className="border-t border-gray-600 pt-4">
+                        <h4 className="text-lg font-semibold text-white mb-3 flex items-center">
+                          <Heart className="w-5 h-5 mr-2 text-tiktok-red" />
+                          {group.character.name}'s Emotions
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {group.emotions.map((emotion, emotionIndex) => {
+                            const EmotionIcon = emotion.emotion === 'happy' ? Smile : 
+                                               emotion.emotion === 'sad' ? Frown : 
+                                               emotion.emotion === 'angry' ? Angry : 
+                                               emotion.emotion === 'vexed' ? Angry :
+                                               emotion.emotion === 'disappointment' ? Frown :
+                                               Heart;
+                            
+                            return (
+                              <div key={emotionIndex} className="bg-gray-700 rounded-lg p-4 border border-gray-500">
+                                <div className="flex items-center justify-between mb-2">
+                                  <div className="flex items-center space-x-2">
+                                    <EmotionIcon className="w-5 h-5 text-tiktok-red" />
+                                    <h5 className="font-semibold text-white capitalize">{emotion.emotion}</h5>
+                                    <span className="text-xs bg-tiktok-red/20 text-tiktok-red px-2 py-1 rounded">
+                                      {emotion.intensity}/10
+                                    </span>
+                                  </div>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-gray-400 hover:text-white h-8 w-8 p-0"
+                                  >
+                                    <Play className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                                <p className="text-sm text-gray-300 mb-2">{emotion.context}</p>
+                                {emotion.quote && (
+                                  <p className="text-xs text-gray-400 italic bg-gray-600 p-2 rounded">
+                                    "{emotion.quote}"
+                                  </p>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
                     </div>
                   ))}
