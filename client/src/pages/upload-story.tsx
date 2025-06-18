@@ -411,52 +411,24 @@ export default function UploadStory() {
         const context = emotion.context.toLowerCase();
         const quote = (emotion.quote || '').toLowerCase();
         const characterName = character.name.toLowerCase();
+        const firstName = characterName.split(' ')[0]; // Get first name for better matching
         
-        // Primary: Check if emotion context explicitly mentions this character as the one experiencing it
-        if (context.includes(`${characterName} feels`) || 
-            context.includes(`${characterName} is`) ||
-            context.includes(`${characterName}'s`) ||
-            context.includes(`${characterName} experiences`)) {
+        // Primary: Check if emotion context explicitly mentions this character
+        if (context.includes(characterName) || context.includes(firstName)) {
           return true;
         }
         
-        // Secondary: Check if the quote is directly from this character
-        if (emotion.quote && context.includes(`${characterName} says`) || 
-            context.includes(`${characterName} speaks`) ||
-            context.includes(`${characterName} tells`)) {
+        // Secondary: Check if the quote mentions this character
+        if (emotion.quote && (quote.includes(characterName) || quote.includes(firstName))) {
           return true;
         }
         
-        // Tertiary: Analyze quote content for speaker identification
-        if (emotion.quote) {
-          // Mother's advice/wisdom quotes
-          if ((quote.includes('take fewer') || quote.includes('be content') || 
-               quote.includes('advice') || quote.includes('wisdom')) && 
-              characterName.includes('mother')) {
-            return true;
-          }
-          
-          // Boy's frustrated/greedy statements
-          if ((quote.includes('my hand') || quote.includes('i want') || 
-               quote.includes('i need') || quote.includes('stuck')) && 
-              characterName.includes('boy')) {
-            return true;
-          }
-        }
-        
-        // Fallback: Match by character role and emotion type
+        // For protagonist role, associate most emotions (since stories typically focus on main character)
         if (character.role === 'protagonist') {
-          // Protagonist typically has action-based emotions
-          return emotion.emotion === 'frustration' || emotion.emotion === 'greed' || 
-                 emotion.emotion === 'disappointment' || emotion.emotion === 'realization';
+          return true;
         }
         
-        if (character.role === 'supporting') {
-          // Supporting characters (like mother) typically have wisdom/guidance emotions
-          return emotion.emotion === 'wisdom' || emotion.emotion === 'patience' || 
-                 emotion.emotion === 'understanding' || emotion.emotion === 'compassion';
-        }
-        
+        // For supporting characters, only associate if explicitly mentioned or if no other characters match
         return false;
       });
       
