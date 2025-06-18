@@ -7,6 +7,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Mic, Play, Square, RotateCcw, Check } from "lucide-react";
+import { ConfigurableAudioRecorder } from "@/lib/audioRecorder";
+import { AudioConfigManager } from "@/lib/audioConfig";
+import { DEFAULT_PLATFORM_CONFIG } from "@shared/audioConfig";
 
 interface VoiceSample {
   label: string;
