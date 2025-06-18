@@ -102,7 +102,7 @@ export default function StoryPlayer() {
   useEffect(() => {
     if (grandmaNarration && grandmaNarration.segments && grandmaNarration.segments.length > 0 && !isPlaying) {
       setCurrentSegmentIndex(0);
-      playSegmentAudio(grandmaNarration.segments[0]);
+      playSegmentAudio(grandmaNarration.segments[0], 0);
       setIsPlaying(true);
     }
   }, [grandmaNarration]);
@@ -129,7 +129,7 @@ export default function StoryPlayer() {
       // Start playing the first segment
       if (response.segments && response.segments.length > 0) {
         setCurrentSegmentIndex(0);
-        playSegmentAudio(response.segments[0]);
+        playSegmentAudio(response.segments[0], 0);
         setIsPlaying(true);
         
         // Track playback start for confidence meter
@@ -185,23 +185,24 @@ export default function StoryPlayer() {
     };
   }, [isPlaying, narration, currentSegmentIndex]);
 
-  const playSegmentAudio = (segment: NarrationSegment) => {
+  const playSegmentAudio = (segment: NarrationSegment, segmentIndex: number) => {
     if (segment.voiceUrl && audioRef.current) {
-      console.log("Playing segment:", segment.text, "URL:", segment.voiceUrl);
+      console.log("Playing segment:", segment.text, "URL:", segment.voiceUrl, "Index:", segmentIndex);
       audioRef.current.src = segment.voiceUrl;
       audioRef.current.volume = volume;
       
       audioRef.current.onended = () => {
         // Auto-advance to next segment
         const currentNarration = grandmaNarration || narration;
-        if (currentNarration && currentSegmentIndex < currentNarration.segments.length - 1) {
-          const nextIndex = currentSegmentIndex + 1;
+        if (currentNarration && segmentIndex < currentNarration.segments.length - 1) {
+          const nextIndex = segmentIndex + 1;
+          console.log("Auto-advancing from", segmentIndex, "to", nextIndex);
           setCurrentSegmentIndex(nextIndex);
-          playSegmentAudio(currentNarration.segments[nextIndex]);
+          playSegmentAudio(currentNarration.segments[nextIndex], nextIndex);
         } else {
           // End of story
           setIsPlaying(false);
-          console.log("Story playback completed");
+          console.log("Story playback completed - reached end");
         }
       };
       
@@ -226,11 +227,11 @@ export default function StoryPlayer() {
         // Use generated narration
         if (grandmaNarration.segments && grandmaNarration.segments.length > 0) {
           setCurrentSegmentIndex(0);
-          playSegmentAudio(grandmaNarration.segments[0]);
+          playSegmentAudio(grandmaNarration.segments[0], 0);
           setIsPlaying(true);
         }
       } else if (currentSegment) {
-        playSegmentAudio(currentSegment);
+        playSegmentAudio(currentSegment, currentSegmentIndex);
         setIsPlaying(true);
       }
     }
@@ -244,7 +245,7 @@ export default function StoryPlayer() {
         setCurrentSegmentIndex(prevIndex);
         setCurrentTime(prevSegment.startTime);
         if (isPlaying) {
-          playSegmentAudio(prevSegment);
+          playSegmentAudio(prevSegment, prevIndex);
         }
       }
     }
@@ -257,7 +258,7 @@ export default function StoryPlayer() {
       setCurrentSegmentIndex(nextIndex);
       setCurrentTime(nextSegment.startTime);
       if (isPlaying) {
-        playSegmentAudio(nextSegment);
+        playSegmentAudio(nextSegment, nextIndex);
       }
     }
   };
