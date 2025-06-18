@@ -541,36 +541,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let fileName: string;
       let filePath: string;
       
-      // Convert WebM to WAV first, then to MP3 for better compatibility
+      // Convert WebM to MP3 with enhanced compatibility
       if (audioFile.mimetype === 'audio/webm') {
-        // Save temporary WebM file
+        // Save temporary WebM file with proper binary data handling
         const tempWebmFile = `temp_${userId}-${emotion}-${intensity}-${timestamp}.webm`;
         const tempWebmPath = path.join(cacheDir, tempWebmFile);
-        await fs.writeFile(tempWebmPath, audioFile.buffer);
         
-        // Convert WebM to WAV first (better for preserving audio quality)
-        const tempWavFile = `temp_${userId}-${emotion}-${intensity}-${timestamp}.wav`;
-        const tempWavPath = path.join(cacheDir, tempWavFile);
+        // Ensure buffer is properly written as binary data
+        console.log(`Writing WebM buffer: ${audioFile.buffer.length} bytes`);
+        await fs.writeFile(tempWebmPath, audioFile.buffer, { flag: 'w' });
         
         fileName = `${userId}-${emotion}-${intensity}-${timestamp}.mp3`;
         filePath = path.join(cacheDir, fileName);
         
         try {
-          // Two-step conversion: WebM -> WAV -> MP3 for best quality
-          await execAsync(`ffmpeg -i "${tempWebmPath}" -ar 44100 -ac 2 -y "${tempWavPath}"`);
-          await execAsync(`ffmpeg -i "${tempWavPath}" -acodec libmp3lame -b:a 128k -ar 44100 -ac 2 -y "${filePath}"`);
+          // Verify the WebM file was written properly
+          const stats = await fs.stat(tempWebmPath);
+          console.log(`WebM file size: ${stats.size} bytes`);
           
-          // Clean up temporary files
+          if (stats.size === 0) {
+            throw new Error("WebM file is empty");
+          }
+          
+          // Enhanced FFmpeg conversion with error handling and compatibility flags
+          await execAsync(`ffmpeg -f webm -i "${tempWebmPath}" -acodec libmp3lame -b:a 128k -ar 44100 -ac 2 -f mp3 -y "${filePath}"`);
+          
+          // Verify output file
+          const outputStats = await fs.stat(filePath);
+          console.log(`MP3 file size: ${outputStats.size} bytes`);
+          
+          // Clean up temporary file
           await fs.unlink(tempWebmPath);
-          await fs.unlink(tempWavPath);
         } catch (conversionError) {
-          console.error("Audio conversion failed:", conversionError);
-          // Fallback: try direct conversion
+          console.error("FFmpeg conversion error:", conversionError);
+          // Enhanced fallback with different codec settings
           try {
-            await execAsync(`ffmpeg -i "${tempWebmPath}" -acodec libmp3lame -b:a 96k -ar 22050 -ac 1 -y "${filePath}"`);
+            // Try with different WebM handling
+            await execAsync(`ffmpeg -f webm -i "${tempWebmPath}" -vn -acodec libmp3lame -b:a 96k -ar 22050 -ac 1 -f mp3 -y "${filePath}"`);
             await fs.unlink(tempWebmPath);
           } catch (fallbackError) {
-            console.error("Fallback conversion also failed, saving original:", fallbackError);
+            console.error("All conversion attempts failed:", fallbackError);
+            // Final fallback: save as WebM with .mp3 extension (browser should still play)
             await fs.copyFile(tempWebmPath, filePath);
             await fs.unlink(tempWebmPath);
           }
