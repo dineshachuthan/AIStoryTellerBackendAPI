@@ -104,6 +104,8 @@ export default function UploadStory() {
   // Emotion voice recording
   const [recordingEmotions, setRecordingEmotions] = useState<Record<string, boolean>>({});
   const [emotionRecorders, setEmotionRecorders] = useState<Record<string, MediaRecorder>>({});
+  const [playingEmotions, setPlayingEmotions] = useState<Record<string, boolean>>({});
+  const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
 
   // Create story with direct analysis data (for automated flow)
   const createStoryWithAnalysis = async (
@@ -481,8 +483,25 @@ export default function UploadStory() {
     });
   };
 
-  const playEmotionSample = async (emotion: any) => {
+  const playEmotionSample = async (emotion: any, emotionKey: string) => {
+    // Prevent multiple simultaneous plays
+    if (playingEmotions[emotionKey]) {
+      return;
+    }
+
+    // Stop any currently playing audio
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+      setCurrentAudio(null);
+      // Reset all playing states
+      setPlayingEmotions({});
+    }
+
     try {
+      // Set playing state
+      setPlayingEmotions(prev => ({ ...prev, [emotionKey]: true }));
+
       // Generate a sample audio for the emotion
       const audioResponse = await apiRequest('/api/emotions/generate-sample', {
         method: 'POST',
@@ -496,19 +515,31 @@ export default function UploadStory() {
         }),
       });
 
-      // Play the audio
+      // Create and play the audio
       const audio = new Audio(audioResponse.url);
-      audio.play().catch(error => {
-        console.error("Audio playback failed:", error);
+      setCurrentAudio(audio);
+
+      audio.onended = () => {
+        setPlayingEmotions(prev => ({ ...prev, [emotionKey]: false }));
+        setCurrentAudio(null);
+      };
+
+      audio.onerror = () => {
+        setPlayingEmotions(prev => ({ ...prev, [emotionKey]: false }));
+        setCurrentAudio(null);
         toast({
           title: "Playback Failed",
           description: "Could not play emotion sample.",
           variant: "destructive",
         });
-      });
+      };
+
+      await audio.play();
 
     } catch (error) {
       console.error("Emotion sample generation error:", error);
+      setPlayingEmotions(prev => ({ ...prev, [emotionKey]: false }));
+      setCurrentAudio(null);
       toast({
         title: "Sample Generation Failed",
         description: error instanceof Error ? error.message : "Could not generate emotion sample.",
@@ -1321,6 +1352,7 @@ export default function UploadStory() {
                             
                             const emotionKey = `${groupIndex}-${emotionIndex}`;
                             const isRecording = recordingEmotions[emotionKey];
+                            const isPlaying = playingEmotions[emotionKey];
                             
                             return (
                               <div key={emotionIndex} className="bg-gray-700 rounded-lg p-4 border border-gray-500">
@@ -1336,8 +1368,9 @@ export default function UploadStory() {
                                     <Button
                                       variant="ghost"
                                       size="sm"
-                                      className="text-gray-400 hover:text-white h-8 w-8 p-0"
-                                      onClick={() => playEmotionSample(emotion)}
+                                      className={`h-8 w-8 p-0 ${isPlaying ? 'text-tiktok-cyan animate-pulse' : 'text-gray-400 hover:text-white'}`}
+                                      onClick={() => playEmotionSample(emotion, emotionKey)}
+                                      disabled={isPlaying}
                                     >
                                       <Play className="w-4 h-4" />
                                     </Button>
