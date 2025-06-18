@@ -88,14 +88,25 @@ export const storyCharacters = pgTable("story_characters", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Story emotions table for extracted emotions with voice samples
+// Generic emotions table for reusable emotion samples
+export const emotions = pgTable("emotions", {
+  id: serial("id").primaryKey(),
+  emotion: text("emotion").notNull(), // 'happy', 'sad', 'angry', 'fear', etc.
+  intensity: integer("intensity").notNull(), // 1-10 scale
+  context: text("context").notNull(), // Context where this emotion appears
+  quote: text("quote"), // Quote that represents this emotion
+  audioUrl: text("audio_url"), // Generated audio sample URL
+  voiceUsed: text("voice_used"), // Which voice was used (for consistency)
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Story emotions association table
 export const storyEmotions = pgTable("story_emotions", {
   id: serial("id").primaryKey(),
   storyId: integer("story_id").references(() => stories.id),
-  emotion: text("emotion").notNull(), // 'happy', 'sad', 'angry', 'fear', etc.
-  intensity: integer("intensity").default(5), // 1-10 scale
-  context: text("context"), // Where this emotion appears in the story
-  voiceUrl: text("voice_url"), // User-recorded voice sample for this emotion
+  emotionId: integer("emotion_id").references(() => emotions.id),
+  characterId: integer("character_id").references(() => storyCharacters.id), // Which character experiences this emotion
+  voiceUrl: text("voice_url"), // User-recorded voice sample for this emotion (optional)
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -210,6 +221,11 @@ export const insertStorySchema = createInsertSchema(stories).omit({
 });
 
 export const insertStoryCharacterSchema = createInsertSchema(storyCharacters).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertEmotionSchema = createInsertSchema(emotions).omit({
   id: true,
   createdAt: true,
 });

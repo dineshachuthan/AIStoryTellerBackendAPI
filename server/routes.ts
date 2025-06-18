@@ -18,18 +18,12 @@ import OpenAI from "openai";
 function detectCharacterInText(text: string, characters: any[]): any | null {
   const lowerText = text.toLowerCase();
   
-  console.log("Detecting character in text:", text);
-  console.log("Available characters:", characters.map(c => ({ name: c.name, voice: c.assignedVoice })));
-  
   // Priority 1: Mother's specific dialogue patterns - "My boy" indicates Mother is speaking
   if (lowerText.includes('my boy') || lowerText.includes('my child') || 
       lowerText.includes('be satisfied') || lowerText.includes('take half') ||
       lowerText.includes('half the nuts')) {
     const mother = characters.find(c => c.name.toLowerCase().includes('mother'));
-    if (mother) {
-      console.log("Detected Mother speaking based on dialogue pattern");
-      return mother;
-    }
+    if (mother) return mother;
   }
   
   // Priority 2: Check for direct dialogue patterns (quoted speech)
@@ -49,7 +43,6 @@ function detectCharacterInText(text: string, characters: any[]): any | null {
             lowerText.includes(`${nameVariation} asked`) ||
             lowerText.includes(`replied ${nameVariation}`) ||
             lowerText.includes(`${nameVariation} replied`)) {
-          console.log(`Detected ${character.name} speaking based on dialogue attribution`);
           return character;
         }
       }
@@ -61,13 +54,9 @@ function detectCharacterInText(text: string, characters: any[]): any | null {
        lowerText.includes('disappointed') || lowerText.includes('cry')) &&
       !lowerText.includes('my boy') && !lowerText.includes('be satisfied')) {
     const boy = characters.find(c => c.name.toLowerCase().includes('boy'));
-    if (boy) {
-      console.log("Detected Boy based on action/emotion pattern");
-      return boy;
-    }
+    if (boy) return boy;
   }
   
-  console.log("No character detected");
   return null;
 }
 
@@ -350,7 +339,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Generate emotion audio sample with character-specific voice
   app.post("/api/emotions/generate-sample", async (req, res) => {
     try {
-      console.log("Received emotion sample request body:", req.body);
       const { emotion, intensity, text, storyId, analysisCharacters } = req.body;
       
       if (!emotion || !text) {
@@ -365,26 +353,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           characters = await storage.getStoryCharacters(storyId);
         } catch (error) {
-          console.log("Could not load story characters from database");
+          // Fall back to default voice selection
         }
       } else if (analysisCharacters) {
         // Use characters from analysis phase (before story is created)
         characters = analysisCharacters;
-        console.log("Using analysis characters for voice detection");
       }
       
       if (characters.length > 0) {
-        console.log("Characters available for voice detection:", characters);
         // Detect which character is speaking in this text
         const detectedCharacter = detectCharacterInText(text, characters);
         if (detectedCharacter && detectedCharacter.assignedVoice) {
           selectedVoice = detectedCharacter.assignedVoice;
-          console.log(`Using character voice '${selectedVoice}' for ${detectedCharacter.name} in emotion sample`);
-        } else {
-          console.log("No character detected or no assigned voice found");
         }
-      } else {
-        console.log("No characters available for voice detection");
       }
 
       // Check cache first with character-specific voice

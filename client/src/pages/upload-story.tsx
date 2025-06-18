@@ -493,6 +493,9 @@ export default function UploadStory() {
         }),
       });
 
+      // Store the generated audio URL in the emotion object for later use in story creation
+      emotion.soundUrl = audioResponse.url;
+
       // Create and play the audio
       const audio = new Audio(audioResponse.url);
       setCurrentAudio(audio);
