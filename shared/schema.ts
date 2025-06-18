@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, jsonb, varchar, index } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, jsonb, varchar, index, doublePrecision } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -199,6 +199,48 @@ export const storyPlaybacks = pgTable("story_playbacks", {
   shareCount: integer("share_count").default(0),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Global character archetypes for reusable voice assignments
+export const characterArchetypes = pgTable("character_archetypes", {
+  id: serial("id").primaryKey(),
+  name: varchar("name").notNull(), // e.g., "King", "Mother", "Wise Old Man"
+  category: varchar("category").notNull(), // e.g., "authority", "family", "animal", "fantasy"
+  gender: varchar("gender"), // "male", "female", "neutral", "unknown"
+  ageGroup: varchar("age_group"), // "child", "young", "adult", "elderly"
+  personality: varchar("personality"), // "authoritative", "gentle", "wise", "dramatic"
+  recommendedVoice: varchar("recommended_voice").notNull(), // OpenAI voice name
+  description: text("description"),
+  keywords: text("keywords").array(), // Array of keywords for matching
+  usageCount: integer("usage_count").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// User-specific character voice preferences that override defaults
+export const userCharacterPreferences = pgTable("user_character_preferences", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  archetypeId: integer("archetype_id").references(() => characterArchetypes.id),
+  characterPattern: varchar("character_pattern").notNull(), // e.g., "king", "mother", "wise old man"
+  preferredVoice: varchar("preferred_voice").notNull(),
+  speedModifier: real("speed_modifier").default(1.0), // 0.25 to 4.0
+  reasonForPreference: text("reason_for_preference"),
+  timesUsed: integer("times_used").default(0),
+  lastUsedAt: timestamp("last_used_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Global emotion-voice mappings for consistency
+export const emotionVoiceProfiles = pgTable("emotion_voice_profiles", {
+  id: serial("id").primaryKey(),
+  emotion: varchar("emotion").notNull(), // "wisdom", "anger", "joy", etc.
+  characterType: varchar("character_type"), // "mother", "king", "child", etc. (optional for specificity)
+  baseVoice: varchar("base_voice").notNull(), // OpenAI voice name
+  speedModifier: real("speed_modifier").default(1.0),
+  styleInstructions: text("style_instructions"), // Text-to-speech style hints
+  usageCount: integer("usage_count").default(0),
+  successRate: real("success_rate").default(1.0), // User satisfaction rating
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 // User schemas
