@@ -1,5 +1,6 @@
 // Advanced voice matching system for character-specific voice assignment
 import type { ExtractedCharacter } from './ai-analysis';
+import { archetypeService } from './character-archetype-service';
 
 interface VoiceProfile {
   voice: 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer';
@@ -208,8 +209,32 @@ export function analyzeCharacter(character: ExtractedCharacter): CharacterAnalys
   };
 }
 
-export function matchVoiceToCharacter(character: ExtractedCharacter): string {
+export async function matchVoiceToCharacter(character: ExtractedCharacter, userId?: string): Promise<string> {
   const analysis = analyzeCharacter(character);
+  
+  // First, check if user has a saved preference for this character type
+  if (userId) {
+    const characterPattern = character.name.toLowerCase();
+    const userPreference = await archetypeService.getUserPreferredVoice(userId, characterPattern);
+    if (userPreference) {
+      return userPreference;
+    }
+  }
+  
+  // Look for matching archetype in the database
+  const matchingArchetype = await archetypeService.findMatchingArchetype(
+    character.name, 
+    character.description, 
+    character.traits
+  );
+  
+  if (matchingArchetype) {
+    // Update usage statistics
+    await archetypeService.updateArchetypeUsage(matchingArchetype.id);
+    return matchingArchetype.recommendedVoice;
+  }
+  
+  // Fallback to local analysis if no archetype match
   const text = `${character.name} ${character.description} ${character.personality}`.toLowerCase();
   
   // Special voice assignments for specific character archetypes
@@ -316,6 +341,52 @@ export function matchVoiceToCharacter(character: ExtractedCharacter): string {
     }
     if (text.includes('young') || text.includes('child')) {
       if (voiceProfile.voice === 'echo' || voiceProfile.voice === 'shimmer') score += 2;
+    }
+    
+    if (score > bestScore) {
+      bestScore = score;
+      bestMatch = voiceProfile.voice;
+    }
+  }
+  
+  return bestMatch;
+}
+
+// Synchronous version for backwards compatibility
+export function matchVoiceToCharacterSync(character: ExtractedCharacter): string {
+  const analysis = analyzeCharacter(character);
+  const text = `${character.name} ${character.description} ${character.personality}`.toLowerCase();
+  
+  // Special voice assignments for specific character archetypes
+  const specialCharacterMappings: Record<string, string> = {
+    'king': 'onyx', 'queen': 'nova', 'president': 'onyx', 'general': 'onyx',
+    'priest': 'fable', 'soldier': 'echo', 'terrorist': 'onyx', 'mother': 'nova',
+    'father': 'fable', 'dog': 'echo', 'cat': 'shimmer', 'lion': 'onyx'
+  };
+  
+  // Check for direct character type match
+  for (const [characterType, voice] of Object.entries(specialCharacterMappings)) {
+    if (text.includes(characterType)) {
+      return voice;
+    }
+  }
+  
+  // Fallback to analysis-based matching
+  const candidateVoices = Object.values(VOICE_PROFILES);
+  let bestMatch = 'alloy';
+  let bestScore = 0;
+  
+  for (const voiceProfile of candidateVoices) {
+    let score = 0;
+    
+    if (analysis.gender !== 'unknown' && voiceProfile.gender === analysis.gender) {
+      score += 10;
+    } else if (analysis.gender === 'unknown' && voiceProfile.gender === 'neutral') {
+      score += 5;
+    }
+    
+    if (analysis.age !== 'unknown' && voiceProfile.age === analysis.age) {
+      score += 5;
     }
     
     if (score > bestScore) {

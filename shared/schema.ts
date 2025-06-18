@@ -223,7 +223,7 @@ export const userCharacterPreferences = pgTable("user_character_preferences", {
   archetypeId: integer("archetype_id").references(() => characterArchetypes.id),
   characterPattern: varchar("character_pattern").notNull(), // e.g., "king", "mother", "wise old man"
   preferredVoice: varchar("preferred_voice").notNull(),
-  speedModifier: real("speed_modifier").default(1.0), // 0.25 to 4.0
+  speedModifier: doublePrecision("speed_modifier").default(1.0), // 0.25 to 4.0
   reasonForPreference: text("reason_for_preference"),
   timesUsed: integer("times_used").default(0),
   lastUsedAt: timestamp("last_used_at"),
@@ -236,10 +236,10 @@ export const emotionVoiceProfiles = pgTable("emotion_voice_profiles", {
   emotion: varchar("emotion").notNull(), // "wisdom", "anger", "joy", etc.
   characterType: varchar("character_type"), // "mother", "king", "child", etc. (optional for specificity)
   baseVoice: varchar("base_voice").notNull(), // OpenAI voice name
-  speedModifier: real("speed_modifier").default(1.0),
+  speedModifier: doublePrecision("speed_modifier").default(1.0),
   styleInstructions: text("style_instructions"), // Text-to-speech style hints
   usageCount: integer("usage_count").default(0),
-  successRate: real("success_rate").default(1.0), // User satisfaction rating
+  successRate: doublePrecision("success_rate").default(1.0), // User satisfaction rating
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -377,3 +377,12 @@ export type InsertCharacterVoiceAssignment = z.infer<typeof insertCharacterVoice
 
 export type StoryPlayback = typeof storyPlaybacks.$inferSelect;
 export type InsertStoryPlayback = z.infer<typeof insertStoryPlaybackSchema>;
+
+export type CharacterArchetype = typeof characterArchetypes.$inferSelect;
+export type InsertCharacterArchetype = typeof characterArchetypes.$inferInsert;
+
+export type UserCharacterPreference = typeof userCharacterPreferences.$inferSelect;
+export type InsertUserCharacterPreference = typeof userCharacterPreferences.$inferInsert;
+
+export type EmotionVoiceProfile = typeof emotionVoiceProfiles.$inferSelect;
+export type InsertEmotionVoiceProfile = typeof emotionVoiceProfiles.$inferInsert;
