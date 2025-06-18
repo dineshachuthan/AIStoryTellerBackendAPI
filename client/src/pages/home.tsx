@@ -7,6 +7,7 @@ import { Upload, Mic, Users, Play, User, Heart, FileText, File, AudioLines, PenT
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { BottomNavigation } from "@/components/bottom-navigation";
+import { defaultStoryConfig } from "@shared/storyConfig";
 
 export default function Home() {
   const [, setLocation] = useLocation();
@@ -80,7 +81,7 @@ export default function Home() {
                 size="sm"
               >
                 <PenTool className="w-5 h-5" />
-                <span className="text-xs">Write Story</span>
+                <span className="text-xs text-center">{defaultStoryConfig.writtenStory.label}</span>
               </Button>
               <Button
                 onClick={() => setLocation("/voice-record")}
@@ -89,7 +90,8 @@ export default function Home() {
                 size="sm"
               >
                 <Mic className="w-5 h-5" />
-                <span className="text-xs">Voice Record</span>
+                <span className="text-xs text-center">{defaultStoryConfig.voiceRecord.label}</span>
+                <span className="text-xs opacity-70">({defaultStoryConfig.voiceRecord.maxDurationMinutes} min limit)</span>
               </Button>
               <Button
                 onClick={() => setLocation("/upload-story")}
@@ -98,7 +100,7 @@ export default function Home() {
                 size="sm"
               >
                 <FileText className="w-5 h-5" />
-                <span className="text-xs">Upload Text/PDF</span>
+                <span className="text-xs text-center">{defaultStoryConfig.uploadText.label}</span>
               </Button>
               <Button
                 onClick={() => setLocation("/upload-audio")}
@@ -106,7 +108,7 @@ export default function Home() {
                 size="sm"
               >
                 <AudioLines className="w-5 h-5" />
-                <span className="text-xs">Upload Audio</span>
+                <span className="text-xs text-center">{defaultStoryConfig.uploadAudio.label}</span>
               </Button>
             </div>
           </CardContent>
