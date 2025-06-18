@@ -105,7 +105,6 @@ export async function setupAuth(app: Express) {
         clientID: oauthConfig.google.clientID,
         clientSecret: oauthConfig.google.clientSecret,
         callbackURL: oauthConfig.google.callbackURL,
-        scope: ['profile', 'email'],
       },
       async (accessToken: any, refreshToken: any, profile: any, done: any) => {
         try {
