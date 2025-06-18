@@ -32,15 +32,8 @@ export default function Login() {
       
       if (event.data.type === 'OAUTH_SUCCESS') {
         console.log('OAuth success received from popup');
-        toast({
-          title: "Login Successful",
-          description: `Signed in with ${event.data.provider}`,
-        });
-        
-        // Navigate to home page
-        setTimeout(() => {
-          setLocation('/');
-        }, 1000);
+        // Navigate to home page immediately
+        setLocation('/');
       }
     };
 
