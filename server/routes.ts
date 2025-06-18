@@ -275,31 +275,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log('[OAuth] User-Agent:', req.get('User-Agent')?.substring(0, 50) + '...');
     console.log('[OAuth] Referer:', req.get('Referer'));
     
-    // Store popup parameter in session to persist through OAuth flow
-    if (req.query.popup === 'true') {
-      (req.session as any).isPopupAuth = true;
-      console.log('[OAuth] Popup flow detected');
-    }
-    
-    passport.authenticate('google', { 
+    // For popup flows, modify the callback URL to include popup parameter
+    let authenticateOptions: any = { 
       scope: ['profile', 'email'],
       prompt: 'select_account'
-    })(req, res, next);
+    };
+    
+    if (req.query.popup === 'true') {
+      console.log('[OAuth] Popup flow detected - modifying callback URL');
+      // Temporarily modify the callback URL to include popup parameter
+      const oauthConfig = getOAuthConfig();
+      authenticateOptions.callbackURL = `${oauthConfig.google.callbackURL}?popup=true`;
+    }
+    
+    passport.authenticate('google', authenticateOptions)(req, res, next);
   });
 
   app.get("/api/auth/google/callback",
     passport.authenticate('google', { failureRedirect: '/login' }),
     (req, res) => {
       console.log('[OAuth] Google callback successful');
+      console.log('[OAuth] Query params:', req.query);
       
-      // Check if this was initiated as a popup flow
-      const isPopup = (req.session as any)?.isPopupAuth;
+      // Check if this was initiated as a popup flow from URL parameter
+      const isPopup = req.query.popup === 'true';
       console.log('[OAuth] Is popup flow:', isPopup);
-      
-      // Clear the popup flag from session
-      if ((req.session as any)?.isPopupAuth) {
-        delete (req.session as any).isPopupAuth;
-      }
       
       if (isPopup) {
         // For popup windows, send script to close popup and notify parent
@@ -311,19 +311,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
           <body>
             <script>
               console.log('OAuth popup callback - closing window');
-              if (window.opener) {
+              
+              // First try to notify parent window
+              if (window.opener && !window.opener.closed) {
                 console.log('Notifying parent window of success');
-                window.opener.postMessage({ 
-                  type: 'OAUTH_SUCCESS', 
-                  provider: 'google' 
-                }, window.location.origin);
-                window.close();
+                try {
+                  window.opener.postMessage({ 
+                    type: 'OAUTH_SUCCESS', 
+                    provider: 'google' 
+                  }, window.location.origin);
+                  
+                  // Give a moment for the message to be received
+                  setTimeout(() => {
+                    window.close();
+                  }, 500);
+                } catch (e) {
+                  console.error('Error communicating with parent:', e);
+                  window.location.href = '/';
+                }
               } else {
                 console.log('No opener found, redirecting');
                 window.location.href = '/';
               }
             </script>
-            <p>Login successful! This window should close automatically.</p>
+            <div style="text-align: center; font-family: Arial, sans-serif; margin-top: 50px;">
+              <h2>Login Successful!</h2>
+              <p>This window should close automatically...</p>
+              <p><a href="javascript:window.close()">Close this window</a> if it doesn't close automatically.</p>
+            </div>
           </body>
           </html>
         `);
