@@ -716,9 +716,14 @@ export default function UploadStory() {
         await confidenceTracking.trackVoiceRecording();
       }
 
+      // Automatically play back the recorded audio
+      setTimeout(() => {
+        playEmotionSample(emotion, emotionKey);
+      }, 500); // Short delay to ensure file is ready
+
       toast({
         title: "Voice Recorded",
-        description: `Your voice sample for ${emotion.emotion} has been saved and ready for playback.`,
+        description: `Your voice sample for ${emotion.emotion} has been saved and is now playing back.`,
       });
 
     } catch (error) {
@@ -1510,7 +1515,7 @@ export default function UploadStory() {
                                   
                                   {!isRecording && (
                                     <div className="mt-2 text-xs text-gray-400 text-center">
-                                      Press and hold to record your voice for this emotion
+                                      Press and hold to record - will auto-play when done
                                     </div>
                                   )}
                                 </div>
