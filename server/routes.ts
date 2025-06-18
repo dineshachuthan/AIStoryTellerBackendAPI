@@ -1091,7 +1091,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Publish/unpublish story endpoint
+  // Publish/unpublish story endpoint - ONLY original author
   app.patch("/api/stories/:userId/:storyId/publish", requireAuth, async (req, res) => {
     try {
       const { userId, storyId } = req.params;
@@ -1100,13 +1100,90 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Users can only publish their own stories
       if (userId !== authenticatedUserId) {
-        return res.status(403).json({ message: "Access denied" });
+        return res.status(403).json({ message: "Only the original author can modify this story" });
       }
       
-      const story = await storage.updateStory(parseInt(storyId), { isPublished });
-      res.json(story);
+      // Verify the user is the original author
+      const story = await storage.getStory(parseInt(storyId));
+      if (!story || story.authorId !== authenticatedUserId) {
+        return res.status(403).json({ message: "Only the original author can modify this story" });
+      }
+      
+      const updatedStory = await storage.updateStory(parseInt(storyId), { isPublished });
+      res.json(updatedStory);
     } catch (error) {
       res.status(500).json({ message: "Failed to update story visibility" });
+    }
+  });
+
+  // Check if user can modify a story (ownership check)
+  app.get("/api/stories/:storyId/permissions", requireAuth, async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.storyId);
+      const authenticatedUserId = (req.user as any)?.id;
+      
+      const story = await storage.getStory(storyId);
+      if (!story) {
+        return res.status(404).json({ message: "Story not found" });
+      }
+      
+      const permissions = {
+        canModify: story.authorId === authenticatedUserId,
+        canCustomize: story.isPublished || story.authorId === authenticatedUserId,
+        isOriginalAuthor: story.authorId === authenticatedUserId,
+        isPublished: story.isPublished
+      };
+      
+      res.json(permissions);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to check permissions" });
+    }
+  });
+
+  // Create or update user customization for a public story
+  app.post("/api/stories/:storyId/customize", requireAuth, async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.storyId);
+      const authenticatedUserId = (req.user as any)?.id;
+      const { customTitle, customCharacterImages, customVoiceAssignments, customEmotionMappings } = req.body;
+      
+      const story = await storage.getStory(storyId);
+      if (!story) {
+        return res.status(404).json({ message: "Story not found" });
+      }
+      
+      // Users can customize published stories or their own stories
+      if (!story.isPublished && story.authorId !== authenticatedUserId) {
+        return res.status(403).json({ message: "Cannot customize private stories of other users" });
+      }
+      
+      const customization = await storage.createOrUpdateStoryCustomization({
+        originalStoryId: storyId,
+        customizedByUserId: authenticatedUserId,
+        customTitle,
+        customCharacterImages,
+        customVoiceAssignments,
+        customEmotionMappings,
+        isPrivate: true // User customizations are private by default
+      });
+      
+      res.json(customization);
+    } catch (error) {
+      console.error("Failed to create customization:", error);
+      res.status(500).json({ message: "Failed to create story customization" });
+    }
+  });
+
+  // Get user's customization for a story
+  app.get("/api/stories/:storyId/customize", requireAuth, async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.storyId);
+      const authenticatedUserId = (req.user as any)?.id;
+      
+      const customization = await storage.getStoryCustomization(storyId, authenticatedUserId);
+      res.json(customization || null);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch story customization" });
     }
   });
 
