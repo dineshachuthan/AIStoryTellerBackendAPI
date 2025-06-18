@@ -21,7 +21,7 @@ export interface ExtractedCharacter {
 }
 
 export interface ExtractedEmotion {
-  emotion: 'happy' | 'sad' | 'angry' | 'fear' | 'surprise' | 'disgust' | 'love' | 'excitement' | 'anxiety' | 'grief' | 'sympathy' | 'empathy' | 'melancholy' | 'despair' | 'hope' | 'relief' | 'guilt' | 'shame' | 'pride' | 'envy' | 'jealousy' | 'contentment' | 'longing' | 'nostalgia' | 'regret' | 'acceptance' | 'betrayal' | 'trust' | 'vulnerability' | 'compassion' | 'other';
+  emotion: string; // Dynamic - AI can detect any emotion from the story
   intensity: number; // 1-10
   context: string;
   quote?: string;
@@ -55,7 +55,7 @@ export async function analyzeStoryContent(content: string): Promise<StoryAnalysi
       ],
       "emotions": [
         {
-          "emotion": "happy|sad|angry|fear|surprise|disgust|love|excitement|anxiety|grief|sympathy|empathy|melancholy|despair|hope|relief|guilt|shame|pride|envy|jealousy|contentment|longing|nostalgia|regret|acceptance|betrayal|trust|vulnerability|compassion|other",
+          "emotion": "Any emotion detected in the story (grief, sympathy, empathy, melancholy, despair, hope, relief, guilt, shame, regret, acceptance, compassion, love, fear, anger, sadness, joy, etc.)",
           "intensity": 7,
           "context": "Context where this emotion appears",
           "quote": "Relevant quote from the story if available"
@@ -70,14 +70,17 @@ export async function analyzeStoryContent(content: string): Promise<StoryAnalysi
 
     Guidelines:
     - Extract all significant characters (minimum 1, maximum 8)
-    - Identify ALL emotions throughout the story with their context - be comprehensive
-    - Pay special attention to complex emotions: grief, sympathy, empathy, melancholy, despair, hope, relief, guilt, regret, acceptance, compassion
-    - For stories involving death, loss, or tragedy, ensure emotions like grief, sympathy, empathy are captured
+    - EXTRACT ALL EMOTIONS: Identify every emotion present in the story, no matter how subtle
+    - Use specific emotion names (grief, sympathy, empathy, melancholy, despair, hope, relief, guilt, shame, regret, acceptance, compassion, betrayal, vulnerability, longing, nostalgia, contentment, etc.)
+    - DO NOT limit emotions to basic categories - be comprehensive and nuanced
+    - For stories involving death, loss, or tragedy: MUST include grief, sympathy, empathy, melancholy
+    - For stories of relationships: include love, betrayal, trust, vulnerability, longing
+    - For stories of conflict: include anger, fear, guilt, shame, regret
     - Provide accurate intensity ratings (1-10 scale) based on story context
-    - Include multiple emotions if the story evokes different feelings
+    - Include multiple emotions - stories typically evoke 3-8 different emotions
+    - Each emotion should have a specific quote and context from the story
     - Determine appropriate category and themes
-    - Flag adult content if it contains explicit material, violence, or mature themes
-    - Be thorough but concise in descriptions`;
+    - Flag adult content if it contains explicit material, violence, or mature themes`;
 
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
