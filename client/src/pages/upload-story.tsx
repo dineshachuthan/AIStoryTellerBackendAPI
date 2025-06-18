@@ -91,7 +91,7 @@ export default function UploadStory() {
   // Step 3: Character & Emotion Assignment
   const [charactersWithImages, setCharactersWithImages] = useState<CharacterWithImage[]>([]);
   const [emotionsWithSounds, setEmotionsWithSounds] = useState<EmotionWithSound[]>([]);
-  const [generatingImages, setGeneratingImages] = useState<Set<number>>(new Set());
+  const [generatingImages, setGeneratingImages] = useState<number[]>([]);
   
   // Audio recording
   const [isRecording, setIsRecording] = useState(false);
@@ -327,12 +327,12 @@ export default function UploadStory() {
       // Automatically proceed through all steps without stopping
       setTimeout(() => {
         // Initialize characters and emotions with defaults
-        const charactersWithDefaults = result.characters.map(char => ({
+        const charactersWithDefaults = result.characters.map((char: any) => ({
           ...char,
           imageUrl: `/api/characters/default-image?name=${encodeURIComponent(char.name)}&role=${char.role}`
         }));
 
-        const emotionsWithDefaults = result.emotions.map(emotion => ({
+        const emotionsWithDefaults = result.emotions.map((emotion: any) => ({
           ...emotion,
           soundUrl: `/api/emotions/default-sound?emotion=${emotion.emotion}&intensity=${emotion.intensity}`
         }));
@@ -349,7 +349,7 @@ export default function UploadStory() {
           for (let i = 0; i < updatedCharacters.length; i++) {
             const character = updatedCharacters[i];
             if (character.imageUrl?.includes('dicebear.com')) {
-              setGeneratingImages(prev => new Set([...prev, i]));
+              setGeneratingImages(prev => [...prev, i]);
               
               try {
                 const imageResponse = await apiRequest('/api/characters/generate-image', {
@@ -369,7 +369,7 @@ export default function UploadStory() {
                 console.error(`Failed to generate image for ${character.name}:`, error);
               } finally {
                 setGeneratingImages(prev => {
-                  const newSet = new Set(prev);
+                  const newSet = new Set([...prev]);
                   newSet.delete(i);
                   return newSet;
                 });
@@ -448,7 +448,7 @@ export default function UploadStory() {
     } finally {
       // Remove from generating set
       setGeneratingImages(prev => {
-        const newSet = new Set(prev);
+        const newSet = new Set([...prev]);
         newSet.delete(characterIndex);
         return newSet;
       });
