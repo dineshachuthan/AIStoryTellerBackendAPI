@@ -1,4 +1,4 @@
-import { users, localUsers, userVoiceSamples, stories, storyCharacters, storyEmotions, characters, conversations, messages, storyCollaborations, storyGroups, storyGroupMembers, characterVoiceAssignments, storyPlaybacks, type User, type UpsertUser, type UserVoiceSample, type InsertUserVoiceSample, type Story, type InsertStory, type StoryCharacter, type InsertStoryCharacter, type StoryEmotion, type InsertStoryEmotion, type Character, type InsertCharacter, type Conversation, type InsertConversation, type Message, type InsertMessage, type StoryCollaboration, type InsertStoryCollaboration, type StoryGroup, type InsertStoryGroup, type StoryGroupMember, type InsertStoryGroupMember, type CharacterVoiceAssignment, type InsertCharacterVoiceAssignment, type StoryPlayback, type InsertStoryPlayback } from "@shared/schema";
+import { users, localUsers, userVoiceSamples, stories, storyCharacters, storyEmotions, characters, conversations, messages, storyCollaborations, storyGroups, storyGroupMembers, characterVoiceAssignments, storyPlaybacks, storyUserConfidence, type User, type UpsertUser, type UserVoiceSample, type InsertUserVoiceSample, type Story, type InsertStory, type StoryCharacter, type InsertStoryCharacter, type StoryEmotion, type InsertStoryEmotion, type Character, type InsertCharacter, type Conversation, type InsertConversation, type Message, type InsertMessage, type StoryCollaboration, type InsertStoryCollaboration, type StoryGroup, type InsertStoryGroup, type StoryGroupMember, type InsertStoryGroupMember, type CharacterVoiceAssignment, type InsertCharacterVoiceAssignment, type StoryPlayback, type InsertStoryPlayback, type StoryUserConfidence, type InsertStoryUserConfidence } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc } from "drizzle-orm";
 
@@ -436,6 +436,89 @@ export class DatabaseStorage implements IStorage {
 
   async deleteStoryPlayback(id: number): Promise<void> {
     await db.delete(storyPlaybacks).where(eq(storyPlaybacks.id, id));
+  }
+
+  // Story User Confidence operations
+  async getStoryUserConfidence(storyId: number, userId: string): Promise<StoryUserConfidence | undefined> {
+    const results = await db
+      .select()
+      .from(storyUserConfidence)
+      .where(and(
+        eq(storyUserConfidence.storyId, storyId),
+        eq(storyUserConfidence.userId, userId)
+      ));
+    return results[0];
+  }
+
+  async createStoryUserConfidence(confidenceData: InsertStoryUserConfidence): Promise<StoryUserConfidence> {
+    const results = await db
+      .insert(storyUserConfidence)
+      .values(confidenceData)
+      .returning();
+    return results[0];
+  }
+
+  async updateStoryUserConfidence(storyId: number, userId: string, updates: Partial<InsertStoryUserConfidence>): Promise<void> {
+    await db
+      .update(storyUserConfidence)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(and(
+        eq(storyUserConfidence.storyId, storyId),
+        eq(storyUserConfidence.userId, userId)
+      ));
+  }
+
+  async incrementConfidenceMetric(
+    storyId: number, 
+    userId: string, 
+    metric: 'totalInteractions' | 'voiceRecordingsCompleted' | 'emotionsRecorded' | 'playbacksCompleted',
+    timeSpentSeconds?: number
+  ): Promise<void> {
+    // Get or create confidence record
+    let confidence = await this.getStoryUserConfidence(storyId, userId);
+    
+    if (!confidence) {
+      confidence = await this.createStoryUserConfidence({
+        storyId,
+        userId,
+        totalInteractions: 0,
+        voiceRecordingsCompleted: 0,
+        emotionsRecorded: 0,
+        playbacksCompleted: 0,
+        timeSpentSeconds: 0,
+        voiceConfidence: 0,
+        storyEngagement: 0,
+        overallConfidence: 0,
+        sessionCount: 1,
+        lastInteractionAt: new Date(),
+        firstInteractionAt: new Date(),
+      });
+    }
+
+    // Increment the specific metric
+    const updates: Partial<InsertStoryUserConfidence> = {
+      [metric]: (confidence[metric] || 0) + 1,
+      lastInteractionAt: new Date(),
+    };
+
+    // Add time spent if provided
+    if (timeSpentSeconds !== undefined) {
+      updates.timeSpentSeconds = (confidence.timeSpentSeconds || 0) + timeSpentSeconds;
+    }
+
+    // Calculate confidence scores based on metrics
+    const newVoiceConfidence = Math.min(100, (updates.voiceRecordingsCompleted || confidence.voiceRecordingsCompleted || 0) * 25);
+    const newStoryEngagement = Math.min(100, 
+      ((updates.playbacksCompleted || confidence.playbacksCompleted || 0) * 20) +
+      (Math.min(60, (updates.timeSpentSeconds || confidence.timeSpentSeconds || 0) / 60) * 1.5)
+    );
+    const newOverallConfidence = Math.round((newVoiceConfidence + newStoryEngagement) / 2);
+
+    updates.voiceConfidence = newVoiceConfidence;
+    updates.storyEngagement = newStoryEngagement;
+    updates.overallConfidence = newOverallConfidence;
+
+    await this.updateStoryUserConfidence(storyId, userId, updates);
   }
 }
 

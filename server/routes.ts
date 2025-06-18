@@ -1759,6 +1759,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Story User Confidence tracking endpoints
+  app.get("/api/stories/:storyId/confidence/:userId", async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.storyId);
+      const userId = req.params.userId;
+      
+      const confidence = await storage.getStoryUserConfidence(storyId, userId);
+      
+      if (!confidence) {
+        // Create initial confidence record
+        const newConfidence = await storage.createStoryUserConfidence({
+          storyId,
+          userId,
+          totalInteractions: 0,
+          voiceRecordingsCompleted: 0,
+          emotionsRecorded: 0,
+          playbacksCompleted: 0,
+          timeSpentSeconds: 0,
+          voiceConfidence: 0,
+          storyEngagement: 0,
+          overallConfidence: 0,
+          sessionCount: 1,
+          lastInteractionAt: new Date(),
+          firstInteractionAt: new Date(),
+        });
+        return res.json(newConfidence);
+      }
+      
+      res.json(confidence);
+    } catch (error) {
+      console.error("Failed to fetch story confidence:", error);
+      res.status(500).json({ message: "Failed to fetch confidence data" });
+    }
+  });
+
+  app.post("/api/stories/:storyId/confidence/:userId/increment", async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.storyId);
+      const userId = req.params.userId;
+      const { metric, timeSpentSeconds } = req.body;
+      
+      if (!['totalInteractions', 'voiceRecordingsCompleted', 'emotionsRecorded', 'playbacksCompleted'].includes(metric)) {
+        return res.status(400).json({ message: "Invalid metric type" });
+      }
+      
+      await storage.incrementConfidenceMetric(storyId, userId, metric, timeSpentSeconds);
+      
+      // Return updated confidence data
+      const updatedConfidence = await storage.getStoryUserConfidence(storyId, userId);
+      res.json(updatedConfidence);
+    } catch (error) {
+      console.error("Failed to increment confidence metric:", error);
+      res.status(500).json({ message: "Failed to update confidence" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
