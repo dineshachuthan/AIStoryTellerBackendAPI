@@ -80,7 +80,13 @@ export const stories = pgTable("stories", {
   content: text("content").notNull(),
   summary: text("summary"),
   category: text("category").notNull(),
+  genre: text("genre"), // Primary genre classification
+  subGenre: text("sub_genre"), // Secondary genre classification
   tags: text("tags").array().default([]),
+  emotionalTags: text("emotional_tags").array().default([]), // Emotional themes in the story
+  moodCategory: text("mood_category"), // Overall mood/tone of the story
+  ageRating: text("age_rating").default("general"), // general, teen, mature
+  readingTime: integer("reading_time"), // Estimated reading time in minutes
   extractedCharacters: jsonb("extracted_characters").default([]), // AI-extracted character data
   extractedEmotions: jsonb("extracted_emotions").default([]), // AI-extracted emotion data
   voiceSampleUrl: text("voice_sample_url"), // Original voice upload if any
