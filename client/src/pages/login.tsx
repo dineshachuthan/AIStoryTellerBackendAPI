@@ -25,7 +25,22 @@ export default function Login() {
   const { login, loginLoading, loginError } = useAuth();
 
   const handleOAuthLogin = (provider: string) => {
-    window.location.href = `/api/auth/${provider}`;
+    const popup = window.open(`/api/auth/${provider}`, 'oauth_popup', 'width=500,height=600,scrollbars=yes,resizable=yes');
+    
+    if (!popup) {
+      // Fallback to same-tab if popup blocked
+      window.location.href = `/api/auth/${provider}`;
+      return;
+    }
+
+    // Monitor popup for closure
+    const checkClosed = setInterval(() => {
+      if (popup.closed) {
+        clearInterval(checkClosed);
+        // Refresh to update auth state
+        window.location.reload();
+      }
+    }, 1000);
   };
 
   const form = useForm<LoginForm>({

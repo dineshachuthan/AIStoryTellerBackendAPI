@@ -281,7 +281,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     passport.authenticate('google', { failureRedirect: '/login' }),
     (req, res) => {
       console.log('[OAuth] Google callback successful');
-      res.redirect('/');
+      
+      // Send HTML that handles both popup and regular tab scenarios
+      res.send(`
+        <!DOCTYPE html>
+        <html>
+        <head><title>Login Success</title></head>
+        <body>
+          <script>
+            // Check if this is a popup window
+            if (window.opener && !window.opener.closed) {
+              // This is a popup - close it
+              window.close();
+            } else {
+              // This is a regular tab - redirect to home
+              window.location.href = '/';
+            }
+          </script>
+          <div style="text-align: center; font-family: Arial, sans-serif; margin-top: 50px;">
+            <h2>Login Successful!</h2>
+            <p>Redirecting...</p>
+          </div>
+        </body>
+        </html>
+      `);
     }
   );
 
