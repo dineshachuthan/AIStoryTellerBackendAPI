@@ -406,6 +406,10 @@ export default function UploadStory() {
 
   // Create character-emotion associations for display
   const getCharacterEmotionGroups = () => {
+    console.log("Building character-emotion groups:");
+    console.log("Characters:", charactersWithImages);
+    console.log("Emotions:", emotionsWithSounds);
+    
     return charactersWithImages.map(character => {
       const characterEmotions = emotionsWithSounds.filter(emotion => {
         const context = emotion.context.toLowerCase();
@@ -413,24 +417,33 @@ export default function UploadStory() {
         const characterName = character.name.toLowerCase();
         const firstName = characterName.split(' ')[0]; // Get first name for better matching
         
+        console.log(`Checking emotion "${emotion.emotion}" for character "${character.name}"`);
+        console.log(`Context: "${emotion.context}"`);
+        console.log(`Character role: ${character.role}`);
+        
         // Primary: Check if emotion context explicitly mentions this character
         if (context.includes(characterName) || context.includes(firstName)) {
+          console.log(`✓ Matched by name mention`);
           return true;
         }
         
         // Secondary: Check if the quote mentions this character
         if (emotion.quote && (quote.includes(characterName) || quote.includes(firstName))) {
+          console.log(`✓ Matched by quote mention`);
           return true;
         }
         
         // For protagonist role, associate most emotions (since stories typically focus on main character)
         if (character.role === 'protagonist') {
+          console.log(`✓ Matched as protagonist`);
           return true;
         }
         
-        // For supporting characters, only associate if explicitly mentioned or if no other characters match
+        console.log(`✗ No match`);
         return false;
       });
+      
+      console.log(`Character ${character.name} assigned ${characterEmotions.length} emotions:`, characterEmotions.map(e => e.emotion));
       
       return {
         character,
