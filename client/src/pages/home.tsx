@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useLocation } from "wouter";
-import { Upload, Mic, Users, Play, User, Heart } from "lucide-react";
+import { Upload, Mic, Users, Play, User, Heart, FileText, File, AudioLines, PenTool } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { BottomNavigation } from "@/components/bottom-navigation";
@@ -63,32 +63,41 @@ export default function Home() {
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-0">
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <Button
-                onClick={() => setLocation("/create")}
+                onClick={() => setLocation("/write-story")}
                 variant="outline"
-                className="border-tiktok-pink text-tiktok-pink hover:bg-tiktok-pink/20 h-auto p-3 flex flex-col items-center space-y-1"
+                className="border-blue-500 text-blue-500 hover:bg-blue-500/20 h-auto p-3 flex flex-col items-center space-y-1"
                 size="sm"
               >
-                <Users className="w-5 h-5" />
-                <span className="text-xs">Character</span>
+                <PenTool className="w-5 h-5" />
+                <span className="text-xs">Write Story</span>
               </Button>
               <Button
-                onClick={() => setLocation("/voice-setup")}
+                onClick={() => setLocation("/voice-record")}
                 variant="outline"
-                className="border-tiktok-cyan text-tiktok-cyan hover:bg-tiktok-cyan/20 h-auto p-3 flex flex-col items-center space-y-1"
+                className="border-green-500 text-green-500 hover:bg-green-500/20 h-auto p-3 flex flex-col items-center space-y-1"
                 size="sm"
               >
                 <Mic className="w-5 h-5" />
-                <span className="text-xs">Voice</span>
+                <span className="text-xs">Voice Record</span>
               </Button>
               <Button
                 onClick={() => setLocation("/upload-story")}
+                variant="outline"
+                className="border-purple-500 text-purple-500 hover:bg-purple-500/20 h-auto p-3 flex flex-col items-center space-y-1"
+                size="sm"
+              >
+                <FileText className="w-5 h-5" />
+                <span className="text-xs">Upload Text/PDF</span>
+              </Button>
+              <Button
+                onClick={() => setLocation("/upload-audio")}
                 className="bg-tiktok-red hover:bg-tiktok-red/80 h-auto p-3 flex flex-col items-center space-y-1"
                 size="sm"
               >
-                <Upload className="w-5 h-5" />
-                <span className="text-xs">Create</span>
+                <AudioLines className="w-5 h-5" />
+                <span className="text-xs">Upload Audio</span>
               </Button>
             </div>
           </CardContent>
