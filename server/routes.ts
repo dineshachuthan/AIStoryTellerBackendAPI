@@ -686,7 +686,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           isAdultContent: analysis.isAdultContent,
         });
 
-        // Create story characters with generated images
+        // Create story characters with generated images and voice assignments
         for (const character of analysis.characters) {
           const imageUrl = await generateCharacterImage(character, analysis.summary);
           
@@ -698,6 +698,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             role: character.role,
             imageUrl,
             isGenerated: true,
+            assignedVoice: character.assignedVoice, // Store voice assignment from analysis
+            voiceSampleId: character.voiceSampleId || null,
           });
         }
 
