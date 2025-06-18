@@ -3,19 +3,23 @@ import path from 'path';
 import crypto from 'crypto';
 import https from 'https';
 import http from 'http';
+import { getStorageConfig, getPublicUrl } from './storage-config';
 
-// Base directory for all cached content
-const CACHE_BASE_DIR = process.env.CACHE_DIR || path.join(process.cwd(), 'persistent-cache');
-const IMAGES_DIR = path.join(CACHE_BASE_DIR, 'images');
-const AUDIO_DIR = path.join(CACHE_BASE_DIR, 'audio');
-const METADATA_DIR = path.join(CACHE_BASE_DIR, 'metadata');
+// Get environment-specific storage configuration
+const storageConfig = getStorageConfig();
+const { cacheDir, imagesDir, audioDir, metadataDir } = storageConfig;
 
 // Ensure all cache directories exist
-[CACHE_BASE_DIR, IMAGES_DIR, AUDIO_DIR, METADATA_DIR].forEach(dir => {
+[cacheDir, imagesDir, audioDir, metadataDir].forEach(dir => {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
 });
+
+console.log(`[Storage] Environment: ${storageConfig.environment}`);
+console.log(`[Storage] Cache directory: ${cacheDir}`);
+console.log(`[Storage] Max cache size: ${storageConfig.maxCacheSizeMB}MB`);
+console.log(`[Storage] Max file age: ${storageConfig.maxFileAgeDays} days`);
 
 // Types for cached content
 interface CachedImage {
