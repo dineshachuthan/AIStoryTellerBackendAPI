@@ -9,6 +9,7 @@ import ConnectPgSimple from 'connect-pg-simple';
 import type { Express, RequestHandler } from 'express';
 import { storage } from './storage';
 import { pool } from './db';
+import { getOAuthConfig } from './oauth-config';
 
 // Session configuration
 export function getSession() {
@@ -86,18 +87,20 @@ export async function setupAuth(app: Express) {
     }
   ));
 
+  const oauthConfig = getOAuthConfig();
+  
+  // Log configuration for debugging
+  console.log(`[Auth] Environment: ${oauthConfig.environment}`);
+  console.log(`[Auth] Base URL: ${oauthConfig.baseUrl}`);
+  console.log(`[Auth] Google OAuth configured: ${!!(oauthConfig.google.clientID && oauthConfig.google.clientSecret)}`);
+
   // Google OAuth strategy
-  if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
-    const replitDomain = process.env.REPLIT_DOMAINS?.split(',')[0];
-    const callbackURL = replitDomain 
-      ? `https://${replitDomain}/api/auth/google/callback`
-      : 'http://localhost:5000/api/auth/google/callback';
-    
+  if (oauthConfig.google.clientID && oauthConfig.google.clientSecret) {
     passport.use(new GoogleStrategy(
       {
-        clientID: process.env.GOOGLE_CLIENT_ID,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        callbackURL: callbackURL,
+        clientID: oauthConfig.google.clientID,
+        clientSecret: oauthConfig.google.clientSecret,
+        callbackURL: oauthConfig.google.callbackURL,
       },
       async (accessToken: any, refreshToken: any, profile: any, done: any) => {
         try {
@@ -156,13 +159,13 @@ export async function setupAuth(app: Express) {
   }
 
   // Facebook OAuth strategy
-  if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
+  if (oauthConfig.facebook.clientID && oauthConfig.facebook.clientSecret) {
     passport.use(new FacebookStrategy(
       {
-        clientID: process.env.FACEBOOK_APP_ID,
-        clientSecret: process.env.FACEBOOK_APP_SECRET,
-        callbackURL: '/api/auth/facebook/callback',
-        profileFields: ['id', 'emails', 'name', 'picture'],
+        clientID: oauthConfig.facebook.clientID,
+        clientSecret: oauthConfig.facebook.clientSecret,
+        callbackURL: oauthConfig.facebook.callbackURL,
+        profileFields: oauthConfig.facebook.profileFields,
       },
       async (accessToken, refreshToken, profile, done) => {
         try {
@@ -221,13 +224,13 @@ export async function setupAuth(app: Express) {
   }
 
   // Microsoft OAuth strategy
-  if (process.env.MICROSOFT_CLIENT_ID && process.env.MICROSOFT_CLIENT_SECRET) {
+  if (oauthConfig.microsoft.clientID && oauthConfig.microsoft.clientSecret) {
     passport.use(new MicrosoftStrategy(
       {
-        clientID: process.env.MICROSOFT_CLIENT_ID,
-        clientSecret: process.env.MICROSOFT_CLIENT_SECRET,
-        callbackURL: '/api/auth/microsoft/callback',
-        scope: ['user.read'],
+        clientID: oauthConfig.microsoft.clientID,
+        clientSecret: oauthConfig.microsoft.clientSecret,
+        callbackURL: oauthConfig.microsoft.callbackURL,
+        scope: oauthConfig.microsoft.scope,
       },
       async (accessToken: any, refreshToken: any, profile: any, done: any) => {
         try {
