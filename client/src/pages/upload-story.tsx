@@ -350,42 +350,7 @@ export default function UploadStory() {
         setStoryContent(textToAnalyze); // Ensure content is set
         setCurrentStep(3);
 
-        // Only generate AI images if we haven't generated them before
-        if (!hasGeneratedImages) {
-          setTimeout(async () => {
-            const updatedCharacters = [...charactersWithDefaults];
-            
-            for (let i = 0; i < updatedCharacters.length; i++) {
-              const character = updatedCharacters[i];
-              // Only generate if using dicebear placeholder (not already AI-generated)
-              if (character.imageUrl?.includes('dicebear.com')) {
-                setGeneratingImages(prev => [...prev, i]);
-                
-                try {
-                  const imageResponse = await apiRequest('/api/characters/generate-image', {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ 
-                      character,
-                      storyContext: result.summary || textToAnalyze.substring(0, 500)
-                    }),
-                  });
-                  
-                  updatedCharacters[i] = { ...character, imageUrl: imageResponse.url };
-                  setCharactersWithImages([...updatedCharacters]);
-                } catch (error) {
-                  console.error(`Failed to generate image for ${character.name}:`, error);
-                } finally {
-                  setGeneratingImages(prev => prev.filter(index => index !== i));
-                }
-              }
-            }
-            // Mark that we've generated images to prevent future automatic generation
-            setHasGeneratedImages(true);
-          }, 1500);
-        }
+        // Skip automated image generation - images will be generated manually or are already cached
       }, 1000);
     } catch (error) {
       console.error("Analysis error:", error);
