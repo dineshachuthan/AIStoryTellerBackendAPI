@@ -20,22 +20,7 @@ function detectCharacterInText(text: string, characters: any[]): any | null {
   
   const lowerText = text.toLowerCase();
   
-  // Direct character name matching (highest priority)
-  for (const character of characters) {
-    const nameVariations = [
-      character.name.toLowerCase(),
-      character.name.toLowerCase().replace('the ', ''),
-      character.name.toLowerCase().split(' ').pop() // Last word of name
-    ];
-    
-    for (const nameVariation of nameVariations) {
-      if (lowerText.includes(nameVariation)) {
-        return character;
-      }
-    }
-  }
-  
-  // Mother's specific patterns (check BEFORE boy patterns to avoid confusion)
+  // Mother's dialogue patterns have HIGHEST priority (before any name matching)
   if (lowerText.includes('my boy') || lowerText.includes('be satisfied') || 
       lowerText.includes('take half') || lowerText.includes('half the nuts')) {
     const mother = characters.find(c => 
@@ -45,6 +30,26 @@ function detectCharacterInText(text: string, characters: any[]): any | null {
     );
     if (mother) return mother;
   }
+  
+  // Direct character name matching (but avoid false positives)
+  for (const character of characters) {
+    const nameVariations = [
+      character.name.toLowerCase(),
+      character.name.toLowerCase().replace('the ', ''),
+    ];
+    
+    for (const nameVariation of nameVariations) {
+      // Skip "boy" matching if it's in context of "my boy" (Mother speaking)
+      if (nameVariation === 'boy' && lowerText.includes('my boy')) {
+        continue;
+      }
+      if (lowerText.includes(nameVariation)) {
+        return character;
+      }
+    }
+  }
+  
+
   
   // Boy's actions and emotions
   if (lowerText.includes('disappointed') || lowerText.includes('frustrated') ||
