@@ -351,7 +351,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/emotions/generate-sample", async (req, res) => {
     try {
       console.log("Received emotion sample request body:", req.body);
-      const { emotion, intensity, text, storyId } = req.body;
+      const { emotion, intensity, text, storyId, analysisCharacters } = req.body;
       
       if (!emotion || !text) {
         return res.status(400).json({ message: "Emotion and text are required" });
@@ -359,20 +359,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Detect character from the text and get their assigned voice
       let selectedVoice = 'alloy'; // Default narrator voice
+      let characters = [];
       
       if (storyId) {
         try {
-          const characters = await storage.getStoryCharacters(storyId);
-          
-          // Detect which character is speaking in this text
-          const detectedCharacter = detectCharacterInText(text, characters);
-          if (detectedCharacter && detectedCharacter.assignedVoice) {
-            selectedVoice = detectedCharacter.assignedVoice;
-            console.log(`Using character voice '${selectedVoice}' for ${detectedCharacter.name} in emotion sample`);
-          }
+          characters = await storage.getStoryCharacters(storyId);
         } catch (error) {
-          console.log("Could not load story characters, using default voice");
+          console.log("Could not load story characters from database");
         }
+      } else if (analysisCharacters) {
+        // Use characters from analysis phase (before story is created)
+        characters = analysisCharacters;
+        console.log("Using analysis characters for voice detection");
+      }
+      
+      if (characters.length > 0) {
+        console.log("Characters available for voice detection:", characters);
+        // Detect which character is speaking in this text
+        const detectedCharacter = detectCharacterInText(text, characters);
+        if (detectedCharacter && detectedCharacter.assignedVoice) {
+          selectedVoice = detectedCharacter.assignedVoice;
+          console.log(`Using character voice '${selectedVoice}' for ${detectedCharacter.name} in emotion sample`);
+        } else {
+          console.log("No character detected or no assigned voice found");
+        }
+      } else {
+        console.log("No characters available for voice detection");
       }
 
       // Check cache first with character-specific voice

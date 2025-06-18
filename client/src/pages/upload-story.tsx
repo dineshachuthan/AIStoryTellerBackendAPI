@@ -489,6 +489,7 @@ export default function UploadStory() {
           intensity: emotion.intensity,
           text: emotion.quote || emotion.context,
           storyId: createdStory?.id, // Pass story ID so backend can use character-specific voices
+          analysisCharacters: createdStory ? undefined : charactersWithImages, // Pass characters from analysis if story not created yet
         }),
       });
 
