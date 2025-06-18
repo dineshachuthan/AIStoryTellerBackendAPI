@@ -540,35 +540,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let fileName: string;
       let filePath: string;
       
-      // Save WebM files directly without conversion for testing
+      // Convert WebM to WAV for maximum browser compatibility
       if (audioFile.mimetype === 'audio/webm') {
-        fileName = `${userId}-${emotion}-${intensity}.webm`;
+        // Save temporary WebM file
+        const tempWebmFile = `temp_${userId}-${emotion}-${intensity}.webm`;
+        const tempWebmPath = path.join(cacheDir, tempWebmFile);
+        
+        console.log(`Converting WebM to WAV: ${audioFile.buffer.length} bytes`);
+        await fs.writeFile(tempWebmPath, audioFile.buffer);
+        
+        // Convert to WAV for maximum compatibility
+        fileName = `${userId}-${emotion}-${intensity}.wav`;
         filePath = path.join(cacheDir, fileName);
         
-        console.log(`Saving WebM directly: ${audioFile.buffer.length} bytes`);
-        await fs.writeFile(filePath, audioFile.buffer);
-        
-        const stats = await fs.stat(filePath);
-        console.log(`WebM file saved: ${stats.size} bytes`);
-        
-        // Update metadata to use WebM format
-        const metadata = {
-          userId,
-          storyId,
-          emotion,
-          intensity: parseInt(intensity),
-          text,
-          fileName,
-          filePath,
-          fileSize: audioFile.size,
-          timestamp: Date.now(),
-          mimeType: 'audio/webm',
-          originalMimeType: audioFile.mimetype,
-        };
-        
-        // Save metadata
-        const metadataPath = path.join(cacheDir, `${fileName}.json`);
-        await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2));
+        try {
+          // Convert WebM/Opus to uncompressed WAV for guaranteed playback
+          await execAsync(`ffmpeg -i "${tempWebmPath}" -acodec pcm_s16le -ar 44100 -ac 1 -y "${filePath}"`);
+          
+          const stats = await fs.stat(filePath);
+          console.log(`WAV file created: ${stats.size} bytes`);
+          
+          // Clean up temporary file
+          await fs.unlink(tempWebmPath);
+          
+          // Update metadata to use WAV format
+          const metadata = {
+            userId,
+            storyId,
+            emotion,
+            intensity: parseInt(intensity),
+            text,
+            fileName,
+            filePath,
+            fileSize: stats.size,
+            timestamp: Date.now(),
+            mimeType: 'audio/wav',
+            originalMimeType: audioFile.mimetype,
+          };
+          
+          // Save metadata
+          const metadataPath = path.join(cacheDir, `${fileName}.json`);
+          await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2));
+          
+        } catch (conversionError) {
+          console.error("WAV conversion failed:", conversionError);
+          // Fallback: save original WebM
+          fileName = `${userId}-${emotion}-${intensity}.webm`;
+          filePath = path.join(cacheDir, fileName);
+          await fs.copyFile(tempWebmPath, filePath);
+          await fs.unlink(tempWebmPath);
+          
+          const metadata = {
+            userId,
+            storyId,
+            emotion,
+            intensity: parseInt(intensity),
+            text,
+            fileName,
+            filePath,
+            fileSize: audioFile.size,
+            timestamp: Date.now(),
+            mimeType: 'audio/webm',
+            originalMimeType: audioFile.mimetype,
+          };
+          
+          const metadataPath = path.join(cacheDir, `${fileName}.json`);
+          await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2));
+        }
       } else {
         // Handle other audio formats with constant filename
         fileName = `${userId}-${emotion}-${intensity}.mp3`;
@@ -644,8 +682,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Set appropriate MIME type and disable caching
-      const isWebM = fileName.endsWith('.webm');
-      res.setHeader('Content-Type', isWebM ? 'audio/webm' : 'audio/mpeg');
+      let contentType = 'audio/mpeg';
+      if (fileName.endsWith('.webm')) {
+        contentType = 'audio/webm';
+      } else if (fileName.endsWith('.wav')) {
+        contentType = 'audio/wav';
+      }
+      
+      res.setHeader('Content-Type', contentType);
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.setHeader('Pragma', 'no-cache');
       res.setHeader('Expires', '0');
