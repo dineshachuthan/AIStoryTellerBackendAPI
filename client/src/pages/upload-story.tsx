@@ -1474,25 +1474,29 @@ export default function UploadStory() {
                                     </p>
                                   )}
                                   
-                                  {/* Prominent Record Voice Button */}
+                                  {/* Press and Hold Record Voice Button */}
                                   <Button
-                                    onClick={() => isRecording ? stopEmotionRecording(emotionKey) : startEmotionRecording(emotionKey, emotion)}
+                                    onMouseDown={() => !isRecording && !isPlaying && startEmotionRecording(emotionKey, emotion)}
+                                    onMouseUp={() => isRecording && stopEmotionRecording(emotionKey)}
+                                    onMouseLeave={() => isRecording && stopEmotionRecording(emotionKey)}
+                                    onTouchStart={() => !isRecording && !isPlaying && startEmotionRecording(emotionKey, emotion)}
+                                    onTouchEnd={() => isRecording && stopEmotionRecording(emotionKey)}
                                     className={`w-full ${
                                       isRecording 
-                                        ? 'bg-red-600 hover:bg-red-700 animate-pulse' 
+                                        ? 'bg-red-600 hover:bg-red-700 animate-pulse shadow-lg shadow-red-500/50' 
                                         : 'bg-tiktok-pink hover:bg-tiktok-pink/80'
-                                    } text-white font-medium py-3`}
+                                    } text-white font-medium py-3 select-none transition-all duration-200`}
                                     disabled={isPlaying}
                                   >
                                     {isRecording ? (
                                       <>
                                         <Square className="w-5 h-5 mr-2" />
-                                        Stop Recording
+                                        Recording... (Release to Stop)
                                       </>
                                     ) : (
                                       <>
                                         <Mic className="w-5 h-5 mr-2" />
-                                        Record your own voice
+                                        Hold to Record Voice
                                       </>
                                     )}
                                   </Button>
@@ -1500,7 +1504,13 @@ export default function UploadStory() {
                                   {isRecording && (
                                     <div className="mt-2 text-xs text-red-400 flex items-center justify-center">
                                       <div className="w-2 h-2 bg-red-500 rounded-full mr-2 animate-pulse"></div>
-                                      Recording your voice for grandma storytelling...
+                                      Recording... Release button to save
+                                    </div>
+                                  )}
+                                  
+                                  {!isRecording && (
+                                    <div className="mt-2 text-xs text-gray-400 text-center">
+                                      Press and hold to record your voice for this emotion
                                     </div>
                                   )}
                                 </div>

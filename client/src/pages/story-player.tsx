@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Play, Pause, SkipBack, SkipForward, Volume2, Share2, Users, Settings, Mic, Loader2 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import { ConfidenceMeter, useConfidenceTracking } from "@/components/confidence-meter";
 
 interface NarrationSegment {
   text: string;
@@ -38,6 +39,11 @@ export default function StoryPlayer() {
   const [grandmaNarration, setGrandmaNarration] = useState(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
+  const [sessionStartTime, setSessionStartTime] = useState<number>(Date.now());
+
+  // Confidence tracking
+  const userId = 'user_123'; // Using test user ID
+  const confidenceTracking = storyId ? useConfidenceTracking(parseInt(storyId), userId) : null;
 
   // Fetch story details
   const { data: story, isLoading: storyLoading } = useQuery({
@@ -115,6 +121,11 @@ export default function StoryPlayer() {
         setCurrentSegmentIndex(0);
         playSegmentAudio(response.segments[0]);
         setIsPlaying(true);
+        
+        // Track playback start for confidence meter
+        if (confidenceTracking) {
+          confidenceTracking.trackPlayback();
+        }
       }
 
     } catch (error) {
@@ -322,6 +333,11 @@ export default function StoryPlayer() {
 
         {/* Main Content */}
         <div className="flex-1 overflow-y-auto p-4 space-y-6">
+          {/* Confidence Meter */}
+          {storyId && (
+            <ConfidenceMeter storyId={parseInt(storyId)} userId={userId} />
+          )}
+
           {/* Story Info */}
           <Card className="bg-dark-card border-gray-800">
             <CardHeader>
