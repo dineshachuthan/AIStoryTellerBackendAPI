@@ -329,7 +329,7 @@ export default function UploadStory() {
         // Initialize characters and emotions with defaults
         const charactersWithDefaults = result.characters.map((char: any) => ({
           ...char,
-          imageUrl: `/api/characters/default-image?name=${encodeURIComponent(char.name)}&role=${char.role}`
+          imageUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(char.name)}&backgroundColor=b6e3f4,c0aede,d1d4f9`
         }));
 
         const emotionsWithDefaults = result.emotions.map((emotion: any) => ({
@@ -1103,7 +1103,7 @@ export default function UploadStory() {
                           variant="outline"
                           size="sm"
                           className="border-gray-600 text-gray-400 hover:bg-gray-800"
-                          disabled={generatingImages.has(index)}
+                          disabled={generatingImages.includes(index)}
                         >
                           <Upload className="w-4 h-4 mr-2" />
                           Upload
