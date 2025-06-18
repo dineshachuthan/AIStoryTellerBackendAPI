@@ -16,6 +16,7 @@ import StoryCollaboration from "@/pages/story-collaboration";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
 import NotFound from "@/pages/not-found";
+import OAuthTest from "@/pages/oauth-test";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -37,6 +38,7 @@ function Router() {
       <Switch>
         <Route path="/login" component={Login} />
         <Route path="/register" component={Register} />
+        <Route path="/oauth-test" component={OAuthTest} />
         {isAuthenticated ? (
           <>
             <Route path="/" component={Home} />

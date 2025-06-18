@@ -11,6 +11,7 @@ import { getCachedCharacterImage, cacheCharacterImage, getCachedAudio, cacheAudi
 import { getAllVoiceSamples, getVoiceSampleProgress } from "./voice-samples";
 import { storyNarrator } from "./story-narrator";
 import { grandmaVoiceNarrator } from "./voice-narrator";
+import { getEnvironment, getBaseUrl, getOAuthConfig } from "./oauth-config";
 import multer from "multer";
 import path from "path";
 import fs from "fs/promises";
@@ -304,6 +305,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.redirect('/');
     }
   );
+
+  // OAuth diagnostics endpoint
+  app.get('/api/oauth/diagnostics', (req, res) => {
+    const baseUrl = getBaseUrl();
+    const oauthConfig = getOAuthConfig();
+    
+    res.json({
+      environment: getEnvironment(),
+      baseUrl,
+      currentDomain: req.get('host'),
+      googleOAuth: {
+        configured: !!(oauthConfig.google.clientID && oauthConfig.google.clientSecret),
+        clientId: oauthConfig.google.clientID ? 
+          `${oauthConfig.google.clientID.substring(0, 20)}...` : 'Not configured',
+        callbackUrl: oauthConfig.google.callbackURL,
+        authUrl: `${baseUrl}/api/auth/google`,
+        requiredGoogleCloudSettings: {
+          oauthConsentScreen: {
+            userType: 'External (required)',
+            publishingStatus: 'Published (or add test users)',
+            authorizedDomains: [req.get('host')?.split('.').slice(-2).join('.') || 'replit.dev']
+          },
+          credentials: {
+            redirectUris: [
+              oauthConfig.google.callbackURL,
+              'http://localhost:5000/api/auth/google/callback'
+            ]
+          }
+        }
+      }
+    });
+  });
 
   // Voice Samples routes
   app.get("/api/voice-samples/templates", (req, res) => {
