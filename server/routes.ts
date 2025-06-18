@@ -366,66 +366,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ url: defaultSoundUrl });
   });
 
-  // Generate emotion audio sample with character-specific voice
+  // Generate emotion audio sample
   app.post("/api/emotions/generate-sample", async (req, res) => {
     try {
-      const { emotion, intensity, text, storyId, analysisCharacters } = req.body;
+      const { emotion, intensity, text } = req.body;
       
       if (!emotion || !text) {
         return res.status(400).json({ message: "Emotion and text are required" });
       }
 
-      // Detect character from the text and get their assigned voice
-      let selectedVoice = 'alloy'; // Default narrator voice
-      let characters = [];
-      
-      if (storyId) {
-        try {
-          characters = await storage.getStoryCharacters(storyId);
-        } catch (error) {
-          // Fall back to default voice selection
-        }
-      } else if (analysisCharacters && analysisCharacters.length > 0) {
-        characters = analysisCharacters;
-      }
-      
-      // Find which character this emotion belongs to based on the emotion text/context
-      if (characters.length > 0) {
-        // Simple pattern matching to identify the speaking character
-        const lowerText = text.toLowerCase();
-        
-        // Find character by matching emotion text patterns
-        for (const character of characters) {
-          const charName = character.name.toLowerCase();
-          
-          // Direct name mention in text
-          if (lowerText.includes(charName.replace('the ', ''))) {
-            selectedVoice = character.assignedVoice || 'alloy';
-            console.log(`Using voice ${selectedVoice} for character ${character.name}`);
-            break;
-          }
-          
-          // Mother's dialogue patterns
-          if ((lowerText.includes('my boy') || lowerText.includes('be satisfied') || 
-               lowerText.includes('half the nuts')) && 
-              charName.includes('mother')) {
-            selectedVoice = character.assignedVoice || 'nova';
-            console.log(`Using voice ${selectedVoice} for Mother character`);
-            break;
-          }
-          
-          // Boy's emotional expressions
-          if ((lowerText.includes('disappointed') || lowerText.includes('frustrated') || 
-               lowerText.includes('vexed')) && 
-              charName.includes('boy')) {
-            selectedVoice = character.assignedVoice || 'echo';
-            console.log(`Using voice ${selectedVoice} for Boy character`);
-            break;
-          }
-        }
-      }
+      // Use emotion-based voice selection only
+      const selectedVoice = selectEmotionVoice(emotion, intensity);
 
-      // Check cache first with character-specific voice
+      // Check cache first
       const cachedAudio = getCachedAudio(text, selectedVoice, emotion, intensity);
       if (cachedAudio) {
         return res.json({ url: cachedAudio });
@@ -435,16 +388,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const openai = new OpenAI({
         apiKey: process.env.OPENAI_API_KEY,
       });
-
-      // Use the character-specific voice
-      const voice = selectedVoice;
       
       // Create emotion-appropriate text
       const emotionText = createEmotionText(text, emotion, intensity);
       
       const response = await openai.audio.speech.create({
         model: "tts-1",
-        voice: voice,
+        voice: selectedVoice,
         input: emotionText,
         speed: getEmotionSpeed(emotion, intensity),
       });
@@ -467,7 +417,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Save metadata for caching
       const metadata = {
         text,
-        voice,
+        voice: selectedVoice,
         emotion,
         intensity,
         fileName,
