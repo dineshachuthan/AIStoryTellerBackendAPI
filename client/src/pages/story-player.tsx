@@ -165,17 +165,25 @@ export default function StoryPlayer() {
   };
 
   const togglePlayPause = () => {
-    if (!narration) return;
-    
     if (isPlaying) {
       setIsPlaying(false);
       if (audioRef.current) {
         audioRef.current.pause();
       }
     } else {
-      setIsPlaying(true);
-      if (currentSegment) {
+      // Generate character-based narration if not already available
+      if (!narration && !grandmaNarration) {
+        playCharacterNarration();
+      } else if (grandmaNarration) {
+        // Use generated narration
+        if (grandmaNarration.segments && grandmaNarration.segments.length > 0) {
+          setCurrentSegmentIndex(0);
+          playSegmentAudio(grandmaNarration.segments[0]);
+          setIsPlaying(true);
+        }
+      } else if (currentSegment) {
         playSegmentAudio(currentSegment);
+        setIsPlaying(true);
       }
     }
   };

@@ -253,6 +253,33 @@ export class StoryNarrator {
     return voiceSamples.find(s => s.isCompleted);
   }
 
+  private selectVoiceForCharacter(character: any, emotion: string): string {
+    // Select OpenAI voice based on character traits and emotion
+    if (!character) {
+      return 'alloy'; // Default narrator voice
+    }
+
+    // Map character roles to voices
+    const roleVoiceMap: { [key: string]: string } = {
+      'protagonist': 'nova',
+      'antagonist': 'onyx',
+      'supporting': 'shimmer',
+      'narrator': 'alloy',
+      'other': 'echo'
+    };
+
+    // Adjust voice based on emotion
+    if (emotion === 'angry' || emotion === 'fear') {
+      return 'onyx'; // Deeper, more intense voice
+    } else if (emotion === 'happy' || emotion === 'excitement') {
+      return 'nova'; // Brighter, more energetic voice
+    } else if (emotion === 'sad') {
+      return 'fable'; // Softer, more gentle voice
+    }
+
+    return roleVoiceMap[character.role] || 'alloy';
+  }
+
   private calculateBaseDuration(wordCount: number, pacing: string): number {
     let wpm = this.WORDS_PER_MINUTE;
     
