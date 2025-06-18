@@ -16,24 +16,63 @@ import OpenAI from "openai";
 
 // Character detection function for emotion samples
 function detectCharacterInText(text: string, characters: any[]): any | null {
+  if (!characters || characters.length === 0) return null;
+  
   const lowerText = text.toLowerCase();
   
-  // Priority 1: Mother's specific dialogue patterns - "My boy" indicates Mother is speaking
-  if (lowerText.includes('my boy') || lowerText.includes('my child') || 
-      lowerText.includes('be satisfied') || lowerText.includes('take half') ||
-      lowerText.includes('half the nuts')) {
-    const mother = characters.find(c => c.name.toLowerCase().includes('mother'));
+  // Direct character name matching (highest priority)
+  for (const character of characters) {
+    const nameVariations = [
+      character.name.toLowerCase(),
+      character.name.toLowerCase().replace('the ', ''),
+      character.name.toLowerCase().split(' ').pop() // Last word of name
+    ];
+    
+    for (const nameVariation of nameVariations) {
+      if (lowerText.includes(nameVariation)) {
+        return character;
+      }
+    }
+  }
+  
+  // Mother's wisdom and teaching patterns
+  if (lowerText.includes('wisdom') || lowerText.includes('wise') ||
+      lowerText.includes('lesson') || lowerText.includes('teaching') ||
+      lowerText.includes('be satisfied') || lowerText.includes('greedy') || 
+      lowerText.includes('my boy') || lowerText.includes('take half') ||
+      lowerText.includes('mother') || lowerText.includes('maternal') ||
+      lowerText.includes('nurturing') || lowerText.includes('caring')) {
+    const mother = characters.find(c => 
+      c.name.toLowerCase().includes('mother') || 
+      c.name.toLowerCase().includes('mom') ||
+      c.personality?.toLowerCase().includes('wise') ||
+      c.personality?.toLowerCase().includes('caring') ||
+      c.role === 'supporting'
+    );
     if (mother) return mother;
   }
   
-  // Priority 2: Check for direct dialogue patterns (quoted speech)
+  // Boy's actions and emotions
+  if (lowerText.includes('disappointed') || lowerText.includes('frustrated') ||
+      lowerText.includes('hand') || lowerText.includes('stuck') || 
+      lowerText.includes('grab') || lowerText.includes('reach') ||
+      lowerText.includes('boy') || lowerText.includes('young') ||
+      lowerText.includes('child') || lowerText.includes('crying')) {
+    const boy = characters.find(c => 
+      c.name.toLowerCase().includes('boy') ||
+      c.name.toLowerCase().includes('child') ||
+      c.role === 'protagonist'
+    );
+    if (boy) return boy;
+  }
+  
+  // Check for direct dialogue patterns (quoted speech)
   if (text.includes('"') || text.includes("'")) {
-    // Look for character names in dialogue attribution - who is speaking
     for (const character of characters) {
       const nameVariations = [
         character.name.toLowerCase(),
         character.name.toLowerCase().replace('the ', ''),
-        character.name.toLowerCase().split(' ').pop() // Last word of name
+        character.name.toLowerCase().split(' ').pop()
       ];
       
       for (const nameVariation of nameVariations) {
@@ -47,14 +86,6 @@ function detectCharacterInText(text: string, characters: any[]): any | null {
         }
       }
     }
-  }
-  
-  // Priority 3: Boy's frustration/action patterns (but not when Mother is clearly speaking)
-  if ((lowerText.includes('hand out') || lowerText.includes('stuck') || 
-       lowerText.includes('disappointed') || lowerText.includes('cry')) &&
-      !lowerText.includes('my boy') && !lowerText.includes('be satisfied')) {
-    const boy = characters.find(c => c.name.toLowerCase().includes('boy'));
-    if (boy) return boy;
   }
   
   return null;
