@@ -59,14 +59,6 @@ export default function StoryLibrary() {
           <Book className="w-6 h-6 text-tiktok-pink" />
           <h1 className="text-2xl font-bold text-white">My Stories</h1>
         </div>
-          <Button
-            onClick={() => setLocation("/upload-story")}
-            className="bg-tiktok-red hover:bg-tiktok-red/80"
-            size="sm"
-          >
-            Create New Story
-          </Button>
-        </div>
       </div>
 
       {/* Stories Grid */}

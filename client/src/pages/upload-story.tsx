@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { ConfidenceMeter, useConfidenceTracking } from "@/components/confidence-meter";
 import { BottomNavigation } from "@/components/bottom-navigation";
+import { AppTopNavigation } from "@/components/app-top-navigation";
 import { 
   ArrowLeft, 
   Upload, 
@@ -1048,6 +1049,8 @@ export default function UploadStory() {
 
   return (
     <div className="min-h-screen bg-dark-bg text-white">
+      <AppTopNavigation />
+      
       {/* Header */}
       <div className="border-b border-gray-800 p-4">
         <div className="flex items-center justify-between">
