@@ -1336,7 +1336,7 @@ export default function UploadStory() {
                             
                             return (
                               <div key={emotionIndex} className="bg-gray-700 rounded-lg p-4 border border-gray-500">
-                                <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center justify-between mb-3">
                                   <div className="flex items-center space-x-2">
                                     <EmotionIcon className="w-5 h-5 text-tiktok-red" />
                                     <h5 className="font-semibold text-white capitalize">{emotion.emotion}</h5>
@@ -1344,34 +1344,48 @@ export default function UploadStory() {
                                       {emotion.intensity}/10
                                     </span>
                                   </div>
-                                  <div className="flex items-center space-x-1">
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className={`h-8 w-8 p-0 ${isPlaying ? 'text-tiktok-cyan animate-pulse' : 'text-gray-400 hover:text-white'}`}
-                                      onClick={() => playEmotionSample(emotion, emotionKey)}
-                                      disabled={isPlaying}
-                                    >
-                                      <Play className="w-4 h-4" />
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className={`h-8 w-8 p-0 ${isRecording ? 'text-red-500 animate-pulse' : 'text-gray-400 hover:text-white'}`}
-                                      onClick={() => isRecording ? stopEmotionRecording(emotionKey) : startEmotionRecording(emotionKey, emotion)}
-                                    >
-                                      {isRecording ? <Square className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-                                    </Button>
-                                  </div>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className={`h-8 w-8 p-0 ${isPlaying ? 'text-tiktok-cyan animate-pulse' : 'text-gray-400 hover:text-white'}`}
+                                    onClick={() => playEmotionSample(emotion, emotionKey)}
+                                    disabled={isPlaying}
+                                  >
+                                    <Play className="w-4 h-4" />
+                                  </Button>
                                 </div>
-                                <p className="text-sm text-gray-300 mb-2">{emotion.context}</p>
+                                <p className="text-sm text-gray-300 mb-3">{emotion.context}</p>
                                 {emotion.quote && (
-                                  <p className="text-xs text-gray-400 italic bg-gray-600 p-2 rounded">
+                                  <p className="text-xs text-gray-400 italic bg-gray-600 p-2 rounded mb-3">
                                     "{emotion.quote}"
                                   </p>
                                 )}
+                                
+                                {/* Prominent Record Voice Button */}
+                                <Button
+                                  onClick={() => isRecording ? stopEmotionRecording(emotionKey) : startEmotionRecording(emotionKey, emotion)}
+                                  className={`w-full ${
+                                    isRecording 
+                                      ? 'bg-red-600 hover:bg-red-700 animate-pulse' 
+                                      : 'bg-tiktok-pink hover:bg-tiktok-pink/80'
+                                  } text-white font-medium py-3`}
+                                  disabled={isPlaying}
+                                >
+                                  {isRecording ? (
+                                    <>
+                                      <Square className="w-5 h-5 mr-2" />
+                                      Stop Recording
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Mic className="w-5 h-5 mr-2" />
+                                      Record your own voice
+                                    </>
+                                  )}
+                                </Button>
+                                
                                 {isRecording && (
-                                  <div className="mt-2 text-xs text-red-400 flex items-center">
+                                  <div className="mt-2 text-xs text-red-400 flex items-center justify-center">
                                     <div className="w-2 h-2 bg-red-500 rounded-full mr-2 animate-pulse"></div>
                                     Recording your voice for grandma storytelling...
                                   </div>
