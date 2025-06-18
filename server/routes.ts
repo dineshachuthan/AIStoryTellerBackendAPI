@@ -271,6 +271,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Social login routes with error handling
   app.get("/api/auth/google", (req, res, next) => {
     console.log('[OAuth] Initiating Google authentication');
+    console.log('[OAuth] User-Agent:', req.get('User-Agent')?.substring(0, 50) + '...');
+    console.log('[OAuth] Referer:', req.get('Referer'));
     passport.authenticate('google', { 
       scope: ['profile', 'email'],
       prompt: 'select_account'
@@ -280,7 +282,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/auth/google/callback",
     passport.authenticate('google', { failureRedirect: '/login' }),
     (req, res) => {
-      res.redirect('/');
+      console.log('[OAuth] Google callback successful');
+      // Check if this is a popup window
+      const isPopup = req.query.popup === 'true';
+      if (isPopup) {
+        // For popup windows, close the popup and notify parent
+        res.send(`
+          <script>
+            if (window.opener) {
+              window.opener.postMessage({ type: 'OAUTH_SUCCESS', provider: 'google' }, window.location.origin);
+              window.close();
+            } else {
+              window.location.href = '/';
+            }
+          </script>
+        `);
+      } else {
+        // Regular redirect for same-tab flow
+        res.redirect('/');
+      }
     }
   );
 

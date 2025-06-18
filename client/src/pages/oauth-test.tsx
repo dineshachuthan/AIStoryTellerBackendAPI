@@ -43,13 +43,17 @@ export default function OAuthTest() {
   }, []);
 
   const testGoogleAuth = () => {
-    console.log('Testing Google OAuth...');
-    window.location.href = '/api/auth/google';
+    console.log('Testing Google OAuth in same tab...');
+    // Use location.assign for better same-tab navigation
+    window.location.assign('/api/auth/google');
   };
 
   const testInNewTab = () => {
     console.log('Testing Google OAuth in new tab...');
-    window.open('/api/auth/google', '_blank');
+    const popup = window.open('/api/auth/google', '_blank', 'width=500,height=600,scrollbars=yes,resizable=yes');
+    if (!popup) {
+      alert('Popup blocked! Please allow popups for this site and try again.');
+    }
   };
 
   if (loading) {
