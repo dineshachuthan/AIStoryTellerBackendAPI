@@ -21,7 +21,7 @@ export interface ExtractedCharacter {
 }
 
 export interface ExtractedEmotion {
-  emotion: 'happy' | 'sad' | 'angry' | 'fear' | 'surprise' | 'disgust' | 'love' | 'excitement' | 'anxiety' | 'other';
+  emotion: 'happy' | 'sad' | 'angry' | 'fear' | 'surprise' | 'disgust' | 'love' | 'excitement' | 'anxiety' | 'grief' | 'sympathy' | 'empathy' | 'melancholy' | 'despair' | 'hope' | 'relief' | 'guilt' | 'shame' | 'pride' | 'envy' | 'jealousy' | 'contentment' | 'longing' | 'nostalgia' | 'regret' | 'acceptance' | 'betrayal' | 'trust' | 'vulnerability' | 'compassion' | 'other';
   intensity: number; // 1-10
   context: string;
   quote?: string;
@@ -55,7 +55,7 @@ export async function analyzeStoryContent(content: string): Promise<StoryAnalysi
       ],
       "emotions": [
         {
-          "emotion": "happy|sad|angry|fear|surprise|disgust|love|excitement|anxiety|other",
+          "emotion": "happy|sad|angry|fear|surprise|disgust|love|excitement|anxiety|grief|sympathy|empathy|melancholy|despair|hope|relief|guilt|shame|pride|envy|jealousy|contentment|longing|nostalgia|regret|acceptance|betrayal|trust|vulnerability|compassion|other",
           "intensity": 7,
           "context": "Context where this emotion appears",
           "quote": "Relevant quote from the story if available"
@@ -70,8 +70,11 @@ export async function analyzeStoryContent(content: string): Promise<StoryAnalysi
 
     Guidelines:
     - Extract all significant characters (minimum 1, maximum 8)
-    - Identify key emotions throughout the story with their context
-    - Provide accurate intensity ratings (1-10 scale)
+    - Identify ALL emotions throughout the story with their context - be comprehensive
+    - Pay special attention to complex emotions: grief, sympathy, empathy, melancholy, despair, hope, relief, guilt, regret, acceptance, compassion
+    - For stories involving death, loss, or tragedy, ensure emotions like grief, sympathy, empathy are captured
+    - Provide accurate intensity ratings (1-10 scale) based on story context
+    - Include multiple emotions if the story evokes different feelings
     - Determine appropriate category and themes
     - Flag adult content if it contains explicit material, violence, or mature themes
     - Be thorough but concise in descriptions`;
