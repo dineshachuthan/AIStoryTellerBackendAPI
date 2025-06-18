@@ -160,9 +160,12 @@ export class StoryNarrator {
           apiKey: process.env.OPENAI_API_KEY,
         });
 
+        const selectedVoice = this.selectVoiceForCharacter(speakingCharacter, detectedEmotion.emotion);
+        console.log("Selected voice:", selectedVoice, "for character:", speakingCharacter?.name || 'narrator');
+        
         const response = await openai.audio.speech.create({
           model: "tts-1",
-          voice: this.selectVoiceForCharacter(speakingCharacter, detectedEmotion.emotion) as any,
+          voice: selectedVoice as any,
           input: sentence.length > 4000 ? sentence.substring(0, 4000) : sentence,
           speed: 1.0,
         });
@@ -288,11 +291,11 @@ export class StoryNarrator {
       return 'alloy'; // Default narrator voice
     }
 
-    // Map character names and roles to specific voices
+    // Map character names and roles to specific voices for maximum distinction
     const characterVoiceMap: { [key: string]: string } = {
-      'Boy': 'echo',        // Younger, higher voice for the boy
-      'Mother': 'nova',     // Warm, maternal voice for the mother
-      'Father': 'onyx',     // Deeper, paternal voice
+      'Boy': 'echo',        // Higher, younger male voice
+      'Mother': 'fable',    // Mature, warmer female voice (more aged sounding)
+      'Father': 'onyx',     // Deep, authoritative male voice
       'Girl': 'shimmer',    // Light, young female voice
       'Narrator': 'alloy',  // Neutral narrator voice
     };
@@ -319,9 +322,9 @@ export class StoryNarrator {
       return 'echo';
     }
     
-    // For the Mother character, always use nova regardless of emotion
+    // For the Mother character, always use fable regardless of emotion
     if (character.name === 'Mother' || character.name === 'mother') {
-      return 'nova';
+      return 'fable';
     }
 
     return baseVoice;
@@ -375,6 +378,25 @@ export class StoryNarrator {
     if (sentence.includes('"')) {
       if (sentence.toLowerCase().includes('mother')) return 'Mother';
       if (sentence.toLowerCase().includes('boy')) return 'Boy';
+    }
+
+    // Check for character references in narrative text
+    const text = sentence.toLowerCase();
+    console.log("Checking narrative text:", text.substring(0, 50), "...");
+    
+    if (text.includes('a boy') || text.includes('the boy') || text.startsWith('boy ')) {
+      console.log("Found Boy in narrative");
+      return 'Boy';
+    }
+    if (text.includes('his mother') || text.includes('the mother') || text.includes('mother')) {
+      console.log("Found Mother in narrative");
+      return 'Mother';
+    }
+    
+    // Check for pronouns referring to the boy in context
+    if (text.includes(' he ') || text.includes(' his ') || text.includes(' him ')) {
+      // If previous context suggests this is about the boy, return Boy
+      return 'Boy';
     }
 
     return undefined;
