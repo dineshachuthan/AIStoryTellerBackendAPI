@@ -245,9 +245,44 @@ function assignVoiceToCharacter(character: ExtractedCharacter): string {
   const traits = character.traits.map(t => t.toLowerCase());
   const name = character.name.toLowerCase();
   
+  // Direct character mapping for common story archetypes
+  const directMappings: { [key: string]: string } = {
+    'mother': 'nova',        // Female maternal voice
+    'mom': 'nova',
+    'mama': 'nova',
+    'boy': 'echo',           // Young male voice
+    'the boy': 'echo',
+    'young boy': 'echo',
+    'little boy': 'echo',
+    'father': 'fable',       // Mature male voice
+    'dad': 'fable',
+    'papa': 'fable',
+    'girl': 'shimmer',       // Young female voice
+    'little girl': 'shimmer',
+    'young girl': 'shimmer',
+    'king': 'onyx',          // Authoritative male voice
+    'queen': 'nova',         // Authoritative female voice
+    'priest': 'fable',       // Wise male voice
+    'soldier': 'echo',       // Strong young male voice
+    'dog': 'echo',           // Friendly energetic voice
+    'cat': 'shimmer',        // Graceful voice
+    'lion': 'onyx',          // Powerful voice
+    'wise man': 'fable',
+    'old man': 'fable',
+    'wise woman': 'nova',
+    'old woman': 'nova'
+  };
+  
+  // Check for direct character mapping first
+  for (const [pattern, voice] of Object.entries(directMappings)) {
+    if (name.includes(pattern)) {
+      return voice;
+    }
+  }
+  
   // Gender detection from name and description
-  const femaleIndicators = ['mother', 'girl', 'woman', 'female', 'she', 'her', 'mrs', 'miss', 'lady'];
-  const maleIndicators = ['boy', 'man', 'male', 'he', 'him', 'mr', 'father', 'sir'];
+  const femaleIndicators = ['mother', 'girl', 'woman', 'female', 'she', 'her', 'mrs', 'miss', 'lady', 'daughter', 'sister', 'grandmother', 'aunt', 'queen', 'princess'];
+  const maleIndicators = ['boy', 'man', 'male', 'he', 'him', 'mr', 'father', 'sir', 'son', 'brother', 'grandfather', 'uncle', 'king', 'prince'];
   
   const isFemale = femaleIndicators.some(indicator => 
     name.includes(indicator) || description.includes(indicator) || personality.includes(indicator)
@@ -257,20 +292,20 @@ function assignVoiceToCharacter(character: ExtractedCharacter): string {
   );
   
   // Age detection from traits and description
-  const youngIndicators = ['young', 'child', 'kid', 'little', 'small', 'boy', 'girl'];
-  const matureIndicators = ['old', 'elderly', 'wise', 'experienced', 'mother', 'father', 'mature'];
+  const youngIndicators = ['young', 'child', 'kid', 'little', 'small', 'boy', 'girl', 'teenage', 'teen'];
+  const matureIndicators = ['old', 'elderly', 'wise', 'experienced', 'mother', 'father', 'mature', 'adult', 'grown'];
   
   const isYoung = youngIndicators.some(indicator => 
-    description.includes(indicator) || personality.includes(indicator) || traits.includes(indicator)
+    name.includes(indicator) || description.includes(indicator) || personality.includes(indicator) || traits.includes(indicator)
   );
   const isMature = matureIndicators.some(indicator => 
-    description.includes(indicator) || personality.includes(indicator) || traits.includes(indicator)
+    name.includes(indicator) || description.includes(indicator) || personality.includes(indicator) || traits.includes(indicator)
   );
   
   // Authority/role detection
-  const authorityIndicators = ['wise', 'leader', 'teacher', 'mentor', 'authoritative', 'commanding'];
-  const gentleIndicators = ['kind', 'gentle', 'soft', 'caring', 'nurturing', 'supportive'];
-  const dramaticIndicators = ['dramatic', 'intense', 'passionate', 'emotional', 'expressive'];
+  const authorityIndicators = ['wise', 'leader', 'teacher', 'mentor', 'authoritative', 'commanding', 'powerful', 'royal', 'noble'];
+  const gentleIndicators = ['kind', 'gentle', 'soft', 'caring', 'nurturing', 'supportive', 'loving', 'tender', 'warm'];
+  const dramaticIndicators = ['dramatic', 'intense', 'passionate', 'emotional', 'expressive', 'fierce', 'angry', 'evil'];
   
   const hasAuthority = authorityIndicators.some(indicator => 
     personality.includes(indicator) || traits.includes(indicator)
@@ -284,24 +319,24 @@ function assignVoiceToCharacter(character: ExtractedCharacter): string {
   
   // Voice selection logic based on character attributes
   if (isFemale) {
-    if (isMature || hasAuthority) {
-      return 'nova';     // Mature, clear female voice
+    if (isMature || hasAuthority || name.includes('mother') || name.includes('queen')) {
+      return 'nova';     // Mature, clear female voice for mothers, queens, mature women
     } else if (isYoung) {
-      return 'shimmer';  // Young, bright female voice
+      return 'shimmer';  // Young, bright female voice for girls
     } else if (isGentle) {
       return 'nova';     // Warm, nurturing female voice
     } else {
       return 'nova';     // Default female voice
     }
   } else if (isMale) {
-    if (isYoung) {
-      return 'echo';     // Young male voice
-    } else if (hasAuthority || isMature) {
-      return 'onyx';     // Deep, authoritative male voice
+    if (isYoung || name.includes('boy')) {
+      return 'echo';     // Young male voice for boys and young men
+    } else if (hasAuthority || isMature || name.includes('father') || name.includes('king')) {
+      return 'onyx';     // Deep, authoritative male voice for fathers, kings, mature men
     } else if (isDramatic) {
-      return 'fable';    // Expressive male voice
+      return 'onyx';     // Dramatic male voice for villains
     } else {
-      return 'echo';     // Default male voice
+      return 'fable';    // Default expressive male voice
     }
   }
   
@@ -309,9 +344,9 @@ function assignVoiceToCharacter(character: ExtractedCharacter): string {
   const roleVoiceMap: { [key: string]: string } = {
     'protagonist': 'echo',     // Young voice for main character
     'antagonist': 'onyx',      // Deeper, more intense voice
-    'supporting': 'nova',      // Default to female for supporting characters
+    'supporting': 'nova',      // Default to supportive voice
     'narrator': 'alloy',       // Neutral narrator voice
-    'other': 'shimmer'         // Alternative voice for others
+    'other': 'alloy'           // Neutral voice for others
   };
 
   return roleVoiceMap[character.role] || 'alloy';
