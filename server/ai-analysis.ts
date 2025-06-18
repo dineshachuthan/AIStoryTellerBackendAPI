@@ -104,7 +104,9 @@ export async function analyzeStoryContent(content: string): Promise<StoryAnalysi
       throw new Error("No analysis generated from OpenAI");
     }
 
+    console.log("Raw OpenAI Analysis Response:", analysisText);
     const analysis: StoryAnalysis = JSON.parse(analysisText);
+    console.log("Parsed Analysis - Emotions found:", analysis.emotions?.length || 0, analysis.emotions);
     
     // Assign voices to characters during analysis phase
     analysis.characters = analysis.characters.map(character => {
