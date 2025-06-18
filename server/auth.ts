@@ -93,6 +93,7 @@ export async function setupAuth(app: Express) {
   console.log(`[Auth] Environment: ${oauthConfig.environment}`);
   console.log(`[Auth] Base URL: ${oauthConfig.baseUrl}`);
   console.log(`[Auth] Google OAuth configured: ${!!(oauthConfig.google.clientID && oauthConfig.google.clientSecret)}`);
+  console.log(`[Auth] Google callback URL: ${oauthConfig.google.callbackURL}`);
 
   // Google OAuth strategy
   if (oauthConfig.google.clientID && oauthConfig.google.clientSecret) {

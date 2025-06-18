@@ -97,7 +97,7 @@ export function getCachedCharacterImage(character: any, storyContext: string): s
     context: storyContext.substring(0, 200)
   });
 
-  const metadataPath = path.join(METADATA_DIR, `image_${hash}.json`);
+  const metadataPath = path.join(metadataDir, `image_${hash}.json`);
   
   if (fs.existsSync(metadataPath)) {
     try {
