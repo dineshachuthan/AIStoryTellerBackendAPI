@@ -257,6 +257,11 @@ function assignVoiceToCharacter(character: ExtractedCharacter): string {
   const traits = character.traits.map(t => t.toLowerCase());
   const name = character.name.toLowerCase();
   
+  console.log(`Assigning voice for: ${character.name}`);
+  console.log(`Description: ${description}`);
+  console.log(`Personality: ${personality}`);
+  console.log(`Traits: ${traits}`);
+  
   // Direct character mapping for common story archetypes
   const directMappings: { [key: string]: string } = {
     'mother': 'nova',        // Female maternal voice
@@ -293,8 +298,8 @@ function assignVoiceToCharacter(character: ExtractedCharacter): string {
   }
   
   // Gender detection from name and description
-  const femaleIndicators = ['mother', 'girl', 'woman', 'female', 'she', 'her', 'mrs', 'miss', 'lady', 'daughter', 'sister', 'grandmother', 'aunt', 'queen', 'princess'];
-  const maleIndicators = ['boy', 'man', 'male', 'he', 'him', 'mr', 'father', 'sir', 'son', 'brother', 'grandfather', 'uncle', 'king', 'prince'];
+  const femaleIndicators = ['mother', 'girl', 'woman', 'female', 'she', 'her', 'mrs', 'miss', 'lady', 'daughter', 'sister', 'grandmother', 'aunt', 'queen', 'princess', 'louise', 'mary', 'elizabeth', 'sarah', 'emma', 'anna', 'jane', 'wife'];
+  const maleIndicators = ['boy', 'man', 'male', 'he', 'him', 'mr', 'father', 'sir', 'son', 'brother', 'grandfather', 'uncle', 'king', 'prince', 'husband'];
   
   const isFemale = femaleIndicators.some(indicator => 
     name.includes(indicator) || description.includes(indicator) || personality.includes(indicator)
@@ -302,6 +307,8 @@ function assignVoiceToCharacter(character: ExtractedCharacter): string {
   const isMale = maleIndicators.some(indicator => 
     name.includes(indicator) || description.includes(indicator) || personality.includes(indicator)
   );
+  
+  console.log(`Gender detection - Female: ${isFemale}, Male: ${isMale}`);
   
   // Age detection from traits and description
   const youngIndicators = ['young', 'child', 'kid', 'little', 'small', 'boy', 'girl', 'teenage', 'teen'];
@@ -361,5 +368,7 @@ function assignVoiceToCharacter(character: ExtractedCharacter): string {
     'other': 'alloy'           // Neutral voice for others
   };
 
-  return roleVoiceMap[character.role] || 'alloy';
+  const finalVoice = roleVoiceMap[character.role] || 'alloy';
+  console.log(`Final voice assignment: ${finalVoice}`);
+  return finalVoice;
 }

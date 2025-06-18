@@ -439,6 +439,16 @@ export default function UploadStory() {
           return true;
         }
         
+        // For supporting characters, associate emotions that could apply broadly
+        if (character.role === 'supporting') {
+          // Supporting characters often have reactions to main events
+          if (emotion.emotion === 'shock' || emotion.emotion === 'surprise' || 
+              emotion.emotion === 'confusion' || emotion.emotion === 'concern') {
+            console.log(`✓ Matched as supporting character reaction`);
+            return true;
+          }
+        }
+        
         console.log(`✗ No match`);
         return false;
       });
