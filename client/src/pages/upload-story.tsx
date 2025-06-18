@@ -220,6 +220,11 @@ export default function UploadStory() {
       
       setAnalysis(result);
       setCurrentStep(2);
+      
+      // Automatically proceed to assignments and story creation
+      setTimeout(() => {
+        proceedToAssignments(result);
+      }, 1000);
     } catch (error) {
       console.error("Analysis error:", error);
       toast({
@@ -233,17 +238,18 @@ export default function UploadStory() {
   };
 
   // Step 3: Assign Images and Sounds
-  const proceedToAssignments = async () => {
-    if (!analysis) return;
+  const proceedToAssignments = async (analysisData?: StoryAnalysis) => {
+    const currentAnalysis = analysisData || analysis;
+    if (!currentAnalysis) return;
 
     // Initialize characters with default images
-    const charactersWithDefaults = analysis.characters.map(char => ({
+    const charactersWithDefaults = currentAnalysis.characters.map(char => ({
       ...char,
       imageUrl: `/api/characters/default-image?name=${encodeURIComponent(char.name)}&role=${char.role}`
     }));
 
     // Initialize emotions with default sounds
-    const emotionsWithDefaults = analysis.emotions.map(emotion => ({
+    const emotionsWithDefaults = currentAnalysis.emotions.map(emotion => ({
       ...emotion,
       soundUrl: `/api/emotions/default-sound?emotion=${emotion.emotion}&intensity=${emotion.intensity}`
     }));
@@ -252,13 +258,29 @@ export default function UploadStory() {
     setEmotionsWithSounds(emotionsWithDefaults);
     setCurrentStep(3);
 
-    // Show character images briefly, then automatically proceed to create story
-    setTimeout(() => {
-      setCurrentStep(4); // Skip manual assignment step
+    // Automatically proceed to story creation when called from analysis
+    if (analysisData) {
       setTimeout(() => {
-        createStory(); // Automatically create the story
-      }, 500); // Small delay to show step 4 briefly
-    }, 2000); // Give users 2 seconds to see the characters
+        createStoryAutomatically(currentAnalysis, charactersWithDefaults, emotionsWithDefaults);
+      }, 1000);
+    }
+  };
+
+  // Wrapper for manual button clicks
+  const handleProceedToAssignments = () => {
+    proceedToAssignments();
+  };
+
+  // Automated story creation function
+  const createStoryAutomatically = async (
+    currentAnalysis: StoryAnalysis, 
+    charactersWithDefaults: CharacterWithImage[], 
+    emotionsWithDefaults: EmotionWithSound[]
+  ) => {
+    setCurrentStep(4);
+    setTimeout(() => {
+      createStory();
+    }, 1000);
   };
 
   const generateCharacterImage = async (characterIndex: number) => {
