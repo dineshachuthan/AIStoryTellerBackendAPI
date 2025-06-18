@@ -35,18 +35,12 @@ function detectCharacterInText(text: string, characters: any[]): any | null {
     }
   }
   
-  // Mother's wisdom and teaching patterns
-  if (lowerText.includes('wisdom') || lowerText.includes('wise') ||
-      lowerText.includes('lesson') || lowerText.includes('teaching') ||
-      lowerText.includes('be satisfied') || lowerText.includes('greedy') || 
-      lowerText.includes('my boy') || lowerText.includes('take half') ||
-      lowerText.includes('mother') || lowerText.includes('maternal') ||
-      lowerText.includes('nurturing') || lowerText.includes('caring')) {
+  // Mother's specific patterns (check BEFORE boy patterns to avoid confusion)
+  if (lowerText.includes('my boy') || lowerText.includes('be satisfied') || 
+      lowerText.includes('take half') || lowerText.includes('half the nuts')) {
     const mother = characters.find(c => 
       c.name.toLowerCase().includes('mother') || 
       c.name.toLowerCase().includes('mom') ||
-      c.personality?.toLowerCase().includes('wise') ||
-      c.personality?.toLowerCase().includes('caring') ||
       c.role === 'supporting'
     );
     if (mother) return mother;
@@ -387,7 +381,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Fall back to default voice selection
         }
       } else if (analysisCharacters && analysisCharacters.length > 0) {
-        characters = analysisCharacters;
+        characters = analysisCharacters.map(char => ({
+          ...char,
+          assignedVoice: char.assignedVoice || (
+            char.name.toLowerCase().includes('mother') ? 'nova' :
+            char.name.toLowerCase().includes('boy') ? 'echo' :
+            'alloy'
+          )
+        }));
       }
       
       if (characters.length > 0) {
