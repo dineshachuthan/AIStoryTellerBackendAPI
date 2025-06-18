@@ -368,11 +368,7 @@ export default function UploadStory() {
               } catch (error) {
                 console.error(`Failed to generate image for ${character.name}:`, error);
               } finally {
-                setGeneratingImages(prev => {
-                  const newSet = new Set([...prev]);
-                  newSet.delete(i);
-                  return newSet;
-                });
+                setGeneratingImages(prev => prev.filter(index => index !== i));
               }
             }
           }
@@ -416,12 +412,12 @@ export default function UploadStory() {
     if (!character) return;
 
     // Prevent multiple simultaneous requests for the same character
-    if (generatingImages.has(characterIndex)) return;
+    if (generatingImages.includes(characterIndex)) return;
 
     console.log("Generating image for character:", character);
 
-    // Add to generating set
-    setGeneratingImages(prev => new Set(prev).add(characterIndex));
+    // Add to generating array
+    setGeneratingImages(prev => [...prev, characterIndex]);
 
     try {
       const imageUrl = await apiRequest('/api/characters/generate-image', {
@@ -446,12 +442,8 @@ export default function UploadStory() {
         variant: "destructive",
       });
     } finally {
-      // Remove from generating set
-      setGeneratingImages(prev => {
-        const newSet = new Set([...prev]);
-        newSet.delete(characterIndex);
-        return newSet;
-      });
+      // Remove from generating array
+      setGeneratingImages(prev => prev.filter(index => index !== characterIndex));
     }
   };
 
@@ -1070,7 +1062,7 @@ export default function UploadStory() {
                               {character.name.charAt(0)}
                             </AvatarFallback>
                           </Avatar>
-                          {generatingImages.has(index) && (
+                          {generatingImages.includes(index) && (
                             <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
                               <Loader2 className="w-6 h-6 text-white animate-spin" />
                             </div>
@@ -1080,7 +1072,7 @@ export default function UploadStory() {
                           <h4 className="font-semibold text-white">{character.name}</h4>
                           <p className="text-sm text-gray-400">{character.role}</p>
                           <p className="text-xs text-gray-500 mt-1">{character.description}</p>
-                          {generatingImages.has(index) && (
+                          {generatingImages.includes(index) && (
                             <p className="text-xs text-tiktok-cyan mt-1 animate-pulse">
                               Creating AI image...
                             </p>
@@ -1093,9 +1085,9 @@ export default function UploadStory() {
                           variant="outline"
                           size="sm"
                           className="border-tiktok-cyan text-tiktok-cyan hover:bg-tiktok-cyan/20"
-                          disabled={generatingImages.has(index)}
+                          disabled={generatingImages.includes(index)}
                         >
-                          {generatingImages.has(index) ? (
+                          {generatingImages.includes(index) ? (
                             <>
                               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                               Generating...
