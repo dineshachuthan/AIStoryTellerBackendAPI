@@ -835,18 +835,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Story not found" });
       }
 
-      // Return a basic narration structure for the story
-      const basicNarration = {
-        storyId: story.id,
-        totalDuration: 0,
-        segments: [],
-        pacing: 'normal' as const,
-      };
+      // Generate character-based narration using the story narrator
+      const characters = await storage.getStoryCharacters(storyId);
+      const emotions = await storage.getStoryEmotions(storyId);
+      const userVoiceSamples = await storage.getUserVoiceSamples('user_123'); // Test user
 
-      res.json(basicNarration);
+      const narration = await storyNarrator.generateNarration(storyId, 'user_123', {
+        pacing: 'normal',
+        includeCharacterVoices: true,
+        useUserVoices: true,
+        characters,
+        emotions,
+        userVoiceSamples
+      });
+
+      res.json(narration);
     } catch (error) {
-      console.error("Error fetching story narration:", error);
-      res.status(500).json({ message: "Failed to fetch story narration" });
+      console.error("Error generating story narration:", error);
+      res.status(500).json({ message: "Failed to generate story narration" });
     }
   });
 

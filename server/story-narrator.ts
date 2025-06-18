@@ -71,8 +71,13 @@ export class StoryNarrator {
     const segments: NarrationSegment[] = [];
     const content = story.content;
     
+    console.log("Story content:", content?.substring(0, 100) + "...");
+    console.log("Characters:", characters?.length || 0);
+    console.log("Emotions:", emotions?.length || 0);
+    
     // Split content into sentences and paragraphs
     const sentences = this.splitIntoSentences(content);
+    console.log("Sentences found:", sentences.length);
     
     let currentTime = 0;
 
@@ -140,21 +145,35 @@ export class StoryNarrator {
     // If no user voice sample, generate AI voice using OpenAI TTS
     if (!voiceUrl) {
       try {
-        const response = await fetch('/api/stories/text-to-speech', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            text: sentence,
-            voice: this.selectVoiceForCharacter(speakingCharacter, detectedEmotion.emotion)
-          }),
+        const OpenAI = (await import('openai')).default;
+        const openai = new OpenAI({
+          apiKey: process.env.OPENAI_API_KEY,
         });
+
+        const response = await openai.audio.speech.create({
+          model: "tts-1",
+          voice: this.selectVoiceForCharacter(speakingCharacter, detectedEmotion.emotion) as any,
+          input: sentence.length > 4000 ? sentence.substring(0, 4000) : sentence,
+          speed: 1.0,
+        });
+
+        const buffer = Buffer.from(await response.arrayBuffer());
         
-        if (response.ok) {
-          const data = await response.json();
-          voiceUrl = data.url;
-        }
+        // Save audio to cache directory
+        const fs = await import('fs/promises');
+        const path = await import('path');
+        const cacheDir = path.join(process.cwd(), 'persistent-cache', 'audio');
+        await fs.mkdir(cacheDir, { recursive: true });
+        
+        const fileName = `narrator-${Date.now()}.mp3`;
+        const filePath = path.join(cacheDir, fileName);
+        
+        // Write audio file
+        await fs.writeFile(filePath, buffer);
+        
+        voiceUrl = `/api/cached-audio/${fileName}`;
+        
+        console.log("Generated AI voice for sentence:", sentence.substring(0, 50) + "...");
       } catch (error) {
         console.error('Error generating AI voice:', error);
       }
