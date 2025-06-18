@@ -92,6 +92,7 @@ export default function UploadStory() {
   const [charactersWithImages, setCharactersWithImages] = useState<CharacterWithImage[]>([]);
   const [emotionsWithSounds, setEmotionsWithSounds] = useState<EmotionWithSound[]>([]);
   const [generatingImages, setGeneratingImages] = useState<number[]>([]);
+  const [hasGeneratedImages, setHasGeneratedImages] = useState(false);
   
   // Audio recording
   const [isRecording, setIsRecording] = useState(false);
@@ -342,12 +343,8 @@ export default function UploadStory() {
         setStoryContent(textToAnalyze); // Ensure content is set
         setCurrentStep(3);
 
-        // Check if we already have AI-generated images for these characters
-        const needsImageGeneration = charactersWithImages.length === 0 || 
-          charactersWithImages.some(char => char.imageUrl?.includes('dicebear.com'));
-        
-        // Only generate AI images if characters don't already have them
-        if (needsImageGeneration) {
+        // Only generate AI images if we haven't generated them before
+        if (!hasGeneratedImages) {
           setTimeout(async () => {
             const updatedCharacters = [...charactersWithDefaults];
             
@@ -378,6 +375,8 @@ export default function UploadStory() {
                 }
               }
             }
+            // Mark that we've generated images to prevent future automatic generation
+            setHasGeneratedImages(true);
           }, 1500);
         }
       }, 1000);
