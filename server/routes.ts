@@ -14,6 +14,51 @@ import path from "path";
 import fs from "fs/promises";
 import OpenAI from "openai";
 
+// Character detection function for emotion samples
+function detectCharacterInText(text: string, characters: any[]): any | null {
+  const lowerText = text.toLowerCase();
+  
+  // Check for direct dialogue patterns (quoted speech)
+  if (text.includes('"') || text.includes("'")) {
+    // Look for character names in dialogue attribution
+    for (const character of characters) {
+      const nameVariations = [
+        character.name.toLowerCase(),
+        character.name.toLowerCase().replace('the ', ''),
+        character.name.toLowerCase().split(' ').pop() // Last word of name
+      ];
+      
+      for (const nameVariation of nameVariations) {
+        if (lowerText.includes(`said ${nameVariation}`) || 
+            lowerText.includes(`${nameVariation} said`) ||
+            lowerText.includes(`asked ${nameVariation}`) ||
+            lowerText.includes(`${nameVariation} asked`) ||
+            lowerText.includes(`replied ${nameVariation}`) ||
+            lowerText.includes(`${nameVariation} replied`)) {
+          return character;
+        }
+      }
+    }
+  }
+  
+  // Check for character name mentions in narrative
+  for (const character of characters) {
+    const nameVariations = [
+      character.name.toLowerCase(),
+      character.name.toLowerCase().replace('the ', ''),
+      character.name.toLowerCase().split(' ').pop()
+    ];
+    
+    for (const nameVariation of nameVariations) {
+      if (lowerText.includes(nameVariation)) {
+        return character;
+      }
+    }
+  }
+  
+  return null;
+}
+
 // Helper functions for emotion audio generation
 function selectEmotionVoice(emotion: string, intensity: number): 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer' {
   const emotionVoiceMap: Record<string, 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer'> = {
@@ -290,18 +335,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ url: defaultSoundUrl });
   });
 
-  // Generate emotion audio sample
+  // Generate emotion audio sample with character-specific voice
   app.post("/api/emotions/generate-sample", async (req, res) => {
     try {
       console.log("Received emotion sample request body:", req.body);
-      const { emotion, intensity, text } = req.body;
+      const { emotion, intensity, text, storyId } = req.body;
       
       if (!emotion || !text) {
         return res.status(400).json({ message: "Emotion and text are required" });
       }
 
-      // Check cache first
-      const cachedAudio = getCachedAudio(text, 'alloy', emotion, intensity);
+      // Detect character from the text and get their assigned voice
+      let selectedVoice = 'alloy'; // Default narrator voice
+      
+      if (storyId) {
+        try {
+          const characters = await storage.getStoryCharacters(storyId);
+          
+          // Detect which character is speaking in this text
+          const detectedCharacter = detectCharacterInText(text, characters);
+          if (detectedCharacter && detectedCharacter.assignedVoice) {
+            selectedVoice = detectedCharacter.assignedVoice;
+            console.log(`Using character voice '${selectedVoice}' for ${detectedCharacter.name} in emotion sample`);
+          }
+        } catch (error) {
+          console.log("Could not load story characters, using default voice");
+        }
+      }
+
+      // Check cache first with character-specific voice
+      const cachedAudio = getCachedAudio(text, selectedVoice, emotion, intensity);
       if (cachedAudio) {
         console.log("Using cached emotion audio for:", emotion);
         return res.json({ url: cachedAudio });
@@ -312,8 +375,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         apiKey: process.env.OPENAI_API_KEY,
       });
 
-      // Select voice based on emotion
-      const voice = selectEmotionVoice(emotion, intensity);
+      // Use the character-specific voice
+      const voice = selectedVoice;
       
       // Create emotion-appropriate text
       const emotionText = createEmotionText(text, emotion, intensity);

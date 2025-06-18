@@ -474,7 +474,7 @@ export default function UploadStory() {
       // Set playing state
       setPlayingEmotions(prev => ({ ...prev, [emotionKey]: true }));
 
-      // Generate a sample audio for the emotion
+      // Generate a sample audio for the emotion with story context for character voice detection
       const audioResponse = await apiRequest('/api/emotions/generate-sample', {
         method: 'POST',
         headers: {
@@ -484,6 +484,7 @@ export default function UploadStory() {
           emotion: emotion.emotion,
           intensity: emotion.intensity,
           text: emotion.quote || emotion.context,
+          storyId: createdStory?.id, // Pass story ID so backend can use character-specific voices
         }),
       });
 
