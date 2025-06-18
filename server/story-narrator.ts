@@ -153,10 +153,6 @@ export class StoryNarrator {
       if (voiceSample && voiceSample.audioUrl) {
         voiceUrl = voiceSample.audioUrl;
         console.log("Found user voice sample for", detectedEmotion.emotion, ":", voiceUrl);
-      } else if (voiceSample && voiceSample.filename) {
-        // Construct URL from filename if audioUrl is not set
-        voiceUrl = `/api/emotions/user-voice-sample/${voiceSample.filename}`;
-        console.log("Constructed user voice URL for", detectedEmotion.emotion, ":", voiceUrl);
       }
     }
     
