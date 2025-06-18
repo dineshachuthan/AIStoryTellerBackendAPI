@@ -989,13 +989,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Public stories routes - only published stories
+  // Public stories routes - only published stories with filtering
   app.get("/api/stories", async (req, res) => {
     try {
-      const stories = await storage.getPublicStories();
+      const { genre, emotionalTags, moodCategory, ageRating, search } = req.query;
+      
+      const filters: any = {};
+      if (genre) filters.genre = genre as string;
+      if (moodCategory) filters.moodCategory = moodCategory as string;
+      if (ageRating) filters.ageRating = ageRating as string;
+      if (search) filters.search = search as string;
+      if (emotionalTags) {
+        filters.emotionalTags = Array.isArray(emotionalTags) 
+          ? emotionalTags as string[]
+          : [emotionalTags as string];
+      }
+      
+      const stories = await storage.getPublicStories(filters);
       res.json(stories);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch public stories" });
+    }
+  });
+
+  // Get available genres and tags for filtering
+  app.get("/api/stories/filters", async (req, res) => {
+    try {
+      // Get unique genres, emotional tags, and mood categories from published stories
+      const publishedStories = await storage.getPublicStories();
+      
+      const genres = Array.from(new Set(publishedStories.map(s => s.genre).filter(Boolean)));
+      const emotionalTags = Array.from(new Set(publishedStories.flatMap(s => s.emotionalTags || [])));
+      const moodCategories = Array.from(new Set(publishedStories.map(s => s.moodCategory).filter(Boolean)));
+      const ageRatings = Array.from(new Set(publishedStories.map(s => s.ageRating).filter(Boolean)));
+      
+      res.json({
+        genres,
+        emotionalTags,
+        moodCategories,
+        ageRatings,
+        totalStories: publishedStories.length
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch story filters" });
     }
   });
 

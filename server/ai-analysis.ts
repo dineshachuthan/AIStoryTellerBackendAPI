@@ -32,8 +32,14 @@ export interface StoryAnalysis {
   emotions: ExtractedEmotion[];
   summary: string;
   category: string;
+  genre: string;
+  subGenre?: string;
   themes: string[];
   suggestedTags: string[];
+  emotionalTags: string[];
+  moodCategory: string;
+  ageRating: 'general' | 'teen' | 'mature';
+  readingTime: number; // estimated minutes
   isAdultContent: boolean;
 }
 

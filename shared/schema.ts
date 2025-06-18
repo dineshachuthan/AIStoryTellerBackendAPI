@@ -221,6 +221,22 @@ export const characterVoiceAssignments = pgTable("character_voice_assignments", 
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// User customizations for public stories - allows users to personalize without modifying original
+export const storyCustomizations = pgTable("story_customizations", {
+  id: serial("id").primaryKey(),
+  originalStoryId: integer("original_story_id").references(() => stories.id).notNull(),
+  customizedByUserId: varchar("customized_by_user_id").references(() => users.id).notNull(),
+  customTitle: text("custom_title"), // Optional custom title for user's version
+  customCharacterImages: jsonb("custom_character_images"), // User's character image overrides
+  customVoiceAssignments: jsonb("custom_voice_assignments"), // User's voice sample assignments
+  customEmotionMappings: jsonb("custom_emotion_mappings"), // User's emotion voice mappings
+  isPrivate: boolean("is_private").default(true), // Whether this customization is private to the user
+  playCount: integer("play_count").default(0),
+  lastPlayedAt: timestamp("last_played_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const storyPlaybacks = pgTable("story_playbacks", {
   id: serial("id").primaryKey(),
   storyId: integer("story_id").references(() => stories.id).notNull(),
