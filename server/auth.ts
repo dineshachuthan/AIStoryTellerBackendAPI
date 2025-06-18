@@ -88,13 +88,17 @@ export async function setupAuth(app: Express) {
 
   // Google OAuth strategy
   if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+    const callbackURL = process.env.NODE_ENV === 'production' 
+      ? `https://${process.env.REPLIT_DOMAINS?.split(',')[0]}/api/auth/google/callback`
+      : 'http://localhost:5000/api/auth/google/callback';
+    
     passport.use(new GoogleStrategy(
       {
         clientID: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        callbackURL: 'http://localhost:5000/api/auth/google/callback',
+        callbackURL: callbackURL,
       },
-      async (accessToken, refreshToken, profile, done) => {
+      async (accessToken: any, refreshToken: any, profile: any, done: any) => {
         try {
           // Check if user exists with this Google provider
           let user = await storage.getUserByProvider('google', profile.id);
@@ -224,7 +228,7 @@ export async function setupAuth(app: Express) {
         callbackURL: '/api/auth/microsoft/callback',
         scope: ['user.read'],
       },
-      async (accessToken, refreshToken, profile, done) => {
+      async (accessToken: any, refreshToken: any, profile: any, done: any) => {
         try {
           // Check if user exists with this Microsoft provider
           let user = await storage.getUserByProvider('microsoft', profile.id);
