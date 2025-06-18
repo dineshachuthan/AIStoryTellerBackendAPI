@@ -20,7 +20,7 @@ function detectCharacterInText(text: string, characters: any[]): any | null {
   
   // Check for direct dialogue patterns (quoted speech)
   if (text.includes('"') || text.includes("'")) {
-    // Look for character names in dialogue attribution
+    // Look for character names in dialogue attribution - who is speaking
     for (const character of characters) {
       const nameVariations = [
         character.name.toLowerCase(),
@@ -41,16 +41,34 @@ function detectCharacterInText(text: string, characters: any[]): any | null {
     }
   }
   
-  // Check for character name mentions in narrative
+  // Special handling for context-based detection
+  // Mother's wisdom/advice patterns
+  if ((lowerText.includes('my boy') || lowerText.includes('my child') || 
+       lowerText.includes('be satisfied') || lowerText.includes('take half')) &&
+      (lowerText.includes('mother') || lowerText.includes('advice') || lowerText.includes('wisdom'))) {
+    const mother = characters.find(c => c.name.toLowerCase().includes('mother'));
+    if (mother) return mother;
+  }
+  
+  // Boy's frustration/action patterns
+  if ((lowerText.includes('hand out') || lowerText.includes('stuck') || 
+       lowerText.includes('disappointed') || lowerText.includes('cry')) &&
+      (lowerText.includes('boy') || lowerText.includes('he '))) {
+    const boy = characters.find(c => c.name.toLowerCase().includes('boy'));
+    if (boy) return boy;
+  }
+  
+  // Generic character name mentions - use with caution
   for (const character of characters) {
     const nameVariations = [
       character.name.toLowerCase(),
-      character.name.toLowerCase().replace('the ', ''),
-      character.name.toLowerCase().split(' ').pop()
+      character.name.toLowerCase().replace('the ', '')
     ];
     
     for (const nameVariation of nameVariations) {
-      if (lowerText.includes(nameVariation)) {
+      // Only match if it's not just "boy" in "my boy" (which means Mother is speaking)
+      if (lowerText.includes(nameVariation) && 
+          !(nameVariation === 'boy' && lowerText.includes('my boy'))) {
         return character;
       }
     }

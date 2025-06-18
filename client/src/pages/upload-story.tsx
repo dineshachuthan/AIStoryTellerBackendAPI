@@ -88,6 +88,7 @@ export default function UploadStory() {
   const [analysis, setAnalysis] = useState<StoryAnalysis | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isCreatingStory, setIsCreatingStory] = useState(false);
+  const [createdStory, setCreatedStory] = useState<any>(null);
   
   // Step 3: Character & Emotion Assignment
   const [charactersWithImages, setCharactersWithImages] = useState<CharacterWithImage[]>([]);
@@ -136,6 +137,9 @@ export default function UploadStory() {
         },
         body: JSON.stringify(storyData),
       });
+
+      // Store the created story for emotion sample generation
+      setCreatedStory(story);
 
       // Create characters and emotions
       for (const character of characters) {
