@@ -28,23 +28,32 @@ export default function Home() {
       <div className="absolute top-0 left-0 right-0 z-50 bg-dark-bg/80 backdrop-blur-lg border-b border-gray-800 p-4">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-white">DeeVee</h1>
-          <div className="flex space-x-2">
+          <div className="flex items-center space-x-3">
             <Button
-              onClick={() => setLocation("/voice-setup")}
+              onClick={() => setLocation("/voice-samples")}
               variant="outline"
               size="sm"
               className="border-tiktok-cyan text-tiktok-cyan hover:bg-tiktok-cyan/20"
             >
-              <Mic className="w-4 h-4 mr-2" />
-              Voice Setup
+              <AudioLines className="w-4 h-4 mr-2" />
+              Voice Samples
             </Button>
+            
             <Button
-              onClick={() => setLocation("/upload-story")}
-              className="bg-tiktok-red hover:bg-tiktok-red/80"
+              onClick={() => setLocation("/profile")}
+              variant="ghost"
               size="sm"
+              className="relative h-8 w-8 rounded-full p-0"
             >
-              <Upload className="w-4 h-4 mr-2" />
-              Upload Story
+              <Avatar className="h-8 w-8">
+                <AvatarImage 
+                  src={user?.profileImageUrl || undefined} 
+                  alt={user?.displayName || user?.email || 'User'} 
+                />
+                <AvatarFallback className="bg-tiktok-red text-white text-xs">
+                  {getUserInitials()}
+                </AvatarFallback>
+              </Avatar>
             </Button>
           </div>
         </div>
