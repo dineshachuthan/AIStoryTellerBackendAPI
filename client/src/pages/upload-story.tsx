@@ -109,6 +109,8 @@ export default function UploadStory() {
   const [playingEmotions, setPlayingEmotions] = useState<Record<string, boolean>>({});
   const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
   const [recordingStartTimes, setRecordingStartTimes] = useState<Record<string, number>>({});
+  const [holdTimers, setHoldTimers] = useState<Record<string, NodeJS.Timeout>>({});
+  const [isHolding, setIsHolding] = useState<Record<string, boolean>>({});
 
   // Confidence tracking
   const userId = 'user_123'; // Using test user ID
@@ -623,6 +625,37 @@ export default function UploadStory() {
     }
   };
 
+  const startHoldTimer = (emotionKey: string, emotion: any) => {
+    // Clear any existing timer
+    const existingTimer = holdTimers[emotionKey];
+    if (existingTimer) {
+      clearTimeout(existingTimer);
+    }
+
+    // Start holding state
+    setIsHolding(prev => ({ ...prev, [emotionKey]: true }));
+
+    // Set timer to start recording after 1 second
+    const timer = setTimeout(() => {
+      startEmotionRecording(emotionKey, emotion);
+    }, 1000);
+
+    setHoldTimers(prev => ({ ...prev, [emotionKey]: timer }));
+  };
+
+  const cancelHoldTimer = (emotionKey: string) => {
+    const timer = holdTimers[emotionKey];
+    if (timer) {
+      clearTimeout(timer);
+      setHoldTimers(prev => {
+        const newTimers = { ...prev };
+        delete newTimers[emotionKey];
+        return newTimers;
+      });
+    }
+    setIsHolding(prev => ({ ...prev, [emotionKey]: false }));
+  };
+
   const startEmotionRecording = async (emotionKey: string, emotion: any) => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -689,6 +722,13 @@ export default function UploadStory() {
   };
 
   const stopEmotionRecording = (emotionKey: string) => {
+    // If we're still in holding phase, cancel the timer
+    if (isHolding[emotionKey] && !recordingEmotions[emotionKey]) {
+      cancelHoldTimer(emotionKey);
+      return;
+    }
+
+    // If we're actually recording, stop the recording
     const recorder = emotionRecorders[emotionKey];
     const startTime = recordingStartTimes[emotionKey];
     
@@ -1517,33 +1557,47 @@ export default function UploadStory() {
                                   <Button
                                     onMouseDown={(e) => {
                                       e.preventDefault();
-                                      if (!isRecording && !isPlaying) {
-                                        startEmotionRecording(emotionKey, emotion);
+                                      const isHoldingButton = isHolding[emotionKey];
+                                      const isRecordingButton = recordingEmotions[emotionKey];
+                                      const isPlayingButton = playingEmotions[emotionKey];
+                                      
+                                      if (!isHoldingButton && !isRecordingButton && !isPlayingButton) {
+                                        startHoldTimer(emotionKey, emotion);
                                       }
                                     }}
                                     onMouseUp={(e) => {
                                       e.preventDefault();
-                                      if (isRecording) {
-                                        stopEmotionRecording(emotionKey);
-                                      }
+                                      stopEmotionRecording(emotionKey);
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      e.preventDefault();
+                                      stopEmotionRecording(emotionKey);
                                     }}
                                     onContextMenu={(e) => e.preventDefault()}
                                     onTouchStart={(e) => {
                                       e.preventDefault();
-                                      if (!isRecording && !isPlaying) {
-                                        startEmotionRecording(emotionKey, emotion);
+                                      const isHoldingButton = isHolding[emotionKey];
+                                      const isRecordingButton = recordingEmotions[emotionKey];
+                                      const isPlayingButton = playingEmotions[emotionKey];
+                                      
+                                      if (!isHoldingButton && !isRecordingButton && !isPlayingButton) {
+                                        startHoldTimer(emotionKey, emotion);
                                       }
                                     }}
                                     onTouchEnd={(e) => {
                                       e.preventDefault();
-                                      if (isRecording) {
-                                        stopEmotionRecording(emotionKey);
-                                      }
+                                      stopEmotionRecording(emotionKey);
+                                    }}
+                                    onTouchCancel={(e) => {
+                                      e.preventDefault();
+                                      stopEmotionRecording(emotionKey);
                                     }}
                                     onDragStart={(e) => e.preventDefault()}
                                     className={`w-full ${
                                       isRecording 
                                         ? 'bg-red-600 hover:bg-red-700 animate-pulse shadow-lg shadow-red-500/50' 
+                                        : isHolding[emotionKey]
+                                        ? 'bg-orange-500 hover:bg-orange-600 animate-pulse shadow-lg shadow-orange-500/50'
                                         : 'bg-tiktok-pink hover:bg-tiktok-pink/80'
                                     } text-white font-medium py-3 select-none transition-all duration-200 cursor-pointer`}
                                     disabled={isPlaying}
@@ -1553,6 +1607,11 @@ export default function UploadStory() {
                                       <>
                                         <Square className="w-5 h-5 mr-2" />
                                         Recording... (Release to Stop)
+                                      </>
+                                    ) : isHolding[emotionKey] ? (
+                                      <>
+                                        <Mic className="w-5 h-5 mr-2 animate-bounce" />
+                                        Hold for Recording...
                                       </>
                                     ) : (
                                       <>
@@ -1569,9 +1628,16 @@ export default function UploadStory() {
                                     </div>
                                   )}
                                   
-                                  {!isRecording && (
+                                  {isHolding[emotionKey] && !isRecording && (
+                                    <div className="mt-2 text-xs text-orange-400 flex items-center justify-center">
+                                      <div className="w-2 h-2 bg-orange-500 rounded-full mr-2 animate-pulse"></div>
+                                      Keep holding... Recording will start in 1 second
+                                    </div>
+                                  )}
+                                  
+                                  {!isRecording && !isHolding[emotionKey] && (
                                     <div className="mt-2 text-xs text-gray-400 text-center">
-                                      Click and hold for at least 1 second - will auto-play when done
+                                      Hold for 1 second to start recording - will auto-play when done
                                     </div>
                                   )}
                                 </div>
