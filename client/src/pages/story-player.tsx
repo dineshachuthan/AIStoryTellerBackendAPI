@@ -83,47 +83,37 @@ export default function StoryPlayer() {
   const currentSegment = narration?.segments?.[currentSegmentIndex];
   const progress = narration && narration.totalDuration > 0 ? (currentTime / narration.totalDuration) * 100 : 0;
 
-  // Create basic text-to-speech playback if no narration segments exist
-  const playStoryContent = async () => {
-    if (!story?.content) return;
+  // Generate character-based narration with user voice samples
+  const playCharacterNarration = async () => {
+    if (!story) return;
 
     try {
-      const response = await apiRequest('/api/stories/text-to-speech', {
+      // Generate character-based narration using user voice samples for emotions
+      const response = await apiRequest(`/api/stories/${storyId}/character-narration`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          text: story.content,
-          voice: 'alloy'
+          useUserVoices: true,
+          userId: 'user_123' // Test user ID
         }),
       });
 
-      const audio = new Audio(response.url);
-      audioRef.current = audio;
+      setGrandmaNarration(response);
       
-      audio.onended = () => {
-        setIsPlaying(false);
-        setCurrentTime(0);
-      };
-
-      audio.onerror = () => {
-        setIsPlaying(false);
-        toast({
-          title: "Playback Failed",
-          description: "Could not play story audio.",
-          variant: "destructive",
-        });
-      };
-
-      await audio.play();
-      setIsPlaying(true);
+      // Start playing the first segment
+      if (response.segments && response.segments.length > 0) {
+        setCurrentSegmentIndex(0);
+        playSegmentAudio(response.segments[0]);
+        setIsPlaying(true);
+      }
 
     } catch (error) {
-      console.error("Text-to-speech error:", error);
+      console.error("Character narration error:", error);
       toast({
-        title: "Playback Failed",
-        description: "Could not generate story audio.",
+        title: "Narration Failed",
+        description: "Could not generate character-based narration.",
         variant: "destructive",
       });
     }

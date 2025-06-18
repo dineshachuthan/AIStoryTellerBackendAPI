@@ -27,18 +27,25 @@ export class StoryNarrator {
   async generateNarration(storyId: number, userId: string, options?: {
     pacing?: 'slow' | 'normal' | 'fast';
     includeCharacterVoices?: boolean;
+    useUserVoices?: boolean;
+    characters?: any[];
+    emotions?: any[];
+    userVoiceSamples?: any[];
   }): Promise<StoryNarration> {
     const story = await storage.getStory(storyId);
     if (!story) {
       throw new Error("Story not found");
     }
 
-    const storyEmotions = await storage.getStoryEmotions(storyId);
-    const userVoiceSamples = await storage.getUserVoiceSamples(userId);
+    // Use provided data or fetch from storage
+    const storyCharacters = options?.characters || await storage.getStoryCharacters(storyId);
+    const storyEmotions = options?.emotions || await storage.getStoryEmotions(storyId);
+    const userVoiceSamples = options?.userVoiceSamples || await storage.getUserVoiceSamples(userId);
     
-    // Parse story content into segments based on emotions and dialogue
+    // Parse story content into segments based on characters, emotions and dialogue
     const segments = await this.parseStoryIntoSegments(
       story, 
+      storyCharacters,
       storyEmotions, 
       userVoiceSamples,
       options
@@ -56,6 +63,7 @@ export class StoryNarrator {
 
   private async parseStoryIntoSegments(
     story: Story,
+    characters: any[],
     emotions: StoryEmotion[],
     voiceSamples: UserVoiceSample[],
     options?: any
@@ -71,10 +79,12 @@ export class StoryNarrator {
     for (const sentence of sentences) {
       const segment = await this.createSegmentFromSentence(
         sentence,
+        characters,
         emotions,
         voiceSamples,
         currentTime,
-        options?.pacing || 'normal'
+        options?.pacing || 'normal',
+        options?.useUserVoices || false
       );
       
       segments.push(segment);
@@ -94,19 +104,61 @@ export class StoryNarrator {
 
   private async createSegmentFromSentence(
     sentence: string,
+    characters: any[],
     emotions: StoryEmotion[],
     voiceSamples: UserVoiceSample[],
     startTime: number,
-    pacing: string
+    pacing: string,
+    useUserVoices: boolean = false
   ): Promise<NarrationSegment> {
     // Detect emotion in the sentence
     const detectedEmotion = this.detectEmotionInText(sentence, emotions);
     
-    // Find matching voice sample
-    const voiceSample = this.findMatchingVoiceSample(
-      detectedEmotion.emotion,
-      voiceSamples
-    );
+    // Detect if it's dialogue and which character is speaking
+    const isDialogue = sentence.includes('"') || sentence.includes("'");
+    const characterName = isDialogue ? this.extractCharacterName(sentence) : undefined;
+    
+    // Find the character who should voice this segment
+    let speakingCharacter = null;
+    if (characterName) {
+      speakingCharacter = characters.find(char => 
+        char.name.toLowerCase().includes(characterName.toLowerCase()) ||
+        characterName.toLowerCase().includes(char.name.toLowerCase())
+      );
+    }
+    
+    // Find matching voice sample for the emotion
+    let voiceUrl = undefined;
+    if (useUserVoices && detectedEmotion) {
+      const voiceSample = this.findMatchingVoiceSample(
+        detectedEmotion.emotion,
+        voiceSamples
+      );
+      voiceUrl = voiceSample?.audioUrl;
+    }
+    
+    // If no user voice sample, generate AI voice using OpenAI TTS
+    if (!voiceUrl) {
+      try {
+        const response = await fetch('/api/stories/text-to-speech', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            text: sentence,
+            voice: this.selectVoiceForCharacter(speakingCharacter, detectedEmotion.emotion)
+          }),
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          voiceUrl = data.url;
+        }
+      } catch (error) {
+        console.error('Error generating AI voice:', error);
+      }
+    }
 
     // Calculate duration based on word count and emotion
     const wordCount = sentence.split(/\s+/).length;
@@ -117,10 +169,6 @@ export class StoryNarrator {
     if (detectedEmotion.intensity > 7) {
       adjustedDuration *= this.EMOTION_PAUSE_MULTIPLIER;
     }
-
-    // Detect if it's dialogue (character speaking)
-    const isDialogue = sentence.includes('"') || sentence.includes("'");
-    const characterName = isDialogue ? this.extractCharacterName(sentence) : undefined;
     
     if (isDialogue) {
       adjustedDuration *= this.CHARACTER_VOICE_MULTIPLIER;
@@ -130,10 +178,10 @@ export class StoryNarrator {
       text: sentence,
       emotion: detectedEmotion.emotion,
       intensity: detectedEmotion.intensity,
-      voiceUrl: voiceSample?.audioUrl,
+      voiceUrl,
       startTime,
       duration: adjustedDuration,
-      characterName,
+      characterName: speakingCharacter?.name || characterName,
     };
   }
 

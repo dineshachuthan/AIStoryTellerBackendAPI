@@ -458,6 +458,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Character-based narration with user voice samples
+  app.post("/api/stories/:id/character-narration", async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.id);
+      const { useUserVoices = true, userId = 'user_123' } = req.body;
+
+      if (!storyId) {
+        return res.status(400).json({ message: "Story ID is required" });
+      }
+
+      // Get story with characters and emotions
+      const story = await storage.getStory(storyId);
+      if (!story) {
+        return res.status(404).json({ message: "Story not found" });
+      }
+
+      const characters = await storage.getStoryCharacters(storyId);
+      const emotions = await storage.getStoryEmotions(storyId);
+      
+      // Get user voice samples if using user voices
+      let userVoiceSamples = [];
+      if (useUserVoices) {
+        userVoiceSamples = await storage.getUserVoiceSamples(userId);
+      }
+
+      // Generate character-based narration segments
+      const narrator = await import('./story-narrator');
+      const narration = await narrator.storyNarrator.generateNarration(storyId, userId, {
+        useUserVoices,
+        characters,
+        emotions,
+        userVoiceSamples
+      });
+
+      console.log(`Generated character narration with ${narration.segments.length} segments`);
+      res.json(narration);
+    } catch (error) {
+      console.error("Character narration error:", error);
+      res.status(500).json({ message: error instanceof Error ? error.message : "Failed to generate character narration" });
+    }
+  });
+
   // Basic text-to-speech for story content
   app.post("/api/stories/text-to-speech", async (req, res) => {
     try {
