@@ -554,8 +554,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         filePath = path.join(cacheDir, fileName);
         
         try {
-          // Convert WebM/Opus to uncompressed WAV with volume amplification
-          await execAsync(`ffmpeg -i "${tempWebmPath}" -af "volume=20dB" -acodec pcm_s16le -ar 44100 -ac 1 -y "${filePath}"`);
+          // Convert WebM/Opus to uncompressed WAV with strong volume amplification
+          await execAsync(`ffmpeg -i "${tempWebmPath}" -af "volume=40dB" -acodec pcm_s16le -ar 44100 -ac 1 -y "${filePath}"`);
           
           const stats = await fs.stat(filePath);
           console.log(`WAV file created: ${stats.size} bytes`);
