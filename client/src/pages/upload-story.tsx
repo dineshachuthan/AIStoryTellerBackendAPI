@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { ConfidenceMeter, useConfidenceTracking } from "@/components/confidence-meter";
+import { BottomNavigation } from "@/components/bottom-navigation";
 import { 
   ArrowLeft, 
   Upload, 
