@@ -505,8 +505,8 @@ export default function UploadStory() {
       }
 
       // Create and play the audio
-      console.log("Attempting to play audio from URL:", audioResponse.url);
-      const audio = new Audio(audioResponse.url);
+      console.log("Attempting to play audio from URL:", audioUrl);
+      const audio = new Audio(audioUrl);
       audio.volume = 1.0; // Ensure volume is at maximum
       audio.muted = false; // Ensure not muted
       setCurrentAudio(audio);
@@ -541,7 +541,7 @@ export default function UploadStory() {
       };
 
       audio.onerror = (error) => {
-        console.error("Audio playback error:", error, "URL:", audioResponse.url);
+        console.error("Audio playback error:", error, "URL:", audioUrl);
         console.error("Audio error details:", audio.error);
         setPlayingEmotions(prev => ({ ...prev, [emotionKey]: false }));
         setCurrentAudio(null);
