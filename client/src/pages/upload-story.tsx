@@ -479,10 +479,11 @@ export default function UploadStory() {
       // Set playing state
       setPlayingEmotions(prev => ({ ...prev, [emotionKey]: true }));
 
-      // Check if emotion already has a user-recorded soundUrl, otherwise generate one
+      // Check if emotion has a user-recorded soundUrl (contains 'user-voice-sample'), otherwise generate one
       let audioUrl = emotion.soundUrl;
+      const hasUserRecording = audioUrl && audioUrl.includes('user-voice-sample');
       
-      if (!audioUrl) {
+      if (!hasUserRecording) {
         // Generate a sample audio for the emotion with story context for character voice detection
         const audioResponse = await apiRequest('/api/emotions/generate-sample', {
           method: 'POST',
@@ -502,9 +503,12 @@ export default function UploadStory() {
         audioUrl = audioResponse.url;
         // Store the generated audio URL in the emotion object for later use in story creation
         emotion.soundUrl = audioUrl;
+      } else {
+        // Use the existing user recording URL
+        audioUrl = emotion.soundUrl;
       }
 
-      // Create and play the audio
+      // Create and play the audio with cache busting for user recordings
       console.log("Attempting to play audio from URL:", audioUrl);
       const audio = new Audio(audioUrl);
       audio.volume = 1.0; // Ensure volume is at maximum
@@ -660,13 +664,24 @@ export default function UploadStory() {
         body: formData,
       });
 
-      // Update the emotion object with the new audio URL immediately
-      emotion.soundUrl = response.url;
+      // Clear any cached audio URL and update with new recording URL
+      emotion.soundUrl = response.url + `?t=${Date.now()}`; // Add cache-busting timestamp
       
-      // Force re-render to update the UI with the new audio URL
+      // Force re-render and clear any cached audio objects
       setEmotionsWithSounds(prev => 
-        prev.map(e => e.emotion === emotion.emotion && e.intensity === emotion.intensity ? emotion : e)
+        prev.map(e => {
+          if (e.emotion === emotion.emotion && e.intensity === emotion.intensity) {
+            return { ...emotion }; // Create new object reference to force re-render
+          }
+          return e;
+        })
       );
+      
+      // Clear any currently playing audio to force reload
+      if (currentAudio) {
+        currentAudio.pause();
+        setCurrentAudio(null);
+      }
 
       toast({
         title: "Voice Recorded",

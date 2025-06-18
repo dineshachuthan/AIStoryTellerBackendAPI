@@ -563,8 +563,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             throw new Error("WebM file is empty");
           }
           
-          // Enhanced FFmpeg conversion with error handling and compatibility flags
-          await execAsync(`ffmpeg -f webm -i "${tempWebmPath}" -acodec libmp3lame -b:a 128k -ar 44100 -ac 2 -f mp3 -y "${filePath}"`);
+          // Enhanced FFmpeg conversion specifically for Opus audio in WebM containers
+          await execAsync(`ffmpeg -i "${tempWebmPath}" -vn -acodec libmp3lame -b:a 128k -ar 44100 -ac 2 -af "volume=2.0" -f mp3 -y "${filePath}"`);
           
           // Verify output file
           const outputStats = await fs.stat(filePath);
