@@ -6,27 +6,17 @@ import { useLocation } from "wouter";
 import { Play, Users, Clock, Book, Edit, Trash2, Share } from "lucide-react";
 import { BottomNavigation } from "@/components/bottom-navigation";
 import { AppTopNavigation } from "@/components/app-top-navigation";
+import { useAuth } from "@/hooks/useAuth";
 import { formatDistanceToNow } from "date-fns";
-
-interface Story {
-  id: number;
-  title: string;
-  content: string;
-  summary: string;
-  category: string;
-  tags: string[];
-  authorId: string;
-  uploadType: string;
-  isPublished: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
+import type { Story } from "@shared/schema";
 
 export default function StoryLibrary() {
   const [, setLocation] = useLocation();
+  const { user } = useAuth();
   
-  const { data: stories = [], isLoading } = useQuery({
-    queryKey: ["/api/stories"],
+  const { data: stories = [], isLoading } = useQuery<Story[]>({
+    queryKey: ["/api/users", user?.id, "stories"],
+    enabled: !!user?.id,
   });
 
   const handlePlayStory = (storyId: number) => {
