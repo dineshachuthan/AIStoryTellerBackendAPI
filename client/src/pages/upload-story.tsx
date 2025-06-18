@@ -1347,6 +1347,13 @@ export default function UploadStory() {
               <p className="text-gray-400">Assign images and sounds to bring your story to life</p>
             </div>
 
+            {/* Confidence Meter */}
+            {createdStory && (
+              <div className="mb-6">
+                <ConfidenceMeter storyId={createdStory.id} userId={userId} />
+              </div>
+            )}
+
             {/* Character & Emotion Groups */}
             <Card className="bg-dark-card border-gray-700">
               <CardHeader>
