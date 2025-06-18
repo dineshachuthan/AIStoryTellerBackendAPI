@@ -5,6 +5,7 @@ import { insertCharacterSchema, insertConversationSchema, insertMessageSchema, i
 import { generateAIResponse } from "./openai";
 import { setupAuth, requireAuth, requireAdmin } from "./auth";
 import { analyzeStoryContent, generateCharacterImage, transcribeAudio } from "./ai-analysis";
+import { getCachedImage, cacheImage, getCacheStats, cleanOldCache } from "./image-cache";
 import { getAllVoiceSamples, getVoiceSampleProgress } from "./voice-samples";
 import { storyNarrator } from "./story-narrator";
 import { grandmaVoiceNarrator } from "./voice-narrator";
@@ -148,8 +149,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Character data is required" });
       }
 
-      console.log("Generating image for character:", character.name);
+      // Check cache first
+      const cachedImage = getCachedImage(character, storyContext || "");
+      if (cachedImage) {
+        console.log(`Using cached image for character: ${character.name}`);
+        return res.json({ url: cachedImage });
+      }
+
+      console.log("Generating new image for character:", character.name);
       const imageUrl = await generateCharacterImage(character, storyContext);
+      
+      // Cache the generated image
+      cacheImage(character, storyContext || "", imageUrl);
+      
       res.json({ url: imageUrl });
     } catch (error) {
       console.error("Error generating character image:", error);
@@ -163,6 +175,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Generate a default avatar URL based on character name and role
     const defaultImageUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name as string)}&backgroundColor=b6e3f4,c0aede,d1d4f9`;
     res.json({ url: defaultImageUrl });
+  });
+
+  // Image cache management endpoints
+  app.get("/api/admin/cache/stats", (req, res) => {
+    try {
+      const stats = getCacheStats();
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get cache stats" });
+    }
+  });
+
+  app.post("/api/admin/cache/clean", (req, res) => {
+    try {
+      const cleaned = cleanOldCache();
+      res.json({ message: `Cleaned ${cleaned} old cache files` });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to clean cache" });
+    }
   });
 
   // Default emotion sound endpoint
