@@ -101,10 +101,10 @@ export default function StoryLibrary() {
                 <CardContent className="pt-0">
                   <div className="flex items-center text-xs text-gray-500 mb-4">
                     <Clock className="w-3 h-3 mr-1" />
-                    {formatDistanceToNow(new Date(story.createdAt), { addSuffix: true })}
+                    {story.createdAt ? formatDistanceToNow(new Date(story.createdAt), { addSuffix: true }) : 'Recently'}
                   </div>
                   
-                  {story.tags.length > 0 && (
+                  {story.tags && story.tags.length > 0 && (
                     <div className="flex flex-wrap gap-1 mb-4">
                       {story.tags.slice(0, 3).map((tag, index) => (
                         <Badge 
