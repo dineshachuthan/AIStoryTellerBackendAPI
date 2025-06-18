@@ -21,11 +21,22 @@ export const users = pgTable("users", {
   lastName: varchar("last_name"),
   displayName: varchar("display_name"),
   profileImageUrl: varchar("profile_image_url"),
-  provider: varchar("provider"), // 'google', 'microsoft', 'facebook', 'local'
-  providerId: varchar("provider_id"), // ID from the provider
+  isEmailVerified: boolean("is_email_verified").default(false),
   isAdmin: boolean("is_admin").default(false),
+  isActive: boolean("is_active").default(true),
+  lastLoginAt: timestamp("last_login_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Social authentication providers table
+export const userProviders = pgTable("user_providers", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  provider: varchar("provider").notNull(), // 'google', 'microsoft', 'facebook', 'local'
+  providerId: varchar("provider_id").notNull(),
+  providerData: jsonb("provider_data"), // Store additional provider data
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 // Local users table for email/password authentication
@@ -290,6 +301,7 @@ export const emotionVoiceProfiles = pgTable("emotion_voice_profiles", {
 export const insertUserSchema = createInsertSchema(users).omit({
   createdAt: true,
   updatedAt: true,
+  lastLoginAt: true,
 });
 
 export const upsertUserSchema = insertUserSchema.extend({
@@ -439,3 +451,18 @@ export const insertStoryUserConfidenceSchema = createInsertSchema(storyUserConfi
 
 export type StoryUserConfidence = typeof storyUserConfidence.$inferSelect;
 export type InsertStoryUserConfidence = z.infer<typeof insertStoryUserConfidenceSchema>;
+
+// Authentication schemas for new tables
+export const insertUserProviderSchema = createInsertSchema(userProviders).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertLocalUserSchema = createInsertSchema(localUsers).omit({
+  createdAt: true,
+});
+
+export type UserProvider = typeof userProviders.$inferSelect;
+export type InsertUserProvider = z.infer<typeof insertUserProviderSchema>;
+export type LocalUser = typeof localUsers.$inferSelect;
+export type InsertLocalUser = z.infer<typeof insertLocalUserSchema>;
