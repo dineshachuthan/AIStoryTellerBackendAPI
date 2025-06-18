@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { useLocation } from "wouter";
 import { Play, Users, Clock, Book, Edit, Trash2, Share } from "lucide-react";
 import { BottomNavigation } from "@/components/bottom-navigation";
+import { AppTopNavigation } from "@/components/app-top-navigation";
 import { formatDistanceToNow } from "date-fns";
 
 interface Story {
@@ -50,13 +51,14 @@ export default function StoryLibrary() {
 
   return (
     <div className="min-h-screen bg-dark-bg text-dark-text">
-      {/* Header */}
-      <div className="sticky top-0 z-50 bg-dark-bg/80 backdrop-blur-lg border-b border-gray-800 p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Book className="w-6 h-6 text-tiktok-pink" />
-            <h1 className="text-2xl font-bold text-white">My Stories</h1>
-          </div>
+      <AppTopNavigation />
+      
+      {/* Page Header */}
+      <div className="p-4 border-b border-gray-800">
+        <div className="flex items-center space-x-3">
+          <Book className="w-6 h-6 text-tiktok-pink" />
+          <h1 className="text-2xl font-bold text-white">My Stories</h1>
+        </div>
           <Button
             onClick={() => setLocation("/upload-story")}
             className="bg-tiktok-red hover:bg-tiktok-red/80"
