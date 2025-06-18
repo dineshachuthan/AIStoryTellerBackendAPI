@@ -28,8 +28,8 @@ export const defaultStoryConfig: StoryConfig = {
     label: "Write 500-1000 Word Story"
   },
   voiceRecord: {
-    maxDurationMinutes: 1,
-    label: "Voice Record Short Story"
+    maxDurationMinutes: 7, // Same as upload audio - ~1000 words at average speaking pace
+    label: "Voice Record Story (<7 min)"
   },
   uploadText: {
     maxWords: 1000,
