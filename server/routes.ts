@@ -418,15 +418,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const files = await fs.readdir(userVoiceDir);
           const matchingFiles = files.filter(file => 
             file.startsWith(`${userId}-${emotion}-${intensity}-`) && 
-            file.endsWith('.mp3')
+            (file.endsWith('.mp3') || file.endsWith('.webm') || file.endsWith('.m4a') || file.endsWith('.wav'))
           );
           
           if (matchingFiles.length > 0) {
-            // Get the most recent file by timestamp (last part of filename before .mp3)
+            // Get the most recent file by timestamp (part before the extension)
             const latestFile = matchingFiles.sort((a, b) => {
-              const timestampA = parseInt(a.split('-').pop()?.replace('.mp3', '') || '0');
-              const timestampB = parseInt(b.split('-').pop()?.replace('.mp3', '') || '0');
-              return timestampB - timestampA; // Sort descending (newest first)
+              const getTimestamp = (filename: string) => {
+                const parts = filename.split('-');
+                const lastPart = parts[parts.length - 1];
+                return parseInt(lastPart.split('.')[0] || '0');
+              };
+              return getTimestamp(b) - getTimestamp(a); // Sort descending (newest first)
             })[0];
             
             const userVoiceUrl = `/api/emotions/user-voice-sample/${latestFile}`;
