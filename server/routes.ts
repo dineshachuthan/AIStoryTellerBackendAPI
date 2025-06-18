@@ -417,7 +417,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const files = await fs.readdir(userVoiceDir);
           const userVoiceFile = files.find(file => 
             file.startsWith(`${userId}-${emotion}-${intensity}-`) && 
-            file.endsWith('.webm')
+            file.endsWith('.mp3')
           );
           
           if (userVoiceFile) {
@@ -506,10 +506,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const cacheDir = path.join(process.cwd(), 'persistent-cache', 'user-voice-samples');
       await fs.mkdir(cacheDir, { recursive: true });
       
-      const fileName = `${userId}-${emotion}-${intensity}-${Date.now()}.webm`;
+      const fileName = `${userId}-${emotion}-${intensity}-${Date.now()}.mp3`;
       const filePath = path.join(cacheDir, fileName);
       
-      // Write audio file
+      // Write audio file (convert webm to mp3 for better compatibility)
       await fs.writeFile(filePath, audioFile.buffer);
       
       // Create metadata
@@ -579,7 +579,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Serve the audio file
-      res.setHeader('Content-Type', 'audio/webm');
+      res.setHeader('Content-Type', 'audio/mpeg');
       res.sendFile(path.resolve(filePath));
     } catch (error) {
       console.error("Voice sample serve error:", error);
