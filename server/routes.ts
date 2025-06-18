@@ -465,20 +465,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log("Step 1: Analyzing story for characters and emotions");
       
-      // Check cache first to ensure consistent results
-      const cachedAnalysis = getCachedAnalysis(content);
-      if (cachedAnalysis) {
-        console.log("Using cached analysis");
-        return res.json(cachedAnalysis);
-      }
-
-      // Generate new analysis if not cached
+      // CACHE DISABLED - Generate fresh analysis every time for testing
       const analysis = await analyzeStoryContent(content);
       
-      // Cache the analysis for future use as baseline metadata
-      cacheAnalysis(content, analysis);
-      
-      console.log("Step 1 Complete: Story metadata generated and cached");
+      console.log("Step 1 Complete: Story metadata generated");
       res.json(analysis);
     } catch (error) {
       console.error("Error analyzing story:", error);
