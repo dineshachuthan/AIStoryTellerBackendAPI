@@ -203,6 +203,17 @@ export default function StoryPlayer() {
           // End of story
           setIsPlaying(false);
           console.log("Story playback completed - reached end");
+          
+          // Show completion notification
+          toast({
+            title: "Story Complete!",
+            description: "Your story has finished playing. You can replay or return to your stories.",
+          });
+          
+          // Track completion for confidence meter
+          if (confidenceTracking) {
+            confidenceTracking.trackPlayback();
+          }
         }
       };
       
