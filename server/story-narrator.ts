@@ -139,6 +139,7 @@ export class StoryNarrator {
           name: characterName,
           role: characterName.toLowerCase() === 'mother' ? 'supporting' : 'protagonist'
         };
+        console.log("Created temp character:", speakingCharacter.name, "with role:", speakingCharacter.role);
       }
     }
     
@@ -300,9 +301,15 @@ export class StoryNarrator {
       'Narrator': 'alloy',  // Neutral narrator voice
     };
 
-    // First check for character name match
-    if (character.name && characterVoiceMap[character.name]) {
-      return characterVoiceMap[character.name];
+    // First check for character name match (case insensitive)
+    if (character.name) {
+      const nameKey = Object.keys(characterVoiceMap).find(key => 
+        key.toLowerCase() === character.name.toLowerCase()
+      );
+      if (nameKey) {
+        console.log("Using character name mapping:", character.name, "->", characterVoiceMap[nameKey]);
+        return characterVoiceMap[nameKey];
+      }
     }
 
     // Map character roles to voices as fallback
