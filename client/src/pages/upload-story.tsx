@@ -99,16 +99,44 @@ export default function UploadStory() {
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const audioRef = useRef<HTMLInputElement>(null);
 
+  // Auto-generate title from story content and analysis
+  const generateTitleFromContent = (content: string, analysis: StoryAnalysis): string => {
+    // Try to use the first character name + action/theme
+    if (analysis.characters.length > 0) {
+      const mainCharacter = analysis.characters.find(c => c.role === 'protagonist') || analysis.characters[0];
+      const themes = analysis.themes || [];
+      
+      if (themes.length > 0) {
+        return `${mainCharacter.name} and the ${themes[0]}`;
+      }
+      
+      // Use character name + category
+      return `The ${analysis.category} of ${mainCharacter.name}`;
+    }
+    
+    // Fall back to first sentence or summary
+    if (analysis.summary) {
+      const words = analysis.summary.split(' ').slice(0, 6);
+      return words.join(' ') + (words.length >= 6 ? '...' : '');
+    }
+    
+    // Last resort: first few words of content
+    const firstSentence = content.split('.')[0] || content.substring(0, 50);
+    const words = firstSentence.trim().split(' ').slice(0, 5);
+    return words.join(' ') + (words.length >= 5 ? '...' : '');
+  };
+
   // Step 1: Upload Content
   const handleTextUpload = () => {
-    if (!storyContent.trim() || !storyTitle.trim()) {
+    if (!storyContent.trim()) {
       toast({
         title: "Missing Information",
-        description: "Please provide both a title and story content.",
+        description: "Please provide story content to analyze.",
         variant: "destructive",
       });
       return;
     }
+    // Don't require title for analysis - it will be auto-generated
     analyzeStory();
   };
 
@@ -197,17 +225,7 @@ export default function UploadStory() {
     const textToAnalyze = content || storyContent;
     setIsAnalyzing(true);
     
-    console.log("Analyzing story with content:", textToAnalyze);
-    
-    if (!textToAnalyze || !textToAnalyze.trim()) {
-      toast({
-        title: "No Content",
-        description: "Please provide story content to analyze.",
-        variant: "destructive",
-      });
-      setIsAnalyzing(false);
-      return;
-    }
+    console.log("Analyzing story with content:", textToAnalyze.substring(0, 100) + "...");
     
     try {
       const result = await apiRequest('/api/stories/analyze', {
