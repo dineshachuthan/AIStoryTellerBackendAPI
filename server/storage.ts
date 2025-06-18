@@ -87,6 +87,12 @@ export interface IStorage {
   createStoryPlayback(playback: InsertStoryPlayback): Promise<StoryPlayback>;
   updateStoryPlayback(id: number, playback: Partial<InsertStoryPlayback>): Promise<void>;
   deleteStoryPlayback(id: number): Promise<void>;
+  
+  // Story User Confidence
+  getStoryUserConfidence(storyId: number, userId: string): Promise<StoryUserConfidence | undefined>;
+  createStoryUserConfidence(confidence: InsertStoryUserConfidence): Promise<StoryUserConfidence>;
+  updateStoryUserConfidence(storyId: number, userId: string, updates: Partial<InsertStoryUserConfidence>): Promise<void>;
+  incrementConfidenceMetric(storyId: number, userId: string, metric: 'totalInteractions' | 'voiceRecordingsCompleted' | 'emotionsRecorded' | 'playbacksCompleted', timeSpentSeconds?: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {

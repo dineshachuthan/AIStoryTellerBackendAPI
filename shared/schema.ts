@@ -216,6 +216,33 @@ export const storyPlaybacks = pgTable("story_playbacks", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// User interaction confidence tracking per story
+export const storyUserConfidence = pgTable("story_user_confidence", {
+  id: serial("id").primaryKey(),
+  storyId: integer("story_id").references(() => stories.id).notNull(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  
+  // Interaction metrics
+  totalInteractions: integer("total_interactions").default(0),
+  voiceRecordingsCompleted: integer("voice_recordings_completed").default(0),
+  emotionsRecorded: integer("emotions_recorded").default(0),
+  playbacksCompleted: integer("playbacks_completed").default(0),
+  timeSpentSeconds: integer("time_spent_seconds").default(0),
+  
+  // Confidence scores (0-100)
+  voiceConfidence: integer("voice_confidence").default(0), // How comfortable with voice recording
+  storyEngagement: integer("story_engagement").default(0), // How engaged with story content
+  overallConfidence: integer("overall_confidence").default(0), // Combined confidence score
+  
+  // Engagement tracking
+  lastInteractionAt: timestamp("last_interaction_at").defaultNow(),
+  firstInteractionAt: timestamp("first_interaction_at").defaultNow(),
+  sessionCount: integer("session_count").default(1),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Global character archetypes for reusable voice assignments
 export const characterArchetypes = pgTable("character_archetypes", {
   id: serial("id").primaryKey(),
@@ -401,3 +428,13 @@ export type InsertUserCharacterPreference = typeof userCharacterPreferences.$inf
 
 export type EmotionVoiceProfile = typeof emotionVoiceProfiles.$inferSelect;
 export type InsertEmotionVoiceProfile = typeof emotionVoiceProfiles.$inferInsert;
+
+// Story User Confidence schemas
+export const insertStoryUserConfidenceSchema = createInsertSchema(storyUserConfidence).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type StoryUserConfidence = typeof storyUserConfidence.$inferSelect;
+export type InsertStoryUserConfidence = z.infer<typeof insertStoryUserConfidenceSchema>;
