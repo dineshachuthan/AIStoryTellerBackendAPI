@@ -109,6 +109,7 @@ function selectEmotionVoice(emotion: string, intensity: number): 'alloy' | 'echo
     'greed': 'onyx',
     'disappointment': 'echo',
     'realization': 'nova',
+    'curiosity': 'shimmer',  // Female voice for curiosity
   };
   
   return emotionVoiceMap[emotion] || 'alloy';
@@ -513,7 +514,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const cacheDir = path.join(process.cwd(), 'persistent-cache', 'user-voice-samples');
       await fs.mkdir(cacheDir, { recursive: true });
       
-      const fileName = `${userId}-${emotion}-${intensity}-${Date.now()}.mp3`;
+      // Use correct file extension based on mime type
+      const fileExtension = audioFile.mimetype === 'audio/webm' ? 'webm' : 
+                           audioFile.mimetype === 'audio/mp4' ? 'm4a' :
+                           audioFile.mimetype === 'audio/wav' ? 'wav' : 'mp3';
+      
+      const fileName = `${userId}-${emotion}-${intensity}-${Date.now()}.${fileExtension}`;
       const filePath = path.join(cacheDir, fileName);
       
       // Write audio file (convert webm to mp3 for better compatibility)
@@ -585,8 +591,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Voice sample not found" });
       }
       
+      // Set correct content type based on file extension
+      const fileExtension = path.extname(fileName).toLowerCase();
+      let contentType = 'audio/mpeg'; // default
+      
+      if (fileExtension === '.webm') {
+        contentType = 'audio/webm';
+      } else if (fileExtension === '.m4a') {
+        contentType = 'audio/mp4';
+      } else if (fileExtension === '.wav') {
+        contentType = 'audio/wav';
+      }
+      
       // Serve the audio file
-      res.setHeader('Content-Type', 'audio/mpeg');
+      res.setHeader('Content-Type', contentType);
       res.sendFile(path.resolve(filePath));
     } catch (error) {
       console.error("Voice sample serve error:", error);
