@@ -3,11 +3,24 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useLocation } from "wouter";
-import { Upload, Mic, Users, Play } from "lucide-react";
+import { Upload, Mic, Users, Play, User, Heart } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { BottomNavigation } from "@/components/bottom-navigation";
 
 export default function Home() {
   const [, setLocation] = useLocation();
+  const { user } = useAuth();
+
+  const getUserInitials = () => {
+    if (!user) return 'U';
+    return user.displayName 
+      ? user.displayName.split(' ').map(n => n[0]).join('').toUpperCase()
+      : user.firstName && user.lastName
+      ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
+      : user.email ? user.email[0].toUpperCase()
+      : 'U';
+  };
 
   return (
     <div className="relative w-full h-screen bg-dark-bg text-dark-text overflow-hidden">
