@@ -52,12 +52,13 @@ export default function Home() {
           <CardContent className="pt-0">
             <div className="grid grid-cols-3 gap-2">
               <Button
-                onClick={() => setLocation("/upload-story")}
-                className="bg-tiktok-red hover:bg-tiktok-red/80 h-auto p-3 flex flex-col items-center space-y-1"
+                onClick={() => setLocation("/create")}
+                variant="outline"
+                className="border-tiktok-pink text-tiktok-pink hover:bg-tiktok-pink/20 h-auto p-3 flex flex-col items-center space-y-1"
                 size="sm"
               >
-                <Upload className="w-5 h-5" />
-                <span className="text-xs">Create</span>
+                <Users className="w-5 h-5" />
+                <span className="text-xs">Character</span>
               </Button>
               <Button
                 onClick={() => setLocation("/voice-setup")}
@@ -69,13 +70,12 @@ export default function Home() {
                 <span className="text-xs">Voice</span>
               </Button>
               <Button
-                onClick={() => setLocation("/create")}
-                variant="outline"
-                className="border-tiktok-pink text-tiktok-pink hover:bg-tiktok-pink/20 h-auto p-3 flex flex-col items-center space-y-1"
+                onClick={() => setLocation("/upload-story")}
+                className="bg-tiktok-red hover:bg-tiktok-red/80 h-auto p-3 flex flex-col items-center space-y-1"
                 size="sm"
               >
-                <Users className="w-5 h-5" />
-                <span className="text-xs">Character</span>
+                <Upload className="w-5 h-5" />
+                <span className="text-xs">Create</span>
               </Button>
             </div>
           </CardContent>
