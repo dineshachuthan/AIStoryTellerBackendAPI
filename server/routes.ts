@@ -563,8 +563,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             throw new Error("WebM file is empty");
           }
           
-          // Specialized FFmpeg conversion for Opus codec with proper decoding
-          await execAsync(`ffmpeg -f webm -c:a libopus -i "${tempWebmPath}" -vn -c:a libmp3lame -b:a 128k -ar 44100 -ac 2 -af "volume=3.0,highpass=f=80" -f mp3 -y "${filePath}"`);
+          // Direct conversion preserving original audio characteristics
+          await execAsync(`ffmpeg -i "${tempWebmPath}" -map 0:a -c:a libmp3lame -q:a 2 -ar 48000 -ac 1 -y "${filePath}"`);
           
           // Verify output file
           const outputStats = await fs.stat(filePath);
@@ -573,18 +573,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Clean up temporary file
           await fs.unlink(tempWebmPath);
         } catch (conversionError) {
-          console.error("FFmpeg conversion error:", conversionError);
-          // Enhanced fallback with different codec settings
-          try {
-            // Try with different WebM handling
-            await execAsync(`ffmpeg -f webm -i "${tempWebmPath}" -vn -acodec libmp3lame -b:a 96k -ar 22050 -ac 1 -f mp3 -y "${filePath}"`);
-            await fs.unlink(tempWebmPath);
-          } catch (fallbackError) {
-            console.error("All conversion attempts failed:", fallbackError);
-            // Final fallback: save as WebM with .mp3 extension (browser should still play)
-            await fs.copyFile(tempWebmPath, filePath);
-            await fs.unlink(tempWebmPath);
-          }
+          console.error("Primary conversion failed:", conversionError);
+          // Fallback: Save original WebM file with correct extension for direct browser playback
+          const webmFilePath = filePath.replace('.mp3', '.webm');
+          await fs.copyFile(tempWebmPath, webmFilePath);
+          
+          // Update metadata to point to WebM file
+          fileName = fileName.replace('.mp3', '.webm');
+          filePath = webmFilePath;
+          
+          await fs.unlink(tempWebmPath);
+          console.log("Saved original WebM file as fallback");
         }
       } else if (audioFile.mimetype === 'audio/mp4' || audioFile.mimetype === 'audio/wav') {
         // Convert other formats directly to MP3
@@ -678,8 +677,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Voice sample not found" });
       }
       
-      // All user voice samples are now MP3 format
-      res.setHeader('Content-Type', 'audio/mpeg');
+      // Set appropriate MIME type based on file extension
+      const isWebM = fileName.endsWith('.webm');
+      res.setHeader('Content-Type', isWebM ? 'audio/webm' : 'audio/mpeg');
       res.sendFile(path.resolve(filePath));
     } catch (error) {
       console.error("Voice sample serve error:", error);
