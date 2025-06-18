@@ -99,7 +99,91 @@ export default function UploadStory() {
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const audioRef = useRef<HTMLInputElement>(null);
 
+  // Create story with direct analysis data (for automated flow)
+  const createStoryWithAnalysis = async (
+    content: string, 
+    analysisData: StoryAnalysis, 
+    characters: CharacterWithImage[], 
+    emotions: EmotionWithSound[]
+  ) => {
+    setIsCreatingStory(true);
 
+    const finalTitle = storyTitle.trim() || generateTitleFromContent(content, analysisData) || "Untitled Story";
+
+    try {
+      const storyData = {
+        title: finalTitle,
+        content: content,
+        category: analysisData.category || 'General',
+        summary: analysisData.summary || null,
+        isAdultContent: analysisData.isAdultContent || false,
+        authorId: 'test_user_123',
+        uploadType: 'manual',
+      };
+
+      const story = await apiRequest('/api/stories', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(storyData),
+      });
+
+      // Create characters and emotions
+      for (const character of characters) {
+        await apiRequest(`/api/stories/${story.id}/characters`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: character.name,
+            description: character.description,
+            personality: character.personality,
+            role: character.role,
+            appearance: character.appearance,
+            traits: character.traits,
+            imageUrl: character.imageUrl,
+          }),
+        });
+      }
+
+      for (const emotion of emotions) {
+        await apiRequest(`/api/stories/${story.id}/emotions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            emotion: emotion.emotion,
+            intensity: emotion.intensity,
+            context: emotion.context,
+            quote: emotion.quote,
+            soundUrl: emotion.soundUrl,
+          }),
+        });
+      }
+
+      toast({
+        title: "Story Created!",
+        description: "Your story has been created successfully with AI-generated character images.",
+      });
+
+      setCurrentStep(5);
+      setTimeout(() => {
+        setLocation(`/story/${story.id}/play`);
+      }, 3000);
+    } catch (error) {
+      console.error("Story creation error:", error);
+      toast({
+        title: "Creation Failed",
+        description: error instanceof Error ? error.message : "Could not create story. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreatingStory(false);
+    }
+  };
 
   // Auto-generate title from story content and analysis
   const generateTitleFromContent = (content: string, analysis: StoryAnalysis): string => {
@@ -255,13 +339,15 @@ export default function UploadStory() {
 
         setCharactersWithImages(charactersWithDefaults);
         setEmotionsWithSounds(emotionsWithDefaults);
+        setStoryContent(textToAnalyze); // Ensure content is set
         setCurrentStep(3);
 
-        // Skip to story creation automatically
+        // Skip to story creation automatically with proper data
         setTimeout(() => {
           setCurrentStep(4);
           setTimeout(() => {
-            createStory();
+            // Create story directly with the analysis data we have
+            createStoryWithAnalysis(textToAnalyze, result, charactersWithDefaults, emotionsWithDefaults);
           }, 500);
         }, 1000);
       }, 1000);
