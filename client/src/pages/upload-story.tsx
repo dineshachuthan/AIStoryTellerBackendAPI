@@ -754,35 +754,8 @@ export default function UploadStory() {
     setIsCreatingStory(true);
 
     try {
-      // Generate AI images for all characters before creating the story
-      const charactersWithAIImages = [...charactersWithImages];
-      
-      // Generate images for all characters in parallel
-      const imagePromises = charactersWithAIImages.map(async (character, index) => {
-        if (character.imageUrl?.includes('dicebear.com')) {
-          // Only generate AI image if it's still using default avatar
-          try {
-            const imageResponse = await apiRequest('/api/characters/generate-image', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ 
-                character,
-                storyContext: analysis.summary || storyContent.substring(0, 500)
-              }),
-            });
-            return { ...character, imageUrl: imageResponse.url };
-          } catch (error) {
-            console.error(`Failed to generate image for ${character.name}:`, error);
-            return character; // Keep default image on error
-          }
-        }
-        return character;
-      });
-
-      // Wait for all images to be generated
-      const finalCharacters = await Promise.all(imagePromises);
+      // Use existing characters (images should already be generated in step 3)
+      const finalCharacters = charactersWithImages;
 
       const storyData = {
         title: finalTitle,
@@ -1433,7 +1406,7 @@ export default function UploadStory() {
           <div className="space-y-6">
             <div className="text-center">
               <h2 className="text-2xl font-bold mb-2">Creating Your Story</h2>
-              <p className="text-gray-400">Generating AI character images and setting up your story...</p>
+              <p className="text-gray-400">Finalizing your story and saving all content...</p>
             </div>
 
             <Card className="bg-dark-card border-gray-700">
@@ -1447,7 +1420,11 @@ export default function UploadStory() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-center space-x-2">
                     <Check className="w-5 h-5 text-green-500" />
-                    <span className="text-gray-300">Story analyzed and characters extracted</span>
+                    <span className="text-gray-300">Story content and characters prepared</span>
+                  </div>
+                  <div className="flex items-center justify-center space-x-2">
+                    <Check className="w-5 h-5 text-green-500" />
+                    <span className="text-gray-300">Character images and emotions ready</span>
                   </div>
                   <div className="flex items-center justify-center space-x-2">
                     {isCreatingStory ? (
@@ -1455,15 +1432,7 @@ export default function UploadStory() {
                     ) : (
                       <Check className="w-5 h-5 text-green-500" />
                     )}
-                    <span className="text-gray-300">Generating AI character images</span>
-                  </div>
-                  <div className="flex items-center justify-center space-x-2">
-                    {isCreatingStory ? (
-                      <Loader2 className="w-5 h-5 animate-spin text-tiktok-cyan" />
-                    ) : (
-                      <Check className="w-5 h-5 text-green-500" />
-                    )}
-                    <span className="text-gray-300">Creating story database entries</span>
+                    <span className="text-gray-300">Saving story to database</span>
                   </div>
                 </div>
                 <Progress value={isCreatingStory ? 50 : 100} className="w-full max-w-md mx-auto" />
