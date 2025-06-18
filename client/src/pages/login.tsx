@@ -23,6 +23,30 @@ export default function Login() {
   const [, setLocation] = useLocation();
   const [showPassword, setShowPassword] = useState(false);
   const { login, loginLoading, loginError } = useAuth();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    // Listen for OAuth popup messages
+    const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      
+      if (event.data.type === 'OAUTH_SUCCESS') {
+        console.log('OAuth success received from popup');
+        toast({
+          title: "Login Successful",
+          description: `Signed in with ${event.data.provider}`,
+        });
+        
+        // Navigate to home page
+        setTimeout(() => {
+          setLocation('/');
+        }, 1000);
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [toast, setLocation]);
 
   const handleOAuthLogin = (provider: string) => {
     const popup = window.open(`/api/auth/${provider}`, 'oauth_popup', 'width=500,height=600,scrollbars=yes,resizable=yes');
@@ -33,12 +57,14 @@ export default function Login() {
       return;
     }
 
-    // Monitor popup for closure
+    // Monitor popup for closure as backup
     const checkClosed = setInterval(() => {
       if (popup.closed) {
         clearInterval(checkClosed);
-        // Refresh to update auth state
-        window.location.reload();
+        // Small delay then check auth state
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
       }
     }, 1000);
   };
