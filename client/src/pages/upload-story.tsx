@@ -162,12 +162,15 @@ export default function UploadStory() {
         body: JSON.stringify({ content: storyContent }),
       });
 
-      setAnalysis(analysisResponse);
+      // Store analysis in localStorage for the analysis page
+      localStorage.setItem('storyAnalysis', JSON.stringify({
+        analysis: analysisResponse,
+        content: storyContent,
+        title: storyTitle || 'Untitled Story'
+      }));
       
-      toast({
-        title: "Analysis Complete",
-        description: `Found ${analysisResponse.characters?.length || 0} characters and ${analysisResponse.emotions?.length || 0} emotions.`,
-      });
+      // Navigate to analysis page
+      setLocation('/story-analysis');
     } catch (error) {
       console.error("Analysis error:", error);
       toast({

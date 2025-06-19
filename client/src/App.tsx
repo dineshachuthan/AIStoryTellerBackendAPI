@@ -10,6 +10,7 @@ import Home from "@/pages/home";
 import Chat from "@/pages/chat";
 import CreateCharacter from "@/pages/create-character";
 import UploadStory from "@/pages/upload-story";
+import StoryAnalysis from "@/pages/story-analysis";
 import VoiceSetup from "@/pages/voice-setup";
 import StoryPlayer from "@/pages/story-player";
 import StoryLibrary from "@/pages/story-library";
@@ -47,6 +48,7 @@ function Router() {
             <Route path="/chat/:conversationId" component={Chat} />
             <Route path="/create" component={CreateCharacter} />
             <Route path="/upload-story" component={UploadStory} />
+            <Route path="/story-analysis" component={StoryAnalysis} />
             <Route path="/voice-setup" component={VoiceSetup} />
             <Route path="/story/:storyId/play" component={StoryPlayer} />
             <Route path="/story/:storyId/collaborate" component={StoryCollaboration} />
