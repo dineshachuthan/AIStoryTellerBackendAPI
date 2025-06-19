@@ -203,8 +203,13 @@ export default function StoryAnalysis() {
       // For now, just show a success message - in future this could save character/emotion updates
       toast({
         title: "Story Updated",
-        description: "Your story changes have been saved!",
+        description: "Navigating to story player...",
       });
+      
+      // Navigate to play page after updating
+      setTimeout(() => {
+        setLocation(`/story/${storyId}`);
+      }, 1000);
     } catch (error) {
       console.error("Story update failed:", error);
       toast({
@@ -212,14 +217,11 @@ export default function StoryAnalysis() {
         description: "Could not update story. Please try again.",
         variant: "destructive",
       });
-    } finally {
       setIsUpdating(false);
     }
   };
 
-  const handlePlayStory = (storyId: number) => {
-    setLocation(`/story/${storyId}`);
-  };
+
 
   if (storyLoading) {
     return (
@@ -275,7 +277,6 @@ export default function StoryAnalysis() {
             isCreating={isCreating}
             storyId={storyId ? parseInt(storyId) : undefined}
             onUpdateStory={handleUpdateStory}
-            onPlayStory={handlePlayStory}
             isUpdating={isUpdating}
             isPrivateStory={!!storyId} // For now, show buttons for all existing stories
           />

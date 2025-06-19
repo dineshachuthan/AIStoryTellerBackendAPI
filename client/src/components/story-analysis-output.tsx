@@ -63,7 +63,6 @@ interface StoryAnalysisOutputProps {
   className?: string;
   storyId?: number;
   onUpdateStory?: (storyId: number) => Promise<void>;
-  onPlayStory?: (storyId: number) => void;
   isUpdating?: boolean;
   isPrivateStory?: boolean;
 }
@@ -78,7 +77,6 @@ export function StoryAnalysisOutput({
   className = "",
   storyId,
   onUpdateStory,
-  onPlayStory,
   isUpdating = false,
   isPrivateStory = false
 }: StoryAnalysisOutputProps) {
@@ -508,33 +506,21 @@ export function StoryAnalysisOutput({
         )}
 
         {/* For existing private stories */}
-        {isPrivateStory && storyId && (
-          <div className="flex gap-4">
-            {onUpdateStory && (
-              <Button
-                onClick={() => onUpdateStory(storyId)}
-                disabled={isUpdating}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3"
-              >
-                {isUpdating ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Updating...
-                  </>
-                ) : (
-                  'Update Story'
-                )}
-              </Button>
+        {isPrivateStory && storyId && onUpdateStory && (
+          <Button
+            onClick={() => onUpdateStory(storyId)}
+            disabled={isUpdating}
+            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3"
+          >
+            {isUpdating ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Updating...
+              </>
+            ) : (
+              'Update Story'
             )}
-            {onPlayStory && (
-              <Button
-                onClick={() => onPlayStory(storyId)}
-                className="bg-gradient-to-r from-tiktok-red to-pink-600 hover:from-tiktok-red/80 hover:to-pink-700 text-white px-6 py-3"
-              >
-                Play Story
-              </Button>
-            )}
-          </div>
+          </Button>
         )}
       </div>
     </div>
