@@ -303,25 +303,48 @@ export class DatabaseStorage implements IStorage {
     ageRating?: string;
     search?: string;
   }): Promise<Story[]> {
-    // Build where conditions array
-    const conditions = [eq(stories.authorId, userId)];
+    // Get user's own stories (both private and public) AND all public stories from other users
+    // Build where conditions for user's own stories
+    const userConditions = [eq(stories.authorId, userId)];
+    
+    // Build where conditions for public stories from all users
+    const publicConditions = [eq(stories.isPublished, true)];
     
     if (filters?.genre) {
-      conditions.push(eq(stories.genre, filters.genre));
+      userConditions.push(eq(stories.genre, filters.genre));
+      publicConditions.push(eq(stories.genre, filters.genre));
     }
     
     if (filters?.moodCategory) {
-      conditions.push(eq(stories.moodCategory, filters.moodCategory));
+      userConditions.push(eq(stories.moodCategory, filters.moodCategory));
+      publicConditions.push(eq(stories.moodCategory, filters.moodCategory));
     }
     
     if (filters?.ageRating) {
-      conditions.push(eq(stories.ageRating, filters.ageRating));
+      userConditions.push(eq(stories.ageRating, filters.ageRating));
+      publicConditions.push(eq(stories.ageRating, filters.ageRating));
     }
     
-    // Execute query with combined conditions
-    const allStories = await db.select().from(stories).where(and(...conditions)).orderBy(desc(stories.id));
+    // Execute both queries
+    const [userStories, publicStories] = await Promise.all([
+      db.select().from(stories).where(and(...userConditions)).orderBy(desc(stories.id)),
+      db.select().from(stories).where(and(...publicConditions)).orderBy(desc(stories.id))
+    ]);
     
-    let filteredStories = allStories;
+    // Combine and deduplicate stories (user's own stories take precedence)
+    const storyMap = new Map();
+    
+    // Add user's stories first (both private and public)
+    userStories.forEach(story => storyMap.set(story.id, story));
+    
+    // Add public stories from other users (won't overwrite user's own stories)
+    publicStories.forEach(story => {
+      if (!storyMap.has(story.id)) {
+        storyMap.set(story.id, story);
+      }
+    });
+    
+    let filteredStories = Array.from(storyMap.values());
     
     // Filter by emotional tags in memory
     if (filters?.emotionalTags && filters.emotionalTags.length > 0) {
@@ -341,6 +364,9 @@ export class DatabaseStorage implements IStorage {
         (story.tags || []).some(tag => tag.toLowerCase().includes(searchTerm))
       );
     }
+    
+    // Sort by ID descending (newest first)
+    filteredStories.sort((a, b) => b.id - a.id);
     
     return filteredStories;
   }

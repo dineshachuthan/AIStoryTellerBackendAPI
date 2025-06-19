@@ -24,14 +24,15 @@ interface Story {
   id: number;
   title: string;
   content: string;
-  category?: string;
+  category: string;
   genre?: string;
-  userId: string;
+  authorId: string;
   publishedAt?: string;
-  isPublic: boolean;
-  readingTimeMinutes?: number;
+  isPublished: boolean;
+  readingTime?: number;
   summary?: string;
-  collaborators?: number;
+  viewCount?: number;
+  likes?: number;
 }
 
 interface StorySearchPanelProps {
@@ -154,13 +155,13 @@ export function StorySearchPanel({
                               )}
                               <div className="flex items-center justify-between text-xs text-gray-500">
                                 <div className="flex items-center space-x-2">
-                                  {story.readingTimeMinutes && (
+                                  {story.readingTime && (
                                     <div className="flex items-center">
                                       <Clock className="w-3 h-3 mr-1" />
-                                      {story.readingTimeMinutes}m
+                                      {story.readingTime}m
                                     </div>
                                   )}
-                                  {story.isPublic ? (
+                                  {story.isPublished ? (
                                     <Globe className="w-3 h-3 text-green-400" />
                                   ) : (
                                     <Lock className="w-3 h-3 text-gray-400" />
