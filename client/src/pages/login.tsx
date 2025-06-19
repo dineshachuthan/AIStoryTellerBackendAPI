@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/hooks/useAuth";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -24,6 +25,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const { login, loginLoading, loginError } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     // Listen for OAuth popup messages
@@ -32,8 +34,12 @@ export default function Login() {
       
       if (event.data.type === 'OAUTH_SUCCESS') {
         console.log('OAuth success received from popup');
-        // Navigate to home page immediately
-        setLocation('/');
+        // Refresh authentication state
+        queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+        // Navigate to home page after a brief delay to allow auth refresh
+        setTimeout(() => {
+          setLocation('/');
+        }, 100);
       }
     };
 
