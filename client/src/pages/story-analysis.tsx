@@ -380,14 +380,42 @@ export default function StoryAnalysis() {
     }
   };
 
+  // Auto-generate title from story content and analysis
+  const generateTitleFromContent = (content: string, analysis: StoryAnalysis): string => {
+    // Try to use the first character name + action/theme
+    if (analysis.characters.length > 0) {
+      const mainCharacter = analysis.characters.find(c => c.role === 'protagonist') || analysis.characters[0];
+      const themes = analysis.themes || [];
+      
+      if (themes.length > 0) {
+        return `${mainCharacter.name} and the ${themes[0]}`;
+      }
+      
+      // Use character name + category
+      return `The ${analysis.category} of ${mainCharacter.name}`;
+    }
+    
+    // Fall back to first sentence or summary
+    if (analysis.summary) {
+      const words = analysis.summary.split(' ').slice(0, 6);
+      return words.join(' ') + (words.length >= 6 ? '...' : '');
+    }
+    
+    // Last resort: first few words of content
+    const firstSentence = content.split('.')[0] || content.substring(0, 50);
+    const words = firstSentence.trim().split(' ').slice(0, 5);
+    return words.join(' ') + (words.length >= 5 ? '...' : '');
+  };
+
   const createStoryFromAnalysis = async (analysisData: StoryAnalysis, content: string, title: string) => {
     if (!user?.id) {
       throw new Error("User authentication required");
     }
 
     try {
+      const finalTitle = title.trim() || generateTitleFromContent(content, analysisData) || "Untitled Story";
       const storyData = {
-        title: title.trim() || "Untitled Story",
+        title: finalTitle,
         content: content,
         category: analysisData.category || 'General',
         summary: analysisData.summary || null,
