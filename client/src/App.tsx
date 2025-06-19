@@ -9,7 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import Home from "@/pages/home";
 import Chat from "@/pages/chat";
 import CreateCharacter from "@/pages/create-character";
-import UploadStory from "@/pages/upload-story-simple";
+import UploadStory from "@/pages/upload-story";
 import VoiceSetup from "@/pages/voice-setup";
 import StoryPlayer from "@/pages/story-player";
 import StoryLibrary from "@/pages/story-library";
