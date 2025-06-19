@@ -277,7 +277,7 @@ export default function StoryAnalysis() {
             onUpdateStory={handleUpdateStory}
             onPlayStory={handlePlayStory}
             isUpdating={isUpdating}
-            isPrivateStory={!!storyId && storyData?.createdBy === user?.id}
+            isPrivateStory={!!storyId} // For now, show buttons for all existing stories
           />
         </div>
       </div>
