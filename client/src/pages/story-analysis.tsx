@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "wouter";
+import { useLocation, useParams } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +10,7 @@ import { ArrowLeft, Users, Heart, BookOpen, Tag, Sparkles, Upload, Loader2, Play
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
 import { AppTopNavigation } from "@/components/app-top-navigation";
+import { StoryAnalysisOutput } from "@/components/story-analysis-output";
 
 interface StoryAnalysis {
   characters: Array<{
@@ -64,47 +66,51 @@ export default function StoryAnalysis() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { user } = useAuth();
+  const params = useParams();
+  const storyId = params.storyId;
+  
   const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
   const [isCreating, setIsCreating] = useState(false);
-  const [charactersWithImages, setCharactersWithImages] = useState<CharacterWithImage[]>([]);
-  const [emotionsWithSounds, setEmotionsWithSounds] = useState<EmotionWithSound[]>([]);
-  const [generatingImages, setGeneratingImages] = useState<number[]>([]);
-  const [playingEmotions, setPlayingEmotions] = useState<{[key: string]: boolean}>({});
-  const [recordingEmotions, setRecordingEmotions] = useState<{[key: string]: boolean}>({});
-  const [emotionRecorders, setEmotionRecorders] = useState<{[key: string]: MediaRecorder}>({});
-  const [recordingStartTimes, setRecordingStartTimes] = useState<{[key: string]: number}>({});
-  const [isHolding, setIsHolding] = useState<{[key: string]: boolean}>({});
-  const [holdTimers, setHoldTimers] = useState<{[key: string]: NodeJS.Timeout}>({});
+
+  // Fetch story data if storyId is provided
+  const { data: storyData, isLoading: storyLoading } = useQuery({
+    queryKey: ["/api/stories", storyId],
+    enabled: !!storyId && !!user?.id,
+  });
 
   useEffect(() => {
-    const stored = localStorage.getItem('storyAnalysis');
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        setAnalysisData(parsed);
-        
-        // Initialize characters with default images
-        const charactersWithDefaults = parsed.analysis.characters.map((char: any) => ({
-          ...char,
-          imageUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(char.name)}&backgroundColor=b6e3f4,c0aede,d1d4f9`,
-        }));
-
-        // Initialize emotions with default sounds
-        const emotionsWithDefaults = parsed.analysis.emotions.map((emotion: any) => ({
-          ...emotion,
-          soundUrl: `/api/emotions/default-sound?emotion=${emotion.emotion}&intensity=${emotion.intensity}`
-        }));
-
-        setCharactersWithImages(charactersWithDefaults);
-        setEmotionsWithSounds(emotionsWithDefaults);
-      } catch (error) {
-        console.error('Failed to parse stored analysis:', error);
+    if (storyId && storyData) {
+      // Convert story data to analysis format
+      const analysis: AnalysisData = {
+        analysis: {
+          characters: storyData.extractedCharacters || [],
+          emotions: storyData.extractedEmotions || [],
+          summary: storyData.summary || "",
+          category: storyData.category || "General",
+          themes: [],
+          suggestedTags: storyData.tags || [],
+          isAdultContent: storyData.isAdultContent || false
+        },
+        content: storyData.content,
+        title: storyData.title
+      };
+      setAnalysisData(analysis);
+    } else if (!storyId) {
+      // Fall back to localStorage for upload flow
+      const stored = localStorage.getItem('storyAnalysis');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          setAnalysisData(parsed);
+        } catch (error) {
+          console.error('Failed to parse stored analysis:', error);
+          setLocation('/upload-story');
+        }
+      } else {
         setLocation('/upload-story');
       }
-    } else {
-      setLocation('/upload-story');
     }
-  }, [setLocation]);
+  }, [storyId, storyData, setLocation]);
 
   // Create character-emotion associations for display
   const getCharacterEmotionGroups = () => {

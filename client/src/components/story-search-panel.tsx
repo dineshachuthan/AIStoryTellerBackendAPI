@@ -169,23 +169,38 @@ export function StorySearchPanel({
                                 </div>
                               </div>
                               <div className="flex space-x-1">
-                                <Button
-                                  size="sm"
-                                  onClick={() => setLocation(`/story/${story.id}`)}
-                                  className="flex-1 bg-tiktok-red hover:bg-tiktok-red/80 text-white text-xs h-6"
-                                >
-                                  <Play className="w-3 h-3 mr-1" />
-                                  Play
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => setLocation(`/analysis/${story.id}`)}
-                                  className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-700 text-xs h-6"
-                                >
-                                  <Eye className="w-3 h-3 mr-1" />
-                                  View
-                                </Button>
+                                {story.authorId === user?.id ? (
+                                  // User's own story - show analysis and play options
+                                  <>
+                                    <Button
+                                      size="sm"
+                                      onClick={() => setLocation(`/analysis/${story.id}`)}
+                                      className="flex-1 bg-purple-600 hover:bg-purple-700 text-white text-xs h-6"
+                                    >
+                                      <Eye className="w-3 h-3 mr-1" />
+                                      Edit
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => setLocation(`/story/${story.id}`)}
+                                      className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-700 text-xs h-6"
+                                    >
+                                      <Play className="w-3 h-3 mr-1" />
+                                      Play
+                                    </Button>
+                                  </>
+                                ) : (
+                                  // Public story from another user - only show play option
+                                  <Button
+                                    size="sm"
+                                    onClick={() => setLocation(`/story/${story.id}`)}
+                                    className="w-full bg-tiktok-red hover:bg-tiktok-red/80 text-white text-xs h-6"
+                                  >
+                                    <Play className="w-3 h-3 mr-1" />
+                                    Play Story
+                                  </Button>
+                                )}
                               </div>
                             </div>
                           </CardContent>
