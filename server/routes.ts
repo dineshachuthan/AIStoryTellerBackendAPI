@@ -1080,7 +1080,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // User-specific stories routes (private by default)
-  app.get("/api/stories/:userId", requireAuth, async (req, res) => {
+  app.get("/api/users/:userId/stories", requireAuth, async (req, res) => {
     try {
       const userId = req.params.userId;
       const authenticatedUserId = (req.user as any)?.id;
@@ -1448,13 +1448,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get individual story by ID (no auth required for viewing)
-  app.get("/api/stories/:id", async (req, res) => {
+  app.get("/api/stories/:id", requireAuth, async (req, res) => {
     try {
       const storyId = parseInt(req.params.id);
+      const authenticatedUserId = (req.user as any)?.id;
       const story = await storage.getStory(storyId);
       
       if (!story) {
         return res.status(404).json({ message: "Story not found" });
+      }
+      
+      // Users can access their own stories or published stories
+      if (story.authorId !== authenticatedUserId && !story.isPublished) {
+        return res.status(403).json({ message: "Access denied" });
       }
       
       res.json(story);

@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Play, Pause, SkipBack, SkipForward, Volume2, Share2, Users, Settings, Mic, Loader2 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { ConfidenceMeter, useConfidenceTracking } from "@/components/confidence-meter";
+import { useAuth } from "@/hooks/useAuth";
 
 interface NarrationSegment {
   text: string;
@@ -41,9 +42,11 @@ export default function StoryPlayer() {
   const timelineRef = useRef<HTMLDivElement>(null);
   const [sessionStartTime, setSessionStartTime] = useState<number>(Date.now());
 
+  // Authentication and user context
+  const { user } = useAuth();
+  
   // Confidence tracking
-  const userId = 'user_123'; // Using test user ID
-  const confidenceTracking = storyId ? useConfidenceTracking(parseInt(storyId), userId) : null;
+  const confidenceTracking = storyId && user ? useConfidenceTracking(parseInt(storyId), user.id) : null;
 
   // Fetch story details
   const { data: story, isLoading: storyLoading } = useQuery({
