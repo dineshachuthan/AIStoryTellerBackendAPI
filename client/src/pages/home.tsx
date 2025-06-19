@@ -75,7 +75,7 @@ export default function Home() {
           <CardContent className="pt-0">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <Button
-                onClick={() => setLocation("/write-story")}
+                onClick={() => setLocation("/upload-story")}
                 variant="outline"
                 className="border-blue-500 text-blue-500 hover:bg-blue-500/20 h-auto p-3 flex flex-col items-center space-y-1"
                 size="sm"

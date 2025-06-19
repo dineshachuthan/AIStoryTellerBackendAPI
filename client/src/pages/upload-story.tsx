@@ -309,13 +309,37 @@ export default function UploadStory() {
                 </Button>
                 
                 {analysis && (
-                  <Button
-                    onClick={() => setLocation('/stories')}
-                    variant="outline"
-                    className="border-white/20 text-white hover:bg-white/10"
-                  >
-                    View Stories
-                  </Button>
+                  <>
+                    <Button
+                      onClick={async () => {
+                        try {
+                          const story = await createStoryFromAnalysis(analysis, storyContent);
+                          toast({
+                            title: "Story Created",
+                            description: "Your story has been saved successfully!",
+                          });
+                          setLocation(`/story/${story.id}/play`);
+                        } catch (error) {
+                          console.error("Story creation failed:", error);
+                          toast({
+                            title: "Creation Failed",
+                            description: "Could not create story. Please try again.",
+                            variant: "destructive",
+                          });
+                        }
+                      }}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      Create Story
+                    </Button>
+                    <Button
+                      onClick={() => setLocation('/stories')}
+                      variant="outline"
+                      className="border-white/20 text-white hover:bg-white/10"
+                    >
+                      View Stories
+                    </Button>
+                  </>
                 )}
               </div>
             </CardContent>
