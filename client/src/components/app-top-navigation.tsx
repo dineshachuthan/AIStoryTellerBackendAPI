@@ -2,7 +2,7 @@ import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { AudioLines } from "lucide-react";
+import { AudioLines, LogOut } from "lucide-react";
 
 export function AppTopNavigation() {
   const [, setLocation] = useLocation();
@@ -38,6 +38,16 @@ export function AppTopNavigation() {
           >
             <AudioLines className="w-4 h-4 mr-2" />
             Voice Samples
+          </Button>
+
+          <Button
+            onClick={() => window.location.href = '/api/auth/logout'}
+            variant="outline"
+            size="sm"
+            className="border-red-500 text-red-500 hover:bg-red-500/20"
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Logout
           </Button>
           
           <Button
