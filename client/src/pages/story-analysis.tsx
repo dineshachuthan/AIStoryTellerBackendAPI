@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Users, Heart, BookOpen, Tag, Sparkles, Upload, Loader2, Play, Volume2 } from "lucide-react";
+import { ArrowLeft, Users, Heart, BookOpen, Tag, Sparkles, Upload, Loader2, Play, Volume2, Mic, MicOff, Square } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
 import { AppTopNavigation } from "@/components/app-top-navigation";
@@ -70,6 +70,11 @@ export default function StoryAnalysis() {
   const [emotionsWithSounds, setEmotionsWithSounds] = useState<EmotionWithSound[]>([]);
   const [generatingImages, setGeneratingImages] = useState<number[]>([]);
   const [playingEmotions, setPlayingEmotions] = useState<{[key: string]: boolean}>({});
+  const [recordingEmotions, setRecordingEmotions] = useState<{[key: string]: boolean}>({});
+  const [emotionRecorders, setEmotionRecorders] = useState<{[key: string]: MediaRecorder}>({});
+  const [recordingStartTimes, setRecordingStartTimes] = useState<{[key: string]: number}>({});
+  const [isHolding, setIsHolding] = useState<{[key: string]: boolean}>({});
+  const [holdTimers, setHoldTimers] = useState<{[key: string]: NodeJS.Timeout}>({});
 
   useEffect(() => {
     const stored = localStorage.getItem('storyAnalysis');
@@ -197,8 +202,28 @@ export default function StoryAnalysis() {
     try {
       setPlayingEmotions(prev => ({ ...prev, [emotionKey]: true }));
       
-      // Try to play emotion audio sample
-      const audio = new Audio(`/api/emotions/sample?emotion=${emotion.emotion}&intensity=${emotion.intensity}`);
+      // First try to play user's custom recording if it exists
+      const userId = user?.id || 'user_123';
+      const expectedFileName = `${userId}-${emotion.emotion}-${emotion.intensity}.wav`;
+      const userRecordingUrl = `/api/emotions/user-voice-sample/${expectedFileName}`;
+      
+      let audioUrl = userRecordingUrl;
+      let hasUserRecording = false;
+      
+      // Check if user recording exists
+      try {
+        const checkResponse = await fetch(userRecordingUrl, { method: 'HEAD' });
+        hasUserRecording = checkResponse.ok;
+      } catch (error) {
+        hasUserRecording = false;
+      }
+      
+      // If no user recording, use AI-generated sample
+      if (!hasUserRecording) {
+        audioUrl = `/api/emotions/sample?emotion=${emotion.emotion}&intensity=${emotion.intensity}`;
+      }
+      
+      const audio = new Audio(audioUrl);
       audio.onended = () => {
         setPlayingEmotions(prev => ({ ...prev, [emotionKey]: false }));
       };
@@ -210,6 +235,145 @@ export default function StoryAnalysis() {
     } catch (error) {
       console.error("Audio playback error:", error);
       setPlayingEmotions(prev => ({ ...prev, [emotionKey]: false }));
+    }
+  };
+
+  const startHoldTimer = (emotionKey: string, emotion: EmotionWithSound) => {
+    const timer = setTimeout(() => {
+      startEmotionRecording(emotionKey, emotion);
+    }, 200); // 200ms hold delay
+    
+    setHoldTimers(prev => ({ ...prev, [emotionKey]: timer }));
+    setIsHolding(prev => ({ ...prev, [emotionKey]: true }));
+  };
+
+  const cancelHoldTimer = (emotionKey: string) => {
+    const timer = holdTimers[emotionKey];
+    if (timer) {
+      clearTimeout(timer);
+      setHoldTimers(prev => {
+        const newTimers = { ...prev };
+        delete newTimers[emotionKey];
+        return newTimers;
+      });
+    }
+    setIsHolding(prev => ({ ...prev, [emotionKey]: false }));
+  };
+
+  const startEmotionRecording = async (emotionKey: string, emotion: EmotionWithSound) => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      const chunks: BlobPart[] = [];
+      const startTime = Date.now();
+
+      setRecordingStartTimes(prev => ({ ...prev, [emotionKey]: startTime }));
+
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          chunks.push(event.data);
+        }
+      };
+
+      recorder.onstop = async () => {
+        const recordingDuration = Date.now() - startTime;
+        
+        if (recordingDuration >= 500) {
+          const audioBlob = new Blob(chunks, { type: 'audio/webm' });
+          await saveEmotionVoiceRecording(emotionKey, emotion, audioBlob);
+        } else {
+          toast({
+            title: "Recording Too Short",
+            description: "Please hold the button for at least half a second to record.",
+            variant: "destructive",
+          });
+        }
+        
+        stream.getTracks().forEach(track => track.stop());
+        setEmotionRecorders(prev => {
+          const newRecorders = { ...prev };
+          delete newRecorders[emotionKey];
+          return newRecorders;
+        });
+        setRecordingStartTimes(prev => {
+          const newTimes = { ...prev };
+          delete newTimes[emotionKey];
+          return newTimes;
+        });
+      };
+
+      recorder.start();
+      
+      setEmotionRecorders(prev => ({ ...prev, [emotionKey]: recorder }));
+      setRecordingEmotions(prev => ({ ...prev, [emotionKey]: true }));
+
+      toast({
+        title: "Recording Started",
+        description: `Recording voice for ${emotion.emotion} emotion. Release to stop.`,
+      });
+
+    } catch (error) {
+      console.error("Failed to start recording:", error);
+      toast({
+        title: "Recording Failed",
+        description: "Could not access microphone. Please check permissions.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const stopEmotionRecording = (emotionKey: string) => {
+    // If we're still in holding phase, cancel the timer
+    if (isHolding[emotionKey] && !recordingEmotions[emotionKey]) {
+      cancelHoldTimer(emotionKey);
+      return;
+    }
+
+    // If we're actually recording, stop the recording
+    const recorder = emotionRecorders[emotionKey];
+    const startTime = recordingStartTimes[emotionKey];
+    
+    if (recorder && recorder.state === 'recording') {
+      if (startTime && (Date.now() - startTime) < 500) {
+        setTimeout(() => {
+          if (recorder.state === 'recording') {
+            recorder.stop();
+            setRecordingEmotions(prev => ({ ...prev, [emotionKey]: false }));
+          }
+        }, 500 - (Date.now() - startTime));
+      } else {
+        recorder.stop();
+        setRecordingEmotions(prev => ({ ...prev, [emotionKey]: false }));
+      }
+    }
+  };
+
+  const saveEmotionVoiceRecording = async (emotionKey: string, emotion: EmotionWithSound, audioBlob: Blob) => {
+    try {
+      const userId = user?.id || 'user_123';
+      const formData = new FormData();
+      formData.append('audio', audioBlob, `${userId}-${emotion.emotion}-${emotion.intensity}.wav`);
+      formData.append('emotion', emotion.emotion);
+      formData.append('intensity', emotion.intensity.toString());
+      formData.append('userId', userId);
+
+      await apiRequest('/api/emotions/upload-voice-sample', {
+        method: 'POST',
+        body: formData,
+      });
+
+      toast({
+        title: "Voice Sample Saved",
+        description: `Your voice recording for ${emotion.emotion} has been saved successfully.`,
+      });
+
+    } catch (error) {
+      console.error("Failed to save voice recording:", error);
+      toast({
+        title: "Save Failed",
+        description: "Could not save voice recording.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -425,6 +589,26 @@ export default function StoryAnalysis() {
                                     <Loader2 className="w-4 h-4 animate-spin" />
                                   ) : (
                                     <Volume2 className="w-4 h-4" />
+                                  )}
+                                </Button>
+                                <Button
+                                  onMouseDown={() => startHoldTimer(emotionKey, emotion)}
+                                  onMouseUp={() => stopEmotionRecording(emotionKey)}
+                                  onMouseLeave={() => stopEmotionRecording(emotionKey)}
+                                  onTouchStart={() => startHoldTimer(emotionKey, emotion)}
+                                  onTouchEnd={() => stopEmotionRecording(emotionKey)}
+                                  disabled={playingEmotions[emotionKey]}
+                                  size="sm"
+                                  variant={recordingEmotions[emotionKey] ? "destructive" : "ghost"}
+                                  className="p-1 h-8 w-8"
+                                  title="Hold to record your voice for this emotion"
+                                >
+                                  {recordingEmotions[emotionKey] ? (
+                                    <Square className="w-4 h-4" />
+                                  ) : isHolding[emotionKey] ? (
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                  ) : (
+                                    <Mic className="w-4 h-4" />
                                   )}
                                 </Button>
                               </div>
