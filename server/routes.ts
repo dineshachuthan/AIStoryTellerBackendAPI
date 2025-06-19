@@ -1014,9 +1014,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Public stories routes - only published stories with filtering
-  app.get("/api/stories", async (req, res) => {
+  app.get("/api/stories", requireAuth, async (req, res) => {
     try {
       const { genre, emotionalTags, moodCategory, ageRating, search } = req.query;
+      const userId = req.user?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
       
       const filters: any = {};
       if (genre) filters.genre = genre as string;
@@ -1029,10 +1034,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           : [emotionalTags as string];
       }
       
-      const stories = await storage.getPublicStories(filters);
+      // Get user's own stories instead of just public stories
+      const stories = await storage.getUserStories(userId, filters);
       res.json(stories);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch public stories" });
+      console.error("Error fetching user stories:", error);
+      res.status(500).json({ message: "Failed to fetch stories" });
     }
   });
 

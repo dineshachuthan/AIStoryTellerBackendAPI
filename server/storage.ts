@@ -35,7 +35,13 @@ export interface IStorage {
     ageRating?: string;
     search?: string;
   }): Promise<Story[]>;
-  getUserStories(userId: string): Promise<Story[]>;
+  getUserStories(userId: string, filters?: {
+    genre?: string;
+    emotionalTags?: string[];
+    moodCategory?: string;
+    ageRating?: string;
+    search?: string;
+  }): Promise<Story[]>;
   getStory(id: number): Promise<Story | undefined>;
   createStory(story: InsertStory): Promise<Story>;
   updateStory(id: number, story: Partial<InsertStory>): Promise<Story | undefined>;
@@ -290,8 +296,53 @@ export class DatabaseStorage implements IStorage {
     return filteredStories;
   }
 
-  async getUserStories(userId: string): Promise<Story[]> {
-    return await db.select().from(stories).where(eq(stories.authorId, userId));
+  async getUserStories(userId: string, filters?: {
+    genre?: string;
+    emotionalTags?: string[];
+    moodCategory?: string;
+    ageRating?: string;
+    search?: string;
+  }): Promise<Story[]> {
+    // Build where conditions array
+    const conditions = [eq(stories.authorId, userId)];
+    
+    if (filters?.genre) {
+      conditions.push(eq(stories.genre, filters.genre));
+    }
+    
+    if (filters?.moodCategory) {
+      conditions.push(eq(stories.moodCategory, filters.moodCategory));
+    }
+    
+    if (filters?.ageRating) {
+      conditions.push(eq(stories.ageRating, filters.ageRating));
+    }
+    
+    // Execute query with combined conditions
+    const allStories = await db.select().from(stories).where(and(...conditions)).orderBy(desc(stories.id));
+    
+    let filteredStories = allStories;
+    
+    // Filter by emotional tags in memory
+    if (filters?.emotionalTags && filters.emotionalTags.length > 0) {
+      filteredStories = filteredStories.filter(story => {
+        const storyTags = story.emotionalTags || [];
+        return filters.emotionalTags!.some(tag => storyTags.includes(tag));
+      });
+    }
+    
+    // Filter by search term in memory
+    if (filters?.search) {
+      const searchTerm = filters.search.toLowerCase();
+      filteredStories = filteredStories.filter(story => 
+        story.title.toLowerCase().includes(searchTerm) ||
+        story.summary?.toLowerCase().includes(searchTerm) ||
+        story.content.toLowerCase().includes(searchTerm) ||
+        (story.tags || []).some(tag => tag.toLowerCase().includes(searchTerm))
+      );
+    }
+    
+    return filteredStories;
   }
 
   async getStory(id: number): Promise<Story | undefined> {
