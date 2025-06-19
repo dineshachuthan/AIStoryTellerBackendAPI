@@ -7,7 +7,7 @@ import { AudioLines, LogOut, User } from "lucide-react";
 
 export function AppTopNavigation() {
   const [, setLocation] = useLocation();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
   const getUserInitials = () => {
     if (!user) return 'U';
@@ -42,7 +42,14 @@ export function AppTopNavigation() {
           </Button>
 
           <Button
-            onClick={() => window.location.href = '/api/auth/logout'}
+            onClick={async () => {
+              try {
+                await logout();
+                setLocation('/');
+              } catch (error) {
+                console.error('Logout failed:', error);
+              }
+            }}
             variant="outline"
             size="sm"
             className="border-red-500 text-red-500 hover:bg-red-500/20"
