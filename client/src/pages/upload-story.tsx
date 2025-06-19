@@ -38,11 +38,36 @@ export default function UploadStory() {
         body: JSON.stringify({ content: storyContent }),
       });
 
+      // Generate intelligent title if none provided
+      const generateTitleFromAnalysis = (analysis: any, content: string): string => {
+        if (analysis.characters?.length > 0) {
+          const mainCharacter = analysis.characters.find((c: any) => c.role === 'protagonist') || analysis.characters[0];
+          const themes = analysis.themes || [];
+          
+          if (themes.length > 0) {
+            return `${mainCharacter.name} and the ${themes[0]}`;
+          }
+          
+          return `The ${analysis.category} of ${mainCharacter.name}`;
+        }
+        
+        if (analysis.summary) {
+          const words = analysis.summary.split(' ').slice(0, 6);
+          return words.join(' ') + (words.length >= 6 ? '...' : '');
+        }
+        
+        const firstSentence = content.split('.')[0] || content.substring(0, 50);
+        const words = firstSentence.trim().split(' ').slice(0, 5);
+        return words.join(' ') + (words.length >= 5 ? '...' : '');
+      };
+
+      const finalTitle = storyTitle.trim() || generateTitleFromAnalysis(analysisResponse, storyContent);
+
       // Store analysis in localStorage for the analysis page
       localStorage.setItem('storyAnalysis', JSON.stringify({
         analysis: analysisResponse,
         content: storyContent,
-        title: storyTitle || 'Untitled Story'
+        title: finalTitle
       }));
       
       // Navigate to analysis page
