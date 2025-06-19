@@ -119,13 +119,6 @@ export function StorySearchPanel({
               {filteredStories.length === 100 && stories.length > 100 && " (limited to 100)"}
             </div>
 
-            <Button
-              onClick={() => setLocation("/upload-story")}
-              className="w-full bg-tiktok-red hover:bg-tiktok-red/80"
-            >
-              Create New Story
-            </Button>
-
             {/* Story Results */}
             <div className="space-y-4">
               {isLoading ? (
