@@ -200,10 +200,13 @@ export default function StoryPlayer() {
       // Create new audio element if needed
       if (!audioRef.current) {
         audioRef.current = new Audio();
+        audioRef.current.preload = 'auto';
+        audioRef.current.crossOrigin = 'anonymous';
       }
       
       audioRef.current.src = segment.voiceUrl;
       audioRef.current.volume = volume;
+      audioRef.current.muted = false;
       
       audioRef.current.onended = () => {
         // Auto-advance to next segment
@@ -237,22 +240,43 @@ export default function StoryPlayer() {
         playPromise
           .then(() => {
             console.log("Audio playback started successfully");
+            console.log("Audio volume:", audioRef.current?.volume);
+            console.log("Audio muted:", audioRef.current?.muted);
+            console.log("Audio duration:", audioRef.current?.duration);
+            console.log("Audio current time:", audioRef.current?.currentTime);
           })
           .catch(error => {
             console.error("Audio playback error:", error);
+            console.error("Error details:", error.name, error.message);
             setIsPlaying(false);
           });
       }
     }
   };
 
-  const togglePlayPause = () => {
+  const togglePlayPause = async () => {
     if (isPlaying) {
       setIsPlaying(false);
       if (audioRef.current) {
         audioRef.current.pause();
       }
     } else {
+      // Initialize audio context on first user interaction to meet browser requirements
+      if (!audioRef.current) {
+        try {
+          audioRef.current = new Audio();
+          audioRef.current.preload = 'auto';
+          audioRef.current.volume = volume;
+          audioRef.current.muted = false;
+          
+          // Test audio capability with a brief silence
+          const testAudio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvGogBSl+0PLvgjMKLoPn8dC');
+          audioRef.current = testAudio;
+        } catch (error) {
+          console.warn("Audio initialization warning:", error);
+        }
+      }
+      
       // Generate character-based narration if not already available
       if (!narration && !grandmaNarration) {
         playCharacterNarration();
@@ -527,9 +551,31 @@ export default function StoryPlayer() {
                   max="1"
                   step="0.1"
                   value={volume}
-                  onChange={(e) => setVolume(parseFloat(e.target.value))}
+                  onChange={(e) => {
+                    const newVolume = parseFloat(e.target.value);
+                    setVolume(newVolume);
+                    if (audioRef.current) {
+                      audioRef.current.volume = newVolume;
+                      console.log("Volume changed to:", newVolume);
+                    }
+                  }}
                   className="w-20 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer"
                 />
+                <span className="text-xs text-gray-text min-w-[3ch]">{Math.round(volume * 100)}%</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    if (audioRef.current) {
+                      const testAudio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvGogBSl+0PLvgjMKLoPn8dC');
+                      testAudio.volume = volume;
+                      testAudio.play().catch(e => console.log('Test audio failed:', e));
+                    }
+                  }}
+                  className="text-xs px-2 py-1 text-gray-text"
+                >
+                  Test
+                </Button>
               </div>
             </CardContent>
           </Card>
