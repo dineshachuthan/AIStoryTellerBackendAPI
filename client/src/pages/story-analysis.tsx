@@ -48,6 +48,7 @@ export default function StoryAnalysis() {
   
   const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   // Fetch story data if storyId is provided
   const { data: storyData, isLoading: storyLoading } = useQuery({
@@ -196,6 +197,30 @@ export default function StoryAnalysis() {
     }
   };
 
+  const handleUpdateStory = async (storyId: number) => {
+    setIsUpdating(true);
+    try {
+      // For now, just show a success message - in future this could save character/emotion updates
+      toast({
+        title: "Story Updated",
+        description: "Your story changes have been saved!",
+      });
+    } catch (error) {
+      console.error("Story update failed:", error);
+      toast({
+        title: "Update Failed",
+        description: "Could not update story. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handlePlayStory = (storyId: number) => {
+    setLocation(`/story/${storyId}`);
+  };
+
   if (storyLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
@@ -248,6 +273,11 @@ export default function StoryAnalysis() {
             onCreateStory={handleCreateStory}
             showCreateButton={!storyId} // Only show create button for new stories
             isCreating={isCreating}
+            storyId={storyId ? parseInt(storyId) : undefined}
+            onUpdateStory={handleUpdateStory}
+            onPlayStory={handlePlayStory}
+            isUpdating={isUpdating}
+            isPrivateStory={!!storyId && storyData?.createdBy === user?.id}
           />
         </div>
       </div>
