@@ -897,6 +897,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Serve generated story audio files
+  app.get("/api/story-audio/:fileName", async (req, res) => {
+    try {
+      const { fileName } = req.params;
+      const filePath = path.join(process.cwd(), 'persistent-cache', 'story-audio', fileName);
+      
+      // Check if file exists
+      try {
+        await fs.access(filePath);
+      } catch {
+        return res.status(404).json({ message: "Audio file not found" });
+      }
+      
+      res.setHeader('Content-Type', 'audio/mpeg');
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      res.sendFile(path.resolve(filePath));
+    } catch (error) {
+      console.error("Story audio serve error:", error);
+      res.status(500).json({ message: "Failed to serve story audio" });
+    }
+  });
+
   // Character-based narration with user voice samples
   app.post("/api/stories/:id/character-narration", async (req, res) => {
     try {
@@ -1514,7 +1538,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Story Narration routes - POST to generate narration with stored voice assignments
+  // Story Narration routes - POST to generate narration with actual audio
   app.post("/api/stories/:id/narration", async (req, res) => {
     try {
       const storyId = parseInt(req.params.id);
@@ -1524,35 +1548,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Story not found" });
       }
 
-      // Get pre-analyzed data with voice assignments
-      const characters = await storage.getStoryCharacters(storyId);
-      const emotions = await storage.getStoryEmotions(storyId);
+      console.log("Generating audio narration for story:", story.title);
+
+      // Get story content and split into manageable chunks
+      const content = story.content;
+      const paragraphs = content.split('\n').filter(p => p.trim().length > 0);
       
-      console.log("Using stored characters with voice assignments:", characters.map(c => ({ name: c.name, voice: c.assignedVoice })));
+      const segments = [];
+      let currentTime = 0;
       
-      // Generate narration using stored analysis data and voice assignments
-      const narration = await storyNarrator.generateNarration(storyId, 'user_123', {
-        pacing: 'normal',
-        includeCharacterVoices: true,
-        useUserVoices: false,
-        characters,
-        emotions,
-        userVoiceSamples: []
-      });
+      // Generate audio for each paragraph using OpenAI TTS
+      for (let i = 0; i < paragraphs.length; i++) {
+        const paragraph = paragraphs[i].trim();
+        if (paragraph.length === 0) continue;
+        
+        console.log(`Generating audio for paragraph ${i + 1}/${paragraphs.length}`);
+        
+        try {
+          // Generate audio using OpenAI TTS
+          const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+          const response = await openai.audio.speech.create({
+            model: "tts-1",
+            voice: "nova", // Use a consistent voice for the narrator
+            input: paragraph,
+            speed: 1.0,
+          });
+
+          // Save audio file
+          const audioBuffer = Buffer.from(await response.arrayBuffer());
+          const audioDir = path.join(process.cwd(), 'persistent-cache', 'story-audio');
+          await fs.mkdir(audioDir, { recursive: true });
+          
+          const audioFileName = `story_${storyId}_segment_${i}_${Date.now()}.mp3`;
+          const audioPath = path.join(audioDir, audioFileName);
+          await fs.writeFile(audioPath, audioBuffer);
+          
+          const audioUrl = `/api/story-audio/${audioFileName}`;
+          
+          // Estimate duration (rough calculation: 150 words per minute)
+          const wordCount = paragraph.split(' ').length;
+          const estimatedDuration = (wordCount / 150) * 60 * 1000; // in milliseconds
+          
+          segments.push({
+            text: paragraph,
+            emotion: "neutral",
+            intensity: 5,
+            voiceUrl: audioUrl,
+            startTime: currentTime,
+            duration: estimatedDuration,
+            characterName: "Narrator"
+          });
+          
+          currentTime += estimatedDuration;
+          
+        } catch (audioError) {
+          console.error(`Failed to generate audio for segment ${i}:`, audioError);
+          // Add segment without audio as fallback
+          const wordCount = paragraph.split(' ').length;
+          const estimatedDuration = (wordCount / 150) * 60 * 1000;
+          
+          segments.push({
+            text: paragraph,
+            emotion: "neutral",
+            intensity: 5,
+            startTime: currentTime,
+            duration: estimatedDuration,
+            characterName: "Narrator"
+          });
+          
+          currentTime += estimatedDuration;
+        }
+      }
+
+      const narration = {
+        storyId,
+        totalDuration: currentTime,
+        segments,
+        pacing: 'normal'
+      };
 
       // Save the generated narration as playback
-      const narrationData = {
-        segments: narration.segments,
-        totalDuration: narration.totalDuration,
-        pacing: narration.pacing
-      };
-      
       await storage.createStoryPlayback({
         storyId: storyId,
-        createdByUserId: 'user_123',
-        narrationData: narrationData
+        createdByUserId: 'system',
+        narrationData: narration
       });
 
+      console.log(`Generated narration with ${segments.length} segments, total duration: ${Math.round(currentTime / 1000)}s`);
       res.json(narration);
     } catch (error) {
       console.error("Error generating story narration:", error);
