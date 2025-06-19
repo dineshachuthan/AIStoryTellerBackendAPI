@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { useLocation } from "wouter";
-import { Play, Users, Clock, Book, Edit, Trash2, Share, Globe, Lock, AlertTriangle } from "lucide-react";
+import { Play, Users, Clock, Book, Edit, Trash2, Share, Globe, Lock, AlertTriangle, Search } from "lucide-react";
 import { BottomNavigation } from "@/components/bottom-navigation";
 import { AppTopNavigation } from "@/components/app-top-navigation";
 import { useAuth } from "@/hooks/useAuth";
@@ -28,6 +30,7 @@ export default function StoryLibrary() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [searchQuery, setSearchQuery] = useState("");
   
   const { data: stories = [], isLoading } = useQuery<Story[]>({
     queryKey: ["/api/stories", user?.id],
@@ -94,25 +97,43 @@ export default function StoryLibrary() {
         </div>
       </div>
 
-      {/* Stories Grid */}
-      <div className="p-4 pb-20">
-        {stories.length === 0 ? (
-          <div className="text-center py-12">
-            <Book className="w-16 h-16 mx-auto text-gray-600 mb-4" />
-            <h2 className="text-xl font-semibold text-white mb-2">No Stories Yet</h2>
-            <p className="text-gray-400 mb-6">
-              Create your first interactive story and bring it to life with voices
-            </p>
-            <Button
-              onClick={() => setLocation("/upload-story")}
-              className="bg-tiktok-red hover:bg-tiktok-red/80"
-            >
-              Create Your First Story
-            </Button>
+      {/* Main Content */}
+      <div className="flex h-[calc(100vh-8rem)]">
+        {/* Left Sidebar - Search */}
+        <div className="w-80 border-r border-gray-800 p-4">
+          <div className="space-y-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                type="text"
+                placeholder="Search stories..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 bg-gray-800 border-gray-700 text-white placeholder-gray-400"
+              />
+            </div>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {stories.map((story: Story) => (
+        </div>
+
+        {/* Right Content Area */}
+        <div className="flex-1 p-4 pb-20 overflow-y-auto">
+            {stories.length === 0 ? (
+            <div className="text-center py-12">
+              <Book className="w-16 h-16 mx-auto text-gray-600 mb-4" />
+              <h2 className="text-xl font-semibold text-white mb-2">No Stories Yet</h2>
+              <p className="text-gray-400 mb-6">
+                Create your first interactive story and bring it to life with voices
+              </p>
+              <Button
+                onClick={() => setLocation("/upload-story")}
+                className="bg-tiktok-red hover:bg-tiktok-red/80"
+              >
+                Create Your First Story
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {stories.map((story: Story) => (
               <Card key={story.id} className="bg-dark-card border-gray-800 hover:border-gray-700 transition-colors">
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
@@ -256,7 +277,8 @@ export default function StoryLibrary() {
               </Card>
             ))}
           </div>
-        )}
+          )}
+        </div>
       </div>
 
       <BottomNavigation />
