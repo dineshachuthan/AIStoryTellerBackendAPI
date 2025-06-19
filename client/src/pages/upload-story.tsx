@@ -142,9 +142,9 @@ export default function UploadStory() {
   const [holdTimers, setHoldTimers] = useState<Record<string, NodeJS.Timeout>>({});
 
   const generateTitleFromContent = (content: string, analysis: StoryAnalysis | null): string => {
-    if (analysis?.characters?.length > 0) {
+    if (analysis?.characters && analysis.characters.length > 0) {
       const mainCharacter = analysis.characters[0].name;
-      return `${mainCharacter} and the ${analysis.category.toLowerCase()}`;
+      return `${mainCharacter} and the ${analysis.category || 'story'}`;
     }
     
     const firstLine = content.split('\n')[0];
@@ -159,7 +159,7 @@ export default function UploadStory() {
       throw new Error("User authentication required");
     }
 
-    trackAction('story_creation_started');
+    // trackAction('story_creation_started');
 
     try {
       const finalTitle = storyTitle.trim() || generateTitleFromContent(content, analysisData) || "Untitled Story";
@@ -221,7 +221,7 @@ export default function UploadStory() {
       return story;
 
     } catch (error) {
-      trackMistake('story_creation_failed');
+      // trackMistake('story_creation_failed');
       throw error;
     }
   };
@@ -578,7 +578,7 @@ export default function UploadStory() {
     }
 
     setIsAnalyzing(true);
-    trackAction('story_analysis_started');
+    // trackAction('story_analysis_started');
 
     try {
       const analysisResponse = await apiRequest('/api/stories/analyze', {
@@ -588,14 +588,14 @@ export default function UploadStory() {
       });
 
       setAnalysis(analysisResponse);
-      trackAction('story_analysis_completed');
+      // trackAction('story_analysis_completed');
       
       toast({
         title: "Analysis Complete",
         description: `Found ${analysisResponse.characters?.length || 0} characters and ${analysisResponse.emotions?.length || 0} emotions.`,
       });
     } catch (error) {
-      trackMistake('story_analysis_failed');
+      // trackMistake('story_analysis_failed');
       console.error("Analysis error:", error);
       toast({
         title: "Analysis Failed",
@@ -606,4 +606,152 @@ export default function UploadStory() {
       setIsAnalyzing(false);
     }
   };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+      <AppTopNavigation />
+      
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          <Card className="bg-white/10 backdrop-blur-lg border-white/20 text-white">
+            <CardHeader>
+              <CardTitle className="text-2xl font-bold">Create Your Story</CardTitle>
+              <CardDescription className="text-gray-300">
+                Upload or write your story and let AI analyze it for you
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Story Input */}
+              <div>
+                <label className="block text-sm font-medium mb-2">Story Title</label>
+                <Input
+                  value={storyTitle}
+                  onChange={(e) => setStoryTitle(e.target.value)}
+                  placeholder="Enter a title for your story..."
+                  className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-2">Story Content</label>
+                <Textarea
+                  value={storyContent}
+                  onChange={(e) => setStoryContent(e.target.value)}
+                  placeholder="Write or paste your story here..."
+                  rows={12}
+                  className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 resize-none"
+                />
+              </div>
+              
+              {/* Analysis Section */}
+              {analysis && (
+                <div className="mt-8 space-y-6">
+                  <h3 className="text-xl font-semibold">Story Analysis</h3>
+                  
+                  {/* Characters */}
+                  {analysis.characters.length > 0 && (
+                    <div>
+                      <h4 className="text-lg font-medium mb-3">Characters ({analysis.characters.length})</h4>
+                      <div className="grid gap-3">
+                        {analysis.characters.map((character, index) => (
+                          <Card key={index} className="bg-white/5 border-white/10">
+                            <CardContent className="p-4">
+                              <div className="flex items-start gap-3">
+                                <Avatar className="w-12 h-12">
+                                  <AvatarFallback className="bg-purple-600 text-white">
+                                    {character.name.charAt(0)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className="flex-1">
+                                  <h5 className="font-medium text-white">{character.name}</h5>
+                                  <p className="text-sm text-gray-300 mb-2">{character.description}</p>
+                                  <div className="flex flex-wrap gap-1">
+                                    <Badge variant="secondary" className="text-xs">
+                                      {character.role}
+                                    </Badge>
+                                    {character.traits.slice(0, 3).map((trait, i) => (
+                                      <Badge key={i} variant="outline" className="text-xs border-white/20 text-gray-300">
+                                        {trait}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Emotions */}
+                  {analysis.emotions.length > 0 && (
+                    <div>
+                      <h4 className="text-lg font-medium mb-3">Emotions ({analysis.emotions.length})</h4>
+                      <div className="grid gap-2">
+                        {analysis.emotions.map((emotion, index) => (
+                          <Card key={index} className="bg-white/5 border-white/10">
+                            <CardContent className="p-3">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center">
+                                    <Heart className="w-4 h-4 text-white" />
+                                  </div>
+                                  <div>
+                                    <span className="font-medium text-white capitalize">{emotion.emotion}</span>
+                                    <p className="text-sm text-gray-300">{emotion.context}</p>
+                                  </div>
+                                </div>
+                                <Badge variant="outline" className="border-white/20 text-gray-300">
+                                  Intensity: {emotion.intensity}/10
+                                </Badge>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {/* Action Buttons */}
+              <div className="flex gap-4 pt-6">
+                <Button
+                  onClick={analyzeStory}
+                  disabled={isAnalyzing || !storyContent.trim()}
+                  className="flex-1 bg-purple-600 hover:bg-purple-700"
+                >
+                  {isAnalyzing ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Analyzing...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Analyze Story
+                    </>
+                  )}
+                </Button>
+                
+                {analysis && (
+                  <Button
+                    onClick={() => setLocation('/stories')}
+                    variant="outline"
+                    className="border-white/20 text-white hover:bg-white/10"
+                  >
+                    View Stories
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+      
+      <BottomNavigation />
+    </div>
+  );
+}
 
