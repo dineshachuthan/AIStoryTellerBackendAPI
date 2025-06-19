@@ -1,9 +1,32 @@
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { CharacterFeed } from "@/components/character-feed";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { useLocation } from "wouter";
-import { Upload, Mic, Users, Play, User, Heart, FileText, File, AudioLines, PenTool } from "lucide-react";
+import { 
+  Upload, 
+  Mic, 
+  Users, 
+  Play, 
+  User, 
+  Heart, 
+  FileText, 
+  File, 
+  AudioLines, 
+  PenTool,
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  Book,
+  Clock,
+  Globe,
+  Lock,
+  Eye
+} from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { BottomNavigation } from "@/components/bottom-navigation";
