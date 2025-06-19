@@ -92,19 +92,19 @@ export default function StoryPlayer() {
   const currentNarration = grandmaNarration || narration;
   const currentSegment = currentNarration?.segments?.[currentSegmentIndex];
   
-  // Calculate total duration from segments if backend didn't provide it
+  // Calculate total duration - use grandmaNarration if available, fallback to computed
   const computedTotalDuration = currentNarration?.segments?.reduce((total, segment) => 
-    total + (segment.duration || 0), 0) || 0;
-  const effectiveTotalDuration = currentNarration?.totalDuration || computedTotalDuration;
+    total + (segment.duration || 2000), 0) || 0; // Default 2 seconds per segment
+  const effectiveTotalDuration = grandmaNarration?.totalDuration || currentNarration?.totalDuration || computedTotalDuration;
   const progress = currentNarration && effectiveTotalDuration > 0 ? (currentTime / effectiveTotalDuration) * 100 : 0;
 
   // Auto-start story playback when component loads
   useEffect(() => {
-    if (story && !narration && !grandmaNarration && !generateNarrationMutation.isPending && !isPlaying) {
-      // Automatically generate and start character-based narration
+    if (story && !grandmaNarration && !generateNarrationMutation.isPending && !isPlaying) {
+      // Always use character-based narration for proper audio playback
       playCharacterNarration();
     }
-  }, [story, narration, grandmaNarration]);
+  }, [story, grandmaNarration]);
 
   // Auto-play when grandma narration is loaded
   useEffect(() => {
