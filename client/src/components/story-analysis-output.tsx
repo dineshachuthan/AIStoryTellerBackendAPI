@@ -87,13 +87,13 @@ export function StoryAnalysisOutput({
 
   useEffect(() => {
     // Initialize characters with default images
-    const charactersWithDefaults = analysis.characters.map((char: any) => ({
+    const charactersWithDefaults = (analysis.characters || []).map((char: any) => ({
       ...char,
       imageUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(char.name)}&backgroundColor=b6e3f4,c0aede,d1d4f9`,
     }));
 
     // Initialize emotions with default sounds
-    const emotionsWithDefaults = analysis.emotions.map((emotion: any) => ({
+    const emotionsWithDefaults = (analysis.emotions || []).map((emotion: any) => ({
       ...emotion,
       soundUrl: `/api/emotions/default-sound?emotion=${emotion.emotion}&intensity=${emotion.intensity}`
     }));
@@ -104,8 +104,8 @@ export function StoryAnalysisOutput({
 
   // Create character-emotion associations for display
   const getCharacterEmotionGroups = () => {
-    return charactersWithImages.map(character => {
-      const characterEmotions = emotionsWithSounds.filter(emotion => {
+    return (charactersWithImages || []).map(character => {
+      const characterEmotions = (emotionsWithSounds || []).filter(emotion => {
         const context = emotion.context.toLowerCase();
         const quote = (emotion.quote || '').toLowerCase();
         const characterName = character.name.toLowerCase();
@@ -312,6 +312,17 @@ export function StoryAnalysisOutput({
     }
   };
 
+  // Early return if no data to prevent errors
+  if (!analysis || !analysis.characters || !analysis.emotions) {
+    return (
+      <div className={`space-y-8 ${className}`}>
+        <div className="text-white text-center">
+          <p>Loading story analysis...</p>
+        </div>
+      </div>
+    );
+  }
+
   const characterEmotionGroups = getCharacterEmotionGroups();
 
   return (
@@ -335,7 +346,7 @@ export function StoryAnalysisOutput({
                   </Badge>
                   <p className="text-white/80 text-sm">{group.character.description}</p>
                   <div className="flex flex-wrap gap-1 mt-2">
-                    {group.character.traits.map((trait, index) => (
+                    {(group.character.traits || []).map((trait, index) => (
                       <Badge key={index} variant="secondary" className="text-xs bg-white/10 text-white/80">
                         {trait}
                       </Badge>
