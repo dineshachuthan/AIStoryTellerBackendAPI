@@ -591,28 +591,102 @@ export default function StoryAnalysis() {
                                     <Volume2 className="w-4 h-4" />
                                   )}
                                 </Button>
-                                <Button
-                                  onMouseDown={() => startHoldTimer(emotionKey, emotion)}
-                                  onMouseUp={() => stopEmotionRecording(emotionKey)}
-                                  onMouseLeave={() => stopEmotionRecording(emotionKey)}
-                                  onTouchStart={() => startHoldTimer(emotionKey, emotion)}
-                                  onTouchEnd={() => stopEmotionRecording(emotionKey)}
-                                  disabled={playingEmotions[emotionKey]}
-                                  size="sm"
-                                  variant={recordingEmotions[emotionKey] ? "destructive" : "ghost"}
-                                  className="p-1 h-8 w-8"
-                                  title="Hold to record your voice for this emotion"
-                                >
-                                  {recordingEmotions[emotionKey] ? (
-                                    <Square className="w-4 h-4" />
-                                  ) : isHolding[emotionKey] ? (
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                  ) : (
-                                    <Mic className="w-4 h-4" />
-                                  )}
-                                </Button>
                               </div>
                             </div>
+                            <p className="text-white/80 text-sm mb-2">{emotion.context}</p>
+                            {emotion.quote && (
+                              <blockquote className="text-white/70 text-sm italic border-l-2 border-white/30 pl-3 mb-3">
+                                "{emotion.quote}"
+                              </blockquote>
+                            )}
+                            
+                            {/* Big Hold to Record Button */}
+                            <Button
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                const isHoldingButton = isHolding[emotionKey];
+                                const isRecordingButton = recordingEmotions[emotionKey];
+                                const isPlayingButton = playingEmotions[emotionKey];
+                                
+                                if (!isHoldingButton && !isRecordingButton && !isPlayingButton) {
+                                  startHoldTimer(emotionKey, emotion);
+                                }
+                              }}
+                              onMouseUp={(e) => {
+                                e.preventDefault();
+                                stopEmotionRecording(emotionKey);
+                              }}
+                              onMouseLeave={(e) => {
+                                e.preventDefault();
+                                stopEmotionRecording(emotionKey);
+                              }}
+                              onContextMenu={(e) => e.preventDefault()}
+                              onTouchStart={(e) => {
+                                e.preventDefault();
+                                const isHoldingButton = isHolding[emotionKey];
+                                const isRecordingButton = recordingEmotions[emotionKey];
+                                const isPlayingButton = playingEmotions[emotionKey];
+                                
+                                if (!isHoldingButton && !isRecordingButton && !isPlayingButton) {
+                                  startHoldTimer(emotionKey, emotion);
+                                }
+                              }}
+                              onTouchEnd={(e) => {
+                                e.preventDefault();
+                                stopEmotionRecording(emotionKey);
+                              }}
+                              onTouchCancel={(e) => {
+                                e.preventDefault();
+                                stopEmotionRecording(emotionKey);
+                              }}
+                              onDragStart={(e) => e.preventDefault()}
+                              className={`w-full ${
+                                recordingEmotions[emotionKey] 
+                                  ? 'bg-red-600 hover:bg-red-700 animate-pulse shadow-lg shadow-red-500/50' 
+                                  : isHolding[emotionKey]
+                                  ? 'bg-orange-500 hover:bg-orange-600 animate-pulse shadow-lg shadow-orange-500/50'
+                                  : 'bg-purple-600 hover:bg-purple-700'
+                              } text-white font-medium py-3 select-none transition-all duration-200 cursor-pointer`}
+                              disabled={playingEmotions[emotionKey]}
+                              style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
+                            >
+                              {recordingEmotions[emotionKey] ? (
+                                <>
+                                  <Square className="w-5 h-5 mr-2" />
+                                  Recording... (Release to Stop)
+                                </>
+                              ) : isHolding[emotionKey] ? (
+                                <>
+                                  <Mic className="w-5 h-5 mr-2 animate-bounce" />
+                                  Hold for Recording...
+                                </>
+                              ) : (
+                                <>
+                                  <Mic className="w-5 h-5 mr-2" />
+                                  Hold to Record Voice
+                                </>
+                              )}
+                            </Button>
+                            
+                            {recordingEmotions[emotionKey] && (
+                              <div className="mt-2 text-xs text-red-400 flex items-center justify-center">
+                                <div className="w-2 h-2 bg-red-500 rounded-full mr-2 animate-pulse"></div>
+                                Recording... Release button to save
+                              </div>
+                            )}
+                            
+                            {isHolding[emotionKey] && !recordingEmotions[emotionKey] && (
+                              <div className="mt-2 text-xs text-orange-400 flex items-center justify-center">
+                                <div className="w-2 h-2 bg-orange-500 rounded-full mr-2 animate-pulse"></div>
+                                Keep holding... Recording will start in 1 second
+                              </div>
+                            )}
+                            
+                            {!recordingEmotions[emotionKey] && !isHolding[emotionKey] && (
+                              <div className="mt-2 text-xs text-gray-400 text-center">
+                                Hold for 1 second to start recording - will auto-play when done
+                              </div>
+                            )}
                             <p className="text-white/80 text-sm mb-2">{emotion.context}</p>
                             {emotion.quote && (
                               <blockquote className="text-white/70 text-sm italic border-l-2 border-white/30 pl-3">
