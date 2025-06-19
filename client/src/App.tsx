@@ -50,11 +50,11 @@ function Router() {
             <Route path="/voice-setup" component={VoiceSetup} />
             <Route path="/story/:storyId/play" component={StoryPlayer} />
             <Route path="/story/:storyId/collaborate" component={StoryCollaboration} />
+            <Route component={NotFound} />
           </>
         ) : (
           <Route path="*" component={Login} />
         )}
-        <Route component={NotFound} />
       </Switch>
     </>
   );
