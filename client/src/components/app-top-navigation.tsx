@@ -41,6 +41,16 @@ export function AppTopNavigation() {
             Voice Samples
           </Button>
 
+          <Button
+            onClick={() => window.location.href = '/api/auth/logout'}
+            variant="outline"
+            size="sm"
+            className="border-red-500 text-red-500 hover:bg-red-500/20"
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Logout
+          </Button>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
