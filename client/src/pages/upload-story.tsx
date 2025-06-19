@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
 import { ConfidenceMeter, useConfidenceTracking } from "@/components/confidence-meter";
 import { BottomNavigation } from "@/components/bottom-navigation";
@@ -80,6 +81,7 @@ interface EmotionWithSound {
 export default function UploadStory() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { user } = useAuth();
   
   // Step management
   const [currentStep, setCurrentStep] = useState(1);
@@ -966,7 +968,7 @@ export default function UploadStory() {
         category: analysis.category || 'General',
         summary: analysis.summary || null,
         isAdultContent: analysis.isAdultContent || false,
-        authorId: 'test_user_123', // TODO: Replace with actual user ID from authentication
+        authorId: user?.id, // Use authenticated user ID
         uploadType: 'manual',
       };
 

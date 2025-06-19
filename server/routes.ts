@@ -1256,7 +1256,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         extractedEmotions: [],
         voiceSampleUrl: null,
         coverImageUrl: null,
-        authorId: authorId || 'test_user_123',
+        authorId: (req.user as any)?.id || authorId,
         uploadType: 'voice',
         originalAudioUrl,
         processingStatus: 'completed',
