@@ -110,8 +110,19 @@ export default function StoryPlayer() {
   useEffect(() => {
     if (grandmaNarration && grandmaNarration.segments && grandmaNarration.segments.length > 0 && !isPlaying) {
       setCurrentSegmentIndex(0);
-      playSegmentAudio(grandmaNarration.segments[0], 0);
       setIsPlaying(true);
+      
+      // Convert simple segments to narration segments for playback
+      const firstSegment = {
+        text: grandmaNarration.segments[0].text,
+        voiceUrl: grandmaNarration.segments[0].audioUrl,
+        emotion: grandmaNarration.segments[0].emotion,
+        intensity: grandmaNarration.segments[0].intensity,
+        startTime: 0,
+        duration: 2000 // 2 seconds per segment
+      };
+      
+      playSegmentAudio(firstSegment, 0);
     }
   }, [grandmaNarration]);
 
@@ -215,13 +226,22 @@ export default function StoryPlayer() {
           const nextIndex = segmentIndex + 1;
           console.log("Auto-advancing from", segmentIndex, "to", nextIndex);
           setCurrentSegmentIndex(nextIndex);
-          playSegmentAudio(currentNarration.segments[nextIndex], nextIndex);
+          
+          // Convert simple segment to narration segment for playback
+          const nextSegment = grandmaNarration ? {
+            text: grandmaNarration.segments[nextIndex].text,
+            voiceUrl: grandmaNarration.segments[nextIndex].audioUrl,
+            emotion: grandmaNarration.segments[nextIndex].emotion,
+            intensity: grandmaNarration.segments[nextIndex].intensity,
+            startTime: nextIndex * 2000,
+            duration: 2000
+          } : currentNarration.segments[nextIndex];
+          
+          playSegmentAudio(nextSegment, nextIndex);
         } else {
           // End of story
           setIsPlaying(false);
           console.log("Story playback completed - reached end");
-          
-          // Story completed - no intrusive notifications
           
           // Track completion for confidence meter
           if (confidenceTracking) {

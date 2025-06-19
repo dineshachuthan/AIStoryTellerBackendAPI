@@ -925,35 +925,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/stories/:id/character-narration", async (req, res) => {
     try {
       const storyId = parseInt(req.params.id);
-      const { useUserVoices = false, userId = 'user_123' } = req.body;
+      const { userId = 'user_123' } = req.body;
 
       if (!storyId) {
         return res.status(400).json({ message: "Story ID is required" });
       }
 
-      // Get story with characters and emotions
-      const story = await storage.getStory(storyId);
-      if (!story) {
-        return res.status(404).json({ message: "Story not found" });
-      }
-
-      const characters = await storage.getStoryCharacters(storyId);
-      const emotions = await storage.getStoryEmotions(storyId);
-      
-      // Get user voice samples if using user voices
-      let userVoiceSamples = [];
-      if (useUserVoices) {
-        userVoiceSamples = await storage.getUserVoiceSamples(userId);
-      }
-
-      // Generate character-based narration segments
-      const narrator = await import('./story-narrator');
-      const narration = await narrator.storyNarrator.generateNarration(storyId, userId, {
-        useUserVoices,
-        characters,
-        emotions,
-        userVoiceSamples
-      });
+      // Use simple audio player for reliable playback
+      const simplePlayer = await import('./simple-audio-player');
+      const narration = await simplePlayer.simpleAudioPlayer.generateSimpleNarration(storyId, userId);
 
       console.log(`Generated character narration with ${narration.segments.length} segments`);
       res.json(narration);
