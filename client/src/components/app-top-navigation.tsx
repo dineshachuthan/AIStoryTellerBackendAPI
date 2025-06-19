@@ -20,7 +20,7 @@ export function AppTopNavigation() {
   };
 
   return (
-    <div className="bg-dark-bg/80 backdrop-blur-lg border-b border-gray-800 p-4">
+    <div className="fixed top-0 left-0 right-0 bg-dark-bg/80 backdrop-blur-lg border-b border-gray-800 p-4 z-50">
       <div className="flex items-center justify-between">
         <Button
           variant="ghost"

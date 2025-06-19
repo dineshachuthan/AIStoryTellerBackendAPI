@@ -166,7 +166,7 @@ export default function UploadStory() {
     <div className="min-h-screen bg-dark-bg text-dark-text">
       <AppTopNavigation />
       
-      <div className="p-4 pb-20">
+      <div className="pt-20 p-4 pb-20">
         <Card className="bg-dark-card border-gray-800 max-w-4xl mx-auto">
           <CardHeader>
             <div className="flex items-center space-x-3">
