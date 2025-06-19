@@ -397,8 +397,8 @@ export default function StoryPlayer() {
         {/* Main Content */}
         <div className="flex-1 overflow-y-auto p-4 space-y-6">
           {/* Confidence Meter */}
-          {storyId && (
-            <ConfidenceMeter storyId={parseInt(storyId)} userId={userId} />
+          {storyId && user?.id && (
+            <ConfidenceMeter storyId={parseInt(storyId)} userId={user.id} />
           )}
 
           {/* Story Info */}

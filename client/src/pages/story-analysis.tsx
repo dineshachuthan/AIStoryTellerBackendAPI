@@ -203,8 +203,8 @@ export default function StoryAnalysis() {
       setPlayingEmotions(prev => ({ ...prev, [emotionKey]: true }));
       
       // First try to play user's custom recording if it exists
-      const userId = user?.id || 'user_123';
-      const expectedFileName = `${userId}-${emotion.emotion}-${emotion.intensity}.wav`;
+      if (!user?.id) return;
+      const expectedFileName = `${user.id}-${emotion.emotion}-${emotion.intensity}.wav`;
       const userRecordingUrl = `/api/emotions/user-voice-sample/${expectedFileName}`;
       
       let audioUrl = userRecordingUrl;
@@ -350,12 +350,15 @@ export default function StoryAnalysis() {
 
   const saveEmotionVoiceRecording = async (emotionKey: string, emotion: EmotionWithSound, audioBlob: Blob) => {
     try {
-      const userId = user?.id || 'user_123';
+      if (!user?.id) {
+        throw new Error("User authentication required");
+      }
+      
       const formData = new FormData();
-      formData.append('audio', audioBlob, `${userId}-${emotion.emotion}-${emotion.intensity}.wav`);
+      formData.append('audio', audioBlob, `${user.id}-${emotion.emotion}-${emotion.intensity}.wav`);
       formData.append('emotion', emotion.emotion);
       formData.append('intensity', emotion.intensity.toString());
-      formData.append('userId', userId);
+      formData.append('userId', user.id);
 
       await apiRequest('/api/emotions/upload-voice-sample', {
         method: 'POST',
