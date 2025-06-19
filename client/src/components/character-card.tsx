@@ -97,7 +97,7 @@ export function CharacterCard({ character, isActive, onChatClick }: CharacterCar
       />
 
       {/* Character Info */}
-      <div className="absolute bottom-20 left-4 right-20 z-10">
+      <div className="absolute bottom-32 left-4 right-20 z-10">
         <div className="flex items-center mb-3">
           <img 
             src={character.avatar || "https://images.unsplash.com/photo-1569913486515-b74bf7751574?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&h=100"}
@@ -131,7 +131,7 @@ export function CharacterCard({ character, isActive, onChatClick }: CharacterCar
       </div>
 
       {/* Action Buttons */}
-      <div className="absolute bottom-20 right-4 flex flex-col space-y-4 z-10">
+      <div className="absolute bottom-32 right-4 flex flex-col space-y-4 z-10">
         <Button
           size="icon"
           variant="ghost"
