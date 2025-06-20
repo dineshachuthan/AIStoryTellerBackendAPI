@@ -112,7 +112,7 @@ export function StoryAnalysisPanel({
             </div>
             <div className="flex items-center gap-2">
               <Users className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm">{analysis.characters.length} characters</span>
+              <span className="text-sm">{(analysis.characters || []).length} characters</span>
             </div>
           </div>
           
@@ -121,7 +121,7 @@ export function StoryAnalysisPanel({
           <div className="space-y-2">
             <h4 className="font-medium">Themes</h4>
             <div className="flex flex-wrap gap-2">
-              {analysis.themes.map((theme) => (
+              {(analysis.themes || []).map((theme) => (
                 <Badge key={theme} variant="outline">
                   {theme}
                 </Badge>
@@ -218,7 +218,7 @@ export function StoryAnalysisPanel({
               <div>
                 <h4 className="font-medium mb-3">Suggested Tags</h4>
                 <div className="flex flex-wrap gap-2">
-                  {analysis.suggestedTags.map((tag) => (
+                  {(analysis.suggestedTags || []).map((tag) => (
                     <Badge key={tag} variant="secondary">
                       {tag}
                     </Badge>
@@ -231,7 +231,7 @@ export function StoryAnalysisPanel({
               <div>
                 <h4 className="font-medium mb-3">Emotional Tags</h4>
                 <div className="flex flex-wrap gap-2">
-                  {analysis.emotionalTags.map((tag) => (
+                  {(analysis.emotionalTags || []).map((tag) => (
                     <EmotionBadge key={tag} emotion={tag} size="sm" />
                   ))}
                 </div>
