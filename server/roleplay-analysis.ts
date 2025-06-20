@@ -55,6 +55,14 @@ export async function generateRolePlayAnalysis(
   const prompt = `
 You are a professional screenplay writer and director. Analyze the following story and create a complete role-play analysis that breaks it down into scenes with dialogues, backgrounds, and stage directions.
 
+For voice assignments, assign appropriate character voices based on role characteristics:
+- Male characters: Use "onyx" or "echo" OpenAI voices
+- Female characters: Use "nova" or "shimmer" OpenAI voices  
+- Children: Use "alloy" with higher pitch
+- Animals (dogs, cats, etc.): Use "fable" with appropriate modulation
+- Elderly characters: Use "echo" with slower speed
+- Narrator: Use "alloy" as neutral voice
+
 Story Content:
 ${storyContent}
 

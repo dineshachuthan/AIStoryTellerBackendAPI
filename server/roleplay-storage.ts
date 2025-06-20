@@ -54,9 +54,23 @@ export class RolePlayStorage {
 
   async getUserProjects(userId: string): Promise<RolePlayProject[]> {
     return withRetry(async () => {
-      return rpDb.select()
+      return rpDb.select({
+        id: rolePlayProjects.id,
+        storyId: rolePlayProjects.storyId,
+        title: rolePlayProjects.title,
+        genre: rolePlayProjects.genre,
+        overallTone: rolePlayProjects.overallTone,
+        totalScenes: rolePlayProjects.totalScenes,
+        estimatedPlaytime: rolePlayProjects.estimatedPlaytime,
+        isPublished: rolePlayProjects.isPublished,
+        visibility: rolePlayProjects.visibility,
+        collaborators: rolePlayProjects.collaborators,
+        createdAt: rolePlayProjects.createdAt,
+        updatedAt: rolePlayProjects.updatedAt,
+      })
         .from(rolePlayProjects)
-        .where(eq(rolePlayProjects.authorId, userId))
+        .innerJoin(stories, eq(stories.id, rolePlayProjects.storyId))
+        .where(eq(stories.authorId, userId))
         .orderBy(desc(rolePlayProjects.updatedAt));
     });
   }

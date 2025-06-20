@@ -8,6 +8,7 @@ import passport from 'passport';
 import { insertUserSchema, insertLocalUserSchema } from "@shared/schema";
 import { analyzeStoryContent, generateCharacterImage, transcribeAudio } from "./ai-analysis";
 import { generateRolePlayAnalysis, enhanceExistingRolePlay, generateSceneDialogue } from "./roleplay-analysis";
+import { rolePlayAudioService } from "./roleplay-audio-service";
 import { getCachedCharacterImage, cacheCharacterImage, getCachedAudio, cacheAudio, getCachedAnalysis, cacheAnalysis, getAllCacheStats, cleanOldCacheFiles } from "./content-cache";
 import { pool } from "./db";
 import { audioService } from "./audio-service";
