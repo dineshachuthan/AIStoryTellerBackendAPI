@@ -710,26 +710,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Save to user voice emotion repository
       const timestamp = Date.now();
-      const fileExtension = audioFile.mimetype.includes('webm') ? 'webm' : 'mp3';
-      const fileName = `${userId}-${emotion}-${intensity || 5}-${timestamp}.${fileExtension}`;
       const emotionDir = path.join(process.cwd(), 'persistent-cache', 'user-voice-emotions');
       await fs.mkdir(emotionDir, { recursive: true });
       
-      const filePath = path.join(emotionDir, fileName);
-      await fs.writeFile(filePath, audioFile.buffer);
+      let finalFileName: string;
+      let finalFilePath: string;
+      
+      if (audioFile.mimetype.includes('webm')) {
+        // Convert webm to high-quality MP3
+        const tempWebmFile = path.join(emotionDir, `temp-${timestamp}.webm`);
+        const mp3FileName = `${userId}-${emotion}-${intensity || 5}-${timestamp}.mp3`;
+        const mp3FilePath = path.join(emotionDir, mp3FileName);
+        
+        // Save temporary webm file
+        await fs.writeFile(tempWebmFile, audioFile.buffer);
+        
+        // Convert to MP3 using FFmpeg
+        const { spawn } = require('child_process');
+        await new Promise((resolve, reject) => {
+          const ffmpeg = spawn('ffmpeg', [
+            '-i', tempWebmFile,
+            '-acodec', 'libmp3lame',
+            '-b:a', '192k',  // High quality 192kbps
+            '-ar', '44100',  // 44.1kHz sample rate
+            '-y',           // Overwrite output file
+            mp3FilePath
+          ]);
+          
+          ffmpeg.on('close', (code: number) => {
+            if (code === 0) {
+              resolve(null);
+            } else {
+              reject(new Error(`FFmpeg conversion failed with code ${code}`));
+            }
+          });
+          
+          ffmpeg.stderr.on('data', (data: Buffer) => {
+            console.log('FFmpeg:', data.toString());
+          });
+        });
+        
+        // Clean up temporary webm file
+        await fs.unlink(tempWebmFile);
+        
+        finalFileName = mp3FileName;
+        finalFilePath = mp3FilePath;
+      } else {
+        // Already MP3 or other format
+        finalFileName = `${userId}-${emotion}-${intensity || 5}-${timestamp}.mp3`;
+        finalFilePath = path.join(emotionDir, finalFileName);
+        await fs.writeFile(finalFilePath, audioFile.buffer);
+      }
       
       // Store in database
       await pool.query(`
         INSERT INTO user_voice_emotions (user_id, emotion, intensity, audio_url, file_name, story_id_recorded, created_at)
         VALUES ($1, $2, $3, $4, $5, $6, NOW())
-      `, [userId, emotion, parseInt(intensity) || 5, `/api/user-voice-emotions/${fileName}`, fileName, storyId ? parseInt(storyId) : null]);
+      `, [userId, emotion, parseInt(intensity) || 5, `/api/user-voice-emotions/${finalFileName}`, finalFileName, storyId ? parseInt(storyId) : null]);
 
-      console.log(`Saved user voice emotion: ${emotion} for user ${userId}`);
+      console.log(`Saved user voice emotion: ${emotion} for user ${userId} (converted to MP3)`);
       res.json({ 
         message: "Voice emotion saved successfully",
         emotion,
-        fileName,
-        audioUrl: `/api/user-voice-emotions/${fileName}`
+        fileName: finalFileName,
+        audioUrl: `/api/user-voice-emotions/${finalFileName}`
       });
     } catch (error) {
       console.error("User voice emotion save error:", error);

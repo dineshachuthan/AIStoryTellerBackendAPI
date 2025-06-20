@@ -399,7 +399,7 @@ export default function VoiceModulationTest() {
                     controls 
                     className="w-full"
                     preload="metadata"
-                    volume={1.0}
+
                     onLoadStart={() => console.log('Audio loading started')}
                     onCanPlay={() => console.log('Audio can play')}
                     onError={(e) => console.error('Audio error:', e)}
