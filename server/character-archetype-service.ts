@@ -343,21 +343,29 @@ export class CharacterArchetypeService {
   
   async initializeDefaultArchetypes(): Promise<void> {
     try {
+      // Use retry mechanism for database operations
+      const { withRetry } = await import('./db');
+      
       // Check if archetypes already exist
-      const existingCount = await db.select({ count: sql<number>`count(*)` })
-        .from(characterArchetypes);
+      const existingCount = await withRetry(async () => 
+        db.select({ count: sql<number>`count(*)` }).from(characterArchetypes)
+      );
       
       if (existingCount[0].count > 0) {
         console.log('Character archetypes already initialized');
         return;
       }
 
-      // Insert default character archetypes
-      await db.insert(characterArchetypes).values(DEFAULT_CHARACTER_ARCHETYPES);
+      // Insert default character archetypes with retry
+      await withRetry(async () => 
+        db.insert(characterArchetypes).values(DEFAULT_CHARACTER_ARCHETYPES)
+      );
       console.log(`Initialized ${DEFAULT_CHARACTER_ARCHETYPES.length} character archetypes`);
 
-      // Insert default emotion profiles
-      await db.insert(emotionVoiceProfiles).values(DEFAULT_EMOTION_PROFILES);
+      // Insert default emotion profiles with retry
+      await withRetry(async () => 
+        db.insert(emotionVoiceProfiles).values(DEFAULT_EMOTION_PROFILES)
+      );
       console.log(`Initialized ${DEFAULT_EMOTION_PROFILES.length} emotion voice profiles`);
 
     } catch (error) {

@@ -38,10 +38,14 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Initialize character archetypes for reusable voice profiles (non-blocking)
-  archetypeService.initializeDefaultArchetypes().catch(console.error);
-  
   const server = await registerRoutes(app);
+  
+  // Initialize character archetypes after server starts (optional, with delay)
+  setTimeout(() => {
+    archetypeService.initializeDefaultArchetypes().catch((error) => {
+      console.log('Character archetype initialization skipped due to database limits');
+    });
+  }, 5000);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;

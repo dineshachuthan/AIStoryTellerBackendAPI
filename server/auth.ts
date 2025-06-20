@@ -18,6 +18,14 @@ export function getSession() {
     pool: pool,
     createTableIfMissing: true,
     tableName: 'sessions',
+    // Add configuration to reduce database pressure
+    pruneSessionInterval: 60 * 15, // 15 minutes
+    errorLog: (error: any) => {
+      // Only log non-rate-limit errors
+      if (!error.message?.includes('rate limit') && !error.message?.includes('Control plane')) {
+        console.error('Session store error:', error.message);
+      }
+    },
   });
 
   return session({
@@ -25,6 +33,7 @@ export function getSession() {
     secret: process.env.SESSION_SECRET || 'your-session-secret-key',
     resave: false,
     saveUninitialized: false,
+    rolling: true, // Extend session on activity
     cookie: {
       secure: false, // Set to false for development to work with HTTP
       httpOnly: true,
