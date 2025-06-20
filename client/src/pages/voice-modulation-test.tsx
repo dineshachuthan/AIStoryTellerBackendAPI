@@ -449,7 +449,7 @@ export default function VoiceModulationTest() {
                   </audio>
                   <div className="text-xs text-center text-muted-foreground space-y-1">
                     <p>Make sure your system volume is up and not muted</p>
-                    <p>Audio will be amplified 3x during conversion for better volume</p>
+                    <p>Audio will be amplified 20x during conversion for audible playback</p>
                   </div>
                 </div>
                 
