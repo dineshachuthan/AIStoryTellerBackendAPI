@@ -59,22 +59,53 @@ export default function VoiceModulationTest() {
 
   const startRecording = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          sampleRate: 44100
+        } 
+      });
+      
+      // Check what audio formats are supported
+      const options = [];
+      if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+        options.push({ mimeType: 'audio/webm;codecs=opus' });
+      } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+        options.push({ mimeType: 'audio/webm' });
+      } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+        options.push({ mimeType: 'audio/mp4' });
+      }
+      
+      const mediaRecorder = new MediaRecorder(stream, options[0] || {});
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
 
       mediaRecorder.ondataavailable = (event) => {
-        audioChunksRef.current.push(event.data);
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+          console.log('Audio chunk received:', event.data.size, 'bytes');
+        }
       };
 
       mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        await saveVoiceEmotion(audioBlob);
+        const mimeType = mediaRecorder.mimeType || 'audio/webm';
+        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
+        console.log('Recording finished. Blob size:', audioBlob.size, 'bytes, type:', mimeType);
+        
+        if (audioBlob.size > 0) {
+          await saveVoiceEmotion(audioBlob);
+        } else {
+          toast({
+            title: "Recording Error",
+            description: "No audio data recorded. Please try again.",
+            variant: "destructive",
+          });
+        }
         stream.getTracks().forEach(track => track.stop());
       };
 
-      mediaRecorder.start();
+      mediaRecorder.start(100); // Record in 100ms chunks
       setIsRecording(true);
       toast({
         title: "Recording Started",
@@ -362,18 +393,53 @@ export default function VoiceModulationTest() {
                   {isPlaying ? "Playing..." : "Play Generated Audio"}
                 </Button>
                 
-                {/* HTML5 Audio Player as fallback */}
-                <div className="w-full">
+                {/* HTML5 Audio Player with volume control */}
+                <div className="w-full space-y-2">
                   <audio 
                     controls 
                     className="w-full"
-                    preload="none"
+                    preload="metadata"
+                    volume={1.0}
+                    onLoadStart={() => console.log('Audio loading started')}
+                    onCanPlay={() => console.log('Audio can play')}
+                    onError={(e) => console.error('Audio error:', e)}
+                    onVolumeChange={(e) => console.log('Volume:', (e.target as HTMLAudioElement).volume)}
+                    onPlay={() => console.log('Audio started playing')}
+                    onTimeUpdate={(e) => console.log('Audio time:', (e.target as HTMLAudioElement).currentTime)}
                   >
                     <source src={audioUrl} type="audio/webm" />
                     <source src={audioUrl} type="audio/mpeg" />
                     Your browser does not support the audio element.
                   </audio>
+                  <p className="text-xs text-center text-muted-foreground">
+                    Make sure your system volume is up and not muted
+                  </p>
                 </div>
+                
+                {/* Simple Audio Test */}
+                <Button
+                  onClick={() => {
+                    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+                    gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                    
+                    oscillator.start();
+                    oscillator.stop(audioContext.currentTime + 0.5);
+                    
+                    toast({ title: "Audio Test", description: "Playing test tone" });
+                  }}
+                  variant="ghost"
+                  size="sm"
+                  className="w-full"
+                >
+                  Test Audio System
+                </Button>
                 
                 <p className="text-xs text-muted-foreground">
                   Audio URL: {audioUrl}
