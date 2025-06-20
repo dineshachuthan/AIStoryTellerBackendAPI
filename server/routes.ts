@@ -585,15 +585,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Step 7: Generate emotion audio sample for story playback (no new metadata)
-  app.get("/api/emotions/generate-sample", async (req, res) => {
+  app.get("/api/emotions/generate-sample", async (req, res, next) => {
     try {
+      console.log("Audio generation endpoint hit with query:", req.query);
       const { emotion, intensity, text, userId, voice } = req.query;
       
       if (!emotion || !text) {
+        console.log("Missing required parameters - emotion:", emotion, "text:", text);
         return res.status(400).json({ message: "Emotion and text are required" });
       }
 
-      console.log("Step 7: Playing story with character voice and emotions (no new metadata)");
+      console.log("Generating audio for emotion:", emotion, "voice:", voice);
       
       // First check if user has recorded their own voice for this emotion
       if (userId) {
