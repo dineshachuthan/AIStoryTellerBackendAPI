@@ -39,13 +39,13 @@ export class SimpleAudioPlayer {
         sentence.toLowerCase().includes(emotion.context.toLowerCase())
       ) || storyEmotions[i % storyEmotions.length] || { emotion: 'neutral', intensity: 5 };
       
-      // Check for user voice override first
+      // Priority 1: Check for user-generated voice first
       const userVoiceSample = userVoiceSamples.find(sample => 
         sample.sampleType === matchingEmotion.emotion && sample.isCompleted
       ) || userVoiceSamples.find(sample => sample.isCompleted);
       
       if (userVoiceSample) {
-        // Use user-recorded voice sample
+        // Use user-generated voice (highest priority)
         segments.push({
           text: sentence,
           audioUrl: userVoiceSample.audioUrl,
@@ -53,11 +53,20 @@ export class SimpleAudioPlayer {
           intensity: matchingEmotion.intensity
         });
       } else {
-        // Use AI-generated voice based on analysis (characters have assigned voices)
+        // Priority 2: Use AI-generated voice as default fallback
         const aiVoice = this.selectAIVoiceForEmotion(matchingEmotion.emotion, storyCharacters);
+        
+        // Generate AI voice audio URL with proper parameters
+        const params = new URLSearchParams({
+          emotion: matchingEmotion.emotion,
+          intensity: matchingEmotion.intensity.toString(),
+          text: sentence,
+          voice: aiVoice
+        });
+        
         segments.push({
           text: sentence,
-          audioUrl: `/api/emotions/generate-sample?emotion=${matchingEmotion.emotion}&intensity=${matchingEmotion.intensity}&text=${encodeURIComponent(sentence)}&voice=${aiVoice}`,
+          audioUrl: `/api/emotions/generate-sample?${params.toString()}`,
           emotion: matchingEmotion.emotion,
           intensity: matchingEmotion.intensity
         });
@@ -77,7 +86,23 @@ export class SimpleAudioPlayer {
   }
 
   private selectAIVoiceForEmotion(emotion: string, characters: any[]): string {
-    // Use character analysis to select appropriate AI voice
+    // Priority 1: Use character's assigned voice from analysis
+    if (characters.length > 0) {
+      // Find character with assigned voice (from AI analysis)
+      const characterWithVoice = characters.find(c => c.assignedVoice);
+      if (characterWithVoice) {
+        console.log(`Using character voice: ${characterWithVoice.assignedVoice} for ${characterWithVoice.name}`);
+        return characterWithVoice.assignedVoice;
+      }
+      
+      // Fallback to protagonist if no assigned voice found
+      const protagonist = characters.find(c => c.role === 'protagonist');
+      if (protagonist && protagonist.assignedVoice) {
+        return protagonist.assignedVoice;
+      }
+    }
+
+    // Priority 2: Emotion-based voice mapping as fallback
     const emotionVoiceMap: { [key: string]: string } = {
       'joy': 'shimmer',
       'happiness': 'shimmer', 
@@ -92,18 +117,15 @@ export class SimpleAudioPlayer {
       'neutral': 'alloy',
       'curiosity': 'echo',
       'disappointment': 'nova',
-      'wisdom': 'fable'
+      'wisdom': 'fable',
+      'melancholy': 'nova',
+      'freedom': 'shimmer',
+      'irony': 'fable'
     };
 
-    // If we have character data, use their assigned voices
-    if (characters.length > 0) {
-      const primaryCharacter = characters.find(c => c.role === 'protagonist') || characters[0];
-      if (primaryCharacter && primaryCharacter.assignedVoice) {
-        return primaryCharacter.assignedVoice;
-      }
-    }
-
-    return emotionVoiceMap[emotion.toLowerCase()] || 'alloy';
+    const selectedVoice = emotionVoiceMap[emotion.toLowerCase()] || 'alloy';
+    console.log(`Using emotion-based voice: ${selectedVoice} for emotion: ${emotion}`);
+    return selectedVoice;
   }
 
   private splitIntoSentences(content: string): string[] {
