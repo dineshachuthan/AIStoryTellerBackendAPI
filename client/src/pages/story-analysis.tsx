@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { useLocation, useParams } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -327,14 +329,39 @@ export default function StoryAnalysis() {
             </div>
           </div>
 
-          {/* Use the new modular StoryAnalysisPanel component */}
-          <StoryAnalysisPanel
-            analysis={analysisData.analysis}
-            userVoiceEmotions={userVoiceEmotions}
-            onEmotionRecorded={handleEmotionRecorded}
-            onPlayEmotionSample={handlePlayEmotionSample}
-            isPlayingSample={playingSample}
-          />
+          {/* Main Analysis Tabs */}
+          <Tabs defaultValue="narrative" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-6">
+              <TabsTrigger value="narrative">Narrative Analysis</TabsTrigger>
+              <TabsTrigger value="roleplay">Role Play Analysis</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="narrative" className="space-y-6">
+              <StoryAnalysisPanel
+                analysis={analysisData.analysis}
+                userVoiceEmotions={userVoiceEmotions}
+                onEmotionRecorded={handleEmotionRecorded}
+                onPlayEmotionSample={handlePlayEmotionSample}
+                isPlayingSample={playingSample}
+              />
+            </TabsContent>
+
+            <TabsContent value="roleplay" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Role Play Analysis</CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Interactive character-based analysis for immersive storytelling
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-center text-muted-foreground py-12">
+                    Role Play Analysis features coming soon...
+                  </p>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </div>

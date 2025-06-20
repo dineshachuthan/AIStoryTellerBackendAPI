@@ -148,7 +148,7 @@ export function StoryAnalysisPanel({
               </p>
             </CardHeader>
             <CardContent className="space-y-4">
-              {analysis.emotions.map((emotion, index) => (
+              {(analysis.emotions || []).map((emotion, index) => (
                 <EmotionVoiceRecorder
                   key={`${emotion.emotion}-${emotion.intensity}`}
                   emotion={emotion.emotion}
@@ -160,7 +160,7 @@ export function StoryAnalysisPanel({
                 />
               ))}
               
-              {analysis.emotions.length === 0 && (
+              {(!analysis.emotions || analysis.emotions.length === 0) && (
                 <p className="text-center text-muted-foreground py-8">
                   No emotions detected in this story.
                 </p>
@@ -176,7 +176,7 @@ export function StoryAnalysisPanel({
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {analysis.characters.map((character, index) => (
+                {(analysis.characters || []).map((character, index) => (
                   <div key={index} className="space-y-3">
                     <CharacterAvatar
                       character={character}
@@ -200,7 +200,7 @@ export function StoryAnalysisPanel({
                 ))}
               </div>
               
-              {analysis.characters.length === 0 && (
+              {(!analysis.characters || analysis.characters.length === 0) && (
                 <p className="text-center text-muted-foreground py-8">
                   No characters detected in this story.
                 </p>
