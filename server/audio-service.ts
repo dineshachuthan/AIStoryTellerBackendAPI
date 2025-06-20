@@ -242,28 +242,53 @@ export class AudioService {
 
     const lowerText = text.toLowerCase();
     
-    // Direct name matching
-    for (const character of characters) {
-      const firstName = character.name.split(' ')[0].toLowerCase();
-      const fullName = character.name.toLowerCase();
-      
-      if (lowerText.includes(fullName) || lowerText.includes(firstName)) {
-        console.log(`Character detected by name: ${character.name} (assigned voice: ${character.assignedVoice})`);
-        return character;
+    // Specific character detection with priority order
+    
+    // Check for Mr. Mallard / husband references first
+    if (lowerText.includes('mr. mallard') || lowerText.includes('mr mallard') || 
+        lowerText.includes('husband') || lowerText.includes('him ') || 
+        lowerText.includes('he ') || lowerText.includes('his ')) {
+      const maleCharacter = characters.find(c => 
+        c.name.toLowerCase().includes('mr.') || 
+        c.description?.toLowerCase().includes('husband') ||
+        c.description?.toLowerCase().includes('male')
+      );
+      if (maleCharacter) {
+        console.log(`Character detected - Male: ${maleCharacter.name} (assigned voice: ${maleCharacter.assignedVoice})`);
+        return maleCharacter;
       }
     }
 
-    // Context-based character detection for specific characters like Louise Mallard
-    if (lowerText.includes('wife') || lowerText.includes('woman') || lowerText.includes('her ') || 
-        lowerText.includes('she ') || lowerText.includes('louise') || lowerText.includes('mallard')) {
+    // Check for Louise Mallard / wife references
+    if (lowerText.includes('louise mallard') || lowerText.includes('louise') ||
+        lowerText.includes('wife') || lowerText.includes('woman') || 
+        lowerText.includes('her ') || lowerText.includes('she ')) {
       const femaleCharacter = characters.find(c => 
         c.name.toLowerCase().includes('louise') || 
         c.description?.toLowerCase().includes('woman') ||
         c.description?.toLowerCase().includes('wife')
       );
       if (femaleCharacter) {
-        console.log(`Character detected by context: ${femaleCharacter.name} (assigned voice: ${femaleCharacter.assignedVoice})`);
+        console.log(`Character detected - Female: ${femaleCharacter.name} (assigned voice: ${femaleCharacter.assignedVoice})`);
         return femaleCharacter;
+      }
+    }
+
+    // Generic "Mallard" - prefer protagonist (Louise)
+    if (lowerText.includes('mallard')) {
+      const protagonist = characters.find(c => c.role === 'protagonist');
+      if (protagonist) {
+        console.log(`Character detected - Protagonist: ${protagonist.name} (assigned voice: ${protagonist.assignedVoice})`);
+        return protagonist;
+      }
+    }
+
+    // Direct full name matching as fallback
+    for (const character of characters) {
+      const fullName = character.name.toLowerCase();
+      if (lowerText.includes(fullName)) {
+        console.log(`Character detected by full name: ${character.name} (assigned voice: ${character.assignedVoice})`);
+        return character;
       }
     }
 
