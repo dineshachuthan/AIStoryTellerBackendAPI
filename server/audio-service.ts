@@ -538,7 +538,7 @@ export class AudioService {
     
     if (hasUserVoices) {
       // User has voice samples - use user voice for all emotions with character modulation
-      const speakingCharacter = this.detectCharacterFromEmotion(options.text, options.emotion, options.characters);
+      const speakingCharacter = this.detectCharacterFromEmotion(options.text, options.emotion, options.characters || []);
       const userVoiceResult = await this.getUserVoiceForEmotion(userId, options.emotion, options.intensity, speakingCharacter);
       if (userVoiceResult) {
         return {
@@ -550,8 +550,8 @@ export class AudioService {
     }
 
     // No user voices exist - use character-level AI voice
-    const speakingCharacter = this.detectCharacterFromEmotion(options.text, options.emotion, options.characters);
-    const characterArray = speakingCharacter ? [speakingCharacter] : options.characters;
+    const speakingCharacter = this.detectCharacterFromEmotion(options.text, options.emotion, options.characters || []);
+    const characterArray = speakingCharacter ? [speakingCharacter] : (options.characters || []);
     const selectedVoice = options.voice || this.selectCharacterVoice(characterArray);
 
     // Try cache first

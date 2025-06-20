@@ -586,6 +586,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Generate character-aware modulated audio
+  app.post("/api/emotions/generate-audio", async (req, res) => {
+    try {
+      const { text, emotion, intensity, characters } = req.body;
+      const userId = (req.user as any)?.id;
+      
+      if (!text || !emotion) {
+        return res.status(400).json({ message: "Text and emotion are required" });
+      }
+
+      console.log(`Generating character-aware audio: emotion=${emotion}, intensity=${intensity}, characters=${characters?.length || 0}`);
+      
+      const result = await audioService.generateEmotionAudio({
+        text,
+        emotion,
+        intensity: parseInt(intensity) || 5,
+        userId,
+        characters: characters || []
+      });
+      
+      console.log(`Generated audio: ${result.isUserGenerated ? 'user voice' : 'AI voice'} (${result.voice})`);
+      res.json({ 
+        audioUrl: result.audioUrl,
+        voice: result.voice,
+        isUserGenerated: result.isUserGenerated
+      });
+    } catch (error) {
+      console.error("Character-aware audio generation error:", error);
+      res.status(500).json({ message: error instanceof Error ? error.message : "Failed to generate modulated audio" });
+    }
+  });
+
   // Step 7: Generate emotion audio sample for story playback (POST - returns JSON with audioURL)
   app.post("/api/emotions/generate-sample", async (req, res) => {
     try {
