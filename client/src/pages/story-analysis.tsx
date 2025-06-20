@@ -56,6 +56,51 @@ export default function StoryAnalysis() {
   const [userVoiceEmotions, setUserVoiceEmotions] = useState<Record<string, boolean>>({});
   const [playingSample, setPlayingSample] = useState<string>("");
 
+  // Handler for when user records an emotion voice
+  const handleEmotionRecorded = (emotion: string, audioBlob: Blob) => {
+    setUserVoiceEmotions(prev => ({ ...prev, [emotion]: true }));
+    toast({
+      title: "Voice Recorded",
+      description: `Your ${emotion} voice has been saved to your repository.`,
+    });
+  };
+
+  // Handler for playing emotion sample
+  const handlePlayEmotionSample = async (emotion: string, intensity: number) => {
+    setPlayingSample(emotion);
+    try {
+      const response = await fetch('/api/emotions/generate-sample', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          emotion,
+          intensity,
+          text: `This is a sample of ${emotion} emotion with intensity ${intensity}.`
+        }),
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        const audio = new Audio(result.audioUrl);
+        audio.play();
+        audio.onended = () => setPlayingSample("");
+      } else {
+        throw new Error('Failed to generate sample');
+      }
+    } catch (error) {
+      console.error('Error playing sample:', error);
+      setPlayingSample("");
+      toast({
+        title: "Playback Error",
+        description: "Could not play emotion sample.",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Fetch story data if storyId is provided
   const { data: storyData, isLoading: storyLoading } = useQuery({
     queryKey: ["/api/stories", storyId],
@@ -72,20 +117,20 @@ export default function StoryAnalysis() {
         const story = storyData as any;
         const analysis: AnalysisData = {
           analysis: {
-            characters: characters || [],
-            emotions: emotions || [],
+            characters: Array.isArray(characters) ? characters : [],
+            emotions: Array.isArray(emotions) ? emotions : [],
             summary: story.summary || "",
             category: story.category || "General",
             genre: story.genre || "Fiction",
-            themes: story.themes || [],
-            suggestedTags: story.tags || [],
-            emotionalTags: story.emotionalTags || [],
+            themes: Array.isArray(story.themes) ? story.themes : [],
+            suggestedTags: Array.isArray(story.tags) ? story.tags : [],
+            emotionalTags: Array.isArray(story.emotionalTags) ? story.emotionalTags : [],
             readingTime: story.readingTime || 5,
             ageRating: story.ageRating || 'general',
             isAdultContent: story.isAdultContent || false
           },
-          content: story.content,
-          title: story.title
+          content: story.content || "",
+          title: story.title || "Untitled Story"
         };
         setAnalysisData(analysis);
       }).catch(error => {
@@ -289,10 +334,6 @@ export default function StoryAnalysis() {
             onEmotionRecorded={handleEmotionRecorded}
             onPlayEmotionSample={handlePlayEmotionSample}
             isPlayingSample={playingSample}
-            storyId={storyId ? parseInt(storyId) : undefined}
-            onUpdateStory={handleUpdateStory}
-            isUpdating={isUpdating}
-            isPrivateStory={!!storyId} // For now, show buttons for all existing stories
           />
         </div>
       </div>
