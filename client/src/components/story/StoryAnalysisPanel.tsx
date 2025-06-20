@@ -37,7 +37,7 @@ interface StoryAnalysisData {
 }
 
 interface StoryAnalysisPanelProps {
-  analysis: StoryAnalysisData;
+  analysis: StoryAnalysisData | null | undefined;
   userVoiceEmotions?: Record<string, boolean>;
   onEmotionRecorded?: (emotion: string, audioBlob: Blob) => void;
   onPlayEmotionSample?: (emotion: string, intensity: number) => void;
@@ -54,6 +54,21 @@ export function StoryAnalysisPanel({
   className
 }: StoryAnalysisPanelProps) {
   const { toast } = useToast();
+
+  // Handle case where analysis is null or undefined
+  if (!analysis) {
+    return (
+      <div className={`space-y-6 ${className}`}>
+        <Card>
+          <CardContent className="py-8">
+            <p className="text-center text-muted-foreground">
+              Loading story analysis...
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const handleEmotionRecording = async (emotion: string, audioBlob: Blob) => {
     try {
@@ -189,7 +204,7 @@ export function StoryAnalysisPanel({
                         {character.description}
                       </p>
                       <div className="flex flex-wrap gap-1">
-                        {character.traits.slice(0, 3).map((trait) => (
+                        {(character.traits || []).slice(0, 3).map((trait) => (
                           <Badge key={trait} variant="outline" className="text-xs">
                             {trait}
                           </Badge>
