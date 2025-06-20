@@ -14,7 +14,7 @@ export interface SimpleAudioNarration {
 }
 
 export class SimpleAudioPlayer {
-  async generateSimpleNarration(storyId: number, userId: string = 'user_123'): Promise<SimpleAudioNarration> {
+  async generateSimpleNarration(storyId: number, userId: string): Promise<SimpleAudioNarration> {
     const story = await storage.getStory(storyId);
     if (!story) {
       throw new Error("Story not found");

@@ -117,7 +117,8 @@ export default function UploadStory() {
   const [isHolding, setIsHolding] = useState<Record<string, boolean>>({});
 
   // Confidence tracking
-  const userId = 'user_123'; // Using test user ID
+  const { user } = useAuth();
+  const userId = user?.id;
   const confidenceTracking = createdStory ? useConfidenceTracking(createdStory.id, userId) : null;
 
   // Create story with direct analysis data (for automated flow)

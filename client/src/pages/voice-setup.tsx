@@ -6,6 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { ArrowLeft, Mic, Play, Square, RotateCcw, Check } from "lucide-react";
 import { ConfigurableAudioRecorder } from "@/lib/audioRecorder";
 import { AudioConfigManager } from "@/lib/audioConfig";
@@ -36,7 +37,8 @@ export default function VoiceSetup() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
 
-  const userId = 'user_123'; // TODO: Get from auth context
+  const { user } = useAuth();
+  const userId = user?.id;
 
   // Fetch voice sample templates
   const { data: templates = [] } = useQuery<VoiceSample[]>({
