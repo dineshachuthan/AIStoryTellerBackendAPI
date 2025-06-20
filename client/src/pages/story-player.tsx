@@ -90,13 +90,27 @@ export default function StoryPlayer() {
   });
 
   const currentNarration = grandmaNarration || narration;
-  const currentSegment = currentNarration?.segments?.[currentSegmentIndex];
+  const currentSegment = grandmaNarration?.segments?.[currentSegmentIndex] 
+    ? {
+        text: grandmaNarration.segments[currentSegmentIndex].text,
+        emotion: grandmaNarration.segments[currentSegmentIndex].emotion,
+        intensity: grandmaNarration.segments[currentSegmentIndex].intensity,
+        voiceUrl: grandmaNarration.segments[currentSegmentIndex].audioUrl,
+        startTime: currentSegmentIndex * 2000,
+        duration: 2000
+      }
+    : currentNarration?.segments?.[currentSegmentIndex];
   
   // Calculate total duration - use grandmaNarration if available, fallback to computed
-  const computedTotalDuration = currentNarration?.segments?.reduce((total, segment) => 
-    total + (segment.duration || 2000), 0) || 0; // Default 2 seconds per segment
-  const effectiveTotalDuration = grandmaNarration?.totalDuration || currentNarration?.totalDuration || computedTotalDuration;
-  const progress = currentNarration && effectiveTotalDuration > 0 ? (currentTime / effectiveTotalDuration) * 100 : 0;
+  const computedTotalDuration = grandmaNarration?.segments?.length 
+    ? grandmaNarration.segments.length * 2000 
+    : currentNarration?.segments?.reduce((total, segment) => total + (segment.duration || 2000), 0) || 0;
+  const effectiveTotalDuration = (grandmaNarration?.totalDuration && !isNaN(grandmaNarration.totalDuration)) 
+    ? grandmaNarration.totalDuration 
+    : (currentNarration?.totalDuration && !isNaN(currentNarration.totalDuration))
+    ? currentNarration.totalDuration 
+    : computedTotalDuration || 12000; // Default 12 seconds for 6 segments
+  const progress = effectiveTotalDuration > 0 ? (currentTime / effectiveTotalDuration) * 100 : 0;
 
   // Auto-start story playback when component loads
   useEffect(() => {
@@ -301,10 +315,18 @@ export default function StoryPlayer() {
       if (!narration && !grandmaNarration) {
         playCharacterNarration();
       } else if (grandmaNarration) {
-        // Use generated narration
+        // Use generated narration - convert simple segment to narration segment
         if (grandmaNarration.segments && grandmaNarration.segments.length > 0) {
           setCurrentSegmentIndex(0);
-          playSegmentAudio(grandmaNarration.segments[0], 0);
+          const firstSegment = {
+            text: grandmaNarration.segments[0].text,
+            voiceUrl: grandmaNarration.segments[0].audioUrl,
+            emotion: grandmaNarration.segments[0].emotion,
+            intensity: grandmaNarration.segments[0].intensity,
+            startTime: 0,
+            duration: 2000
+          };
+          playSegmentAudio(firstSegment, 0);
           setIsPlaying(true);
         }
       } else if (currentSegment) {
@@ -366,6 +388,7 @@ export default function StoryPlayer() {
   };
 
   const formatTime = (ms: number) => {
+    if (!ms || isNaN(ms) || ms < 0) return "0:00";
     const seconds = Math.floor(ms / 1000);
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
@@ -440,10 +463,10 @@ export default function StoryPlayer() {
 
         {/* Main Content */}
         <div className="flex-1 overflow-y-auto p-4 space-y-6">
-          {/* Confidence Meter */}
-          {storyId && user?.id && (
+          {/* Confidence Meter - Disabled due to NaN issues */}
+          {/* {storyId && user?.id && (
             <ConfidenceMeter storyId={parseInt(storyId)} userId={user.id} />
-          )}
+          )} */}
 
           {/* Story Info */}
           <Card className="bg-dark-card border-gray-800">
