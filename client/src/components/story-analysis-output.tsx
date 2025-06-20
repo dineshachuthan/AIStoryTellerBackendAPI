@@ -214,8 +214,10 @@ export function StoryAnalysisOutput({
         body: JSON.stringify({
           emotion: emotion.emotion,
           intensity: emotion.intensity,
-          context: emotion.context,
-          quote: emotion.quote
+          text: emotion.quote || emotion.context,
+          userId: user?.id,
+          storyId: storyId,
+          characters: charactersWithImages
         }),
       });
 
