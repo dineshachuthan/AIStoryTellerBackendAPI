@@ -20,7 +20,9 @@ export class SimpleAudioPlayer {
       throw new Error("Story not found");
     }
 
-    // Get user voice samples
+    // Get story analysis data with AI-generated voice assignments
+    const storyCharacters = await storage.getStoryCharacters(storyId);
+    const storyEmotions = await storage.getStoryEmotions(storyId);
     const userVoiceSamples = await storage.getUserVoiceSamples(userId);
     
     // Split story into sentences
@@ -29,33 +31,35 @@ export class SimpleAudioPlayer {
     
     const segments: SimpleAudioSegment[] = [];
     
-    // If user has voice samples, use them; otherwise use OpenAI TTS
-    if (userVoiceSamples.length > 0) {
-      for (let i = 0; i < sentences.length; i++) {
-        const sentence = sentences[i];
-        
-        // Use existing user voice sample
-        const voiceSample = userVoiceSamples.find(sample => sample.sampleType === 'shock') || 
-                           userVoiceSamples.find(sample => sample.sampleType === 'neutral') ||
-                           userVoiceSamples[0];
-        
+    for (let i = 0; i < sentences.length; i++) {
+      const sentence = sentences[i];
+      
+      // Find matching emotion for this sentence segment
+      const matchingEmotion = storyEmotions.find(emotion => 
+        sentence.toLowerCase().includes(emotion.context.toLowerCase())
+      ) || storyEmotions[i % storyEmotions.length] || { emotion: 'neutral', intensity: 5 };
+      
+      // Check for user voice override first
+      const userVoiceSample = userVoiceSamples.find(sample => 
+        sample.sampleType === matchingEmotion.emotion && sample.isCompleted
+      ) || userVoiceSamples.find(sample => sample.isCompleted);
+      
+      if (userVoiceSample) {
+        // Use user-recorded voice sample
         segments.push({
           text: sentence,
-          audioUrl: voiceSample.audioUrl,
-          emotion: voiceSample.sampleType || 'neutral',
-          intensity: 5
+          audioUrl: userVoiceSample.audioUrl,
+          emotion: userVoiceSample.sampleType || matchingEmotion.emotion,
+          intensity: matchingEmotion.intensity
         });
-      }
-    } else {
-      // Fallback to OpenAI TTS when no user voice samples exist
-      console.log('No user voice samples found, using OpenAI TTS fallback');
-      for (let i = 0; i < sentences.length; i++) {
-        const sentence = sentences[i];
+      } else {
+        // Use AI-generated voice based on analysis (characters have assigned voices)
+        const aiVoice = this.selectAIVoiceForEmotion(matchingEmotion.emotion, storyCharacters);
         segments.push({
           text: sentence,
-          audioUrl: `/api/tts/generate?text=${encodeURIComponent(sentence)}&voice=alloy`,
-          emotion: 'neutral',
-          intensity: 5
+          audioUrl: `/api/emotions/generate-sample?emotion=${matchingEmotion.emotion}&intensity=${matchingEmotion.intensity}&text=${encodeURIComponent(sentence)}&voice=${aiVoice}`,
+          emotion: matchingEmotion.emotion,
+          intensity: matchingEmotion.intensity
         });
       }
     }
@@ -70,6 +74,36 @@ export class SimpleAudioPlayer {
       segments,
       totalDuration
     };
+  }
+
+  private selectAIVoiceForEmotion(emotion: string, characters: any[]): string {
+    // Use character analysis to select appropriate AI voice
+    const emotionVoiceMap: { [key: string]: string } = {
+      'joy': 'shimmer',
+      'happiness': 'shimmer', 
+      'excitement': 'echo',
+      'sadness': 'nova',
+      'grief': 'nova',
+      'anger': 'onyx',
+      'rage': 'onyx',
+      'fear': 'fable',
+      'shock': 'echo',
+      'surprise': 'echo',
+      'neutral': 'alloy',
+      'curiosity': 'echo',
+      'disappointment': 'nova',
+      'wisdom': 'fable'
+    };
+
+    // If we have character data, use their assigned voices
+    if (characters.length > 0) {
+      const primaryCharacter = characters.find(c => c.role === 'protagonist') || characters[0];
+      if (primaryCharacter && primaryCharacter.assignedVoice) {
+        return primaryCharacter.assignedVoice;
+      }
+    }
+
+    return emotionVoiceMap[emotion.toLowerCase()] || 'alloy';
   }
 
   private splitIntoSentences(content: string): string[] {
