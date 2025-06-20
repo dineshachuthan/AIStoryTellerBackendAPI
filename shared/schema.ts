@@ -222,6 +222,22 @@ export const characterVoiceAssignments = pgTable("character_voice_assignments", 
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// User voice emotion repository - persistent across all stories
+export const userVoiceEmotions = pgTable("user_voice_emotions", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  emotion: varchar("emotion").notNull(), // joy, grief, shock, anger, fear, love, etc.
+  intensity: integer("intensity").notNull(), // 1-10 scale
+  audioUrl: text("audio_url").notNull(),
+  fileName: varchar("file_name").notNull(),
+  duration: integer("duration"), // in milliseconds
+  isBaseVoice: boolean("is_base_voice").default(false), // Primary voice for interpolation
+  storyIdRecorded: integer("story_id_recorded").references(() => stories.id), // Story where it was first recorded
+  usageCount: integer("usage_count").default(0), // How many times this voice has been used
+  lastUsedAt: timestamp("last_used_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // User customizations for public stories - allows users to personalize without modifying original
 export const storyCustomizations = pgTable("story_customizations", {
   id: serial("id").primaryKey(),

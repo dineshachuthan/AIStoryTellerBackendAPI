@@ -26,6 +26,14 @@ export interface IStorage {
   updateUserVoiceSample(id: number, sample: Partial<InsertUserVoiceSample>): Promise<void>;
   deleteUserVoiceSample(id: number): Promise<void>;
   getUserVoiceProgress(userId: string): Promise<{ completed: number; total: number; percentage: number }>;
+
+  // User Voice Emotions (cross-story repository)
+  getUserVoiceEmotions(userId: string): Promise<any[]>;
+  getUserVoiceEmotion(userId: string, emotion: string, intensity?: number): Promise<any | undefined>;
+  saveUserVoiceEmotion(voiceEmotion: any): Promise<any>;
+  updateUserVoiceEmotion(id: number, updates: any): Promise<void>;
+  deleteUserVoiceEmotion(userId: string, fileName: string): Promise<void>;
+  incrementVoiceEmotionUsage(id: number): Promise<void>;
   
   // Stories
   getPublicStories(filters?: {

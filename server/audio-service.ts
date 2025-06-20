@@ -2,6 +2,7 @@ import OpenAI from 'openai';
 import fs from 'fs/promises';
 import path from 'path';
 import { getCachedAudio, cacheAudio } from './content-cache';
+import { db } from './db';
 
 export interface AudioGenerationOptions {
   text: string;
@@ -29,6 +30,84 @@ export class AudioService {
   }
 
   // Select voice based on character consistency first, then gender and emotion context
+  // Check if user has any voice emotions in repository
+  private async hasAnyUserVoiceEmotions(userId: string): Promise<boolean> {
+    if (!userId) return false;
+    
+    try {
+      // Check database for any user voice emotions
+      const result = await db.query(`
+        SELECT COUNT(*) as count 
+        FROM user_voice_emotions 
+        WHERE user_id = $1
+      `, [userId]);
+      
+      return result.rows[0]?.count > 0;
+    } catch (error) {
+      console.error('Error checking user voice emotions:', error);
+      return false;
+    }
+  }
+
+  // Get user voice for specific emotion (with fallback to any user voice)
+  private async getUserVoiceForEmotion(userId: string, emotion: string, intensity: number): Promise<{ audioUrl: string } | null> {
+    if (!userId) return null;
+    
+    try {
+      // First try exact emotion match
+      let result = await db.query(`
+        SELECT audio_url, usage_count 
+        FROM user_voice_emotions 
+        WHERE user_id = $1 AND emotion = $2 
+        ORDER BY ABS(intensity - $3), created_at DESC 
+        LIMIT 1
+      `, [userId, emotion, intensity]);
+      
+      if (result.rows.length > 0) {
+        // Update usage count
+        await db.query(`
+          UPDATE user_voice_emotions 
+          SET usage_count = usage_count + 1, last_used_at = NOW() 
+          WHERE user_id = $1 AND emotion = $2
+        `, [userId, emotion]);
+        
+        return { audioUrl: result.rows[0].audio_url };
+      }
+      
+      // Fallback to any user voice (most recently used)
+      result = await db.query(`
+        SELECT audio_url 
+        FROM user_voice_emotions 
+        WHERE user_id = $1 
+        ORDER BY last_used_at DESC, created_at DESC 
+        LIMIT 1
+      `, [userId]);
+      
+      if (result.rows.length > 0) {
+        console.log(`Using fallback user voice for emotion: ${emotion}`);
+        return { audioUrl: result.rows[0].audio_url };
+      }
+      
+    } catch (error) {
+      console.error('Error getting user voice emotion:', error);
+    }
+    
+    return null;
+  }
+
+  // Select character-level voice (consistent per character)
+  private selectCharacterVoice(characters?: any[]): string {
+    if (characters && characters.length > 0) {
+      const character = characters[0];
+      if (character.assignedVoice) {
+        return character.assignedVoice;
+      }
+    }
+    
+    // Default voice if no character voice assigned
+    return 'alloy';
+  }
+
   private selectEmotionVoice(emotion: string, intensity: number, characters?: any[]): string {
     // Priority 1: Use character's assigned voice from analysis if available
     if (characters && characters.length > 0) {
@@ -298,32 +377,37 @@ export class AudioService {
     return protagonist;
   }
 
-  // Main method to generate or retrieve audio with fallback-to-source pattern
+  // Main method to generate or retrieve audio with simplified voice logic
   async generateEmotionAudio(options: AudioGenerationOptions): Promise<AudioResult> {
-    // Check for user voice override first
-    const userVoiceUrl = await this.getUserVoiceOverride(options.userId || '', options.emotion, options.intensity, options.storyId);
-    if (userVoiceUrl) {
-      return {
-        audioUrl: userVoiceUrl,
-        isUserGenerated: true,
-        voice: 'user'
-      };
+    const userId = options.userId || '';
+    
+    // Check if user has any voice emotions in their repository
+    const hasUserVoices = await this.hasAnyUserVoiceEmotions(userId);
+    
+    if (hasUserVoices) {
+      // User has voice samples - use user voice for all emotions
+      const userVoiceResult = await this.getUserVoiceForEmotion(userId, options.emotion, options.intensity);
+      if (userVoiceResult) {
+        return {
+          audioUrl: userVoiceResult.audioUrl,
+          isUserGenerated: true,
+          voice: 'user-emotion-repository'
+        };
+      }
     }
 
-    // Detect which character is speaking for this emotion
+    // No user voices exist - use character-level AI voice
     const speakingCharacter = this.detectCharacterFromEmotion(options.text, options.emotion, options.characters);
     const characterArray = speakingCharacter ? [speakingCharacter] : options.characters;
-    const selectedVoice = options.voice || this.selectEmotionVoice(options.emotion, options.intensity, characterArray);
+    const selectedVoice = options.voice || this.selectCharacterVoice(characterArray);
 
     // Try cache first
     try {
       const cachedAudio = getCachedAudio(options.text, selectedVoice, options.emotion, options.intensity);
       if (cachedAudio) {
-        // Verify cached file actually exists
         const filePath = path.join(process.cwd(), 'persistent-cache', 'audio', path.basename(cachedAudio));
         try {
           await fs.access(filePath);
-          console.log("Using valid cached audio");
           return {
             audioUrl: `/api/emotions/cached-audio/${path.basename(cachedAudio)}`,
             isUserGenerated: false,
@@ -337,20 +421,17 @@ export class AudioService {
       console.warn("Cache read failed, generating from source:", cacheError);
     }
 
-    // Cache miss/error - call source and update cache
+    // Generate new character-level AI audio
     const updatedOptions = { ...options, characters: characterArray };
     const buffer = await this.generateAIAudio(updatedOptions);
-    
-    // Generate new audio and cache it
     const fileName = await this.cacheAudioFile(buffer, updatedOptions, selectedVoice);
     const audioUrl = `/api/emotions/cached-audio/${fileName}`;
     
-    // Update cache with new audio data
+    // Update cache
     try {
       await cacheAudio(options.text, selectedVoice, audioUrl, options.emotion, options.intensity);
-      console.log("Successfully updated cache with new audio");
     } catch (cacheUpdateError) {
-      console.warn("Failed to update cache, but audio generated successfully:", cacheUpdateError);
+      console.warn("Failed to update cache:", cacheUpdateError);
     }
     
     return {
