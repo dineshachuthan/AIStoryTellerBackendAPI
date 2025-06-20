@@ -166,12 +166,15 @@ export default function VoiceModulationTest() {
 
       if (response.ok) {
         const result = await response.json();
+        console.log('Generated audio result:', result);
         setAudioUrl(result.audioUrl);
         toast({
           title: "Audio Generated",
-          description: `Generated ${selectedCharacter.name}'s voice with ${selectedEmotion} emotion`,
+          description: `Generated ${selectedCharacter.name}'s voice with ${selectedEmotion} emotion (${result.voice})`,
         });
       } else {
+        const errorText = await response.text();
+        console.error('Audio generation failed:', errorText);
         throw new Error('Failed to generate audio');
       }
     } catch (error) {
@@ -186,12 +189,30 @@ export default function VoiceModulationTest() {
     }
   };
 
-  const playAudio = () => {
+  const playAudio = async () => {
     if (audioUrl && audioRef.current) {
-      audioRef.current.src = audioUrl;
-      audioRef.current.play();
-      setIsPlaying(true);
-      audioRef.current.onended = () => setIsPlaying(false);
+      try {
+        audioRef.current.src = audioUrl;
+        setIsPlaying(true);
+        await audioRef.current.play();
+        audioRef.current.onended = () => setIsPlaying(false);
+        audioRef.current.onerror = () => {
+          setIsPlaying(false);
+          toast({
+            title: "Playback Error",
+            description: "Failed to play audio file",
+            variant: "destructive",
+          });
+        };
+      } catch (error) {
+        setIsPlaying(false);
+        console.error('Audio playback error:', error);
+        toast({
+          title: "Playback Error", 
+          description: "Could not play audio - try again",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -330,15 +351,28 @@ export default function VoiceModulationTest() {
             </Button>
 
             {audioUrl && (
-              <Button
-                onClick={playAudio}
-                disabled={isPlaying}
-                variant="outline"
-                className="w-full"
-              >
-                <Play className="h-4 w-4 mr-2" />
-                {isPlaying ? "Playing..." : "Play Generated Audio"}
-              </Button>
+              <div className="space-y-2">
+                <Button
+                  onClick={playAudio}
+                  disabled={isPlaying}
+                  variant="outline"
+                  className="w-full"
+                >
+                  <Play className="h-4 w-4 mr-2" />
+                  {isPlaying ? "Playing..." : "Play Generated Audio"}
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  Audio URL: {audioUrl}
+                </p>
+                <Button
+                  onClick={() => window.open(audioUrl, '_blank')}
+                  variant="ghost"
+                  size="sm"
+                  className="w-full"
+                >
+                  Open Audio in New Tab
+                </Button>
+              </div>
             )}
           </CardContent>
         </Card>
