@@ -710,7 +710,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Save to user voice emotion repository
       const timestamp = Date.now();
-      const fileName = `${userId}-${emotion}-${intensity || 5}-${timestamp}.mp3`;
+      const fileExtension = audioFile.mimetype.includes('webm') ? 'webm' : 'mp3';
+      const fileName = `${userId}-${emotion}-${intensity || 5}-${timestamp}.${fileExtension}`;
       const emotionDir = path.join(process.cwd(), 'persistent-cache', 'user-voice-emotions');
       await fs.mkdir(emotionDir, { recursive: true });
       
@@ -748,8 +749,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Voice emotion file not found" });
       }
       
-      res.setHeader('Content-Type', 'audio/mpeg');
+      // Set appropriate content type based on file extension
+      const contentType = fileName.endsWith('.webm') ? 'audio/webm' : 'audio/mpeg';
+      res.setHeader('Content-Type', contentType);
       res.setHeader('Accept-Ranges', 'bytes');
+      res.setHeader('Cache-Control', 'public, max-age=3600');
       res.sendFile(path.resolve(filePath));
     } catch (error) {
       console.error("Voice emotion serve error:", error);

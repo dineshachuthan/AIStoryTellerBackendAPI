@@ -69,7 +69,7 @@ export default function VoiceModulationTest() {
       };
 
       mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/mp3' });
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         await saveVoiceEmotion(audioBlob);
         stream.getTracks().forEach(track => track.stop());
       };
@@ -361,6 +361,20 @@ export default function VoiceModulationTest() {
                   <Play className="h-4 w-4 mr-2" />
                   {isPlaying ? "Playing..." : "Play Generated Audio"}
                 </Button>
+                
+                {/* HTML5 Audio Player as fallback */}
+                <div className="w-full">
+                  <audio 
+                    controls 
+                    className="w-full"
+                    preload="none"
+                  >
+                    <source src={audioUrl} type="audio/webm" />
+                    <source src={audioUrl} type="audio/mpeg" />
+                    Your browser does not support the audio element.
+                  </audio>
+                </div>
+                
                 <p className="text-xs text-muted-foreground">
                   Audio URL: {audioUrl}
                 </p>
