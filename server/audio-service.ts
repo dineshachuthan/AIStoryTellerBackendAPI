@@ -48,8 +48,8 @@ export class AudioService {
     }
   }
 
-  // Get user voice for specific emotion (with fallback to any user voice)
-  private async getUserVoiceForEmotion(userId: string, emotion: string, intensity: number): Promise<{ audioUrl: string } | null> {
+  // Get user voice for specific emotion with character-aware modulation
+  private async getUserVoiceForEmotion(userId: string, emotion: string, intensity: number, character?: any): Promise<{ audioUrl: string; voiceModulation?: any } | null> {
     if (!userId) return null;
     
     try {
@@ -70,7 +70,10 @@ export class AudioService {
           WHERE user_id = $1 AND emotion = $2
         `, [userId, emotion]);
         
-        return { audioUrl: result.rows[0].audio_url };
+        return { 
+          audioUrl: result.rows[0].audio_url,
+          voiceModulation: this.getCharacterModulation(character, emotion, intensity)
+        };
       }
       
       // Fallback to any user voice (most recently used)
@@ -83,8 +86,11 @@ export class AudioService {
       `, [userId]);
       
       if (result.rows.length > 0) {
-        console.log(`Using fallback user voice for emotion: ${emotion}`);
-        return { audioUrl: result.rows[0].audio_url };
+        console.log(`Using fallback user voice for emotion: ${emotion} with character modulation`);
+        return { 
+          audioUrl: result.rows[0].audio_url,
+          voiceModulation: this.getCharacterModulation(character, emotion, intensity)
+        };
       }
       
     } catch (error) {
@@ -92,6 +98,164 @@ export class AudioService {
     }
     
     return null;
+  }
+
+  // Get character-specific voice modulation parameters
+  private getCharacterModulation(character: any, emotion: string, intensity: number): any {
+    if (!character) return null;
+    
+    const modulation = {
+      pitchShift: 0,
+      speedAdjustment: this.getEmotionSpeed(emotion, intensity),
+      toneAdjustment: 'normal',
+      characterType: 'human'
+    };
+
+    const characterName = character.name?.toLowerCase() || '';
+    const characterDesc = character.description?.toLowerCase() || '';
+    const characterTraits = character.traits?.map((t: string) => t.toLowerCase()) || [];
+
+    // Animal character modulations
+    if (this.isAnimalCharacter(characterName, characterDesc, characterTraits)) {
+      modulation.characterType = 'animal';
+      
+      // Specific animal voice adjustments
+      if (characterName.includes('dog') || characterDesc.includes('dog')) {
+        modulation.pitchShift = 0.1; // Slightly higher pitch
+        modulation.toneAdjustment = 'energetic';
+      } else if (characterName.includes('cat') || characterDesc.includes('cat')) {
+        modulation.pitchShift = 0.15; // Higher pitch, more refined
+        modulation.toneAdjustment = 'smooth';
+      } else if (characterName.includes('lion') || characterDesc.includes('lion')) {
+        modulation.pitchShift = -0.2; // Lower, more powerful
+        modulation.toneAdjustment = 'commanding';
+      } else if (characterName.includes('bird') || characterDesc.includes('bird')) {
+        modulation.pitchShift = 0.3; // Much higher pitch
+        modulation.toneAdjustment = 'bright';
+      } else {
+        // Generic animal modulation
+        modulation.pitchShift = 0.05;
+        modulation.toneAdjustment = 'natural';
+      }
+    }
+    // Age-based modulations
+    else if (this.isChildCharacter(characterName, characterDesc, characterTraits)) {
+      modulation.characterType = 'child';
+      modulation.pitchShift = 0.2; // Higher pitch for children
+      modulation.speedAdjustment *= 1.1; // Slightly faster
+      modulation.toneAdjustment = 'youthful';
+    }
+    else if (this.isElderlyCharacter(characterName, characterDesc, characterTraits)) {
+      modulation.characterType = 'elderly';
+      modulation.pitchShift = -0.1; // Slightly lower pitch
+      modulation.speedAdjustment *= 0.9; // Slower pace
+      modulation.toneAdjustment = 'wise';
+    }
+    // Gender-based subtle modulations
+    else if (this.isFemaleCharacter(characterName, characterDesc, characterTraits)) {
+      modulation.characterType = 'female';
+      modulation.pitchShift = 0.05; // Slightly higher
+      modulation.toneAdjustment = 'feminine';
+    }
+    else if (this.isMaleCharacter(characterName, characterDesc, characterTraits)) {
+      modulation.characterType = 'male';
+      modulation.pitchShift = -0.05; // Slightly lower
+      modulation.toneAdjustment = 'masculine';
+    }
+
+    // Personality-based fine-tuning
+    if (characterTraits.includes('aggressive') || characterTraits.includes('angry')) {
+      modulation.speedAdjustment *= 1.1;
+      modulation.toneAdjustment = 'intense';
+    } else if (characterTraits.includes('gentle') || characterTraits.includes('kind')) {
+      modulation.speedAdjustment *= 0.95;
+      modulation.toneAdjustment = 'soft';
+    } else if (characterTraits.includes('wise') || characterTraits.includes('intelligent')) {
+      modulation.speedAdjustment *= 0.92;
+      modulation.toneAdjustment = 'thoughtful';
+    }
+
+    console.log(`Character modulation for ${character.name}: type=${modulation.characterType}, pitch=${modulation.pitchShift}, speed=${modulation.speedAdjustment}`);
+    return modulation;
+  }
+
+  // Character type detection helpers
+  private isAnimalCharacter(name: string, desc: string, traits: string[]): boolean {
+    const animalIndicators = ['dog', 'cat', 'lion', 'tiger', 'bear', 'wolf', 'fox', 'bird', 'eagle', 'owl', 'horse', 'elephant', 'mouse', 'rabbit', 'deer', 'dragon', 'snake', 'fish', 'whale', 'dolphin'];
+    return animalIndicators.some(animal => 
+      name.includes(animal) || desc.includes(animal) || traits.some(trait => trait.includes(animal))
+    );
+  }
+
+  private isChildCharacter(name: string, desc: string, traits: string[]): boolean {
+    const childIndicators = ['child', 'kid', 'boy', 'girl', 'young', 'little', 'small', 'teenager', 'teen'];
+    return childIndicators.some(indicator => 
+      name.includes(indicator) || desc.includes(indicator) || traits.includes(indicator)
+    );
+  }
+
+  private isElderlyCharacter(name: string, desc: string, traits: string[]): boolean {
+    const elderlyIndicators = ['old', 'elderly', 'aged', 'grandfather', 'grandmother', 'grandpa', 'grandma', 'elder', 'senior', 'ancient'];
+    return elderlyIndicators.some(indicator => 
+      name.includes(indicator) || desc.includes(indicator) || traits.includes(indicator)
+    );
+  }
+
+  private isFemaleCharacter(name: string, desc: string, traits: string[]): boolean {
+    const femaleIndicators = ['woman', 'lady', 'girl', 'mother', 'daughter', 'sister', 'queen', 'princess', 'female', 'she', 'her'];
+    return femaleIndicators.some(indicator => 
+      name.includes(indicator) || desc.includes(indicator) || traits.includes(indicator)
+    );
+  }
+
+  private isMaleCharacter(name: string, desc: string, traits: string[]): boolean {
+    const maleIndicators = ['man', 'gentleman', 'boy', 'father', 'son', 'brother', 'king', 'prince', 'male', 'he', 'him'];
+    return maleIndicators.some(indicator => 
+      name.includes(indicator) || desc.includes(indicator) || traits.includes(indicator)
+    );
+  }
+
+  // Detect which character is speaking based on text content and context
+  private detectCharacterFromEmotion(text: string, emotion: string, characters: any[]): any {
+    if (!characters || characters.length === 0) return null;
+    
+    const textLower = text.toLowerCase();
+    
+    // Look for character names mentioned in the text
+    for (const character of characters) {
+      const charName = character.name?.toLowerCase();
+      if (charName && textLower.includes(charName)) {
+        return character;
+      }
+    }
+    
+    // If no explicit character found, try to match by emotion context
+    // For example, if emotion is "anger" and we have an aggressive character
+    const emotionCharacterMap: { [key: string]: string[] } = {
+      anger: ['aggressive', 'fierce', 'warrior', 'fighter'],
+      joy: ['happy', 'cheerful', 'optimistic', 'bright'],
+      sadness: ['melancholy', 'sorrowful', 'tragic', 'depressed'],
+      fear: ['timid', 'scared', 'anxious', 'nervous'],
+      wisdom: ['wise', 'intelligent', 'scholarly', 'sage'],
+      love: ['romantic', 'caring', 'gentle', 'loving']
+    };
+    
+    const emotionTraits = emotionCharacterMap[emotion.toLowerCase()] || [];
+    if (emotionTraits.length > 0) {
+      for (const character of characters) {
+        const charTraits = character.traits?.map((t: string) => t.toLowerCase()) || [];
+        const charDesc = character.description?.toLowerCase() || '';
+        
+        if (emotionTraits.some(trait => 
+          charTraits.includes(trait) || charDesc.includes(trait)
+        )) {
+          return character;
+        }
+      }
+    }
+    
+    // Default to first character if no specific match
+    return characters[0] || null;
   }
 
   // Select character-level voice (consistent per character)
@@ -363,67 +527,7 @@ export class AudioService {
     return fileName;
   }
 
-  // Detect which character is speaking based on emotion context
-  private detectCharacterFromEmotion(text: string, emotion: string, characters?: any[]): any | null {
-    if (!characters || characters.length === 0) return null;
 
-    const lowerText = text.toLowerCase();
-    
-    // Specific character detection with priority order
-    
-    // Check for Mr. Mallard / husband references first
-    if (lowerText.includes('mr. mallard') || lowerText.includes('mr mallard') || 
-        lowerText.includes('husband') || lowerText.includes('him ') || 
-        lowerText.includes('he ') || lowerText.includes('his ')) {
-      const maleCharacter = characters.find(c => 
-        c.name.toLowerCase().includes('mr.') || 
-        c.description?.toLowerCase().includes('husband') ||
-        c.description?.toLowerCase().includes('male')
-      );
-      if (maleCharacter) {
-        console.log(`Character detected - Male: ${maleCharacter.name} (assigned voice: ${maleCharacter.assignedVoice})`);
-        return maleCharacter;
-      }
-    }
-
-    // Check for Louise Mallard / wife references
-    if (lowerText.includes('louise mallard') || lowerText.includes('louise') ||
-        lowerText.includes('wife') || lowerText.includes('woman') || 
-        lowerText.includes('her ') || lowerText.includes('she ')) {
-      const femaleCharacter = characters.find(c => 
-        c.name.toLowerCase().includes('louise') || 
-        c.description?.toLowerCase().includes('woman') ||
-        c.description?.toLowerCase().includes('wife')
-      );
-      if (femaleCharacter) {
-        console.log(`Character detected - Female: ${femaleCharacter.name} (assigned voice: ${femaleCharacter.assignedVoice})`);
-        return femaleCharacter;
-      }
-    }
-
-    // Generic "Mallard" - prefer protagonist (Louise)
-    if (lowerText.includes('mallard')) {
-      const protagonist = characters.find(c => c.role === 'protagonist');
-      if (protagonist) {
-        console.log(`Character detected - Protagonist: ${protagonist.name} (assigned voice: ${protagonist.assignedVoice})`);
-        return protagonist;
-      }
-    }
-
-    // Direct full name matching as fallback
-    for (const character of characters) {
-      const fullName = character.name.toLowerCase();
-      if (lowerText.includes(fullName)) {
-        console.log(`Character detected by full name: ${character.name} (assigned voice: ${character.assignedVoice})`);
-        return character;
-      }
-    }
-
-    // Default to protagonist if no specific match
-    const protagonist = characters.find(c => c.role === 'protagonist') || characters[0];
-    console.log(`Using default protagonist: ${protagonist?.name} (assigned voice: ${protagonist?.assignedVoice})`);
-    return protagonist;
-  }
 
   // Main method to generate or retrieve audio with simplified voice logic
   async generateEmotionAudio(options: AudioGenerationOptions): Promise<AudioResult> {
@@ -433,13 +537,14 @@ export class AudioService {
     const hasUserVoices = await this.hasAnyUserVoiceEmotions(userId);
     
     if (hasUserVoices) {
-      // User has voice samples - use user voice for all emotions
-      const userVoiceResult = await this.getUserVoiceForEmotion(userId, options.emotion, options.intensity);
+      // User has voice samples - use user voice for all emotions with character modulation
+      const speakingCharacter = this.detectCharacterFromEmotion(options.text, options.emotion, options.characters);
+      const userVoiceResult = await this.getUserVoiceForEmotion(userId, options.emotion, options.intensity, speakingCharacter);
       if (userVoiceResult) {
         return {
           audioUrl: userVoiceResult.audioUrl,
           isUserGenerated: true,
-          voice: 'user-emotion-repository'
+          voice: `user-${userVoiceResult.voiceModulation?.characterType || 'modulated'}`
         };
       }
     }

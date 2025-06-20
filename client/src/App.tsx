@@ -15,6 +15,7 @@ import VoiceSetup from "@/pages/voice-setup";
 import StoryPlayer from "@/pages/story-player";
 import StoryLibrary from "@/pages/story-library";
 import StoryCollaboration from "@/pages/story-collaboration";
+import VoiceModulationTest from "@/pages/voice-modulation-test";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
 import NotFound from "@/pages/not-found";
@@ -54,6 +55,7 @@ function Router() {
             <Route path="/story/:storyId" component={StoryPlayer} />
             <Route path="/story/:storyId/play" component={StoryPlayer} />
             <Route path="/story/:storyId/collaborate" component={StoryCollaboration} />
+            <Route path="/voice-test" component={VoiceModulationTest} />
             <Route component={NotFound} />
           </>
         ) : (
