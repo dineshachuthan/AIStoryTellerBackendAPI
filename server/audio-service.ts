@@ -2,7 +2,7 @@ import OpenAI from 'openai';
 import fs from 'fs/promises';
 import path from 'path';
 import { getCachedAudio, cacheAudio } from './content-cache';
-import { db } from './db';
+import { pool } from './db';
 
 export interface AudioGenerationOptions {
   text: string;
@@ -35,14 +35,13 @@ export class AudioService {
     if (!userId) return false;
     
     try {
-      // Check database for any user voice emotions
-      const result = await db.query(`
+      const result = await pool.query(`
         SELECT COUNT(*) as count 
         FROM user_voice_emotions 
         WHERE user_id = $1
       `, [userId]);
       
-      return result.rows[0]?.count > 0;
+      return parseInt(result.rows[0]?.count || '0') > 0;
     } catch (error) {
       console.error('Error checking user voice emotions:', error);
       return false;
@@ -55,7 +54,7 @@ export class AudioService {
     
     try {
       // First try exact emotion match
-      let result = await db.query(`
+      let result = await pool.query(`
         SELECT audio_url, usage_count 
         FROM user_voice_emotions 
         WHERE user_id = $1 AND emotion = $2 
@@ -65,7 +64,7 @@ export class AudioService {
       
       if (result.rows.length > 0) {
         // Update usage count
-        await db.query(`
+        await pool.query(`
           UPDATE user_voice_emotions 
           SET usage_count = usage_count + 1, last_used_at = NOW() 
           WHERE user_id = $1 AND emotion = $2
@@ -75,7 +74,7 @@ export class AudioService {
       }
       
       // Fallback to any user voice (most recently used)
-      result = await db.query(`
+      result = await pool.query(`
         SELECT audio_url 
         FROM user_voice_emotions 
         WHERE user_id = $1 
@@ -209,29 +208,75 @@ export class AudioService {
     return originalText;
   }
 
-  // Get emotion-appropriate speech speed
+  // Get emotion-appropriate speech speed with dynamic modulation
   private getEmotionSpeed(emotion: string, intensity: number): number {
     const baseSpeed = 1.0;
+    
+    // Comprehensive emotion-to-speed mapping
     const speedMap: { [key: string]: number } = {
-      excitement: 1.2,
-      joy: 1.1,
-      anger: 1.15,
-      fear: 0.9,
-      sadness: 0.8,
-      melancholy: 0.85,
-      grief: 0.7,
-      wisdom: 0.9,
+      // High energy emotions (faster)
+      excitement: 1.25,
+      joy: 1.15,
+      happiness: 1.1,
+      enthusiasm: 1.2,
+      anger: 1.2,
+      rage: 1.3,
+      panic: 1.4,
+      shock: 1.1,
+      surprise: 1.15,
       anticipation: 1.1,
-      shock: 0.95,
-      surprise: 1.05
+      
+      // Medium energy emotions (normal to slightly varied)
+      hope: 1.05,
+      love: 0.95,
+      contentment: 0.95,
+      confusion: 0.9,
+      curiosity: 1.05,
+      trust: 0.98,
+      acceptance: 0.95,
+      
+      // Low energy emotions (slower)
+      sadness: 0.8,
+      melancholy: 0.82,
+      grief: 0.7,
+      despair: 0.75,
+      disappointment: 0.85,
+      fear: 0.88,
+      worry: 0.9,
+      regret: 0.85,
+      guilt: 0.87,
+      shame: 0.8,
+      loneliness: 0.82,
+      nostalgia: 0.85,
+      
+      // Neutral/contemplative emotions
+      neutral: 1.0,
+      calm: 0.92,
+      peace: 0.9,
+      wisdom: 0.88,
+      thoughtfulness: 0.9,
+      reflection: 0.88
     };
     
     const emotionSpeed = speedMap[emotion.toLowerCase()] || baseSpeed;
     
-    // Adjust based on intensity (higher intensity = slightly faster)
-    const intensityAdjustment = (intensity - 5) * 0.02; // -0.08 to +0.1
+    // Dynamic intensity adjustment - more nuanced than linear
+    let intensityAdjustment = 0;
+    if (intensity <= 3) {
+      // Low intensity - slower and more subdued
+      intensityAdjustment = -0.1 + (intensity * 0.02);
+    } else if (intensity >= 8) {
+      // High intensity - faster and more energetic
+      intensityAdjustment = 0.05 + ((intensity - 8) * 0.03);
+    } else {
+      // Medium intensity - slight variation
+      intensityAdjustment = (intensity - 5) * 0.015;
+    }
     
-    return Math.max(0.5, Math.min(2.0, emotionSpeed + intensityAdjustment));
+    const finalSpeed = emotionSpeed + intensityAdjustment;
+    
+    // Clamp to reasonable bounds
+    return Math.max(0.6, Math.min(1.8, finalSpeed));
   }
 
   // Check for user-recorded voice override
@@ -274,16 +319,19 @@ export class AudioService {
     return null;
   }
 
-  // Generate AI audio
+  // Generate AI audio with dynamic emotion modulation
   private async generateAIAudio(options: AudioGenerationOptions): Promise<Buffer> {
-    const selectedVoice = options.voice || this.selectEmotionVoice(options.emotion, options.intensity, options.characters);
+    const selectedVoice = options.voice || this.selectCharacterVoice(options.characters);
     const emotionText = this.createEmotionText(options.text, options.emotion, options.intensity);
+    const emotionSpeed = this.getEmotionSpeed(options.emotion, options.intensity);
+    
+    console.log(`Generating modulated audio: voice=${selectedVoice}, emotion=${options.emotion}, intensity=${options.intensity}, speed=${emotionSpeed}`);
     
     const response = await this.openai.audio.speech.create({
       model: "tts-1",
       voice: selectedVoice as any,
       input: emotionText,
-      speed: this.getEmotionSpeed(options.emotion, options.intensity),
+      speed: emotionSpeed,
     });
 
     return Buffer.from(await response.arrayBuffer());

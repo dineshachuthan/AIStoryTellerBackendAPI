@@ -8,6 +8,7 @@ import passport from 'passport';
 import { insertUserSchema, insertLocalUserSchema } from "@shared/schema";
 import { analyzeStoryContent, generateCharacterImage, transcribeAudio } from "./ai-analysis";
 import { getCachedCharacterImage, cacheCharacterImage, getCachedAudio, cacheAudio, getCachedAnalysis, cacheAnalysis, getAllCacheStats, cleanOldCacheFiles } from "./content-cache";
+import { pool } from "./db";
 import { audioService } from "./audio-service";
 import { getAllVoiceSamples, getVoiceSampleProgress } from "./voice-samples";
 import { storyNarrator } from "./story-narrator";
@@ -661,6 +662,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error serving cached audio:", error);
       res.status(404).json({ message: "Audio file not found" });
+    }
+  });
+
+  // Save user voice emotion to repository (cross-story)
+  app.post("/api/user-voice-emotions", upload.single('audio'), async (req, res) => {
+    try {
+      const { emotion, intensity, storyId } = req.body;
+      const userId = (req.user as any)?.id;
+      const audioFile = req.file;
+      
+      if (!audioFile || !emotion || !userId) {
+        return res.status(400).json({ message: "Audio file, emotion, and user authentication are required" });
+      }
+
+      // Save to user voice emotion repository
+      const timestamp = Date.now();
+      const fileName = `${userId}-${emotion}-${intensity || 5}-${timestamp}.mp3`;
+      const emotionDir = path.join(process.cwd(), 'persistent-cache', 'user-voice-emotions');
+      await fs.mkdir(emotionDir, { recursive: true });
+      
+      const filePath = path.join(emotionDir, fileName);
+      await fs.writeFile(filePath, audioFile.buffer);
+      
+      // Store in database
+      await pool.query(`
+        INSERT INTO user_voice_emotions (user_id, emotion, intensity, audio_url, file_name, story_id_recorded, created_at)
+        VALUES ($1, $2, $3, $4, $5, $6, NOW())
+      `, [userId, emotion, parseInt(intensity) || 5, `/api/user-voice-emotions/${fileName}`, fileName, storyId ? parseInt(storyId) : null]);
+
+      console.log(`Saved user voice emotion: ${emotion} for user ${userId}`);
+      res.json({ 
+        message: "Voice emotion saved successfully",
+        emotion,
+        fileName,
+        audioUrl: `/api/user-voice-emotions/${fileName}`
+      });
+    } catch (error) {
+      console.error("User voice emotion save error:", error);
+      res.status(500).json({ message: "Failed to save voice emotion" });
+    }
+  });
+
+  // Serve user voice emotion files
+  app.get("/api/user-voice-emotions/:fileName", async (req, res) => {
+    try {
+      const { fileName } = req.params;
+      const filePath = path.join(process.cwd(), 'persistent-cache', 'user-voice-emotions', fileName);
+      
+      try {
+        await fs.access(filePath);
+      } catch {
+        return res.status(404).json({ message: "Voice emotion file not found" });
+      }
+      
+      res.setHeader('Content-Type', 'audio/mpeg');
+      res.setHeader('Accept-Ranges', 'bytes');
+      res.sendFile(path.resolve(filePath));
+    } catch (error) {
+      console.error("Voice emotion serve error:", error);
+      res.status(500).json({ message: "Failed to serve voice emotion" });
     }
   });
 
