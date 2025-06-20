@@ -61,9 +61,11 @@ export default function VoiceModulationTest() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          sampleRate: 44100
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: true,
+          sampleRate: 44100,
+          channelCount: 1
         } 
       });
       
@@ -411,9 +413,10 @@ export default function VoiceModulationTest() {
                     <source src={audioUrl} type="audio/mpeg" />
                     Your browser does not support the audio element.
                   </audio>
-                  <p className="text-xs text-center text-muted-foreground">
-                    Make sure your system volume is up and not muted
-                  </p>
+                  <div className="text-xs text-center text-muted-foreground space-y-1">
+                    <p>Make sure your system volume is up and not muted</p>
+                    <p>Audio will be amplified 3x during conversion for better volume</p>
+                  </div>
                 </div>
                 
                 {/* Simple Audio Test */}

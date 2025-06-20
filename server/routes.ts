@@ -725,11 +725,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Save temporary webm file
         await fs.writeFile(tempWebmFile, audioFile.buffer);
         
-        // Convert to MP3 using FFmpeg
+        // Convert to MP3 using FFmpeg with volume amplification
         try {
-          const ffmpegCommand = `ffmpeg -i "${tempWebmFile}" -acodec libmp3lame -b:a 192k -ar 44100 -y "${mp3FilePath}"`;
+          const ffmpegCommand = `ffmpeg -i "${tempWebmFile}" -acodec libmp3lame -b:a 192k -ar 44100 -af "volume=3.0" -y "${mp3FilePath}"`;
           await execAsync(ffmpegCommand);
-          console.log(`Successfully converted webm to MP3: ${mp3FileName}`);
+          console.log(`Successfully converted webm to MP3 with volume boost: ${mp3FileName}`);
         } catch (ffmpegError) {
           console.error('FFmpeg conversion error:', ffmpegError);
           // Fallback: save as webm if conversion fails
