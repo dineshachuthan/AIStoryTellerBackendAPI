@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
 import { AppTopNavigation } from "@/components/app-top-navigation";
 import { StoryAnalysisPanel } from "@/components/story/StoryAnalysisPanel";
+import { RolePlayAnalysisPanel } from "@/components/story/RolePlayAnalysisPanel";
 
 interface StoryAnalysis {
   characters: Array<{
@@ -347,19 +348,13 @@ export default function StoryAnalysis() {
             </TabsContent>
 
             <TabsContent value="roleplay" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Role Play Analysis</CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    Interactive character-based analysis for immersive storytelling
-                  </p>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-center text-muted-foreground py-12">
-                    Role Play Analysis features coming soon...
-                  </p>
-                </CardContent>
-              </Card>
+              <RolePlayAnalysisPanel
+                storyContent={analysisData.content}
+                existingCharacters={analysisData.analysis?.characters || []}
+                onAnalysisGenerated={(rolePlayAnalysis) => {
+                  console.log('Role-play analysis generated:', rolePlayAnalysis);
+                }}
+              />
             </TabsContent>
           </Tabs>
         </div>

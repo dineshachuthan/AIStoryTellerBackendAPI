@@ -7,6 +7,7 @@ import { setupAuth, requireAuth, requireAdmin, hashPassword } from "./auth";
 import passport from 'passport';
 import { insertUserSchema, insertLocalUserSchema } from "@shared/schema";
 import { analyzeStoryContent, generateCharacterImage, transcribeAudio } from "./ai-analysis";
+import { generateRolePlayAnalysis, enhanceExistingRolePlay, generateSceneDialogue } from "./roleplay-analysis";
 import { getCachedCharacterImage, cacheCharacterImage, getCachedAudio, cacheAudio, getCachedAnalysis, cacheAnalysis, getAllCacheStats, cleanOldCacheFiles } from "./content-cache";
 import { pool } from "./db";
 import { audioService } from "./audio-service";
@@ -475,6 +476,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error analyzing story:", error);
       res.status(500).json({ message: "Failed to analyze story" });
+    }
+  });
+
+  // Role-play analysis - generate scenes, dialogues, and backgrounds
+  app.post("/api/stories/roleplay-analyze", async (req, res) => {
+    try {
+      const { content, existingCharacters } = req.body;
+      if (!content) {
+        return res.status(400).json({ message: "Content is required" });
+      }
+
+      console.log("Generating role-play analysis for story");
+      
+      const rolePlayAnalysis = await generateRolePlayAnalysis(content, existingCharacters || []);
+      
+      console.log("Role-play analysis generated successfully");
+      res.json(rolePlayAnalysis);
+    } catch (error) {
+      console.error("Error generating role-play analysis:", error);
+      res.status(500).json({ message: "Failed to generate role-play analysis" });
+    }
+  });
+
+  // Enhance existing role-play with modifications
+  app.post("/api/stories/roleplay-enhance", async (req, res) => {
+    try {
+      const { originalAnalysis, modifications } = req.body;
+      if (!originalAnalysis) {
+        return res.status(400).json({ message: "Original analysis is required" });
+      }
+
+      console.log("Enhancing role-play analysis with modifications");
+      
+      const enhancedAnalysis = await enhanceExistingRolePlay(originalAnalysis, modifications);
+      
+      res.json(enhancedAnalysis);
+    } catch (error) {
+      console.error("Error enhancing role-play analysis:", error);
+      res.status(500).json({ message: "Failed to enhance role-play analysis" });
+    }
+  });
+
+  // Generate dialogue for a specific scene
+  app.post("/api/stories/generate-scene-dialogue", async (req, res) => {
+    try {
+      const { sceneContext, characters, emotionalTone } = req.body;
+      if (!sceneContext || !characters) {
+        return res.status(400).json({ message: "Scene context and characters are required" });
+      }
+
+      console.log("Generating scene dialogue");
+      
+      const dialogue = await generateSceneDialogue(sceneContext, characters, emotionalTone || "neutral");
+      
+      res.json({ dialogue });
+    } catch (error) {
+      console.error("Error generating scene dialogue:", error);
+      res.status(500).json({ message: "Failed to generate scene dialogue" });
     }
   });
 
