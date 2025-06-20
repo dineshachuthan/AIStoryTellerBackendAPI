@@ -54,20 +54,19 @@ export class SimpleAudioPlayer {
           intensity: matchingEmotion.intensity
         });
       } else {
-        // Priority 2: Use AI-generated voice as default fallback
-        const aiVoice = this.selectAIVoiceForEmotion(matchingEmotion.emotion, storyCharacters);
-        
-        // Generate AI voice audio URL with proper parameters
-        const params = new URLSearchParams({
-          emotion: matchingEmotion.emotion,
-          intensity: matchingEmotion.intensity.toString(),
+        // Priority 2: Use AI-generated voice through modular audio service
+        const result = await audioService.generateEmotionAudio({
           text: sentence,
-          voice: aiVoice
+          emotion: matchingEmotion.emotion,
+          intensity: matchingEmotion.intensity,
+          userId: userId,
+          storyId: storyId,
+          characters: storyCharacters
         });
         
         segments.push({
           text: sentence,
-          audioUrl: `/api/emotions/generate-sample?${params.toString()}`,
+          audioUrl: result.audioUrl,
           emotion: matchingEmotion.emotion,
           intensity: matchingEmotion.intensity
         });
@@ -86,48 +85,7 @@ export class SimpleAudioPlayer {
     };
   }
 
-  private selectAIVoiceForEmotion(emotion: string, characters: any[]): string {
-    // Priority 1: Use character's assigned voice from analysis
-    if (characters.length > 0) {
-      // Find character with assigned voice (from AI analysis)
-      const characterWithVoice = characters.find(c => c.assignedVoice);
-      if (characterWithVoice) {
-        console.log(`Using character voice: ${characterWithVoice.assignedVoice} for ${characterWithVoice.name}`);
-        return characterWithVoice.assignedVoice;
-      }
-      
-      // Fallback to protagonist if no assigned voice found
-      const protagonist = characters.find(c => c.role === 'protagonist');
-      if (protagonist && protagonist.assignedVoice) {
-        return protagonist.assignedVoice;
-      }
-    }
-
-    // Priority 2: Emotion-based voice mapping as fallback
-    const emotionVoiceMap: { [key: string]: string } = {
-      'joy': 'shimmer',
-      'happiness': 'shimmer', 
-      'excitement': 'echo',
-      'sadness': 'nova',
-      'grief': 'nova',
-      'anger': 'onyx',
-      'rage': 'onyx',
-      'fear': 'fable',
-      'shock': 'echo',
-      'surprise': 'echo',
-      'neutral': 'alloy',
-      'curiosity': 'echo',
-      'disappointment': 'nova',
-      'wisdom': 'fable',
-      'melancholy': 'nova',
-      'freedom': 'shimmer',
-      'irony': 'fable'
-    };
-
-    const selectedVoice = emotionVoiceMap[emotion.toLowerCase()] || 'alloy';
-    console.log(`Using emotion-based voice: ${selectedVoice} for emotion: ${emotion}`);
-    return selectedVoice;
-  }
+  // Voice selection logic moved to audioService for consistency
 
   private splitIntoSentences(content: string): string[] {
     return content
