@@ -38,8 +38,8 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Initialize character archetypes for reusable voice profiles
-  await archetypeService.initializeDefaultArchetypes();
+  // Initialize character archetypes for reusable voice profiles (non-blocking)
+  archetypeService.initializeDefaultArchetypes().catch(console.error);
   
   const server = await registerRoutes(app);
 
