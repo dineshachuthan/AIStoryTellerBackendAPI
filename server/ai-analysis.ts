@@ -255,133 +255,21 @@ export async function transcribeAudio(audioBuffer: Buffer): Promise<string> {
   }
 }
 
-// Advanced voice assignment function that considers multiple character attributes
+// Simple voice assignment function that rotates through available voices
 function assignVoiceToCharacter(character: ExtractedCharacter): string {
-  // Analyze character traits and description for voice selection
-  const description = character.description.toLowerCase();
-  const personality = character.personality.toLowerCase();
-  const traits = character.traits.map(t => t.toLowerCase());
-  const name = character.name.toLowerCase();
+  const availableVoices = ['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'];
   
-  console.log(`Assigning voice for: ${character.name}`);
-  console.log(`Description: ${description}`);
-  console.log(`Personality: ${personality}`);
-  console.log(`Traits: ${traits}`);
-  
-  // Direct character mapping for common story archetypes
-  const directMappings: { [key: string]: string } = {
-    'mother': 'nova',        // Female maternal voice
-    'mom': 'nova',
-    'mama': 'nova',
-    'boy': 'echo',           // Young male voice
-    'the boy': 'echo',
-    'young boy': 'echo',
-    'little boy': 'echo',
-    'father': 'fable',       // Mature male voice
-    'dad': 'fable',
-    'papa': 'fable',
-    'girl': 'shimmer',       // Young female voice
-    'little girl': 'shimmer',
-    'young girl': 'shimmer',
-    'king': 'onyx',          // Authoritative male voice
-    'queen': 'nova',         // Authoritative female voice
-    'priest': 'fable',       // Wise male voice
-    'soldier': 'echo',       // Strong young male voice
-    'dog': 'echo',           // Friendly energetic voice
-    'cat': 'shimmer',        // Graceful voice
-    'lion': 'onyx',          // Powerful voice
-    'wise man': 'fable',
-    'old man': 'fable',
-    'wise woman': 'nova',
-    'old woman': 'nova'
-  };
-  
-  // Check for direct character mapping first
-  for (const [pattern, voice] of Object.entries(directMappings)) {
-    if (name.includes(pattern)) {
-      return voice;
-    }
+  // Use character name hash to consistently assign same voice to same character
+  let hash = 0;
+  for (let i = 0; i < character.name.length; i++) {
+    const char = character.name.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
   }
   
-  // Gender detection from name and description
-  const femaleIndicators = ['mother', 'girl', 'woman', 'female', 'she', 'her', 'mrs', 'miss', 'lady', 'daughter', 'sister', 'grandmother', 'aunt', 'queen', 'princess', 'louise', 'mary', 'elizabeth', 'sarah', 'emma', 'anna', 'jane', 'wife'];
-  const maleIndicators = ['boy', 'man', 'male', 'he', 'him', 'mr', 'father', 'sir', 'son', 'brother', 'grandfather', 'uncle', 'king', 'prince', 'husband'];
+  const voiceIndex = Math.abs(hash) % availableVoices.length;
+  const assignedVoice = availableVoices[voiceIndex];
   
-  // Check female indicators first (more specific)
-  const isFemale = femaleIndicators.some(indicator => 
-    name.includes(indicator) || description.includes(indicator) || personality.includes(indicator)
-  );
-  
-  // Only check male if not already identified as female
-  const isMale = !isFemale && maleIndicators.some(indicator => 
-    name.includes(indicator) || description.includes(indicator) || personality.includes(indicator)
-  );
-  
-  console.log(`Gender detection - Female: ${isFemale}, Male: ${isMale}`);
-  
-  // Age detection from traits and description
-  const youngIndicators = ['young', 'child', 'kid', 'little', 'small', 'boy', 'girl', 'teenage', 'teen'];
-  const matureIndicators = ['old', 'elderly', 'wise', 'experienced', 'mother', 'father', 'mature', 'adult', 'grown'];
-  
-  const isYoung = youngIndicators.some(indicator => 
-    name.includes(indicator) || description.includes(indicator) || personality.includes(indicator) || traits.includes(indicator)
-  );
-  const isMature = matureIndicators.some(indicator => 
-    name.includes(indicator) || description.includes(indicator) || personality.includes(indicator) || traits.includes(indicator)
-  );
-  
-  // Authority/role detection
-  const authorityIndicators = ['wise', 'leader', 'teacher', 'mentor', 'authoritative', 'commanding', 'powerful', 'royal', 'noble'];
-  const gentleIndicators = ['kind', 'gentle', 'soft', 'caring', 'nurturing', 'supportive', 'loving', 'tender', 'warm'];
-  const dramaticIndicators = ['dramatic', 'intense', 'passionate', 'emotional', 'expressive', 'fierce', 'angry', 'evil'];
-  
-  const hasAuthority = authorityIndicators.some(indicator => 
-    personality.includes(indicator) || traits.includes(indicator)
-  );
-  const isGentle = gentleIndicators.some(indicator => 
-    personality.includes(indicator) || traits.includes(indicator)
-  );
-  const isDramatic = dramaticIndicators.some(indicator => 
-    personality.includes(indicator) || traits.includes(indicator)
-  );
-  
-  // Voice selection logic based on character attributes
-  if (isFemale) {
-    if (isMature || hasAuthority || name.includes('mother') || name.includes('queen')) {
-      console.log(`Selected nova for mature/authority female`);
-      return 'nova';     // Mature, clear female voice for mothers, queens, mature women
-    } else if (isYoung) {
-      console.log(`Selected shimmer for young female`);
-      return 'shimmer';  // Young, bright female voice for girls
-    } else if (isGentle) {
-      console.log(`Selected nova for gentle female`);
-      return 'nova';     // Warm, nurturing female voice
-    } else {
-      console.log(`Selected nova as default female voice`);
-      return 'nova';     // Default female voice
-    }
-  } else if (isMale) {
-    if (isYoung || name.includes('boy')) {
-      return 'echo';     // Young male voice for boys and young men
-    } else if (hasAuthority || isMature || name.includes('father') || name.includes('king')) {
-      return 'onyx';     // Deep, authoritative male voice for fathers, kings, mature men
-    } else if (isDramatic) {
-      return 'onyx';     // Dramatic male voice for villains
-    } else {
-      return 'fable';    // Default expressive male voice
-    }
-  }
-  
-  // Role-based fallback for ambiguous cases
-  const roleVoiceMap: { [key: string]: string } = {
-    'protagonist': 'echo',     // Young voice for main character
-    'antagonist': 'onyx',      // Deeper, more intense voice
-    'supporting': 'nova',      // Default to supportive voice
-    'narrator': 'alloy',       // Neutral narrator voice
-    'other': 'alloy'           // Neutral voice for others
-  };
-
-  const finalVoice = roleVoiceMap[character.role] || 'alloy';
-  console.log(`Final voice assignment: ${finalVoice}`);
-  return finalVoice;
+  console.log(`Assigning voice "${assignedVoice}" to character "${character.name}"`);
+  return assignedVoice;
 }
