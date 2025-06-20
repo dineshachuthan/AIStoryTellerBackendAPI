@@ -585,9 +585,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Step 7: Generate emotion audio sample for story playback (no new metadata)
-  app.post("/api/emotions/generate-sample", async (req, res) => {
+  app.get("/api/emotions/generate-sample", async (req, res) => {
     try {
-      const { emotion, intensity, text, userId } = req.body;
+      const { emotion, intensity, text, userId, voice } = req.query;
       
       if (!emotion || !text) {
         return res.status(400).json({ message: "Emotion and text are required" });
@@ -625,13 +625,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Use emotion-based voice selection for AI generation
-      const selectedVoice = selectEmotionVoice(emotion, intensity);
+      // Use specified voice or emotion-based voice selection for AI generation
+      const selectedVoice = (voice as string) || selectEmotionVoice(emotion as string, parseInt(intensity as string) || 5);
 
       // Check cache first
-      const cachedAudio = getCachedAudio(text, selectedVoice, emotion, intensity);
+      const cachedAudio = getCachedAudio(text as string, selectedVoice, emotion as string, parseInt(intensity as string) || 5);
       if (cachedAudio) {
-        return res.json({ url: cachedAudio });
+        // Serve the cached audio file directly
+        const filePath = path.join(process.cwd(), 'persistent-cache', 'audio', path.basename(cachedAudio));
+        res.setHeader('Content-Type', 'audio/mpeg');
+        res.setHeader('Cache-Control', 'public, max-age=3600');
+        return res.sendFile(path.resolve(filePath));
       }
 
       // Generate audio using OpenAI TTS
@@ -640,13 +644,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       // Create emotion-appropriate text
-      const emotionText = createEmotionText(text, emotion, intensity);
+      const emotionText = createEmotionText(text as string, emotion as string, parseInt(intensity as string) || 5);
       
       const response = await openai.audio.speech.create({
         model: "tts-1",
-        voice: selectedVoice,
+        voice: selectedVoice as any,
         input: emotionText,
-        speed: getEmotionSpeed(emotion, intensity),
+        speed: getEmotionSpeed(emotion as string, parseInt(intensity as string) || 5),
       });
 
       const buffer = Buffer.from(await response.arrayBuffer());
@@ -660,9 +664,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Write audio file
       await fs.writeFile(filePath, buffer);
-      
-      // Create file URL
-      const audioUrl = `/api/cached-audio/${fileName}`;
       
       // Save metadata for caching
       const metadata = {
@@ -679,7 +680,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2));
       
       console.log("Generated emotion audio sample for:", emotion);
-      res.json({ url: audioUrl });
+      
+      // Serve the audio file directly
+      res.setHeader('Content-Type', 'audio/mpeg');
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+      res.send(buffer);
     } catch (error) {
       console.error("Emotion sample generation error:", error);
       res.status(500).json({ message: error instanceof Error ? error.message : "Failed to generate emotion sample" });
