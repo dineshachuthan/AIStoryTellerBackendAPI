@@ -17,7 +17,7 @@ import { getEnvironment, getBaseUrl, getOAuthConfig } from "./oauth-config";
 import multer from "multer";
 import path from "path";
 import fs from "fs/promises";
-import { exec } from "child_process";
+import { exec, spawn } from "child_process";
 import { promisify } from "util";
 import OpenAI from "openai";
 
@@ -726,29 +726,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await fs.writeFile(tempWebmFile, audioFile.buffer);
         
         // Convert to MP3 using FFmpeg
-        const { spawn } = require('child_process');
-        await new Promise((resolve, reject) => {
-          const ffmpeg = spawn('ffmpeg', [
-            '-i', tempWebmFile,
-            '-acodec', 'libmp3lame',
-            '-b:a', '192k',  // High quality 192kbps
-            '-ar', '44100',  // 44.1kHz sample rate
-            '-y',           // Overwrite output file
-            mp3FilePath
-          ]);
-          
-          ffmpeg.on('close', (code: number) => {
-            if (code === 0) {
-              resolve(null);
-            } else {
-              reject(new Error(`FFmpeg conversion failed with code ${code}`));
-            }
-          });
-          
-          ffmpeg.stderr.on('data', (data: Buffer) => {
-            console.log('FFmpeg:', data.toString());
-          });
-        });
+        try {
+          const ffmpegCommand = `ffmpeg -i "${tempWebmFile}" -acodec libmp3lame -b:a 192k -ar 44100 -y "${mp3FilePath}"`;
+          await execAsync(ffmpegCommand);
+          console.log(`Successfully converted webm to MP3: ${mp3FileName}`);
+        } catch (ffmpegError) {
+          console.error('FFmpeg conversion error:', ffmpegError);
+          // Fallback: save as webm if conversion fails
+          finalFileName = `${userId}-${emotion}-${intensity || 5}-${timestamp}.webm`;
+          finalFilePath = path.join(emotionDir, finalFileName);
+          await fs.writeFile(finalFilePath, audioFile.buffer);
+        }
         
         // Clean up temporary webm file
         await fs.unlink(tempWebmFile);
