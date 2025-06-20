@@ -307,10 +307,13 @@ function assignVoiceToCharacter(character: ExtractedCharacter): string {
   const femaleIndicators = ['mother', 'girl', 'woman', 'female', 'she', 'her', 'mrs', 'miss', 'lady', 'daughter', 'sister', 'grandmother', 'aunt', 'queen', 'princess', 'louise', 'mary', 'elizabeth', 'sarah', 'emma', 'anna', 'jane', 'wife'];
   const maleIndicators = ['boy', 'man', 'male', 'he', 'him', 'mr', 'father', 'sir', 'son', 'brother', 'grandfather', 'uncle', 'king', 'prince', 'husband'];
   
+  // Check female indicators first (more specific)
   const isFemale = femaleIndicators.some(indicator => 
     name.includes(indicator) || description.includes(indicator) || personality.includes(indicator)
   );
-  const isMale = maleIndicators.some(indicator => 
+  
+  // Only check male if not already identified as female
+  const isMale = !isFemale && maleIndicators.some(indicator => 
     name.includes(indicator) || description.includes(indicator) || personality.includes(indicator)
   );
   
