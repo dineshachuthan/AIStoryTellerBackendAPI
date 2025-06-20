@@ -585,10 +585,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Step 7: Generate emotion audio sample for story playback (no new metadata)
-  app.get("/api/emotions/generate-sample", async (req, res, next) => {
+  app.post("/api/emotions/generate-sample", async (req, res) => {
     try {
-      console.log("Audio generation endpoint hit with query:", req.query);
-      const { emotion, intensity, text, userId, voice } = req.query;
+      const { emotion, intensity, text, userId, voice } = req.body;
       
       if (!emotion || !text) {
         console.log("Missing required parameters - emotion:", emotion, "text:", text);
@@ -683,12 +682,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log("Generated emotion audio sample for:", emotion);
       
+      // Return JSON response with audioUrl for analysis page
+      const audioUrl = `/api/emotions/generate-sample?emotion=${emotion}&intensity=${intensity}&text=${encodeURIComponent(text as string)}&voice=${selectedVoice}`;
+      res.json({ audioUrl });
+    } catch (error) {
+      console.error("Emotion sample generation error:", error);
+      res.status(500).json({ message: error instanceof Error ? error.message : "Failed to generate emotion sample" });
+    }
+  });
+
+  // GET endpoint for direct audio serving (used by story narration)
+  app.get("/api/emotions/generate-sample", async (req, res) => {
+    try {
+      const { emotion, intensity, text, voice } = req.query;
+      
+      if (!emotion || !text) {
+        return res.status(400).json({ message: "Emotion and text are required" });
+      }
+
+      const selectedVoice = (voice as string) || selectEmotionVoice(emotion as string, parseInt(intensity as string) || 5);
+
+      // Check cache first
+      const cachedAudio = getCachedAudio(text as string, selectedVoice, emotion as string, parseInt(intensity as string) || 5);
+      if (cachedAudio) {
+        const filePath = path.join(process.cwd(), 'persistent-cache', 'audio', path.basename(cachedAudio));
+        res.setHeader('Content-Type', 'audio/mpeg');
+        res.setHeader('Cache-Control', 'public, max-age=3600');
+        return res.sendFile(path.resolve(filePath));
+      }
+
+      // Generate audio using OpenAI TTS
+      const openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+      });
+      
+      const emotionText = createEmotionText(text as string, emotion as string, parseInt(intensity as string) || 5);
+      
+      const response = await openai.audio.speech.create({
+        model: "tts-1",
+        voice: selectedVoice as any,
+        input: emotionText,
+        speed: getEmotionSpeed(emotion as string, parseInt(intensity as string) || 5),
+      });
+
+      const buffer = Buffer.from(await response.arrayBuffer());
+      
+      // Cache the audio
+      const cacheDir = path.join(process.cwd(), 'persistent-cache', 'audio');
+      await fs.mkdir(cacheDir, { recursive: true });
+      
+      const fileName = `emotion-${emotion}-${intensity}-${Date.now()}.mp3`;
+      const filePath = path.join(cacheDir, fileName);
+      
+      await fs.writeFile(filePath, buffer);
+      
+      const metadata = {
+        text,
+        voice: selectedVoice,
+        emotion,
+        intensity,
+        fileName,
+        timestamp: Date.now(),
+        fileSize: buffer.length,
+      };
+      
+      const metadataPath = path.join(cacheDir, `${fileName}.json`);
+      await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2));
+      
       // Serve the audio file directly
       res.setHeader('Content-Type', 'audio/mpeg');
       res.setHeader('Cache-Control', 'public, max-age=3600');
       res.send(buffer);
     } catch (error) {
-      console.error("Emotion sample generation error:", error);
+      console.error("GET emotion sample generation error:", error);
       res.status(500).json({ message: error instanceof Error ? error.message : "Failed to generate emotion sample" });
     }
   });
