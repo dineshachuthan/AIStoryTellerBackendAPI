@@ -298,7 +298,7 @@ export class AudioService {
     return protagonist;
   }
 
-  // Main method to generate or retrieve audio
+  // Main method to generate or retrieve audio with fallback-to-source pattern
   async generateEmotionAudio(options: AudioGenerationOptions): Promise<AudioResult> {
     // Check for user voice override first
     const userVoiceUrl = await this.getUserVoiceOverride(options.userId || '', options.emotion, options.intensity, options.storyId);
@@ -313,29 +313,48 @@ export class AudioService {
     // Detect which character is speaking for this emotion
     const speakingCharacter = this.detectCharacterFromEmotion(options.text, options.emotion, options.characters);
     const characterArray = speakingCharacter ? [speakingCharacter] : options.characters;
-
     const selectedVoice = options.voice || this.selectEmotionVoice(options.emotion, options.intensity, characterArray);
 
-    // Check cache for AI-generated audio with character-specific voice
-    const cachedAudio = getCachedAudio(options.text, selectedVoice, options.emotion, options.intensity);
-    if (cachedAudio) {
+    // Try cache first, with fallback to source
+    try {
+      const cachedAudio = getCachedAudio(options.text, selectedVoice, options.emotion, options.intensity);
+      if (cachedAudio) {
+        // Verify cached file actually exists
+        const filePath = path.join(process.cwd(), 'persistent-cache', 'audio', path.basename(cachedAudio));
+        try {
+          await fs.access(filePath);
+          console.log("Using valid cached audio");
+          return {
+            audioUrl: `/api/emotions/cached-audio/${path.basename(cachedAudio)}`,
+            isUserGenerated: false,
+            voice: selectedVoice
+          };
+        } catch (fileError) {
+          console.warn("Cached audio file missing, falling back to source generation");
+          // Continue to source generation below
+        }
+      }
+    } catch (cacheError) {
+      console.warn("Cache read failed, falling back to source generation:", cacheError);
+      // Continue to source generation below
+    }
+
+    // Cache miss or error - generate from source and update cache
+    console.log("Generating audio from source and updating cache");
+    try {
+      const updatedOptions = { ...options, characters: characterArray };
+      const buffer = await this.generateAIAudio(updatedOptions);
+      const fileName = await this.cacheAudioFile(buffer, updatedOptions, selectedVoice);
+      
       return {
-        audioUrl: `/api/emotions/cached-audio/${path.basename(cachedAudio)}`,
+        audioUrl: `/api/emotions/cached-audio/${fileName}`,
         isUserGenerated: false,
         voice: selectedVoice
       };
+    } catch (sourceError) {
+      console.error("Source generation failed:", sourceError);
+      throw new Error(`Failed to generate audio: ${sourceError.message}`);
     }
-
-    // Generate new AI audio with character-specific voice
-    const updatedOptions = { ...options, characters: characterArray };
-    const buffer = await this.generateAIAudio(updatedOptions);
-    const fileName = await this.cacheAudioFile(buffer, updatedOptions, selectedVoice);
-    
-    return {
-      audioUrl: `/api/emotions/cached-audio/${fileName}`,
-      isUserGenerated: false,
-      voice: selectedVoice
-    };
   }
 
   // Get audio buffer for direct streaming
