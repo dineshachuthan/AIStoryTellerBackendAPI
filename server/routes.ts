@@ -922,13 +922,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Character-based narration with user voice samples
-  app.post("/api/stories/:id/character-narration", async (req, res) => {
+  app.post("/api/stories/:id/character-narration", requireAuth, async (req, res) => {
     try {
       const storyId = parseInt(req.params.id);
-      const { userId = 'user_123' } = req.body;
+      const userId = (req.user as any)?.id;
 
       if (!storyId) {
         return res.status(400).json({ message: "Story ID is required" });
+      }
+
+      if (!userId) {
+        return res.status(401).json({ message: "User authentication required" });
       }
 
       // Use simple audio player for reliable playback

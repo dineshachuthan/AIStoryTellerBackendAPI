@@ -153,7 +153,7 @@ export default function StoryPlayer() {
         },
         body: JSON.stringify({
           useUserVoices: true,
-          userId: 'user_123' // Test user ID
+          userId: user?.id || null
         }),
       });
 
@@ -222,18 +222,33 @@ export default function StoryPlayer() {
     if (segment.voiceUrl) {
       console.log("Playing segment:", segment.text, "URL:", segment.voiceUrl, "Index:", segmentIndex);
       
-      // Create new audio element if needed
-      if (!audioRef.current) {
-        audioRef.current = new Audio();
-        audioRef.current.preload = 'auto';
-        audioRef.current.crossOrigin = 'anonymous';
-      }
+      // Create new audio element for each segment to avoid conflicts
+      const audioElement = new Audio();
+      audioElement.src = segment.voiceUrl;
+      audioElement.volume = volume;
+      audioElement.muted = false;
+      audioElement.preload = 'auto';
+      audioElement.crossOrigin = 'anonymous';
       
-      audioRef.current.src = segment.voiceUrl;
-      audioRef.current.volume = volume;
-      audioRef.current.muted = false;
+      // Update the ref for volume controls
+      audioRef.current = audioElement;
       
-      audioRef.current.onended = () => {
+      // Ensure audio can play - handle browser autoplay policies
+      audioElement.play().then(() => {
+        console.log("Audio playback started successfully");
+        console.log("Audio volume:", audioElement.volume);
+        console.log("Audio muted:", audioElement.muted);
+        console.log("Audio duration:", audioElement.duration);
+        console.log("Audio current time:", audioElement.currentTime);
+      }).catch(error => {
+        console.error("Audio playback failed:", error);
+        // Try to enable audio context for future plays
+        if (error.name === 'NotAllowedError') {
+          console.log("Audio blocked by browser policy - user interaction required");
+        }
+      });
+      
+      audioElement.onended = () => {
         // Auto-advance to next segment
         const currentNarration = grandmaNarration || narration;
         if (currentNarration && segmentIndex < currentNarration.segments.length - 1) {
@@ -295,20 +310,17 @@ export default function StoryPlayer() {
         audioRef.current.pause();
       }
     } else {
-      // Initialize audio context on first user interaction to meet browser requirements
-      if (!audioRef.current) {
-        try {
-          audioRef.current = new Audio();
-          audioRef.current.preload = 'auto';
-          audioRef.current.volume = volume;
-          audioRef.current.muted = false;
-          
-          // Test audio capability with a brief silence
-          const testAudio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvGogBSl+0PLvgjMKLoPn8dC');
-          audioRef.current = testAudio;
-        } catch (error) {
-          console.warn("Audio initialization warning:", error);
-        }
+      // Create audio context with user interaction for browser policies
+      try {
+        // Test audio capability with user interaction
+        const testAudio = new Audio();
+        testAudio.volume = 0.01; // Very low volume test
+        testAudio.src = 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvGogBSl+0PLvgjMKLoPn8dC';
+        await testAudio.play();
+        testAudio.pause();
+        console.log("Audio context initialized successfully");
+      } catch (error) {
+        console.log("Audio context initialization:", error.message);
       }
       
       // Generate character-based narration if not already available
