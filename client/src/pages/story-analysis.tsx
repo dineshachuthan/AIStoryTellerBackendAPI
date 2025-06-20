@@ -7,14 +7,14 @@ import { ArrowLeft } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
 import { AppTopNavigation } from "@/components/app-top-navigation";
-import { StoryAnalysisOutput } from "@/components/story-analysis-output";
+import { StoryAnalysisPanel } from "@/components/story/StoryAnalysisPanel";
 
 interface StoryAnalysis {
   characters: Array<{
     name: string;
     description: string;
     personality: string;
-    role: string;
+    role: 'protagonist' | 'antagonist' | 'supporting' | 'narrator' | 'other';
     appearance?: string;
     traits: string[];
     assignedVoice?: string;
@@ -28,8 +28,12 @@ interface StoryAnalysis {
   }>;
   summary: string;
   category: string;
+  genre: string;
   themes: string[];
   suggestedTags: string[];
+  emotionalTags: string[];
+  readingTime: number;
+  ageRating: 'general' | 'teen' | 'mature';
   isAdultContent: boolean;
 }
 
@@ -49,6 +53,8 @@ export default function StoryAnalysis() {
   const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [userVoiceEmotions, setUserVoiceEmotions] = useState<Record<string, boolean>>({});
+  const [playingSample, setPlayingSample] = useState<string>("");
 
   // Fetch story data if storyId is provided
   const { data: storyData, isLoading: storyLoading } = useQuery({
@@ -63,18 +69,23 @@ export default function StoryAnalysis() {
         fetch(`/api/stories/${storyId}/characters`).then(res => res.ok ? res.json() : []),
         fetch(`/api/stories/${storyId}/emotions`).then(res => res.ok ? res.json() : [])
       ]).then(([characters, emotions]) => {
+        const story = storyData as any;
         const analysis: AnalysisData = {
           analysis: {
             characters: characters || [],
             emotions: emotions || [],
-            summary: storyData.summary || "",
-            category: storyData.category || "General",
-            themes: [],
-            suggestedTags: storyData.tags || [],
-            isAdultContent: storyData.isAdultContent || false
+            summary: story.summary || "",
+            category: story.category || "General",
+            genre: story.genre || "Fiction",
+            themes: story.themes || [],
+            suggestedTags: story.tags || [],
+            emotionalTags: story.emotionalTags || [],
+            readingTime: story.readingTime || 5,
+            ageRating: story.ageRating || 'general',
+            isAdultContent: story.isAdultContent || false
           },
-          content: storyData.content,
-          title: storyData.title
+          content: story.content,
+          title: story.title
         };
         setAnalysisData(analysis);
       }).catch(error => {
@@ -84,14 +95,18 @@ export default function StoryAnalysis() {
           analysis: {
             characters: [],
             emotions: [],
-            summary: storyData.summary || "",
-            category: storyData.category || "General",
-            themes: [],
-            suggestedTags: storyData.tags || [],
-            isAdultContent: storyData.isAdultContent || false
+            summary: (storyData as any).summary || "",
+            category: (storyData as any).category || "General",
+            genre: (storyData as any).genre || "Fiction",
+            themes: (storyData as any).themes || [],
+            suggestedTags: (storyData as any).tags || [],
+            emotionalTags: (storyData as any).emotionalTags || [],
+            readingTime: (storyData as any).readingTime || 5,
+            ageRating: (storyData as any).ageRating || 'general',
+            isAdultContent: (storyData as any).isAdultContent || false
           },
-          content: storyData.content,
-          title: storyData.title
+          content: (storyData as any).content,
+          title: (storyData as any).title
         };
         setAnalysisData(analysis);
       });
@@ -267,14 +282,13 @@ export default function StoryAnalysis() {
             </div>
           </div>
 
-          {/* Use the reusable StoryAnalysisOutput component */}
-          <StoryAnalysisOutput
+          {/* Use the new modular StoryAnalysisPanel component */}
+          <StoryAnalysisPanel
             analysis={analysisData.analysis}
-            content={analysisData.content}
-            title={analysisData.title}
-            onCreateStory={handleCreateStory}
-            showCreateButton={!storyId} // Only show create button for new stories
-            isCreating={isCreating}
+            userVoiceEmotions={userVoiceEmotions}
+            onEmotionRecorded={handleEmotionRecorded}
+            onPlayEmotionSample={handlePlayEmotionSample}
+            isPlayingSample={playingSample}
             storyId={storyId ? parseInt(storyId) : undefined}
             onUpdateStory={handleUpdateStory}
             isUpdating={isUpdating}
