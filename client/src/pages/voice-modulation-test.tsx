@@ -51,6 +51,7 @@ export default function VoiceModulationTest() {
   const [audioUrl, setAudioUrl] = useState<string>('');
   const [isPlaying, setIsPlaying] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [audioLevel, setAudioLevel] = useState(0);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -82,6 +83,24 @@ export default function VoiceModulationTest() {
       const mediaRecorder = new MediaRecorder(stream, options[0] || {});
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
+
+      // Add audio level monitoring
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const source = audioContext.createMediaStreamSource(stream);
+      const analyser = audioContext.createAnalyser();
+      analyser.fftSize = 256;
+      source.connect(analyser);
+
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+      const monitorLevel = () => {
+        analyser.getByteFrequencyData(dataArray);
+        const average = dataArray.reduce((sum, value) => sum + value, 0) / dataArray.length;
+        setAudioLevel(Math.round(average));
+        if (isRecording) {
+          requestAnimationFrame(monitorLevel);
+        }
+      };
+      monitorLevel();
 
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
@@ -298,6 +317,21 @@ export default function VoiceModulationTest() {
                 className="w-full"
               />
             </div>
+
+            {isRecording && (
+              <div className="space-y-2">
+                <Label>Audio Level: {audioLevel}</Label>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div 
+                    className="bg-green-600 h-2 rounded-full transition-all duration-100"
+                    style={{ width: `${Math.min(100, (audioLevel / 128) * 100)}%` }}
+                  ></div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {audioLevel > 10 ? "Good audio level detected" : "Speak louder - audio level too low"}
+                </p>
+              </div>
+            )}
 
             <Button
               onClick={isRecording ? stopRecording : startRecording}
