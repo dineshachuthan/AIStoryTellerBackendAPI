@@ -1,4 +1,5 @@
 import { storage } from "./storage";
+import { audioService } from "./audio-service";
 
 export interface SimpleAudioSegment {
   text: string;
