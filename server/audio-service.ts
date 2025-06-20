@@ -315,7 +315,7 @@ export class AudioService {
     const characterArray = speakingCharacter ? [speakingCharacter] : options.characters;
     const selectedVoice = options.voice || this.selectEmotionVoice(options.emotion, options.intensity, characterArray);
 
-    // Try cache first, with fallback to source
+    // Try cache first
     try {
       const cachedAudio = getCachedAudio(options.text, selectedVoice, options.emotion, options.intensity);
       if (cachedAudio) {
@@ -330,31 +330,34 @@ export class AudioService {
             voice: selectedVoice
           };
         } catch (fileError) {
-          console.warn("Cached audio file missing, falling back to source generation");
-          // Continue to source generation below
+          console.warn("Cached audio file missing, generating from source");
         }
       }
     } catch (cacheError) {
-      console.warn("Cache read failed, falling back to source generation:", cacheError);
-      // Continue to source generation below
+      console.warn("Cache read failed, generating from source:", cacheError);
     }
 
-    // Cache miss or error - generate from source and update cache
-    console.log("Generating audio from source and updating cache");
+    // Cache miss/error - call source and update cache
+    const updatedOptions = { ...options, characters: characterArray };
+    const buffer = await this.generateAIAudio(updatedOptions);
+    
+    // Generate new audio and cache it
+    const fileName = await this.cacheAudioFile(buffer, updatedOptions, selectedVoice);
+    const audioUrl = `/api/emotions/cached-audio/${fileName}`;
+    
+    // Update cache with new audio data
     try {
-      const updatedOptions = { ...options, characters: characterArray };
-      const buffer = await this.generateAIAudio(updatedOptions);
-      const fileName = await this.cacheAudioFile(buffer, updatedOptions, selectedVoice);
-      
-      return {
-        audioUrl: `/api/emotions/cached-audio/${fileName}`,
-        isUserGenerated: false,
-        voice: selectedVoice
-      };
-    } catch (sourceError) {
-      console.error("Source generation failed:", sourceError);
-      throw new Error(`Failed to generate audio: ${sourceError.message}`);
+      await cacheAudio(options.text, selectedVoice, audioUrl, options.emotion, options.intensity);
+      console.log("Successfully updated cache with new audio");
+    } catch (cacheUpdateError) {
+      console.warn("Failed to update cache, but audio generated successfully:", cacheUpdateError);
     }
+    
+    return {
+      audioUrl,
+      isUserGenerated: false,
+      voice: selectedVoice
+    };
   }
 
   // Get audio buffer for direct streaming

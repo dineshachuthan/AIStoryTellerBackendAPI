@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { getCachedAnalysis, cacheAnalysis } from './content-cache';
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 if (!process.env.OPENAI_API_KEY) {
@@ -44,6 +45,18 @@ export interface StoryAnalysis {
 }
 
 export async function analyzeStoryContent(content: string): Promise<StoryAnalysis> {
+  // Try cache first, fallback to source with cache update
+  try {
+    const cachedAnalysis = getCachedAnalysis(content);
+    if (cachedAnalysis) {
+      console.log("Using cached story analysis");
+      return cachedAnalysis;
+    }
+  } catch (cacheError) {
+    console.warn("Cache read failed, generating analysis from source:", cacheError);
+  }
+
+  // Cache miss/error - generate from source and update cache
   try {
     const systemPrompt = `You are an expert story analyst. Analyze the provided story text and extract detailed information about characters, emotions, themes, and content.
 
@@ -123,6 +136,14 @@ export async function analyzeStoryContent(content: string): Promise<StoryAnalysi
         assignedVoice
       };
     });
+
+    // Update cache with new analysis
+    try {
+      cacheAnalysis(content, analysis);
+      console.log("Successfully cached story analysis");
+    } catch (cacheUpdateError) {
+      console.warn("Failed to update analysis cache:", cacheUpdateError);
+    }
     
     return analysis;
   } catch (error) {
