@@ -217,7 +217,7 @@ export function StoryAnalysisOutput({
           text: emotion.quote || emotion.context,
           userId: user?.id,
           storyId: storyId,
-          characters: charactersWithImages
+          characters: charactersWithImages // This ensures character consistency
         }),
       });
 

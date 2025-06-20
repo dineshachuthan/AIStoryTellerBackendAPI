@@ -28,74 +28,77 @@ export class AudioService {
     });
   }
 
-  // Select voice based on emotion, character context, and gender
+  // Select voice based on character consistency first, then gender and emotion context
   private selectEmotionVoice(emotion: string, intensity: number, characters?: any[]): string {
-    // Voice mapping based on emotion and character context
-    const emotionVoiceMap: { [key: string]: string[] } = {
-      joy: ['nova', 'shimmer'],
-      happiness: ['nova', 'shimmer'],
-      excitement: ['shimmer', 'nova'],
-      sadness: ['onyx', 'fable'],
-      grief: ['onyx', 'fable'],
-      melancholy: ['fable', 'onyx'],
-      anger: ['onyx', 'echo'],
-      rage: ['onyx', 'echo'],
-      fear: ['echo', 'fable'],
-      anxiety: ['echo', 'fable'],
-      surprise: ['shimmer', 'nova'],
-      shock: ['echo', 'onyx'],
-      disgust: ['onyx', 'echo'],
-      love: ['nova', 'shimmer'],
-      trust: ['alloy', 'nova'],
-      anticipation: ['shimmer', 'echo'],
-      curiosity: ['shimmer', 'alloy'],
-      wisdom: ['fable', 'alloy'],
-      irony: ['echo', 'fable'],
-      freedom: ['nova', 'shimmer'],
-      despair: ['onyx', 'fable']
-    };
-
-    // Get voices for this emotion or default
-    const emotionVoices = emotionVoiceMap[emotion.toLowerCase()] || ['alloy', 'echo'];
-    
-    // If we have character context, consider gender
+    // Priority 1: Use character's assigned voice from analysis if available
     if (characters && characters.length > 0) {
-      const character = characters[0]; // Use first character for voice selection
+      const character = characters[0]; // Primary character for this emotion
+      if (character.assignedVoice) {
+        console.log(`Using character assigned voice: ${character.assignedVoice} for ${character.name} (emotion: ${emotion})`);
+        return character.assignedVoice;
+      }
+      
+      // Priority 2: Assign consistent voice based on character gender/role
       const description = character.description?.toLowerCase() || '';
       const appearance = character.appearance?.toLowerCase() || '';
+      const name = character.name?.toLowerCase() || '';
       
-      // Simple gender detection
+      // Gender detection for voice consistency
       const isFemale = description.includes('woman') || description.includes('girl') || 
                       description.includes('female') || description.includes('she') ||
-                      appearance.includes('woman') || appearance.includes('girl');
+                      appearance.includes('woman') || appearance.includes('girl') ||
+                      name.includes('louise') || name.includes('mary') || name.includes('anna');
       
       const isMale = description.includes('man') || description.includes('boy') || 
                     description.includes('male') || description.includes('he') ||
                     appearance.includes('man') || appearance.includes('boy');
       
-      // Prefer female voices for female characters
+      // Assign consistent character voice based on gender and role
       if (isFemale) {
-        const femaleVoices = emotionVoices.filter(v => ['nova', 'shimmer', 'alloy'].includes(v));
-        if (femaleVoices.length > 0) {
-          return femaleVoices[0];
-        }
+        // Female character voices - consistent assignment
+        if (character.role === 'protagonist') return 'nova';
+        if (character.role === 'antagonist') return 'shimmer';
+        return 'alloy'; // Supporting female characters
       }
       
-      // Prefer male voices for male characters
       if (isMale) {
-        const maleVoices = emotionVoices.filter(v => ['onyx', 'echo', 'fable'].includes(v));
-        if (maleVoices.length > 0) {
-          return maleVoices[0];
-        }
+        // Male character voices - consistent assignment
+        if (character.role === 'protagonist') return 'onyx';
+        if (character.role === 'antagonist') return 'echo';
+        return 'fable'; // Supporting male characters
       }
+      
+      // Default protagonist/antagonist assignment if gender unclear
+      if (character.role === 'protagonist') return 'nova';
+      if (character.role === 'antagonist') return 'echo';
     }
     
-    // Default to first voice for emotion, with intensity consideration
-    if (intensity >= 8) {
-      return emotionVoices[0]; // More expressive voice for high intensity
-    } else {
-      return emotionVoices[emotionVoices.length - 1]; // Calmer voice for lower intensity
-    }
+    // Priority 3: Fallback to emotion-appropriate voice (only if no character context)
+    const emotionDefaults: { [key: string]: string } = {
+      joy: 'nova',
+      happiness: 'nova',
+      excitement: 'shimmer',
+      sadness: 'alloy',
+      grief: 'alloy',
+      melancholy: 'fable',
+      anger: 'onyx',
+      rage: 'onyx',
+      fear: 'echo',
+      anxiety: 'echo',
+      surprise: 'shimmer',
+      shock: 'echo',
+      disgust: 'onyx',
+      love: 'nova',
+      trust: 'alloy',
+      anticipation: 'shimmer',
+      curiosity: 'shimmer',
+      wisdom: 'fable',
+      irony: 'echo',
+      freedom: 'nova',
+      despair: 'alloy'
+    };
+
+    return emotionDefaults[emotion.toLowerCase()] || 'alloy';
   }
 
   // Create emotion-appropriate text
@@ -233,6 +236,43 @@ export class AudioService {
     return fileName;
   }
 
+  // Detect which character is speaking based on emotion context
+  private detectCharacterFromEmotion(text: string, emotion: string, characters?: any[]): any | null {
+    if (!characters || characters.length === 0) return null;
+
+    const lowerText = text.toLowerCase();
+    
+    // Direct name matching
+    for (const character of characters) {
+      const firstName = character.name.split(' ')[0].toLowerCase();
+      const fullName = character.name.toLowerCase();
+      
+      if (lowerText.includes(fullName) || lowerText.includes(firstName)) {
+        console.log(`Character detected by name: ${character.name} (assigned voice: ${character.assignedVoice})`);
+        return character;
+      }
+    }
+
+    // Context-based character detection for specific characters like Louise Mallard
+    if (lowerText.includes('wife') || lowerText.includes('woman') || lowerText.includes('her ') || 
+        lowerText.includes('she ') || lowerText.includes('louise') || lowerText.includes('mallard')) {
+      const femaleCharacter = characters.find(c => 
+        c.name.toLowerCase().includes('louise') || 
+        c.description?.toLowerCase().includes('woman') ||
+        c.description?.toLowerCase().includes('wife')
+      );
+      if (femaleCharacter) {
+        console.log(`Character detected by context: ${femaleCharacter.name} (assigned voice: ${femaleCharacter.assignedVoice})`);
+        return femaleCharacter;
+      }
+    }
+
+    // Default to protagonist if no specific match
+    const protagonist = characters.find(c => c.role === 'protagonist') || characters[0];
+    console.log(`Using default protagonist: ${protagonist?.name} (assigned voice: ${protagonist?.assignedVoice})`);
+    return protagonist;
+  }
+
   // Main method to generate or retrieve audio
   async generateEmotionAudio(options: AudioGenerationOptions): Promise<AudioResult> {
     // Check for user voice override first
@@ -245,9 +285,13 @@ export class AudioService {
       };
     }
 
-    const selectedVoice = options.voice || this.selectEmotionVoice(options.emotion, options.intensity, options.characters);
+    // Detect which character is speaking for this emotion
+    const speakingCharacter = this.detectCharacterFromEmotion(options.text, options.emotion, options.characters);
+    const characterArray = speakingCharacter ? [speakingCharacter] : options.characters;
 
-    // Check cache for AI-generated audio
+    const selectedVoice = options.voice || this.selectEmotionVoice(options.emotion, options.intensity, characterArray);
+
+    // Check cache for AI-generated audio with character-specific voice
     const cachedAudio = getCachedAudio(options.text, selectedVoice, options.emotion, options.intensity);
     if (cachedAudio) {
       return {
@@ -257,9 +301,10 @@ export class AudioService {
       };
     }
 
-    // Generate new AI audio
-    const buffer = await this.generateAIAudio(options);
-    const fileName = await this.cacheAudioFile(buffer, options, selectedVoice);
+    // Generate new AI audio with character-specific voice
+    const updatedOptions = { ...options, characters: characterArray };
+    const buffer = await this.generateAIAudio(updatedOptions);
+    const fileName = await this.cacheAudioFile(buffer, updatedOptions, selectedVoice);
     
     return {
       audioUrl: `/api/emotions/cached-audio/${fileName}`,
