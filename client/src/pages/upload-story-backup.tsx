@@ -139,7 +139,7 @@ export default function UploadStory() {
         category: analysisData.category || 'General',
         summary: analysisData.summary || null,
         isAdultContent: analysisData.isAdultContent || false,
-        authorId: 'test_user_123',
+        authorId: 'userId',
         uploadType: 'manual',
       };
 
@@ -487,7 +487,7 @@ export default function UploadStory() {
       setPlayingEmotions(prev => ({ ...prev, [emotionKey]: true }));
 
       // Always check for the latest user recording first
-      const userId = 'user_123';
+      const userId = user?.id;
       const expectedFileName = `${userId}-${emotion.emotion}-${emotion.intensity}.wav`;
       const userRecordingUrl = `/api/emotions/user-voice-sample/${expectedFileName}`;
       
@@ -750,7 +750,7 @@ export default function UploadStory() {
 
   const saveEmotionVoiceRecording = async (emotionKey: string, emotion: any, audioBlob: Blob) => {
     try {
-      const userId = 'user_123';
+      const userId = user?.id;
       const formData = new FormData();
       // Use consistent filename format that matches server expectations
       formData.append('audio', audioBlob, `${userId}-${emotion.emotion}-${emotion.intensity}.webm`);
@@ -872,7 +872,7 @@ export default function UploadStory() {
         category: analysisData.category || 'General',
         summary: analysisData.summary || null,
         isAdultContent: analysisData.isAdultContent || false,
-        authorId: 'test_user_123',
+        authorId: 'userId',
         uploadType: 'manual',
       };
 

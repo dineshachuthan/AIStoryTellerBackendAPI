@@ -29,19 +29,32 @@ export class SimpleAudioPlayer {
     
     const segments: SimpleAudioSegment[] = [];
     
-    for (let i = 0; i < sentences.length; i++) {
-      const sentence = sentences[i];
-      
-      // Use existing user voice sample
-      const voiceSample = userVoiceSamples.find(sample => sample.sampleType === 'shock') || 
-                         userVoiceSamples.find(sample => sample.sampleType === 'neutral') ||
-                         userVoiceSamples[0];
-      
-      if (voiceSample) {
+    // If user has voice samples, use them; otherwise use OpenAI TTS
+    if (userVoiceSamples.length > 0) {
+      for (let i = 0; i < sentences.length; i++) {
+        const sentence = sentences[i];
+        
+        // Use existing user voice sample
+        const voiceSample = userVoiceSamples.find(sample => sample.sampleType === 'shock') || 
+                           userVoiceSamples.find(sample => sample.sampleType === 'neutral') ||
+                           userVoiceSamples[0];
+        
         segments.push({
           text: sentence,
           audioUrl: voiceSample.audioUrl,
           emotion: voiceSample.sampleType || 'neutral',
+          intensity: 5
+        });
+      }
+    } else {
+      // Fallback to OpenAI TTS when no user voice samples exist
+      console.log('No user voice samples found, using OpenAI TTS fallback');
+      for (let i = 0; i < sentences.length; i++) {
+        const sentence = sentences[i];
+        segments.push({
+          text: sentence,
+          audioUrl: `/api/tts/generate?text=${encodeURIComponent(sentence)}&voice=alloy`,
+          emotion: 'neutral',
           intensity: 5
         });
       }
