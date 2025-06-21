@@ -433,6 +433,7 @@ export default function StoryAnalysis() {
                   storyId={parseInt(storyId!)}
                   storyContent={storyData?.content || ""}
                   existingCharacters={analysisData.analysis.characters}
+                  existingAnalysis={rolePlayAnalysis}
                   onAnalysisGenerated={(analysis) => {
                     console.log("Roleplay analysis generated:", analysis);
                   }}

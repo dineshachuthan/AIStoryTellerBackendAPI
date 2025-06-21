@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -77,6 +77,7 @@ interface RolePlayAnalysisPanelProps {
   storyId: number;
   storyContent: string;
   existingCharacters?: any[];
+  existingAnalysis?: RolePlayAnalysis | null;
   onAnalysisGenerated?: (analysis: RolePlayAnalysis) => void;
 }
 
@@ -84,6 +85,7 @@ export function RolePlayAnalysisPanel({
   storyId,
   storyContent,
   existingCharacters = [],
+  existingAnalysis = null,
   onAnalysisGenerated
 }: RolePlayAnalysisPanelProps) {
   const { toast } = useToast();
@@ -111,6 +113,13 @@ export function RolePlayAnalysisPanel({
     characterAssignments: {} as { [characterName: string]: string }
   });
   const [sendingInvitation, setSendingInvitation] = useState(false);
+
+  // Use existing analysis if provided
+  useEffect(() => {
+    if (existingAnalysis && !analysis) {
+      setAnalysis(existingAnalysis);
+    }
+  }, [existingAnalysis, analysis]);
 
   const sendInvitation = async () => {
     if (!inviteForm.invitationName || !inviteForm.contactValue) {
