@@ -119,11 +119,13 @@ export default function StoryAnalysis() {
 
   // Generate both narrative and roleplay analyses automatically
   const generateComprehensiveAnalysis = async (story: any) => {
+    console.log('Starting comprehensive analysis for story:', storyId);
     setIsLoadingAnalyses(true);
     setAnalysisProgress({ narrative: false, roleplay: false });
 
     try {
       // Generate narrative analysis first
+      console.log('Calling narrative endpoint:', `/api/stories/${storyId}/narrative`);
       const narrativeResponse = await apiRequest(`/api/stories/${storyId}/narrative`, {
         method: 'POST',
         credentials: 'include'
@@ -139,14 +141,16 @@ export default function StoryAnalysis() {
 
       // Generate roleplay analysis
       try {
+        console.log('Calling roleplay endpoint:', `/api/stories/${storyId}/roleplay`);
         const rolePlayResponse = await apiRequest(`/api/stories/${storyId}/roleplay`, {
           method: 'POST',
           credentials: 'include'
         });
+        console.log('Roleplay analysis completed successfully');
         setRolePlayAnalysis(rolePlayResponse);
         setAnalysisProgress(prev => ({ ...prev, roleplay: true }));
       } catch (roleplayError: any) {
-        console.log('Roleplay analysis error:', roleplayError);
+        console.error('Roleplay analysis error:', roleplayError);
         setAnalysisProgress(prev => ({ ...prev, roleplay: false }));
         setRolePlayAnalysis(null);
       }
