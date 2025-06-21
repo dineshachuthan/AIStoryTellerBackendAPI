@@ -5,6 +5,9 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { 
@@ -17,7 +20,13 @@ import {
   Users, 
   Film, 
   Loader2,
-  RefreshCw
+  RefreshCw,
+  Send,
+  UserPlus,
+  Mail,
+  Phone,
+  Copy,
+  ExternalLink
 } from "lucide-react";
 
 interface DialogueLine {
@@ -82,6 +91,105 @@ export function RolePlayAnalysisPanel({
   const [isGenerating, setIsGenerating] = useState(false);
   const [editingScene, setEditingScene] = useState<number | null>(null);
   const [editedScene, setEditedScene] = useState<RolePlayScene | null>(null);
+  
+  // Invitation system state
+  const [sentInvitations, setSentInvitations] = useState<Array<{
+    id: string;
+    invitationName: string;
+    contactMethod: "email" | "phone";
+    contactValue: string;
+    status: "pending" | "accepted" | "declined" | "completed";
+    sentAt: Date;
+    characterAssignments: { [characterName: string]: string };
+    invitationUrl: string;
+  }>>([]);
+  const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [inviteForm, setInviteForm] = useState({
+    invitationName: "",
+    contactMethod: "email" as "email" | "phone",
+    contactValue: "",
+    characterAssignments: {} as { [characterName: string]: string }
+  });
+  const [sendingInvitation, setSendingInvitation] = useState(false);
+
+  const sendInvitation = async () => {
+    if (!inviteForm.invitationName || !inviteForm.contactValue) {
+      toast({
+        title: "Missing Information",
+        description: "Please provide invitation name and contact details",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSendingInvitation(true);
+    try {
+      // Convert story to collaborative template
+      const templateResponse = await apiRequest("/api/roleplay-templates/convert", "POST", {
+        storyId: storyId,
+        title: `${analysis?.title || 'Untitled'} - ${inviteForm.invitationName}`,
+        description: `Roleplay invitation: ${inviteForm.invitationName}`,
+        isPublic: false
+      });
+
+      // Create instance from template
+      const instanceResponse = await apiRequest("/api/roleplay-instances/create", "POST", {
+        templateId: templateResponse.templateId,
+        instanceTitle: inviteForm.invitationName,
+        participantContacts: [{
+          characterName: Object.keys(inviteForm.characterAssignments)[0] || analysis?.characters[0]?.name || "Character",
+          contactMethod: inviteForm.contactMethod,
+          contactValue: inviteForm.contactValue,
+          isGuest: true
+        }]
+      });
+
+      // Add to sent invitations
+      const newInvitation = {
+        id: instanceResponse.instanceId,
+        invitationName: inviteForm.invitationName,
+        contactMethod: inviteForm.contactMethod,
+        contactValue: inviteForm.contactValue,
+        status: "pending" as const,
+        sentAt: new Date(),
+        characterAssignments: inviteForm.characterAssignments,
+        invitationUrl: instanceResponse.invitationLinks[0]?.invitationUrl || ""
+      };
+
+      setSentInvitations(prev => [...prev, newInvitation]);
+
+      toast({
+        title: "Invitation Sent",
+        description: `Roleplay invitation "${inviteForm.invitationName}" has been sent successfully!`,
+      });
+
+      // Reset form
+      setInviteForm({
+        invitationName: "",
+        contactMethod: "email",
+        contactValue: "",
+        characterAssignments: {}
+      });
+      setShowInviteDialog(false);
+
+    } catch (error) {
+      toast({
+        title: "Failed to Send Invitation",
+        description: "There was an error sending the invitation. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setSendingInvitation(false);
+    }
+  };
+
+  const copyInvitationLink = (invitationUrl: string) => {
+    navigator.clipboard.writeText(invitationUrl);
+    toast({
+      title: "Link Copied",
+      description: "Invitation link copied to clipboard",
+    });
+  };
 
   const generateRolePlayAnalysis = async () => {
     if (!storyId) {
@@ -283,7 +391,115 @@ export function RolePlayAnalysisPanel({
             </div>
             
             <div>
-              <h4 className="font-medium mb-2">Characters</h4>
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="font-medium">Characters</h4>
+                <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
+                  <DialogTrigger asChild>
+                    <Button size="sm" className="bg-purple-600 hover:bg-purple-700">
+                      <Send className="w-4 h-4 mr-2" />
+                      Send Invitation
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Send Roleplay Invitation</DialogTitle>
+                      <DialogDescription>
+                        Invite friends to participate in this roleplay story
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="invitationName">Invitation Name</Label>
+                        <Input
+                          id="invitationName"
+                          placeholder="e.g., 'Sarah's Version', 'Team A Roleplay'"
+                          value={inviteForm.invitationName}
+                          onChange={(e) => setInviteForm(prev => ({ ...prev, invitationName: e.target.value }))}
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label>Contact Method</Label>
+                        <Select 
+                          value={inviteForm.contactMethod} 
+                          onValueChange={(value: "email" | "phone") => setInviteForm(prev => ({ ...prev, contactMethod: value }))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="email">
+                              <div className="flex items-center gap-2">
+                                <Mail className="w-4 h-4" />
+                                Email
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="phone">
+                              <div className="flex items-center gap-2">
+                                <Phone className="w-4 h-4" />
+                                Phone Number
+                              </div>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="contactValue">
+                          {inviteForm.contactMethod === "email" ? "Email Address" : "Phone Number"}
+                        </Label>
+                        <Input
+                          id="contactValue"
+                          type={inviteForm.contactMethod === "email" ? "email" : "tel"}
+                          placeholder={inviteForm.contactMethod === "email" ? "friend@example.com" : "+1234567890"}
+                          value={inviteForm.contactValue}
+                          onChange={(e) => setInviteForm(prev => ({ ...prev, contactValue: e.target.value }))}
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label>Assign Character (Optional)</Label>
+                        <Select 
+                          value={inviteForm.characterAssignments[Object.keys(inviteForm.characterAssignments)[0]] || ""} 
+                          onValueChange={(value) => setInviteForm(prev => ({ 
+                            ...prev, 
+                            characterAssignments: { [value]: inviteForm.contactValue } 
+                          }))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select character for friend" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {analysis.characters.map((character) => (
+                              <SelectItem key={character.name} value={character.name}>
+                                {character.name} ({character.role})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setShowInviteDialog(false)}>
+                        Cancel
+                      </Button>
+                      <Button onClick={sendInvitation} disabled={sendingInvitation}>
+                        {sendingInvitation ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Sending...
+                          </>
+                        ) : (
+                          <>
+                            <Send className="w-4 h-4 mr-2" />
+                            Send Invitation
+                          </>
+                        )}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {analysis.characters.map((character, index) => (
                   <div key={index} className="border rounded-lg p-3 space-y-2">
