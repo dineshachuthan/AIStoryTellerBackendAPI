@@ -9,6 +9,8 @@ import { insertUserSchema, insertLocalUserSchema } from "@shared/schema";
 import { analyzeStoryContent, generateCharacterImage, transcribeAudio } from "./ai-analysis";
 import { generateRolePlayAnalysis, enhanceExistingRolePlay, generateSceneDialogue } from "./roleplay-analysis";
 import { rolePlayAudioService } from "./roleplay-audio-service";
+import { collaborativeRoleplayStorage } from "./collaborative-roleplay-storage";
+import { templateConversionService } from "./template-conversion-service";
 import { getCachedCharacterImage, cacheCharacterImage, getCachedAudio, cacheAudio, getCachedAnalysis, cacheAnalysis, getAllCacheStats, cleanOldCacheFiles } from "./content-cache";
 import { pool } from "./db";
 import { audioService } from "./audio-service";
@@ -2695,6 +2697,211 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Failed to increment confidence metric:", error);
       res.status(500).json({ message: "Failed to update confidence" });
+    }
+  });
+
+  // =============================================================================
+  // COLLABORATIVE ROLEPLAY ENDPOINTS
+  // =============================================================================
+  
+  // Convert existing story to collaborative template
+  app.post("/api/stories/:storyId/convert-to-template", requireAuth, async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.storyId);
+      const userId = (req.user as any)?.id;
+      const { makePublic = true } = req.body;
+      
+      // Verify story ownership or public access
+      const story = await storage.getStory(storyId);
+      if (!story) {
+        return res.status(404).json({ message: "Story not found" });
+      }
+      
+      if (story.authorId !== userId && !story.isPublished) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const result = await templateConversionService.convertStoryToTemplate(
+        storyId, 
+        userId, 
+        makePublic
+      );
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Template conversion error:", error);
+      res.status(500).json({ message: "Failed to convert story to template" });
+    }
+  });
+  
+  // Get public templates for browsing
+  app.get("/api/roleplay-templates", async (req, res) => {
+    try {
+      const templates = await collaborativeRoleplayStorage.getPublicTemplates();
+      res.json(templates);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch templates" });
+    }
+  });
+  
+  // Get user's templates
+  app.get("/api/roleplay-templates/my-templates", requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any)?.id;
+      const templates = await collaborativeRoleplayStorage.getUserTemplates(userId);
+      res.json(templates);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch user templates" });
+    }
+  });
+  
+  // Get template details with character roles
+  app.get("/api/roleplay-templates/:templateId", async (req, res) => {
+    try {
+      const templateId = parseInt(req.params.templateId);
+      
+      const [template, characterRoles, scenes] = await Promise.all([
+        collaborativeRoleplayStorage.getTemplate(templateId),
+        collaborativeRoleplayStorage.getTemplateCharacterRoles(templateId),
+        collaborativeRoleplayStorage.getTemplateScenes(templateId)
+      ]);
+      
+      if (!template) {
+        return res.status(404).json({ message: "Template not found" });
+      }
+      
+      res.json({
+        ...template,
+        characterRoles,
+        scenes: scenes.dialogues.length,
+        backgrounds: scenes.backgrounds.length
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch template details" });
+    }
+  });
+  
+  // Create new instance from template
+  app.post("/api/roleplay-templates/:templateId/create-instance", requireAuth, async (req, res) => {
+    try {
+      const templateId = parseInt(req.params.templateId);
+      const userId = (req.user as any)?.id;
+      const { instanceTitle, isPublic = false } = req.body;
+      
+      const result = await templateConversionService.createInstanceFromTemplate(
+        templateId,
+        instanceTitle,
+        userId,
+        isPublic
+      );
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Instance creation error:", error);
+      res.status(500).json({ message: "Failed to create instance" });
+    }
+  });
+  
+  // Get user's instances
+  app.get("/api/roleplay-instances/my-instances", requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any)?.id;
+      const instances = await collaborativeRoleplayStorage.getUserInstances(userId);
+      res.json(instances);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch user instances" });
+    }
+  });
+  
+  // Get instance details with participants
+  app.get("/api/roleplay-instances/:instanceId", requireAuth, async (req, res) => {
+    try {
+      const instanceId = parseInt(req.params.instanceId);
+      const userId = (req.user as any)?.id;
+      
+      const [instance, participants] = await Promise.all([
+        collaborativeRoleplayStorage.getInstance(instanceId),
+        collaborativeRoleplayStorage.getInstanceParticipants(instanceId)
+      ]);
+      
+      if (!instance) {
+        return res.status(404).json({ message: "Instance not found" });
+      }
+      
+      // Check access permissions
+      if (instance.createdByUserId !== userId && !instance.isPublic) {
+        const userParticipant = participants.find(p => p.userId === userId);
+        if (!userParticipant) {
+          return res.status(403).json({ message: "Access denied" });
+        }
+      }
+      
+      res.json({
+        ...instance,
+        participants
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch instance details" });
+    }
+  });
+  
+  // Invitation landing page (public access)
+  app.get("/api/roleplay-invitations/:token", async (req, res) => {
+    try {
+      const token = req.params.token;
+      
+      const participant = await collaborativeRoleplayStorage.getParticipantByToken(token);
+      if (!participant) {
+        return res.status(404).json({ message: "Invalid invitation token" });
+      }
+      
+      // Get related data for invitation display
+      const instance = await collaborativeRoleplayStorage.getInstance(participant.instanceId);
+      if (!instance) {
+        return res.status(404).json({ message: "Instance not found" });
+      }
+      
+      const characterRoles = await collaborativeRoleplayStorage.getTemplateCharacterRoles(instance.templateId);
+      const characterRole = characterRoles.find(r => r.id === participant.characterRoleId);
+      
+      res.json({
+        participant,
+        instance,
+        characterRole,
+        invitationStatus: participant.invitationStatus
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch invitation details" });
+    }
+  });
+  
+  // Accept invitation
+  app.post("/api/roleplay-invitations/:token/accept", requireAuth, async (req, res) => {
+    try {
+      const token = req.params.token;
+      const userId = (req.user as any)?.id;
+      
+      const participant = await collaborativeRoleplayStorage.getParticipantByToken(token);
+      if (!participant) {
+        return res.status(404).json({ message: "Invalid invitation token" });
+      }
+      
+      if (participant.invitationStatus !== "pending") {
+        return res.status(400).json({ message: "Invitation already processed" });
+      }
+      
+      const updatedParticipant = await collaborativeRoleplayStorage.updateParticipant(
+        participant.id,
+        {
+          userId,
+          invitationStatus: "accepted",
+          acceptedAt: new Date(),
+        }
+      );
+      
+      res.json(updatedParticipant);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to accept invitation" });
     }
   });
 
