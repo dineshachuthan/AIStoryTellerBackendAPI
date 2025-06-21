@@ -1693,9 +1693,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = (req.user as any)?.id;
       const { title = "Untitled Story", storyType = "text" } = req.body;
       
-      console.log("Creating new draft story for user:", userId, "with auth user:", req.user);
+      console.log("Creating new draft story for user:", userId);
       
       if (!userId) {
+        console.log("No userId found in request.user:", req.user);
         return res.status(401).json({ message: "Authentication required" });
       }
       

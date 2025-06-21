@@ -32,53 +32,23 @@ export default function UploadStory() {
     enabled: !!storyId,
   });
 
-  // Create new draft story
-  async function createDraftStory() {
-    if (!user?.id) {
-      toast({
-        title: "Authentication Required",
-        description: "Please log in to create stories.",
-        variant: "destructive",
-      });
-      return;
+  // Type guard for existingStory
+  const story = existingStory as any;
+
+  // Initialize story content from existing story
+  useEffect(() => {
+    if (story && !storyLoading) {
+      setStoryTitle(story.title || "");
+      setStoryContent(story.content || "");
     }
-
-    setIsCreatingDraft(true);
-
-    try {
-      const draft = await apiRequest('/api/stories/draft', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: storyTitle.trim() || "Untitled Story"
-        }),
-      });
-
-      console.log('Draft story created:', draft);
-      setDraftStory(draft);
-      
-      toast({
-        title: "Story Created",
-        description: "Your draft story has been created. You can now add content.",
-      });
-    } catch (error) {
-      console.error("Draft creation error:", error);
-      toast({
-        title: "Creation Failed",
-        description: "Could not create draft story. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsCreatingDraft(false);
-    }
-  }
+  }, [story, storyLoading]);
 
   // Update story content
   async function updateStoryContent() {
-    if (!draftStory?.id) {
+    if (!storyId) {
       toast({
-        title: "No Draft Story",
-        description: "Please create a story first.",
+        title: "No Story ID",
+        description: "Story ID is missing.",
         variant: "destructive",
       });
       return;
@@ -94,17 +64,16 @@ export default function UploadStory() {
     }
 
     try {
-      const updatedStory = await apiRequest(`/api/stories/${draftStory.id}/content`, {
+      const updatedStory = await apiRequest(`/api/stories/${storyId}/content`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title: storyTitle.trim() || draftStory.title,
+          title: storyTitle.trim() || story?.title || "Untitled Story",
           content: storyContent
         }),
       });
 
       console.log('Story content updated:', updatedStory);
-      setDraftStory(updatedStory);
       
       toast({
         title: "Content Saved",
@@ -122,10 +91,10 @@ export default function UploadStory() {
 
   // Analyze story and trigger dual analysis
   async function analyzeStory() {
-    if (!draftStory?.id) {
+    if (!storyId) {
       toast({
         title: "No Story",
-        description: "Please create and save your story first.",
+        description: "Story ID is missing.",
         variant: "destructive",
       });
       return;
@@ -147,7 +116,7 @@ export default function UploadStory() {
       await updateStoryContent();
       
       // Navigate to analysis page to trigger dual analysis
-      setLocation(`/analysis/${draftStory.id}`);
+      setLocation(`/analysis/${storyId}`);
     } catch (error) {
       console.error("Analysis error:", error);
       toast({
@@ -208,49 +177,30 @@ export default function UploadStory() {
                   className="min-h-[400px] bg-white/10 border-white/20 text-white placeholder-white/50 resize-none"
                 />
                 <div className="flex justify-between text-sm text-white/60">
-                  <span>Word count: {storyContent.trim().split(/\s+/).filter(word => word.length > 0).length}</span>
+                  <span>Word count: {storyContent.trim() ? storyContent.trim().split(/\s+/).length : 0}</span>
                   <span>Recommended: 500-1000 words</span>
                 </div>
               </div>
               
-              {/* Draft Story Status */}
-              {draftStory && (
+              {/* Story Status */}
+              {story && (
                 <div className="p-4 bg-green-500/20 border border-green-500/30 rounded-lg">
                   <div className="flex items-center gap-2 text-green-400">
                     <FileText className="w-4 h-4" />
-                    <span className="text-sm font-medium">Draft Story: {draftStory.title}</span>
+                    <span className="text-sm font-medium">Story: {story.title}</span>
                   </div>
-                  <p className="text-xs text-green-300 mt-1">Status: {draftStory.status || 'draft'}</p>
+                  <p className="text-xs text-green-300 mt-1">Status: {story.status || 'draft'}</p>
                 </div>
               )}
               
               {/* Action Buttons */}
               <div className="space-y-4 pt-6">
-                {!draftStory ? (
-                  // Step 1: Create new story
-                  <Button
-                    onClick={createDraftStory}
-                    disabled={isCreatingDraft}
-                    className="w-full bg-blue-600 hover:bg-blue-700"
-                  >
-                    {isCreatingDraft ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Creating Story...
-                      </>
-                    ) : (
-                      <>
-                        <Plus className="w-4 h-4 mr-2" />
-                        Create New Story
-                      </>
-                    )}
-                  </Button>
-                ) : (
+                {storyId ? (
                   <div className="space-y-3">
-                    {/* Step 2: Save content */}
+                    {/* Step 1: Save content */}
                     <Button
                       onClick={updateStoryContent}
-                      disabled={!storyContent.trim()}
+                      disabled={!storyContent.trim() || storyLoading}
                       variant="outline"
                       className="w-full border-white/20 text-white hover:bg-white/10"
                     >
@@ -258,10 +208,10 @@ export default function UploadStory() {
                       Save Content
                     </Button>
                     
-                    {/* Step 3: Analyze story */}
+                    {/* Step 2: Analyze story */}
                     <Button
                       onClick={analyzeStory}
-                      disabled={isAnalyzing || !storyContent.trim()}
+                      disabled={isAnalyzing || !storyContent.trim() || storyLoading}
                       className="w-full bg-purple-600 hover:bg-purple-700"
                     >
                       {isAnalyzing ? (
@@ -275,6 +225,19 @@ export default function UploadStory() {
                           Analyze Story
                         </>
                       )}
+                    </Button>
+                  </div>
+                ) : (
+                  // Fallback for direct navigation without story ID
+                  <div className="text-center p-6">
+                    <p className="text-white/70 mb-4">Please create a story from the home page to continue.</p>
+                    <Button
+                      onClick={() => setLocation("/")}
+                      variant="outline"
+                      className="border-white/20 text-white hover:bg-white/10"
+                    >
+                      <ArrowLeft className="w-4 h-4 mr-2" />
+                      Go Home
                     </Button>
                   </div>
                 )}
