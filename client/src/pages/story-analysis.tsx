@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLocation, useParams } from "wouter";
+import { useLocation, useRoute } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -51,10 +51,11 @@ export default function StoryAnalysis() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { user } = useAuth();
-  const params = useParams();
-  const storyId = params.storyId;
+  const [match, params] = useRoute("/analysis/:storyId");
+  const storyId = params?.storyId;
   
-  console.log('URL params:', params);
+  console.log('Route match:', match);
+  console.log('Route params:', params);
   console.log('Extracted storyId:', storyId);
   
   const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
