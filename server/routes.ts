@@ -552,19 +552,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Story not found" });
       }
 
-      // Allow story access for authors and collaborators
+      // Roleplay analysis access control:
+      // - Private stories: Only author can generate roleplay analysis
+      // - Public stories: Users can fork to their repository first
       const isAuthor = story.authorId === userId;
-      let isCollaborator = false;
       
-      try {
-        const collaborations = await storage.getStoryCollaborations(storyId);
-        isCollaborator = collaborations.some(c => c.invitedUserId === userId && c.status === 'accepted');
-      } catch (error) {
-        console.log("No collaborations found, continuing as author check");
-      }
-      
-      if (!isAuthor && !isCollaborator) {
-        return res.status(403).json({ message: "Access denied" });
+      if (!isAuthor) {
+        if (story.isPublished) {
+          return res.status(403).json({ 
+            message: "For public stories, please fork this story to your repository first, then generate roleplay analysis",
+            canFork: true
+          });
+        } else {
+          return res.status(403).json({ 
+            message: "Only the story author can generate roleplay analysis for private stories" 
+          });
+        }
       }
 
       console.log(`Generating roleplay analysis for story ${storyId}`);
@@ -1431,6 +1434,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(stories);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch user stories" });
+    }
+  });
+
+  // Fork a public story to user's private repository
+  app.post("/api/stories/:storyId/fork", requireAuth, async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.storyId);
+      const userId = (req.user as any)?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const originalStory = await storage.getStory(storyId);
+      if (!originalStory) {
+        return res.status(404).json({ message: "Story not found" });
+      }
+
+      if (!originalStory.isPublished) {
+        return res.status(403).json({ message: "Only public stories can be forked" });
+      }
+
+      // Create a new private story in user's repository
+      const forkedStory = await storage.createStory({
+        title: `${originalStory.title} (Fork)`,
+        content: originalStory.content,
+        authorId: userId,
+        genre: originalStory.genre || undefined,
+        summary: originalStory.summary || undefined,
+        themes: originalStory.themes || [],
+        tags: originalStory.tags || [],
+        category: originalStory.category || undefined,
+        isPublished: false, // Always private for forks
+        readingTime: originalStory.readingTime || undefined,
+        ageRating: originalStory.ageRating || 'general',
+        isAdultContent: originalStory.isAdultContent || false,
+        forkedFromId: storyId // Track the original story
+      });
+
+      // Copy characters if they exist
+      try {
+        const originalCharacters = await storage.getStoryCharacters(storyId);
+        for (const character of originalCharacters) {
+          await storage.createStoryCharacter({
+            storyId: forkedStory.id,
+            name: character.name,
+            description: character.description,
+            personality: character.personality,
+            role: character.role,
+            appearance: character.appearance,
+            traits: character.traits
+          });
+        }
+      } catch (error) {
+        console.log("No characters to copy for forked story");
+      }
+
+      // Copy emotions if they exist
+      try {
+        const originalEmotions = await storage.getStoryEmotions(storyId);
+        for (const emotion of originalEmotions) {
+          await storage.createStoryEmotion({
+            storyId: forkedStory.id,
+            emotion: emotion.emotion,
+            intensity: emotion.intensity,
+            context: emotion.context,
+            quote: emotion.quote
+          });
+        }
+      } catch (error) {
+        console.log("No emotions to copy for forked story");
+      }
+
+      res.json({ 
+        success: true, 
+        forkedStory,
+        message: "Story forked successfully to your private repository"
+      });
+    } catch (error) {
+      console.error("Error forking story:", error);
+      res.status(500).json({ message: "Failed to fork story" });
     }
   });
 
