@@ -95,6 +95,7 @@ export const stories = pgTable("stories", {
   uploadType: text("upload_type").notNull(), // 'text', 'voice', 'manual'
   originalAudioUrl: text("original_audio_url"), // For voice uploads
   processingStatus: text("processing_status").default("pending"), // 'pending', 'processing', 'completed', 'failed'
+  status: text("status").default("draft"), // 'draft', 'ready', 'analyzed', 'published'
   copyrightInfo: text("copyright_info"),
   licenseType: text("license_type").default("all_rights_reserved"),
   isPublished: boolean("is_published").default(false),

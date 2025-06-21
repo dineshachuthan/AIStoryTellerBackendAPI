@@ -1687,6 +1687,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create new draft story
+  app.post("/api/stories/draft", requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any)?.id;
+      const { title = "Untitled Story" } = req.body;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      console.log("Creating new draft story for user:", userId);
+      
+      const draftStory = await storage.createStory({
+        title,
+        content: "", // Empty content initially
+        summary: "",
+        category: "uncategorized",
+        tags: [],
+        extractedCharacters: [],
+        extractedEmotions: [],
+        voiceSampleUrl: null,
+        coverImageUrl: null,
+        authorId: userId,
+        uploadType: 'text',
+        originalAudioUrl: null,
+        processingStatus: 'pending',
+        status: 'draft', // New draft status
+        copyrightInfo: null,
+        licenseType: 'all_rights_reserved',
+        isPublished: false,
+        isAdultContent: false,
+      });
+
+      console.log("Draft story created:", draftStory.id);
+      res.status(201).json(draftStory);
+    } catch (error) {
+      console.error("Error creating draft story:", error);
+      res.status(500).json({ message: "Failed to create draft story" });
+    }
+  });
+
+  // Update draft story with content
+  app.put("/api/stories/:storyId/content", requireAuth, async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.storyId);
+      const userId = (req.user as any)?.id;
+      const { title, content } = req.body;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const story = await storage.getStory(storyId);
+      if (!story) {
+        return res.status(404).json({ message: "Story not found" });
+      }
+
+      if (story.authorId !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      console.log("Updating story content:", storyId);
+      
+      const updatedStory = await storage.updateStory(storyId, {
+        title: title || story.title,
+        content,
+        status: 'ready', // Mark as ready for analysis
+        processingStatus: 'pending'
+      });
+
+      res.json(updatedStory);
+    } catch (error) {
+      console.error("Error updating story content:", error);
+      res.status(500).json({ message: "Failed to update story content" });
+    }
+  });
+
   // Step 6: Save the final story
   app.post("/api/stories", async (req, res) => {
     try {
