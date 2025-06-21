@@ -63,15 +63,21 @@ export default function UploadStory() {
 
       const finalTitle = storyTitle.trim() || generateTitleFromAnalysis(analysisResponse, storyContent);
 
-      // Store analysis in localStorage for the analysis page
-      localStorage.setItem('storyAnalysis', JSON.stringify({
-        analysis: analysisResponse,
-        content: storyContent,
-        title: finalTitle
-      }));
+      // Create story in database first
+      const createResponse = await apiRequest('/api/stories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: finalTitle,
+          content: storyContent,
+          isPublic: false
+        }),
+      });
+
+      console.log('Story created:', createResponse);
       
-      // Navigate to analysis page
-      setLocation('/story-analysis');
+      // Navigate to analysis page with the new story ID to trigger dual analysis
+      setLocation(`/analysis/${createResponse.id}`);
     } catch (error) {
       console.error("Analysis error:", error);
       toast({
