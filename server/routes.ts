@@ -1694,6 +1694,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { title = "Untitled Story", storyType = "text" } = req.body;
       
       console.log("Creating new draft story for user:", userId);
+      console.log("Request authenticated:", req.isAuthenticated());
+      console.log("Session ID:", req.sessionID);
+      console.log("User object:", req.user);
       
       if (!userId) {
         console.log("No userId found in request.user:", req.user);

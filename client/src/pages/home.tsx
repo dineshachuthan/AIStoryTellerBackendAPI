@@ -43,9 +43,14 @@ export default function Home() {
     setIsCreatingStory(true);
 
     try {
+      console.log('Creating story with request:', {
+        url: '/api/stories/draft',
+        method: 'POST',
+        body: { title: "Untitled Story", storyType }
+      });
+      
       const story = await apiRequest('/api/stories/draft', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: "Untitled Story",
           storyType
@@ -58,9 +63,10 @@ export default function Home() {
       setLocation(`/${story.id}${targetPath}`);
     } catch (error) {
       console.error("Story creation error:", error);
+      console.error("Error details:", error.message);
       toast({
         title: "Creation Failed",
-        description: "Could not create story. Please try again.",
+        description: `Could not create story: ${error.message}`,
         variant: "destructive",
       });
     } finally {
@@ -131,12 +137,13 @@ export default function Home() {
               <CardContent className="pt-0">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   <Button
-                    onClick={() => setLocation("/upload-story")}
+                    onClick={() => createStoryAndNavigate("text", "/upload-story")}
+                    disabled={isCreatingStory}
                     variant="outline"
                     className="border-blue-500 text-blue-500 hover:bg-blue-500/20 h-auto p-3 flex flex-col items-center space-y-1"
                     size="sm"
                   >
-                    <PenTool className="w-5 h-5" />
+                    {isCreatingStory ? <Loader2 className="w-5 h-5 animate-spin" /> : <PenTool className="w-5 h-5" />}
                     <span className="text-xs text-center">{defaultStoryConfig.writtenStory.label}</span>
                   </Button>
                   <Button
