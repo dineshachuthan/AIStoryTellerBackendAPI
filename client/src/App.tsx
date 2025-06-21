@@ -49,6 +49,9 @@ function Router() {
             <Route path="/chat/:conversationId" component={Chat} />
             <Route path="/create" component={CreateCharacter} />
             <Route path="/upload-story" component={UploadStory} />
+            <Route path="/:storyId/upload-story" component={UploadStory} />
+            <Route path="/:storyId/voice-record" component={UploadStory} />
+            <Route path="/:storyId/upload-audio" component={UploadStory} />
             <Route path="/story-analysis" component={StoryAnalysis} />
             <Route path="/analysis/:storyId" component={StoryAnalysis} />
             <Route path="/voice-setup" component={VoiceSetup} />

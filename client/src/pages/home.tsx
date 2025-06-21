@@ -4,16 +4,20 @@ import { StorySearchPanel } from "@/components/story-search-panel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLocation } from "wouter";
-import { Upload, Mic, Users, FileText, AudioLines, PenTool } from "lucide-react";
+import { Upload, Mic, Users, FileText, AudioLines, PenTool, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { BottomNavigation } from "@/components/bottom-navigation";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import { defaultStoryConfig } from "@shared/storyConfig";
 
 export default function Home() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
+  const { toast } = useToast();
   const [isSearchPanelCollapsed, setIsSearchPanelCollapsed] = useState(false);
+  const [isCreatingStory, setIsCreatingStory] = useState(false);
 
   const getUserInitials = () => {
     if (!user) return 'U';
@@ -23,6 +27,45 @@ export default function Home() {
       ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
       : user.email ? user.email[0].toUpperCase()
       : 'U';
+  };
+
+  // Create empty story and navigate to upload page
+  const createStoryAndNavigate = async (storyType: string, targetPath: string) => {
+    if (!user?.id) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to create stories.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsCreatingStory(true);
+
+    try {
+      const story = await apiRequest('/api/stories/draft', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: "Untitled Story",
+          storyType
+        }),
+      });
+
+      console.log('Empty story created:', story);
+      
+      // Navigate to upload page with story ID
+      setLocation(`/${story.id}${targetPath}`);
+    } catch (error) {
+      console.error("Story creation error:", error);
+      toast({
+        title: "Creation Failed",
+        description: "Could not create story. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreatingStory(false);
+    }
   };
 
   return (
@@ -97,30 +140,33 @@ export default function Home() {
                     <span className="text-xs text-center">{defaultStoryConfig.writtenStory.label}</span>
                   </Button>
                   <Button
-                    onClick={() => setLocation("/voice-record")}
+                    onClick={() => createStoryAndNavigate("voice", "/voice-record")}
+                    disabled={isCreatingStory}
                     variant="outline"
                     className="border-green-500 text-green-500 hover:bg-green-500/20 h-auto p-3 flex flex-col items-center space-y-1"
                     size="sm"
                   >
-                    <Mic className="w-5 h-5" />
+                    {isCreatingStory ? <Loader2 className="w-5 h-5 animate-spin" /> : <Mic className="w-5 h-5" />}
                     <span className="text-xs text-center">{defaultStoryConfig.voiceRecord.label}</span>
                     <span className="text-xs opacity-70">({defaultStoryConfig.voiceRecord.maxDurationMinutes} min limit)</span>
                   </Button>
                   <Button
-                    onClick={() => setLocation("/upload-story")}
+                    onClick={() => createStoryAndNavigate("text", "/upload-story")}
+                    disabled={isCreatingStory}
                     variant="outline"
                     className="border-purple-500 text-purple-500 hover:bg-purple-500/20 h-auto p-3 flex flex-col items-center space-y-1"
                     size="sm"
                   >
-                    <FileText className="w-5 h-5" />
+                    {isCreatingStory ? <Loader2 className="w-5 h-5 animate-spin" /> : <FileText className="w-5 h-5" />}
                     <span className="text-xs text-center">{defaultStoryConfig.uploadText.label}</span>
                   </Button>
                   <Button
-                    onClick={() => setLocation("/upload-audio")}
+                    onClick={() => createStoryAndNavigate("audio", "/upload-audio")}
+                    disabled={isCreatingStory}
                     className="bg-tiktok-red hover:bg-tiktok-red/80 h-auto p-3 flex flex-col items-center space-y-1"
                     size="sm"
                   >
-                    <AudioLines className="w-5 h-5" />
+                    {isCreatingStory ? <Loader2 className="w-5 h-5 animate-spin" /> : <AudioLines className="w-5 h-5" />}
                     <span className="text-xs text-center">{defaultStoryConfig.uploadAudio.label}</span>
                   </Button>
                 </div>

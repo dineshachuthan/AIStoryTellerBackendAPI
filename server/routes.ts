@@ -1691,13 +1691,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/stories/draft", requireAuth, async (req, res) => {
     try {
       const userId = (req.user as any)?.id;
-      const { title = "Untitled Story" } = req.body;
+      const { title = "Untitled Story", storyType = "text" } = req.body;
+      
+      console.log("Creating new draft story for user:", userId, "with auth user:", req.user);
       
       if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
-
-      console.log("Creating new draft story for user:", userId);
       
       const draftStory = await storage.createStory({
         title,

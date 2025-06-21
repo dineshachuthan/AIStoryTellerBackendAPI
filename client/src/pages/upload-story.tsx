@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "wouter";
+import { useLocation, useRoute } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,6 +9,7 @@ import { ArrowLeft, RefreshCw, Loader2, FileText, Upload, Plus } from "lucide-re
 import { AppTopNavigation } from "@/components/app-top-navigation";
 import { BottomNavigation } from "@/components/bottom-navigation";
 import { useAuth } from "@/hooks/useAuth";
+import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 
 export default function UploadStory() {
@@ -16,12 +17,20 @@ export default function UploadStory() {
   const { toast } = useToast();
   const { user } = useAuth();
   
+  // Extract story ID from URL if present
+  const [match, params] = useRoute("/:storyId/upload-story");
+  const storyId = params?.storyId;
+  
   // Story management states
   const [storyContent, setStoryContent] = useState("");
   const [storyTitle, setStoryTitle] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [draftStory, setDraftStory] = useState<any>(null);
-  const [isCreatingDraft, setIsCreatingDraft] = useState(false);
+  
+  // Fetch existing story if storyId is present
+  const { data: existingStory, isLoading: storyLoading } = useQuery({
+    queryKey: ['/api/stories', storyId],
+    enabled: !!storyId,
+  });
 
   // Create new draft story
   async function createDraftStory() {
