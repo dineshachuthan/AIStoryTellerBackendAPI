@@ -1,6 +1,20 @@
 import { storage } from "./storage";
 import { generateRolePlayAnalysis } from "./roleplay-analysis";
 import type { RolePlayAnalysis } from "./roleplay-analysis";
+import { 
+  getCollaborativeConfig, 
+  getDefaultEmotionsForCharacter, 
+  getProgressThreshold,
+  type CollaborativeConfig 
+} from "@shared/collaborative-config";
+import {
+  CollaborativeValidator,
+  CollaborativePermissionManager,
+  CollaborativeTokenManager,
+  CollaborativeProgressCalculator,
+  CollaborativeNotificationManager,
+  CollaborativeServiceFactory
+} from "./collaborative-utils";
 
 export interface CollaborativeTemplate {
   id: number;
@@ -60,6 +74,25 @@ export class CollaborativeRoleplayService {
   private templates: Map<number, CollaborativeTemplate> = new Map();
   private instances: Map<string, CollaborativeInstance> = new Map();
   private nextTemplateId = 1;
+  private config: CollaborativeConfig;
+  
+  // Modular utilities
+  private validator: CollaborativeValidator;
+  private permissionManager: CollaborativePermissionManager;
+  private tokenManager: CollaborativeTokenManager;
+  private progressCalculator: CollaborativeProgressCalculator;
+  private notificationManager: CollaborativeNotificationManager;
+
+  constructor(config?: Partial<CollaborativeConfig>) {
+    this.config = { ...getCollaborativeConfig(), ...config };
+    
+    // Initialize modular utilities
+    this.validator = CollaborativeServiceFactory.createValidator();
+    this.permissionManager = CollaborativeServiceFactory.createPermissionManager();
+    this.tokenManager = CollaborativeServiceFactory.createTokenManager();
+    this.progressCalculator = CollaborativeServiceFactory.createProgressCalculator();
+    this.notificationManager = CollaborativeServiceFactory.createNotificationManager();
+  }
 
   /**
    * Convert existing story to collaborative template
@@ -308,17 +341,54 @@ export class CollaborativeRoleplayService {
   }
 
   /**
-   * Update overall instance progress
+   * Update overall instance progress using configuration
    */
   private updateInstanceProgress(instance: CollaborativeInstance): void {
     const totalProgress = instance.participants.reduce((sum, p) => sum + p.recordingProgress, 0);
     instance.completionPercentage = Math.round(totalProgress / (instance.participants.length * 100) * 100);
     
-    // Check if all participants completed
-    const allCompleted = instance.participants.every(p => p.recordingProgress >= 100);
-    if (allCompleted && instance.status !== "completed") {
+    const minimumThreshold = getProgressThreshold('minimum');
+    const allCompleted = instance.participants.every(p => p.recordingProgress >= minimumThreshold);
+    
+    if (allCompleted && this.canTransitionStatus(instance.status, "processing")) {
       instance.status = "processing";
     }
+  }
+
+  /**
+   * Check if status transition is allowed based on configuration
+   */
+  private canTransitionStatus(currentStatus: string, newStatus: string): boolean {
+    const allowedTransitions = this.config.instance.statusFlow[currentStatus] || [];
+    return allowedTransitions.includes(newStatus);
+  }
+
+  /**
+   * Get default voice for character based on configuration
+   */
+  private getDefaultVoiceForCharacter(character: any): string {
+    const characterType = this.determineCharacterType(character);
+    const defaultEmotions = getDefaultEmotionsForCharacter(characterType);
+    return defaultEmotions[0]?.aiVoice || 'alloy';
+  }
+
+  /**
+   * Determine character type for voice mapping
+   */
+  private determineCharacterType(character: any): string {
+    const traits = (character.traits || []).join(' ').toLowerCase();
+    const personality = (character.personality || '').toLowerCase();
+    const description = (character.description || '').toLowerCase();
+    
+    const combinedText = `${traits} ${personality} ${description}`;
+    
+    if (combinedText.includes('child') || combinedText.includes('young') || combinedText.includes('kid')) {
+      return 'child';
+    }
+    if (combinedText.includes('old') || combinedText.includes('elder') || combinedText.includes('ancient')) {
+      return 'elderly';
+    }
+    return 'adult';
   }
 
   /**
