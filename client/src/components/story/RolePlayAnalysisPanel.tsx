@@ -522,6 +522,73 @@ export function RolePlayAnalysisPanel({
         </CardContent>
       </Card>
 
+      {/* Sent Invitations Tracking */}
+      {sentInvitations.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <UserPlus className="w-5 h-5" />
+              Sent Invitations ({sentInvitations.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {sentInvitations.map((invitation) => (
+                <div key={invitation.id} className="border rounded-lg p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-medium">{invitation.invitationName}</h4>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        {invitation.contactMethod === "email" ? (
+                          <Mail className="w-4 h-4" />
+                        ) : (
+                          <Phone className="w-4 h-4" />
+                        )}
+                        {invitation.contactValue}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge 
+                        variant={
+                          invitation.status === "completed" ? "default" :
+                          invitation.status === "accepted" ? "secondary" :
+                          invitation.status === "declined" ? "destructive" : "outline"
+                        }
+                      >
+                        {invitation.status}
+                      </Badge>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => copyInvitationLink(invitation.invitationUrl)}
+                    >
+                      <Copy className="w-4 h-4 mr-1" />
+                      Copy Link
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => window.open(invitation.invitationUrl, '_blank')}
+                    >
+                      <ExternalLink className="w-4 h-4 mr-1" />
+                      View
+                    </Button>
+                  </div>
+                  
+                  <div className="text-xs text-muted-foreground">
+                    Sent: {invitation.sentAt.toLocaleDateString()} at {invitation.sentAt.toLocaleTimeString()}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Scenes */}
       {analysis.scenes.map((scene, sceneIndex) => (
         <Card key={scene.sceneNumber}>
