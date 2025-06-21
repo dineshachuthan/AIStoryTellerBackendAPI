@@ -35,11 +35,20 @@ export interface CollaborativeInstance {
   status: "draft" | "inviting" | "recording" | "processing" | "completed";
   participants: Array<{
     characterName: string;
-    userId?: string;
+    userId?: string; // For registered users
+    guestName?: string; // For unregistered guests
+    guestEmail?: string; // Optional guest contact
     invitationToken: string;
     invitationStatus: "pending" | "accepted" | "declined" | "completed";
     recordingProgress: number;
     profileImageUrl?: string;
+    isGuest: boolean;
+    voiceRecordings?: Array<{
+      emotion: string;
+      audioUrl: string;
+      uploadedAt: Date;
+    }>;
+    characterPhoto?: string;
   }>;
   completionPercentage: number;
   finalVideoUrl?: string;
@@ -121,6 +130,12 @@ export class CollaborativeRoleplayService {
       invitationToken: this.generateInvitationToken(),
       invitationStatus: "pending" as const,
       recordingProgress: 0,
+      isGuest: false,
+      voiceRecordings: [] as Array<{
+        emotion: string;
+        audioUrl: string;
+        uploadedAt: Date;
+      }>,
     }));
 
     const instance: CollaborativeInstance = {

@@ -2759,22 +2759,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const templateId = parseInt(req.params.templateId);
       
-      const [template, characterRoles, scenes] = await Promise.all([
-        collaborativeRoleplayStorage.getTemplate(templateId),
-        collaborativeRoleplayStorage.getTemplateCharacterRoles(templateId),
-        collaborativeRoleplayStorage.getTemplateScenes(templateId)
-      ]);
+      const template = collaborativeRoleplayService.getTemplate(templateId);
       
       if (!template) {
         return res.status(404).json({ message: "Template not found" });
       }
       
-      res.json({
-        ...template,
-        characterRoles,
-        scenes: scenes.dialogues.length,
-        backgrounds: scenes.backgrounds.length
-      });
+      res.json(template);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch template details" });
     }
@@ -2787,11 +2778,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = (req.user as any)?.id;
       const { instanceTitle, isPublic = false } = req.body;
       
-      const result = await templateConversionService.createInstanceFromTemplate(
+      const result = await collaborativeRoleplayService.createInstanceFromTemplate(
         templateId,
         instanceTitle,
-        userId,
-        isPublic
+        userId
       );
       
       res.json(result);
@@ -2805,7 +2795,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/roleplay-instances/my-instances", requireAuth, async (req, res) => {
     try {
       const userId = (req.user as any)?.id;
-      const instances = await collaborativeRoleplayStorage.getUserInstances(userId);
+      const instances = collaborativeRoleplayService.getUserInstances(userId);
       res.json(instances);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch user instances" });
