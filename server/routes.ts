@@ -1687,22 +1687,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Create new draft story
-  app.post("/api/stories/draft", async (req, res) => {
+  // Create new draft story  
+  app.post("/api/stories/draft", requireAuth, async (req, res) => {
     try {
       const userId = (req.user as any)?.id;
       const { title = "Untitled Story", storyType = "text" } = req.body;
       
-      console.log("Creating new draft story for user:", userId);
-      console.log("Request authenticated:", req.isAuthenticated());
-      console.log("Session ID:", req.sessionID);
-      console.log("User object:", req.user);
-      
-      if (!userId) {
-        console.log("No userId found in request.user:", req.user);
-        return res.status(401).json({ message: "Authentication required. Please log in first." });
-      }
-      
+      console.log("About to create story with data:", {
+        title,
+        authorId: userId,
+        uploadType: 'text',
+        processingStatus: 'pending',
+        status: 'draft'
+      });
+
       const draftStory = await storage.createStory({
         title,
         content: "", // Empty content initially
@@ -1728,7 +1726,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(draftStory);
     } catch (error) {
       console.error("Error creating draft story:", error);
-      res.status(500).json({ message: "Failed to create draft story" });
+      console.error("Error details:", error.message);
+      console.error("Error stack:", error.stack);
+      
+      // Check if it's an access denied error
+      if (error.message && error.message.includes('Access denied')) {
+        res.status(403).json({ message: "Access denied" });
+      } else {
+        res.status(500).json({ message: "Failed to create draft story" });
+      }
     }
   });
 
