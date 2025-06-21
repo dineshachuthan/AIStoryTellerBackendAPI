@@ -480,61 +480,207 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Role-play analysis - generate scenes, dialogues, and backgrounds
-  app.post("/api/stories/roleplay-analyze", async (req, res) => {
+  // NARRATIVE ANALYSIS ROUTES - Uses user's personal voice recordings
+  // Generate narrative analysis for a story
+  app.post("/api/stories/:storyId/narrative", requireAuth, async (req, res) => {
     try {
-      const { content, existingCharacters } = req.body;
-      if (!content) {
-        return res.status(400).json({ message: "Content is required" });
+      const storyId = parseInt(req.params.storyId);
+      const userId = (req.user as any)?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
       }
 
-      console.log("Generating role-play analysis for story");
+      const story = await storage.getStory(storyId);
+      if (!story || story.authorId !== userId) {
+        return res.status(404).json({ message: "Story not found" });
+      }
+
+      console.log(`Generating narrative analysis for story ${storyId}`);
       
-      const rolePlayAnalysis = await generateRolePlayAnalysis(content, existingCharacters || []);
+      const analysis = await analyzeStoryContent(story.content);
       
-      console.log("Role-play analysis generated successfully");
-      res.json(rolePlayAnalysis);
+      console.log("Narrative analysis generated successfully");
+      res.json(analysis);
     } catch (error) {
-      console.error("Error generating role-play analysis:", error);
-      res.status(500).json({ message: "Failed to generate role-play analysis" });
+      console.error("Error generating narrative analysis:", error);
+      res.status(500).json({ message: "Failed to generate narrative analysis" });
     }
   });
 
-  // Enhance existing role-play with modifications
-  app.post("/api/stories/roleplay-enhance", async (req, res) => {
+  // Generate audio for narrative using user's voice recordings
+  app.post("/api/stories/:storyId/narrative/audio", requireAuth, async (req, res) => {
     try {
+      const storyId = parseInt(req.params.storyId);
+      const userId = (req.user as any)?.id;
+      const { emotion, intensity, text } = req.body;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      console.log(`Generating narrative audio for story ${storyId} with user voice`);
+      
+      const audioResult = await audioService.generateEmotionAudio({
+        text,
+        emotion,
+        intensity,
+        userId,
+        storyId
+      });
+      
+      res.json(audioResult);
+    } catch (error) {
+      console.error("Error generating narrative audio:", error);
+      res.status(500).json({ message: "Failed to generate narrative audio" });
+    }
+  });
+
+  // ROLEPLAY ANALYSIS ROUTES - Uses character-specific voices
+  // Generate roleplay analysis for a story
+  app.post("/api/stories/:storyId/roleplay", requireAuth, async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.storyId);
+      const userId = (req.user as any)?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const story = await storage.getStory(storyId);
+      if (!story || story.authorId !== userId) {
+        return res.status(404).json({ message: "Story not found" });
+      }
+
+      console.log(`Generating roleplay analysis for story ${storyId}`);
+      
+      const rolePlayAnalysis = await generateRolePlayAnalysis(story.content, []);
+      
+      console.log("Roleplay analysis generated successfully");
+      res.json(rolePlayAnalysis);
+    } catch (error) {
+      console.error("Error generating roleplay analysis:", error);
+      res.status(500).json({ message: "Failed to generate roleplay analysis" });
+    }
+  });
+
+  // Generate character-specific audio for roleplay
+  app.post("/api/stories/:storyId/roleplay/audio", requireAuth, async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.storyId);
+      const userId = (req.user as any)?.id;
+      const { 
+        text, 
+        characterName, 
+        characterPersonality, 
+        characterRole, 
+        emotion, 
+        intensity,
+        characterDescription 
+      } = req.body;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      if (!text || !characterName) {
+        return res.status(400).json({ message: "Text and character name are required" });
+      }
+
+      console.log(`Generating roleplay audio for character ${characterName} in story ${storyId}`);
+      
+      const audioResult = await rolePlayAudioService.generateRolePlayAudio(
+        text,
+        characterName,
+        characterPersonality || "neutral",
+        characterRole || "other",
+        emotion || "neutral",
+        intensity || 5,
+        characterDescription
+      );
+      
+      res.json(audioResult);
+    } catch (error) {
+      console.error("Error generating roleplay audio:", error);
+      res.status(500).json({ message: "Failed to generate roleplay audio" });
+    }
+  });
+
+  // Generate audio for entire roleplay scene
+  app.post("/api/stories/:storyId/roleplay/scene-audio", requireAuth, async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.storyId);
+      const userId = (req.user as any)?.id;
+      const { dialogues } = req.body;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      if (!dialogues || !Array.isArray(dialogues)) {
+        return res.status(400).json({ message: "Dialogues array is required" });
+      }
+
+      console.log(`Generating scene audio for story ${storyId}`);
+      
+      const sceneAudio = await rolePlayAudioService.generateSceneAudio(dialogues);
+      
+      res.json({ sceneAudio });
+    } catch (error) {
+      console.error("Error generating scene audio:", error);
+      res.status(500).json({ message: "Failed to generate scene audio" });
+    }
+  });
+
+  // Update roleplay analysis
+  app.put("/api/stories/:storyId/roleplay", requireAuth, async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.storyId);
+      const userId = (req.user as any)?.id;
       const { originalAnalysis, modifications } = req.body;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
       if (!originalAnalysis) {
         return res.status(400).json({ message: "Original analysis is required" });
       }
 
-      console.log("Enhancing role-play analysis with modifications");
+      console.log(`Updating roleplay analysis for story ${storyId}`);
       
       const enhancedAnalysis = await enhanceExistingRolePlay(originalAnalysis, modifications);
       
       res.json(enhancedAnalysis);
     } catch (error) {
-      console.error("Error enhancing role-play analysis:", error);
-      res.status(500).json({ message: "Failed to enhance role-play analysis" });
+      console.error("Error updating roleplay analysis:", error);
+      res.status(500).json({ message: "Failed to update roleplay analysis" });
     }
   });
 
-  // Generate dialogue for a specific scene
-  app.post("/api/stories/generate-scene-dialogue", async (req, res) => {
+  // Generate new dialogue for a scene
+  app.post("/api/stories/:storyId/roleplay/dialogue", requireAuth, async (req, res) => {
     try {
+      const storyId = parseInt(req.params.storyId);
+      const userId = (req.user as any)?.id;
       const { sceneContext, characters, emotionalTone } = req.body;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
       if (!sceneContext || !characters) {
         return res.status(400).json({ message: "Scene context and characters are required" });
       }
 
-      console.log("Generating scene dialogue");
+      console.log(`Generating dialogue for story ${storyId}`);
       
       const dialogue = await generateSceneDialogue(sceneContext, characters, emotionalTone || "neutral");
       
       res.json({ dialogue });
     } catch (error) {
-      console.error("Error generating scene dialogue:", error);
-      res.status(500).json({ message: "Failed to generate scene dialogue" });
+      console.error("Error generating dialogue:", error);
+      res.status(500).json({ message: "Failed to generate dialogue" });
     }
   });
 

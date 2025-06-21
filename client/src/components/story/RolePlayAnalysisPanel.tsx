@@ -65,12 +65,14 @@ interface RolePlayAnalysis {
 }
 
 interface RolePlayAnalysisPanelProps {
+  storyId: number;
   storyContent: string;
   existingCharacters?: any[];
   onAnalysisGenerated?: (analysis: RolePlayAnalysis) => void;
 }
 
 export function RolePlayAnalysisPanel({
+  storyId,
   storyContent,
   existingCharacters = [],
   onAnalysisGenerated
@@ -82,10 +84,10 @@ export function RolePlayAnalysisPanel({
   const [editedScene, setEditedScene] = useState<RolePlayScene | null>(null);
 
   const generateRolePlayAnalysis = async () => {
-    if (!storyContent.trim()) {
+    if (!storyId) {
       toast({
-        title: "No Content",
-        description: "Story content is required for role-play analysis.",
+        title: "Invalid Story",
+        description: "Story ID is required for role-play analysis.",
         variant: "destructive",
       });
       return;
@@ -93,13 +95,9 @@ export function RolePlayAnalysisPanel({
 
     setIsGenerating(true);
     try {
-      const result = await apiRequest('/api/stories/roleplay-analyze', {
+      const result = await apiRequest(`/api/stories/${storyId}/roleplay`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          content: storyContent,
-          existingCharacters
-        }),
         credentials: 'include'
       });
 
@@ -136,8 +134,8 @@ export function RolePlayAnalysisPanel({
       const updatedScenes = [...analysis.scenes];
       updatedScenes[editingScene] = editedScene;
 
-      const enhancedAnalysis = await apiRequest('/api/stories/roleplay-enhance', {
-        method: 'POST',
+      const enhancedAnalysis = await apiRequest(`/api/stories/${storyId}/roleplay`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           originalAnalysis: analysis,
@@ -171,7 +169,7 @@ export function RolePlayAnalysisPanel({
       const scene = analysis.scenes[sceneIndex];
       const characterNames = scene.dialogueSequence.map(d => d.characterName);
       
-      const result = await apiRequest('/api/stories/generate-scene-dialogue', {
+      const result = await apiRequest(`/api/stories/${storyId}/roleplay/dialogue`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
