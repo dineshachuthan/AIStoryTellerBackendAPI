@@ -65,7 +65,6 @@ export default function StoryAnalysis() {
   }>({ narrative: false, roleplay: false });
   const [userVoiceEmotions, setUserVoiceEmotions] = useState<Record<string, boolean>>({});
   const [playingSample, setPlayingSample] = useState<string>("");
-  const [isForking, setIsForking] = useState(false);
 
   // Handler for when user records an emotion voice
   const handleEmotionRecorded = (emotion: string, audioBlob: Blob) => {
@@ -138,7 +137,7 @@ export default function StoryAnalysis() {
       setAnalysisData(narrativeAnalysis);
       setAnalysisProgress(prev => ({ ...prev, narrative: true }));
 
-      // Generate roleplay analysis - handle authorization properly
+      // Generate roleplay analysis
       try {
         const rolePlayResponse = await apiRequest(`/api/stories/${storyId}/roleplay`, {
           method: 'POST',
@@ -149,20 +148,7 @@ export default function StoryAnalysis() {
       } catch (roleplayError: any) {
         console.log('Roleplay analysis error:', roleplayError);
         setAnalysisProgress(prev => ({ ...prev, roleplay: false }));
-        
-        // Store error for roleplay tab to display fork option if needed
-        if (roleplayError?.canFork) {
-          setRolePlayAnalysis({ 
-            error: roleplayError.message, 
-            canFork: true,
-            storyId: parseInt(storyId!)
-          });
-        } else {
-          setRolePlayAnalysis({ 
-            error: roleplayError.message || "Unable to generate roleplay analysis",
-            canFork: false
-          });
-        }
+        setRolePlayAnalysis(null);
       }
 
     } catch (error) {
