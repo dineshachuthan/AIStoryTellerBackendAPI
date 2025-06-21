@@ -1587,6 +1587,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create new draft story  
+  app.post("/api/stories/draft", requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any)?.id;
+      const { title = "Untitled Story", storyType = "text" } = req.body;
+      
+
+      const draftStory = await storage.createStory({
+        title,
+        content: "", // Empty content initially
+        summary: "",
+        category: "uncategorized",
+        tags: [],
+        extractedCharacters: [],
+        extractedEmotions: [],
+        voiceSampleUrl: null,
+        coverImageUrl: null,
+        authorId: userId,
+        uploadType: 'text',
+        originalAudioUrl: null,
+        processingStatus: 'pending',
+        status: 'draft', // New draft status
+        copyrightInfo: null,
+        licenseType: 'all_rights_reserved',
+        isPublished: false,
+        isAdultContent: false,
+      });
+
+      res.status(201).json(draftStory);
+    } catch (error) {
+      console.error("Error creating draft story:", error);
+      res.status(500).json({ message: "Failed to create draft story" });
+    }
+  });
+
   // Store story under user's private collection
   app.post("/api/stories/:userId", requireAuth, async (req, res) => {
     try {
@@ -1687,50 +1722,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Create new draft story  
-  app.post("/api/stories/draft", requireAuth, async (req, res) => {
-    try {
-      const userId = (req.user as any)?.id;
-      const { title = "Untitled Story", storyType = "text" } = req.body;
-      
 
-
-      const draftStory = await storage.createStory({
-        title,
-        content: "", // Empty content initially
-        summary: "",
-        category: "uncategorized",
-        tags: [],
-        extractedCharacters: [],
-        extractedEmotions: [],
-        voiceSampleUrl: null,
-        coverImageUrl: null,
-        authorId: userId,
-        uploadType: 'text',
-        originalAudioUrl: null,
-        processingStatus: 'pending',
-        status: 'draft', // New draft status
-        copyrightInfo: null,
-        licenseType: 'all_rights_reserved',
-        isPublished: false,
-        isAdultContent: false,
-      });
-
-
-      res.status(201).json(draftStory);
-    } catch (error) {
-      console.error("Error creating draft story:", error);
-      console.error("Error details:", error.message);
-      console.error("Error stack:", error.stack);
-      
-      // Check if it's an access denied error
-      if (error.message && error.message.includes('Access denied')) {
-        res.status(403).json({ message: "Access denied" });
-      } else {
-        res.status(500).json({ message: "Failed to create draft story" });
-      }
-    }
-  });
 
   // Update draft story with content
   app.put("/api/stories/:storyId/content", requireAuth, async (req, res) => {
