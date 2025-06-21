@@ -548,8 +548,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const story = await storage.getStory(storyId);
-      if (!story || story.authorId !== userId) {
+      if (!story) {
         return res.status(404).json({ message: "Story not found" });
+      }
+
+      // Allow story access for authors and collaborators
+      const isAuthor = story.authorId === userId;
+      let isCollaborator = false;
+      
+      try {
+        const collaborations = await storage.getStoryCollaborations(storyId);
+        isCollaborator = collaborations.some(c => c.invitedUserId === userId && c.status === 'accepted');
+      } catch (error) {
+        console.log("No collaborations found, continuing as author check");
+      }
+      
+      if (!isAuthor && !isCollaborator) {
+        return res.status(403).json({ message: "Access denied" });
       }
 
       console.log(`Generating roleplay analysis for story ${storyId}`);
