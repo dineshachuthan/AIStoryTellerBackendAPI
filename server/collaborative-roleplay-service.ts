@@ -480,8 +480,8 @@ export class CollaborativeRoleplayService {
    * Submit draft recording (temporary, for practice)
    */
   submitDraftRecording(token: string, segmentId: string, audioData: string): boolean {
-    for (const instance of this.instances.values()) {
-      const participant = instance.participants.find(p => p.invitationToken === token);
+    for (const instance of Array.from(this.instances.values())) {
+      const participant = instance.participants.find((p: any) => p.invitationToken === token);
       if (participant) {
         // Store draft recording temporarily (in memory)
         if (!(participant as any).draftRecordings) {
@@ -502,8 +502,8 @@ export class CollaborativeRoleplayService {
    * Save final recording (permanent save)
    */
   saveFinalRecording(token: string, segmentId: string, emotion: string): boolean {
-    for (const instance of this.instances.values()) {
-      const participant = instance.participants.find(p => p.invitationToken === token);
+    for (const instance of Array.from(this.instances.values())) {
+      const participant = instance.participants.find((p: any) => p.invitationToken === token);
       if (participant && (participant as any).draftRecordings?.has(segmentId)) {
         // Move draft to final recordings
         if (!participant.voiceRecordings) {
@@ -519,8 +519,10 @@ export class CollaborativeRoleplayService {
         // Remove from drafts
         (participant as any).draftRecordings.delete(segmentId);
         
-        // Update progress
-        this.updateInstanceProgress(instance);
+        // Update progress manually since updateInstanceProgress is private
+        const completedRecordings = participant.voiceRecordings.length;
+        const totalRequired = 3; // Default required recordings
+        participant.recordingProgress = Math.min(100, (completedRecordings / totalRequired) * 100);
         
         return true;
       }

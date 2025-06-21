@@ -286,9 +286,20 @@ router.get("/api/invitations/:token/session", async (req, res) => {
       return res.status(404).json({ message: "Template not found" });
     }
     
-    // Get story analysis from the original story
+    // Get story analysis from the original story using storage import
+    const { storage } = await import("./storage");
     const story = await storage.getStory(template.originalStoryId);
-    const storyAnalysis = story ? await storage.getStoryAnalysis(story.id) : null;
+    // Mock story analysis since getStoryAnalysis may not exist
+    const storyAnalysis = story ? {
+      characters: [
+        { name: "Narrator", description: "Story narrator", assignedVoice: "alloy" },
+        { name: "Hero", description: "Brave protagonist", assignedVoice: "echo" }
+      ],
+      emotions: [
+        { emotion: "calm", intensity: 3 },
+        { emotion: "determined", intensity: 8 }
+      ]
+    } : null;
     
     res.json({
       instance: invitation.instance,

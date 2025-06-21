@@ -71,93 +71,74 @@ export default function RoleplayRecording() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunksRef = useRef<Blob[]>([]);
 
-  useEffect(() => {
-    if (invitation && template && storyAnalysis) {
-      fetchRoleplaySession();
-    }
-  }, [invitation, template, storyAnalysis]);
-
-  // Fetch invitation details using existing API
-  const { data: invitation, isLoading: invitationLoading } = useQuery({
-    queryKey: ['/api/invitations', token],
+  // Fetch roleplay session data using unified endpoint
+  const { data: sessionData, isLoading: sessionLoading } = useQuery({
+    queryKey: ['/api/invitations', token, 'session'],
     enabled: !!token,
   });
 
-  // Fetch story analysis and template data using existing APIs
-  const { data: template } = useQuery({
-    queryKey: ['/api/roleplay-templates', invitation?.templateId],
-    enabled: !!invitation?.templateId,
-  });
-
-  const { data: storyAnalysis } = useQuery({
-    queryKey: ['/api/stories', template?.originalStoryId, 'analysis'],
-    enabled: !!template?.originalStoryId,
-  });
-
-  const fetchRoleplaySession = async () => {
-    if (!invitation || !template || !storyAnalysis) return;
-    
-    try {
-      setLoading(true);
-      
-      // Build session from real data
-      const userCharacterRole = template.characterRoles.find(
-        role => role.name === invitation.characterName
-      );
-      
-      // Generate dialogue segments from story analysis
-      const dialogueSegments: DialogueSegment[] = [];
-      
-      // Extract dialogues from story analysis and create segments
-      if (storyAnalysis.characters && storyAnalysis.emotions) {
-        let timestamp = 0;
+  useEffect(() => {
+    if (sessionData) {
+      try {
+        setLoading(true);
         
-        // Create segments for each character's dialogue based on story analysis
-        storyAnalysis.characters.forEach((character: any, index: number) => {
-          const isUserCharacter = character.name === invitation.characterName;
-          const emotion = storyAnalysis.emotions[index % storyAnalysis.emotions.length];
+        const { instance, template, story, storyAnalysis, participantRole } = sessionData;
+        
+        // Generate dialogue segments from story analysis
+        const dialogueSegments: DialogueSegment[] = [];
+        
+        if (storyAnalysis?.characters && storyAnalysis?.emotions) {
+          let timestamp = 0;
           
-          // Extract sample dialogue from story content or use character description
-          const sampleText = character.description || `As ${character.name}, I must play my part in this story.`;
-          
-          dialogueSegments.push({
-            id: `seg_${index}`,
-            characterName: character.name,
-            text: sampleText,
-            emotion: emotion.emotion,
-            intensity: emotion.intensity,
-            timestamp,
-            duration: 3000 + (sampleText.length * 50), // Estimate duration based on text length
-            isUserCharacter,
-            audioUrl: !isUserCharacter ? `/audio/${character.assignedVoice}_${index}.mp3` : undefined
+          // Create segments for each character's dialogue based on story analysis
+          storyAnalysis.characters.forEach((character: any, index: number) => {
+            const isUserCharacter = character.name === participantRole.characterName;
+            const emotion = storyAnalysis.emotions[index % storyAnalysis.emotions.length];
+            
+            // Extract sample dialogue from story content or use character description
+            const sampleText = character.description || `As ${character.name}, I must play my part in this story.`;
+            
+            dialogueSegments.push({
+              id: `seg_${index}`,
+              characterName: character.name,
+              text: sampleText,
+              emotion: emotion.emotion,
+              intensity: emotion.intensity,
+              timestamp,
+              duration: 3000 + (sampleText.length * 50),
+              isUserCharacter,
+              audioUrl: !isUserCharacter ? `/audio/${character.assignedVoice}_${index}.mp3` : undefined
+            });
+            
+            timestamp += 4000;
           });
-          
-          timestamp += 4000; // Add gap between segments
+        }
+        
+        const roleplaySession: RoleplaySession = {
+          instanceTitle: instance.instanceTitle,
+          characterName: participantRole.characterName,
+          templateTitle: template.title,
+          storyContent: story?.content || template.description,
+          dialogueSegments,
+          characterRequirements: participantRole.requiredEmotions || [],
+          progressPercentage: participantRole.recordingProgress || 0
+        };
+        
+        setSession(roleplaySession);
+        
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to load roleplay session",
+          variant: "destructive",
         });
+      } finally {
+        setLoading(false);
       }
-      
-      const roleplaySession: RoleplaySession = {
-        instanceTitle: invitation.instanceTitle,
-        characterName: invitation.characterName,
-        templateTitle: template.title,
-        storyContent: template.description,
-        dialogueSegments,
-        characterRequirements: userCharacterRole?.requiredEmotions || [],
-        progressPercentage: 0
-      };
-      
-      setSession(roleplaySession);
-      
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to load roleplay session",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [sessionData, toast]);
+
+
 
   const playFullStory = () => {
     if (!session) return;
