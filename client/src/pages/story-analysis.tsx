@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Clock, Users, Film, MapPin } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
 import { AppTopNavigation } from "@/components/app-top-navigation";
@@ -54,8 +55,14 @@ export default function StoryAnalysis() {
   const storyId = params.storyId;
   
   const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
+  const [rolePlayAnalysis, setRolePlayAnalysis] = useState<any>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isLoadingAnalyses, setIsLoadingAnalyses] = useState(false);
+  const [analysisProgress, setAnalysisProgress] = useState<{
+    narrative: boolean;
+    roleplay: boolean;
+  }>({ narrative: false, roleplay: false });
   const [userVoiceEmotions, setUserVoiceEmotions] = useState<Record<string, boolean>>({});
   const [playingSample, setPlayingSample] = useState<string>("");
 
@@ -110,54 +117,66 @@ export default function StoryAnalysis() {
     enabled: !!storyId && !!user?.id,
   });
 
-  useEffect(() => {
-    if (storyId && storyData) {
-      // Fetch story characters and emotions
-      Promise.all([
-        fetch(`/api/stories/${storyId}/characters`).then(res => res.ok ? res.json() : []),
-        fetch(`/api/stories/${storyId}/emotions`).then(res => res.ok ? res.json() : [])
-      ]).then(([characters, emotions]) => {
-        const story = storyData as any;
-        const analysis: AnalysisData = {
-          analysis: {
-            characters: Array.isArray(characters) ? characters : [],
-            emotions: Array.isArray(emotions) ? emotions : [],
-            summary: story.summary || "",
-            category: story.category || "General",
-            genre: story.genre || "Fiction",
-            themes: Array.isArray(story.themes) ? story.themes : [],
-            suggestedTags: Array.isArray(story.tags) ? story.tags : [],
-            emotionalTags: Array.isArray(story.emotionalTags) ? story.emotionalTags : [],
-            readingTime: story.readingTime || 5,
-            ageRating: story.ageRating || 'general',
-            isAdultContent: story.isAdultContent || false
-          },
-          content: story.content || "",
-          title: story.title || "Untitled Story"
-        };
-        setAnalysisData(analysis);
-      }).catch(error => {
-        console.error('Failed to fetch story details:', error);
-        // Fallback to basic story data
-        const analysis: AnalysisData = {
-          analysis: {
-            characters: [],
-            emotions: [],
-            summary: (storyData as any).summary || "",
-            category: (storyData as any).category || "General",
-            genre: (storyData as any).genre || "Fiction",
-            themes: (storyData as any).themes || [],
-            suggestedTags: (storyData as any).tags || [],
-            emotionalTags: (storyData as any).emotionalTags || [],
-            readingTime: (storyData as any).readingTime || 5,
-            ageRating: (storyData as any).ageRating || 'general',
-            isAdultContent: (storyData as any).isAdultContent || false
-          },
-          content: (storyData as any).content,
-          title: (storyData as any).title
-        };
-        setAnalysisData(analysis);
+  // Generate both narrative and roleplay analyses automatically
+  const generateComprehensiveAnalysis = async (story: any) => {
+    setIsLoadingAnalyses(true);
+    setAnalysisProgress({ narrative: false, roleplay: false });
+
+    try {
+      // Generate narrative analysis first
+      const narrativeResponse = await apiRequest(`/api/stories/${storyId}/narrative`, {
+        method: 'POST',
+        credentials: 'include'
       });
+
+      const narrativeAnalysis: AnalysisData = {
+        analysis: narrativeResponse,
+        content: story.content || "",
+        title: story.title || "Untitled Story"
+      };
+      setAnalysisData(narrativeAnalysis);
+      setAnalysisProgress(prev => ({ ...prev, narrative: true }));
+
+      // Generate roleplay analysis
+      const rolePlayResponse = await apiRequest(`/api/stories/${storyId}/roleplay`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+      setRolePlayAnalysis(rolePlayResponse);
+      setAnalysisProgress(prev => ({ ...prev, roleplay: true }));
+
+    } catch (error) {
+      console.error('Failed to generate comprehensive analysis:', error);
+      
+      // Fallback to basic story data for narrative
+      const analysis: AnalysisData = {
+        analysis: {
+          characters: [],
+          emotions: [],
+          summary: story.summary || "",
+          category: story.category || "General",
+          genre: story.genre || "Fiction",
+          themes: story.themes || [],
+          suggestedTags: story.tags || [],
+          emotionalTags: story.emotionalTags || [],
+          readingTime: story.readingTime || 5,
+          ageRating: story.ageRating || 'general',
+          isAdultContent: story.isAdultContent || false
+        },
+        content: story.content,
+        title: story.title
+      };
+      setAnalysisData(analysis);
+      setAnalysisProgress({ narrative: true, roleplay: false });
+    } finally {
+      setIsLoadingAnalyses(false);
+    }
+  };
+
+  useEffect(() => {
+    if (storyId && storyData && user?.id) {
+      // Automatically generate both analyses when story data is available
+      generateComprehensiveAnalysis(storyData);
     } else if (!storyId) {
       // Fall back to localStorage for upload flow
       const stored = localStorage.getItem('storyAnalysis');
@@ -173,7 +192,7 @@ export default function StoryAnalysis() {
         setLocation('/upload-story');
       }
     }
-  }, [storyId, storyData, setLocation]);
+  }, [storyId, storyData, user?.id, setLocation]);
 
   const generateTitleFromContent = (content: string, analysis: StoryAnalysis): string => {
     // Use the first character name + category as a simple title
@@ -286,10 +305,50 @@ export default function StoryAnalysis() {
 
 
 
-  if (storyLoading) {
+  if (storyLoading || isLoadingAnalyses) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
-        <div className="text-white">Loading story...</div>
+        <div className="bg-white/10 backdrop-blur-sm rounded-lg p-8 max-w-md w-full mx-4">
+          <div className="text-center text-white space-y-4">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto"></div>
+            <h3 className="text-xl font-semibold">
+              {storyLoading ? "Loading Story" : "Generating Analysis"}
+            </h3>
+            {isLoadingAnalyses && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between text-sm">
+                  <span>Narrative Analysis</span>
+                  {analysisProgress.narrative ? (
+                    <span className="text-green-400">✓ Complete</span>
+                  ) : (
+                    <span className="text-yellow-400">Processing...</span>
+                  )}
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span>Roleplay Analysis</span>
+                  {analysisProgress.roleplay ? (
+                    <span className="text-green-400">✓ Complete</span>
+                  ) : analysisProgress.narrative ? (
+                    <span className="text-yellow-400">Processing...</span>
+                  ) : (
+                    <span className="text-gray-400">Waiting...</span>
+                  )}
+                </div>
+                <div className="w-full bg-white/20 rounded-full h-2">
+                  <div 
+                    className="bg-purple-400 h-2 rounded-full transition-all duration-500"
+                    style={{ 
+                      width: `${(
+                        (analysisProgress.narrative ? 50 : 0) + 
+                        (analysisProgress.roleplay ? 50 : 0)
+                      )}%` 
+                    }}
+                  ></div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     );
   }
@@ -297,7 +356,7 @@ export default function StoryAnalysis() {
   if (!analysisData) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
-        <div className="text-white">Loading analysis...</div>
+        <div className="text-white">No analysis data available.</div>
       </div>
     );
   }
@@ -348,14 +407,152 @@ export default function StoryAnalysis() {
             </TabsContent>
 
             <TabsContent value="roleplay" className="space-y-6">
-              <RolePlayAnalysisPanel
-                storyId={storyId ? parseInt(storyId) : 0}
-                storyContent={analysisData.content}
-                existingCharacters={analysisData.analysis?.characters || []}
-                onAnalysisGenerated={(rolePlayAnalysis) => {
-                  console.log('Role-play analysis generated:', rolePlayAnalysis);
-                }}
-              />
+              {rolePlayAnalysis ? (
+                <div className="space-y-6">
+                  {/* Analysis Overview */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Film className="h-5 w-5" />
+                        {rolePlayAnalysis.title}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary">{rolePlayAnalysis.genre}</Badge>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm">{rolePlayAnalysis.estimatedPlaytime} min</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Film className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm">{rolePlayAnalysis.totalScenes} scenes</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Users className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm">{rolePlayAnalysis.characters.length} characters</span>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-4">
+                        <div>
+                          <h4 className="font-medium mb-2">Overall Tone</h4>
+                          <Badge variant="outline">{rolePlayAnalysis.overallTone}</Badge>
+                        </div>
+                        
+                        <div>
+                          <h4 className="font-medium mb-2">Characters</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {rolePlayAnalysis.characters.map((character: any, index: number) => (
+                              <div key={index} className="border rounded-lg p-3 space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <h5 className="font-medium">{character.name}</h5>
+                                  <Badge variant="outline" className="text-xs">
+                                    {character.role}
+                                  </Badge>
+                                </div>
+                                <p className="text-sm text-muted-foreground">{character.personality}</p>
+                                <p className="text-xs text-muted-foreground">Voice: {character.voiceProfile}</p>
+                                {character.costumeSuggestion && (
+                                  <p className="text-xs text-muted-foreground">Costume: {character.costumeSuggestion}</p>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Scenes */}
+                  {rolePlayAnalysis.scenes.map((scene: any, sceneIndex: number) => (
+                    <Card key={scene.sceneNumber}>
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <span className="bg-purple-100 text-purple-800 rounded-full w-6 h-6 flex items-center justify-center text-sm font-medium">
+                            {scene.sceneNumber}
+                          </span>
+                          {scene.title}
+                        </CardTitle>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-1">
+                            <Clock className="w-4 h-4" />
+                            {Math.floor(scene.estimatedDuration / 60)}:{(scene.estimatedDuration % 60).toString().padStart(2, '0')}
+                          </div>
+                          <Badge variant="outline" className="text-xs">
+                            {scene.emotionalTone}
+                          </Badge>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-6">
+                        {/* Scene Background */}
+                        <div className="bg-slate-50 dark:bg-slate-900 rounded-lg p-4 space-y-3">
+                          <h4 className="font-medium flex items-center gap-2">
+                            <MapPin className="w-4 h-4" />
+                            Scene Background
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                            <div>
+                              <span className="font-medium">Location:</span> {scene.background.location}
+                            </div>
+                            <div>
+                              <span className="font-medium">Time:</span> {scene.background.timeOfDay}
+                            </div>
+                            <div>
+                              <span className="font-medium">Atmosphere:</span> {scene.background.atmosphere}
+                            </div>
+                            {scene.background.lighting && (
+                              <div>
+                                <span className="font-medium">Lighting:</span> {scene.background.lighting}
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <span className="font-medium">Visual Description:</span>
+                            <p className="mt-1 text-muted-foreground">{scene.background.visualDescription}</p>
+                          </div>
+                        </div>
+
+                        {/* Dialogue Sequence */}
+                        <div className="space-y-3">
+                          <h4 className="font-medium">Dialogue Sequence</h4>
+                          <div className="space-y-3">
+                            {scene.dialogueSequence.map((dialogue: any, dialogueIndex: number) => (
+                              <div key={dialogueIndex} className="border rounded-lg p-3 space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <span className="font-medium text-purple-700 dark:text-purple-300">
+                                    {dialogue.characterName}
+                                  </span>
+                                  <div className="flex items-center gap-2 text-xs">
+                                    <Badge variant="outline">{dialogue.emotion}</Badge>
+                                    <span className="text-muted-foreground">Intensity: {dialogue.intensity}/10</span>
+                                  </div>
+                                </div>
+                                <p className="text-sm">{dialogue.dialogue}</p>
+                                {dialogue.action && (
+                                  <p className="text-xs text-muted-foreground italic">
+                                    *{dialogue.action}*
+                                  </p>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <Card>
+                  <CardContent className="py-8">
+                    <p className="text-center text-muted-foreground">
+                      Roleplay analysis will be generated automatically.
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
           </Tabs>
         </div>
