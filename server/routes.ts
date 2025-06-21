@@ -9,8 +9,7 @@ import { insertUserSchema, insertLocalUserSchema } from "@shared/schema";
 import { analyzeStoryContent, generateCharacterImage, transcribeAudio } from "./ai-analysis";
 import { generateRolePlayAnalysis, enhanceExistingRolePlay, generateSceneDialogue } from "./roleplay-analysis";
 import { rolePlayAudioService } from "./roleplay-audio-service";
-import { collaborativeRoleplayStorage } from "./collaborative-roleplay-storage";
-import { templateConversionService } from "./template-conversion-service";
+import { collaborativeRoleplayService } from "./collaborative-roleplay-service";
 import { getCachedCharacterImage, cacheCharacterImage, getCachedAudio, cacheAudio, getCachedAnalysis, cacheAnalysis, getAllCacheStats, cleanOldCacheFiles } from "./content-cache";
 import { pool } from "./db";
 import { audioService } from "./audio-service";
@@ -2721,7 +2720,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Access denied" });
       }
       
-      const result = await templateConversionService.convertStoryToTemplate(
+      const result = await collaborativeRoleplayService.convertStoryToTemplate(
         storyId, 
         userId, 
         makePublic
@@ -2737,7 +2736,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get public templates for browsing
   app.get("/api/roleplay-templates", async (req, res) => {
     try {
-      const templates = await collaborativeRoleplayStorage.getPublicTemplates();
+      const templates = collaborativeRoleplayService.getPublicTemplates();
       res.json(templates);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch templates" });
@@ -2748,7 +2747,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/roleplay-templates/my-templates", requireAuth, async (req, res) => {
     try {
       const userId = (req.user as any)?.id;
-      const templates = await collaborativeRoleplayStorage.getUserTemplates(userId);
+      const templates = collaborativeRoleplayService.getUserTemplates(userId);
       res.json(templates);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch user templates" });

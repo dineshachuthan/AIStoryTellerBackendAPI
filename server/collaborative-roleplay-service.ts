@@ -1,0 +1,296 @@
+import { storage } from "./storage";
+import { generateRolePlayAnalysis } from "./roleplay-analysis";
+import type { RolePlayAnalysis } from "./roleplay-analysis";
+
+export interface CollaborativeTemplate {
+  id: number;
+  originalStoryId: number;
+  title: string;
+  description: string;
+  genre: string;
+  characterRoles: Array<{
+    name: string;
+    description: string;
+    personality: string;
+    role: string;
+    requiredEmotions: Array<{
+      emotion: string;
+      intensity: number;
+      sampleCount: number;
+    }>;
+    aiVoiceDefault: string;
+  }>;
+  sceneCount: number;
+  estimatedDuration: number;
+  createdBy: string;
+  isPublic: boolean;
+  createdAt: Date;
+}
+
+export interface CollaborativeInstance {
+  id: string;
+  templateId: number;
+  instanceTitle: string;
+  createdBy: string;
+  status: "draft" | "inviting" | "recording" | "processing" | "completed";
+  participants: Array<{
+    characterName: string;
+    userId?: string;
+    invitationToken: string;
+    invitationStatus: "pending" | "accepted" | "declined" | "completed";
+    recordingProgress: number;
+    profileImageUrl?: string;
+  }>;
+  completionPercentage: number;
+  finalVideoUrl?: string;
+  finalAudioUrl?: string;
+  createdAt: Date;
+}
+
+export class CollaborativeRoleplayService {
+  private templates: Map<number, CollaborativeTemplate> = new Map();
+  private instances: Map<string, CollaborativeInstance> = new Map();
+  private nextTemplateId = 1;
+
+  /**
+   * Convert existing story to collaborative template
+   */
+  async convertStoryToTemplate(
+    storyId: number, 
+    userId: string,
+    makePublic: boolean = true
+  ): Promise<CollaborativeTemplate> {
+    
+    const story = await storage.getStory(storyId);
+    if (!story) {
+      throw new Error("Story not found");
+    }
+
+    // Generate roleplay analysis
+    const roleplayAnalysis = await generateRolePlayAnalysis(story.content, story.title || "Untitled Story");
+    
+    const template: CollaborativeTemplate = {
+      id: this.nextTemplateId++,
+      originalStoryId: storyId,
+      title: roleplayAnalysis.title || story.title,
+      description: `${roleplayAnalysis.genre} story with ${roleplayAnalysis.totalScenes} scenes`,
+      genre: roleplayAnalysis.genre,
+      characterRoles: roleplayAnalysis.characters.map(char => ({
+        name: char.name,
+        description: char.personality,
+        personality: char.personality,
+        role: char.role,
+        requiredEmotions: this.extractRequiredEmotions(roleplayAnalysis, char.name),
+        aiVoiceDefault: char.voiceProfile || "alloy",
+      })),
+      sceneCount: roleplayAnalysis.totalScenes,
+      estimatedDuration: roleplayAnalysis.estimatedPlaytime * 60,
+      createdBy: userId,
+      isPublic: makePublic,
+      createdAt: new Date(),
+    };
+
+    this.templates.set(template.id, template);
+    return template;
+  }
+
+  /**
+   * Create instance from template
+   */
+  async createInstanceFromTemplate(
+    templateId: number,
+    instanceTitle: string,
+    userId: string
+  ): Promise<{
+    instanceId: string;
+    participantSlots: Array<{
+      characterName: string;
+      invitationToken: string;
+    }>;
+  }> {
+    
+    const template = this.templates.get(templateId);
+    if (!template) {
+      throw new Error("Template not found");
+    }
+
+    const instanceId = `inst_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    const participants = template.characterRoles.map(role => ({
+      characterName: role.name,
+      invitationToken: this.generateInvitationToken(),
+      invitationStatus: "pending" as const,
+      recordingProgress: 0,
+    }));
+
+    const instance: CollaborativeInstance = {
+      id: instanceId,
+      templateId,
+      instanceTitle,
+      createdBy: userId,
+      status: "draft",
+      participants,
+      completionPercentage: 0,
+      createdAt: new Date(),
+    };
+
+    this.instances.set(instanceId, instance);
+
+    return {
+      instanceId,
+      participantSlots: participants.map(p => ({
+        characterName: p.characterName,
+        invitationToken: p.invitationToken,
+      })),
+    };
+  }
+
+  /**
+   * Get public templates
+   */
+  getPublicTemplates(): CollaborativeTemplate[] {
+    return Array.from(this.templates.values()).filter(t => t.isPublic);
+  }
+
+  /**
+   * Get user's templates
+   */
+  getUserTemplates(userId: string): CollaborativeTemplate[] {
+    return Array.from(this.templates.values()).filter(t => t.createdBy === userId);
+  }
+
+  /**
+   * Get template by ID
+   */
+  getTemplate(templateId: number): CollaborativeTemplate | null {
+    return this.templates.get(templateId) || null;
+  }
+
+  /**
+   * Get user's instances
+   */
+  getUserInstances(userId: string): CollaborativeInstance[] {
+    return Array.from(this.instances.values()).filter(i => i.createdBy === userId);
+  }
+
+  /**
+   * Get instance by ID
+   */
+  getInstance(instanceId: string): CollaborativeInstance | null {
+    return this.instances.get(instanceId) || null;
+  }
+
+  /**
+   * Get invitation details by token
+   */
+  getInvitationByToken(token: string): {
+    instance: CollaborativeInstance;
+    participant: CollaborativeInstance['participants'][0];
+    template: CollaborativeTemplate;
+  } | null {
+    
+    for (const instance of Array.from(this.instances.values())) {
+      const participant = instance.participants.find(p => p.invitationToken === token);
+      if (participant) {
+        const template = this.templates.get(instance.templateId);
+        if (template) {
+          return { instance, participant, template };
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Accept invitation
+   */
+  acceptInvitation(token: string, userId: string): boolean {
+    for (const instance of Array.from(this.instances.values())) {
+      const participant = instance.participants.find(p => p.invitationToken === token);
+      if (participant && participant.invitationStatus === "pending") {
+        participant.userId = userId;
+        participant.invitationStatus = "accepted";
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Submit media for character role
+   */
+  submitCharacterMedia(token: string, mediaType: 'voice' | 'photo', mediaUrl: string): boolean {
+    const invitation = this.getInvitationByToken(token);
+    if (!invitation) return false;
+
+    const { instance, participant } = invitation;
+    
+    // Update participant progress
+    participant.recordingProgress = Math.min(100, participant.recordingProgress + 50);
+    
+    // Update instance completion
+    const totalProgress = instance.participants.reduce((sum, p) => sum + p.recordingProgress, 0);
+    instance.completionPercentage = Math.round(totalProgress / (instance.participants.length * 100) * 100);
+    
+    // Check if all participants completed
+    const allCompleted = instance.participants.every(p => p.recordingProgress >= 100);
+    if (allCompleted) {
+      instance.status = "processing";
+    }
+    
+    return true;
+  }
+
+  /**
+   * Generate invitation links for instance
+   */
+  generateInvitationLinks(instanceId: string, baseUrl: string): Array<{
+    characterName: string;
+    invitationUrl: string;
+    token: string;
+  }> {
+    const instance = this.getInstance(instanceId);
+    if (!instance) return [];
+
+    return instance.participants.map(participant => ({
+      characterName: participant.characterName,
+      invitationUrl: `${baseUrl}/invite/${participant.invitationToken}`,
+      token: participant.invitationToken,
+    }));
+  }
+
+  private extractRequiredEmotions(analysis: RolePlayAnalysis, characterName: string): Array<{
+    emotion: string;
+    intensity: number;
+    sampleCount: number;
+  }> {
+    const emotions = new Map<string, { intensity: number; count: number }>();
+    
+    for (const scene of analysis.scenes) {
+      for (const dialogue of scene.dialogueSequence) {
+        if (dialogue.characterName === characterName) {
+          const key = dialogue.emotion.toLowerCase();
+          const existing = emotions.get(key);
+          if (existing) {
+            existing.intensity = Math.max(existing.intensity, dialogue.intensity);
+            existing.count++;
+          } else {
+            emotions.set(key, { intensity: dialogue.intensity, count: 1 });
+          }
+        }
+      }
+    }
+    
+    return Array.from(emotions.entries()).map(([emotion, data]) => ({
+      emotion,
+      intensity: data.intensity,
+      sampleCount: Math.min(data.count, 3),
+    }));
+  }
+
+  private generateInvitationToken(): string {
+    return `invite_${Date.now()}_${Math.random().toString(36).substr(2, 16)}`;
+  }
+}
+
+export const collaborativeRoleplayService = new CollaborativeRoleplayService();
