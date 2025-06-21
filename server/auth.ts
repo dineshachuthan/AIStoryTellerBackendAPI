@@ -40,6 +40,7 @@ export function getSession() {
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
       sameSite: 'lax', // Add sameSite for better compatibility
     },
+    name: 'connect.sid', // Explicit session name
   });
 }
 

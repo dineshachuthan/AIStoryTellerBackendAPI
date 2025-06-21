@@ -1688,19 +1688,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create new draft story  
-  app.post("/api/stories/draft", async (req, res) => {
+  app.post("/api/stories/draft", requireAuth, async (req, res) => {
     try {
-      console.log("Session info:", {
-        authenticated: req.isAuthenticated(),
-        user: req.user,
-        sessionID: req.sessionID,
-        cookies: req.headers.cookie
-      });
-
-      if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "Authentication required" });
-      }
-
       const userId = (req.user as any)?.id;
       const { title = "Untitled Story", storyType = "text" } = req.body;
       
