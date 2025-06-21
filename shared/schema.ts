@@ -491,6 +491,177 @@ export const insertStoryUserConfidenceSchema = createInsertSchema(storyUserConfi
 export type StoryUserConfidence = typeof storyUserConfidence.$inferSelect;
 export type InsertStoryUserConfidence = z.infer<typeof insertStoryUserConfidenceSchema>;
 
+// =============================================================================
+// COLLABORATIVE ROLEPLAY SYSTEM - Template-Instance Architecture
+// =============================================================================
+
+// Story Templates - Master story content (immutable)
+export const storyTemplates = pgTable("story_templates", {
+  id: serial("id").primaryKey(),
+  originalStoryId: integer("original_story_id").references(() => stories.id).notNull(),
+  title: text("title").notNull(),
+  description: text("description"),
+  genre: varchar("genre"),
+  tags: text("tags").array(),
+  isPublic: boolean("is_public").default(true),
+  allowRemixes: boolean("allow_remixes").default(true),
+  allowInstances: boolean("allow_instances").default(true),
+  createdByUserId: varchar("created_by_user_id").references(() => users.id).notNull(),
+  templateVersion: integer("template_version").default(1),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Story Instances - Production versions with specific cast assignments
+export const storyInstances = pgTable("story_instances", {
+  id: serial("id").primaryKey(),
+  templateId: integer("template_id").references(() => storyTemplates.id).notNull(),
+  instanceTitle: text("instance_title").notNull(),
+  description: text("description"),
+  createdByUserId: varchar("created_by_user_id").references(() => users.id).notNull(),
+  status: varchar("status").default("draft"), // draft, recording, processing, completed, published
+  isPublic: boolean("is_public").default(false),
+  allowCollaborators: boolean("allow_collaborators").default(true),
+  estimatedDuration: integer("estimated_duration"), // in seconds
+  completionPercentage: integer("completion_percentage").default(0),
+  finalVideoUrl: text("final_video_url"),
+  finalAudioUrl: text("final_audio_url"),
+  viewCount: integer("view_count").default(0),
+  likeCount: integer("like_count").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Story Remixes - Modified templates with customizations
+export const storyRemixes = pgTable("story_remixes", {
+  id: serial("id").primaryKey(),
+  originalTemplateId: integer("original_template_id").references(() => storyTemplates.id).notNull(),
+  remixTitle: text("remix_title").notNull(),
+  description: text("description"),
+  createdByUserId: varchar("created_by_user_id").references(() => users.id).notNull(),
+  modifications: jsonb("modifications"), // Store scene/setting changes
+  isPublic: boolean("is_public").default(true),
+  allowInstances: boolean("allow_instances").default(true),
+  parentRemixId: integer("parent_remix_id"), // Self-reference will be added later
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Character Roles - Extracted from roleplay analysis
+export const characterRoles = pgTable("character_roles", {
+  id: serial("id").primaryKey(),
+  templateId: integer("template_id").references(() => storyTemplates.id),
+  remixId: integer("remix_id").references(() => storyRemixes.id),
+  characterName: text("character_name").notNull(),
+  characterDescription: text("character_description"),
+  personality: text("personality"),
+  role: varchar("role").notNull(), // protagonist, antagonist, supporting, narrator, other
+  appearance: text("appearance"),
+  traits: text("traits").array(),
+  dialogueCount: integer("dialogue_count").default(0),
+  estimatedRecordingTime: integer("estimated_recording_time"), // in seconds
+  requiredEmotions: jsonb("required_emotions"), // Array of {emotion, intensity, sampleCount}
+  aiVoiceDefault: varchar("ai_voice_default"), // fallback OpenAI voice
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Instance Participants - Character assignments per instance
+export const instanceParticipants = pgTable("instance_participants", {
+  id: serial("id").primaryKey(),
+  instanceId: integer("instance_id").references(() => storyInstances.id).notNull(),
+  characterRoleId: integer("character_role_id").references(() => characterRoles.id).notNull(),
+  userId: varchar("user_id").references(() => users.id), // null if AI voice
+  assignmentType: varchar("assignment_type").notNull(), // self, invited, ai
+  invitationToken: varchar("invitation_token").unique(),
+  invitationStatus: varchar("invitation_status").default("pending"), // pending, accepted, declined, completed
+  profileImageUrl: text("profile_image_url"),
+  recordingProgress: integer("recording_progress").default(0), // percentage
+  voiceQualityScore: doublePrecision("voice_quality_score"),
+  invitedAt: timestamp("invited_at"),
+  acceptedAt: timestamp("accepted_at"),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Character Media Submissions - Voice samples and profile pictures
+export const characterMediaSubmissions = pgTable("character_media_submissions", {
+  id: serial("id").primaryKey(),
+  participantId: integer("participant_id").references(() => instanceParticipants.id).notNull(),
+  mediaType: varchar("media_type").notNull(), // voice, profile_image
+  emotion: varchar("emotion"), // for voice samples
+  intensity: integer("intensity"), // 1-10 for voice samples
+  fileUrl: text("file_url").notNull(),
+  fileName: text("file_name"),
+  fileSize: integer("file_size"),
+  duration: integer("duration"), // for voice samples in seconds
+  qualityScore: doublePrecision("quality_score"),
+  isApproved: boolean("is_approved").default(true),
+  metadata: jsonb("metadata"), // additional file metadata
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Scene Dialogues - Detailed scene breakdown for video generation
+export const sceneDialogues = pgTable("scene_dialogues", {
+  id: serial("id").primaryKey(),
+  templateId: integer("template_id").references(() => storyTemplates.id),
+  remixId: integer("remix_id").references(() => storyRemixes.id),
+  sceneNumber: integer("scene_number").notNull(),
+  sequenceNumber: integer("sequence_number").notNull(),
+  characterRoleId: integer("character_role_id").references(() => characterRoles.id).notNull(),
+  dialogueText: text("dialogue_text").notNull(),
+  emotion: varchar("emotion").notNull(),
+  intensity: integer("intensity").notNull(),
+  stageDirection: text("stage_direction"),
+  estimatedDuration: integer("estimated_duration"), // in seconds
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Scene Backgrounds - Visual settings for video generation
+export const sceneBackgrounds = pgTable("scene_backgrounds", {
+  id: serial("id").primaryKey(),
+  templateId: integer("template_id").references(() => storyTemplates.id),
+  remixId: integer("remix_id").references(() => storyRemixes.id),
+  sceneNumber: integer("scene_number").notNull(),
+  location: text("location").notNull(),
+  timeOfDay: varchar("time_of_day"),
+  atmosphere: text("atmosphere"),
+  visualDescription: text("visual_description"),
+  soundscape: text("soundscape"),
+  lighting: text("lighting"),
+  backgroundImageUrl: text("background_image_url"),
+  isCustomized: boolean("is_customized").default(false), // true for remixes
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Video Generation Jobs - Background processing queue
+export const videoGenerationJobs = pgTable("video_generation_jobs", {
+  id: serial("id").primaryKey(),
+  instanceId: integer("instance_id").references(() => storyInstances.id).notNull(),
+  status: varchar("status").default("queued"), // queued, processing, completed, failed
+  priority: integer("priority").default(5), // 1-10, higher = more priority
+  progress: integer("progress").default(0), // 0-100 percentage
+  errorMessage: text("error_message"),
+  processingStartedAt: timestamp("processing_started_at"),
+  processingCompletedAt: timestamp("processing_completed_at"),
+  outputVideoUrl: text("output_video_url"),
+  outputAudioUrl: text("output_audio_url"),
+  metadata: jsonb("metadata"), // processing details
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Version Lineage - Track original→remix→instance relationships
+export const versionLineage = pgTable("version_lineage", {
+  id: serial("id").primaryKey(),
+  parentType: varchar("parent_type").notNull(), // template, remix
+  parentId: integer("parent_id").notNull(),
+  childType: varchar("child_type").notNull(), // remix, instance
+  childId: integer("child_id").notNull(),
+  relationshipType: varchar("relationship_type").notNull(), // remix, instance, fork
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Authentication schemas for new tables
 export const insertUserProviderSchema = createInsertSchema(userProviders).omit({
   id: true,
@@ -505,3 +676,106 @@ export type UserProvider = typeof userProviders.$inferSelect;
 export type InsertUserProvider = z.infer<typeof insertUserProviderSchema>;
 export type LocalUser = typeof localUsers.$inferSelect;
 export type InsertLocalUser = z.infer<typeof insertLocalUserSchema>;
+
+// =============================================================================
+// COLLABORATIVE ROLEPLAY SCHEMAS
+// =============================================================================
+
+// Story Template schemas
+export const insertStoryTemplateSchema = createInsertSchema(storyTemplates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Story Instance schemas
+export const insertStoryInstanceSchema = createInsertSchema(storyInstances).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Story Remix schemas
+export const insertStoryRemixSchema = createInsertSchema(storyRemixes).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Character Role schemas
+export const insertCharacterRoleSchema = createInsertSchema(characterRoles).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Instance Participant schemas
+export const insertInstanceParticipantSchema = createInsertSchema(instanceParticipants).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Character Media Submission schemas
+export const insertCharacterMediaSubmissionSchema = createInsertSchema(characterMediaSubmissions).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Scene Dialogue schemas
+export const insertSceneDialogueSchema = createInsertSchema(sceneDialogues).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Scene Background schemas
+export const insertSceneBackgroundSchema = createInsertSchema(sceneBackgrounds).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Video Generation Job schemas
+export const insertVideoGenerationJobSchema = createInsertSchema(videoGenerationJobs).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Version Lineage schemas
+export const insertVersionLineageSchema = createInsertSchema(versionLineage).omit({
+  id: true,
+  createdAt: true,
+});
+
+// =============================================================================
+// COLLABORATIVE ROLEPLAY TYPE EXPORTS
+// =============================================================================
+
+export type StoryTemplate = typeof storyTemplates.$inferSelect;
+export type InsertStoryTemplate = z.infer<typeof insertStoryTemplateSchema>;
+
+export type StoryInstance = typeof storyInstances.$inferSelect;
+export type InsertStoryInstance = z.infer<typeof insertStoryInstanceSchema>;
+
+export type StoryRemix = typeof storyRemixes.$inferSelect;
+export type InsertStoryRemix = z.infer<typeof insertStoryRemixSchema>;
+
+export type CharacterRole = typeof characterRoles.$inferSelect;
+export type InsertCharacterRole = z.infer<typeof insertCharacterRoleSchema>;
+
+export type InstanceParticipant = typeof instanceParticipants.$inferSelect;
+export type InsertInstanceParticipant = z.infer<typeof insertInstanceParticipantSchema>;
+
+export type CharacterMediaSubmission = typeof characterMediaSubmissions.$inferSelect;
+export type InsertCharacterMediaSubmission = z.infer<typeof insertCharacterMediaSubmissionSchema>;
+
+export type SceneDialogue = typeof sceneDialogues.$inferSelect;
+export type InsertSceneDialogue = z.infer<typeof insertSceneDialogueSchema>;
+
+export type SceneBackground = typeof sceneBackgrounds.$inferSelect;
+export type InsertSceneBackground = z.infer<typeof insertSceneBackgroundSchema>;
+
+export type VideoGenerationJob = typeof videoGenerationJobs.$inferSelect;
+export type InsertVideoGenerationJob = z.infer<typeof insertVideoGenerationJobSchema>;
+
+export type VersionLineage = typeof versionLineage.$inferSelect;
+export type InsertVersionLineage = z.infer<typeof insertVersionLineageSchema>;
