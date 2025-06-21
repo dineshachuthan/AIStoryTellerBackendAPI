@@ -54,6 +54,9 @@ export default function StoryAnalysis() {
   const params = useParams();
   const storyId = params.storyId;
   
+  console.log('URL params:', params);
+  console.log('Extracted storyId:', storyId);
+  
   const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
   const [rolePlayAnalysis, setRolePlayAnalysis] = useState<any>(null);
   const [isCreating, setIsCreating] = useState(false);
