@@ -162,7 +162,7 @@ router.get("/api/invitations/:token", async (req, res) => {
   }
 });
 
-// Accept invitation
+// Accept invitation (registered users)
 router.post("/api/invitations/:token/accept", requireAuth, async (req, res) => {
   try {
     const token = req.params.token;
@@ -180,25 +180,81 @@ router.post("/api/invitations/:token/accept", requireAuth, async (req, res) => {
   }
 });
 
-// Submit media for character role
-router.post("/api/invitations/:token/submit-media", requireAuth, async (req, res) => {
+// Accept invitation (guest users)
+router.post("/api/invitations/:token/accept-guest", async (req, res) => {
   try {
     const token = req.params.token;
-    const { mediaType, mediaUrl } = req.body;
+    const { guestName, guestEmail } = req.body;
     
-    if (!mediaType || !mediaUrl) {
-      return res.status(400).json({ message: "Media type and URL are required" });
+    if (!guestName) {
+      return res.status(400).json({ message: "Guest name is required" });
     }
     
-    const success = collaborativeRoleplayService.submitCharacterMedia(token, mediaType, mediaUrl);
+    const success = collaborativeRoleplayService.acceptInvitationAsGuest(token, guestName, guestEmail);
     
     if (!success) {
-      return res.status(400).json({ message: "Failed to submit media" });
+      return res.status(400).json({ message: "Failed to accept invitation" });
     }
     
-    res.json({ message: "Media submitted successfully" });
+    res.json({ message: "Invitation accepted successfully as guest" });
   } catch (error) {
-    res.status(500).json({ message: "Failed to submit media" });
+    res.status(500).json({ message: "Failed to accept invitation" });
+  }
+});
+
+// Submit voice recording
+router.post("/api/invitations/:token/submit-voice", async (req, res) => {
+  try {
+    const token = req.params.token;
+    const { emotion, audioUrl } = req.body;
+    
+    if (!emotion || !audioUrl) {
+      return res.status(400).json({ message: "Emotion and audio URL are required" });
+    }
+    
+    const success = collaborativeRoleplayService.submitVoiceRecording(token, emotion, audioUrl);
+    
+    if (!success) {
+      return res.status(400).json({ message: "Failed to submit voice recording" });
+    }
+    
+    res.json({ message: "Voice recording submitted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to submit voice recording" });
+  }
+});
+
+// Submit character photo
+router.post("/api/invitations/:token/submit-photo", async (req, res) => {
+  try {
+    const token = req.params.token;
+    const { photoUrl } = req.body;
+    
+    if (!photoUrl) {
+      return res.status(400).json({ message: "Photo URL is required" });
+    }
+    
+    const success = collaborativeRoleplayService.submitCharacterPhoto(token, photoUrl);
+    
+    if (!success) {
+      return res.status(400).json({ message: "Failed to submit photo" });
+    }
+    
+    res.json({ message: "Photo submitted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to submit photo" });
+  }
+});
+
+// Get participant's required emotions
+router.get("/api/invitations/:token/requirements", async (req, res) => {
+  try {
+    const token = req.params.token;
+    const requirements = collaborativeRoleplayService.getParticipantRequiredEmotions(token);
+    
+    res.json({ requirements });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch requirements" });
   }
 });
 

@@ -217,7 +217,7 @@ export class CollaborativeRoleplayService {
   }
 
   /**
-   * Accept invitation
+   * Accept invitation (for registered users)
    */
   acceptInvitation(token: string, userId: string): boolean {
     for (const instance of Array.from(this.instances.values())) {
@@ -225,6 +225,7 @@ export class CollaborativeRoleplayService {
       if (participant && participant.invitationStatus === "pending") {
         participant.userId = userId;
         participant.invitationStatus = "accepted";
+        participant.isGuest = false;
         return true;
       }
     }
@@ -232,28 +233,126 @@ export class CollaborativeRoleplayService {
   }
 
   /**
-   * Submit media for character role
+   * Accept invitation (for guest users)
    */
-  submitCharacterMedia(token: string, mediaType: 'voice' | 'photo', mediaUrl: string): boolean {
+  acceptInvitationAsGuest(token: string, guestName: string, guestEmail?: string): boolean {
+    for (const instance of Array.from(this.instances.values())) {
+      const participant = instance.participants.find(p => p.invitationToken === token);
+      if (participant && participant.invitationStatus === "pending") {
+        participant.guestName = guestName;
+        participant.guestEmail = guestEmail;
+        participant.invitationStatus = "accepted";
+        participant.isGuest = true;
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Submit voice recording for character role
+   */
+  submitVoiceRecording(token: string, emotion: string, audioUrl: string): boolean {
     const invitation = this.getInvitationByToken(token);
     if (!invitation) return false;
 
     const { instance, participant } = invitation;
     
-    // Update participant progress
-    participant.recordingProgress = Math.min(100, participant.recordingProgress + 50);
+    // Initialize voice recordings array if not exists
+    if (!participant.voiceRecordings) {
+      participant.voiceRecordings = [];
+    }
     
-    // Update instance completion
+    // Add or update voice recording for this emotion
+    const existingIndex = participant.voiceRecordings.findIndex(r => r.emotion === emotion);
+    const recording = {
+      emotion,
+      audioUrl,
+      uploadedAt: new Date()
+    };
+    
+    if (existingIndex >= 0) {
+      participant.voiceRecordings[existingIndex] = recording;
+    } else {
+      participant.voiceRecordings.push(recording);
+    }
+    
+    // Update progress based on required emotions
+    const template = this.getTemplate(instance.templateId);
+    if (template) {
+      const characterRole = template.characterRoles.find(r => r.name === participant.characterName);
+      if (characterRole) {
+        const requiredEmotions = characterRole.requiredEmotions.length;
+        const completedEmotions = participant.voiceRecordings.length;
+        participant.recordingProgress = Math.round((completedEmotions / requiredEmotions) * 70); // 70% for voice
+      }
+    }
+    
+    this.updateInstanceProgress(instance);
+    return true;
+  }
+
+  /**
+   * Submit character photo
+   */
+  submitCharacterPhoto(token: string, photoUrl: string): boolean {
+    const invitation = this.getInvitationByToken(token);
+    if (!invitation) return false;
+
+    const { instance, participant } = invitation;
+    participant.characterPhoto = photoUrl;
+    participant.recordingProgress = Math.min(100, participant.recordingProgress + 30); // 30% for photo
+    
+    this.updateInstanceProgress(instance);
+    return true;
+  }
+
+  /**
+   * Update overall instance progress
+   */
+  private updateInstanceProgress(instance: CollaborativeInstance): void {
     const totalProgress = instance.participants.reduce((sum, p) => sum + p.recordingProgress, 0);
     instance.completionPercentage = Math.round(totalProgress / (instance.participants.length * 100) * 100);
     
     // Check if all participants completed
     const allCompleted = instance.participants.every(p => p.recordingProgress >= 100);
-    if (allCompleted) {
+    if (allCompleted && instance.status !== "completed") {
       instance.status = "processing";
     }
+  }
+
+  /**
+   * Get participant's required emotions
+   */
+  getParticipantRequiredEmotions(token: string): Array<{
+    emotion: string;
+    intensity: number;
+    sampleCount: number;
+    completed: boolean;
+  }> {
+    const invitation = this.getInvitationByToken(token);
+    if (!invitation) return [];
+
+    const { instance, participant, template } = invitation;
+    const characterRole = template.characterRoles.find(r => r.name === participant.characterName);
     
-    return true;
+    if (!characterRole) return [];
+
+    return characterRole.requiredEmotions.map(emotion => ({
+      ...emotion,
+      completed: (participant.voiceRecordings || []).some(r => r.emotion === emotion.emotion)
+    }));
+  }
+
+  /**
+   * Check if participant can access story content
+   */
+  canParticipantAccessStory(token: string): boolean {
+    const invitation = this.getInvitationByToken(token);
+    if (!invitation) return false;
+
+    const { participant } = invitation;
+    return participant.invitationStatus === "accepted";
   }
 
   /**

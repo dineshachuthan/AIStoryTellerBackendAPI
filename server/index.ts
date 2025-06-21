@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { archetypeService } from "./character-archetype-service";
+import { collaborativeRoutes } from "./routes-collaborative";
 
 const app = express();
 app.use(express.json());
@@ -38,6 +39,9 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Add collaborative routes
+  app.use(collaborativeRoutes);
+  
   const server = await registerRoutes(app);
   
   // Initialize character archetypes after server starts (optional, with delay)
