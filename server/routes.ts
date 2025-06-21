@@ -1693,13 +1693,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = (req.user as any)?.id;
       const { title = "Untitled Story", storyType = "text" } = req.body;
       
-      console.log("About to create story with data:", {
-        title,
-        authorId: userId,
-        uploadType: 'text',
-        processingStatus: 'pending',
-        status: 'draft'
-      });
+
 
       const draftStory = await storage.createStory({
         title,
@@ -1722,7 +1716,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isAdultContent: false,
       });
 
-      console.log("Draft story created:", draftStory.id);
+
       res.status(201).json(draftStory);
     } catch (error) {
       console.error("Error creating draft story:", error);
