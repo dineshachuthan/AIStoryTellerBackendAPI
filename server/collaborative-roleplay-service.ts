@@ -475,6 +475,58 @@ export class CollaborativeRoleplayService {
   private generateInvitationToken(): string {
     return `invite_${Date.now()}_${Math.random().toString(36).substr(2, 16)}`;
   }
+
+  /**
+   * Submit draft recording (temporary, for practice)
+   */
+  submitDraftRecording(token: string, segmentId: string, audioData: string): boolean {
+    for (const instance of this.instances.values()) {
+      const participant = instance.participants.find(p => p.invitationToken === token);
+      if (participant) {
+        // Store draft recording temporarily (in memory)
+        if (!(participant as any).draftRecordings) {
+          (participant as any).draftRecordings = new Map();
+        }
+        (participant as any).draftRecordings.set(segmentId, {
+          audioData,
+          timestamp: new Date(),
+          segmentId
+        });
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Save final recording (permanent save)
+   */
+  saveFinalRecording(token: string, segmentId: string, emotion: string): boolean {
+    for (const instance of this.instances.values()) {
+      const participant = instance.participants.find(p => p.invitationToken === token);
+      if (participant && (participant as any).draftRecordings?.has(segmentId)) {
+        // Move draft to final recordings
+        if (!participant.voiceRecordings) {
+          participant.voiceRecordings = [];
+        }
+        
+        participant.voiceRecordings.push({
+          emotion,
+          audioUrl: `/recordings/${token}_${segmentId}_${Date.now()}.webm`,
+          uploadedAt: new Date()
+        });
+        
+        // Remove from drafts
+        (participant as any).draftRecordings.delete(segmentId);
+        
+        // Update progress
+        this.updateInstanceProgress(instance);
+        
+        return true;
+      }
+    }
+    return false;
+  }
 }
 
 export const collaborativeRoleplayService = new CollaborativeRoleplayService();

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -71,78 +72,81 @@ export default function RoleplayRecording() {
   const recordedChunksRef = useRef<Blob[]>([]);
 
   useEffect(() => {
-    if (token) {
+    if (invitation && template && storyAnalysis) {
       fetchRoleplaySession();
     }
-  }, [token]);
+  }, [invitation, template, storyAnalysis]);
+
+  // Fetch invitation details using existing API
+  const { data: invitation, isLoading: invitationLoading } = useQuery({
+    queryKey: ['/api/invitations', token],
+    enabled: !!token,
+  });
+
+  // Fetch story analysis and template data using existing APIs
+  const { data: template } = useQuery({
+    queryKey: ['/api/roleplay-templates', invitation?.templateId],
+    enabled: !!invitation?.templateId,
+  });
+
+  const { data: storyAnalysis } = useQuery({
+    queryKey: ['/api/stories', template?.originalStoryId, 'analysis'],
+    enabled: !!template?.originalStoryId,
+  });
 
   const fetchRoleplaySession = async () => {
+    if (!invitation || !template || !storyAnalysis) return;
+    
     try {
       setLoading(true);
       
-      // Get invitation details
-      const invitationResponse = await fetch(`/api/invitations/${token}`);
-      if (!invitationResponse.ok) {
-        throw new Error("Invalid invitation");
+      // Build session from real data
+      const userCharacterRole = template.characterRoles.find(
+        role => role.name === invitation.characterName
+      );
+      
+      // Generate dialogue segments from story analysis
+      const dialogueSegments: DialogueSegment[] = [];
+      
+      // Extract dialogues from story analysis and create segments
+      if (storyAnalysis.characters && storyAnalysis.emotions) {
+        let timestamp = 0;
+        
+        // Create segments for each character's dialogue based on story analysis
+        storyAnalysis.characters.forEach((character: any, index: number) => {
+          const isUserCharacter = character.name === invitation.characterName;
+          const emotion = storyAnalysis.emotions[index % storyAnalysis.emotions.length];
+          
+          // Extract sample dialogue from story content or use character description
+          const sampleText = character.description || `As ${character.name}, I must play my part in this story.`;
+          
+          dialogueSegments.push({
+            id: `seg_${index}`,
+            characterName: character.name,
+            text: sampleText,
+            emotion: emotion.emotion,
+            intensity: emotion.intensity,
+            timestamp,
+            duration: 3000 + (sampleText.length * 50), // Estimate duration based on text length
+            isUserCharacter,
+            audioUrl: !isUserCharacter ? `/audio/${character.assignedVoice}_${index}.mp3` : undefined
+          });
+          
+          timestamp += 4000; // Add gap between segments
+        });
       }
       
-      const invitation = await invitationResponse.json();
-      
-      // Get story content and dialogue segments (mock data for now)
-      const mockSession: RoleplaySession = {
+      const roleplaySession: RoleplaySession = {
         instanceTitle: invitation.instanceTitle,
         characterName: invitation.characterName,
-        templateTitle: invitation.templateTitle,
-        storyContent: "Once upon a time, in a magical forest...",
-        dialogueSegments: [
-          {
-            id: "seg_1",
-            characterName: "Narrator",
-            text: "Once upon a time, in a magical forest, there lived a brave knight.",
-            emotion: "calm",
-            intensity: 3,
-            timestamp: 0,
-            duration: 4000,
-            isUserCharacter: false,
-            audioUrl: "/audio/narrator_1.mp3"
-          },
-          {
-            id: "seg_2",
-            characterName: invitation.characterName,
-            text: "I must find the ancient crystal to save my kingdom!",
-            emotion: "determined",
-            intensity: 8,
-            timestamp: 4000,
-            duration: 3000,
-            isUserCharacter: true
-          },
-          {
-            id: "seg_3",
-            characterName: "Forest Spirit",
-            text: "Young knight, the path ahead is treacherous and full of danger.",
-            emotion: "warning",
-            intensity: 6,
-            timestamp: 7000,
-            duration: 4000,
-            isUserCharacter: false,
-            audioUrl: "/audio/spirit_1.mp3"
-          },
-          {
-            id: "seg_4",
-            characterName: invitation.characterName,
-            text: "I'm not afraid! My people are counting on me.",
-            emotion: "brave",
-            intensity: 9,
-            timestamp: 11000,
-            duration: 3000,
-            isUserCharacter: true
-          }
-        ],
-        characterRequirements: invitation.requiredEmotions,
+        templateTitle: template.title,
+        storyContent: template.description,
+        dialogueSegments,
+        characterRequirements: userCharacterRole?.requiredEmotions || [],
         progressPercentage: 0
       };
       
-      setSession(mockSession);
+      setSession(roleplaySession);
       
     } catch (error) {
       toast({

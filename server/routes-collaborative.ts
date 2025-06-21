@@ -224,6 +224,85 @@ router.post("/api/invitations/:token/submit-voice", async (req, res) => {
   }
 });
 
+// Submit draft voice recording (temporary, not saved permanently)
+router.post("/api/invitations/:token/submit-draft", async (req, res) => {
+  try {
+    const token = req.params.token;
+    const { segmentId, audioData } = req.body;
+    
+    if (!segmentId || !audioData) {
+      return res.status(400).json({ message: "Segment ID and audio data are required" });
+    }
+    
+    const success = collaborativeRoleplayService.submitDraftRecording(token, segmentId, audioData);
+    
+    if (!success) {
+      return res.status(400).json({ message: "Failed to submit draft recording" });
+    }
+    
+    res.json({ 
+      message: "Draft recording saved",
+      audioUrl: `/temp-audio/${token}_${segmentId}.webm`
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to submit draft recording" });
+  }
+});
+
+// Save final voice recording (permanent save)
+router.post("/api/invitations/:token/save-recording", async (req, res) => {
+  try {
+    const token = req.params.token;
+    const { segmentId, emotion } = req.body;
+    
+    if (!segmentId || !emotion) {
+      return res.status(400).json({ message: "Segment ID and emotion are required" });
+    }
+    
+    const success = collaborativeRoleplayService.saveFinalRecording(token, segmentId, emotion);
+    
+    if (!success) {
+      return res.status(404).json({ message: "Invalid invitation token or no draft found" });
+    }
+    
+    res.json({ message: "Recording saved successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to save recording" });
+  }
+});
+
+// Get roleplay session data (story content, character dialogues, etc.)
+router.get("/api/invitations/:token/session", async (req, res) => {
+  try {
+    const token = req.params.token;
+    
+    const invitation = collaborativeRoleplayService.getInvitationByToken(token);
+    if (!invitation) {
+      return res.status(404).json({ message: "Invitation not found" });
+    }
+    
+    const template = collaborativeRoleplayService.getTemplate(invitation.instance.templateId);
+    if (!template) {
+      return res.status(404).json({ message: "Template not found" });
+    }
+    
+    // Get story analysis from the original story
+    const story = await storage.getStory(template.originalStoryId);
+    const storyAnalysis = story ? await storage.getStoryAnalysis(story.id) : null;
+    
+    res.json({
+      instance: invitation.instance,
+      template,
+      story,
+      storyAnalysis,
+      participantRole: invitation.participant
+    });
+  } catch (error) {
+    console.error("Error fetching roleplay session:", error);
+    res.status(500).json({ message: "Failed to fetch roleplay session" });
+  }
+});
+
 // Submit character photo
 router.post("/api/invitations/:token/submit-photo", async (req, res) => {
   try {
