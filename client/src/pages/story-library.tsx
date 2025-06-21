@@ -45,6 +45,7 @@ export default function StoryLibrary() {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreatingStory, setIsCreatingStory] = useState(false);
+  const [convertingStories, setConvertingStories] = useState<Set<number>>(new Set());
 
   // Create story and navigate to upload page
   const createStoryAndNavigate = async (storyType: string, targetPath: string) => {
@@ -88,6 +89,38 @@ export default function StoryLibrary() {
       });
     } finally {
       setIsCreatingStory(false);
+    }
+  };
+
+  // Convert story to collaborative template
+  const convertToCollaborative = async (storyId: number) => {
+    setConvertingStories(prev => new Set(prev).add(storyId));
+    
+    try {
+      const response = await apiRequest(`/api/stories/${storyId}/convert-to-template`, "POST", {
+        makePublic: true
+      });
+      
+      toast({
+        title: "Success",
+        description: "Story converted to collaborative template! Generating invitation links...",
+      });
+      
+      // Navigate to collaborative roleplay page to view the template
+      setLocation("/collaborative-roleplay");
+      
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to convert story to collaborative template",
+        variant: "destructive",
+      });
+    } finally {
+      setConvertingStories(prev => {
+        const next = new Set(prev);
+        next.delete(storyId);
+        return next;
+      });
     }
   };
   
@@ -255,23 +288,45 @@ export default function StoryLibrary() {
                             </div>
                           </div>
 
-                          <div className="flex space-x-2">
-                            <Button
-                              size="sm"
-                              onClick={() => setLocation(`/story/${story.id}`)}
-                              className="flex-1 bg-tiktok-red hover:bg-tiktok-red/80 text-white"
-                            >
-                              <Play className="w-4 h-4 mr-1" />
-                              Play
-                            </Button>
+                          <div className="space-y-2">
+                            <div className="flex space-x-2">
+                              <Button
+                                size="sm"
+                                onClick={() => setLocation(`/story/${story.id}`)}
+                                className="flex-1 bg-tiktok-red hover:bg-tiktok-red/80 text-white"
+                              >
+                                <Play className="w-4 h-4 mr-1" />
+                                Play
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setLocation(`/analysis/${story.id}`)}
+                                className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-800"
+                              >
+                                <Eye className="w-4 h-4 mr-1" />
+                                Analyze
+                              </Button>
+                            </div>
+                            
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => setLocation(`/analysis/${story.id}`)}
-                              className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-800"
+                              onClick={() => convertToCollaborative(story.id)}
+                              disabled={convertingStories.has(story.id)}
+                              className="w-full border-purple-600 text-purple-400 hover:bg-purple-900/20"
                             >
-                              <Eye className="w-4 h-4 mr-1" />
-                              Analyze
+                              {convertingStories.has(story.id) ? (
+                                <>
+                                  <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                                  Converting...
+                                </>
+                              ) : (
+                                <>
+                                  <Users className="w-4 h-4 mr-1" />
+                                  Convert to Collaborative
+                                </>
+                              )}
                             </Button>
                           </div>
 

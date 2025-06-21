@@ -39,10 +39,10 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Add collaborative routes
-  app.use(collaborativeRoutes);
-  
   const server = await registerRoutes(app);
+  
+  // Add collaborative routes after authentication is set up
+  app.use(collaborativeRoutes);
   
   // Initialize character archetypes after server starts (optional, with delay)
   setTimeout(() => {
