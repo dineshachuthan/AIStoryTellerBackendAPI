@@ -1688,7 +1688,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create new draft story
-  app.post("/api/stories/draft", requireAuth, async (req, res) => {
+  app.post("/api/stories/draft", async (req, res) => {
     try {
       const userId = (req.user as any)?.id;
       const { title = "Untitled Story", storyType = "text" } = req.body;
@@ -1700,7 +1700,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (!userId) {
         console.log("No userId found in request.user:", req.user);
-        return res.status(401).json({ message: "Authentication required" });
+        return res.status(401).json({ message: "Authentication required. Please log in first." });
       }
       
       const draftStory = await storage.createStory({

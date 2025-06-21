@@ -14,13 +14,15 @@ import {
   Lock,
   Star,
   MessageSquare,
-  Eye
+  Eye,
+  Loader2
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { BottomNavigation } from "@/components/bottom-navigation";
+import { apiRequest } from "@/lib/queryClient";
 
 interface Story {
   id: number;
@@ -42,6 +44,52 @@ export default function StoryLibrary() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
+  const [isCreatingStory, setIsCreatingStory] = useState(false);
+
+  // Create story and navigate to upload page
+  const createStoryAndNavigate = async (storyType: string, targetPath: string) => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to create stories.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsCreatingStory(true);
+
+    try {
+      console.log('Creating story with request:', {
+        url: '/api/stories/draft',
+        method: 'POST',
+        body: { title: "Untitled Story", storyType }
+      });
+      
+      const story = await apiRequest('/api/stories/draft', {
+        method: 'POST',
+        body: JSON.stringify({
+          title: "Untitled Story",
+          storyType
+        }),
+      });
+
+      console.log('Empty story created:', story);
+      
+      // Navigate to upload page with story ID
+      setLocation(`/${story.id}${targetPath}`);
+    } catch (error: any) {
+      console.error("Story creation error:", error);
+      console.error("Error details:", error.message);
+      toast({
+        title: "Creation Failed",
+        description: `Could not create story: ${error.message}`,
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreatingStory(false);
+    }
+  };
   
   const { data: stories = [], isLoading } = useQuery<Story[]>({
     queryKey: ["/api/stories", user?.id],
@@ -109,10 +157,18 @@ export default function StoryLibrary() {
             </div>
 
             <Button
-              onClick={() => setLocation("/upload-story")}
+              onClick={() => createStoryAndNavigate("text", "/upload-story")}
+              disabled={isCreatingStory}
               className="w-full bg-tiktok-red hover:bg-tiktok-red/80"
             >
-              Create New Story
+              {isCreatingStory ? (
+                <>
+                  <div className="w-4 h-4 animate-spin border-2 border-white border-t-transparent rounded-full mr-2" />
+                  Creating...
+                </>
+              ) : (
+                "Create New Story"
+              )}
             </Button>
           </div>
         </div>
@@ -133,10 +189,18 @@ export default function StoryLibrary() {
               </p>
               {!searchQuery && (
                 <Button
-                  onClick={() => setLocation("/upload-story")}
+                  onClick={() => createStoryAndNavigate("text", "/upload-story")}
+                  disabled={isCreatingStory}
                   className="bg-tiktok-red hover:bg-tiktok-red/80"
                 >
-                  Create Your First Story
+                  {isCreatingStory ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                      Creating...
+                    </>
+                  ) : (
+                    "Create Your First Story"
+                  )}
                 </Button>
               )}
             </div>
