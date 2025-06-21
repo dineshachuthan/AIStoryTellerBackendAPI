@@ -184,15 +184,20 @@ export default function StoryAnalysis() {
   };
 
   useEffect(() => {
+    console.log('StoryAnalysis useEffect triggered:', { storyId, hasStoryData: !!storyData, userId: user?.id });
+    
     if (storyId && storyData && user?.id) {
+      console.log('Triggering dual analysis for existing story');
       // Automatically generate both analyses when story data is available
       generateComprehensiveAnalysis(storyData);
     } else if (!storyId) {
+      console.log('No storyId - checking localStorage for upload flow');
       // Fall back to localStorage for upload flow
       const stored = localStorage.getItem('storyAnalysis');
       if (stored) {
         try {
           const parsed = JSON.parse(stored);
+          console.log('Found stored analysis, using it');
           setAnalysisData(parsed);
         } catch (error) {
           console.error('Failed to parse stored analysis:', error);
@@ -201,6 +206,8 @@ export default function StoryAnalysis() {
       } else {
         setLocation('/upload-story');
       }
+    } else {
+      console.log('Waiting for story data or user auth...');
     }
   }, [storyId, storyData, user?.id, setLocation]);
 
