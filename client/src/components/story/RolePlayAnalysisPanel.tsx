@@ -126,6 +126,7 @@ export function RolePlayAnalysisPanel({
   const [isEditMode, setIsEditMode] = useState(false);
   const [editedAnalysis, setEditedAnalysis] = useState<RolePlayAnalysis | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [hasMetadataChanges, setHasMetadataChanges] = useState(false);
 
   // Use existing analysis if provided
   useEffect(() => {
@@ -153,6 +154,63 @@ export function RolePlayAnalysisPanel({
 
     checkExistingVideo();
   }, [storyId, videoResult]);
+
+  // Function to check if metadata has changed (excluding dialogues)
+  const hasNonDialogueChanges = (original: RolePlayAnalysis | null, edited: RolePlayAnalysis | null): boolean => {
+    if (!original || !edited) return false;
+    
+    // Check metadata fields that would require video regeneration
+    const metadataFields = ['title', 'genre', 'estimatedDuration', 'sceneCount'];
+    for (const field of metadataFields) {
+      if (original[field as keyof RolePlayAnalysis] !== edited[field as keyof RolePlayAnalysis]) {
+        return true;
+      }
+    }
+    
+    // Check character changes (excluding dialogue text)
+    if (original.characters.length !== edited.characters.length) return true;
+    
+    for (let i = 0; i < original.characters.length; i++) {
+      const origChar = original.characters[i];
+      const editChar = edited.characters[i];
+      
+      // Check character metadata (not dialogue content)
+      if (origChar.name !== editChar.name ||
+          origChar.description !== editChar.description ||
+          origChar.personality !== editChar.personality ||
+          origChar.voiceProfile !== editChar.voiceProfile) {
+        return true;
+      }
+    }
+    
+    // Check scene metadata (not dialogue content)
+    if (original.scenes.length !== edited.scenes.length) return true;
+    
+    for (let i = 0; i < original.scenes.length; i++) {
+      const origScene = original.scenes[i];
+      const editScene = edited.scenes[i];
+      
+      if (origScene.title !== editScene.title ||
+          origScene.setting !== editScene.setting ||
+          origScene.mood !== editScene.mood ||
+          origScene.estimatedDuration !== editScene.estimatedDuration) {
+        return true;
+      }
+    }
+    
+    return false;
+  };
+
+  // Track metadata changes when editing
+  useEffect(() => {
+    if (analysis && editedAnalysis) {
+      const hasChanges = hasNonDialogueChanges(analysis, editedAnalysis);
+      setHasMetadataChanges(hasChanges);
+    }
+  }, [analysis, editedAnalysis]);
+
+  // Determine when to show generate video button
+  const shouldShowGenerateButton = !videoResult || (hasMetadataChanges && hasUnsavedChanges === false);
 
   // Video generation function
   const generateVideo = async () => {
@@ -528,24 +586,26 @@ export function RolePlayAnalysisPanel({
                     <Edit className="w-4 h-4 mr-2" />
                     Edit
                   </Button>
-                  <Button
-                    size="sm"
-                    onClick={generateVideo}
-                    disabled={generatingVideo}
-                    className="bg-purple-600 hover:bg-purple-700"
-                  >
-                    {generatingVideo ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Generating...
-                      </>
-                    ) : (
-                      <>
-                        <Play className="w-4 h-4 mr-2" />
-                        Generate Video
-                      </>
-                    )}
-                  </Button>
+                  {shouldShowGenerateButton && (
+                    <Button
+                      size="sm"
+                      onClick={generateVideo}
+                      disabled={generatingVideo}
+                      className="bg-purple-600 hover:bg-purple-700"
+                    >
+                      {generatingVideo ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <Play className="w-4 h-4 mr-2" />
+                          Generate Video
+                        </>
+                      )}
+                    </Button>
+                  )}
                 </>
               )}
             </div>
