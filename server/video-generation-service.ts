@@ -1,8 +1,9 @@
 import { db } from "./db";
-import { characterAssets, videoGenerations, storyScenes, aiAssetCache, stories, roleplayAnalyses } from "@shared/schema";
+import { characterAssets, videoGenerations, storyScenes, aiAssetCache, stories } from "@shared/schema";
 import { eq, and, desc, lt } from "drizzle-orm";
 import { analyzeStoryContent, generateCharacterImage } from "./ai-analysis";
 import { audioService } from "./audio-service";
+
 import { CacheWithFallback } from "./cache-with-fallback";
 import path from "path";
 import crypto from "crypto";
@@ -274,7 +275,7 @@ export class VideoGenerationService {
           videoUrl: videoResult.videoUrl,
           thumbnailUrl: videoResult.thumbnailUrl,
           duration: videoResult.duration,
-          characterCount: characterAssetsList.length,
+
           updatedAt: new Date()
         })
         .where(eq(videoGenerations.id, generation.id));
@@ -313,35 +314,14 @@ export class VideoGenerationService {
   }
 
   private async loadAndValidateCharacterAssets(storyId: number): Promise<CharacterAssetOverride[]> {
-    // Get existing roleplay analysis first
-    const [existingRoleplay] = await db
-      .select()
-      .from(roleplayAnalyses)
-      .where(eq(roleplayAnalyses.storyId, storyId));
-
-    let characters: any[] = [];
-
-    if (existingRoleplay && existingRoleplay.analysisData) {
-      // Use existing roleplay analysis
-      const analysisData = typeof existingRoleplay.analysisData === 'string' 
-        ? JSON.parse(existingRoleplay.analysisData) 
-        : existingRoleplay.analysisData;
-      characters = analysisData.characters || [];
-      console.log(`Using existing roleplay analysis with ${characters.length} characters`);
-    } else {
-      // Fall back to generating new analysis
-      const [story] = await db.select().from(stories).where(eq(stories.id, storyId));
-      if (!story) {
-        throw new Error("Story not found");
-      }
-      
-      const analysis = await analyzeStoryContent(story.content);
-      characters = analysis.characters || [];
-      console.log(`Generated new analysis with ${characters.length} characters`);
+    // Get story and generate analysis if needed
+    const [story] = await db.select().from(stories).where(eq(stories.id, storyId));
+    if (!story) {
+      throw new Error("Story not found");
     }
 
-    // Ensure character assets exist for all characters
-    const assetPromises = characters.map(character => 
+    const analysis = await analyzeStoryContent(story.content);
+    const assetPromises = analysis.characters.map(character => 
       this.ensureCharacterAsset(storyId, character)
     );
 

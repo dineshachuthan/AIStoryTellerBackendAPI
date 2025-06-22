@@ -3107,10 +3107,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Story ID and authentication required" });
       }
 
-      const result = await simpleVideoService.generateSimpleVideo({
+      // Use proper video generation service
+      const { VideoGenerationService } = await import("./video-generation-service");
+      const videoService = new VideoGenerationService();
+      const result = await videoService.generateVideo({
         storyId: parseInt(storyId),
-        userId,
-        characterOverrides
+        userId
       });
 
       res.json(result);
