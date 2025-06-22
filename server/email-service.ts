@@ -84,7 +84,7 @@ Thank you for participating in our storytelling community!
 
     await mailService.send({
       to: data.recipientEmail,
-      from: 'noreply@storytelling.app', // You may need to verify this domain with SendGrid
+      from: process.env.SENDGRID_FROM_EMAIL || 'test@example.com', // Use verified sender email
       subject: `Roleplay Invitation: Play ${data.characterName} in "${data.storyTitle}"`,
       text: textContent,
       html: htmlContent,
