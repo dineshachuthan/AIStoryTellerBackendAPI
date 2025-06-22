@@ -33,6 +33,7 @@ import {
   AlertCircle,
   X
 } from "lucide-react";
+import { VideoPlayer } from '@/components/ui/video-player';
 
 interface DialogueLine {
   characterName: string;
@@ -140,16 +141,12 @@ export function RolePlayAnalysisPanel({
 
     setGeneratingVideo(true);
     try {
-      const result = await apiRequest("/api/videos/generate", "POST", {
-        storyId: storyId,
-        characterOverrides: {}, // Could be populated from user customizations
-        quality: 'standard'
-      });
+      const result = await apiRequest(`/api/videos/generate/${storyId}`);
 
       setVideoResult(result);
       toast({
         title: "Video Generated Successfully",
-        description: `Video created with ${result.charactersUsed.length} characters`,
+        description: `Video created with ${result.charactersUsed?.length || 0} characters`,
       });
     } catch (error: any) {
       console.error("Video generation failed:", error);

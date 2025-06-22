@@ -5,40 +5,33 @@ import { z } from "zod";
 
 const router = Router();
 
-// Request video generation with smart caching
-router.post("/api/videos/generate", requireAuth, async (req: any, res) => {
+// Get video with smart caching - generates if needed
+router.get("/api/videos/generate/:storyId", requireAuth, async (req: any, res) => {
   try {
-    const requestSchema = z.object({
-      storyId: z.number(),
-      characterOverrides: z.record(z.object({
-        imageUrl: z.string().optional(),
-        voiceSampleUrl: z.string().optional()
-      })).optional(),
-      quality: z.enum(['draft', 'standard', 'high']).default('standard')
-    });
-
-    const validatedRequest = requestSchema.parse(req.body);
+    const storyId = parseInt(req.params.storyId);
     const userId = req.user?.id;
 
     if (!userId) {
       return res.status(401).json({ message: "User not authenticated" });
     }
 
+    if (isNaN(storyId)) {
+      return res.status(400).json({ message: "Invalid story ID" });
+    }
+
+    // Check for character overrides in query params
+    const characterOverrides = req.query.overrides ? 
+      JSON.parse(req.query.overrides as string) : {};
+
     const result = await simpleVideoService.generateSimpleVideo({
-      storyId: validatedRequest.storyId,
+      storyId,
       userId,
-      characterOverrides: validatedRequest.characterOverrides || {}
+      characterOverrides
     });
 
     res.json(result);
   } catch (error: any) {
     console.error("Video generation request failed:", error);
-    if (error?.name === 'ZodError') {
-      return res.status(400).json({ 
-        message: "Invalid request parameters",
-        errors: error.errors
-      });
-    }
     res.status(500).json({ message: error?.message || "Video generation failed" });
   }
 });
