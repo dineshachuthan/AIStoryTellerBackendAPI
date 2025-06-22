@@ -3,7 +3,7 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { archetypeService } from "./character-archetype-service";
 import { collaborativeRoutes } from "./routes-collaborative";
-import videoRoutes from "./routes-video-simple";
+import videoRoutes from "./routes-video";
 
 const app = express();
 app.use(express.json());

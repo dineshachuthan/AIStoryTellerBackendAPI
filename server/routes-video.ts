@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { requireAuth } from "./auth";
-import { simpleVideoService } from "./simple-video-service";
+import { videoGenerationService } from "./video-generation-service";
 import { insertCharacterAssetSchema, insertVideoGenerationSchema } from "@shared/schema";
 import { z } from "zod";
 
@@ -25,10 +25,10 @@ router.post("/api/videos/generate", requireAuth, async (req: any, res) => {
       return res.status(401).json({ message: "User not authenticated" });
     }
 
-    const result = await simpleVideoService.generateSimpleVideo({
+    const result = await videoGenerationService.generateVideo({
       storyId: validatedRequest.storyId,
       userId,
-      characterOverrides: validatedRequest.characterOverrides || {}
+      quality: validatedRequest.quality
     });
 
     res.json(result);
@@ -52,7 +52,7 @@ router.get("/api/videos/story/:storyId/assets", requireAuth, async (req: any, re
       return res.status(400).json({ message: "Invalid story ID" });
     }
 
-    const assets = await simpleVideoService.getCharacterAssets(storyId);
+    const assets = await videoGenerationService.getCharacterAssets(storyId);
     res.json(assets);
   } catch (error: any) {
     console.error("Failed to get character assets:", error);
@@ -84,7 +84,7 @@ router.put("/api/videos/story/:storyId/assets/:characterName", requireAuth, asyn
 
     const validatedUpdate = updateSchema.parse(req.body);
 
-    await simpleVideoService.updateCharacterOverride(
+    await videoGenerationService.updateCharacterAsset(
       storyId,
       characterName,
       validatedUpdate,
