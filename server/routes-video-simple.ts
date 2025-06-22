@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { requireAuth } from "./auth";
-import { simpleVideoService } from "./simple-video-service";
+import { videoGenerationService } from "./video-generation-service";
 import { z } from "zod";
 
 const router = Router();
@@ -23,10 +23,9 @@ router.get("/api/videos/generate/:storyId", requireAuth, async (req: any, res) =
     const characterOverrides = req.query.overrides ? 
       JSON.parse(req.query.overrides as string) : {};
 
-    const result = await simpleVideoService.generateSimpleVideo({
+    const result = await videoGenerationService.generateVideo({
       storyId,
-      userId,
-      characterOverrides
+      userId
     });
 
     res.json(result);
@@ -44,7 +43,7 @@ router.get("/api/videos/story/:storyId/assets", requireAuth, async (req: any, re
       return res.status(400).json({ message: "Invalid story ID" });
     }
 
-    const assets = await simpleVideoService.getCharacterAssets(storyId);
+    const assets = await videoGenerationService.getCharacterAssets(storyId);
     res.json(assets);
   } catch (error: any) {
     console.error("Failed to get character assets:", error);
