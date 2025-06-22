@@ -5,6 +5,62 @@ import { getBaseUrl } from "./oauth-config";
 
 const router = Router();
 
+// Send per-character invitation
+router.post("/api/collaborative/templates", requireAuth, async (req, res) => {
+  try {
+    const userId = (req.user as any)?.id;
+    const { storyId, characterName, contactMethod, contactValue, invitationName } = req.body;
+    
+    if (!storyId || !characterName || !contactMethod || !contactValue) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    // First convert story to template if not already done
+    const template = await collaborativeRoleplayService.convertStoryToTemplate(
+      storyId, 
+      userId, 
+      false // private by default for individual invitations
+    );
+    
+    // Create instance from template
+    const instance = await collaborativeRoleplayService.createInstanceFromTemplate(
+      template.id,
+      userId,
+      invitationName || `${characterName} Roleplay`
+    );
+    
+    // Generate invitation links
+    const baseUrl = getBaseUrl();
+    const invitationLinks = collaborativeRoleplayService.generateInvitationLinks(instance.id, baseUrl);
+    
+    // Find the link for the specific character
+    const characterInvitation = invitationLinks.find(link => 
+      link.characterName === characterName
+    );
+    
+    if (!characterInvitation) {
+      return res.status(404).json({ message: "Character not found in roleplay" });
+    }
+    
+    // Here you would typically send the invitation via email/SMS
+    // For now, we'll return the invitation details
+    res.json({
+      instanceId: instance.id,
+      templateId: template.id,
+      characterName,
+      invitationLink: characterInvitation.invitationLink,
+      invitationToken: characterInvitation.invitationToken,
+      contactMethod,
+      contactValue,
+      message: "Invitation created successfully"
+    });
+    
+  } catch (error) {
+    console.error("Failed to create character invitation:", error);
+    res.status(500).json({ message: "Failed to create invitation" });
+  }
+});
+
 // Convert story to collaborative template
 router.post("/api/stories/:storyId/convert-to-template", requireAuth, async (req, res) => {
   try {
