@@ -3029,6 +3029,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Save roleplay customization (preserves original AI data)
+  app.put("/api/stories/:storyId/roleplay/customization", requireAuth, async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.storyId);
+      const userId = (req.user as any)?.id;
+      const { customizedAnalysis } = req.body;
+
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      if (!customizedAnalysis) {
+        return res.status(400).json({ message: "Customized analysis data required" });
+      }
+
+      // Verify story ownership
+      const story = await storage.getStory(storyId);
+      if (!story || story.authorId !== userId) {
+        return res.status(403).json({ message: "Only the story author can save customizations" });
+      }
+
+      // Save customization to storyCustomizations table (preserves original analysis)
+      await storage.createOrUpdateStoryCustomization({
+        originalStoryId: storyId,
+        customizedByUserId: userId,
+        customTitle: customizedAnalysis.title,
+        customCharacterImages: {},
+        customVoiceAssignments: {},
+        customEmotionMappings: customizedAnalysis,
+        isPrivate: true
+      });
+
+      res.json({
+        message: "Roleplay customization saved successfully",
+        preservedOriginal: true
+      });
+    } catch (error: any) {
+      console.error("Failed to save roleplay customization:", error);
+      res.status(500).json({ message: "Failed to save customization" });
+    }
+  });
+
+  // Get roleplay customization 
+  app.get("/api/stories/:storyId/roleplay/customization", requireAuth, async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.storyId);
+      const userId = (req.user as any)?.id;
+
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const customization = await storage.getStoryCustomization(storyId, userId);
+      if (!customization) {
+        return res.status(404).json({ message: "No customization found" });
+      }
+
+      res.json(customization);
+    } catch (error: any) {
+      console.error("Failed to get roleplay customization:", error);
+      res.status(500).json({ message: "Failed to get customization" });
+    }
+  });
+
   // =============================================================================
   // VIDEO GENERATION API ENDPOINTS
   // =============================================================================

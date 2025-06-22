@@ -30,7 +30,8 @@ import {
   ExternalLink,
   CheckCircle,
   XCircle,
-  AlertCircle
+  AlertCircle,
+  X
 } from "lucide-react";
 
 interface DialogueLine {
@@ -116,12 +117,117 @@ export function RolePlayAnalysisPanel({
   });
   const [sendingInvitation, setSendingInvitation] = useState(false);
 
+  // Video generation state
+  const [generatingVideo, setGeneratingVideo] = useState(false);
+  const [videoResult, setVideoResult] = useState<any>(null);
+
+  // Edit mode state
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editedAnalysis, setEditedAnalysis] = useState<RolePlayAnalysis | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
   // Use existing analysis if provided
   useEffect(() => {
     if (existingAnalysis && !analysis) {
       setAnalysis(existingAnalysis);
+      setEditedAnalysis(JSON.parse(JSON.stringify(existingAnalysis))); // Deep copy for editing
     }
   }, [existingAnalysis, analysis]);
+
+  // Video generation function
+  const generateVideo = async () => {
+    if (!analysis) return;
+
+    setGeneratingVideo(true);
+    try {
+      const result = await apiRequest("/api/videos/generate", "POST", {
+        storyId: storyId,
+        characterOverrides: {}, // Could be populated from user customizations
+        quality: 'standard'
+      });
+
+      setVideoResult(result);
+      toast({
+        title: "Video Generated Successfully",
+        description: `Video created with ${result.charactersUsed.length} characters`,
+      });
+    } catch (error: any) {
+      console.error("Video generation failed:", error);
+      toast({
+        title: "Video Generation Failed",
+        description: error.message || "Failed to generate video",
+        variant: "destructive",
+      });
+    } finally {
+      setGeneratingVideo(false);
+    }
+  };
+
+  // Edit mode functions
+  const enterEditMode = () => {
+    if (analysis) {
+      setIsEditMode(true);
+      setEditedAnalysis(JSON.parse(JSON.stringify(analysis))); // Deep copy
+      setHasUnsavedChanges(false);
+    }
+  };
+
+  const exitEditMode = () => {
+    setIsEditMode(false);
+    setEditedAnalysis(null);
+    setHasUnsavedChanges(false);
+  };
+
+  const saveChanges = async () => {
+    if (!editedAnalysis) return;
+
+    try {
+      // Save edited analysis to database as user customization
+      await apiRequest(`/api/stories/${storyId}/roleplay/customization`, "PUT", {
+        customizedAnalysis: editedAnalysis
+      });
+
+      // Update the current analysis with edited version
+      setAnalysis(editedAnalysis);
+      setIsEditMode(false);
+      setHasUnsavedChanges(false);
+
+      toast({
+        title: "Changes Saved",
+        description: "Your roleplay customizations have been saved",
+      });
+    } catch (error: any) {
+      console.error("Failed to save changes:", error);
+      toast({
+        title: "Save Failed",
+        description: error.message || "Failed to save changes",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const updateAnalysisField = (field: string, value: any) => {
+    if (!editedAnalysis) return;
+    
+    setEditedAnalysis(prev => ({
+      ...prev!,
+      [field]: value
+    }));
+    setHasUnsavedChanges(true);
+  };
+
+  const updateScene = (sceneIndex: number, updatedScene: RolePlayScene) => {
+    if (!editedAnalysis) return;
+
+    const updatedScenes = [...editedAnalysis.scenes];
+    updatedScenes[sceneIndex] = updatedScene;
+    
+    setEditedAnalysis(prev => ({
+      ...prev!,
+      scenes: updatedScenes
+    }));
+    setHasUnsavedChanges(true);
+  };
 
   const sendInvitation = async () => {
     if (!inviteForm.invitationName || !inviteForm.contactValue) {
@@ -363,20 +469,115 @@ export function RolePlayAnalysisPanel({
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <Film className="h-5 w-5" />
-              {analysis.title}
+              {isEditMode && editedAnalysis ? (
+                <Input
+                  value={editedAnalysis.title}
+                  onChange={(e) => updateAnalysisField('title', e.target.value)}
+                  className="text-lg font-semibold"
+                />
+              ) : (
+                analysis.title
+              )}
             </CardTitle>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={generateRolePlayAnalysis}
-              disabled={isGenerating}
-            >
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Regenerate
-            </Button>
+            <div className="flex items-center gap-2">
+              {isEditMode ? (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={exitEditMode}
+                    disabled={generatingVideo}
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    Cancel
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={saveChanges}
+                    disabled={!hasUnsavedChanges || generatingVideo}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    <Save className="w-4 h-4 mr-2" />
+                    Save Changes
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={enterEditMode}
+                    disabled={generatingVideo}
+                  >
+                    <Edit className="w-4 h-4 mr-2" />
+                    Edit
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={generateVideo}
+                    disabled={generatingVideo}
+                    className="bg-purple-600 hover:bg-purple-700"
+                  >
+                    {generatingVideo ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <Play className="w-4 h-4 mr-2" />
+                        Generate Video
+                      </>
+                    )}
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
+          {hasUnsavedChanges && (
+            <div className="text-sm text-amber-600 mt-2">
+              <AlertCircle className="w-4 h-4 inline mr-1" />
+              You have unsaved changes
+            </div>
+          )}
         </CardHeader>
         <CardContent>
+          {/* Video Generation Result */}
+          {videoResult && (
+            <div className="mb-6 p-4 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-semibold text-green-800 dark:text-green-200">
+                  Video Generated Successfully
+                </h3>
+                <Badge variant="secondary" className="bg-green-100 dark:bg-green-900">
+                  {videoResult.duration}s
+                </Badge>
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Play className="w-4 h-4 text-green-600" />
+                  <a 
+                    href={videoResult.videoUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-green-600 hover:text-green-800 underline"
+                  >
+                    View Generated Video
+                  </a>
+                </div>
+                <div className="text-sm text-green-700 dark:text-green-300">
+                  Characters used: {videoResult.charactersUsed?.map((c: any) => c.name).join(', ')}
+                </div>
+                {videoResult.cacheHit && (
+                  <div className="text-xs text-green-600">
+                    <CheckCircle className="w-3 h-3 inline mr-1" />
+                    Retrieved from cache (no OpenAI cost)
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
             <div className="flex items-center gap-2">
               <Badge variant="secondary">{analysis.genre}</Badge>
