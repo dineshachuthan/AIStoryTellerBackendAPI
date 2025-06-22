@@ -99,16 +99,14 @@ export function RolePlayAnalysisPanel({
   const [editedScene, setEditedScene] = useState<RolePlayScene | null>(null);
   
   // Invitation system state
-  const [sentInvitations, setSentInvitations] = useState<Array<{
+  const [characterInvitations, setCharacterInvitations] = useState<Map<string, {
     id: string;
-    invitationName: string;
-    contactMethod: "email" | "phone";
     contactValue: string;
-    status: "pending" | "accepted" | "declined" | "completed";
+    contactMethod: string;
+    hasVoiceRecording: boolean;
+    invitationToken: string;
     sentAt: Date;
-    characterAssignments: { [characterName: string]: string };
-    invitationUrl: string;
-  }>>([]);
+  }>>(new Map());
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [inviteForm, setInviteForm] = useState({
     invitationName: "",
@@ -411,13 +409,24 @@ export function RolePlayAnalysisPanel({
                     key={index}
                     character={character}
                     storyId={storyId}
-                    existingInvitation={sentInvitations.find(inv => inv.characterName === character.name)}
+                    existingInvitation={characterInvitations.get(character.name) || null}
                     onInviteSent={(invitation) => {
-                      setSentInvitations(prev => [...prev, invitation]);
+                      setCharacterInvitations(prev => new Map(prev.set(character.name, {
+                        id: invitation.id,
+                        contactValue: invitation.contactValue,
+                        contactMethod: invitation.contactMethod,
+                        hasVoiceRecording: invitation.hasVoiceRecording || false,
+                        invitationToken: invitation.invitationToken,
+                        sentAt: invitation.sentAt
+                      })));
                       toast({ title: "Invitation sent!", description: `Invitation sent to ${invitation.contactValue}` });
                     }}
                     onInviteDeleted={(characterName) => {
-                      setSentInvitations(prev => prev.filter(inv => inv.characterName !== characterName));
+                      setCharacterInvitations(prev => {
+                        const newMap = new Map(prev);
+                        newMap.delete(characterName);
+                        return newMap;
+                      });
                       toast({ title: "Invitation deleted", description: `${characterName} invitation removed` });
                     }}
                   />
@@ -428,22 +437,22 @@ export function RolePlayAnalysisPanel({
         </CardContent>
       </Card>
 
-      {/* Sent Invitations Tracking */}
-      {sentInvitations.length > 0 && (
+      {/* Character Invitations Summary */}
+      {characterInvitations.size > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <UserPlus className="w-5 h-5" />
-              Sent Invitations ({sentInvitations.length})
+              Active Invitations ({characterInvitations.size})
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {sentInvitations.map((invitation) => (
-                <div key={invitation.id} className="border rounded-lg p-4 space-y-3">
+              {Array.from(characterInvitations.entries()).map(([characterName, invitation]) => (
+                <div key={characterName} className="border rounded-lg p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h4 className="font-medium">{invitation.invitationName}</h4>
+                      <h4 className="font-medium">{characterName} Role</h4>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         {invitation.contactMethod === "email" ? (
                           <Mail className="w-4 h-4" />

@@ -61,6 +61,49 @@ router.post("/api/collaborative/templates", requireAuth, async (req, res) => {
   }
 });
 
+// Delete invitation
+router.delete("/api/collaborative/invitations/:token", requireAuth, async (req, res) => {
+  try {
+    const token = req.params.token;
+    const userId = (req.user as any)?.id;
+    
+    // Find and validate invitation
+    const invitationDetails = collaborativeRoleplayService.getInvitationByToken(token);
+    if (!invitationDetails) {
+      return res.status(404).json({ message: "Invitation not found" });
+    }
+    
+    // Check if user owns this invitation (created the instance)
+    if (invitationDetails.instance.createdBy !== userId) {
+      return res.status(403).json({ message: "Not authorized to delete this invitation" });
+    }
+    
+    // Remove the participant from the instance
+    const instance = invitationDetails.instance;
+    const participantIndex = instance.participants.findIndex(p => p.invitationToken === token);
+    
+    if (participantIndex === -1) {
+      return res.status(404).json({ message: "Participant not found" });
+    }
+    
+    // Check if participant has voice recordings
+    const participant = instance.participants[participantIndex];
+    const hasRecordings = participant.voiceRecordings && participant.voiceRecordings.length > 0;
+    
+    // Remove participant
+    instance.participants.splice(participantIndex, 1);
+    
+    res.json({ 
+      message: "Invitation deleted successfully",
+      hadVoiceRecordings: hasRecordings
+    });
+    
+  } catch (error) {
+    console.error("Failed to delete invitation:", error);
+    res.status(500).json({ message: "Failed to delete invitation" });
+  }
+});
+
 // Convert story to collaborative template
 router.post("/api/stories/:storyId/convert-to-template", requireAuth, async (req, res) => {
   try {
