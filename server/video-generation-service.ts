@@ -340,7 +340,7 @@ export class VideoGenerationService {
         storyId,
         characterName: character.name,
         aiGeneratedImageUrl: imageUrl,
-        aiGeneratedImagePrompt: `${character.description} - ${character.personality}`,
+        aiGeneratedImagePrompt: `${character.description || character.name} - ${character.personality || 'character'}`,
         aiVoiceAssignment: voiceAssignment,
         imageGenerationStatus: 'completed',
         voiceAssignmentStatus: 'completed',
