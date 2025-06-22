@@ -768,6 +768,171 @@ export type StoryAnalysis = typeof storyAnalyses.$inferSelect;
 export type InsertStoryAnalysis = z.infer<typeof insertStoryAnalysisSchema>;
 
 // =============================================================================
+// VIDEO GENERATION SYSTEM - Character Assets & Caching
+// =============================================================================
+
+// Character assets for video generation with user overrides
+export const characterAssets = pgTable("character_assets", {
+  id: serial("id").primaryKey(),
+  storyId: integer("story_id").references(() => stories.id).notNull(),
+  characterName: varchar("character_name").notNull(),
+  
+  // AI-generated defaults
+  aiGeneratedImageUrl: text("ai_generated_image_url"),
+  aiGeneratedImagePrompt: text("ai_generated_image_prompt"),
+  aiVoiceAssignment: varchar("ai_voice_assignment"), // OpenAI voice (alloy, echo, fable, nova, onyx, shimmer)
+  
+  // User overrides (takes precedence)
+  userImageUrl: text("user_image_url"),
+  userVoiceSampleUrl: text("user_voice_sample_url"),
+  overriddenBy: varchar("overridden_by").references(() => users.id),
+  
+  // Generation and validation status
+  imageGenerationStatus: varchar("image_generation_status").default("pending"), // pending, generating, completed, failed
+  voiceAssignmentStatus: varchar("voice_assignment_status").default("pending"),
+  lastValidationAt: timestamp("last_validation_at"),
+  isValid: boolean("is_valid").default(false),
+  validationErrors: jsonb("validation_errors"),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_character_assets_story_character").on(table.storyId, table.characterName)
+]);
+
+// Video generation jobs and cache
+export const videoGenerations = pgTable("video_generations", {
+  id: serial("id").primaryKey(),
+  storyId: integer("story_id").references(() => stories.id).notNull(),
+  requestedBy: varchar("requested_by").references(() => users.id).notNull(),
+  
+  // Generation parameters and snapshot
+  generationParams: jsonb("generation_params").notNull(),
+  characterAssetsSnapshot: jsonb("character_assets_snapshot").notNull(),
+  
+  // Status and outputs
+  status: varchar("status").default("pending"), // pending, processing, completed, failed
+  videoUrl: text("video_url"),
+  thumbnailUrl: text("thumbnail_url"),
+  duration: integer("duration"), // in seconds
+  
+  // Error handling and retries
+  errorMessage: text("error_message"),
+  retryCount: integer("retry_count").default(0),
+  
+  // Caching and expiration
+  cacheKey: varchar("cache_key").unique(),
+  expiresAt: timestamp("expires_at"),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_video_cache_key").on(table.cacheKey),
+  index("idx_video_story_status").on(table.storyId, table.status)
+]);
+
+// Scene data for video generation
+export const storyScenes = pgTable("story_scenes", {
+  id: serial("id").primaryKey(),
+  storyId: integer("story_id").references(() => stories.id).notNull(),
+  sceneNumber: integer("scene_number").notNull(),
+  title: varchar("title"),
+  description: text("description"),
+  
+  // Scene content
+  dialogues: jsonb("dialogues").notNull(),
+  backgroundPrompt: text("background_prompt"),
+  backgroundImageUrl: text("background_image_url"),
+  
+  // Timing and pacing
+  estimatedDuration: integer("estimated_duration"), // in seconds
+  pacing: varchar("pacing").default("normal"), // slow, normal, fast
+  
+  // Generation status
+  backgroundGenerationStatus: varchar("background_generation_status").default("pending"),
+  lastProcessedAt: timestamp("last_processed_at"),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_story_scenes_story_order").on(table.storyId, table.sceneNumber)
+]);
+
+// Asset cache for OpenAI generated content
+export const aiAssetCache = pgTable("ai_asset_cache", {
+  id: serial("id").primaryKey(),
+  cacheKey: varchar("cache_key").unique().notNull(),
+  assetType: varchar("asset_type").notNull(), // 'character_image', 'scene_background', 'voice_audio'
+  
+  // Generation parameters
+  prompt: text("prompt").notNull(),
+  model: varchar("model"),
+  parameters: jsonb("parameters"),
+  
+  // Generated content
+  assetUrl: text("asset_url").notNull(),
+  metadata: jsonb("metadata"),
+  
+  // Validation and quality
+  isValid: boolean("is_valid").default(true),
+  validationErrors: jsonb("validation_errors"),
+  qualityScore: doublePrecision("quality_score"),
+  
+  // Usage tracking for cost optimization
+  usageCount: integer("usage_count").default(0),
+  lastUsedAt: timestamp("last_used_at"),
+  
+  // Cache management
+  expiresAt: timestamp("expires_at"),
+  estimatedCost: doublePrecision("estimated_cost"),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_asset_cache_key").on(table.cacheKey),
+  index("idx_asset_cache_type_valid").on(table.assetType, table.isValid),
+  index("idx_asset_cache_expires").on(table.expiresAt)
+]);
+
+// Video generation schemas
+export const insertCharacterAssetSchema = createInsertSchema(characterAssets).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertVideoGenerationSchema = createInsertSchema(videoGenerations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertStorySceneSchema = createInsertSchema(storyScenes).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAiAssetCacheSchema = createInsertSchema(aiAssetCache).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Video generation type exports
+export type CharacterAsset = typeof characterAssets.$inferSelect;
+export type InsertCharacterAsset = z.infer<typeof insertCharacterAssetSchema>;
+
+export type VideoGeneration = typeof videoGenerations.$inferSelect;
+export type InsertVideoGeneration = z.infer<typeof insertVideoGenerationSchema>;
+
+export type StoryScene = typeof storyScenes.$inferSelect;
+export type InsertStoryScene = z.infer<typeof insertStorySceneSchema>;
+
+export type AiAssetCache = typeof aiAssetCache.$inferSelect;
+export type InsertAiAssetCache = z.infer<typeof insertAiAssetCacheSchema>;
+
+// =============================================================================
 // COLLABORATIVE ROLEPLAY TYPE EXPORTS
 // =============================================================================
 
