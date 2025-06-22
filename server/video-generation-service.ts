@@ -351,7 +351,7 @@ export class VideoGenerationService {
   }
 
   private async generateCharacterImageWithCache(character: any, storyId: number): Promise<string> {
-    const prompt = `${character.description} - ${character.personality}`;
+    const prompt = `${character.description || character.name} - ${character.personality || 'character'}`;
     const cacheKey = crypto.createHash('sha256').update(prompt).digest('hex');
 
     // Check AI asset cache first
