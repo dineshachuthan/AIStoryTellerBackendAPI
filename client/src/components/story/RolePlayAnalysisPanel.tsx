@@ -411,9 +411,14 @@ export function RolePlayAnalysisPanel({
                     key={index}
                     character={character}
                     storyId={storyId}
+                    existingInvitation={sentInvitations.find(inv => inv.characterName === character.name)}
                     onInviteSent={(invitation) => {
                       setSentInvitations(prev => [...prev, invitation]);
                       toast({ title: "Invitation sent!", description: `Invitation sent to ${invitation.contactValue}` });
+                    }}
+                    onInviteDeleted={(characterName) => {
+                      setSentInvitations(prev => prev.filter(inv => inv.characterName !== characterName));
+                      toast({ title: "Invitation deleted", description: `${characterName} invitation removed` });
                     }}
                   />
                 ))}
