@@ -230,7 +230,7 @@ export class VideoGenerationService {
     request: VideoGenerationRequest, 
     cacheKey: string
   ): Promise<VideoGenerationResult> {
-    // Create generation record
+    // Upsert generation record to handle duplicate cache keys
     const [generation] = await db.insert(videoGenerations).values({
       storyId: request.storyId,
       requestedBy: request.userId,
@@ -239,6 +239,12 @@ export class VideoGenerationService {
       status: 'processing',
       cacheKey,
       expiresAt: new Date(Date.now() + this.CACHE_DURATION)
+    }).onConflictDoUpdate({
+      target: videoGenerations.cacheKey,
+      set: {
+        status: 'processing',
+        updatedAt: new Date()
+      }
     }).returning();
 
     try {
