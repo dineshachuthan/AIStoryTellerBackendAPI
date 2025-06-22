@@ -7,6 +7,17 @@ import { storage } from "./storage";
 
 const router = Router();
 
+// Get notification service status
+router.get("/api/collaborative/notification-status", requireAuth, async (req, res) => {
+  try {
+    const status = notificationService.getStatus();
+    res.json(status);
+  } catch (error) {
+    console.error("Failed to get notification status:", error);
+    res.status(500).json({ message: "Failed to get notification status" });
+  }
+});
+
 // Send per-character invitation
 router.post("/api/collaborative/templates", requireAuth, async (req, res) => {
   try {
