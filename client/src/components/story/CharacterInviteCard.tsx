@@ -213,10 +213,10 @@ export function CharacterInviteCard({ character, storyId, existingInvitation, on
                       Email
                     </div>
                   </SelectItem>
-                  <SelectItem value="phone">
+                  <SelectItem value="phone" disabled>
                     <div className="flex items-center gap-2">
                       <Phone className="w-4 h-4" />
-                      Phone Number
+                      Phone Number (Coming Soon)
                     </div>
                   </SelectItem>
                 </SelectContent>
@@ -234,6 +234,11 @@ export function CharacterInviteCard({ character, storyId, existingInvitation, on
                 value={contactValue}
                 onChange={(e) => setContactValue(e.target.value)}
               />
+              {contactMethod === "phone" && (
+                <p className="text-xs text-muted-foreground">
+                  SMS invitations are not yet supported. Use email for now.
+                </p>
+              )}
             </div>
           </div>
           <DialogFooter>

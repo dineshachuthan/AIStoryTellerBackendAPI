@@ -58,7 +58,11 @@ router.post("/api/collaborative/templates", requireAuth, async (req, res) => {
     }
 
     if (!invitationSent && contactMethod === 'email') {
-      return res.status(500).json({ message: "Failed to send email invitation" });
+      return res.status(500).json({ message: "Failed to send email invitation. Please check SendGrid configuration." });
+    }
+    
+    if (contactMethod === 'phone' && !invitationSent) {
+      console.log(`SMS functionality not yet implemented for ${contactValue}`);
     }
     
     // Return invitation details that match frontend expectations

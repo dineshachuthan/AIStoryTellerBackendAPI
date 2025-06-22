@@ -1,11 +1,13 @@
 import { MailService } from '@sendgrid/mail';
 
 if (!process.env.SENDGRID_API_KEY) {
-  throw new Error("SENDGRID_API_KEY environment variable must be set");
+  console.warn("SENDGRID_API_KEY not configured - email invitations will not work");
 }
 
 const mailService = new MailService();
-mailService.setApiKey(process.env.SENDGRID_API_KEY);
+if (process.env.SENDGRID_API_KEY) {
+  mailService.setApiKey(process.env.SENDGRID_API_KEY);
+}
 
 export interface InvitationEmailData {
   recipientEmail: string;
@@ -17,6 +19,11 @@ export interface InvitationEmailData {
 }
 
 export async function sendRoleplayInvitation(data: InvitationEmailData): Promise<boolean> {
+  if (!process.env.SENDGRID_API_KEY) {
+    console.log(`Email invitation to ${data.recipientEmail} for character ${data.characterName} - SendGrid not configured`);
+    return false;
+  }
+  
   try {
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
