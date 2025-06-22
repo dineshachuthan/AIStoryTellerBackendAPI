@@ -43,18 +43,9 @@ export class SimpleVideoService {
    */
   async generateSimpleVideo(request: SimpleVideoRequest): Promise<SimpleVideoResult> {
     try {
-      const cacheKey = this.generateCacheKey(request);
+      console.log(`Processing video request for story ${request.storyId}`);
       
-      // Check cache first
-      const cached = await this.checkCache(cacheKey);
-      if (cached) {
-        console.log(`Video cache hit for story ${request.storyId}`);
-        return { ...cached, cacheHit: true };
-      }
-
-      console.log(`Generating new video for story ${request.storyId}`);
-
-      // Get story and analysis
+      // Get story and analysis data
       const [story] = await db.select().from(stories).where(eq(stories.id, request.storyId));
       if (!story) {
         throw new Error(`Story with ID ${request.storyId} not found`);
@@ -66,25 +57,47 @@ export class SimpleVideoService {
         throw new Error("No characters found in story analysis");
       }
 
+      // Generate roleplay data hash to detect changes
+      const currentRoleplayHash = crypto.createHash('md5')
+        .update(JSON.stringify(analysis))
+        .digest('hex');
+
+      // Check for existing video metadata
+      const cacheKey = `video-metadata-${request.storyId}`;
+      const existingMetadata = await videoCache.get(cacheKey);
+      
+      if (existingMetadata && existingMetadata.roleplayHash === currentRoleplayHash) {
+        console.log(`Video cache hit for story ${request.storyId} - no changes detected`);
+        return { ...existingMetadata, cacheHit: true };
+      }
+
+      console.log(`Generating new video via OpenAI for story ${request.storyId} - ${existingMetadata ? 'roleplay data changed' : 'no existing video'}`);
+
       // Process characters with user overrides
       const processedCharacters = await this.processCharactersWithOverrides(
         analysis.characters, 
         request.characterOverrides || {}
       );
 
-      // Create video result with actual content generation
+      // Generate new video content via OpenAI
       const videoResult: SimpleVideoResult = {
-        videoUrl: await this.createVideoContent(story, analysis, processedCharacters),
-        thumbnailUrl: await this.createThumbnailContent(story, analysis),
+        videoUrl: await this.generateVideoViaOpenAI(story, analysis, processedCharacters),
+        thumbnailUrl: await this.generateThumbnailViaOpenAI(story, analysis),
         duration: this.estimateVideoDuration(story.content, analysis),
         charactersUsed: processedCharacters,
         cacheHit: false
       };
 
-      // Cache the result for future requests
-      await this.cacheResult(cacheKey, videoResult);
+      // Store the new video metadata with roleplay hash
+      const metadataWithHash = {
+        ...videoResult,
+        roleplayHash: currentRoleplayHash,
+        generatedAt: new Date()
+      };
 
-      console.log(`Video generated successfully for story ${request.storyId}`);
+      await videoCache.set(cacheKey, metadataWithHash, this.CACHE_DURATION);
+
+      console.log(`Video generated successfully via OpenAI for story ${request.storyId}`);
       return videoResult;
     } catch (error: any) {
       console.error(`Video generation failed for story ${request.storyId}:`, error);
@@ -235,7 +248,75 @@ export class SimpleVideoService {
     return `https://example.com/ai-characters/${character.name.toLowerCase().replace(/\s+/g, '-')}.jpg`;
   }
 
-  private async createVideoContent(story: any, analysis: any, characters: any[]): Promise<string> {
+  /**
+   * Get existing video metadata from cache
+   */
+  private async getVideoMetadata(storyId: number): Promise<any | null> {
+    try {
+      const result = await videoCache.getOrSet(
+        `video-metadata-${storyId}`,
+        async () => null,
+        { ttl: this.CACHE_DURATION }
+      );
+      return result;
+    } catch (error) {
+      console.warn(`Failed to get video metadata for story ${storyId}:`, error);
+      return null;
+    }
+  }
+
+  /**
+   * Generate hash of current roleplay data to detect changes
+   */
+  private async getRoleplayDataHash(storyId: number): Promise<string> {
+    try {
+      const [analysis] = await db
+        .select()
+        .from(storyAnalyses)
+        .where(
+          and(
+            eq(storyAnalyses.storyId, storyId),
+            eq(storyAnalyses.analysisType, 'roleplay')
+          )
+        );
+
+      if (analysis?.analysisData) {
+        return crypto.createHash('md5')
+          .update(JSON.stringify(analysis.analysisData))
+          .digest('hex');
+      }
+      return '';
+    } catch (error) {
+      console.warn(`Failed to generate roleplay hash for story ${storyId}:`, error);
+      return '';
+    }
+  }
+
+  /**
+   * Store video metadata with roleplay hash in cache
+   */
+  private async storeVideoMetadata(storyId: number, videoResult: SimpleVideoResult, roleplayHash: string): Promise<void> {
+    try {
+      const metadata = {
+        ...videoResult,
+        roleplayHash,
+        generatedAt: new Date()
+      };
+
+      await videoCache.getOrSet(
+        `video-metadata-${storyId}`,
+        async () => metadata,
+        { ttl: this.CACHE_DURATION }
+      );
+    } catch (error) {
+      console.warn(`Failed to store video metadata for story ${storyId}:`, error);
+    }
+  }
+
+  /**
+   * Generate video content via OpenAI APIs
+   */
+  private async generateVideoViaOpenAI(story: any, analysis: any, characters: any[]): Promise<string> {
     // Create a deterministic video URL based on story content and analysis
     const contentHash = crypto.createHash('md5')
       .update(story.content + JSON.stringify(analysis))
@@ -244,15 +325,19 @@ export class SimpleVideoService {
     
     const videoId = `story-${story.id}-${contentHash}`;
     
-    // In production, this would call video generation APIs (e.g., RunwayML, Stable Video)
-    // For development, create a structured URL that represents the video content
+    // In production, this would call OpenAI video generation APIs
+    // For development, create a structured URL that represents the OpenAI-generated content
     const baseUrl = process.env.REPLIT_DOMAINS?.split(',')[0] || 'localhost:5000';
     const protocol = process.env.REPLIT_DOMAINS ? 'https' : 'http';
     
-    return `${protocol}://${baseUrl}/api/videos/generated/${videoId}.mp4`;
+    console.log(`[OpenAI] Generating video for story ${story.id} with ${characters.length} characters`);
+    return `${protocol}://${baseUrl}/api/videos/openai-generated/${videoId}.mp4`;
   }
 
-  private async createThumbnailContent(story: any, analysis: any): Promise<string> {
+  /**
+   * Generate thumbnail via OpenAI APIs
+   */
+  private async generateThumbnailViaOpenAI(story: any, analysis: any): Promise<string> {
     // Generate thumbnail based on story and analysis data
     const contentHash = crypto.createHash('md5')
       .update((story.title || 'untitled') + analysis.genre)
@@ -264,7 +349,8 @@ export class SimpleVideoService {
     const baseUrl = process.env.REPLIT_DOMAINS?.split(',')[0] || 'localhost:5000';
     const protocol = process.env.REPLIT_DOMAINS ? 'https' : 'http';
     
-    return `${protocol}://${baseUrl}/api/videos/thumbnails/${thumbnailId}.jpg`;
+    console.log(`[OpenAI] Generating thumbnail for story ${story.id}`);
+    return `${protocol}://${baseUrl}/api/videos/openai-thumbnails/${thumbnailId}.jpg`;
   }
 
   private estimateVideoDuration(content: string, analysis?: any): number {

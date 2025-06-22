@@ -103,6 +103,7 @@ export const stories = pgTable("stories", {
   isAdultContent: boolean("is_adult_content").default(false),
   viewCount: integer("view_count").default(0),
   likes: integer("likes").default(0),
+  metadata: jsonb("metadata").default({}), // Video generation and other metadata
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
