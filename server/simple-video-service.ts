@@ -64,7 +64,11 @@ export class SimpleVideoService {
 
       // Check for existing video metadata
       const cacheKey = `video-metadata-${request.storyId}`;
-      const existingMetadata = await videoCache.get(cacheKey);
+      const existingMetadata = await videoCache.getOrSet(
+        cacheKey,
+        async () => null,
+        { ttl: this.CACHE_DURATION }
+      );
       
       if (existingMetadata && existingMetadata.roleplayHash === currentRoleplayHash) {
         console.log(`Video cache hit for story ${request.storyId} - no changes detected`);
@@ -95,7 +99,7 @@ export class SimpleVideoService {
         generatedAt: new Date()
       };
 
-      await videoCache.set(cacheKey, metadataWithHash, this.CACHE_DURATION);
+      await videoCache.getOrSet(cacheKey, async () => metadataWithHash, { ttl: this.CACHE_DURATION });
 
       console.log(`Video generated successfully via OpenAI for story ${request.storyId}`);
       return videoResult;
