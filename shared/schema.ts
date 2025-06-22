@@ -746,6 +746,27 @@ export const insertVersionLineageSchema = createInsertSchema(versionLineage).omi
   createdAt: true,
 });
 
+// Story Analyses - Store narrative and roleplay analyses to prevent regeneration
+export const storyAnalyses = pgTable("story_analyses", {
+  id: serial("id").primaryKey(),
+  storyId: integer("story_id").references(() => stories.id).notNull(),
+  analysisType: text("analysis_type").notNull(), // 'narrative' or 'roleplay'
+  analysisData: jsonb("analysis_data").notNull(), // Full analysis JSON
+  generatedBy: varchar("generated_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Story Analysis schemas
+export const insertStoryAnalysisSchema = createInsertSchema(storyAnalyses).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type StoryAnalysis = typeof storyAnalyses.$inferSelect;
+export type InsertStoryAnalysis = z.infer<typeof insertStoryAnalysisSchema>;
+
 // =============================================================================
 // COLLABORATIVE ROLEPLAY TYPE EXPORTS
 // =============================================================================

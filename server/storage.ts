@@ -1,4 +1,4 @@
-import { users, localUsers, userProviders, userVoiceSamples, stories, storyCharacters, storyEmotions, characters, conversations, messages, storyCollaborations, storyGroups, storyGroupMembers, characterVoiceAssignments, storyPlaybacks, storyUserConfidence, type User, type InsertUser, type UpsertUser, type UserProvider, type InsertUserProvider, type LocalUser, type InsertLocalUser, type UserVoiceSample, type InsertUserVoiceSample, type Story, type InsertStory, type StoryCharacter, type InsertStoryCharacter, type StoryEmotion, type InsertStoryEmotion, type Character, type InsertCharacter, type Conversation, type InsertConversation, type Message, type InsertMessage, type StoryCollaboration, type InsertStoryCollaboration, type StoryGroup, type InsertStoryGroup, type StoryGroupMember, type InsertStoryGroupMember, type CharacterVoiceAssignment, type InsertCharacterVoiceAssignment, type StoryPlayback, type InsertStoryPlayback, type StoryUserConfidence, type InsertStoryUserConfidence } from "@shared/schema";
+import { users, localUsers, userProviders, userVoiceSamples, stories, storyCharacters, storyEmotions, characters, conversations, messages, storyCollaborations, storyGroups, storyGroupMembers, characterVoiceAssignments, storyPlaybacks, storyUserConfidence, storyAnalyses, type User, type InsertUser, type UpsertUser, type UserProvider, type InsertUserProvider, type LocalUser, type InsertLocalUser, type UserVoiceSample, type InsertUserVoiceSample, type Story, type InsertStory, type StoryCharacter, type InsertStoryCharacter, type StoryEmotion, type InsertStoryEmotion, type Character, type InsertCharacter, type Conversation, type InsertConversation, type Message, type InsertMessage, type StoryCollaboration, type InsertStoryCollaboration, type StoryGroup, type InsertStoryGroup, type StoryGroupMember, type InsertStoryGroupMember, type CharacterVoiceAssignment, type InsertCharacterVoiceAssignment, type StoryPlayback, type InsertStoryPlayback, type StoryUserConfidence, type InsertStoryUserConfidence, type StoryAnalysis, type InsertStoryAnalysis } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc } from "drizzle-orm";
 
@@ -117,11 +117,12 @@ export interface IStorage {
   updateStoryPlayback(id: number, playback: Partial<InsertStoryPlayback>): Promise<void>;
   deleteStoryPlayback(id: number): Promise<void>;
   
-  // Story User Confidence
-  getStoryUserConfidence(storyId: number, userId: string): Promise<StoryUserConfidence | undefined>;
-  createStoryUserConfidence(confidence: InsertStoryUserConfidence): Promise<StoryUserConfidence>;
-  updateStoryUserConfidence(storyId: number, userId: string, updates: Partial<InsertStoryUserConfidence>): Promise<void>;
-  incrementConfidenceMetric(storyId: number, userId: string, metric: 'totalInteractions' | 'voiceRecordingsCompleted' | 'emotionsRecorded' | 'playbacksCompleted', timeSpentSeconds?: number): Promise<void>;
+
+  
+  // Story Analyses
+  getStoryAnalysis(storyId: number, analysisType: 'narrative' | 'roleplay'): Promise<StoryAnalysis | undefined>;
+  createStoryAnalysis(analysis: InsertStoryAnalysis): Promise<StoryAnalysis>;
+  updateStoryAnalysis(storyId: number, analysisType: 'narrative' | 'roleplay', analysisData: any): Promise<StoryAnalysis>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -722,6 +723,50 @@ export class DatabaseStorage implements IStorage {
     updates.overallConfidence = newOverallConfidence;
 
     await this.updateStoryUserConfidence(storyId, userId, updates);
+  }
+
+  // Story Analysis operations
+  async getStoryAnalysis(storyId: number, analysisType: 'narrative' | 'roleplay'): Promise<StoryAnalysis | undefined> {
+    const [analysis] = await db
+      .select()
+      .from(storyAnalyses)
+      .where(and(eq(storyAnalyses.storyId, storyId), eq(storyAnalyses.analysisType, analysisType)))
+      .orderBy(desc(storyAnalyses.createdAt))
+      .limit(1);
+    return analysis || undefined;
+  }
+
+  async createStoryAnalysis(analysisData: InsertStoryAnalysis): Promise<StoryAnalysis> {
+    const [analysis] = await db
+      .insert(storyAnalyses)
+      .values(analysisData)
+      .returning();
+    return analysis;
+  }
+
+  async updateStoryAnalysis(storyId: number, analysisType: 'narrative' | 'roleplay', analysisData: any): Promise<StoryAnalysis> {
+    // First try to update existing analysis
+    const existing = await this.getStoryAnalysis(storyId, analysisType);
+    
+    if (existing) {
+      const [updated] = await db
+        .update(storyAnalyses)
+        .set({ 
+          analysisData,
+          updatedAt: new Date()
+        })
+        .where(eq(storyAnalyses.id, existing.id))
+        .returning();
+      return updated;
+    } else {
+      // Create new if doesn't exist
+      return await this.createStoryAnalysis({
+        storyId,
+        analysisType,
+        analysisData,
+        generatedBy: 'system' // Default value, should be overridden
+      });
+    }
   }
 }
 
