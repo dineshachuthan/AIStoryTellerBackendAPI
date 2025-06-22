@@ -45,6 +45,9 @@ app.use((req, res, next) => {
   // Add collaborative routes after authentication is set up
   app.use(collaborativeRoutes);
   
+  // Add video generation routes
+  app.use(videoRoutes);
+  
   // Initialize character archetypes after server starts (optional, with delay)
   setTimeout(() => {
     archetypeService.initializeDefaultArchetypes().catch((error) => {
