@@ -113,6 +113,18 @@ export interface IStorage {
   getStoryAnalysis(storyId: number, analysisType: 'narrative' | 'roleplay'): Promise<StoryAnalysis | undefined>;
   createStoryAnalysis(analysis: InsertStoryAnalysis): Promise<StoryAnalysis>;
   updateStoryAnalysis(storyId: number, analysisType: 'narrative' | 'roleplay', analysisData: any): Promise<StoryAnalysis>;
+
+  // Story Customizations
+  createOrUpdateStoryCustomization(customization: {
+    originalStoryId: number;
+    customizedByUserId: string;
+    customTitle: string;
+    customCharacterImages: any;
+    customVoiceAssignments: any;
+    customEmotionMappings: any;
+    isPrivate: boolean;
+  }): Promise<void>;
+  getStoryCustomization(storyId: number, userId: string): Promise<any>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -474,6 +486,67 @@ export class DatabaseStorage implements IStorage {
 
   async deleteStoryPlayback(id: number): Promise<void> {
     await db.delete(storyPlaybacks).where(eq(storyPlaybacks.id, id));
+  }
+
+  // Story Analysis operations
+  async getStoryAnalysis(storyId: number, analysisType: 'narrative' | 'roleplay'): Promise<StoryAnalysis | undefined> {
+    const [analysis] = await db.select().from(storyAnalyses).where(
+      and(eq(storyAnalyses.storyId, storyId), eq(storyAnalyses.analysisType, analysisType))
+    );
+    return analysis || undefined;
+  }
+
+  async createStoryAnalysis(analysis: InsertStoryAnalysis): Promise<StoryAnalysis> {
+    const [created] = await db.insert(storyAnalyses).values(analysis).returning();
+    return created;
+  }
+
+  async updateStoryAnalysis(storyId: number, analysisType: 'narrative' | 'roleplay', analysisData: any): Promise<StoryAnalysis> {
+    const [updated] = await db.update(storyAnalyses)
+      .set({ analysisData, updatedAt: new Date() })
+      .where(and(eq(storyAnalyses.storyId, storyId), eq(storyAnalyses.analysisType, analysisType)))
+      .returning();
+    return updated;
+  }
+
+  // Story Customization operations
+  async createOrUpdateStoryCustomization(customization: {
+    originalStoryId: number;
+    customizedByUserId: string;
+    customTitle: string;
+    customCharacterImages: any;
+    customVoiceAssignments: any;
+    customEmotionMappings: any;
+    isPrivate: boolean;
+  }): Promise<void> {
+    // For now, store in a simple JSON format in story metadata
+    // In a full implementation, this would use a dedicated storyCustomizations table
+    const story = await this.getStory(customization.originalStoryId);
+    if (story) {
+      await this.updateStory(customization.originalStoryId, {
+        metadata: {
+          ...story.metadata,
+          customizations: {
+            [customization.customizedByUserId]: {
+              customTitle: customization.customTitle,
+              customCharacterImages: customization.customCharacterImages,
+              customVoiceAssignments: customization.customVoiceAssignments,
+              customEmotionMappings: customization.customEmotionMappings,
+              isPrivate: customization.isPrivate,
+              updatedAt: new Date()
+            }
+          }
+        }
+      });
+    }
+  }
+
+  async getStoryCustomization(storyId: number, userId: string): Promise<any> {
+    const story = await this.getStory(storyId);
+    if (story?.metadata?.customizations?.[userId]) {
+      return story.metadata.customizations[userId];
+    }
+    return null;
   }
 }
 
