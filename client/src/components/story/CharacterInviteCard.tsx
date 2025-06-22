@@ -221,10 +221,10 @@ export function CharacterInviteCard({ character, storyId, existingInvitation, on
                       Email
                     </div>
                   </SelectItem>
-                  <SelectItem value="phone" disabled>
+                  <SelectItem value="phone">
                     <div className="flex items-center gap-2">
                       <Phone className="w-4 h-4" />
-                      Phone Number (Coming Soon)
+                      Phone Number
                     </div>
                   </SelectItem>
                 </SelectContent>
@@ -244,7 +244,7 @@ export function CharacterInviteCard({ character, storyId, existingInvitation, on
               />
               {contactMethod === "phone" && (
                 <p className="text-xs text-muted-foreground">
-                  SMS invitations are not yet supported. Use email for now.
+                  SMS requires Twilio configuration. Invitation link will be created if SMS fails.
                 </p>
               )}
             </div>
