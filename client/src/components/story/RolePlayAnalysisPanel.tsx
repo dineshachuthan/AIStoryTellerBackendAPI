@@ -550,18 +550,14 @@ export function RolePlayAnalysisPanel({
                   {videoResult.duration}s
                 </Badge>
               </div>
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Play className="w-4 h-4 text-green-600" />
-                  <a 
-                    href={videoResult.videoUrl} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-green-600 hover:text-green-800 underline"
-                  >
-                    View Generated Video
-                  </a>
-                </div>
+              <div className="space-y-4">
+                <VideoPlayer
+                  videoUrl={videoResult.videoUrl}
+                  thumbnailUrl={videoResult.thumbnailUrl}
+                  title={`${analysis.title} - Generated Video`}
+                  duration={videoResult.duration}
+                  className="w-full"
+                />
                 <div className="text-sm text-green-700 dark:text-green-300">
                   Characters used: {videoResult.charactersUsed?.map((c: any) => c.name).join(', ')}
                 </div>
