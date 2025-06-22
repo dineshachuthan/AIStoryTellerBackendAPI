@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { requireAuth } from "./auth";
-import { videoGenerationService } from "./video-generation-service";
+import { simpleVideoService } from "./simple-video-service";
 import { insertCharacterAssetSchema, insertVideoGenerationSchema } from "@shared/schema";
 import { z } from "zod";
 
@@ -11,8 +11,10 @@ router.post("/api/videos/generate", requireAuth, async (req: any, res) => {
   try {
     const requestSchema = z.object({
       storyId: z.number(),
-      scenes: z.array(z.number()).optional(),
-      duration: z.number().min(10).max(600).optional(), // 10 seconds to 10 minutes
+      characterOverrides: z.record(z.object({
+        imageUrl: z.string().optional(),
+        voiceSampleUrl: z.string().optional()
+      })).optional(),
       quality: z.enum(['draft', 'standard', 'high']).default('standard')
     });
 
@@ -23,15 +25,16 @@ router.post("/api/videos/generate", requireAuth, async (req: any, res) => {
       return res.status(401).json({ message: "User not authenticated" });
     }
 
-    const result = await videoGenerationService.generateVideo({
-      ...validatedRequest,
-      userId
+    const result = await simpleVideoService.generateSimpleVideo({
+      storyId: validatedRequest.storyId,
+      userId,
+      characterOverrides: validatedRequest.characterOverrides || {}
     });
 
     res.json(result);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Video generation request failed:", error);
-    if (error.name === 'ZodError') {
+    if (error?.name === 'ZodError') {
       return res.status(400).json({ 
         message: "Invalid request parameters",
         errors: error.errors
@@ -49,9 +52,9 @@ router.get("/api/videos/story/:storyId/assets", requireAuth, async (req: any, re
       return res.status(400).json({ message: "Invalid story ID" });
     }
 
-    const assets = await videoGenerationService.getCharacterAssets(storyId);
+    const assets = await simpleVideoService.getCharacterAssets(storyId);
     res.json(assets);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Failed to get character assets:", error);
     res.status(500).json({ message: "Failed to load character assets" });
   }
@@ -81,7 +84,7 @@ router.put("/api/videos/story/:storyId/assets/:characterName", requireAuth, asyn
 
     const validatedUpdate = updateSchema.parse(req.body);
 
-    await videoGenerationService.updateCharacterAsset(
+    await simpleVideoService.updateCharacterOverride(
       storyId,
       characterName,
       validatedUpdate,
