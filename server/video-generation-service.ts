@@ -94,9 +94,9 @@ export class VideoGenerationService {
       // Step 2: Load from database or generate
       return await this.loadAndValidateCharacterAssets(storyId);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to get character assets:", error);
-      throw new Error(`Character assets loading failed: ${error.message}`);
+      throw new Error(`Character assets loading failed: ${error?.message || 'Unknown error'}`);
     }
   }
 
@@ -147,9 +147,9 @@ export class VideoGenerationService {
       await this.invalidateCharacterCache(storyId);
       
       console.log(`Character asset updated for ${characterName} in story ${storyId}`);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to update character asset:", error);
-      throw new Error(`Character asset update failed: ${error.message}`);
+      throw new Error(`Character asset update failed: ${error?.message || 'Unknown error'}`);
     }
   }
 
@@ -187,11 +187,12 @@ export class VideoGenerationService {
 
   private async checkCache(cacheKey: string): Promise<VideoGenerationResult | null> {
     try {
-      return await videoCache.getOrSet(
+      const cached = await videoCache.getOrSet(
         `video-${cacheKey}`,
-        async () => null, // Don't generate if not in cache
+        async () => Promise.resolve(null),
         { ttl: this.CACHE_DURATION }
       );
+      return cached;
     } catch (error: any) {
       console.warn("Cache check failed:", error);
       return null;
@@ -281,8 +282,8 @@ export class VideoGenerationService {
       await db.update(videoGenerations)
         .set({
           status: 'failed',
-          errorMessage: error.message,
-          retryCount: generation.retryCount + 1,
+          errorMessage: (error as any)?.message || 'Unknown error',
+          retryCount: (generation.retryCount || 0) + 1,
           updatedAt: new Date()
         })
         .where(eq(videoGenerations.id, generation.id));
@@ -367,7 +368,7 @@ export class VideoGenerationService {
       // Update usage count
       await db.update(aiAssetCache)
         .set({
-          usageCount: cachedAsset.usageCount + 1,
+          usageCount: (cachedAsset.usageCount || 0) + 1,
           lastUsedAt: new Date()
         })
         .where(eq(aiAssetCache.id, cachedAsset.id));
@@ -408,7 +409,7 @@ export class VideoGenerationService {
           isValid = false;
         }
       } catch (error) {
-        validationErrors.push(`User image URL validation failed: ${error.message}`);
+        validationErrors.push(`User image URL validation failed: ${(error as any)?.message || 'Unknown error'}`);
         isValid = false;
       }
     }
@@ -421,8 +422,8 @@ export class VideoGenerationService {
           validationErrors.push(`User voice URL not accessible: ${response.status}`);
           isValid = false;
         }
-      } catch (error) {
-        validationErrors.push(`User voice URL validation failed: ${error.message}`);
+      } catch (error: any) {
+        validationErrors.push(`User voice URL validation failed: ${error?.message || 'Unknown error'}`);
         isValid = false;
       }
     }
@@ -486,10 +487,10 @@ export class VideoGenerationService {
     try {
       await videoCache.getOrSet(
         `video-${cacheKey}`,
-        () => result,
+        async () => Promise.resolve(result),
         { ttl: this.CACHE_DURATION }
       );
-    } catch (error) {
+    } catch (error: any) {
       console.warn("Failed to update video cache:", error);
     }
   }
