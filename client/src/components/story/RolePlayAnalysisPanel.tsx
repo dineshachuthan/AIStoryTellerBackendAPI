@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { CharacterInviteCard } from "./CharacterInviteCard";
 import { 
   Play, 
   Edit, 
@@ -26,7 +27,10 @@ import {
   Mail,
   Phone,
   Copy,
-  ExternalLink
+  ExternalLink,
+  CheckCircle,
+  XCircle,
+  AlertCircle
 } from "lucide-react";
 
 interface DialogueLine {
@@ -400,130 +404,18 @@ export function RolePlayAnalysisPanel({
             </div>
             
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="font-medium">Characters</h4>
-                <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
-                  <DialogTrigger asChild>
-                    <Button size="sm" className="bg-purple-600 hover:bg-purple-700">
-                      <Send className="w-4 h-4 mr-2" />
-                      Send Invitation
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                      <DialogTitle>Send Roleplay Invitation</DialogTitle>
-                      <DialogDescription>
-                        Invite friends to participate in this roleplay story
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="invitationName">Invitation Name</Label>
-                        <Input
-                          id="invitationName"
-                          placeholder="e.g., 'Sarah's Version', 'Team A Roleplay'"
-                          value={inviteForm.invitationName}
-                          onChange={(e) => setInviteForm(prev => ({ ...prev, invitationName: e.target.value }))}
-                        />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label>Contact Method</Label>
-                        <Select 
-                          value={inviteForm.contactMethod} 
-                          onValueChange={(value: "email" | "phone") => setInviteForm(prev => ({ ...prev, contactMethod: value }))}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="email">
-                              <div className="flex items-center gap-2">
-                                <Mail className="w-4 h-4" />
-                                Email
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="phone">
-                              <div className="flex items-center gap-2">
-                                <Phone className="w-4 h-4" />
-                                Phone Number
-                              </div>
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="contactValue">
-                          {inviteForm.contactMethod === "email" ? "Email Address" : "Phone Number"}
-                        </Label>
-                        <Input
-                          id="contactValue"
-                          type={inviteForm.contactMethod === "email" ? "email" : "tel"}
-                          placeholder={inviteForm.contactMethod === "email" ? "friend@example.com" : "+1234567890"}
-                          value={inviteForm.contactValue}
-                          onChange={(e) => setInviteForm(prev => ({ ...prev, contactValue: e.target.value }))}
-                        />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label>Assign Character (Optional)</Label>
-                        <Select 
-                          value={inviteForm.characterAssignments[Object.keys(inviteForm.characterAssignments)[0]] || ""} 
-                          onValueChange={(value) => setInviteForm(prev => ({ 
-                            ...prev, 
-                            characterAssignments: { [value]: inviteForm.contactValue } 
-                          }))}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select character for friend" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {analysis.characters.map((character) => (
-                              <SelectItem key={character.name} value={character.name}>
-                                {character.name} ({character.role})
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    <DialogFooter>
-                      <Button variant="outline" onClick={() => setShowInviteDialog(false)}>
-                        Cancel
-                      </Button>
-                      <Button onClick={sendInvitation} disabled={sendingInvitation}>
-                        {sendingInvitation ? (
-                          <>
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            Sending...
-                          </>
-                        ) : (
-                          <>
-                            <Send className="w-4 h-4 mr-2" />
-                            Send Invitation
-                          </>
-                        )}
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              </div>
+              <h4 className="font-medium mb-2">Characters</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {analysis.characters.map((character, index) => (
-                  <div key={index} className="border rounded-lg p-3 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <h5 className="font-medium">{character.name}</h5>
-                      <Badge variant="outline" className="text-xs">
-                        {character.role}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground">{character.personality}</p>
-                    <p className="text-xs text-muted-foreground">Voice: {character.voiceProfile}</p>
-                    {character.costumeSuggestion && (
-                      <p className="text-xs text-muted-foreground">Costume: {character.costumeSuggestion}</p>
-                    )}
-                  </div>
+                  <CharacterInviteCard 
+                    key={index}
+                    character={character}
+                    storyId={storyId}
+                    onInviteSent={(invitation) => {
+                      setSentInvitations(prev => [...prev, invitation]);
+                      toast({ title: "Invitation sent!", description: `Invitation sent to ${invitation.contactValue}` });
+                    }}
+                  />
                 ))}
               </div>
             </div>
