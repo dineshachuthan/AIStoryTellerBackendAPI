@@ -482,6 +482,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // NARRATIVE ANALYSIS ROUTES - Uses user's personal voice recordings
+  // Get existing narrative analysis for a story
+  app.get("/api/stories/:storyId/narrative", requireAuth, async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.storyId);
+      const userId = (req.user as any)?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const story = await storage.getStory(storyId);
+      if (!story) {
+        return res.status(404).json({ message: "Story not found" });
+      }
+
+      // Check if user has access to this story
+      const isAuthor = story.authorId === userId;
+      const isPublished = story.isPublished;
+      
+      if (!isAuthor && !isPublished) {
+        return res.status(403).json({ 
+          message: "Access denied" 
+        });
+      }
+
+      // Check if we have existing analysis data in the story
+      if (story.extractedCharacters && story.extractedCharacters.length > 0) {
+        const existingAnalysis = {
+          characters: story.extractedCharacters,
+          emotions: story.extractedEmotions || [],
+          summary: story.summary || "",
+          category: story.category || "General",
+          genre: story.genre || "Fiction",
+          themes: story.themes || [],
+          suggestedTags: story.tags || [],
+          emotionalTags: story.emotionalTags || [],
+          readingTime: story.readingTime || 5,
+          ageRating: story.ageRating || 'general',
+          isAdultContent: story.isAdultContent || false
+        };
+        
+        console.log(`Retrieved existing narrative analysis for story ${storyId}`);
+        return res.json(existingAnalysis);
+      }
+
+      // No existing analysis found
+      return res.status(404).json({ message: "Narrative analysis not found. Generate one first." });
+    } catch (error) {
+      console.error("Error fetching narrative analysis:", error);
+      res.status(500).json({ message: "Failed to fetch narrative analysis" });
+    }
+  });
+
   // Generate narrative analysis for a story
   app.post("/api/stories/:storyId/narrative", requireAuth, async (req, res) => {
     try {
@@ -538,6 +591,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ROLEPLAY ANALYSIS ROUTES - Uses character-specific voices
+  
+  // Get existing roleplay analysis for a story
+  app.get("/api/stories/:storyId/roleplay", requireAuth, async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.storyId);
+      const userId = (req.user as any)?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const story = await storage.getStory(storyId);
+      if (!story) {
+        return res.status(404).json({ message: "Story not found" });
+      }
+
+      // Check if user has access to this story
+      const isAuthor = story.authorId === userId;
+      const isPublished = story.isPublished;
+      
+      if (!isAuthor && !isPublished) {
+        return res.status(403).json({ 
+          message: "Access denied" 
+        });
+      }
+
+      // Check if we have cached roleplay analysis
+      try {
+        const { analysisCache } = await import("./cache-with-fallback");
+        const cachedAnalysis = await analysisCache.getOrSet(
+          `roleplay-${storyId}`,
+          () => null, // Don't generate if not exists
+          { ttl: 24 * 60 * 60 * 1000 } // 24 hours
+        );
+        
+        if (cachedAnalysis) {
+          console.log(`Retrieved cached roleplay analysis for story ${storyId}`);
+          return res.json(cachedAnalysis);
+        }
+      } catch (cacheError) {
+        console.log(`No cached roleplay analysis found for story ${storyId}`);
+      }
+
+      // No existing analysis found
+      return res.status(404).json({ message: "Roleplay analysis not found. Generate one first." });
+    } catch (error) {
+      console.error("Error fetching roleplay analysis:", error);
+      res.status(500).json({ message: "Failed to fetch roleplay analysis" });
+    }
+  });
+
   // Generate roleplay analysis for a story
   app.post("/api/stories/:storyId/roleplay", requireAuth, async (req, res) => {
     try {

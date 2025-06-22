@@ -128,12 +128,27 @@ export default function StoryAnalysis() {
     setAnalysisProgress({ narrative: false, roleplay: false });
 
     try {
-      // Generate narrative analysis first
-      console.log('Calling narrative endpoint:', `/api/stories/${storyId}/narrative`);
-      const narrativeResponse = await apiRequest(`/api/stories/${storyId}/narrative`, {
-        method: 'POST',
-        credentials: 'include'
-      });
+      // Try to fetch existing narrative analysis first
+      console.log('Fetching existing narrative analysis:', `/api/stories/${storyId}/narrative`);
+      let narrativeResponse;
+      
+      try {
+        narrativeResponse = await apiRequest(`/api/stories/${storyId}/narrative`, {
+          method: 'GET',
+          credentials: 'include'
+        });
+        console.log('Found existing narrative analysis');
+      } catch (fetchError: any) {
+        if (fetchError.message?.includes('404')) {
+          console.log('No existing narrative analysis, generating new one...');
+          narrativeResponse = await apiRequest(`/api/stories/${storyId}/narrative`, {
+            method: 'POST',
+            credentials: 'include'
+          });
+        } else {
+          throw fetchError;
+        }
+      }
 
       const narrativeAnalysis: AnalysisData = {
         analysis: narrativeResponse,
@@ -143,13 +158,29 @@ export default function StoryAnalysis() {
       setAnalysisData(narrativeAnalysis);
       setAnalysisProgress(prev => ({ ...prev, narrative: true }));
 
-      // Generate roleplay analysis
+      // Try to fetch existing roleplay analysis first
       try {
-        console.log('Calling roleplay endpoint:', `/api/stories/${storyId}/roleplay`);
-        const rolePlayResponse = await apiRequest(`/api/stories/${storyId}/roleplay`, {
-          method: 'POST',
-          credentials: 'include'
-        });
+        console.log('Fetching existing roleplay analysis:', `/api/stories/${storyId}/roleplay`);
+        let rolePlayResponse;
+        
+        try {
+          rolePlayResponse = await apiRequest(`/api/stories/${storyId}/roleplay`, {
+            method: 'GET',
+            credentials: 'include'
+          });
+          console.log('Found existing roleplay analysis');
+        } catch (fetchError: any) {
+          if (fetchError.message?.includes('404')) {
+            console.log('No existing roleplay analysis, generating new one...');
+            rolePlayResponse = await apiRequest(`/api/stories/${storyId}/roleplay`, {
+              method: 'POST',
+              credentials: 'include'
+            });
+          } else {
+            throw fetchError;
+          }
+        }
+        
         console.log('Roleplay analysis completed successfully');
         setRolePlayAnalysis(rolePlayResponse);
         setAnalysisProgress(prev => ({ ...prev, roleplay: true }));
