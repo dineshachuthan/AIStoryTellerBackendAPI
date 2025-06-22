@@ -2,6 +2,8 @@ import { Router } from "express";
 import { collaborativeRoleplayService } from "./collaborative-roleplay-service";
 import { requireAuth } from "./auth";
 import { getBaseUrl } from "./oauth-config";
+import { sendRoleplayInvitation, sendSMSInvitation } from "./email-service";
+import { storage } from "./storage";
 
 const router = Router();
 
@@ -15,12 +17,49 @@ router.post("/api/collaborative/templates", requireAuth, async (req, res) => {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    // Create a simple invitation token and response
+    // Get story details for the invitation
+    const story = await storage.getStory(storyId);
+    if (!story) {
+      return res.status(404).json({ message: "Story not found" });
+    }
+
+    // Get sender details
+    const sender = await storage.getUser(userId);
+    if (!sender) {
+      return res.status(404).json({ message: "Sender not found" });
+    }
+
+    // Create invitation token and link
     const invitationToken = `inv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const baseUrl = getBaseUrl();
     const invitationLink = `${baseUrl}/roleplay-invitation/${invitationToken}`;
     
     console.log(`Created invitation for ${characterName} in story ${storyId}: ${invitationToken}`);
+    
+    // Send actual invitation based on contact method
+    let invitationSent = false;
+    if (contactMethod === 'email') {
+      invitationSent = await sendRoleplayInvitation({
+        recipientEmail: contactValue,
+        recipientName: invitationName || undefined,
+        characterName,
+        storyTitle: story.title,
+        invitationLink,
+        senderName: sender.firstName || sender.email || 'A storytelling friend'
+      });
+    } else if (contactMethod === 'phone') {
+      invitationSent = await sendSMSInvitation(contactValue, {
+        recipientName: invitationName || undefined,
+        characterName,
+        storyTitle: story.title,
+        invitationLink,
+        senderName: sender.firstName || sender.email || 'A storytelling friend'
+      });
+    }
+
+    if (!invitationSent && contactMethod === 'email') {
+      return res.status(500).json({ message: "Failed to send email invitation" });
+    }
     
     // Return invitation details that match frontend expectations
     res.json({
@@ -31,7 +70,10 @@ router.post("/api/collaborative/templates", requireAuth, async (req, res) => {
       invitationToken,
       contactMethod,
       contactValue,
-      message: "Invitation created successfully"
+      invitationSent,
+      message: invitationSent ? 
+        `${contactMethod === 'email' ? 'Email' : 'SMS'} invitation sent successfully` : 
+        "Invitation created (SMS not yet supported)"
     });
     
   } catch (error) {
