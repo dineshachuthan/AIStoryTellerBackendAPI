@@ -17,6 +17,7 @@ import { getAllVoiceSamples, getVoiceSampleProgress } from "./voice-samples";
 import { storyNarrator } from "./story-narrator";
 import { grandmaVoiceNarrator } from "./voice-narrator";
 import { getEnvironment, getBaseUrl, getOAuthConfig } from "./oauth-config";
+import { simpleVideoService } from "./simple-video-service";
 import multer from "multer";
 import path from "path";
 import fs from "fs/promises";
@@ -3025,6 +3026,226 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(updatedParticipant);
     } catch (error) {
       res.status(500).json({ message: "Failed to accept invitation" });
+    }
+  });
+
+  // =============================================================================
+  // VIDEO GENERATION API ENDPOINTS
+  // =============================================================================
+
+  // Generate video with user overrides
+  app.post("/api/videos/generate", requireAuth, async (req, res) => {
+    try {
+      const { storyId, characterOverrides, quality = 'standard' } = req.body;
+      const userId = (req.user as any)?.id;
+
+      if (!storyId || !userId) {
+        return res.status(400).json({ message: "Story ID and authentication required" });
+      }
+
+      const result = await simpleVideoService.generateSimpleVideo({
+        storyId: parseInt(storyId),
+        userId,
+        characterOverrides
+      });
+
+      res.json(result);
+    } catch (error: any) {
+      console.error("Video generation failed:", error);
+      res.status(500).json({ 
+        message: "Video generation failed", 
+        error: error?.message || 'Unknown error'
+      });
+    }
+  });
+
+  // Get character assets for video generation
+  app.get("/api/videos/story/:storyId/assets", requireAuth, async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.storyId);
+      if (isNaN(storyId)) {
+        return res.status(400).json({ message: "Invalid story ID" });
+      }
+
+      const assets = await simpleVideoService.getCharacterAssets(storyId);
+      res.json({
+        storyId,
+        characters: assets,
+        message: "Character assets loaded successfully"
+      });
+    } catch (error: any) {
+      console.error("Failed to get character assets:", error);
+      res.status(500).json({ 
+        message: "Failed to load character assets",
+        error: error?.message || 'Unknown error'
+      });
+    }
+  });
+
+  // Update character asset with user override
+  app.put("/api/videos/story/:storyId/character/:characterName", requireAuth, async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.storyId);
+      const characterName = decodeURIComponent(req.params.characterName);
+      const userId = (req.user as any)?.id;
+      const { imageUrl, voiceSampleUrl } = req.body;
+
+      if (isNaN(storyId) || !characterName || !userId) {
+        return res.status(400).json({ message: "Invalid parameters" });
+      }
+
+      if (!imageUrl && !voiceSampleUrl) {
+        return res.status(400).json({ message: "At least one asset (image or voice) must be provided" });
+      }
+
+      await simpleVideoService.updateCharacterOverride(
+        storyId,
+        characterName,
+        { imageUrl, voiceSampleUrl },
+        userId
+      );
+
+      res.json({
+        message: "Character asset updated successfully",
+        character: characterName,
+        updates: { imageUrl, voiceSampleUrl }
+      });
+    } catch (error: any) {
+      console.error("Failed to update character asset:", error);
+      res.status(500).json({ 
+        message: "Failed to update character asset",
+        error: error?.message || 'Unknown error'
+      });
+    }
+  });
+
+  // Get user voice samples for character override
+  app.get("/api/videos/user-voices", requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any)?.id;
+      const emotion = req.query.emotion as string;
+
+      if (!userId) {
+        return res.status(401).json({ message: "User authentication required" });
+      }
+
+      const voiceSamples = await simpleVideoService.getUserVoiceSamples(userId, emotion);
+      res.json({
+        userId,
+        emotion: emotion || 'all',
+        samples: voiceSamples
+      });
+    } catch (error: any) {
+      console.error("Failed to get user voice samples:", error);
+      res.status(500).json({ 
+        message: "Failed to retrieve voice samples",
+        error: error?.message || 'Unknown error'
+      });
+    }
+  });
+
+  // Upload character image for override
+  app.post("/api/videos/upload-character-image", requireAuth, upload.single('image'), async (req, res) => {
+    try {
+      const userId = (req.user as any)?.id;
+      const { characterName, storyId } = req.body;
+      const imageFile = req.file;
+
+      if (!userId || !imageFile) {
+        return res.status(400).json({ message: "User authentication and image file required" });
+      }
+
+      // Save image to persistent storage
+      const timestamp = Date.now();
+      const imageDir = path.join(process.cwd(), 'persistent-cache', 'character-images');
+      await fs.mkdir(imageDir, { recursive: true });
+      
+      const fileName = `${userId}-${characterName || 'character'}-${timestamp}.${imageFile.originalname.split('.').pop()}`;
+      const filePath = path.join(imageDir, fileName);
+      
+      await fs.writeFile(filePath, imageFile.buffer);
+      
+      const imageUrl = `/api/character-images/${fileName}`;
+
+      res.json({
+        message: "Character image uploaded successfully",
+        imageUrl,
+        characterName,
+        fileName
+      });
+    } catch (error: any) {
+      console.error("Character image upload failed:", error);
+      res.status(500).json({ 
+        message: "Image upload failed",
+        error: error?.message || 'Unknown error'
+      });
+    }
+  });
+
+  // Serve character images
+  app.get("/api/character-images/:fileName", async (req, res) => {
+    try {
+      const { fileName } = req.params;
+      const filePath = path.join(process.cwd(), 'persistent-cache', 'character-images', fileName);
+      
+      try {
+        await fs.access(filePath);
+      } catch {
+        return res.status(404).json({ message: "Image not found" });
+      }
+      
+      // Determine content type
+      const ext = path.extname(fileName).toLowerCase();
+      let contentType = 'image/jpeg';
+      if (ext === '.png') contentType = 'image/png';
+      if (ext === '.gif') contentType = 'image/gif';
+      if (ext === '.webp') contentType = 'image/webp';
+      
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Cache-Control', 'public, max-age=86400'); // 24 hours
+      res.sendFile(path.resolve(filePath));
+    } catch (error: any) {
+      console.error("Error serving character image:", error);
+      res.status(500).json({ message: "Failed to serve image" });
+    }
+  });
+
+  // Validate assets before video generation
+  app.post("/api/videos/story/:storyId/validate", requireAuth, async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.storyId);
+      if (isNaN(storyId)) {
+        return res.status(400).json({ message: "Invalid story ID" });
+      }
+
+      const assets = await simpleVideoService.getCharacterAssets(storyId);
+      const validationResults = assets.map(asset => ({
+        characterName: asset.name,
+        hasAIImage: !!asset.aiImagePrompt,
+        hasUserImage: !!asset.userImageUrl,
+        hasAIVoice: !!asset.aiVoiceAssignment,
+        hasUserVoice: !!asset.userVoiceSampleUrl,
+        isReady: true // All characters have AI defaults
+      }));
+
+      const allReady = validationResults.every(result => result.isReady);
+
+      res.json({
+        storyId,
+        isValid: allReady,
+        characters: validationResults,
+        summary: {
+          total: validationResults.length,
+          withUserOverrides: validationResults.filter(r => r.hasUserImage || r.hasUserVoice).length,
+          readyForGeneration: validationResults.filter(r => r.isReady).length
+        }
+      });
+    } catch (error: any) {
+      console.error("Asset validation failed:", error);
+      res.status(500).json({ 
+        message: "Asset validation failed",
+        error: error?.message || 'Unknown error'
+      });
     }
   });
 
