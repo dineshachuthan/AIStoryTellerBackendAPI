@@ -42,10 +42,21 @@ export class SimpleVideoService {
    * Generate video with user overrides prioritized over AI defaults
    */
   async generateSimpleVideo(request: SimpleVideoRequest): Promise<SimpleVideoResult> {
+    const cacheKey = await this.generateCacheKey(request);
+    
     try {
       console.log(`Processing video request for story ${request.storyId}`);
       
-      // Get story and analysis data
+      // Step 1: Check cache first
+      const cachedResult = await this.checkCache(cacheKey);
+      if (cachedResult) {
+        console.log(`Video cache hit for story ${request.storyId}`);
+        return { ...cachedResult, cacheHit: true };
+      }
+
+      // Step 2: Generate new video
+      console.log(`Generating new video for story ${request.storyId}`);
+      
       const [story] = await db.select().from(stories).where(eq(stories.id, request.storyId));
       if (!story) {
         throw new Error(`Story with ID ${request.storyId} not found`);
@@ -57,33 +68,13 @@ export class SimpleVideoService {
         throw new Error("No characters found in story analysis");
       }
 
-      // Generate roleplay data hash to detect changes
-      const currentRoleplayHash = crypto.createHash('md5')
-        .update(JSON.stringify(analysis))
-        .digest('hex');
-
-      // Check for existing video metadata
-      const cacheKey = `video-metadata-${request.storyId}`;
-      const existingMetadata = await videoCache.getOrSet(
-        cacheKey,
-        async () => null,
-        { ttl: this.CACHE_DURATION }
-      );
-      
-      if (existingMetadata && existingMetadata.roleplayHash === currentRoleplayHash) {
-        console.log(`Video cache hit for story ${request.storyId} - no changes detected`);
-        return { ...existingMetadata, cacheHit: true };
-      }
-
-      console.log(`Generating new video via OpenAI for story ${request.storyId} - ${existingMetadata ? 'roleplay data changed' : 'no existing video'}`);
-
       // Process characters with user overrides
       const processedCharacters = await this.processCharactersWithOverrides(
         analysis.characters, 
         request.characterOverrides || {}
       );
 
-      // Generate new video content via OpenAI
+      // Generate video content via OpenAI
       const videoResult: SimpleVideoResult = {
         videoUrl: await this.generateVideoViaOpenAI(story, analysis, processedCharacters),
         thumbnailUrl: await this.generateThumbnailViaOpenAI(story, analysis),
@@ -92,14 +83,8 @@ export class SimpleVideoService {
         cacheHit: false
       };
 
-      // Store the new video metadata with roleplay hash
-      const metadataWithHash = {
-        ...videoResult,
-        roleplayHash: currentRoleplayHash,
-        generatedAt: new Date()
-      };
-
-      await videoCache.getOrSet(cacheKey, async () => metadataWithHash, { ttl: this.CACHE_DURATION });
+      // Cache the result
+      await this.updateCache(cacheKey, videoResult);
 
       console.log(`Video generated successfully via OpenAI for story ${request.storyId}`);
       return videoResult;
@@ -186,18 +171,7 @@ export class SimpleVideoService {
       .digest('hex');
   }
 
-  private async checkCache(cacheKey: string): Promise<SimpleVideoResult | null> {
-    try {
-      return await videoCache.getOrSet(
-        `simple-video-${cacheKey}`,
-        async () => Promise.resolve(null),
-        { ttl: this.CACHE_DURATION }
-      );
-    } catch (error) {
-      console.warn("Cache check failed:", error);
-      return null;
-    }
-  }
+
 
   private async getOrCreateRoleplayAnalysis(storyId: number, content: string): Promise<any> {
     // Check if roleplay analysis exists
@@ -253,67 +227,48 @@ export class SimpleVideoService {
   }
 
   /**
-   * Get existing video metadata from cache
+   * Check cache for existing video result
    */
-  private async getVideoMetadata(storyId: number): Promise<any | null> {
+  private async checkCache(cacheKey: string): Promise<SimpleVideoResult | null> {
     try {
-      const result = await videoCache.getOrSet(
-        `video-metadata-${storyId}`,
+      const cached = await videoCache.getOrSet(
+        cacheKey,
         async () => null,
         { ttl: this.CACHE_DURATION }
       );
-      return result;
+      return cached;
     } catch (error) {
-      console.warn(`Failed to get video metadata for story ${storyId}:`, error);
+      console.warn(`Cache check failed for key ${cacheKey}:`, error);
       return null;
     }
   }
 
   /**
-   * Generate hash of current roleplay data to detect changes
+   * Generate cache key for video request
    */
-  private async getRoleplayDataHash(storyId: number): Promise<string> {
-    try {
-      const [analysis] = await db
-        .select()
-        .from(storyAnalyses)
-        .where(
-          and(
-            eq(storyAnalyses.storyId, storyId),
-            eq(storyAnalyses.analysisType, 'roleplay')
-          )
-        );
-
-      if (analysis?.analysisData) {
-        return crypto.createHash('md5')
-          .update(JSON.stringify(analysis.analysisData))
-          .digest('hex');
-      }
-      return '';
-    } catch (error) {
-      console.warn(`Failed to generate roleplay hash for story ${storyId}:`, error);
-      return '';
-    }
+  private async generateCacheKey(request: SimpleVideoRequest): Promise<string> {
+    const keyData = {
+      storyId: request.storyId,
+      characterOverrides: request.characterOverrides || {}
+    };
+    
+    return crypto.createHash('md5')
+      .update(JSON.stringify(keyData))
+      .digest('hex');
   }
 
   /**
-   * Store video metadata with roleplay hash in cache
+   * Update cache with video result
    */
-  private async storeVideoMetadata(storyId: number, videoResult: SimpleVideoResult, roleplayHash: string): Promise<void> {
+  private async updateCache(cacheKey: string, result: SimpleVideoResult): Promise<void> {
     try {
-      const metadata = {
-        ...videoResult,
-        roleplayHash,
-        generatedAt: new Date()
-      };
-
       await videoCache.getOrSet(
-        `video-metadata-${storyId}`,
-        async () => metadata,
+        cacheKey,
+        async () => result,
         { ttl: this.CACHE_DURATION }
       );
     } catch (error) {
-      console.warn(`Failed to store video metadata for story ${storyId}:`, error);
+      console.warn(`Failed to update cache for key ${cacheKey}:`, error);
     }
   }
 
