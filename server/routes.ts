@@ -550,9 +550,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Story not found" });
       }
 
+      // Check if analysis already exists
+      const existingAnalysis = await storage.getStoryAnalysis(storyId, 'narrative');
+      if (existingAnalysis) {
+        console.log(`Found existing narrative analysis for story ${storyId}`);
+        return res.json(existingAnalysis.analysisData);
+      }
+
       console.log(`Generating narrative analysis for story ${storyId}`);
       
       const analysis = await analyzeStoryContent(story.content);
+      
+      // Store analysis in database
+      await storage.createStoryAnalysis({
+        storyId,
+        analysisType: 'narrative',
+        analysisData: analysis,
+        generatedBy: userId
+      });
       
       console.log("Narrative analysis generated successfully");
       res.json(analysis);
@@ -666,9 +681,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      // Check if analysis already exists
+      const existingAnalysis = await storage.getStoryAnalysis(storyId, 'roleplay');
+      if (existingAnalysis) {
+        console.log(`Found existing roleplay analysis for story ${storyId}`);
+        return res.json(existingAnalysis.analysisData);
+      }
+
       console.log(`Generating roleplay analysis for story ${storyId}`);
       
       const rolePlayAnalysis = await generateRolePlayAnalysis(story.content, []);
+      
+      // Store analysis in database
+      await storage.createStoryAnalysis({
+        storyId,
+        analysisType: 'roleplay',
+        analysisData: rolePlayAnalysis,
+        generatedBy: userId
+      });
       
       console.log("Roleplay analysis generated successfully");
       res.json(rolePlayAnalysis);
