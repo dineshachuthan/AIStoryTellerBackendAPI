@@ -135,6 +135,25 @@ export function RolePlayAnalysisPanel({
     }
   }, [existingAnalysis, analysis]);
 
+  // Check for existing video when component loads
+  useEffect(() => {
+    const checkExistingVideo = async () => {
+      if (!storyId || videoResult) return;
+      
+      try {
+        const result = await apiRequest(`/api/videos/story/${storyId}`);
+        if (result && result.videoUrl) {
+          setVideoResult(result);
+        }
+      } catch (error) {
+        // No existing video found, which is normal
+        console.log("No existing video found for story", storyId);
+      }
+    };
+
+    checkExistingVideo();
+  }, [storyId, videoResult]);
+
   // Video generation function
   const generateVideo = async () => {
     if (!analysis) return;

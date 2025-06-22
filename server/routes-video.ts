@@ -1,7 +1,9 @@
 import { Router } from "express";
 import { requireAuth } from "./auth";
 import { videoGenerationService } from "./video-generation-service";
-import { insertCharacterAssetSchema, insertVideoGenerationSchema } from "@shared/schema";
+import { insertCharacterAssetSchema, insertVideoGenerationSchema, videoGenerations } from "@shared/schema";
+import { db } from "./db";
+import { and, eq, desc } from "drizzle-orm";
 import { z } from "zod";
 
 const router = Router();
@@ -41,6 +43,42 @@ router.post("/api/videos/generate", requireAuth, async (req: any, res) => {
       });
     }
     res.status(500).json({ message: "Video generation failed" });
+  }
+});
+
+// Get existing video for a story
+router.get("/api/videos/story/:storyId", requireAuth, async (req: any, res) => {
+  try {
+    const storyId = parseInt(req.params.storyId);
+    if (isNaN(storyId)) {
+      return res.status(400).json({ message: "Invalid story ID" });
+    }
+
+    // Check for existing completed video generation
+    const [existingVideo] = await db
+      .select()
+      .from(videoGenerations)
+      .where(and(
+        eq(videoGenerations.storyId, storyId),
+        eq(videoGenerations.status, 'completed')
+      ))
+      .orderBy(desc(videoGenerations.createdAt))
+      .limit(1);
+
+    if (!existingVideo || !existingVideo.videoUrl) {
+      return res.status(404).json({ message: "No video found for this story" });
+    }
+
+    res.json({
+      videoUrl: existingVideo.videoUrl,
+      thumbnailUrl: existingVideo.thumbnailUrl,
+      duration: existingVideo.duration,
+      status: 'completed',
+      cacheHit: true
+    });
+  } catch (error: any) {
+    console.error("Failed to get existing video:", error);
+    res.status(500).json({ message: "Failed to check for existing video" });
   }
 });
 
