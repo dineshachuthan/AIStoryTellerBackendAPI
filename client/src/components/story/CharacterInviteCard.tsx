@@ -68,16 +68,24 @@ export function CharacterInviteCard({ character, storyId, existingInvitation, on
         invitationName: `${character.name} Role`,
         invitationToken: response.invitationToken,
         hasVoiceRecording: false,
-        sentAt: new Date()
+        sentAt: new Date(),
+        invitationUrl: response.invitationLink
       };
 
       onInviteSent(invitation);
       setShowInvite(false);
       setContactValue("");
       
+      // Show appropriate message based on response
+      const isEmailSent = response.invitationSent && contactMethod === 'email';
+      const title = isEmailSent ? "Email sent!" : "Invitation created!";
+      const description = response.message || 
+        (isEmailSent ? `Email sent to ${contactValue}` : `Invitation link created for ${character.name}`);
+      
       toast({ 
-        title: "Invitation sent!", 
-        description: `${character.name} role invitation sent to ${contactValue}` 
+        title,
+        description,
+        variant: isEmailSent ? "default" : "default"
       });
     } catch (error) {
       console.error('Invitation error:', error);

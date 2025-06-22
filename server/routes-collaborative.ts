@@ -38,31 +38,30 @@ router.post("/api/collaborative/templates", requireAuth, async (req, res) => {
     
     // Send actual invitation based on contact method
     let invitationSent = false;
-    if (contactMethod === 'email') {
-      invitationSent = await sendRoleplayInvitation({
-        recipientEmail: contactValue,
-        recipientName: invitationName || undefined,
-        characterName,
-        storyTitle: story.title,
-        invitationLink,
-        senderName: sender.firstName || sender.email || 'A storytelling friend'
-      });
-    } else if (contactMethod === 'phone') {
-      invitationSent = await sendSMSInvitation(contactValue, {
-        recipientName: invitationName || undefined,
-        characterName,
-        storyTitle: story.title,
-        invitationLink,
-        senderName: sender.firstName || sender.email || 'A storytelling friend'
-      });
-    }
+    let responseMessage = "";
 
-    if (!invitationSent && contactMethod === 'email') {
-      return res.status(500).json({ message: "Failed to send email invitation. Please check SendGrid configuration." });
-    }
-    
-    if (contactMethod === 'phone' && !invitationSent) {
-      console.log(`SMS functionality not yet implemented for ${contactValue}`);
+    try {
+      if (contactMethod === 'email') {
+        invitationSent = await sendRoleplayInvitation({
+          recipientEmail: contactValue,
+          recipientName: invitationName || undefined,
+          characterName,
+          storyTitle: story.title,
+          invitationLink,
+          senderName: sender.firstName || sender.email || 'A storytelling friend'
+        });
+        responseMessage = invitationSent ? 
+          "Email invitation sent successfully" : 
+          "Invitation link created (email delivery failed - you can share the link manually)";
+      } else if (contactMethod === 'phone') {
+        responseMessage = "Invitation link created (SMS not yet supported)";
+        console.log(`SMS functionality not yet implemented for ${contactValue}`);
+      }
+    } catch (error) {
+      console.error(`Failed to send ${contactMethod} invitation:`, error);
+      responseMessage = contactMethod === 'email' ? 
+        "Invitation link created (email delivery failed - you can share the link manually)" :
+        "Invitation link created (SMS not yet supported)";
     }
     
     // Return invitation details that match frontend expectations
@@ -75,9 +74,7 @@ router.post("/api/collaborative/templates", requireAuth, async (req, res) => {
       contactMethod,
       contactValue,
       invitationSent,
-      message: invitationSent ? 
-        `${contactMethod === 'email' ? 'Email' : 'SMS'} invitation sent successfully` : 
-        "Invitation created (SMS not yet supported)"
+      message: responseMessage
     });
     
   } catch (error) {
