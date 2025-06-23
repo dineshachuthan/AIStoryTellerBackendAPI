@@ -103,7 +103,6 @@ export const stories = pgTable("stories", {
   isAdultContent: boolean("is_adult_content").default(false),
   viewCount: integer("view_count").default(0),
   likes: integer("likes").default(0),
-  isArchived: boolean("is_archived").default(false),
   archivedAt: timestamp("archived_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -121,7 +120,6 @@ export const storyCharacters = pgTable("story_characters", {
   isGenerated: boolean("is_generated").default(true), // Whether image was AI-generated
   assignedVoice: text("assigned_voice"), // OpenAI voice (alloy, echo, fable, nova, onyx, shimmer)
   voiceSampleId: integer("voice_sample_id"), // User voice sample ID if assigned
-  isArchived: boolean("is_archived").default(false),
   archivedAt: timestamp("archived_at"),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -757,7 +755,6 @@ export const storyAnalyses = pgTable("story_analyses", {
   analysisType: text("analysis_type").notNull(), // 'narrative' or 'roleplay'
   analysisData: jsonb("analysis_data").notNull(), // Full analysis JSON
   generatedBy: varchar("generated_by").references(() => users.id).notNull(),
-  isArchived: boolean("is_archived").default(false),
   archivedAt: timestamp("archived_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
