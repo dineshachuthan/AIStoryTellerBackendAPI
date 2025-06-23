@@ -17,25 +17,56 @@ export class RunwayMLProvider extends BaseVideoProvider {
     try {
       const prompt = this.createPrompt(request);
       
-      console.log(`Generating video using RunwayML SDK`);
+      console.log(`Generating video using RunwayML API with SDK authentication`);
       console.log('Comprehensive prompt:', prompt);
 
-      // Use the official SDK for text-to-video generation
-      const task = await this.client.textToVideo
-        .create({
-          model: 'gen3a_turbo',
-          promptText: prompt,
-          ratio: request.aspectRatio === '9:16' ? '768:1344' : 
-                 request.aspectRatio === '1:1' ? '1024:1024' : '1280:720',
-          duration: Math.min(request.duration || 10, 10),
-          seed: Math.floor(Math.random() * 2147483647)
+      // Use direct API call for text-to-video (SDK doesn't have textToVideo method)
+      // but leverage SDK's authentication mechanism
+      const response = await fetch('https://api.runwayml.com/v1/tasks', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.client.apiKey}`,
+          'Content-Type': 'application/json',
+          'X-Runway-Version': '2024-09-13'
+        },
+        body: JSON.stringify({
+          taskType: 'gen3a_turbo',
+          internal: false,
+          options: {
+            promptText: prompt,
+            seconds: Math.min(request.duration || 10, 10),
+            gen3a_turbo: {
+              mode: 'gen3a_turbo',
+              seed: Math.floor(Math.random() * 2147483647),
+              watermark: false,
+              init_image: null,
+              motion_bucket_id: 127,
+              cond_aug: 0.02,
+              width: request.aspectRatio === '9:16' ? 768 : 
+                     request.aspectRatio === '1:1' ? 1024 : 1280,
+              height: request.aspectRatio === '9:16' ? 1344 : 
+                      request.aspectRatio === '1:1' ? 1024 : 720
+            }
+          }
         })
-        .waitForTaskOutput();
+      });
 
-      console.log('RunwayML task completed:', task);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`RunwayML API error: ${response.status} ${response.statusText}`, errorText);
+        throw new Error(`RunwayML API error: ${response.status} ${response.statusText}: ${errorText}`);
+      }
 
-      // Extract video URL from task output
-      const videoUrl = task.output?.length > 0 ? task.output[0] : '';
+      const task = await response.json();
+      console.log('RunwayML task created:', task);
+
+      // Wait for task completion by polling
+      let completedTask = task;
+      if (task.status !== 'SUCCEEDED') {
+        completedTask = await this.waitForCompletion(task.id);
+      }
+
+      const videoUrl = completedTask.output?.[0] || completedTask.artifacts?.[0]?.url || '';
       
       if (!videoUrl) {
         throw new Error('No video URL returned from RunwayML');
@@ -43,7 +74,7 @@ export class RunwayMLProvider extends BaseVideoProvider {
 
       return {
         videoUrl: videoUrl,
-        thumbnailUrl: task.thumbnail || '',
+        thumbnailUrl: completedTask.thumbnail || '',
         duration: request.duration || 10,
         status: 'completed',
         metadata: {
@@ -58,7 +89,7 @@ export class RunwayMLProvider extends BaseVideoProvider {
       };
 
     } catch (error: any) {
-      console.error('RunwayML SDK error:', error);
+      console.error('RunwayML generation error:', error);
       
       if (error instanceof TaskFailedError) {
         console.error('The video failed to generate.');
@@ -70,16 +101,44 @@ export class RunwayMLProvider extends BaseVideoProvider {
     }
   }
 
+  private async waitForCompletion(taskId: string): Promise<any> {
+    const maxAttempts = 60; // 5 minutes with 5-second intervals
+    let attempts = 0;
+
+    while (attempts < maxAttempts) {
+      try {
+        const task = await this.client.tasks.retrieve(taskId);
+        
+        if (task.status === 'SUCCEEDED') {
+          return task;
+        } else if (task.status === 'FAILED') {
+          throw new Error(`Task failed: ${task.failure?.reason || 'Unknown error'}`);
+        }
+        
+        // Wait 5 seconds before next poll
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        attempts++;
+        
+      } catch (error) {
+        console.error('Error polling task status:', error);
+        attempts++;
+        await new Promise(resolve => setTimeout(resolve, 5000));
+      }
+    }
+    
+    throw new Error('Task timed out waiting for completion');
+  }
+
   async checkStatus(jobId: string): Promise<VideoGenerationResult> {
     try {
       // Get task status using SDK
-      const task = await this.client.tasks.get(jobId);
+      const task = await this.client.tasks.retrieve(jobId);
       
       return {
-        videoUrl: task.status === 'COMPLETE' ? (task.output?.[0] || '') : '',
+        videoUrl: task.status === 'SUCCEEDED' ? (task.output?.[0] || '') : '',
         thumbnailUrl: task.thumbnail || '',
         duration: 10,
-        status: task.status === 'COMPLETE' ? 'completed' : 
+        status: task.status === 'SUCCEEDED' ? 'completed' : 
                 task.status === 'FAILED' ? 'failed' : 'processing',
         metadata: {
           provider: 'runwayml',
@@ -100,7 +159,7 @@ export class RunwayMLProvider extends BaseVideoProvider {
   async cancelGeneration(jobId: string): Promise<boolean> {
     try {
       // Cancel task using SDK
-      await this.client.tasks.cancel(jobId);
+      await this.client.tasks.delete(jobId);
       return true;
     } catch (error: any) {
       console.error('RunwayML cancel error:', error);
@@ -110,9 +169,16 @@ export class RunwayMLProvider extends BaseVideoProvider {
 
   async validateConfig(): Promise<boolean> {
     try {
-      // Test the API key by getting account info
-      await this.client.users.me();
-      return true;
+      // Test the API key by trying to retrieve a task list (simpler endpoint)
+      // Since the SDK doesn't have a users.me() method, we'll use a different approach
+      const response = await fetch('https://api.runwayml.com/v1/tasks', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${this.client.apiKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      return response.ok;
     } catch (error: any) {
       console.error('RunwayML config validation failed:', error);
       return false;
@@ -124,9 +190,10 @@ export class RunwayMLProvider extends BaseVideoProvider {
       maxDuration: 10, // seconds
       supportedFormats: ['mp4'],
       supportedResolutions: ['1280x720', '768x1344', '1024x1024'],
-      supportedAspectRatios: ['16:9', '9:16', '1:1'],
-      models: ['gen3a_turbo'],
-      features: ['text-to-video', 'prompt-enhancement', 'seed-control']
+      supportedStyles: ['cinematic', 'documentary', 'animated', 'realistic'],
+      supportsCharacters: true,
+      supportsVoice: true,
+      supportsCustomImages: false
     };
   }
 
