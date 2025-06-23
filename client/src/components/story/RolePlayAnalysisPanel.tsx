@@ -31,7 +31,9 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
-  X
+  X,
+  DollarSign,
+  AlertTriangle
 } from "lucide-react";
 import { VideoPlayer } from '@/components/ui/video-player';
 
@@ -121,6 +123,7 @@ export function RolePlayAnalysisPanel({
   // Video generation state
   const [generatingVideo, setGeneratingVideo] = useState(false);
   const [videoResult, setVideoResult] = useState<any>(null);
+  const [showCostWarning, setShowCostWarning] = useState(false);
 
   // Edit mode state
   const [isEditMode, setIsEditMode] = useState(false);
@@ -212,19 +215,35 @@ export function RolePlayAnalysisPanel({
   // Determine when to show generate video button
   const shouldShowGenerateButton = !videoResult || (hasMetadataChanges && hasUnsavedChanges === false);
 
-  // Video generation function
-  const generateVideo = async () => {
+  // Video generation function with cost control
+  const generateVideo = async (forceRegenerate: boolean = false) => {
     if (!analysis) return;
 
     setGeneratingVideo(true);
     try {
-      const result = await apiRequest(`/api/videos/generate/${storyId}`);
+      const result = await apiRequest(`/api/videos/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          storyId,
+          quality: 'standard',
+          forceRegenerate
+        })
+      });
 
       setVideoResult(result);
-      toast({
-        title: "Video Generated Successfully",
-        description: `Video created with ${result.charactersUsed?.length || 0} characters`,
-      });
+      
+      if (result.cacheHit) {
+        toast({
+          title: "Video Retrieved",
+          description: "Using existing video to save costs",
+        });
+      } else {
+        toast({
+          title: "Video Generated Successfully",
+          description: `New 3-minute video created with RunwayML`,
+        });
+      }
     } catch (error: any) {
       console.error("Video generation failed:", error);
       toast({
@@ -234,6 +253,16 @@ export function RolePlayAnalysisPanel({
       });
     } finally {
       setGeneratingVideo(false);
+      setShowCostWarning(false);
+    }
+  };
+
+  // Handle video generation with cost warning
+  const handleVideoGeneration = () => {
+    if (videoResult && !showCostWarning) {
+      setShowCostWarning(true);
+    } else {
+      generateVideo(showCostWarning);
     }
   };
 
@@ -928,6 +957,116 @@ export function RolePlayAnalysisPanel({
           </CardContent>
         </Card>
       )}
+
+      {/* Video Generation Section */}
+      <Card className="border-purple-200 dark:border-purple-800">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Film className="h-5 w-5" />
+            Cinematic Video Generation
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Transform your roleplay into a cinematic video using RunwayML AI (3-minute max)
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {videoResult ? (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+                <CheckCircle className="w-4 h-4" />
+                Video ready ({videoResult.cacheHit ? 'cached' : 'generated'})
+              </div>
+              <VideoPlayer 
+                src={videoResult.videoUrl} 
+                thumbnail={videoResult.thumbnailUrl}
+                className="w-full rounded-lg"
+              />
+              <div className="flex gap-2">
+                <Button
+                  onClick={handleVideoGeneration}
+                  variant="outline"
+                  size="sm"
+                  className="text-orange-600 border-orange-300 hover:bg-orange-50"
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Regenerate Video
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-6">
+              <Button
+                onClick={handleVideoGeneration}
+                disabled={generatingVideo}
+                className="bg-purple-600 hover:bg-purple-700"
+              >
+                {generatingVideo ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Generating Video...
+                  </>
+                ) : (
+                  <>
+                    <Film className="w-4 h-4 mr-2" />
+                    Generate Cinematic Video
+                  </>
+                )}
+              </Button>
+              <p className="text-xs text-muted-foreground mt-2">
+                Uses RunwayML Gen-3 • Maximum 3 minutes • Cached to save costs
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Cost Warning Dialog */}
+      <Dialog open={showCostWarning} onOpenChange={setShowCostWarning}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-orange-500" />
+              Video Regeneration Cost Warning
+            </DialogTitle>
+            <DialogDescription>
+              You already have a video for this story. Regenerating will create a new video using RunwayML credits.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg">
+              <div className="flex items-center gap-2 text-orange-700 dark:text-orange-300 mb-2">
+                <DollarSign className="w-4 h-4" />
+                <span className="font-medium">Cost Information</span>
+              </div>
+              <ul className="text-sm text-orange-600 dark:text-orange-400 space-y-1">
+                <li>• Video regeneration will consume RunwayML credits</li>
+                <li>• Maximum duration: 3 minutes (cost optimized)</li>
+                <li>• Existing video will be replaced</li>
+                <li>• New video will be cached to prevent future costs</li>
+              </ul>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCostWarning(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={() => generateVideo(true)}
+              disabled={generatingVideo}
+              className="bg-orange-600 hover:bg-orange-700"
+            >
+              {generatingVideo ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                'Proceed with Regeneration'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
