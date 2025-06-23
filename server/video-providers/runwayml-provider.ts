@@ -12,8 +12,8 @@ export class RunwayMLProvider extends BaseVideoProvider {
       
       console.log(`Generating video using runwayml provider`);
       
-      // RunwayML Gen-3 API endpoint - updated to correct API structure
-      const response = await fetch(`${this.config.baseUrl || 'https://api.runwayml.com'}/v1/video/generations`, {
+      // RunwayML Gen-3 API endpoint - using correct Runway API
+      const response = await fetch(`${this.config.baseUrl || 'https://api.runway.team/v1'}/image_to_video`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${this.config.apiKey}`,
