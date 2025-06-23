@@ -221,14 +221,19 @@ export function RolePlayAnalysisPanel({
 
     setGeneratingVideo(true);
     try {
+      // Ensure clean serializable data
+      const requestData = {
+        storyId: Number(storyId),
+        quality: 'standard' as const,
+        forceRegenerate: Boolean(forceRegenerate)
+      };
+      
+      console.log('Video generation request:', requestData);
+
       const result = await apiRequest(`/api/videos/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          storyId,
-          quality: 'standard',
-          forceRegenerate
-        })
+        body: JSON.stringify(requestData)
       });
 
       setVideoResult(result);

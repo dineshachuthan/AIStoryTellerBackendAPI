@@ -507,15 +507,23 @@ export class VideoGenerationService {
       .where(eq(storyScenes.storyId, storyId));
 
     if (existingScenes.length === 0) {
-      // Generate basic scene from story content
+      // Generate basic scene from story content with safe serializable data
+      const safeDialogues = [
+        { 
+          character: "narrator", 
+          text: content.substring(0, 500),
+          emotion: "neutral",
+          timing: 0
+        }
+      ];
+
       await db.insert(storyScenes).values({
         storyId,
         sceneNumber: 1,
         title: "Main Scene",
-        content: content.substring(0, 1000), // Add content field
         description: "Primary story scene",
-        dialogues: [{ character: "narrator", text: content.substring(0, 500) }],
-        estimatedDuration: Math.min(Math.max(Math.floor(content.length / 10), 30), 300) // 30s to 5min
+        dialogues: safeDialogues,
+        estimatedDuration: Math.min(Math.max(Math.floor(content.length / 10), 30), 180) // 30s to 3min max
       });
     }
   }
