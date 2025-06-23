@@ -16,7 +16,7 @@ export class RunwayMLProvider extends BaseVideoProvider {
       const response = await fetch(`${this.config.baseUrl || 'https://api.runway.team/v1'}/image_to_video`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${this.config.apiKey}`,
+          'X-Runway-Token': this.config.apiKey,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
