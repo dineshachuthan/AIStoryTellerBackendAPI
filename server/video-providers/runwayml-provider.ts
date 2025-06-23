@@ -12,7 +12,8 @@ export class RunwayMLProvider extends BaseVideoProvider {
       
       console.log(`Generating video using runwayml provider`);
       
-      const url = `${this.config.baseUrl || 'https://api.runway.team/v1'}/image_to_video`;
+      // Use correct text-to-video endpoint with direct API key authentication
+      const url = `${this.config.baseUrl || 'https://api.runway.team/v1'}/text_to_video`;
       const headers = {
         'X-API-Key': this.config.apiKey,
         'Content-Type': 'application/json'
@@ -84,7 +85,7 @@ export class RunwayMLProvider extends BaseVideoProvider {
 
   async checkStatus(jobId: string): Promise<VideoGenerationResult> {
     try {
-      const response = await fetch(`${this.config.baseUrl || 'https://api.runway.team/v1'}/video/status/${jobId}`, {
+      const response = await fetch(`${this.config.baseUrl || 'https://api.runway.team/v1'}/tasks/${jobId}`, {
         headers: {
           'X-API-Key': this.config.apiKey
         }
@@ -122,7 +123,7 @@ export class RunwayMLProvider extends BaseVideoProvider {
 
   async cancelGeneration(jobId: string): Promise<boolean> {
     try {
-      const response = await fetch(`${this.config.baseUrl || 'https://api.runway.team/v1'}/video/cancel/${jobId}`, {
+      const response = await fetch(`${this.config.baseUrl || 'https://api.runway.team/v1'}/tasks/${jobId}/cancel`, {
         method: 'POST',
         headers: {
           'X-API-Key': this.config.apiKey
@@ -168,6 +169,28 @@ export class RunwayMLProvider extends BaseVideoProvider {
     const qualityMultiplier = request.quality === 'ultra' ? 2 : request.quality === 'high' ? 1.5 : 1;
     
     return duration * baseRate * qualityMultiplier;
+  }
+
+  private async getAuthToken(): Promise<string> {
+    try {
+      // Get authentication token using API key
+      const response = await fetch(`${this.config.baseUrl || 'https://api.runway.team/v1'}/auth/token`, {
+        method: 'POST',
+        headers: {
+          'X-API-Key': this.config.apiKey,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Auth failed: ${response.status} ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      return result.access_token || result.token;
+    } catch (error: any) {
+      throw new Error(`RunwayML authentication failed: ${error.message}`);
+    }
   }
 
   private createPrompt(request: VideoGenerationRequest): string {
