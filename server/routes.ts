@@ -3169,8 +3169,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const videoService = new VideoGenerationService();
       const durationLimits = videoService.getDurationLimits();
       
+      // Get roleplay configuration
+      const { getVideoProviderConfig } = await import("./video-config");
+      const videoConfig = getVideoProviderConfig();
+      
       res.json({
         duration: durationLimits,
+        roleplay: {
+          targetDurationSeconds: videoConfig.roleplay?.targetDurationSeconds || 60,
+          maxDurationSeconds: videoConfig.roleplay?.maxDurationSeconds || 240,
+          videoGenerationSeconds: videoConfig.roleplay?.videoGenerationSeconds || 20
+        },
         supportedProviders: ['runwayml', 'pika-labs', 'luma-ai'],
         activeProvider: 'runwayml'
       });
