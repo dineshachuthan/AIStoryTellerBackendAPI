@@ -10,35 +10,52 @@ export class RunwayMLProvider extends BaseVideoProvider {
       // Create narrative prompt from story content and characters
       const prompt = this.createPrompt(request);
       
-      const response = await fetch(`${this.config.baseUrl || 'https://api.runwayml.com'}/v1/video/generations`, {
+      console.log(`Generating video using runwayml provider`);
+      
+      // RunwayML Gen-3 API endpoint
+      const response = await fetch(`${this.config.baseUrl || 'https://api.runwayml.com'}/v1/image_to_video`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${this.config.apiKey}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          prompt,
-          duration: Math.min(request.duration || 10, 30), // RunwayML max 30s
-          resolution: '1920x1080',
-          motion_bucket_id: 127, // Default motion setting
-          seed: Math.floor(Math.random() * 1000000),
-          style: request.style || 'cinematic'
+          promptText: prompt,
+          duration: Math.min(request.duration || 10, 10), // Gen-3 supports up to 10s
+          model: 'gen3a_turbo',
+          watermark: false,
+          enhance_prompt: true,
+          motion_score: 20,
+          seed: Math.floor(Math.random() * 2147483647)
         })
       });
+
+      console.log(`RunwayML API response status: ${response.status}`);
+      
+      if (!response.ok) {
+        const errorBody = await response.text();
+        console.error(`RunwayML API error: ${response.status} ${response.statusText}`, errorBody);
+        throw new Error(`RunwayML API error: ${response.status} ${response.statusText}: ${errorBody}`);
+      }
 
       if (!response.ok) {
         throw new Error(`RunwayML API error: ${response.status} ${response.statusText}`);
       }
 
       const result = await response.json();
+      console.log(`RunwayML API response:`, JSON.stringify(result, null, 2));
       
-      if (result.status === 'completed') {
+      if (result.status === 'SUCCEEDED') {
         return this.normalizeVideo({
-          videoUrl: result.video_url,
-          thumbnailUrl: result.thumbnail_url,
-          duration: result.duration,
+          videoUrl: result.output?.[0] || result.video_url || result.url,
+          thumbnailUrl: result.thumbnail_url || result.preview_url,
+          duration: result.duration || request.duration || 10,
           id: result.id
         });
+      }
+
+      if (result.status === 'FAILED') {
+        throw new Error(`RunwayML generation failed: ${result.failure_reason || 'Unknown error'}`);
       }
 
       // If processing, return partial result with job ID for status checking
