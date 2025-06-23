@@ -811,7 +811,7 @@ export const videoGenerations = pgTable("video_generations", {
   characterAssetsSnapshot: jsonb("character_assets_snapshot").notNull(),
   
   // Status and outputs
-  status: varchar("status").default("pending"), // pending, processing, completed, failed
+  status: varchar("status").default("pending"), // pending, processing, pending_approval, completed, failed
   videoUrl: text("video_url"),
   thumbnailUrl: text("thumbnail_url"),
   duration: integer("duration"), // in seconds

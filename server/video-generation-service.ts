@@ -38,7 +38,7 @@ export interface VideoGenerationResult {
   videoUrl: string;
   thumbnailUrl: string;
   duration: number;
-  status: 'completed' | 'processing' | 'failed';
+  status: 'completed' | 'processing' | 'pending_approval' | 'failed';
   cacheHit: boolean;
 }
 
@@ -320,22 +320,33 @@ export class VideoGenerationService {
         request
       );
 
-      // Update generation record with character count and proper duration
+      // Validate video result before setting status
+      const isValidVideoResult = videoResult.videoUrl && 
+                                 videoResult.videoUrl.trim() !== '' && 
+                                 videoResult.duration && 
+                                 videoResult.duration > 0;
+
+      // Update generation record - mark as pending_approval if valid, failed if invalid
       await db.update(videoGenerations)
         .set({
-          status: 'completed',
+          status: isValidVideoResult ? 'pending_approval' : 'failed',
           videoUrl: videoResult.videoUrl,
           thumbnailUrl: videoResult.thumbnailUrl,
           duration: videoResult.duration,
-
+          errorMessage: isValidVideoResult ? null : 'Generated video has invalid duration or URL',
           updatedAt: new Date()
         })
         .where(eq(videoGenerations.id, generation.id));
 
-      // Cache the result
-      await this.updateCache(cacheKey, videoResult);
+      if (isValidVideo) {
+        await this.updateCache(cacheKey, videoResult);
+      }
 
-      return { ...videoResult, cacheHit: false };
+      return { 
+        ...videoResult, 
+        cacheHit: false,
+        status: isValidVideo ? 'pending_approval' : 'failed'
+      };
 
     } catch (error) {
       // Update generation record with error
@@ -697,6 +708,71 @@ export class VideoGenerationService {
     } catch (error) {
       console.warn("Failed to invalidate character cache:", error);
     }
+  }
+
+  /**
+   * Approve a pending video - mark it as completed
+   */
+  async approveVideo(storyId: number, userId: string): Promise<VideoGenerationResult> {
+    const [generation] = await db
+      .select()
+      .from(videoGenerations)
+      .where(and(
+        eq(videoGenerations.storyId, storyId),
+        eq(videoGenerations.requestedBy, userId),
+        eq(videoGenerations.status, 'pending_approval')
+      ))
+      .orderBy(desc(videoGenerations.createdAt))
+      .limit(1);
+
+    if (!generation) {
+      throw new Error("No pending video found for approval");
+    }
+
+    // Mark as completed
+    await db.update(videoGenerations)
+      .set({
+        status: 'completed',
+        updatedAt: new Date()
+      })
+      .where(eq(videoGenerations.id, generation.id));
+
+    return {
+      videoUrl: generation.videoUrl!,
+      thumbnailUrl: generation.thumbnailUrl || '',
+      duration: generation.duration!,
+      status: 'completed',
+      cacheHit: false
+    };
+  }
+
+  /**
+   * Reject a pending video - mark it as failed
+   */
+  async rejectVideo(storyId: number, userId: string, reason?: string): Promise<void> {
+    const [generation] = await db
+      .select()
+      .from(videoGenerations)
+      .where(and(
+        eq(videoGenerations.storyId, storyId),
+        eq(videoGenerations.requestedBy, userId),
+        eq(videoGenerations.status, 'pending_approval')
+      ))
+      .orderBy(desc(videoGenerations.createdAt))
+      .limit(1);
+
+    if (!generation) {
+      throw new Error("No pending video found for rejection");
+    }
+
+    // Mark as failed
+    await db.update(videoGenerations)
+      .set({
+        status: 'failed',
+        errorMessage: reason || 'Video rejected by user',
+        updatedAt: new Date()
+      })
+      .where(eq(videoGenerations.id, generation.id));
   }
 
   /**
