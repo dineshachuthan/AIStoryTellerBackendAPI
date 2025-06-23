@@ -17,6 +17,7 @@ import { getAllVoiceSamples, getVoiceSampleProgress } from "./voice-samples";
 import { storyNarrator } from "./story-narrator";
 import { grandmaVoiceNarrator } from "./voice-narrator";
 import { getEnvironment, getBaseUrl, getOAuthConfig } from "./oauth-config";
+import { videoGenerationService } from "./video-generation-service";
 
 import multer from "multer";
 import path from "path";
@@ -3223,7 +3224,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid story ID" });
       }
 
-      const assets = await simpleVideoService.getCharacterAssets(storyId);
+      const assets = await videoGenerationService.getCharacterAssets(storyId);
       res.json({
         storyId,
         characters: assets,
@@ -3254,7 +3255,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "At least one asset (image or voice) must be provided" });
       }
 
-      await simpleVideoService.updateCharacterOverride(
+      await videoGenerationService.updateCharacterOverride(
         storyId,
         characterName,
         { imageUrl, voiceSampleUrl },
