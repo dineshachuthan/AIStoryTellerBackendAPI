@@ -1,5 +1,5 @@
 import { BaseVideoProvider, VideoGenerationRequest, VideoGenerationResult, ProviderConfig } from './base-provider';
-import { RunwayMLProvider } from './runwayml-provider';
+import { RunwayMLProvider } from './runwayml-provider-new';
 import { PikaLabsProvider } from './pika-labs-provider';
 import { LumaAIProvider } from './luma-ai-provider';
 
