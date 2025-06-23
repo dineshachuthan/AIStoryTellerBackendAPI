@@ -115,19 +115,11 @@ export abstract class BaseVideoProvider {
   /**
    * Handle provider-specific errors
    */
-  protected handleError(error: any): VideoGenerationResult {
-    return {
-      videoUrl: '',
-      duration: 0,
-      status: 'failed',
-      metadata: {
-        provider: this.name,
-        format: '',
-        resolution: '',
-        codec: '',
-        generatedAt: new Date()
-      },
-      error: error.message || 'Unknown provider error'
-    };
+  protected handleError(error: any): never {
+    // Always throw errors instead of returning empty results
+    // This prevents saving invalid data to the database
+    const errorMessage = error.message || 'Unknown provider error';
+    console.error(`${this.name} provider error:`, errorMessage);
+    throw new Error(`${this.name} provider failed: ${errorMessage}`);
   }
 }
