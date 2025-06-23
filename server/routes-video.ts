@@ -289,6 +289,42 @@ router.post("/api/videos/story/:storyId/validate", requireAuth, async (req: any,
   }
 });
 
+// Video approval endpoints
+router.post("/api/videos/approve/:storyId", requireAuth, async (req: any, res) => {
+  try {
+    const storyId = parseInt(req.params.storyId);
+    const userId = req.user.id;
+
+    if (isNaN(storyId)) {
+      return res.status(400).json({ message: "Invalid story ID" });
+    }
+
+    const result = await videoGenerationService.approveVideo(storyId, userId);
+    res.json(result);
+  } catch (error: any) {
+    console.error("Video approval failed:", error);
+    res.status(500).json({ message: error.message || "Video approval failed" });
+  }
+});
+
+router.post("/api/videos/reject/:storyId", requireAuth, async (req: any, res) => {
+  try {
+    const storyId = parseInt(req.params.storyId);
+    const userId = req.user.id;
+    const { reason } = req.body;
+
+    if (isNaN(storyId)) {
+      return res.status(400).json({ message: "Invalid story ID" });
+    }
+
+    await videoGenerationService.rejectVideo(storyId, userId, reason);
+    res.json({ success: true });
+  } catch (error: any) {
+    console.error("Video rejection failed:", error);
+    res.status(500).json({ message: error.message || "Video rejection failed" });
+  }
+});
+
 // Get video generation status
 router.get("/api/videos/status/:videoId", requireAuth, async (req: any, res) => {
   try {

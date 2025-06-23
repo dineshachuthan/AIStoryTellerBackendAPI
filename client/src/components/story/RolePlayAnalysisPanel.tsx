@@ -243,6 +243,11 @@ export function RolePlayAnalysisPanel({
           title: "Video Retrieved from Library",
           description: "Using existing video to save costs",
         });
+      } else if (result.status === 'pending_approval') {
+        toast({
+          title: "Video Generated - Pending Review",
+          description: "Please review and approve the generated video",
+        });
       } else {
         toast({
           title: "Video Generated Successfully", 
@@ -259,6 +264,56 @@ export function RolePlayAnalysisPanel({
     } finally {
       setGeneratingVideo(false);
       setShowCostWarning(false);
+    }
+  };
+
+  // Video approval functions
+  const approveVideo = async () => {
+    if (!storyId) return;
+
+    try {
+      const result = await apiRequest(`/api/videos/approve/${storyId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      setVideoResult(result);
+      toast({
+        title: "Video Approved",
+        description: "Video has been approved and saved",
+      });
+    } catch (error: any) {
+      console.error("Video approval failed:", error);
+      toast({
+        title: "Approval Failed",
+        description: error.message || "Failed to approve video",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const rejectVideo = async () => {
+    if (!storyId) return;
+
+    try {
+      await apiRequest(`/api/videos/reject/${storyId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: 'Video quality not acceptable' })
+      });
+
+      setVideoResult(null);
+      toast({
+        title: "Video Rejected",
+        description: "Video has been rejected. You can generate a new one.",
+      });
+    } catch (error: any) {
+      console.error("Video rejection failed:", error);
+      toast({
+        title: "Rejection Failed",
+        description: error.message || "Failed to reject video",
+        variant: "destructive",
+      });
     }
   };
 
@@ -982,28 +1037,67 @@ export function RolePlayAnalysisPanel({
         <CardContent className="space-y-4">
           {videoResult ? (
             <div className="space-y-4">
-              <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
-                <CheckCircle className="w-4 h-4" />
-                Video ready ({videoResult.cacheHit ? 'cached' : 'generated'})
-              </div>
-              <VideoPlayer 
-                videoUrl={videoResult.videoUrl} 
-                thumbnailUrl={videoResult.thumbnailUrl}
-                title="Roleplay Cinematic Video"
-                duration={videoResult.duration}
-                className="w-full rounded-lg"
-              />
-              <div className="flex gap-2">
-                <Button
-                  onClick={handleGenerateVideoClick}
-                  variant="outline"
-                  size="sm"
-                  className="text-orange-600 border-orange-300 hover:bg-orange-50"
-                >
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Regenerate Video
-                </Button>
-              </div>
+              {videoResult.status === 'pending_approval' ? (
+                <>
+                  <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400">
+                    <AlertCircle className="w-4 h-4" />
+                    Video generated - pending your approval
+                  </div>
+                  {videoResult.videoUrl && (
+                    <VideoPlayer 
+                      videoUrl={videoResult.videoUrl} 
+                      thumbnailUrl={videoResult.thumbnailUrl}
+                      title="Roleplay Cinematic Video (Preview)"
+                      duration={videoResult.duration}
+                      className="w-full rounded-lg"
+                    />
+                  )}
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={approveVideo}
+                      size="sm"
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      Accept Video
+                    </Button>
+                    <Button
+                      onClick={rejectVideo}
+                      variant="outline"
+                      size="sm"
+                      className="text-red-600 border-red-300 hover:bg-red-50"
+                    >
+                      <X className="w-4 h-4 mr-2" />
+                      Reject & Regenerate
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+                    <CheckCircle className="w-4 h-4" />
+                    Video ready ({videoResult.cacheHit ? 'cached' : 'generated'})
+                  </div>
+                  <VideoPlayer 
+                    videoUrl={videoResult.videoUrl} 
+                    thumbnailUrl={videoResult.thumbnailUrl}
+                    title="Roleplay Cinematic Video"
+                    duration={videoResult.duration}
+                    className="w-full rounded-lg"
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={handleGenerateVideoClick}
+                      variant="outline"
+                      size="sm"
+                      className="text-orange-600 border-orange-300 hover:bg-orange-50"
+                    >
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Regenerate Video
+                    </Button>
+                  </div>
+                </>
+              )}
             </div>
           ) : (
             <div className="text-center py-6">
