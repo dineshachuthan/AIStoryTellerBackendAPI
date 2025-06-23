@@ -25,9 +25,8 @@ export class RunwayMLProvider extends BaseVideoProvider {
       const response = await fetch('https://api.runwayml.com/v1/tasks', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${this.client.apiKey}`,
-          'Content-Type': 'application/json',
-          'X-Runway-Version': '2024-09-13'
+          'X-API-Key': this.client.apiKey,
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           taskType: 'gen3a_turbo',

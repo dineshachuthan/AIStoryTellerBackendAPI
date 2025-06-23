@@ -119,6 +119,13 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Asset Serving**: Optimized static file serving with proper headers
 
 ## Changelog
+- June 23, 2025: Implemented configurable roleplay duration system
+  - Added separate roleplay configuration (shared/roleplay-config.ts) with duration targets from 60-240 seconds
+  - Enhanced roleplay analysis generation to use configurable duration specifications for precise content creation
+  - Updated AI prompts to generate exact word counts, dialogue counts, and scene structures based on target duration
+  - Maintained strict 20-second video generation limit for cost protection while allowing longer roleplay content
+  - Added roleplay configuration API endpoint to display current duration settings to users
+  - Fixed RunwayML API authentication to use correct X-API-Key header format
 - June 23, 2025: Enhanced video generation with comprehensive roleplay data integration
   - Fixed RunwayML authentication to use X-API-Key header consistently
   - Switched to /text_to_video endpoint for proper text-based prompts
