@@ -12,21 +12,27 @@ export class RunwayMLProvider extends BaseVideoProvider {
       
       console.log(`Generating video using runwayml provider`);
       
-      // RunwayML Gen-3 API endpoint - using correct Runway API
-      const response = await fetch(`${this.config.baseUrl || 'https://api.runway.team/v1'}/image_to_video`, {
+      // RunwayML Gen-3 API endpoint - trying tasks endpoint
+      const response = await fetch(`${this.config.baseUrl || 'https://api.runway.team/v1'}/tasks`, {
         method: 'POST',
         headers: {
-          'X-API-Key': this.config.apiKey,
+          'Authorization': `Bearer ${this.config.apiKey}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          promptText: prompt,
-          duration: Math.min(request.duration || 10, 10), // Gen-3 supports up to 10s
-          model: 'gen3a_turbo',
-          watermark: false,
-          enhance_prompt: true,
-          motion_score: 20,
-          seed: Math.floor(Math.random() * 2147483647)
+          taskType: "gen3a_turbo",
+          internal: false,
+          options: {
+            name: "Generated Story Video",
+            seconds: Math.min(request.duration || 10, 10),
+            gen3a_turbo: {
+              mode: "gen3",
+              prompt: prompt,
+              watermark: false,
+              enhance_prompt: true,
+              seed: Math.floor(Math.random() * 2147483647)
+            }
+          }
         })
       });
 
