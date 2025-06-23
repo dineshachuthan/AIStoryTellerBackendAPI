@@ -179,7 +179,7 @@ export function RolePlayAnalysisPanel({
       
       // Check character metadata (not dialogue content)
       if (origChar.name !== editChar.name ||
-          origChar.description !== editChar.description ||
+          origChar.role !== editChar.role ||
           origChar.personality !== editChar.personality ||
           origChar.voiceProfile !== editChar.voiceProfile) {
         return true;
@@ -194,8 +194,8 @@ export function RolePlayAnalysisPanel({
       const editScene = edited.scenes[i];
       
       if (origScene.title !== editScene.title ||
-          origScene.setting !== editScene.setting ||
-          origScene.mood !== editScene.mood ||
+          origScene.background?.location !== editScene.background?.location ||
+          origScene.emotionalTone !== editScene.emotionalTone ||
           origScene.estimatedDuration !== editScene.estimatedDuration) {
         return true;
       }
