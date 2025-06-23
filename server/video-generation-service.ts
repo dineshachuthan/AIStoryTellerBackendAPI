@@ -338,14 +338,14 @@ export class VideoGenerationService {
         })
         .where(eq(videoGenerations.id, generation.id));
 
-      if (isValidVideo) {
+      if (isValidVideoResult) {
         await this.updateCache(cacheKey, videoResult);
       }
 
       return { 
         ...videoResult, 
         cacheHit: false,
-        status: isValidVideo ? 'pending_approval' : 'failed'
+        status: isValidVideoResult ? 'pending_approval' : 'failed'
       };
 
     } catch (error) {
