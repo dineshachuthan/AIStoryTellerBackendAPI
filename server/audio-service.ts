@@ -580,12 +580,8 @@ export class AudioService {
     const fileName = await this.cacheAudioFile(buffer, updatedOptions, selectedVoice);
     const audioUrl = `/api/emotions/cached-audio/${fileName}`;
     
-    // Update cache
-    try {
-      await cacheAudio(options.text, selectedVoice, audioUrl, options.emotion, options.intensity);
-    } catch (cacheUpdateError) {
-      console.warn("Failed to update cache:", cacheUpdateError);
-    }
+    // Skip caching local URLs to avoid Invalid URL errors
+    // The audio is already cached locally at this point
     
     return {
       audioUrl,

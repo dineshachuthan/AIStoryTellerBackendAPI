@@ -256,6 +256,7 @@ export class VideoGenerationService {
       }
 
       const characterAssetsList = await this.getCharacterAssets(request.storyId);
+      console.log(`Loaded ${characterAssetsList.length} character assets for story ${request.storyId}`);
       
       // Generate scenes if not exist
       await this.ensureScenes(request.storyId, story.content);
@@ -314,14 +315,33 @@ export class VideoGenerationService {
   }
 
   private async loadAndValidateCharacterAssets(storyId: number): Promise<CharacterAssetOverride[]> {
-    // Get story and generate analysis if needed
-    const [story] = await db.select().from(stories).where(eq(stories.id, storyId));
-    if (!story) {
-      throw new Error("Story not found");
+    // Try to get existing roleplay analysis via API request
+    let characters: any[] = [];
+    
+    try {
+      // Make internal API call to get existing roleplay analysis
+      const response = await fetch(`http://localhost:5000/api/stories/${storyId}/roleplay`);
+      if (response.ok) {
+        const roleplayData = await response.json();
+        characters = roleplayData.characters || [];
+        console.log(`Using existing roleplay analysis with ${characters.length} characters:`, characters.map(c => c.name));
+      } else {
+        throw new Error('No existing roleplay analysis');
+      }
+    } catch (error) {
+      // Fall back to fresh analysis
+      const [story] = await db.select().from(stories).where(eq(stories.id, storyId));
+      if (!story) {
+        throw new Error("Story not found");
+      }
+
+      const analysis = await analyzeStoryContent(story.content);
+      characters = analysis.characters || [];
+      console.log(`Generated fresh analysis with ${characters.length} characters:`, characters.map(c => c.name));
     }
 
-    const analysis = await analyzeStoryContent(story.content);
-    const assetPromises = analysis.characters.map(character => 
+    // Ensure character assets exist for all characters
+    const assetPromises = characters.map(character => 
       this.ensureCharacterAsset(storyId, character)
     );
 
@@ -482,7 +502,7 @@ export class VideoGenerationService {
     const thumbnailUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg";
     const duration = request.duration || 120; // Default 2 minutes
 
-    console.log(`Generated working video for story ${story.id} with ${characterAssets.length} character assets`);
+    console.log(`Generated working video for story ${story.id} with ${characterAssets.length} character assets, duration: ${duration}s`);
 
     return {
       videoUrl,
