@@ -80,20 +80,16 @@ export class VideoGenerationService {
    */
   async getCharacterAssets(storyId: number): Promise<CharacterAssetOverride[]> {
     try {
-      // Step 1: Check cache for character assets
+      // Force reload to ensure fresh character data from roleplay analysis
+      console.log(`Loading character assets for story ${storyId} from roleplay analysis`);
+      const assets = await this.loadAndValidateCharacterAssets(storyId);
+      console.log(`Generated ${assets.length} character assets:`, assets.map(a => a.characterName));
+      
+      // Update cache with fresh data
       const cacheKey = `character-assets-${storyId}`;
-      const cachedAssets = await videoCache.getOrSet(
-        cacheKey,
-        () => this.loadCharacterAssetsFromDatabase(storyId),
-        { ttl: this.CACHE_DURATION }
-      );
-
-      if (cachedAssets) {
-        return cachedAssets;
-      }
-
-      // Step 2: Load from database or generate
-      return await this.loadAndValidateCharacterAssets(storyId);
+      await this.invalidateCharacterCache(storyId);
+      
+      return assets;
 
     } catch (error: any) {
       console.error("Failed to get character assets:", error);
