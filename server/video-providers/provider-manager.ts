@@ -24,6 +24,11 @@ export interface VideoProviderConfiguration {
     maximum: number; // Maximum allowed duration per story
     allowUserOverride: boolean; // Allow users to specify custom duration within limits
   };
+  roleplay?: {
+    targetDurationSeconds: number; // Target duration for roleplay content generation
+    maxDurationSeconds: number; // Maximum roleplay duration allowed
+    videoGenerationSeconds: number; // Actual video generation duration (separate from roleplay content)
+  };
 }
 
 export class VideoProviderManager {

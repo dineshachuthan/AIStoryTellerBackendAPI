@@ -43,8 +43,13 @@ export const defaultVideoConfig: VideoProviderConfiguration = {
   duration: {
     default: 10, // Default video duration in seconds
     minimum: 3,  // Minimum allowed duration
-    maximum: 20, // Maximum allowed duration per story
+    maximum: 20, // Maximum allowed duration per story - keep low for cost protection
     allowUserOverride: true // Allow users to specify custom duration within limits
+  },
+  roleplay: {
+    targetDurationSeconds: 60, // Target duration for roleplay content generation (can be 60, 120, 240)
+    maxDurationSeconds: 240, // Maximum roleplay duration allowed
+    videoGenerationSeconds: 20 // Actual video generation duration (separate from roleplay content)
   }
 };
 

@@ -692,7 +692,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`Generating roleplay analysis for story ${storyId}`);
       
-      const rolePlayAnalysis = await generateRolePlayAnalysis(story.content, []);
+      // Get roleplay duration configuration
+      const { getVideoProviderConfig } = await import("./video-config");
+      const videoConfig = getVideoProviderConfig();
+      const targetDurationSeconds = videoConfig.roleplay?.targetDurationSeconds || 60;
+      
+      console.log(`Using target roleplay duration: ${targetDurationSeconds} seconds`);
+      const rolePlayAnalysis = await generateRolePlayAnalysis(story.content, [], targetDurationSeconds);
       
       // Store analysis in database
       await storage.createStoryAnalysis({

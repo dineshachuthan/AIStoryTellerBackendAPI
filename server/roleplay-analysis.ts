@@ -54,11 +54,26 @@ export interface RolePlayAnalysis {
 
 export async function generateRolePlayAnalysis(
   storyContent: string,
-  existingCharacters: any[] = []
+  existingCharacters: any[] = [],
+  targetDurationSeconds: number = 60
 ): Promise<RolePlayAnalysis> {
+  // Calculate content targets based on duration
+  const targetMinutes = targetDurationSeconds / 60;
+  const targetWords = Math.round(targetMinutes * 150); // 150 words per minute
+  const targetDialogues = Math.round(targetMinutes * 8); // 8 dialogues per minute
+  const scenesCount = Math.min(4, Math.max(2, Math.round(targetMinutes)));
+  const dialoguesPerScene = Math.round(targetDialogues / scenesCount);
+
   // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
   const prompt = `
 You are a professional screenplay writer and director. Analyze the following story and create a complete role-play analysis that breaks it down into scenes with dialogues, backgrounds, and stage directions.
+
+TARGET SPECIFICATIONS:
+- Target duration: ${targetDurationSeconds} seconds (${targetMinutes.toFixed(1)} minutes)
+- Target word count: ${targetWords} words total
+- Target scenes: ${scenesCount} scenes
+- Target dialogues: ${targetDialogues} total dialogues (${dialoguesPerScene} per scene)
+- Each dialogue should be 15-25 words for natural pacing
 
 For voice assignments, assign appropriate character voices based on role characteristics:
 - Male characters: Use "onyx" or "echo" OpenAI voices
@@ -118,14 +133,16 @@ Generate a comprehensive role-play analysis in the following JSON format:
 }
 
 Guidelines:
-1. Create natural, engaging dialogue that captures each character's voice
-2. Break the story into 3-7 logical scenes with clear transitions
-3. Provide detailed background descriptions for immersive settings
-4. Include stage directions and actions to guide performance
-5. Assign emotions and intensity levels (1-10) for voice modulation
-6. Ensure dialogues flow naturally and advance the story
-7. Create vivid, cinematic scene descriptions
-8. Include production notes for directing guidance
+1. Create exactly ${scenesCount} scenes with ${dialoguesPerScene} dialogues each
+2. Each dialogue should be 15-25 words for natural speaking pace
+3. Total content should target ${targetWords} words across all scenes
+4. Estimated duration per scene: ${Math.round(targetDurationSeconds / scenesCount)} seconds
+5. Create natural, engaging dialogue that captures each character's voice
+6. Provide detailed background descriptions for immersive settings
+7. Include stage directions and actions to guide performance
+8. Assign emotions and intensity levels (1-10) for voice modulation
+9. Ensure dialogues flow naturally and advance the story
+10. Create vivid, cinematic scene descriptions that fit the target duration
 
 Respond only with valid JSON.
 `;
