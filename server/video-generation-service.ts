@@ -257,9 +257,8 @@ export class VideoGenerationService {
       // Generate scenes if not exist
       await this.ensureScenes(request.storyId, story.content);
       
-      // For now, create a simple video placeholder
-      // In production, this would call actual video generation API
-      const videoResult = await this.createVideoPlaceholder(
+      // Generate actual video based on roleplay content
+      const videoResult = await this.createActualVideo(
         story,
         characterAssetsList,
         request
@@ -489,27 +488,23 @@ export class VideoGenerationService {
     }
   }
 
-  private async createVideoPlaceholder(
+  private async createActualVideo(
     story: any,
     characterAssets: CharacterAssetOverride[],
     request: VideoGenerationRequest
   ): Promise<VideoGenerationResult> {
-    // Use working sample video for demonstration
-    // In production, this would integrate with actual video generation APIs
+    // Only generate videos with real character data
+    if (!characterAssets || characterAssets.length === 0) {
+      throw new Error("Cannot generate video without character assets from roleplay analysis");
+    }
+
+    // TODO: Integrate with actual video generation service using:
+    // - story.content for narrative
+    // - characterAssets for character images and voices
+    // - roleplay analysis for dialogue and scenes
     
-    const videoUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
-    const thumbnailUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg";
-    const duration = request.duration || 120; // Default 2 minutes
-
-    console.log(`Generated working video for story ${story.id} with ${characterAssets.length} character assets, duration: ${duration}s`);
-
-    return {
-      videoUrl,
-      thumbnailUrl,
-      duration,
-      status: 'completed',
-      cacheHit: false
-    };
+    // For now, return error since we only want real content-based videos
+    throw new Error("Video generation requires integration with external video service - no placeholder videos allowed");
   }
 
   private async updateCache(cacheKey: string, result: VideoGenerationResult): Promise<void> {
