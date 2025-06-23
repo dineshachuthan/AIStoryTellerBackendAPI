@@ -982,8 +982,10 @@ export function RolePlayAnalysisPanel({
                 Video ready ({videoResult.cacheHit ? 'cached' : 'generated'})
               </div>
               <VideoPlayer 
-                src={videoResult.videoUrl} 
-                thumbnail={videoResult.thumbnailUrl}
+                videoUrl={videoResult.videoUrl} 
+                thumbnailUrl={videoResult.thumbnailUrl}
+                title="Roleplay Cinematic Video"
+                duration={videoResult.duration}
                 className="w-full rounded-lg"
               />
               <div className="flex gap-2">
