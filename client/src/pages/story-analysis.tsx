@@ -83,6 +83,8 @@ export default function StoryAnalysis() {
   const handlePlayEmotionSample = async (emotion: string, intensity: number) => {
     setPlayingSample(emotion);
     try {
+      console.log('Generating emotion sample:', { emotion, intensity });
+      
       const response = await fetch('/api/emotions/generate-sample', {
         method: 'POST',
         headers: {
@@ -98,11 +100,53 @@ export default function StoryAnalysis() {
 
       if (response.ok) {
         const result = await response.json();
-        const audio = new Audio(result.audioUrl);
-        audio.play();
-        audio.onended = () => setPlayingSample("");
+        console.log('Audio generation result:', result);
+        
+        if (result.audioUrl) {
+          const audio = new Audio(result.audioUrl);
+          
+          audio.addEventListener('loadstart', () => {
+            console.log('Audio loading started');
+          });
+          
+          audio.addEventListener('canplay', () => {
+            console.log('Audio can play');
+          });
+          
+          audio.addEventListener('error', (e) => {
+            console.error('Audio error:', e);
+            setPlayingSample("");
+            toast({
+              title: "Audio Error",
+              description: "Could not load audio file.",
+              variant: "destructive",
+            });
+          });
+          
+          audio.onended = () => {
+            console.log('Audio playback ended');
+            setPlayingSample("");
+          };
+          
+          try {
+            await audio.play();
+            console.log('Audio playback started successfully');
+          } catch (playError) {
+            console.error('Audio play error:', playError);
+            setPlayingSample("");
+            toast({
+              title: "Playback Error",
+              description: "Could not play audio. Try clicking to interact with the page first.",
+              variant: "destructive",
+            });
+          }
+        } else {
+          throw new Error('No audio URL in response');
+        }
       } else {
-        throw new Error('Failed to generate sample');
+        const errorText = await response.text();
+        console.error('Sample generation failed:', response.status, errorText);
+        throw new Error(`Failed to generate sample: ${response.status}`);
       }
     } catch (error) {
       console.error('Error playing sample:', error);
