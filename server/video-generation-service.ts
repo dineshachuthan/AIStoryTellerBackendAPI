@@ -8,11 +8,17 @@ import { CacheWithFallback } from "./cache-with-fallback";
 import path from "path";
 import crypto from "crypto";
 import OpenAI from "openai";
+import { VideoProviderManager } from './video-providers/provider-manager';
+import { getVideoProviderConfig } from './video-config';
+import { VideoGenerationRequest as ProviderVideoRequest } from './video-providers/base-provider';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // Initialize cache for video assets
 const videoCache = new CacheWithFallback<any>(path.join(process.cwd(), 'persistent-cache', 'video'));
+
+// Initialize video provider manager
+const videoProviderManager = new VideoProviderManager(getVideoProviderConfig());
 
 export interface VideoGenerationRequest {
   storyId: number;
