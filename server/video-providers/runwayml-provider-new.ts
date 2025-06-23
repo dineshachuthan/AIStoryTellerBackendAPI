@@ -7,10 +7,16 @@ export class RunwayMLProvider extends BaseVideoProvider {
   constructor(config: ProviderConfig) {
     super('runwayml', config);
     
+    if (!config.apiKey) {
+      throw new Error('RunwayML API key is required but not provided');
+    }
+    
     // Initialize RunwayML SDK client
     this.client = new RunwayML({
       apiKey: config.apiKey
     });
+    
+    console.log('RunwayML provider initialized with API key:', config.apiKey ? 'present' : 'missing');
   }
 
   async generateVideo(request: VideoGenerationRequest): Promise<VideoGenerationResult> {

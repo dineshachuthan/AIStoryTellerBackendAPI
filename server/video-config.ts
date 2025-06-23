@@ -6,7 +6,7 @@ export const defaultVideoConfig: VideoProviderConfiguration = {
     'runwayml': {
       enabled: true,
       config: {
-        apiKey: process.env.RUNWAYML_API_KEY || '',
+        apiKey: process.env.RUNWAYML_API_KEY || process.env.RUNWAY_API_KEY || '',
         baseUrl: 'https://api.runway.team/v1',
         timeout: 60000,
         retryCount: 2
@@ -74,4 +74,27 @@ export function getVideoProviderConfig(): VideoProviderConfiguration {
   });
   
   return config;
+}
+
+/**
+ * Get status of all video providers
+ */
+export function getVideoProviderStatus(): { [key: string]: { enabled: boolean; hasApiKey: boolean; reason?: string } } {
+  return {
+    'runwayml': {
+      enabled: !!(process.env.RUNWAYML_API_KEY || process.env.RUNWAY_API_KEY),
+      hasApiKey: !!(process.env.RUNWAYML_API_KEY || process.env.RUNWAY_API_KEY),
+      reason: !(process.env.RUNWAYML_API_KEY || process.env.RUNWAY_API_KEY) ? 'Missing API key' : undefined
+    },
+    'pika-labs': {
+      enabled: !!process.env.PIKA_LABS_API_KEY,
+      hasApiKey: !!process.env.PIKA_LABS_API_KEY,
+      reason: !process.env.PIKA_LABS_API_KEY ? 'Missing API key' : undefined
+    },
+    'luma-ai': {
+      enabled: !!process.env.LUMA_AI_API_KEY,
+      hasApiKey: !!process.env.LUMA_AI_API_KEY,
+      reason: !process.env.LUMA_AI_API_KEY ? 'Missing API key' : undefined
+    }
+  };
 }
