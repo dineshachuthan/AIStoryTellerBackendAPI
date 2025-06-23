@@ -4,6 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { 
   Book, 
   Search, 
@@ -48,6 +59,7 @@ export default function StoryLibrary() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreatingStory, setIsCreatingStory] = useState(false);
   const [convertingStories, setConvertingStories] = useState<Set<number>>(new Set());
+  const [deletingStories, setDeletingStories] = useState<Set<number>>(new Set());
 
   // Create story and navigate to upload page
   const createStoryAndNavigate = async (storyType: string, targetPath: string) => {
@@ -119,6 +131,35 @@ export default function StoryLibrary() {
       });
     } finally {
       setConvertingStories(prev => {
+        const next = new Set(prev);
+        next.delete(storyId);
+        return next;
+      });
+    }
+  };
+
+  const deleteStory = async (storyId: number) => {
+    setDeletingStories(prev => new Set(prev).add(storyId));
+    
+    try {
+      await apiRequest(`/api/stories/${storyId}/archive`, "PUT");
+      
+      toast({
+        title: "Story Deleted",
+        description: "Your story has been moved to the archive.",
+      });
+      
+      // Refresh the stories list
+      queryClient.invalidateQueries({ queryKey: ["/api/stories"] });
+      
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete story",
+        variant: "destructive",
+      });
+    } finally {
+      setDeletingStories(prev => {
         const next = new Set(prev);
         next.delete(storyId);
         return next;
