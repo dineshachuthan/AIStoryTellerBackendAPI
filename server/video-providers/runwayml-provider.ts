@@ -1,4 +1,5 @@
 import { BaseVideoProvider, VideoGenerationRequest, VideoGenerationResult, ProviderConfig } from './base-provider';
+import { RunwayML } from '@runwayml/sdk';
 
 export class RunwayMLProvider extends BaseVideoProvider {
   constructor(config: ProviderConfig) {

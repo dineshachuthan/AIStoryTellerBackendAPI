@@ -1,0 +1,197 @@
+import { BaseVideoProvider, VideoGenerationRequest, VideoGenerationResult, ProviderConfig } from './base-provider';
+import RunwayML, { TaskFailedError } from '@runwayml/sdk';
+
+export class RunwayMLProvider extends BaseVideoProvider {
+  private client: RunwayML;
+
+  constructor(config: ProviderConfig) {
+    super('runwayml', config);
+    
+    // Initialize RunwayML SDK client
+    this.client = new RunwayML({
+      apiKey: config.apiKey
+    });
+  }
+
+  async generateVideo(request: VideoGenerationRequest): Promise<VideoGenerationResult> {
+    try {
+      const prompt = this.createPrompt(request);
+      
+      console.log(`Generating video using RunwayML SDK`);
+      console.log('Comprehensive prompt:', prompt);
+
+      // Use the official SDK for text-to-video generation
+      const task = await this.client.textToVideo
+        .create({
+          model: 'gen3a_turbo',
+          promptText: prompt,
+          ratio: request.aspectRatio === '9:16' ? '768:1344' : 
+                 request.aspectRatio === '1:1' ? '1024:1024' : '1280:720',
+          duration: Math.min(request.duration || 10, 10),
+          seed: Math.floor(Math.random() * 2147483647)
+        })
+        .waitForTaskOutput();
+
+      console.log('RunwayML task completed:', task);
+
+      // Extract video URL from task output
+      const videoUrl = task.output?.length > 0 ? task.output[0] : '';
+      
+      if (!videoUrl) {
+        throw new Error('No video URL returned from RunwayML');
+      }
+
+      return {
+        videoUrl: videoUrl,
+        thumbnailUrl: task.thumbnail || '',
+        duration: request.duration || 10,
+        status: 'completed',
+        metadata: {
+          provider: 'runwayml',
+          providerJobId: task.id,
+          format: 'mp4',
+          resolution: request.aspectRatio === '9:16' ? '768x1344' : 
+                     request.aspectRatio === '1:1' ? '1024x1024' : '1280x720',
+          codec: 'h264',
+          generatedAt: new Date()
+        }
+      };
+
+    } catch (error: any) {
+      console.error('RunwayML SDK error:', error);
+      
+      if (error instanceof TaskFailedError) {
+        console.error('The video failed to generate.');
+        console.error('Task details:', error.taskDetails);
+        throw new Error(`Video generation failed: ${error.taskDetails?.error || 'Task failed'}`);
+      }
+      
+      throw this.handleError(error);
+    }
+  }
+
+  async checkStatus(jobId: string): Promise<VideoGenerationResult> {
+    try {
+      // Get task status using SDK
+      const task = await this.client.tasks.get(jobId);
+      
+      return {
+        videoUrl: task.status === 'COMPLETE' ? (task.output?.[0] || '') : '',
+        thumbnailUrl: task.thumbnail || '',
+        duration: 10,
+        status: task.status === 'COMPLETE' ? 'completed' : 
+                task.status === 'FAILED' ? 'failed' : 'processing',
+        metadata: {
+          provider: 'runwayml',
+          providerJobId: task.id,
+          format: 'mp4',
+          resolution: '1280x720',
+          codec: 'h264',
+          generatedAt: new Date()
+        }
+      };
+
+    } catch (error: any) {
+      console.error('RunwayML status check error:', error);
+      throw this.handleError(error);
+    }
+  }
+
+  async cancelGeneration(jobId: string): Promise<boolean> {
+    try {
+      // Cancel task using SDK
+      await this.client.tasks.cancel(jobId);
+      return true;
+    } catch (error: any) {
+      console.error('RunwayML cancel error:', error);
+      return false;
+    }
+  }
+
+  async validateConfig(): Promise<boolean> {
+    try {
+      // Test the API key by getting account info
+      await this.client.users.me();
+      return true;
+    } catch (error: any) {
+      console.error('RunwayML config validation failed:', error);
+      return false;
+    }
+  }
+
+  getCapabilities() {
+    return {
+      maxDuration: 10, // seconds
+      supportedFormats: ['mp4'],
+      supportedResolutions: ['1280x720', '768x1344', '1024x1024'],
+      supportedAspectRatios: ['16:9', '9:16', '1:1'],
+      models: ['gen3a_turbo'],
+      features: ['text-to-video', 'prompt-enhancement', 'seed-control']
+    };
+  }
+
+  async estimateCost(request: VideoGenerationRequest): Promise<number> {
+    const duration = Math.min(request.duration || 10, 10);
+    const baseRate = 0.95; // $0.95 per second for gen3a_turbo
+    const qualityMultiplier = request.quality === 'high' ? 1.2 : 1;
+    
+    return duration * baseRate * qualityMultiplier;
+  }
+
+  private createPrompt(request: VideoGenerationRequest): string {
+    let prompt = `${request.style || 'Cinematic'} style video adaptation of "${request.title}". `;
+    
+    // Add detailed character information with voice and appearance
+    if (request.characters.length > 0) {
+      prompt += `CHARACTERS: `;
+      const characterDetails = request.characters.map(c => {
+        let charDesc = `${c.name} - ${c.description || 'main character'}`;
+        if (c.imageUrl) {
+          charDesc += ` (custom appearance defined)`;
+        }
+        if (c.voiceUrl) {
+          charDesc += ` (custom voice provided)`;
+        }
+        return charDesc;
+      }).join('; ');
+      prompt += `${characterDetails}. `;
+    }
+
+    // Add comprehensive scene information from roleplay analysis
+    if (request.scenes.length > 0) {
+      prompt += `SCENES: `;
+      const sceneDetails = request.scenes.map((scene, index) => {
+        let sceneDesc = `Scene ${index + 1}: ${scene.title || scene.description}`;
+        
+        // Add dialogue context if available
+        if (scene.dialogues && scene.dialogues.length > 0) {
+          const keyDialogue = scene.dialogues.slice(0, 2).map(d => 
+            `${d.character}: "${d.text.substring(0, 50)}${d.text.length > 50 ? '...' : ''}"`
+          ).join(', ');
+          sceneDesc += ` - Key dialogue: ${keyDialogue}`;
+        }
+        
+        // Add background/setting
+        if (scene.backgroundDescription) {
+          sceneDesc += ` - Setting: ${scene.backgroundDescription}`;
+        }
+        
+        return sceneDesc;
+      }).join('; ');
+      prompt += `${sceneDetails}. `;
+    }
+
+    // Add story narrative with emotional context
+    const storyExcerpt = request.content.substring(0, 400);
+    prompt += `NARRATIVE: ${storyExcerpt}${request.content.length > 400 ? '...' : ''}. `;
+    
+    // Add visual style instructions
+    prompt += `VISUAL STYLE: Professional ${request.style || 'cinematic'} quality with clear character focus, `;
+    prompt += `natural lighting, and immersive storytelling. `;
+    
+    // Add duration and pacing guidance
+    prompt += `Create a ${request.duration || 10}-second video that captures the essence of this story with smooth transitions and engaging visual narrative.`;
+
+    return prompt;
+  }
+}
