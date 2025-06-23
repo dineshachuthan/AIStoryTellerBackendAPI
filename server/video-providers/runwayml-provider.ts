@@ -12,11 +12,10 @@ export class RunwayMLProvider extends BaseVideoProvider {
       
       console.log(`Generating video using runwayml provider`);
       
-      // RunwayML Gen-3 API endpoint - trying tasks endpoint
-      const response = await fetch(`${this.config.baseUrl || 'https://api.runway.team/v1'}/tasks`, {
+      // RunwayML Gen-3 API endpoint - using API key as query parameter
+      const response = await fetch(`${this.config.baseUrl || 'https://api.runway.team/v1'}/tasks?key=${this.config.apiKey}`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${this.config.apiKey}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
