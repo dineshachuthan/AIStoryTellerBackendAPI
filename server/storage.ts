@@ -304,11 +304,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async archiveStory(id: number): Promise<Story | undefined> {
-    // For now, use the title field to mark as archived until schema migration
+    // Use the title field to mark as archived with prefix
+    const story = await this.getStory(id);
+    if (!story) return undefined;
+
     const [archivedStory] = await db
       .update(stories)
       .set({ 
-        title: "[ARCHIVED] " + (await this.getStory(id))?.title || "Archived Story",
+        title: "[ARCHIVED] " + story.title,
         updatedAt: new Date()
       })
       .where(eq(stories.id, id))
