@@ -18,6 +18,12 @@ export interface VideoProviderConfiguration {
     enforceH264: boolean;
     maxFileSize: number; // in MB
   };
+  duration: {
+    default: number; // Default video duration in seconds
+    minimum: number; // Minimum allowed duration
+    maximum: number; // Maximum allowed duration per story
+    allowUserOverride: boolean; // Allow users to specify custom duration within limits
+  };
 }
 
 export class VideoProviderManager {
@@ -65,9 +71,12 @@ export class VideoProviderManager {
       throw new Error('No active video provider configured');
     }
 
+    // Enforce duration limits before generation
+    const validatedRequest = this.validateDurationLimits(request);
+
     try {
       console.log(`Generating video using ${this.configuration.activeProvider} provider`);
-      const result = await activeProvider.generateVideo(request);
+      const result = await activeProvider.generateVideo(validatedRequest);
       
       // Ensure compatibility standards
       return this.ensureCompatibility(result);
@@ -76,7 +85,7 @@ export class VideoProviderManager {
       console.error(`Primary provider ${this.configuration.activeProvider} failed:`, error);
       
       // Try fallback providers
-      return this.tryFallbackProviders(request, error as Error);
+      return this.tryFallbackProviders(validatedRequest, error as Error);
     }
   }
 
@@ -237,6 +246,38 @@ export class VideoProviderManager {
     }
 
     return result;
+  }
+
+  /**
+   * Validate and enforce duration limits from configuration
+   */
+  private validateDurationLimits(request: VideoGenerationRequest): VideoGenerationRequest {
+    const durationConfig = this.configuration.duration;
+    let duration = request.duration || durationConfig.default;
+
+    // Enforce minimum duration
+    if (duration < durationConfig.minimum) {
+      console.log(`Duration ${duration}s below minimum, setting to ${durationConfig.minimum}s`);
+      duration = durationConfig.minimum;
+    }
+
+    // Enforce maximum duration
+    if (duration > durationConfig.maximum) {
+      console.log(`Duration ${duration}s exceeds maximum, capping at ${durationConfig.maximum}s`);
+      duration = durationConfig.maximum;
+    }
+
+    return {
+      ...request,
+      duration: duration
+    };
+  }
+
+  /**
+   * Get duration configuration
+   */
+  getDurationLimits() {
+    return this.configuration.duration;
   }
 
   private getActiveProvider(): BaseVideoProvider | undefined {

@@ -39,6 +39,12 @@ export const defaultVideoConfig: VideoProviderConfiguration = {
     enforceMP4: true,
     enforceH264: true,
     maxFileSize: 100 // 100MB max file size
+  },
+  duration: {
+    default: 10, // Default video duration in seconds
+    minimum: 3,  // Minimum allowed duration
+    maximum: 20, // Maximum allowed duration per story
+    allowUserOverride: true // Allow users to specify custom duration within limits
   }
 };
 

@@ -3156,6 +3156,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // VIDEO GENERATION API ENDPOINTS
   // =============================================================================
 
+  // Get video configuration limits
+  app.get("/api/videos/config", requireAuth, async (req, res) => {
+    try {
+      const { VideoGenerationService } = await import("./video-generation-service");
+      const videoService = new VideoGenerationService();
+      const durationLimits = videoService.getDurationLimits();
+      
+      res.json({
+        duration: durationLimits,
+        supportedProviders: ['runwayml', 'pika-labs', 'luma-ai'],
+        activeProvider: 'runwayml'
+      });
+    } catch (error: any) {
+      console.error("Failed to get video config:", error);
+      res.status(500).json({ message: "Failed to get video configuration" });
+    }
+  });
+
   // Generate video with user overrides (POST)
   app.post("/api/videos/generate", requireAuth, async (req, res) => {
     try {

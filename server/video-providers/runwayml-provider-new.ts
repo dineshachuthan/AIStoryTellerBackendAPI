@@ -34,7 +34,7 @@ export class RunwayMLProvider extends BaseVideoProvider {
           internal: false,
           options: {
             promptText: prompt,
-            seconds: Math.min(request.duration || 10, 10),
+            seconds: Math.min(request.duration || 10, 20),
             gen3a_turbo: {
               mode: 'gen3a_turbo',
               seed: Math.floor(Math.random() * 2147483647),
