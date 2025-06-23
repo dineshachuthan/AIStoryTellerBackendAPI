@@ -12,10 +12,13 @@ export class RunwayMLProvider extends BaseVideoProvider {
       
       console.log(`Generating video using runwayml provider`);
       
-      // Use correct text-to-video endpoint with direct API key authentication
+      // First, get authentication token using X-API-Key
+      const authToken = await this.getAuthToken();
+      
+      // Use correct text-to-video endpoint with Bearer token
       const url = `${this.config.baseUrl || 'https://api.runway.team/v1'}/text_to_video`;
       const headers = {
-        'X-API-Key': this.config.apiKey,
+        'Authorization': `Bearer ${authToken}`,
         'Content-Type': 'application/json'
       };
       const body = {
@@ -85,9 +88,10 @@ export class RunwayMLProvider extends BaseVideoProvider {
 
   async checkStatus(jobId: string): Promise<VideoGenerationResult> {
     try {
+      const authToken = await this.getAuthToken();
       const response = await fetch(`${this.config.baseUrl || 'https://api.runway.team/v1'}/tasks/${jobId}`, {
         headers: {
-          'X-API-Key': this.config.apiKey
+          'Authorization': `Bearer ${authToken}`
         }
       });
 
@@ -123,10 +127,11 @@ export class RunwayMLProvider extends BaseVideoProvider {
 
   async cancelGeneration(jobId: string): Promise<boolean> {
     try {
+      const authToken = await this.getAuthToken();
       const response = await fetch(`${this.config.baseUrl || 'https://api.runway.team/v1'}/tasks/${jobId}/cancel`, {
         method: 'POST',
         headers: {
-          'X-API-Key': this.config.apiKey
+          'Authorization': `Bearer ${authToken}`
         }
       });
 
@@ -138,9 +143,10 @@ export class RunwayMLProvider extends BaseVideoProvider {
 
   async validateConfig(): Promise<boolean> {
     try {
+      const authToken = await this.getAuthToken();
       const response = await fetch(`${this.config.baseUrl || 'https://api.runway.team/v1'}/account`, {
         headers: {
-          'X-API-Key': this.config.apiKey
+          'Authorization': `Bearer ${authToken}`
         }
       });
 
@@ -171,7 +177,27 @@ export class RunwayMLProvider extends BaseVideoProvider {
     return duration * baseRate * qualityMultiplier;
   }
 
+  private async getAuthToken(): Promise<string> {
+    try {
+      // Get authentication token using X-API-Key
+      const response = await fetch(`${this.config.baseUrl || 'https://api.runway.team/v1'}/auth/token`, {
+        method: 'POST',
+        headers: {
+          'X-API-Key': this.config.apiKey,
+          'Content-Type': 'application/json'
+        }
+      });
 
+      if (!response.ok) {
+        throw new Error(`Auth failed: ${response.status} ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      return result.access_token || result.token;
+    } catch (error: any) {
+      throw new Error(`RunwayML authentication failed: ${error.message}`);
+    }
+  }
 
   private createPrompt(request: VideoGenerationRequest): string {
     let prompt = `${request.style || 'Cinematic'} style video adaptation of "${request.title}". `;
