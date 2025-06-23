@@ -279,7 +279,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserStories(userId: string): Promise<Story[]> {
-    return await db.select().from(stories).where(eq(stories.authorId, userId));
+    const allStories = await db.select().from(stories).where(eq(stories.authorId, userId)).orderBy(desc(stories.createdAt));
+    // Filter out archived stories (identified by [ARCHIVED] prefix for now)
+    return allStories.filter(story => !story.title.startsWith("[ARCHIVED]"));
   }
 
   async getStory(id: number): Promise<Story | undefined> {
@@ -302,46 +304,28 @@ export class DatabaseStorage implements IStorage {
   }
 
   async archiveStory(id: number): Promise<Story | undefined> {
+    // For now, use the title field to mark as archived until schema migration
     const [archivedStory] = await db
       .update(stories)
       .set({ 
-        isArchived: true, 
-        archivedAt: new Date(),
+        title: "[ARCHIVED] " + (await this.getStory(id))?.title || "Archived Story",
         updatedAt: new Date()
       })
       .where(eq(stories.id, id))
       .returning();
 
-    if (archivedStory) {
-      // Archive related story characters
-      await db
-        .update(storyCharacters)
-        .set({ 
-          isArchived: true, 
-          archivedAt: new Date()
-        })
-        .where(eq(storyCharacters.storyId, id));
-
-      // Archive related story analyses
-      await db
-        .update(storyAnalyses)
-        .set({ 
-          isArchived: true, 
-          archivedAt: new Date(),
-          updatedAt: new Date()
-        })
-        .where(eq(storyAnalyses.storyId, id));
-    }
-
     return archivedStory || undefined;
   }
 
   async getArchivedStories(userId: string): Promise<Story[]> {
-    return await db
+    const allStories = await db
       .select()
       .from(stories)
-      .where(and(eq(stories.authorId, userId), eq(stories.isArchived, true)))
-      .orderBy(desc(stories.archivedAt));
+      .where(eq(stories.authorId, userId))
+      .orderBy(desc(stories.updatedAt));
+    
+    // Filter archived stories by title prefix for now
+    return allStories.filter(story => story.title.startsWith("[ARCHIVED]"));
   }
 
   async getStoryCharacters(storyId: number): Promise<StoryCharacter[]> {

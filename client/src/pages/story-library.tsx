@@ -15,7 +15,9 @@ import {
   Star,
   MessageSquare,
   Eye,
-  Loader2
+  Loader2,
+  Trash2,
+  AlertTriangle
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useLocation } from "wouter";

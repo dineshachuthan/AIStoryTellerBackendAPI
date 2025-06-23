@@ -2010,6 +2010,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Archive story (soft delete)
+  app.put("/api/stories/:id/archive", requireAuth, async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.id);
+      const userId = (req.user as any)?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      // Verify ownership
+      const story = await storage.getStory(storyId);
+      if (!story || story.authorId !== userId) {
+        return res.status(404).json({ message: "Story not found or access denied" });
+      }
+
+      const archivedStory = await storage.archiveStory(storyId);
+      res.json(archivedStory);
+    } catch (error) {
+      console.error("Error archiving story:", error);
+      res.status(500).json({ message: "Failed to archive story" });
+    }
+  });
+
+  // Get archived stories
+  app.get("/api/stories/archived", requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any)?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const archivedStories = await storage.getArchivedStories(userId);
+      res.json(archivedStories);
+    } catch (error) {
+      console.error("Error fetching archived stories:", error);
+      res.status(500).json({ message: "Failed to fetch archived stories" });
+    }
+  });
+
   app.get("/api/stories/:id/characters", async (req, res) => {
     try {
       const storyId = parseInt(req.params.id);
