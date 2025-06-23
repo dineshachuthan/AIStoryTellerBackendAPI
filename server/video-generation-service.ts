@@ -251,7 +251,13 @@ export class VideoGenerationService {
     const [generation] = await db.insert(videoGenerations).values({
       storyId: request.storyId,
       requestedBy: request.userId,
-      generationParams: request,
+      generationParams: {
+        storyId: request.storyId,
+        userId: request.userId,
+        scenes: request.scenes || [],
+        duration: request.duration || this.MAX_ROLEPLAY_DURATION,
+        quality: request.quality || 'standard'
+      },
       characterAssetsSnapshot: await this.getCharacterAssetsSnapshot(request.storyId),
       status: 'processing',
       cacheKey,
@@ -485,7 +491,13 @@ export class VideoGenerationService {
   }
 
   private async getCharacterAssetsSnapshot(storyId: number): Promise<any> {
-    return await this.loadCharacterAssetsFromDatabase(storyId);
+    const assets = await this.loadCharacterAssetsFromDatabase(storyId);
+    // Return a clean serializable object without circular references
+    return assets.map(asset => ({
+      characterName: asset.characterName,
+      imageUrl: asset.imageUrl,
+      voiceSampleUrl: asset.voiceSampleUrl
+    }));
   }
 
   private async ensureScenes(storyId: number, content: string): Promise<void> {

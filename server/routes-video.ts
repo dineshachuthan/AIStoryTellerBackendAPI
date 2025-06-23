@@ -52,7 +52,18 @@ router.post("/api/videos/generate", requireAuth, async (req: any, res) => {
         errors: error.errors
       });
     }
-    res.status(500).json({ message: "Video generation failed" });
+    
+    // Handle circular reference serialization errors
+    let errorMessage = "Video generation failed";
+    if (error?.message) {
+      // Safely extract error message without circular references
+      errorMessage = typeof error.message === 'string' ? error.message : "Video generation failed";
+    }
+    
+    res.status(500).json({ 
+      message: errorMessage,
+      details: "Please check server logs for more information"
+    });
   }
 });
 

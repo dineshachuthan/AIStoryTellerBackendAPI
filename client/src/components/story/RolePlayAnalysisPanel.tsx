@@ -266,6 +266,11 @@ export function RolePlayAnalysisPanel({
     }
   };
 
+  // Safe button click handler
+  const handleGenerateVideoClick = () => {
+    handleVideoGeneration();
+  };
+
   // Edit mode functions
   const enterEditMode = () => {
     if (analysis) {
@@ -983,7 +988,7 @@ export function RolePlayAnalysisPanel({
               />
               <div className="flex gap-2">
                 <Button
-                  onClick={handleVideoGeneration}
+                  onClick={handleGenerateVideoClick}
                   variant="outline"
                   size="sm"
                   className="text-orange-600 border-orange-300 hover:bg-orange-50"
@@ -996,7 +1001,7 @@ export function RolePlayAnalysisPanel({
           ) : (
             <div className="text-center py-6">
               <Button
-                onClick={handleVideoGeneration}
+                onClick={handleGenerateVideoClick}
                 disabled={generatingVideo}
                 className="bg-purple-600 hover:bg-purple-700"
               >
