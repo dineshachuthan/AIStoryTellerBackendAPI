@@ -26,33 +26,23 @@ export class RunwayMLProvider extends BaseVideoProvider {
       console.log(`Generating video using RunwayML API with SDK authentication`);
       console.log('Comprehensive prompt:', prompt);
 
-      // Use direct API call for text-to-video (SDK doesn't have textToVideo method)
-      // but leverage SDK's authentication mechanism
-      const response = await fetch('https://api.runwayml.com/v1/tasks', {
+      // Use RunwayML text-to-video generation endpoint
+      const response = await fetch('https://api.dev.runwayml.com/v1/generate', {
         method: 'POST',
         headers: {
-          'X-API-Key': this.client.apiKey,
+          'Authorization': `Bearer ${this.client.apiKey}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          taskType: 'gen3a_turbo',
-          internal: false,
-          options: {
-            promptText: prompt,
-            seconds: Math.min(request.duration || 10, 20),
-            gen3a_turbo: {
-              mode: 'gen3a_turbo',
-              seed: Math.floor(Math.random() * 2147483647),
-              watermark: false,
-              init_image: null,
-              motion_bucket_id: 127,
-              cond_aug: 0.02,
-              width: request.aspectRatio === '9:16' ? 768 : 
-                     request.aspectRatio === '1:1' ? 1024 : 1280,
-              height: request.aspectRatio === '9:16' ? 1344 : 
-                      request.aspectRatio === '1:1' ? 1024 : 720
-            }
-          }
+          model: 'gen3a_turbo',
+          prompt: prompt,
+          seconds: Math.min(request.duration || 10, 20),
+          seed: Math.floor(Math.random() * 2147483647),
+          watermark: false,
+          width: request.aspectRatio === '9:16' ? 768 : 
+                 request.aspectRatio === '1:1' ? 1024 : 1280,
+          height: request.aspectRatio === '9:16' ? 1344 : 
+                  request.aspectRatio === '1:1' ? 1024 : 720
         })
       });
 
@@ -62,16 +52,27 @@ export class RunwayMLProvider extends BaseVideoProvider {
         throw new Error(`RunwayML API error: ${response.status} ${response.statusText}: ${errorText}`);
       }
 
-      const task = await response.json();
-      console.log('RunwayML task created:', task);
+      const result = await response.json();
+      console.log('RunwayML generation result:', result);
 
-      // Wait for task completion by polling
-      let completedTask = task;
-      if (task.status !== 'SUCCEEDED') {
-        completedTask = await this.waitForCompletion(task.id);
+      // Handle different response formats based on API endpoint
+      let videoUrl = '';
+      let taskId = '';
+
+      if (result.id) {
+        // If we get a task ID, poll for completion
+        taskId = result.id;
+        const completedTask = await this.waitForCompletion(taskId);
+        videoUrl = completedTask.output?.[0] || completedTask.artifacts?.[0]?.url || completedTask.video_url || '';
+      } else if (result.video_url || result.url) {
+        // Direct video URL response
+        videoUrl = result.video_url || result.url;
+        taskId = result.task_id || 'direct-generation';
+      } else if (result.data?.video_url) {
+        // Nested response structure
+        videoUrl = result.data.video_url;
+        taskId = result.data.id || 'nested-generation';
       }
-
-      const videoUrl = completedTask.output?.[0] || completedTask.artifacts?.[0]?.url || '';
       
       if (!videoUrl) {
         throw new Error('No video URL returned from RunwayML');
@@ -79,12 +80,12 @@ export class RunwayMLProvider extends BaseVideoProvider {
 
       return {
         videoUrl: videoUrl,
-        thumbnailUrl: completedTask.thumbnail || '',
+        thumbnailUrl: result.thumbnail || result.data?.thumbnail || '',
         duration: request.duration || 10,
         status: 'completed',
         metadata: {
           provider: 'runwayml',
-          providerJobId: task.id,
+          providerJobId: taskId,
           format: 'mp4',
           resolution: request.aspectRatio === '9:16' ? '768x1344' : 
                      request.aspectRatio === '1:1' ? '1024x1024' : '1280x720',

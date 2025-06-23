@@ -119,16 +119,19 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Asset Serving**: Optimized static file serving with proper headers
 
 ## Changelog
+- June 23, 2025: Corrected RunwayML API integration with proper endpoint structure
+  - Updated RunwayML provider to use correct API endpoint (api.dev.runwayml.com/v1/generate) based on official documentation
+  - Fixed authentication to use Bearer token format instead of X-API-Key for consistency with API docs
+  - Enhanced response handling to support multiple API response formats (direct URL, task-based, nested data)
+  - Updated video generation to maintain 20-second duration limit for cost protection
+  - Improved error handling and logging for better debugging of API issues
 - June 23, 2025: Implemented configurable roleplay duration system
   - Added separate roleplay configuration (shared/roleplay-config.ts) with duration targets from 60-240 seconds
   - Enhanced roleplay analysis generation to use configurable duration specifications for precise content creation
   - Updated AI prompts to generate exact word counts, dialogue counts, and scene structures based on target duration
   - Maintained strict 20-second video generation limit for cost protection while allowing longer roleplay content
   - Added roleplay configuration API endpoint to display current duration settings to users
-  - Fixed RunwayML API authentication to use correct X-API-Key header format
 - June 23, 2025: Enhanced video generation with comprehensive roleplay data integration
-  - Fixed RunwayML authentication to use X-API-Key header consistently
-  - Switched to /text_to_video endpoint for proper text-based prompts
   - Enhanced prompt generation to include detailed character information, voice assignments, scene dialogues, and emotional context
   - Improved scene building from roleplay analysis with rich dialogue extraction and mood inference
   - Added comprehensive error handling to prevent empty video URLs in database
