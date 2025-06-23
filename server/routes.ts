@@ -1727,14 +1727,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/stories/draft", requireAuth, async (req, res) => {
     try {
       const userId = (req.user as any)?.id;
-      const { title = "Untitled Story", storyType = "text" } = req.body;
+      const { title, storyType = "text", content } = req.body;
+
+      let finalTitle = "New Story";
+      let finalCategory = "General";
       
+      // If content is provided, generate title and category from analysis
+      if (content && content.trim()) {
+        try {
+          const analysis = await analyzeStoryContent(content.trim());
+          finalTitle = analysis.summary ? 
+            analysis.summary.split('.')[0].substring(0, 50) + (analysis.summary.length > 50 ? '...' : '') :
+            "New Story";
+          finalCategory = analysis.category || "General";
+        } catch (analysisError) {
+          console.log("Could not analyze content for draft, using defaults");
+        }
+      } else if (title) {
+        finalTitle = title;
+      }
 
       const draftStory = await storage.createStory({
-        title,
-        content: "", // Empty content initially
+        title: finalTitle,
+        content: content || "", 
         summary: "",
-        category: "uncategorized",
+        category: finalCategory,
         tags: [],
         extractedCharacters: [],
         extractedEmotions: [],
@@ -1743,8 +1760,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         authorId: userId,
         uploadType: 'text',
         originalAudioUrl: null,
-        processingStatus: 'pending',
-        status: 'draft', // New draft status
+        processingStatus: content ? 'completed' : 'pending',
+        status: 'draft',
         copyrightInfo: null,
         licenseType: 'all_rights_reserved',
         isPublished: false,
