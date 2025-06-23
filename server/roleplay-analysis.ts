@@ -42,7 +42,12 @@ export interface RolePlayAnalysis {
     role: string;
     personality: string;
     voiceProfile: string;
+    description?: string;
+    traits?: string[];
     costumeSuggestion?: string;
+    assignedVoice?: string;
+    voiceSampleId?: number;
+    appearance?: string;
   }>;
   productionNotes: string[];
 }

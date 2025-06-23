@@ -772,31 +772,19 @@ export function RolePlayAnalysisPanel({
               <h4 className="font-medium mb-2">Characters</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {analysis.characters.map((character, index) => (
-                  <CharacterInviteCard 
-                    key={index}
-                    character={character}
-                    storyId={storyId}
-                    existingInvitation={characterInvitations.get(character.name) || null}
-                    onInviteSent={(invitation) => {
-                      setCharacterInvitations(prev => new Map(prev.set(character.name, {
-                        id: invitation.id,
-                        contactValue: invitation.contactValue,
-                        contactMethod: invitation.contactMethod,
-                        hasVoiceRecording: invitation.hasVoiceRecording || false,
-                        invitationToken: invitation.invitationToken,
-                        sentAt: invitation.sentAt
-                      })));
-                      toast({ title: "Invitation sent!", description: `Invitation sent to ${invitation.contactValue}` });
-                    }}
-                    onInviteDeleted={(characterName) => {
-                      setCharacterInvitations(prev => {
-                        const newMap = new Map(prev);
-                        newMap.delete(characterName);
-                        return newMap;
-                      });
-                      toast({ title: "Invitation deleted", description: `${characterName} invitation removed` });
-                    }}
-                  />
+                  <div key={index} className="border rounded-lg p-3 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <h5 className="font-medium">{character.name}</h5>
+                      <Badge variant="outline" className="text-xs">
+                        {character.role}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">{character.personality}</p>
+                    <p className="text-xs text-muted-foreground">Voice: {character.voiceProfile}</p>
+                    {character.costumeSuggestion && (
+                      <p className="text-xs text-muted-foreground">Costume: {character.costumeSuggestion}</p>
+                    )}
+                  </div>
                 ))}
               </div>
             </div>
