@@ -12,21 +12,30 @@ export class RunwayMLProvider extends BaseVideoProvider {
       
       console.log(`Generating video using runwayml provider`);
       
+      const url = `${this.config.baseUrl || 'https://api.runway.team/v1'}/image_to_video`;
+      const headers = {
+        'Authorization': `Bearer ${this.config.apiKey}`,
+        'Content-Type': 'application/json'
+      };
+      const body = {
+        prompt: prompt,
+        duration: Math.min(request.duration || 10, 10),
+        model: 'gen3a_turbo',
+        watermark: false,
+        enhance_prompt: true,
+        seed: Math.floor(Math.random() * 2147483647)
+      };
+      
+      console.log('RunwayML API Request Details:');
+      console.log('URL:', url);
+      console.log('Headers:', JSON.stringify(headers, null, 2));
+      console.log('Body:', JSON.stringify(body, null, 2));
+      
       // RunwayML Gen-3 API endpoint - back to original endpoint with proper auth
-      const response = await fetch(`${this.config.baseUrl || 'https://api.runway.team/v1'}/image_to_video`, {
+      const response = await fetch(url, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.config.apiKey}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          prompt: prompt,
-          duration: Math.min(request.duration || 10, 10),
-          model: 'gen3a_turbo',
-          watermark: false,
-          enhance_prompt: true,
-          seed: Math.floor(Math.random() * 2147483647)
-        })
+        headers,
+        body: JSON.stringify(body)
       });
 
       console.log(`RunwayML API response status: ${response.status}`);
