@@ -13,7 +13,14 @@ export class RunwayMLProvider extends BaseVideoProvider {
       console.log(`Generating video using runwayml provider`);
       
       // First, get authentication token using X-API-Key
-      const authToken = await this.getAuthToken();
+      let authToken;
+      try {
+        authToken = await this.getAuthToken();
+        console.log('Successfully obtained auth token for video generation');
+      } catch (authError) {
+        console.error('Authentication failed:', authError);
+        throw new Error(`Authentication failed: ${authError.message}`);
+      }
       
       // Use correct text-to-video endpoint with Bearer token
       const url = `${this.config.baseUrl || 'https://api.runway.team/v1'}/text_to_video`;
@@ -34,6 +41,7 @@ export class RunwayMLProvider extends BaseVideoProvider {
       console.log('URL:', url);
       console.log('Headers:', JSON.stringify(headers, null, 2));
       console.log('Body:', JSON.stringify(body, null, 2));
+      console.log('Auth token obtained:', !!authToken);
       
       // RunwayML Gen-3 API endpoint - back to original endpoint with proper auth
       const response = await fetch(url, {
@@ -179,6 +187,8 @@ export class RunwayMLProvider extends BaseVideoProvider {
 
   private async getAuthToken(): Promise<string> {
     try {
+      console.log('RunwayML: Getting authentication token...');
+      
       // Get authentication token using X-API-Key
       const response = await fetch(`${this.config.baseUrl || 'https://api.runway.team/v1'}/auth/token`, {
         method: 'POST',
@@ -188,13 +198,26 @@ export class RunwayMLProvider extends BaseVideoProvider {
         }
       });
 
+      console.log(`RunwayML auth response status: ${response.status}`);
+      
       if (!response.ok) {
-        throw new Error(`Auth failed: ${response.status} ${response.statusText}`);
+        const errorText = await response.text();
+        console.log(`RunwayML auth error: ${response.status} ${response.statusText}`, errorText);
+        throw new Error(`Auth failed: ${response.status} ${response.statusText}: ${errorText}`);
       }
 
       const result = await response.json();
-      return result.access_token || result.token;
+      console.log('RunwayML auth response keys:', Object.keys(result));
+      
+      const token = result.access_token || result.token;
+      if (!token) {
+        throw new Error(`No token found in auth response: ${JSON.stringify(result)}`);
+      }
+      
+      console.log(`RunwayML: Successfully obtained auth token (length: ${token.length})`);
+      return token;
     } catch (error: any) {
+      console.error('RunwayML authentication failed:', error);
       throw new Error(`RunwayML authentication failed: ${error.message}`);
     }
   }
