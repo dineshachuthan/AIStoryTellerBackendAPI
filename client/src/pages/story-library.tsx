@@ -111,8 +111,10 @@ export default function StoryLibrary() {
     setConvertingStories(prev => new Set(prev).add(storyId));
     
     try {
-      const response = await apiRequest(`/api/stories/${storyId}/convert-to-template`, "POST", {
-        makePublic: true
+      const response = await apiRequest(`/api/stories/${storyId}/convert-to-template`, {
+        method: "POST",
+        body: JSON.stringify({ makePublic: true }),
+        headers: { "Content-Type": "application/json" }
       });
       
       toast({
@@ -142,7 +144,9 @@ export default function StoryLibrary() {
     setDeletingStories(prev => new Set(prev).add(storyId));
     
     try {
-      await apiRequest(`/api/stories/${storyId}/archive`, "PUT");
+      await apiRequest(`/api/stories/${storyId}/archive`, {
+        method: "PUT"
+      });
       
       toast({
         title: "Story Deleted",
@@ -250,7 +254,7 @@ export default function StoryLibrary() {
         </div>
 
         {/* Right Content Area */}
-        <div className="flex-1 p-4 pb-20 overflow-y-auto">
+        <div className="flex-1 p-4 pb-24 overflow-y-auto">
           {filteredStories.length === 0 ? (
             <div className="text-center py-12">
               <Book className="w-16 h-16 mx-auto text-gray-600 mb-4" />
@@ -352,25 +356,66 @@ export default function StoryLibrary() {
                               </Button>
                             </div>
                             
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => convertToCollaborative(story.id)}
-                              disabled={convertingStories.has(story.id)}
-                              className="w-full border-purple-600 text-purple-400 hover:bg-purple-900/20"
-                            >
-                              {convertingStories.has(story.id) ? (
-                                <>
-                                  <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-                                  Converting...
-                                </>
-                              ) : (
-                                <>
-                                  <Users className="w-4 h-4 mr-1" />
-                                  Convert to Collaborative
-                                </>
-                              )}
-                            </Button>
+                            <div className="flex space-x-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => convertToCollaborative(story.id)}
+                                disabled={convertingStories.has(story.id)}
+                                className="flex-1 border-purple-600 text-purple-400 hover:bg-purple-900/20"
+                              >
+                                {convertingStories.has(story.id) ? (
+                                  <>
+                                    <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                                    Converting...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Users className="w-4 h-4 mr-1" />
+                                    Convert to Collaborative
+                                  </>
+                                )}
+                              </Button>
+                              
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    disabled={deletingStories.has(story.id)}
+                                    className="border-red-600 text-red-400 hover:bg-red-900/20"
+                                  >
+                                    {deletingStories.has(story.id) ? (
+                                      <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                      <Trash2 className="w-4 h-4" />
+                                    )}
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent className="bg-dark-card border-gray-800">
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle className="text-white flex items-center">
+                                      <AlertTriangle className="w-5 h-5 mr-2 text-red-400" />
+                                      Delete Story
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription className="text-gray-400">
+                                      Are you sure you want to delete "{story.title}"? This will move the story to your archive. This action cannot be undone.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel className="bg-gray-700 text-gray-300 hover:bg-gray-600">
+                                      Cancel
+                                    </AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => deleteStory(story.id)}
+                                      className="bg-red-600 text-white hover:bg-red-700"
+                                    >
+                                      Delete Story
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
                           </div>
 
                           {story.isPublic ? (
