@@ -171,27 +171,7 @@ export class RunwayMLProvider extends BaseVideoProvider {
     return duration * baseRate * qualityMultiplier;
   }
 
-  private async getAuthToken(): Promise<string> {
-    try {
-      // Get authentication token using API key
-      const response = await fetch(`${this.config.baseUrl || 'https://api.runway.team/v1'}/auth/token`, {
-        method: 'POST',
-        headers: {
-          'X-API-Key': this.config.apiKey,
-          'Content-Type': 'application/json'
-        }
-      });
 
-      if (!response.ok) {
-        throw new Error(`Auth failed: ${response.status} ${response.statusText}`);
-      }
-
-      const result = await response.json();
-      return result.access_token || result.token;
-    } catch (error: any) {
-      throw new Error(`RunwayML authentication failed: ${error.message}`);
-    }
-  }
 
   private createPrompt(request: VideoGenerationRequest): string {
     let prompt = `${request.style || 'Cinematic'} style video: `;
