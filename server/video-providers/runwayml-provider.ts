@@ -38,10 +38,6 @@ export class RunwayMLProvider extends BaseVideoProvider {
         throw new Error(`RunwayML API error: ${response.status} ${response.statusText}: ${errorBody}`);
       }
 
-      if (!response.ok) {
-        throw new Error(`RunwayML API error: ${response.status} ${response.statusText}`);
-      }
-
       const result = await response.json();
       console.log(`RunwayML API response:`, JSON.stringify(result, null, 2));
       
