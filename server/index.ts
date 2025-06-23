@@ -4,6 +4,7 @@ import { setupVite, serveStatic, log } from "./vite";
 import { archetypeService } from "./character-archetype-service";
 import { collaborativeRoutes } from "./routes-collaborative";
 import videoRoutes from "./routes-video";
+import { registerVideoProviderRoutes } from "./routes-video-providers";
 
 const app = express();
 app.use(express.json());
@@ -47,6 +48,9 @@ app.use((req, res, next) => {
   
   // Add video generation routes
   app.use(videoRoutes);
+  
+  // Add video provider management routes
+  registerVideoProviderRoutes(app);
   
   // Initialize character archetypes after server starts (optional, with delay)
   setTimeout(() => {
