@@ -69,6 +69,25 @@ export default function StoryAnalysis() {
   }>({ narrative: false, roleplay: false });
   const [userVoiceEmotions, setUserVoiceEmotions] = useState<Record<string, boolean>>({});
   const [playingSample, setPlayingSample] = useState<string>("");
+  const [audioEnabled, setAudioEnabled] = useState(false);
+
+  // Enable audio context on first user interaction
+  const enableAudio = async () => {
+    if (!audioEnabled && typeof window !== 'undefined') {
+      try {
+        if (window.AudioContext || (window as any).webkitAudioContext) {
+          const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+          if (audioContext.state === 'suspended') {
+            await audioContext.resume();
+          }
+        }
+        setAudioEnabled(true);
+        console.log('Audio context enabled');
+      } catch (error) {
+        console.error('Failed to enable audio context:', error);
+      }
+    }
+  };
 
   // Handler for when user records an emotion voice
   const handleEmotionRecorded = (emotion: string, audioBlob: Blob) => {
@@ -81,6 +100,9 @@ export default function StoryAnalysis() {
 
   // Handler for playing emotion sample
   const handlePlayEmotionSample = async (emotion: string, intensity: number) => {
+    // Enable audio context on first interaction
+    await enableAudio();
+    
     setPlayingSample(emotion);
     try {
       console.log('Generating emotion sample:', { emotion, intensity });
@@ -129,16 +151,37 @@ export default function StoryAnalysis() {
           };
           
           try {
+            // Check if audio context is allowed
+            if (typeof window !== 'undefined' && window.AudioContext) {
+              const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+              if (audioContext.state === 'suspended') {
+                await audioContext.resume();
+              }
+            }
+            
+            // Set volume to ensure it's audible
+            audio.volume = 0.8;
+            
             await audio.play();
             console.log('Audio playback started successfully');
           } catch (playError) {
             console.error('Audio play error:', playError);
             setPlayingSample("");
-            toast({
-              title: "Playback Error",
-              description: "Could not play audio. Try clicking to interact with the page first.",
-              variant: "destructive",
-            });
+            
+            // Check if it's an autoplay policy error
+            if ((playError as any).name === 'NotAllowedError') {
+              toast({
+                title: "Audio Blocked",
+                description: "Browser blocked audio. Please click anywhere on the page first, then try again.",
+                variant: "destructive",
+              });
+            } else {
+              toast({
+                title: "Playback Error",
+                description: "Could not play audio. Check your speakers and volume.",
+                variant: "destructive",
+              });
+            }
           }
         } else {
           throw new Error('No audio URL in response');
@@ -458,7 +501,7 @@ export default function StoryAnalysis() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900" onClick={enableAudio}>
       <AppTopNavigation />
       
       <div className="container mx-auto px-4 py-8">
