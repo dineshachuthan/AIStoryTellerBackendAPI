@@ -548,20 +548,24 @@ export class VideoGenerationService {
 
   private async getRoleplayAnalysis(storyId: number): Promise<any> {
     try {
+      // Generate cache key for this story's roleplay analysis
+      const cacheKey = `roleplay-${storyId}`;
+      
       // Try to get existing roleplay analysis from database
       const [existingAnalysis] = await db
         .select()
         .from(aiAssetCache)
         .where(and(
-          eq(aiAssetCache.storyId, storyId),
+          eq(aiAssetCache.cacheKey, cacheKey),
           eq(aiAssetCache.assetType, 'roleplay_analysis')
         ))
         .limit(1);
 
-      if (existingAnalysis && existingAnalysis.content) {
-        return typeof existingAnalysis.content === 'string' 
-          ? JSON.parse(existingAnalysis.content) 
-          : existingAnalysis.content;
+      if (existingAnalysis && existingAnalysis.metadata) {
+        // The roleplay analysis should be stored in the metadata field
+        return typeof existingAnalysis.metadata === 'string' 
+          ? JSON.parse(existingAnalysis.metadata) 
+          : existingAnalysis.metadata;
       }
 
       // If no analysis exists, return basic structure
