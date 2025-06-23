@@ -315,18 +315,18 @@ export class VideoGenerationService {
   }
 
   private async loadAndValidateCharacterAssets(storyId: number): Promise<CharacterAssetOverride[]> {
-    // Try to get existing roleplay analysis via API request
+    // Import storage directly to avoid API authentication issues
+    const { storage } = await import("./storage");
     let characters: any[] = [];
     
     try {
-      // Make internal API call to get existing roleplay analysis
-      const response = await fetch(`http://localhost:5000/api/stories/${storyId}/roleplay`);
-      if (response.ok) {
-        const roleplayData = await response.json();
-        characters = roleplayData.characters || [];
+      // Try to get existing roleplay analysis from storage
+      const existingAnalysis = await storage.getStoryAnalysis(storyId, 'roleplay');
+      if (existingAnalysis && existingAnalysis.analysisData && existingAnalysis.analysisData.characters) {
+        characters = existingAnalysis.analysisData.characters || [];
         console.log(`Using existing roleplay analysis with ${characters.length} characters:`, characters.map(c => c.name));
       } else {
-        throw new Error('No existing roleplay analysis');
+        throw new Error('No existing roleplay analysis in storage');
       }
     } catch (error) {
       // Fall back to fresh analysis
