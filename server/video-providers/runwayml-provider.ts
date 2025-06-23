@@ -174,32 +174,58 @@ export class RunwayMLProvider extends BaseVideoProvider {
 
 
   private createPrompt(request: VideoGenerationRequest): string {
-    let prompt = `${request.style || 'Cinematic'} style video: `;
+    let prompt = `${request.style || 'Cinematic'} style video adaptation of "${request.title}". `;
     
-    // Add main narrative
-    prompt += `${request.title}. `;
-    
-    // Add character descriptions
+    // Add detailed character information with voice and appearance
     if (request.characters.length > 0) {
-      const characterDesc = request.characters.map(c => 
-        `${c.name}: ${c.description}`
-      ).join(', ');
-      prompt += `Characters: ${characterDesc}. `;
+      prompt += `CHARACTERS: `;
+      const characterDetails = request.characters.map(c => {
+        let charDesc = `${c.name} - ${c.description || 'main character'}`;
+        if (c.imageUrl) {
+          charDesc += ` (custom appearance defined)`;
+        }
+        if (c.voiceUrl) {
+          charDesc += ` (custom voice provided)`;
+        }
+        return charDesc;
+      }).join('; ');
+      prompt += `${characterDetails}. `;
     }
 
-    // Add scene context from first scene
+    // Add comprehensive scene information from roleplay analysis
     if (request.scenes.length > 0) {
-      const firstScene = request.scenes[0];
-      prompt += `Scene: ${firstScene.description}. `;
-      
-      if (firstScene.backgroundDescription) {
-        prompt += `Setting: ${firstScene.backgroundDescription}. `;
-      }
+      prompt += `SCENES: `;
+      const sceneDetails = request.scenes.map((scene, index) => {
+        let sceneDesc = `Scene ${index + 1}: ${scene.title || scene.description}`;
+        
+        // Add dialogue context if available
+        if (scene.dialogues && scene.dialogues.length > 0) {
+          const keyDialogue = scene.dialogues.slice(0, 2).map(d => 
+            `${d.character}: "${d.text.substring(0, 50)}${d.text.length > 50 ? '...' : ''}"`
+          ).join(', ');
+          sceneDesc += ` - Key dialogue: ${keyDialogue}`;
+        }
+        
+        // Add background/setting
+        if (scene.backgroundDescription) {
+          sceneDesc += ` - Setting: ${scene.backgroundDescription}`;
+        }
+        
+        return sceneDesc;
+      }).join('; ');
+      prompt += `${sceneDetails}. `;
     }
 
-    // Add story excerpt for context
-    const excerpt = request.content.substring(0, 200);
-    prompt += `Story context: ${excerpt}...`;
+    // Add story narrative with emotional context
+    const storyExcerpt = request.content.substring(0, 400);
+    prompt += `NARRATIVE: ${storyExcerpt}${request.content.length > 400 ? '...' : ''}. `;
+    
+    // Add visual style instructions
+    prompt += `VISUAL STYLE: Professional ${request.style || 'cinematic'} quality with clear character focus, `;
+    prompt += `natural lighting, and immersive storytelling. `;
+    
+    // Add duration and pacing guidance
+    prompt += `Create a ${request.duration || 10}-second video that captures the essence of this story with smooth transitions and engaging visual narrative.`;
 
     return prompt;
   }

@@ -119,7 +119,14 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Asset Serving**: Optimized static file serving with proper headers
 
 ## Changelog
-- June 23, 2025. Initial setup
+- June 23, 2025: Enhanced video generation with comprehensive roleplay data integration
+  - Fixed RunwayML authentication to use X-API-Key header consistently
+  - Switched to /text_to_video endpoint for proper text-based prompts
+  - Enhanced prompt generation to include detailed character information, voice assignments, scene dialogues, and emotional context
+  - Improved scene building from roleplay analysis with rich dialogue extraction and mood inference
+  - Added comprehensive error handling to prevent empty video URLs in database
+  - Implemented emotion detection from dialogue text for enhanced video generation
+- June 23, 2025: Initial setup
 
 ## User Preferences
 

@@ -665,27 +665,110 @@ export class VideoGenerationService {
     if (!roleplayAnalysis || !roleplayAnalysis.scenes) {
       return [{
         title: "Main Scene",
-        description: "Primary story scene",
+        description: "Primary story scene with rich narrative",
         dialogues: [{
           character: "Narrator",
-          text: "Story content",
-          emotion: "neutral"
+          text: "Story content with emotional depth",
+          emotion: "engaged"
         }],
-        backgroundDescription: "Cinematic setting"
+        backgroundDescription: "Immersive cinematic setting with atmospheric details"
       }];
     }
 
-    return roleplayAnalysis.scenes.map((scene: any) => ({
-      title: scene.title || "Scene",
-      description: scene.description || "Story scene",
-      dialogues: scene.dialogues || [{
+    return roleplayAnalysis.scenes.map((scene: any, index: number) => {
+      // Extract rich dialogue information with emotions
+      const enrichedDialogues = scene.dialogues?.map((dialogue: any) => ({
+        character: dialogue.character || dialogue.speaker || "Character",
+        text: dialogue.text || dialogue.content || dialogue.line || "Scene dialogue",
+        emotion: dialogue.emotion || dialogue.mood || this.inferEmotionFromText(dialogue.text) || "neutral"
+      })) || [{
         character: "Narrator",
-        text: scene.content || "Scene content",
-        emotion: "neutral"
-      }],
-      backgroundDescription: scene.setting || "Cinematic environment",
-      duration: 5 // Default scene duration
-    }));
+        text: scene.content || scene.description || "Scene narration",
+        emotion: scene.mood || "storytelling"
+      }];
+
+      // Create comprehensive scene description
+      const sceneDescription = this.buildRichSceneDescription(scene, index + 1);
+      
+      return {
+        title: scene.title || scene.name || `Scene ${index + 1}`,
+        description: sceneDescription,
+        dialogues: enrichedDialogues,
+        backgroundDescription: scene.setting || scene.location || scene.background || 
+          this.generateContextualBackground(scene, enrichedDialogues),
+        duration: Math.min(scene.duration || 8, 15), // 8-15 seconds per scene
+        mood: scene.mood || this.inferSceneMood(enrichedDialogues),
+        characters: scene.characters || this.extractSceneCharacters(enrichedDialogues)
+      };
+    });
+  }
+
+  private buildRichSceneDescription(scene: any, sceneNumber: number): string {
+    let description = `Scene ${sceneNumber}: `;
+    
+    if (scene.description) {
+      description += scene.description;
+    } else if (scene.content) {
+      description += scene.content.substring(0, 100) + (scene.content.length > 100 ? '...' : '');
+    } else {
+      description += "Dynamic story scene with character interaction";
+    }
+    
+    // Add emotional context if available
+    if (scene.mood || scene.emotion) {
+      description += ` (${scene.mood || scene.emotion} tone)`;
+    }
+    
+    return description;
+  }
+
+  private inferEmotionFromText(text: string): string {
+    if (!text) return "neutral";
+    
+    const emotionKeywords = {
+      excited: ['excited', 'amazing', 'wonderful', 'fantastic', 'great'],
+      sad: ['sad', 'crying', 'tears', 'sorrow', 'grief'],
+      angry: ['angry', 'furious', 'mad', 'rage', 'frustrated'],
+      fearful: ['scared', 'afraid', 'terrified', 'fear', 'nervous'],
+      surprised: ['surprised', 'shocked', 'amazed', 'stunned'],
+      confident: ['confident', 'determined', 'strong', 'powerful'],
+      gentle: ['gentle', 'soft', 'kind', 'caring', 'tender']
+    };
+
+    const lowerText = text.toLowerCase();
+    for (const [emotion, keywords] of Object.entries(emotionKeywords)) {
+      if (keywords.some(keyword => lowerText.includes(keyword))) {
+        return emotion;
+      }
+    }
+    
+    return "neutral";
+  }
+
+  private inferSceneMood(dialogues: any[]): string {
+    const emotions = dialogues.map(d => d.emotion).filter(e => e !== "neutral");
+    if (emotions.length === 0) return "narrative";
+    
+    // Return the most common emotion or the first one
+    return emotions[0] || "narrative";
+  }
+
+  private extractSceneCharacters(dialogues: any[]): string[] {
+    return [...new Set(dialogues.map(d => d.character).filter(c => c !== "Narrator"))];
+  }
+
+  private generateContextualBackground(scene: any, dialogues: any[]): string {
+    // Generate background based on scene content and dialogue
+    const characters = this.extractSceneCharacters(dialogues);
+    const hasMultipleCharacters = characters.length > 1;
+    
+    if (hasMultipleCharacters) {
+      return "Interactive scene with multiple characters in a cinematic environment";
+    } else if (characters.length === 1) {
+      return `Focused scene featuring ${characters[0]} in an atmospheric setting`;
+    } else {
+      return "Narrative scene with immersive storytelling atmosphere";
+    }
   }
 
   private async updateCache(cacheKey: string, result: VideoGenerationResult): Promise<void> {
