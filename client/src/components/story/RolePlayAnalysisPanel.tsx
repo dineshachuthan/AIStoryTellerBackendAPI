@@ -97,10 +97,17 @@ export function RolePlayAnalysisPanel({
   onAnalysisGenerated
 }: RolePlayAnalysisPanelProps) {
   const { toast } = useToast();
-  const [analysis, setAnalysis] = useState<RolePlayAnalysis | null>(null);
+  const [analysis, setAnalysis] = useState<RolePlayAnalysis | null>(existingAnalysis);
   const [isGenerating, setIsGenerating] = useState(false);
   const [editingScene, setEditingScene] = useState<number | null>(null);
   const [editedScene, setEditedScene] = useState<RolePlayScene | null>(null);
+
+  // Update analysis when existingAnalysis prop changes
+  useEffect(() => {
+    if (existingAnalysis) {
+      setAnalysis(existingAnalysis);
+    }
+  }, [existingAnalysis]);
   
   // Invitation system state
   const [characterInvitations, setCharacterInvitations] = useState<Map<string, {
@@ -1023,7 +1030,7 @@ export function RolePlayAnalysisPanel({
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
-          {videoResult ? (
+          {videoResult && videoResult.videoUrl && videoResult.duration > 0 ? (
             <div className="space-y-4">
               {videoResult.status === 'pending_approval' ? (
                 <>
@@ -1031,15 +1038,13 @@ export function RolePlayAnalysisPanel({
                     <AlertCircle className="w-4 h-4" />
                     Video generated - pending your approval
                   </div>
-                  {videoResult.videoUrl && (
-                    <VideoPlayer 
-                      videoUrl={videoResult.videoUrl} 
-                      thumbnailUrl={videoResult.thumbnailUrl}
-                      title="Roleplay Cinematic Video (Preview)"
-                      duration={videoResult.duration}
-                      className="w-full rounded-lg"
-                    />
-                  )}
+                  <VideoPlayer 
+                    videoUrl={videoResult.videoUrl} 
+                    thumbnailUrl={videoResult.thumbnailUrl}
+                    title="Roleplay Cinematic Video (Preview)"
+                    duration={videoResult.duration}
+                    className="w-full rounded-lg"
+                  />
                   <div className="flex gap-2">
                     <Button
                       onClick={approveVideo}
@@ -1088,10 +1093,14 @@ export function RolePlayAnalysisPanel({
               )}
             </div>
           ) : (
-            <div className="text-center py-6">
+            <div className="text-center py-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
+              <Film className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+              <p className="text-gray-500 dark:text-gray-400 mb-4">
+                No video available yet
+              </p>
               <Button
                 onClick={handleGenerateVideoClick}
-                disabled={generatingVideo}
+                disabled={generatingVideo || !analysis?.characters?.length}
                 className="bg-purple-600 hover:bg-purple-700"
               >
                 {generatingVideo ? (
@@ -1101,14 +1110,16 @@ export function RolePlayAnalysisPanel({
                   </>
                 ) : (
                   <>
-                    <Film className="w-4 h-4 mr-2" />
+                    <Play className="w-4 h-4 mr-2" />
                     Generate Cinematic Video
                   </>
                 )}
               </Button>
-              <p className="text-xs text-muted-foreground mt-2">
-                Uses RunwayML Gen-3 • Maximum 3 minutes • Cached to save costs
-              </p>
+              {!analysis?.characters?.length && (
+                <p className="text-xs text-gray-400 mt-2">
+                  Characters required for video generation
+                </p>
+              )}
             </div>
           )}
         </CardContent>
