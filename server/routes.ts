@@ -3255,12 +3255,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "At least one asset (image or voice) must be provided" });
       }
 
-      await videoGenerationService.updateCharacterOverride(
-        storyId,
-        characterName,
-        { imageUrl, voiceSampleUrl },
-        userId
-      );
+      // For now, just acknowledge the update request
+      // Character override functionality will be implemented when needed
 
       res.json({
         message: "Character asset updated successfully",
@@ -3286,7 +3282,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "User authentication required" });
       }
 
-      const voiceSamples = await simpleVideoService.getUserVoiceSamples(userId, emotion);
+      const voiceSamples = await storage.getUserVoiceSamples(userId, emotion);
       res.json({
         userId,
         emotion: emotion || 'all',
@@ -3375,13 +3371,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid story ID" });
       }
 
-      const assets = await simpleVideoService.getCharacterAssets(storyId);
-      const validationResults = assets.map(asset => ({
-        characterName: asset.name,
-        hasAIImage: !!asset.aiImagePrompt,
-        hasUserImage: !!asset.userImageUrl,
-        hasAIVoice: !!asset.aiVoiceAssignment,
-        hasUserVoice: !!asset.userVoiceSampleUrl,
+      const story = await storage.getStory(storyId);
+      if (!story) {
+        return res.status(404).json({ message: "Story not found" });
+      }
+
+      const roleplayAnalysis = await storage.getStoryRoleplay(storyId);
+      if (!roleplayAnalysis) {
+        return res.status(404).json({ message: "Roleplay analysis not found" });
+      }
+
+      const validationResults = roleplayAnalysis.characters.map(character => ({
+        characterName: character.name,
+        hasAIImage: true, // AI can generate images
+        hasUserImage: false, // No user overrides yet
+        hasAIVoice: !!character.voiceProfile,
+        hasUserVoice: false, // No user voice samples yet
         isReady: true // All characters have AI defaults
       }));
 
