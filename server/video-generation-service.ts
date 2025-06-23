@@ -47,12 +47,49 @@ export class VideoGenerationService {
   private readonly CACHE_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days
   private readonly ASSET_VALIDATION_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours
   private readonly MAX_ROLEPLAY_DURATION = 180; // 3 minutes maximum for roleplay videos to control costs
+  
+  // STRICT COST PROTECTION - CANNOT BE EXCEEDED WITHOUT AUTHORIZATION
+  private readonly ABSOLUTE_MAX_DURATION = 20; // Hard limit: 20 seconds maximum
+  private readonly COST_PROTECTION_ENABLED = true; // Master switch for cost protection
 
   /**
    * Generate video with strict caching to prevent unnecessary API calls
    * Priority: Database -> Cache -> New Generation (only if explicitly requested)
    */
+  /**
+   * COST PROTECTION: Validate duration limits before any generation
+   */
+  private validateCostProtection(request: VideoGenerationRequest): void {
+    if (!this.COST_PROTECTION_ENABLED) return;
+
+    const requestedDuration = request.duration || 10;
+    
+    if (requestedDuration > this.ABSOLUTE_MAX_DURATION) {
+      throw new Error(
+        `COST PROTECTION: Video duration ${requestedDuration}s exceeds absolute maximum of ${this.ABSOLUTE_MAX_DURATION}s. ` +
+        `Contact administrator to authorize longer durations. This limit protects against unexpected costs.`
+      );
+    }
+
+    console.log(`✓ Cost protection validated: ${requestedDuration}s <= ${this.ABSOLUTE_MAX_DURATION}s maximum`);
+  }
+
+  /**
+   * Get duration limits for API access
+   */
+  getDurationLimits() {
+    return {
+      default: 10,
+      minimum: 3,
+      maximum: this.ABSOLUTE_MAX_DURATION,
+      allowUserOverride: false // Disabled for cost protection
+    };
+  }
+
   async generateVideo(request: VideoGenerationRequest, forceRegenerate: boolean = false): Promise<VideoGenerationResult> {
+    // FIRST: Always validate cost protection before any operations
+    this.validateCostProtection(request);
+    
     const cacheKey = await this.generateCacheKey(request);
     
     try {

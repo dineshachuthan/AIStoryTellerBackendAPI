@@ -34,7 +34,7 @@ router.post("/api/videos/generate", requireAuth, async (req: any, res) => {
       storyId: validatedRequest.storyId,
       userId,
       quality: validatedRequest.quality,
-      duration: 180 // Maximum 3 minutes to control RunwayML costs
+      duration: 10 // Maximum 10 seconds with 20-second hard limit enforced by cost protection
     }, validatedRequest.forceRegenerate);
 
     if (result.cacheHit) {

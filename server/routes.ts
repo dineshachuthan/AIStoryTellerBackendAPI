@@ -3184,12 +3184,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Story ID and authentication required" });
       }
 
-      // Use proper video generation service
+      // Use proper video generation service with strict duration control
       const { VideoGenerationService } = await import("./video-generation-service");
       const videoService = new VideoGenerationService();
       const result = await videoService.generateVideo({
         storyId: parseInt(storyId),
-        userId
+        userId,
+        duration: 10 // Default 10 seconds, enforced by cost protection
       });
 
       res.json(result);
@@ -3214,12 +3215,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`Generating video for story ${storyId} by user ${userId}`);
 
-      // Use proper video generation service
+      // Use proper video generation service with strict duration control
       const { VideoGenerationService } = await import("./video-generation-service");
       const videoService = new VideoGenerationService();
       const result = await videoService.generateVideo({
         storyId,
         userId,
+        duration: 10, // Default 10 seconds, enforced by cost protection
         quality: 'standard'
       });
 
