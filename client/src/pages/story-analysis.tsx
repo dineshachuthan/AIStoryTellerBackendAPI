@@ -269,6 +269,7 @@ export default function StoryAnalysis() {
         }
         
         console.log('Roleplay analysis completed successfully');
+        console.log('Roleplay response data:', rolePlayResponse);
         setRolePlayAnalysis(rolePlayResponse);
         setAnalysisProgress(prev => ({ ...prev, roleplay: true }));
       } catch (roleplayError: any) {

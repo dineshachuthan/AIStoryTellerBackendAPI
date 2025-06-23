@@ -104,7 +104,9 @@ export function RolePlayAnalysisPanel({
 
   // Update analysis when existingAnalysis prop changes
   useEffect(() => {
+    console.log('RolePlayAnalysisPanel - existingAnalysis prop:', existingAnalysis);
     if (existingAnalysis) {
+      console.log('Setting analysis from existingAnalysis:', existingAnalysis);
       setAnalysis(existingAnalysis);
     }
   }, [existingAnalysis]);
