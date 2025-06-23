@@ -240,12 +240,12 @@ export function RolePlayAnalysisPanel({
       
       if (result.cacheHit) {
         toast({
-          title: "Video Retrieved",
+          title: "Video Retrieved from Library",
           description: "Using existing video to save costs",
         });
       } else {
         toast({
-          title: "Video Generated Successfully",
+          title: "Video Generated Successfully", 
           description: `New 3-minute video created with RunwayML`,
         });
       }

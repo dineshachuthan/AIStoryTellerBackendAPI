@@ -65,12 +65,17 @@ export class VideoGenerationService {
           .orderBy(desc(videoGenerations.createdAt))
           .limit(1);
 
-        if (existingVideo && existingVideo.status === 'completed' && existingVideo.videoUrl) {
+        if (existingVideo && 
+            existingVideo.status === 'completed' && 
+            existingVideo.videoUrl && 
+            existingVideo.videoUrl.trim() !== '' &&
+            existingVideo.duration && 
+            existingVideo.duration > 0) {
           console.log(`COST OPTIMIZATION: Using existing video for story ${request.storyId}, preventing RunwayML API call`);
           return {
             videoUrl: existingVideo.videoUrl,
             thumbnailUrl: existingVideo.thumbnailUrl || '',
-            duration: existingVideo.duration || 0,
+            duration: existingVideo.duration,
             status: 'completed',
             cacheHit: true
           };
@@ -209,7 +214,25 @@ export class VideoGenerationService {
         async () => Promise.resolve(null),
         { ttl: this.CACHE_DURATION }
       );
-      return cached;
+      
+      // Validate cached video data before returning
+      if (cached && 
+          cached.videoUrl && 
+          cached.videoUrl.trim() !== '' && 
+          cached.duration && 
+          cached.duration > 0 &&
+          cached.status === 'completed') {
+        console.log(`Valid video found in cache for key: ${cacheKey.substring(0, 20)}...`);
+        return cached;
+      }
+      
+      // Invalid cache data - clear it
+      if (cached) {
+        console.log(`Invalid cache data found, clearing for key: ${cacheKey.substring(0, 20)}...`);
+        await videoCache.clearAll(); // Clear corrupted cache
+      }
+      
+      return null;
     } catch (error: any) {
       console.warn("Cache check failed:", error);
       return null;
@@ -230,14 +253,21 @@ export class VideoGenerationService {
       .orderBy(desc(videoGenerations.createdAt))
       .limit(1);
 
-    if (!generation || !generation.videoUrl) {
+    // Validate database entry has valid video data
+    if (!generation || 
+        !generation.videoUrl || 
+        generation.videoUrl.trim() === '' ||
+        !generation.duration ||
+        generation.duration <= 0) {
+      console.log(`No valid video found in database for story ${request.storyId}`);
       return null;
     }
 
+    console.log(`Valid video found in database for story ${request.storyId}`);
     return {
       videoUrl: generation.videoUrl,
       thumbnailUrl: generation.thumbnailUrl || '',
-      duration: generation.duration || 0,
+      duration: generation.duration,
       status: 'completed',
       cacheHit: false
     };
