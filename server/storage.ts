@@ -46,6 +46,8 @@ export interface IStorage {
   createStory(story: InsertStory): Promise<Story>;
   updateStory(id: number, story: Partial<InsertStory>): Promise<Story | undefined>;
   deleteStory(id: number): Promise<void>;
+  archiveStory(id: number): Promise<Story | undefined>;
+  getArchivedStories(userId: string): Promise<Story[]>;
   
   // Story Characters
   getStoryCharacters(storyId: number): Promise<StoryCharacter[]>;
@@ -297,6 +299,49 @@ export class DatabaseStorage implements IStorage {
 
   async deleteStory(id: number): Promise<void> {
     await db.delete(stories).where(eq(stories.id, id));
+  }
+
+  async archiveStory(id: number): Promise<Story | undefined> {
+    const [archivedStory] = await db
+      .update(stories)
+      .set({ 
+        isArchived: true, 
+        archivedAt: new Date(),
+        updatedAt: new Date()
+      })
+      .where(eq(stories.id, id))
+      .returning();
+
+    if (archivedStory) {
+      // Archive related story characters
+      await db
+        .update(storyCharacters)
+        .set({ 
+          isArchived: true, 
+          archivedAt: new Date()
+        })
+        .where(eq(storyCharacters.storyId, id));
+
+      // Archive related story analyses
+      await db
+        .update(storyAnalyses)
+        .set({ 
+          isArchived: true, 
+          archivedAt: new Date(),
+          updatedAt: new Date()
+        })
+        .where(eq(storyAnalyses.storyId, id));
+    }
+
+    return archivedStory || undefined;
+  }
+
+  async getArchivedStories(userId: string): Promise<Story[]> {
+    return await db
+      .select()
+      .from(stories)
+      .where(and(eq(stories.authorId, userId), eq(stories.isArchived, true)))
+      .orderBy(desc(stories.archivedAt));
   }
 
   async getStoryCharacters(storyId: number): Promise<StoryCharacter[]> {
