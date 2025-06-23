@@ -7,7 +7,7 @@ export const defaultVideoConfig: VideoProviderConfiguration = {
       enabled: true,
       config: {
         apiKey: process.env.RUNWAYML_API_KEY || '',
-        baseUrl: 'https://api.runwayml.com',
+        baseUrl: 'https://dev-api.runwayml.com',
         timeout: 60000,
         retryCount: 2
       },
