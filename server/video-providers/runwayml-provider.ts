@@ -14,7 +14,7 @@ export class RunwayMLProvider extends BaseVideoProvider {
       
       const url = `${this.config.baseUrl || 'https://api.runway.team/v1'}/image_to_video`;
       const headers = {
-        'Authorization': `Bearer ${this.config.apiKey}`,
+        'X-API-Key': this.config.apiKey,
         'Content-Type': 'application/json'
       };
       const body = {
