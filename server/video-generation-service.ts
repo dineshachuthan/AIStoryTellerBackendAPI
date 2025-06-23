@@ -46,32 +46,46 @@ export class VideoGenerationService {
   private readonly MAX_RETRIES = 3;
   private readonly CACHE_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days
   private readonly ASSET_VALIDATION_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours
+  private readonly MAX_ROLEPLAY_DURATION = 180; // 3 minutes maximum for roleplay videos to control costs
 
   /**
-   * Generate video with smart caching and user overrides
-   * Priority: Cache -> Database -> File Storage -> OpenAI (last resort)
+   * Generate video with strict caching to prevent unnecessary API calls
+   * Priority: Database -> Cache -> New Generation (only if explicitly requested)
    */
-  async generateVideo(request: VideoGenerationRequest): Promise<VideoGenerationResult> {
+  async generateVideo(request: VideoGenerationRequest, forceRegenerate: boolean = false): Promise<VideoGenerationResult> {
     const cacheKey = await this.generateCacheKey(request);
     
     try {
-      // Step 1: Check cache first
+      // CRITICAL: Always check database first to prevent duplicate API calls
+      if (!forceRegenerate) {
+        const [existingVideo] = await db
+          .select()
+          .from(videoGenerations)
+          .where(eq(videoGenerations.storyId, request.storyId))
+          .orderBy(desc(videoGenerations.createdAt))
+          .limit(1);
+
+        if (existingVideo && existingVideo.status === 'completed' && existingVideo.videoUrl) {
+          console.log(`COST OPTIMIZATION: Using existing video for story ${request.storyId}, preventing RunwayML API call`);
+          return {
+            videoUrl: existingVideo.videoUrl,
+            thumbnailUrl: existingVideo.thumbnailUrl || '',
+            duration: existingVideo.duration || 0,
+            status: 'completed',
+            cacheHit: true
+          };
+        }
+      }
+
+      // Step 1: Check cache if no database entry
       const cachedResult = await this.checkCache(cacheKey);
-      if (cachedResult) {
+      if (cachedResult && !forceRegenerate) {
         console.log(`Video cache hit for story ${request.storyId}`);
         return { ...cachedResult, cacheHit: true };
       }
 
-      // Step 2: Check database for existing generation
-      const existingGeneration = await this.checkDatabase(request);
-      if (existingGeneration) {
-        console.log(`Video found in database for story ${request.storyId}`);
-        await this.updateCache(cacheKey, existingGeneration);
-        return { ...existingGeneration, cacheHit: false };
-      }
-
-      // Step 3: Generate new video
-      console.log(`Generating new video for story ${request.storyId}`);
+      // Step 2: Generate new video ONLY if explicitly requested or no existing video
+      console.log(`Generating new video for story ${request.storyId} - API COST INCURRED`);
       const result = await this.generateNewVideo(request, cacheKey);
       return result;
 
@@ -522,7 +536,7 @@ export class VideoGenerationService {
         scenes: this.buildScenesFromRoleplay(roleplayAnalysis),
         style: 'cinematic',
         quality: request.quality === 'high' ? 'high' : 'standard',
-        duration: request.duration || 10,
+        duration: Math.min(request.duration || this.MAX_ROLEPLAY_DURATION, this.MAX_ROLEPLAY_DURATION),
         aspectRatio: '16:9'
       };
 

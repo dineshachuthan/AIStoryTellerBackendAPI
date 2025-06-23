@@ -8,7 +8,7 @@ import { z } from "zod";
 
 const router = Router();
 
-// Request video generation
+// Request video generation with strict cost control
 router.post("/api/videos/generate", requireAuth, async (req: any, res) => {
   try {
     const requestSchema = z.object({
@@ -17,7 +17,8 @@ router.post("/api/videos/generate", requireAuth, async (req: any, res) => {
         imageUrl: z.string().optional(),
         voiceSampleUrl: z.string().optional()
       })).optional(),
-      quality: z.enum(['draft', 'standard', 'high']).default('standard')
+      quality: z.enum(['draft', 'standard', 'high']).default('standard'),
+      forceRegenerate: z.boolean().default(false)
     });
 
     const validatedRequest = requestSchema.parse(req.body);
@@ -27,11 +28,20 @@ router.post("/api/videos/generate", requireAuth, async (req: any, res) => {
       return res.status(401).json({ message: "User not authenticated" });
     }
 
+    console.log(`Video generation request for story ${validatedRequest.storyId}, forceRegenerate: ${validatedRequest.forceRegenerate}`);
+
     const result = await videoGenerationService.generateVideo({
       storyId: validatedRequest.storyId,
       userId,
-      quality: validatedRequest.quality
-    });
+      quality: validatedRequest.quality,
+      duration: 180 // Maximum 3 minutes to control RunwayML costs
+    }, validatedRequest.forceRegenerate);
+
+    if (result.cacheHit) {
+      console.log(`COST OPTIMIZATION: Used existing video for story ${validatedRequest.storyId}`);
+    } else {
+      console.log(`API COST INCURRED: Generated new video for story ${validatedRequest.storyId}`);
+    }
 
     res.json(result);
   } catch (error: any) {
