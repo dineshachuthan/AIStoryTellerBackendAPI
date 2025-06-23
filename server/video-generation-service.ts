@@ -322,9 +322,11 @@ export class VideoGenerationService {
     try {
       // Try to get existing roleplay analysis from storage
       const existingAnalysis = await storage.getStoryAnalysis(storyId, 'roleplay');
-      if (existingAnalysis && existingAnalysis.analysisData && existingAnalysis.analysisData.characters) {
-        characters = existingAnalysis.analysisData.characters || [];
-        console.log(`Using existing roleplay analysis with ${characters.length} characters:`, characters.map(c => c.name));
+      if (existingAnalysis && existingAnalysis.analysisData) {
+        const roleplayData = existingAnalysis.analysisData as any;
+        // Handle both direct characters array and nested structure
+        characters = roleplayData.characters || [];
+        console.log(`Using existing roleplay analysis with ${characters.length} characters:`, characters.map((c: any) => c.name || c.characterName || 'Unnamed'));
       } else {
         throw new Error('No existing roleplay analysis in storage');
       }

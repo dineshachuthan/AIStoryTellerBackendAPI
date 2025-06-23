@@ -3155,7 +3155,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // VIDEO GENERATION API ENDPOINTS
   // =============================================================================
 
-  // Generate video with user overrides
+  // Generate video with user overrides (POST)
   app.post("/api/videos/generate", requireAuth, async (req, res) => {
     try {
       const { storyId, characterOverrides, quality = 'standard' } = req.body;
@@ -3173,6 +3173,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId
       });
 
+      res.json(result);
+    } catch (error: any) {
+      console.error("Video generation failed:", error);
+      res.status(500).json({ 
+        message: "Video generation failed", 
+        error: error?.message || 'Unknown error'
+      });
+    }
+  });
+
+  // Generate video (GET route for frontend compatibility)
+  app.get("/api/videos/generate/:storyId", requireAuth, async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.storyId);
+      const userId = (req.user as any)?.id;
+
+      if (!storyId || !userId) {
+        return res.status(400).json({ message: "Story ID and authentication required" });
+      }
+
+      console.log(`Generating video for story ${storyId} by user ${userId}`);
+
+      // Use proper video generation service
+      const { VideoGenerationService } = await import("./video-generation-service");
+      const videoService = new VideoGenerationService();
+      const result = await videoService.generateVideo({
+        storyId,
+        userId,
+        quality: 'standard'
+      });
+
+      console.log(`Video generation completed for story ${storyId}`);
       res.json(result);
     } catch (error: any) {
       console.error("Video generation failed:", error);
