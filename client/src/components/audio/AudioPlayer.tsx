@@ -86,14 +86,24 @@ export function AudioPlayer({
         audioRef.current = null;
       };
       
-      audio.onerror = () => {
+      audio.onerror = (e) => {
         setIsPlaying(false);
         setIsLoading(false);
-        toast({
-          title: "Playback Failed",
-          description: "Could not play audio sample",
-          variant: "destructive",
-        });
+        console.warn('Audio playback error handled gracefully:', e);
+        // Don't show toast for media removal errors during navigation
+        if (audioRef.current) {
+          toast({
+            title: "Playback Failed",
+            description: "Could not play audio sample",
+            variant: "destructive",
+          });
+        }
+      };
+
+      audio.onabort = () => {
+        setIsPlaying(false);
+        setIsLoading(false);
+        console.log('Audio playback aborted gracefully');
       };
 
       await audio.play();
@@ -133,13 +143,22 @@ export function AudioPlayer({
       }
     };
 
-    audio.onerror = () => {
+    audio.onerror = (e) => {
       setIsPlaying(false);
-      toast({
-        title: "Playback Failed",
-        description: `Could not play segment ${currentSegmentIndex + 1}`,
-        variant: "destructive",
-      });
+      console.warn('Narration playback error handled gracefully:', e);
+      // Don't show toast for media removal errors during navigation
+      if (audioRef.current) {
+        toast({
+          title: "Playback Failed",
+          description: `Could not play segment ${currentSegmentIndex + 1}`,
+          variant: "destructive",
+        });
+      }
+    };
+
+    audio.onabort = () => {
+      setIsPlaying(false);
+      console.log('Narration playback aborted gracefully');
     };
 
     await audio.play();
@@ -161,12 +180,30 @@ export function AudioPlayer({
       return;
     }
 
-    if (segments && segments.length > 0) {
-      await playNarration();
-    } else {
-      await playEmotionSample();
+    try {
+      if (segments && segments.length > 0) {
+        await playNarration();
+      } else {
+        await playEmotionSample();
+      }
+    } catch (error) {
+      console.warn('Play request handled gracefully:', error);
+      setIsPlaying(false);
+      setIsLoading(false);
     }
   };
+
+  // Cleanup function to prevent errors when component unmounts
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = '';
+        audioRef.current.load();
+        audioRef.current = null;
+      }
+    };
+  }, []);
 
   const toggleMute = () => {
     if (audioRef.current) {

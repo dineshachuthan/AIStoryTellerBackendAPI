@@ -84,9 +84,9 @@ export class RunwayMLProvider extends BaseVideoProvider {
 
   async checkStatus(jobId: string): Promise<VideoGenerationResult> {
     try {
-      const response = await fetch(`${this.config.baseUrl || 'https://api.runwayml.com'}/v1/video/generations/${jobId}`, {
+      const response = await fetch(`${this.config.baseUrl || 'https://api.runway.team/v1'}/video/status/${jobId}`, {
         headers: {
-          'Authorization': `Bearer ${this.config.apiKey}`
+          'X-API-Key': this.config.apiKey
         }
       });
 
@@ -122,10 +122,10 @@ export class RunwayMLProvider extends BaseVideoProvider {
 
   async cancelGeneration(jobId: string): Promise<boolean> {
     try {
-      const response = await fetch(`${this.config.baseUrl || 'https://api.runwayml.com'}/v1/video/generations/${jobId}/cancel`, {
+      const response = await fetch(`${this.config.baseUrl || 'https://api.runway.team/v1'}/video/cancel/${jobId}`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${this.config.apiKey}`
+          'X-API-Key': this.config.apiKey
         }
       });
 
@@ -137,9 +137,9 @@ export class RunwayMLProvider extends BaseVideoProvider {
 
   async validateConfig(): Promise<boolean> {
     try {
-      const response = await fetch(`${this.config.baseUrl || 'https://api.runwayml.com'}/v1/account`, {
+      const response = await fetch(`${this.config.baseUrl || 'https://api.runway.team/v1'}/account`, {
         headers: {
-          'Authorization': `Bearer ${this.config.apiKey}`
+          'X-API-Key': this.config.apiKey
         }
       });
 
