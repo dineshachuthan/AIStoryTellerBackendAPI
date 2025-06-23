@@ -485,6 +485,7 @@ export class VideoGenerationService {
         storyId,
         sceneNumber: 1,
         title: "Main Scene",
+        content: content.substring(0, 1000), // Add content field
         description: "Primary story scene",
         dialogues: [{ character: "narrator", text: content.substring(0, 500) }],
         estimatedDuration: Math.min(Math.max(Math.floor(content.length / 10), 30), 300) // 30s to 5min
