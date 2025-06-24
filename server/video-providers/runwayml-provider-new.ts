@@ -1,10 +1,10 @@
 import { BaseVideoProvider, VideoGenerationRequest, VideoGenerationResult, ProviderConfig } from './base-provider';
-import RunwayML, { TaskFailedError } from '@runwayml/sdk';
 import { runwayMLConfig, RunwayMLConfig } from './runwayml-config';
 
 export class RunwayMLProvider extends BaseVideoProvider {
-  private client: RunwayML;
+  private apiKey: string;
   private runwayConfig: RunwayMLConfig;
+  private readonly API_BASE_URL = 'https://api.dev.runwayml.com';
 
   constructor(config: ProviderConfig) {
     super('runwayml', config);
@@ -13,28 +13,64 @@ export class RunwayMLProvider extends BaseVideoProvider {
       throw new Error('RunwayML API key is required but not provided');
     }
     
-    // Initialize RunwayML SDK client
-    try {
-      this.client = new RunwayML({
-        apiKey: config.apiKey
-      });
-      
-      // Verify client has required methods
-      if (!this.client.imageToVideo) {
-        console.error('RunwayML client missing required methods. Client structure:', Object.keys(this.client));
-        throw new Error('RunwayML client initialization failed - missing imageToVideo method');
-      }
-      
-    } catch (error) {
-      console.error('RunwayML client initialization error:', error);
-      throw new Error(`RunwayML client initialization failed: ${error.message}`);
-    }
-    
+    this.apiKey = config.apiKey;
     this.runwayConfig = runwayMLConfig;
     
     console.log('RunwayML provider initialized with API key:', config.apiKey ? 'present' : 'missing');
     console.log('RunwayML config loaded - API version:', this.runwayConfig.apiVersion);
-    console.log('RunwayML client methods available:', this.client.imageToVideo ? 'imageToVideo: yes' : 'imageToVideo: no');
+  }
+
+  /**
+   * Make authenticated API request to RunwayML
+   */
+  private async runwayApiRequest<T = any>(endpoint: string, options: {
+    method?: string;
+    body?: any;
+  } = {}): Promise<T> {
+    const { method = 'GET', body } = options;
+
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${this.apiKey}`,
+      'X-Runway-Version': this.runwayConfig.apiVersion,
+    };
+
+    const requestOptions: RequestInit = {
+      method,
+      headers,
+    };
+
+    if (body && (method === 'POST' || method === 'PUT')) {
+      requestOptions.body = JSON.stringify(body);
+    }
+
+    const url = `${this.API_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
+    console.log(`Making RunwayML API request: ${method} ${url}`);
+
+    const response = await fetch(url, requestOptions);
+
+    if (!response.ok) {
+      let errorData;
+      try {
+        errorData = await response.json();
+      } catch (e) {
+        errorData = { error: response.statusText || 'Unknown error' };
+      }
+
+      throw new Error(
+        JSON.stringify({
+          status: response.status,
+          statusText: response.statusText,
+          details: errorData,
+        })
+      );
+    }
+
+    if (response.status === 204) {
+      return {} as T;
+    }
+
+    return await response.json();
   }
 
   async generateVideo(request: VideoGenerationRequest): Promise<VideoGenerationResult> {
@@ -73,14 +109,11 @@ export class RunwayMLProvider extends BaseVideoProvider {
             console.log('Using cached image URL as fallback:', promptImage);
           }
           
-          if (!this.client.imageToVideo) {
-            throw new Error('RunwayML client imageToVideo method is not available');
-          }
-          
           console.log('Creating image-to-video task with prompt:', prompt.substring(0, 100) + '...');
           
-          const task = await this.client.imageToVideo
-            .create({
+          const task = await this.runwayApiRequest('/v1/image_to_video', {
+            method: 'POST',
+            body: {
               model: 'gen3a_turbo',
               promptImage: promptImage,
               promptText: prompt,
@@ -88,7 +121,8 @@ export class RunwayMLProvider extends BaseVideoProvider {
               seed: Math.floor(Math.random() * 2147483647),
               watermark: false,
               ratio: this.getValidAspectRatio(request.aspectRatio)
-            });
+            }
+          });
             
           console.log('RunwayML image-to-video task created, waiting for completion...');
             
@@ -133,22 +167,20 @@ export class RunwayMLProvider extends BaseVideoProvider {
           'Character images were found but failed to process, using text-to-video generation' : 
           'No character images found, using text-to-video generation');
 
-        // Use RunwayML SDK for text-to-video generation (using imageToVideo with no image)
-        if (!this.client.imageToVideo) {
-          throw new Error('RunwayML client imageToVideo method is not available');
-        }
-        
+        // Use RunwayML API for text-to-video generation
         console.log('Creating text-to-video task with prompt:', prompt.substring(0, 100) + '...');
         
-        const task = await this.client.imageToVideo
-          .create({
+        const task = await this.runwayApiRequest('/v1/image_to_video', {
+          method: 'POST',
+          body: {
             model: 'gen3a_turbo',
             promptText: prompt,
             duration: Math.min(request.duration || 10, 20),
             seed: Math.floor(Math.random() * 2147483647),
             watermark: false,
             ratio: this.getValidAspectRatio(request.aspectRatio)
-          });
+          }
+        });
           
         console.log('RunwayML task created, waiting for completion...');
 
@@ -183,13 +215,6 @@ export class RunwayMLProvider extends BaseVideoProvider {
 
     } catch (error: any) {
       console.error('RunwayML generation error:', error);
-      
-      if (error instanceof TaskFailedError) {
-        console.error('The video failed to generate.');
-        console.error('Task details:', error.taskDetails);
-        throw new Error(`Video generation failed: ${error.taskDetails?.error || 'Task failed'}`);
-      }
-      
       throw this.handleError(error);
     }
   }
@@ -200,13 +225,15 @@ export class RunwayMLProvider extends BaseVideoProvider {
 
     while (attempts < maxAttempts) {
       try {
-        const task = await this.client.tasks.retrieve(taskId);
+        const task = await this.runwayApiRequest(`/v1/tasks/${taskId}`);
         
         if (task.status === 'SUCCEEDED') {
           return task;
         } else if (task.status === 'FAILED') {
           throw new Error(`Task failed: ${task.failure?.reason || 'Unknown error'}`);
         }
+        
+        console.log(`Task ${taskId} status: ${task.status}, waiting...`);
         
         // Wait 5 seconds before next poll
         await new Promise(resolve => setTimeout(resolve, 5000));
@@ -224,8 +251,8 @@ export class RunwayMLProvider extends BaseVideoProvider {
 
   async checkStatus(jobId: string): Promise<VideoGenerationResult> {
     try {
-      // Get task status using SDK
-      const task = await this.client.tasks.retrieve(jobId);
+      // Get task status using API
+      const task = await this.runwayApiRequest(`/v1/tasks/${jobId}`);
       
       return {
         videoUrl: task.status === 'SUCCEEDED' ? (task.output?.[0] || '') : '',
@@ -251,8 +278,8 @@ export class RunwayMLProvider extends BaseVideoProvider {
 
   async cancelGeneration(jobId: string): Promise<boolean> {
     try {
-      // Cancel task using SDK
-      await this.client.tasks.delete(jobId);
+      // Cancel task using API
+      await this.runwayApiRequest(`/v1/tasks/${jobId}`, { method: 'DELETE' });
       return true;
     } catch (error: any) {
       console.error('RunwayML cancel error:', error);
@@ -262,16 +289,9 @@ export class RunwayMLProvider extends BaseVideoProvider {
 
   async validateConfig(): Promise<boolean> {
     try {
-      // Test the API key by trying to retrieve a task list (simpler endpoint)
-      // Since the SDK doesn't have a users.me() method, we'll use a different approach
-      const response = await fetch('https://api.runwayml.com/v1/tasks', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${this.client.apiKey}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      return response.ok;
+      // Test the API key by trying to retrieve a task list
+      await this.runwayApiRequest('/v1/tasks');
+      return true;
     } catch (error: any) {
       console.error('RunwayML config validation failed:', error);
       return false;
