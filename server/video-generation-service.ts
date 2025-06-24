@@ -643,8 +643,41 @@ export class VideoGenerationService {
 
       console.log(`Generating video using provider system for story ${story.id}`);
       
-      // Use the provider manager to generate video
-      const result = await videoProviderManager.generateVideo(providerRequest);
+      // Use the provider manager to generate video - stop on first failure
+      let result;
+      try {
+        result = await videoProviderManager.generateVideo(providerRequest);
+      } catch (error: any) {
+        console.error(`Video provider failed:`, error.message);
+        
+        // Immediately save failure to database to prevent retries
+        try {
+          await db.insert(videoGenerations).values({
+            storyId: story.id,
+            requestedBy: request.userId,
+            videoUrl: '',
+            status: 'failed',
+            errorMessage: error.message,
+            generationParams: {
+              quality: 'standard',
+              provider: 'runwayml',
+              model: 'gen3a_turbo',
+              error: error.message
+            },
+            characterAssetsSnapshot: {
+              error: error.message,
+              failedAt: new Date().toISOString()
+            },
+            cacheKey: `story-${story.id}-user-${request.userId}-failed`,
+            expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000)
+          });
+          console.log(`Video generation failure recorded in database for story ${story.id}`);
+        } catch (dbError) {
+          console.error('Failed to record video generation failure:', dbError);
+        }
+        
+        throw error; // Stop here, don't continue processing
+      }
       
       // Generate audio from roleplay dialogue
       console.log(`Generating audio for video from roleplay dialogues`);

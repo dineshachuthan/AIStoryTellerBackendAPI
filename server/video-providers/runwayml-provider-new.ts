@@ -193,7 +193,8 @@ export class RunwayMLProvider extends BaseVideoProvider {
           return task;
         } else if (task.status === 'FAILED') {
           const failureReason = task.failure?.reason || task.failure?.message || 'Content may violate guidelines or exceed limits';
-          console.log(`RunwayML task ${taskId} failed: ${failureReason}`);
+          console.log(`RunwayML task ${taskId} failed immediately: ${failureReason}`);
+          // Stop polling immediately on failure - don't retry
           throw new Error(`RunwayML generation failed: ${failureReason}`);
         }
         
@@ -205,7 +206,20 @@ export class RunwayMLProvider extends BaseVideoProvider {
         
       } catch (error) {
         console.error('Error polling task status:', error);
+        
+        // If this is a RunwayML generation failure, stop immediately
+        if (error instanceof Error && error.message.includes('RunwayML generation failed')) {
+          console.log('Stopping polling due to RunwayML task failure');
+          throw error;
+        }
+        
         attempts++;
+        
+        // Stop if too many attempts
+        if (attempts >= maxAttempts) {
+          throw new Error(`Polling failed after ${maxAttempts} attempts: ${error}`);
+        }
+        
         await new Promise(resolve => setTimeout(resolve, 5000));
       }
     }
