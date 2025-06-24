@@ -3208,7 +3208,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .from(videoGenerations)
         .where(and(
           eq(videoGenerations.storyId, parseInt(storyId)),
-          eq(videoGenerations.userId, userId)
+          eq(videoGenerations.requestedBy, userId)
         ))
         .orderBy(desc(videoGenerations.createdAt))
         .limit(1);
@@ -3222,12 +3222,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         return res.json({
           videoUrl: existingVideo.videoUrl,
-          audioUrl: existingVideo.metadata?.audioUrl || null,
+          audioUrl: existingVideo.characterAssetsSnapshot?.audioUrl || null,
           thumbnailUrl: existingVideo.thumbnailUrl || '',
           duration: existingVideo.duration,
           status: existingVideo.status,
           cacheHit: true,
-          metadata: existingVideo.metadata
+          metadata: {
+            hasAudio: !!existingVideo.characterAssetsSnapshot?.audioUrl,
+            dialogueCount: existingVideo.characterAssetsSnapshot?.dialogueCount || 0,
+            videoExpectation: existingVideo.characterAssetsSnapshot?.videoExpectation || ''
+          }
         });
       }
 

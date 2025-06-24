@@ -98,7 +98,10 @@ export class VideoGenerationService {
         const [existingVideo] = await db
           .select()
           .from(videoGenerations)
-          .where(eq(videoGenerations.storyId, request.storyId))
+          .where(and(
+            eq(videoGenerations.storyId, request.storyId),
+            eq(videoGenerations.requestedBy, request.userId)
+          ))
           .orderBy(desc(videoGenerations.createdAt))
           .limit(1);
 
@@ -654,21 +657,28 @@ export class VideoGenerationService {
       console.log(`Saving video to database for story ${story.id} to prevent regeneration costs`);
       
       try {
+        // Map to the correct database schema fields
         const videoData = {
           storyId: story.id,
-          userId: userId,
+          requestedBy: userId, // Use requestedBy instead of userId
           videoUrl: result.videoUrl,
           thumbnailUrl: result.thumbnailUrl || '',
           duration: result.duration,
           status: 'completed' as const,
-          metadata: {
+          generationParams: {
+            quality: 'standard',
+            duration: result.duration,
+            provider: 'runwayml',
+            model: 'gen3a_turbo'
+          },
+          characterAssetsSnapshot: {
             hasAudio: !!audioUrl,
             dialogueCount: roleplayAnalysis?.scenes?.reduce((total, scene) => total + (scene.dialogues?.length || 0), 0) || 0,
             videoExpectation: videoExpectation,
-            audioUrl: audioUrl,
-            provider: 'runwayml',
-            model: 'gen3a_turbo'
-          }
+            audioUrl: audioUrl
+          },
+          cacheKey: `story-${story.id}-user-${userId}`,
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days from now
         };
 
         // Try to insert first, simple approach
@@ -682,19 +692,23 @@ export class VideoGenerationService {
             thumbnailUrl: result.thumbnailUrl || '',
             duration: result.duration,
             status: 'completed',
-            metadata: {
+            generationParams: {
+              quality: 'standard',
+              duration: result.duration,
+              provider: 'runwayml',
+              model: 'gen3a_turbo'
+            },
+            characterAssetsSnapshot: {
               hasAudio: !!audioUrl,
               dialogueCount: roleplayAnalysis?.scenes?.reduce((total, scene) => total + (scene.dialogues?.length || 0), 0) || 0,
               videoExpectation: videoExpectation,
-              audioUrl: audioUrl,
-              provider: 'runwayml',
-              model: 'gen3a_turbo'
+              audioUrl: audioUrl
             },
             updatedAt: new Date()
           })
           .where(and(
             eq(videoGenerations.storyId, story.id),
-            eq(videoGenerations.userId, userId)
+            eq(videoGenerations.requestedBy, userId)
           ));
       }
 
