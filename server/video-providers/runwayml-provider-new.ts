@@ -88,10 +88,9 @@ export class RunwayMLProvider extends BaseVideoProvider {
       
       console.log('Creating video task with enhanced prompt:', prompt.substring(0, 100) + '...');
       
-      // Use minimal transparent image to avoid content moderation issues
-      // Character images may trigger RunwayML's public figure detection
-      console.log('Using minimal transparent image to avoid content moderation issues');
-      const promptImage = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+      // Use a simple solid color PNG to avoid any image validation issues
+      console.log('Using simple solid color PNG to avoid content moderation issues');
+      const promptImage = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAKklEQVQYV2NkYPjPgA4wYhVgoKJiahmA7gfWC2QbIa+ApgfIhkl4AAEAAI4IBxrk9WOOAAAAASUVORK5CYII=';
       
       // Get resolution based on quality setting
       const aspectRatio = this.getValidAspectRatio(request.aspectRatio, request.quality);
