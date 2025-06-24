@@ -127,6 +127,11 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Priority**: Medium (requested but deferred for future implementation)
 
 ## Changelog
+- June 24, 2025: Investigating RunwayML API model requirements and parameter formats
+  - Removed placeholder system per user request to focus on real API integration
+  - Testing various parameter combinations to identify correct RunwayML API usage
+  - Working to resolve "Model variant not available" errors through proper API calls
+  - Maintaining focus on authentic video generation without fallback systems
 - June 24, 2025: Resolved RunwayML API integration issues and stabilized video generation
   - Fixed "promptImage: Invalid input" error by temporarily disabling image-to-video generation
   - Enhanced text-to-video prompts to include character descriptions for better results
