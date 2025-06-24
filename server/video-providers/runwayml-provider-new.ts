@@ -1,8 +1,10 @@
 import { BaseVideoProvider, VideoGenerationRequest, VideoGenerationResult, ProviderConfig } from './base-provider';
 import RunwayML, { TaskFailedError } from '@runwayml/sdk';
+import { runwayMLConfig, RunwayMLConfig } from './runwayml-config';
 
 export class RunwayMLProvider extends BaseVideoProvider {
   private client: RunwayML;
+  private runwayConfig: RunwayMLConfig;
 
   constructor(config: ProviderConfig) {
     super('runwayml', config);
@@ -16,7 +18,10 @@ export class RunwayMLProvider extends BaseVideoProvider {
       apiKey: config.apiKey
     });
     
+    this.runwayConfig = runwayMLConfig;
+    
     console.log('RunwayML provider initialized with API key:', config.apiKey ? 'present' : 'missing');
+    console.log('RunwayML config loaded - API version:', this.runwayConfig.apiVersion);
   }
 
   async generateVideo(request: VideoGenerationRequest): Promise<VideoGenerationResult> {
