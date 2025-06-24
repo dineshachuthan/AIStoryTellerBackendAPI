@@ -75,7 +75,7 @@ export class RunwayMLProvider extends BaseVideoProvider {
 
   async generateVideo(request: VideoGenerationRequest): Promise<VideoGenerationResult> {
     try {
-      const prompt = this.createPrompt(request);
+      let prompt = this.createPrompt(request);
       
       // Check if we have character images for image-to-video generation
       const hasCharacterImages = request.characters && request.characters.some(char => char.imageUrl);
