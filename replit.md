@@ -119,6 +119,11 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Asset Serving**: Optimized static file serving with proper headers
 
 ## Changelog
+- June 24, 2025: Enhanced RunwayML with character image-to-video generation
+  - Implemented character reference image support using RunwayML SDK imageToVideo method
+  - Added automatic fallback from image-to-video to text-to-video based on character image availability
+  - Enhanced video generation to use character images from roleplay analysis for more accurate character representation
+  - Maintained 20-second video generation limit for cost protection
 - June 24, 2025: Final RunwayML API integration fixes
   - Added required X-Runway-Version header (2024-11-06) to meet API requirements
   - Moved API version to configuration instead of hardcoding for maintainability

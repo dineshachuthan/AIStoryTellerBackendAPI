@@ -23,46 +23,104 @@ export class RunwayMLProvider extends BaseVideoProvider {
     try {
       const prompt = this.createPrompt(request);
       
-      console.log(`Generating video using RunwayML SDK textToVideo method`);
-      console.log('Comprehensive prompt:', prompt);
-
-      // Use RunwayML SDK for text-to-video generation
-      const task = await this.client.textToVideo
-        .create({
-          model: 'gen3a_turbo',
-          promptText: prompt,
-          duration: Math.min(request.duration || 10, 20),
-          seed: Math.floor(Math.random() * 2147483647),
-          watermark: false,
-          ratio: request.aspectRatio === '9:16' ? '720:1280' : 
-                 request.aspectRatio === '1:1' ? '1024:1024' : '1280:720'
-        })
-        .waitForTaskOutput();
-
-      console.log('RunwayML task completed:', task);
-
-      // Extract video URL from task output
-      const videoUrl = task.output?.[0] || task.artifacts?.[0]?.url || '';
+      // Check if we have character images for image-to-video generation
+      const hasCharacterImages = request.characters && request.characters.some(char => char.imageUrl);
       
-      if (!videoUrl) {
-        throw new Error('No video URL returned from RunwayML task');
-      }
-
-      return {
-        videoUrl: videoUrl,
-        thumbnailUrl: task.thumbnails?.[0] || '',
-        duration: request.duration || 10,
-        status: 'completed',
-        metadata: {
-          provider: 'runwayml',
-          providerJobId: task.id,
-          format: 'mp4',
-          resolution: request.aspectRatio === '9:16' ? '720x1280' : 
-                     request.aspectRatio === '1:1' ? '1024x1024' : '1280x720',
-          codec: 'h264',
-          generatedAt: new Date()
+      if (hasCharacterImages) {
+        console.log(`Generating video using RunwayML SDK imageToVideo method with character references`);
+        console.log('Character images found:', request.characters?.filter(char => char.imageUrl).length);
+        
+        // Use the first character image as the primary reference
+        const primaryCharacter = request.characters?.find(char => char.imageUrl);
+        if (!primaryCharacter?.imageUrl) {
+          throw new Error('Character image URL is required for image-to-video generation');
         }
-      };
+
+        // Convert image URL to data URI for SDK
+        const imageDataUri = await this.convertImageUrlToDataUri(primaryCharacter.imageUrl);
+        
+        const task = await this.client.imageToVideo
+          .create({
+            model: 'gen3a_turbo',
+            promptImage: imageDataUri,
+            promptText: prompt,
+            duration: Math.min(request.duration || 10, 20),
+            seed: Math.floor(Math.random() * 2147483647),
+            watermark: false,
+            ratio: request.aspectRatio === '9:16' ? '720:1280' : 
+                   request.aspectRatio === '1:1' ? '1024:1024' : '1280:720'
+          })
+          .waitForTaskOutput();
+          
+        console.log('RunwayML image-to-video task completed:', task);
+        
+        // Extract video URL from task output
+        const videoUrl = task.output?.[0] || task.artifacts?.[0]?.url || '';
+        
+        if (!videoUrl) {
+          throw new Error('No video URL returned from RunwayML image-to-video task');
+        }
+
+        return {
+          videoUrl: videoUrl,
+          thumbnailUrl: task.thumbnails?.[0] || '',
+          duration: request.duration || 10,
+          status: 'completed',
+          metadata: {
+            provider: 'runwayml',
+            providerJobId: task.id,
+            format: 'mp4',
+            resolution: request.aspectRatio === '9:16' ? '720x1280' : 
+                       request.aspectRatio === '1:1' ? '1024x1024' : '1280x720',
+            codec: 'h264',
+            generatedAt: new Date(),
+            generationType: 'image-to-video',
+            referenceImage: primaryCharacter.imageUrl
+          }
+        };
+      } else {
+        console.log(`Generating video using RunwayML SDK textToVideo method`);
+        console.log('No character images found, using text-to-video generation');
+
+        // Use RunwayML SDK for text-to-video generation
+        const task = await this.client.textToVideo
+          .create({
+            model: 'gen3a_turbo',
+            promptText: prompt,
+            duration: Math.min(request.duration || 10, 20),
+            seed: Math.floor(Math.random() * 2147483647),
+            watermark: false,
+            ratio: request.aspectRatio === '9:16' ? '720:1280' : 
+                   request.aspectRatio === '1:1' ? '1024:1024' : '1280:720'
+          })
+          .waitForTaskOutput();
+
+        console.log('RunwayML text-to-video task completed:', task);
+
+        // Extract video URL from task output
+        const videoUrl = task.output?.[0] || task.artifacts?.[0]?.url || '';
+        
+        if (!videoUrl) {
+          throw new Error('No video URL returned from RunwayML task');
+        }
+
+        return {
+          videoUrl: videoUrl,
+          thumbnailUrl: task.thumbnails?.[0] || '',
+          duration: request.duration || 10,
+          status: 'completed',
+          metadata: {
+            provider: 'runwayml',
+            providerJobId: task.id,
+            format: 'mp4',
+            resolution: request.aspectRatio === '9:16' ? '720x1280' : 
+                       request.aspectRatio === '1:1' ? '1024x1024' : '1280x720',
+            codec: 'h264',
+            generatedAt: new Date(),
+            generationType: 'text-to-video'
+          }
+        };
+      }
 
     } catch (error: any) {
       console.error('RunwayML generation error:', error);
@@ -236,5 +294,40 @@ export class RunwayMLProvider extends BaseVideoProvider {
     prompt += `Create a ${request.duration || 10}-second video that captures the essence of this story with smooth transitions and engaging visual narrative.`;
 
     return prompt;
+  }
+
+  private async convertImageUrlToDataUri(imageUrl: string): Promise<string> {
+    try {
+      console.log('Converting image URL to data URI:', imageUrl);
+      
+      const response = await fetch(imageUrl);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
+      }
+      
+      const imageBuffer = await response.arrayBuffer();
+      const buffer = Buffer.from(imageBuffer);
+      
+      let mimeType = response.headers.get('content-type') || 'image/jpeg';
+      if (!mimeType.startsWith('image/')) {
+        if (imageUrl.toLowerCase().includes('.png')) {
+          mimeType = 'image/png';
+        } else if (imageUrl.toLowerCase().includes('.webp')) {
+          mimeType = 'image/webp';
+        } else {
+          mimeType = 'image/jpeg';
+        }
+      }
+      
+      const base64 = buffer.toString('base64');
+      const dataUri = `data:${mimeType};base64,${base64}`;
+      
+      console.log(`Converted image to data URI, size: ${buffer.length} bytes, type: ${mimeType}`);
+      return dataUri;
+      
+    } catch (error) {
+      console.error('Error converting image URL to data URI:', error);
+      throw new Error(`Failed to convert image URL to data URI: ${error.message}`);
+    }
   }
 }
