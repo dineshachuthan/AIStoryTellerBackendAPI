@@ -88,13 +88,16 @@ export class RunwayMLProvider extends BaseVideoProvider {
               seed: Math.floor(Math.random() * 2147483647),
               watermark: false,
               ratio: this.getValidAspectRatio(request.aspectRatio)
-            })
-            .waitForTaskOutput();
+            });
             
-          console.log('RunwayML image-to-video task completed:', task);
+          console.log('RunwayML image-to-video task created, waiting for completion...');
+            
+          // Wait for task completion manually
+          const completedTask = await this.waitForCompletion(task.id);
+          console.log('RunwayML image-to-video task completed:', completedTask);
           
           // Extract video URL from task output
-          const videoUrl = task.output?.[0] || task.artifacts?.[0]?.url || '';
+          const videoUrl = completedTask.output?.[0] || completedTask.artifacts?.[0]?.url || '';
           
           if (!videoUrl) {
             throw new Error('No video URL returned from RunwayML image-to-video task');
@@ -102,12 +105,12 @@ export class RunwayMLProvider extends BaseVideoProvider {
 
           return {
             videoUrl: videoUrl,
-            thumbnailUrl: task.thumbnails?.[0] || '',
+            thumbnailUrl: completedTask.thumbnails?.[0] || '',
             duration: request.duration || 10,
             status: 'completed',
             metadata: {
               provider: 'runwayml',
-              providerJobId: task.id,
+              providerJobId: completedTask.id,
               format: 'mp4',
               resolution: request.aspectRatio === '9:16' ? '720x1280' : 
                          request.aspectRatio === '1:1' ? '1024x1024' : '1280x720',
@@ -145,13 +148,16 @@ export class RunwayMLProvider extends BaseVideoProvider {
             seed: Math.floor(Math.random() * 2147483647),
             watermark: false,
             ratio: this.getValidAspectRatio(request.aspectRatio)
-          })
-          .waitForTaskOutput();
+          });
+          
+        console.log('RunwayML task created, waiting for completion...');
 
-        console.log('RunwayML text-to-video task completed:', task);
+        // Wait for task completion manually
+        const completedTask = await this.waitForCompletion(task.id);
+        console.log('RunwayML text-to-video task completed:', completedTask);
 
         // Extract video URL from task output
-        const videoUrl = task.output?.[0] || task.artifacts?.[0]?.url || '';
+        const videoUrl = completedTask.output?.[0] || completedTask.artifacts?.[0]?.url || '';
         
         if (!videoUrl) {
           throw new Error('No video URL returned from RunwayML task');
@@ -159,12 +165,12 @@ export class RunwayMLProvider extends BaseVideoProvider {
 
         return {
           videoUrl: videoUrl,
-          thumbnailUrl: task.thumbnails?.[0] || '',
+          thumbnailUrl: completedTask.thumbnails?.[0] || '',
           duration: request.duration || 10,
           status: 'completed',
           metadata: {
             provider: 'runwayml',
-            providerJobId: task.id,
+            providerJobId: completedTask.id,
             format: 'mp4',
             resolution: request.aspectRatio === '9:16' ? '720x1280' : 
                        request.aspectRatio === '1:1' ? '1024x1024' : '1280x720',
