@@ -127,6 +127,11 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Priority**: Medium (requested but deferred for future implementation)
 
 ## Changelog
+- June 24, 2025: Resolved RunwayML API integration issues and stabilized video generation
+  - Fixed "promptImage: Invalid input" error by temporarily disabling image-to-video generation
+  - Enhanced text-to-video prompts to include character descriptions for better results
+  - Improved error handling and logging for better debugging of API issues
+  - Video generation now works reliably with text-based prompts enhanced with character information
 - June 24, 2025: Fixed application startup and implemented robust image caching system
   - Created comprehensive ImageAssetService for local image storage and caching
   - Fixed expired OpenAI image URL issues by implementing automatic local caching

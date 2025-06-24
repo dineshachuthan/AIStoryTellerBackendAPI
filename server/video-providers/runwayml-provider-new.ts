@@ -80,138 +80,64 @@ export class RunwayMLProvider extends BaseVideoProvider {
       // Check if we have character images for image-to-video generation
       const hasCharacterImages = request.characters && request.characters.some(char => char.imageUrl);
       
+      // For now, skip image-to-video and use text-to-video only to avoid format issues
+      // TODO: Re-enable image-to-video once we resolve the promptImage format requirements
+      console.log('Skipping image-to-video for now, using text-to-video generation');
+      
       if (hasCharacterImages) {
-        console.log(`Generating video using RunwayML SDK imageToVideo method with character references`);
-        console.log('Character images found:', request.characters?.filter(char => char.imageUrl).length);
-        
-        // Use the first character image as the primary reference
         const primaryCharacter = request.characters?.find(char => char.imageUrl);
-        if (!primaryCharacter?.imageUrl) {
-          throw new Error('Character image URL is required for image-to-video generation');
-        }
-
-        // Try to use image-to-video, but gracefully fall back to text-to-video if image processing fails
-        try {
-          // Try data URI first, fallback to cached URL if needed
-          let promptImage: string;
-          try {
-            promptImage = await this.convertImageUrlToDataUri(primaryCharacter.imageUrl);
-          } catch (error) {
-            console.log('Failed to convert to data URI, trying cached URL fallback:', error.message);
-            
-            // Try to get cached image URL as fallback
-            const { imageAssetService } = await import('../image-asset-service');
-            const cachedAsset = await imageAssetService.cacheImage(primaryCharacter.imageUrl, 'runway-video');
-            const baseUrl = process.env.REPLIT_DEV_DOMAIN ? 
-              `https://${process.env.REPLIT_DEV_DOMAIN}` : 
-              'http://localhost:5000';
-            promptImage = imageAssetService.getAbsoluteUrl(cachedAsset.publicUrl, baseUrl);
-            console.log('Using cached image URL as fallback:', promptImage);
-          }
-          
-          console.log('Creating image-to-video task with prompt:', prompt.substring(0, 100) + '...');
-          
-          const task = await this.runwayApiRequest('/v1/image_to_video', {
-            method: 'POST',
-            body: {
-              model: 'gen3a_turbo',
-              promptImage: promptImage,
-              promptText: prompt,
-              duration: Math.min(request.duration || 10, 20),
-              seed: Math.floor(Math.random() * 2147483647),
-              watermark: false,
-              ratio: this.getValidAspectRatio(request.aspectRatio)
-            }
-          });
-            
-          console.log('RunwayML image-to-video task created, waiting for completion...');
-            
-          // Wait for task completion manually
-          const completedTask = await this.waitForCompletion(task.id);
-          console.log('RunwayML image-to-video task completed:', completedTask);
-          
-          // Extract video URL from task output
-          const videoUrl = completedTask.output?.[0] || completedTask.artifacts?.[0]?.url || '';
-          
-          if (!videoUrl) {
-            throw new Error('No video URL returned from RunwayML image-to-video task');
-          }
-
-          return {
-            videoUrl: videoUrl,
-            thumbnailUrl: completedTask.thumbnails?.[0] || '',
-            duration: request.duration || 10,
-            status: 'completed',
-            metadata: {
-              provider: 'runwayml',
-              providerJobId: completedTask.id,
-              format: 'mp4',
-              resolution: request.aspectRatio === '9:16' ? '720x1280' : 
-                         request.aspectRatio === '1:1' ? '1024x1024' : '1280x720',
-              codec: 'h264',
-              generatedAt: new Date(),
-              generationType: 'image-to-video',
-              referenceImage: primaryCharacter.imageUrl
-            }
-          };
-        } catch (imageError) {
-          console.warn('Image-to-video failed, falling back to text-to-video:', imageError.message);
-          // Continue to text-to-video generation below
+        console.log(`Character images available (${request.characters?.filter(char => char.imageUrl).length}), but using text-only generation for stability`);
+        if (primaryCharacter) {
+          // Enhance the prompt with character description instead of using the image
+          prompt += ` Features a character named ${primaryCharacter.name}: ${primaryCharacter.description || 'main character'}`;
         }
       }
       
-      // Text-to-video generation (either no character images or image-to-video failed)
-      {
-        console.log(`Generating video using RunwayML SDK textToVideo method`);
-        console.log(hasCharacterImages ? 
-          'Character images were found but failed to process, using text-to-video generation' : 
-          'No character images found, using text-to-video generation');
-
-        // Use RunwayML API for text-to-video generation
-        console.log('Creating text-to-video task with prompt:', prompt.substring(0, 100) + '...');
-        
-        const task = await this.runwayApiRequest('/v1/image_to_video', {
-          method: 'POST',
-          body: {
-            model: 'gen3a_turbo',
-            promptText: prompt,
-            duration: Math.min(request.duration || 10, 20),
-            seed: Math.floor(Math.random() * 2147483647),
-            watermark: false,
-            ratio: this.getValidAspectRatio(request.aspectRatio)
-          }
-        });
-          
-        console.log('RunwayML task created, waiting for completion...');
-
-        // Wait for task completion manually
-        const completedTask = await this.waitForCompletion(task.id);
-        console.log('RunwayML text-to-video task completed:', completedTask);
-
-        // Extract video URL from task output
-        const videoUrl = completedTask.output?.[0] || completedTask.artifacts?.[0]?.url || '';
-        
-        if (!videoUrl) {
-          throw new Error('No video URL returned from RunwayML task');
+      // Text-to-video generation
+      console.log('Creating text-to-video task with enhanced prompt:', prompt.substring(0, 100) + '...');
+      
+      const task = await this.runwayApiRequest('/v1/image_to_video', {
+        method: 'POST',
+        body: {
+          model: 'gen3a_turbo',
+          promptText: prompt,
+          duration: Math.min(request.duration || 10, 20),
+          seed: Math.floor(Math.random() * 2147483647),
+          watermark: false,
+          ratio: this.getValidAspectRatio(request.aspectRatio)
+          // Note: No promptImage parameter for text-to-video
         }
+      });
+        
+      console.log('RunwayML task created, waiting for completion...');
 
-        return {
-          videoUrl: videoUrl,
-          thumbnailUrl: completedTask.thumbnails?.[0] || '',
-          duration: request.duration || 10,
-          status: 'completed',
-          metadata: {
-            provider: 'runwayml',
-            providerJobId: completedTask.id,
-            format: 'mp4',
-            resolution: request.aspectRatio === '9:16' ? '720x1280' : 
-                       request.aspectRatio === '1:1' ? '1024x1024' : '1280x720',
-            codec: 'h264',
-            generatedAt: new Date(),
-            generationType: 'text-to-video'
-          }
-        };
+      // Wait for task completion manually
+      const completedTask = await this.waitForCompletion(task.id);
+      console.log('RunwayML text-to-video task completed:', completedTask);
+
+      // Extract video URL from task output
+      const videoUrl = completedTask.output?.[0] || completedTask.artifacts?.[0]?.url || '';
+      
+      if (!videoUrl) {
+        throw new Error('No video URL returned from RunwayML task');
       }
+
+      return {
+        videoUrl: videoUrl,
+        thumbnailUrl: completedTask.thumbnails?.[0] || '',
+        duration: request.duration || 10,
+        status: 'completed',
+        metadata: {
+          provider: 'runwayml',
+          providerJobId: completedTask.id,
+          format: 'mp4',
+          resolution: request.aspectRatio === '9:16' ? '720x1280' : 
+                     request.aspectRatio === '1:1' ? '1024x1024' : '1280x720',
+          codec: 'h264',
+          generatedAt: new Date(),
+          generationType: 'text-to-video'
+        }
+      };
 
     } catch (error: any) {
       console.error('RunwayML generation error:', error);
@@ -397,7 +323,7 @@ export class RunwayMLProvider extends BaseVideoProvider {
         finalImageUrl = imageAssetService.getAbsoluteUrl(cachedAsset.publicUrl, baseUrl);
         console.log('Using cached image URL:', finalImageUrl);
       } catch (cacheError) {
-        console.warn('Failed to cache image, using original URL:', cacheError.message);
+        console.warn('Failed to cache image, will try original URL:', cacheError.message);
         // Continue with original URL as fallback
       }
       
