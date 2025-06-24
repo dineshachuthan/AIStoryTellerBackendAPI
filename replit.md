@@ -127,6 +127,12 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Priority**: Medium (requested but deferred for future implementation)
 
 ## Changelog
+- June 24, 2025: Implemented video regeneration functionality with cache clearing and database cleanup
+  - Added regenerate video button that appears when video exists
+  - Implemented force regeneration with complete cache and database clearing
+  - Enhanced video prompt generation with detailed story content and character descriptions
+  - Added cost warning dialog for regeneration to prevent accidental API costs
+  - Video regeneration now sends complete story narrative and character details to RunwayML
 - June 24, 2025: Enhanced video generation with proper story content and audio integration
   - Restored story-focused prompt generation while avoiding character name mentions for content moderation
   - Added automatic audio generation from roleplay dialogues using existing audio service
