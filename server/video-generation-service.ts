@@ -628,7 +628,7 @@ export class VideoGenerationService {
         characters: characterAssets.map((asset: CharacterAssetOverride) => ({
           name: asset.characterName,
           description: asset.characterName || 'Story character',
-          imageUrl: asset.imageUrl,
+          imageUrl: '', // Temporarily disable image URLs to avoid API issues
           voiceUrl: asset.voiceSampleUrl
         })),
         scenes: this.buildScenesFromRoleplay(roleplayAnalysis),

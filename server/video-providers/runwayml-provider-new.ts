@@ -77,37 +77,47 @@ export class RunwayMLProvider extends BaseVideoProvider {
     try {
       let prompt = this.createPrompt(request);
       
-      // Check if we have character images for image-to-video generation
-      const hasCharacterImages = request.characters && request.characters.some(char => char.imageUrl);
-      
-      // For now, skip image-to-video and use text-to-video only to avoid format issues
-      // TODO: Re-enable image-to-video once we resolve the promptImage format requirements
-      console.log('Skipping image-to-video for now, using text-to-video generation');
-      
-      if (hasCharacterImages) {
-        const primaryCharacter = request.characters?.find(char => char.imageUrl);
-        console.log(`Character images available (${request.characters?.filter(char => char.imageUrl).length}), but using text-only generation for stability`);
-        if (primaryCharacter) {
-          // Enhance the prompt with character description instead of using the image
-          prompt += ` Features a character named ${primaryCharacter.name}: ${primaryCharacter.description || 'main character'}`;
-        }
+      // Add character descriptions to prompt for better text-to-video generation
+      if (request.characters && request.characters.length > 0) {
+        const characterDescriptions = request.characters.map(char => 
+          `${char.name}: ${char.description || 'main character'}`
+        ).join(', ');
+        prompt += ` Features characters: ${characterDescriptions}`;
+        console.log(`Enhanced prompt with ${request.characters.length} character descriptions`);
       }
       
       // Text-to-video generation
       console.log('Creating text-to-video task with enhanced prompt:', prompt.substring(0, 100) + '...');
       
-      const task = await this.runwayApiRequest('/v1/image_to_video', {
-        method: 'POST',
-        body: {
-          model: 'gen3a_turbo',
-          promptText: prompt,
-          duration: Math.min(request.duration || 10, 20),
-          seed: Math.floor(Math.random() * 2147483647),
-          watermark: false,
-          ratio: this.getValidAspectRatio(request.aspectRatio)
-          // Note: No promptImage parameter for text-to-video
-        }
-      });
+      // Try text-to-video endpoint first, fallback to image-to-video without image
+      let endpoint = '/v1/text_to_video';
+      let requestBody = {
+        model: 'gen3a_turbo',
+        promptText: prompt,
+        duration: Math.min(request.duration || 10, 20),
+        seed: Math.floor(Math.random() * 2147483647),
+        watermark: false,
+        ratio: this.getValidAspectRatio(request.aspectRatio)
+      };
+
+      console.log('Trying text-to-video endpoint first...');
+      
+      let task;
+      try {
+        task = await this.runwayApiRequest(endpoint, {
+          method: 'POST',
+          body: requestBody
+        });
+      } catch (textToVideoError) {
+        console.log('Text-to-video endpoint failed, trying image-to-video without image:', textToVideoError.message);
+        
+        // Fallback to image-to-video endpoint without promptImage
+        endpoint = '/v1/image_to_video';
+        task = await this.runwayApiRequest(endpoint, {
+          method: 'POST',
+          body: requestBody
+        });
+      }
         
       console.log('RunwayML task created, waiting for completion...');
 
