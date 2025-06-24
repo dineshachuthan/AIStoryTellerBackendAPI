@@ -652,30 +652,15 @@ export class VideoGenerationService {
       
       // CRITICAL: Save to database to prevent regeneration costs
       console.log(`Saving video to database for story ${story.id} to prevent regeneration costs`);
-      await db.insert(videoGenerations).values({
-        storyId: story.id,
-        userId: userId,
-        videoUrl: result.videoUrl,
-        thumbnailUrl: result.thumbnailUrl || '',
-        duration: result.duration,
-        status: 'completed',
-        generatedAt: new Date(),
-        metadata: {
-          hasAudio: !!audioUrl,
-          dialogueCount: roleplayAnalysis?.scenes?.reduce((total, scene) => total + (scene.dialogues?.length || 0), 0) || 0,
-          videoExpectation: videoExpectation,
-          audioUrl: audioUrl,
-          provider: 'runwayml',
-          model: 'gen3a_turbo'
-        }
-      }).onConflictDoUpdate({
-        target: [videoGenerations.storyId, videoGenerations.userId],
-        set: {
+      
+      try {
+        const videoData = {
+          storyId: story.id,
+          userId: userId,
           videoUrl: result.videoUrl,
           thumbnailUrl: result.thumbnailUrl || '',
           duration: result.duration,
-          status: 'completed',
-          generatedAt: new Date(),
+          status: 'completed' as const,
           metadata: {
             hasAudio: !!audioUrl,
             dialogueCount: roleplayAnalysis?.scenes?.reduce((total, scene) => total + (scene.dialogues?.length || 0), 0) || 0,
@@ -684,8 +669,34 @@ export class VideoGenerationService {
             provider: 'runwayml',
             model: 'gen3a_turbo'
           }
-        }
-      });
+        };
+
+        // Try to insert first, simple approach
+        await db.insert(videoGenerations).values(videoData);
+      } catch (insertError: any) {
+        console.log('Insert failed, trying update instead:', insertError.message);
+        // Fallback: Try to update existing record
+        await db.update(videoGenerations)
+          .set({
+            videoUrl: result.videoUrl,
+            thumbnailUrl: result.thumbnailUrl || '',
+            duration: result.duration,
+            status: 'completed',
+            metadata: {
+              hasAudio: !!audioUrl,
+              dialogueCount: roleplayAnalysis?.scenes?.reduce((total, scene) => total + (scene.dialogues?.length || 0), 0) || 0,
+              videoExpectation: videoExpectation,
+              audioUrl: audioUrl,
+              provider: 'runwayml',
+              model: 'gen3a_turbo'
+            },
+            updatedAt: new Date()
+          })
+          .where(and(
+            eq(videoGenerations.storyId, story.id),
+            eq(videoGenerations.userId, userId)
+          ));
+      }
 
       console.log(`Video successfully saved to database for story ${story.id}`);
 
