@@ -31,7 +31,8 @@ export class RunwayMLProvider extends BaseVideoProvider {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${this.client.apiKey}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'X-Runway-Version': this.config.apiVersion || '2024-11-06'
         },
         body: JSON.stringify({
           model: 'gen3a_turbo',

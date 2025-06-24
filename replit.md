@@ -119,6 +119,11 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Asset Serving**: Optimized static file serving with proper headers
 
 ## Changelog
+- June 24, 2025: Final RunwayML API integration fixes
+  - Added required X-Runway-Version header (2024-11-06) to meet API requirements
+  - Moved API version to configuration instead of hardcoding for maintainability
+  - Fixed all RunwayML API authentication and header requirements per official documentation
+  - Maintained 20-second video generation limit for cost protection
 - June 23, 2025: Corrected RunwayML API integration with proper endpoint structure
   - Updated RunwayML provider to use correct API endpoint (api.dev.runwayml.com/v1/generate) based on official documentation
   - Fixed authentication to use Bearer token format instead of X-API-Key for consistency with API docs
