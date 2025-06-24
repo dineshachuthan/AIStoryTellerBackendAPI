@@ -127,12 +127,12 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Priority**: Medium (requested but deferred for future implementation)
 
 ## Changelog
-- June 24, 2025: Fixed RunwayML API infinite polling loop and improved error handling
-  - Resolved infinite loop caused by improper task failure detection
-  - Fixed content moderation issues by using minimal transparent images instead of character images
-  - Enhanced task polling with proper retry limits and detailed status logging
-  - Improved video URL extraction from completed tasks with multiple fallback fields
-  - API connection working (125 credits spent) but investigating task completion issues
+- June 24, 2025: Enhanced video generation with proper story content and audio integration
+  - Restored story-focused prompt generation while avoiding character name mentions for content moderation
+  - Added automatic audio generation from roleplay dialogues using existing audio service
+  - Enhanced video generation to include character dialogue audio alongside visual content
+  - Improved prompt creation to include setting, mood, and scene descriptions for better relevance
+  - Video generation now produces both visual content and accompanying character audio
 - June 24, 2025: Resolved RunwayML API integration issues and stabilized video generation
   - Fixed "promptImage: Invalid input" error by temporarily disabling image-to-video generation
   - Enhanced text-to-video prompts to include character descriptions for better results

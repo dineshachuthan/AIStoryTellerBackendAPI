@@ -643,13 +643,27 @@ export class VideoGenerationService {
       // Use the provider manager to generate video
       const result = await videoProviderManager.generateVideo(providerRequest);
       
-      // Convert provider result to our format
+      // Generate audio from roleplay dialogue
+      console.log(`Generating audio for video from roleplay dialogues`);
+      const audioUrl = await this.generateRoleplayAudio(story.id, userId, roleplayAnalysis);
+      
+      // Create human-readable description of what was sent to RunwayML
+      const videoExpectation = this.createVideoExpectationDescription(story, roleplayAnalysis, narrativeAnalysis);
+      
+      // For now, return the video with audio URL in metadata
+      // Future enhancement: combine video + audio into single file
       return {
         videoUrl: result.videoUrl,
+        audioUrl: audioUrl,
         thumbnailUrl: result.thumbnailUrl || '',
         duration: result.duration,
         status: result.status,
-        cacheHit: false
+        cacheHit: false,
+        metadata: {
+          hasAudio: !!audioUrl,
+          dialogueCount: roleplayAnalysis?.scenes?.reduce((total, scene) => total + (scene.dialogues?.length || 0), 0) || 0,
+          videoExpectation: videoExpectation
+        }
       };
 
     } catch (error: any) {
