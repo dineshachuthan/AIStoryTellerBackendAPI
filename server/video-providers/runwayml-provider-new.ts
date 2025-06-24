@@ -88,8 +88,10 @@ export class RunwayMLProvider extends BaseVideoProvider {
       
       console.log('Creating video task with enhanced prompt:', prompt.substring(0, 100) + '...');
       
-      // RunwayML requires promptImage even for text-to-video, use minimal transparent pixel
-      const transparentPixel = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+      // Use minimal transparent image to avoid content moderation issues
+      // Character images may trigger RunwayML's public figure detection
+      console.log('Using minimal transparent image to avoid content moderation issues');
+      const promptImage = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
       
       // Get resolution based on quality setting
       const aspectRatio = this.getValidAspectRatio(request.aspectRatio, request.quality);
@@ -99,7 +101,7 @@ export class RunwayMLProvider extends BaseVideoProvider {
       
       const requestBody = {
         model: modelName,
-        promptImage: transparentPixel,
+        promptImage: promptImage,
         promptText: prompt,
         duration: Math.min(request.duration || this.runwayConfig.defaultDuration, this.runwayConfig.maxDuration),
         aspectRatio: aspectRatio
@@ -120,11 +122,20 @@ export class RunwayMLProvider extends BaseVideoProvider {
       console.log('RunwayML task completed:', completedTask);
 
       // Extract video URL from task output
-      const videoUrl = completedTask.output?.[0] || completedTask.artifacts?.[0]?.url || '';
+      console.log('Completed task structure:', JSON.stringify(completedTask, null, 2));
+      
+      const videoUrl = completedTask.output?.[0] || 
+                      completedTask.artifacts?.[0]?.url || 
+                      completedTask.output?.url ||
+                      completedTask.videoUrl ||
+                      '';
       
       if (!videoUrl) {
-        throw new Error('No video URL returned from RunwayML task');
+        console.error('No video URL found in completed task. Available fields:', Object.keys(completedTask));
+        throw new Error(`No video URL returned from RunwayML task. Task structure: ${JSON.stringify(completedTask)}`);
       }
+      
+      console.log('Video generation successful! URL:', videoUrl);
 
       // Get resolution info for metadata
       const resolutionTier = request.quality === 'high' ? 'high' : 
