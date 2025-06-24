@@ -108,6 +108,10 @@ export class RunwayMLProvider extends BaseVideoProvider {
 
       console.log('Making RunwayML API request with minimal image and text prompt');
       console.log('Prompt length:', prompt.length, 'Duration:', requestBody.duration);
+      console.log('Full prompt being sent to RunwayML:');
+      console.log('====================================');
+      console.log(prompt);
+      console.log('====================================');
       
       const task = await this.runwayApiRequest('/v1/image_to_video', {
         method: 'POST',
@@ -135,6 +139,12 @@ export class RunwayMLProvider extends BaseVideoProvider {
       }
       
       console.log('Video generation successful! URL:', videoUrl);
+      console.log('Video metadata summary:');
+      console.log('- Generated from prompt:', prompt.substring(0, 100) + '...');
+      console.log('- Characters requested:', request.characters?.length || 0);
+      console.log('- Scenes requested:', request.scenes?.length || 0);
+      console.log('- Resolution tier:', resolutionTier);
+      console.log('- Aspect ratio:', aspectRatio);
 
       // Get resolution info for metadata
       const resolutionTier = request.quality === 'high' ? 'high' : 
