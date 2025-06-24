@@ -520,26 +520,7 @@ export class DatabaseStorage implements IStorage {
     await db.delete(storyPlaybacks).where(eq(storyPlaybacks.id, id));
   }
 
-  // Story Analysis operations
-  async getStoryAnalysis(storyId: number, analysisType: 'narrative' | 'roleplay'): Promise<StoryAnalysis | undefined> {
-    const [analysis] = await db.select().from(storyAnalyses).where(
-      and(eq(storyAnalyses.storyId, storyId), eq(storyAnalyses.analysisType, analysisType))
-    );
-    return analysis || undefined;
-  }
-
-  async createStoryAnalysis(analysis: InsertStoryAnalysis): Promise<StoryAnalysis> {
-    const [created] = await db.insert(storyAnalyses).values(analysis).returning();
-    return created;
-  }
-
-  async updateStoryAnalysis(storyId: number, analysisType: 'narrative' | 'roleplay', analysisData: any): Promise<StoryAnalysis> {
-    const [updated] = await db.update(storyAnalyses)
-      .set({ analysisData, updatedAt: new Date() })
-      .where(and(eq(storyAnalyses.storyId, storyId), eq(storyAnalyses.analysisType, analysisType)))
-      .returning();
-    return updated;
-  }
+  // Story Analysis operations (duplicates removed)
 
   // Story Customization operations
   async createOrUpdateStoryCustomization(customization: {
