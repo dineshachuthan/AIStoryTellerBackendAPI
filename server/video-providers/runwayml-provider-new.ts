@@ -36,19 +36,24 @@ export class RunwayMLProvider extends BaseVideoProvider {
           throw new Error('Character image URL is required for image-to-video generation');
         }
 
-        // Convert image URL to data URI for SDK
-        const imageDataUri = await this.convertImageUrlToDataUri(primaryCharacter.imageUrl);
+        // Try data URI first, fallback to direct URL if too large
+        let promptImage: string;
+        try {
+          promptImage = await this.convertImageUrlToDataUri(primaryCharacter.imageUrl);
+        } catch (error) {
+          console.log('Image too large for data URI, using direct URL:', error.message);
+          promptImage = primaryCharacter.imageUrl;
+        }
         
         const task = await this.client.imageToVideo
           .create({
             model: 'gen3a_turbo',
-            promptImage: imageDataUri,
+            promptImage: promptImage,
             promptText: prompt,
             duration: Math.min(request.duration || 10, 20),
             seed: Math.floor(Math.random() * 2147483647),
             watermark: false,
-            ratio: request.aspectRatio === '9:16' ? '720:1280' : 
-                   request.aspectRatio === '1:1' ? '1024:1024' : '1280:720'
+            ratio: this.getValidAspectRatio(request.aspectRatio)
           })
           .waitForTaskOutput();
           
@@ -90,8 +95,7 @@ export class RunwayMLProvider extends BaseVideoProvider {
             duration: Math.min(request.duration || 10, 20),
             seed: Math.floor(Math.random() * 2147483647),
             watermark: false,
-            ratio: request.aspectRatio === '9:16' ? '720:1280' : 
-                   request.aspectRatio === '1:1' ? '1024:1024' : '1280:720'
+            ratio: this.getValidAspectRatio(request.aspectRatio)
           })
           .waitForTaskOutput();
 
@@ -296,6 +300,10 @@ export class RunwayMLProvider extends BaseVideoProvider {
     return prompt;
   }
 
+  private getValidAspectRatio(requestedRatio?: string): string {
+    return this.runwayConfig.aspectRatioMappings[requestedRatio || '16:9'] || '1280:768';
+  }
+
   private async convertImageUrlToDataUri(imageUrl: string): Promise<string> {
     try {
       console.log('Converting image URL to data URI:', imageUrl);
@@ -308,21 +316,32 @@ export class RunwayMLProvider extends BaseVideoProvider {
       const imageBuffer = await response.arrayBuffer();
       const buffer = Buffer.from(imageBuffer);
       
-      let mimeType = response.headers.get('content-type') || 'image/jpeg';
-      if (!mimeType.startsWith('image/')) {
+      // Check size limits per RunwayML documentation
+      if (buffer.length > this.runwayConfig.sizeLimits.dataUriMaxSize) {
+        const sizeMB = (buffer.length / 1024 / 1024).toFixed(1);
+        const limitMB = (this.runwayConfig.sizeLimits.dataUriMaxSize / 1024 / 1024).toFixed(1);
+        throw new Error(`Image too large for data URI (${sizeMB}MB > ${limitMB}MB). Use direct URL instead.`);
+      }
+      
+      // Validate content type per RunwayML requirements
+      let mimeType = response.headers.get('content-type') || '';
+      const supportedTypes = this.runwayConfig.supportedFormats;
+      
+      if (!supportedTypes.includes(mimeType)) {
+        // Fallback based on URL extension
         if (imageUrl.toLowerCase().includes('.png')) {
           mimeType = 'image/png';
         } else if (imageUrl.toLowerCase().includes('.webp')) {
           mimeType = 'image/webp';
         } else {
-          mimeType = 'image/jpeg';
+          mimeType = 'image/jpeg'; // Default fallback
         }
       }
       
       const base64 = buffer.toString('base64');
       const dataUri = `data:${mimeType};base64,${base64}`;
       
-      console.log(`Converted image to data URI, size: ${buffer.length} bytes, type: ${mimeType}`);
+      console.log(`Converted image to data URI: ${(buffer.length / 1024).toFixed(1)}KB, type: ${mimeType}`);
       return dataUri;
       
     } catch (error) {

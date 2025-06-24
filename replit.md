@@ -119,6 +119,12 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Asset Serving**: Optimized static file serving with proper headers
 
 ## Changelog
+- June 24, 2025: Optimized RunwayML integration per official documentation requirements
+  - Implemented proper aspect ratio mapping for Gen-3 Alpha Turbo (1280:768, 768:1280)
+  - Added size validation with 3.3MB data URI limit and 16MB URL limit per RunwayML specs
+  - Enhanced image handling with automatic fallback from data URI to direct URL for large images
+  - Validated content types (JPEG, PNG, WebP) according to RunwayML input requirements
+  - Maintained character image-to-video generation with proper format compliance
 - June 24, 2025: Enhanced RunwayML with character image-to-video generation
   - Implemented character reference image support using RunwayML SDK imageToVideo method
   - Added automatic fallback from image-to-video to text-to-video based on character image availability
