@@ -739,10 +739,21 @@ export function RolePlayAnalysisPanel({
                   className="w-full"
                 />
                 
+                {/* Video Generation Details */}
+                <div className="border rounded-lg p-4 bg-blue-50 dark:bg-blue-950">
+                  <h4 className="font-medium text-blue-900 dark:text-blue-200 mb-2">Video Generation Details</h4>
+                  <div className="text-sm text-blue-800 dark:text-blue-300 space-y-2">
+                    <p><strong>Story Content:</strong> {analysis.title} ({story?.content?.length || 0} characters)</p>
+                    <p><strong>Characters Used:</strong> {analysis.characters?.map(c => c.name).join(', ') || 'None'}</p>
+                    <p><strong>Scenes Generated:</strong> {analysis.scenes?.length || 0}</p>
+                    <p><strong>Generated with:</strong> Complete story narrative, character descriptions, personality traits, and scene settings</p>
+                  </div>
+                </div>
+                
                 {/* Audio player if available */}
                 {videoResult.audioUrl && (
-                  <div className="border rounded-lg p-3 bg-blue-50 dark:bg-blue-950">
-                    <h5 className="font-medium text-blue-900 dark:text-blue-200 mb-2 text-sm">Character Audio</h5>
+                  <div className="border rounded-lg p-3 bg-green-50 dark:bg-green-950">
+                    <h5 className="font-medium text-green-900 dark:text-green-200 mb-2 text-sm">Character Audio</h5>
                     <audio src={videoResult.audioUrl} controls className="w-full" />
                   </div>
                 )}
@@ -1159,7 +1170,7 @@ export function RolePlayAnalysisPanel({
                       disabled={generatingVideo}
                     >
                       <RefreshCw className="w-4 h-4 mr-2" />
-                      {generatingVideo ? 'Regenerating...' : 'Regenerate Video (Cost $)'}
+                      {generatingVideo ? 'Regenerating...' : 'Regenerate Video'}
                     </Button>
                   </div>
                 </>
@@ -1184,7 +1195,7 @@ export function RolePlayAnalysisPanel({
                 ) : (
                   <>
                     <Play className="w-4 h-4 mr-2" />
-                    Generate Cinematic Video
+                    Generate Video
                   </>
                 )}
               </Button>

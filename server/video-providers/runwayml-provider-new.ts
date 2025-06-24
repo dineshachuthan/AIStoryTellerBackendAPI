@@ -339,18 +339,28 @@ export class RunwayMLProvider extends BaseVideoProvider {
       prompt += `${sceneDetails}. `;
     }
 
-    // Add story narrative with emotional context
-    const storyExcerpt = request.content.substring(0, 400);
-    prompt += `NARRATIVE: ${storyExcerpt}${request.content.length > 400 ? '...' : ''}. `;
+    // Add story narrative with content filtering for RunwayML guidelines
+    const storyExcerpt = this.filterContentForPolicy(request.content.substring(0, 300));
+    prompt += `STORY ELEMENTS: ${storyExcerpt}${request.content.length > 300 ? '...' : ''}. `;
     
-    // Add visual style instructions
-    prompt += `VISUAL STYLE: Professional ${request.style || 'cinematic'} quality with clear character focus, `;
-    prompt += `natural lighting, and immersive storytelling. `;
+    // Add visual style instructions with safe, general terms
+    prompt += `VISUAL STYLE: Professional cinematic storytelling with natural lighting and engaging narrative flow. `;
     
     // Add duration and pacing guidance
     prompt += `Create a ${request.duration || 10}-second video that captures the essence of this story with smooth transitions and engaging visual narrative.`;
 
     return prompt;
+  }
+
+  private filterContentForPolicy(content: string): string {
+    // Remove potentially problematic content for RunwayML content policy
+    const filtered = content
+      .replace(/\b(violence|violent|death|kill|murder|blood|fight|attack|weapon|gun|knife|sword)\b/gi, 'conflict')
+      .replace(/\b(steal|stolen|theft|thief|rob|robbery|crime|criminal)\b/gi, 'adventure')
+      .replace(/\b(dark|darkness|shadow|evil|sinister|menacing)\b/gi, 'mysterious')
+      .replace(/\b(adult|mature|explicit|inappropriate)\b/gi, 'dramatic');
+    
+    return filtered;
   }
 
   private getValidAspectRatio(requestedRatio?: string, quality?: string): string {

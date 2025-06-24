@@ -766,11 +766,12 @@ export class VideoGenerationService {
       
       // Store failure in database to prevent retries
       try {
-        await db.insert(videoGenerations).values({
+        // Use upsert to handle duplicate cache key constraint
+        const failureRecord = {
           storyId: story.id,
           requestedBy: request.userId,
           videoUrl: '',
-          status: 'failed',
+          status: 'failed' as const,
           errorMessage: error.message,
           generationParams: {
             quality: 'standard',
@@ -782,9 +783,11 @@ export class VideoGenerationService {
             error: error.message,
             failedAt: new Date().toISOString()
           },
-          cacheKey: `story-${story.id}-user-${request.userId}-failed`,
+          cacheKey: `story-${story.id}-user-${request.userId}-failed-${Date.now()}`, // Make unique
           expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours from now
-        });
+        };
+
+        await db.insert(videoGenerations).values(failureRecord);
         console.log(`Failure recorded in database for story ${story.id}`);
       } catch (dbError) {
         console.error('Failed to record error in database:', dbError);
