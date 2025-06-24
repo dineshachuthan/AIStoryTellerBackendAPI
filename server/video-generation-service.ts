@@ -650,8 +650,46 @@ export class VideoGenerationService {
       // Create human-readable description of what was sent to RunwayML
       const videoExpectation = this.createVideoExpectationDescription(story, roleplayAnalysis, narrativeAnalysis);
       
-      // For now, return the video with audio URL in metadata
-      // Future enhancement: combine video + audio into single file
+      // CRITICAL: Save to database to prevent regeneration costs
+      console.log(`Saving video to database for story ${story.id} to prevent regeneration costs`);
+      await db.insert(videoGenerations).values({
+        storyId: story.id,
+        userId: userId,
+        videoUrl: result.videoUrl,
+        thumbnailUrl: result.thumbnailUrl || '',
+        duration: result.duration,
+        status: 'completed',
+        generatedAt: new Date(),
+        metadata: {
+          hasAudio: !!audioUrl,
+          dialogueCount: roleplayAnalysis?.scenes?.reduce((total, scene) => total + (scene.dialogues?.length || 0), 0) || 0,
+          videoExpectation: videoExpectation,
+          audioUrl: audioUrl,
+          provider: 'runwayml',
+          model: 'gen3a_turbo'
+        }
+      }).onConflictDoUpdate({
+        target: [videoGenerations.storyId, videoGenerations.userId],
+        set: {
+          videoUrl: result.videoUrl,
+          thumbnailUrl: result.thumbnailUrl || '',
+          duration: result.duration,
+          status: 'completed',
+          generatedAt: new Date(),
+          metadata: {
+            hasAudio: !!audioUrl,
+            dialogueCount: roleplayAnalysis?.scenes?.reduce((total, scene) => total + (scene.dialogues?.length || 0), 0) || 0,
+            videoExpectation: videoExpectation,
+            audioUrl: audioUrl,
+            provider: 'runwayml',
+            model: 'gen3a_turbo'
+          }
+        }
+      });
+
+      console.log(`Video successfully saved to database for story ${story.id}`);
+
+      // Return the video data with proper caching indication
       return {
         videoUrl: result.videoUrl,
         audioUrl: audioUrl,

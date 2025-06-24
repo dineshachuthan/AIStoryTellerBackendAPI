@@ -761,6 +761,7 @@ export function RolePlayAnalysisPanel({
                   Characters used: {videoResult.charactersUsed?.map((c: any) => c.name).join(', ')}
                   {videoResult.metadata?.hasAudio && " | Audio included"}
                   {videoResult.metadata?.dialogueCount && ` | ${videoResult.metadata.dialogueCount} dialogues`}
+                  {videoResult.cacheHit && " | Loaded from cache (no cost)"}
                 </div>
                 {videoResult.cacheHit && (
                   <div className="text-xs text-green-600">
@@ -1151,13 +1152,14 @@ export function RolePlayAnalysisPanel({
                   )}
                   <div className="flex gap-2">
                     <Button
-                      onClick={handleGenerateVideoClick}
+                      onClick={() => generateVideo(true)}
                       variant="outline"
                       size="sm"
                       className="text-orange-600 border-orange-300 hover:bg-orange-50"
+                      disabled={generatingVideo}
                     >
                       <RefreshCw className="w-4 h-4 mr-2" />
-                      Regenerate Video
+                      {generatingVideo ? 'Regenerating...' : 'Regenerate Video (Cost $)'}
                     </Button>
                   </div>
                 </>
@@ -1170,7 +1172,7 @@ export function RolePlayAnalysisPanel({
                 No video available yet
               </p>
               <Button
-                onClick={handleGenerateVideoClick}
+                onClick={() => generateVideo(false)}
                 disabled={generatingVideo || !analysis?.characters?.length}
                 className="bg-purple-600 hover:bg-purple-700"
               >

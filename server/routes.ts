@@ -3199,6 +3199,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Story ID and authentication required" });
       }
 
+      // Check if video already exists to prevent unnecessary regeneration
+      const [existingVideo] = await db
+        .select()
+        .from(videoGenerations)
+        .where(and(
+          eq(videoGenerations.storyId, parseInt(storyId)),
+          eq(videoGenerations.userId, userId)
+        ))
+        .orderBy(desc(videoGenerations.createdAt))
+        .limit(1);
+
+      if (existingVideo && 
+          existingVideo.status === 'completed' && 
+          existingVideo.videoUrl && 
+          existingVideo.videoUrl.trim() !== '' &&
+          !req.body.forceRegenerate) {
+        console.log(`COST PROTECTION: Using existing video for story ${storyId}, preventing unnecessary RunwayML API call`);
+        
+        return res.json({
+          videoUrl: existingVideo.videoUrl,
+          audioUrl: existingVideo.metadata?.audioUrl || null,
+          thumbnailUrl: existingVideo.thumbnailUrl || '',
+          duration: existingVideo.duration,
+          status: existingVideo.status,
+          cacheHit: true,
+          metadata: existingVideo.metadata
+        });
+      }
+
+      // Only generate new video if explicitly requested or none exists
+      if (req.body.forceRegenerate) {
+        console.log(`Force regeneration requested for story ${storyId} - API COST WILL BE INCURRED`);
+      } else {
+        console.log(`No existing video found for story ${storyId} - generating new video - API COST WILL BE INCURRED`);
+      }
+
       // Use proper video generation service with strict duration control
       const { VideoGenerationService } = await import("./video-generation-service");
       const videoService = new VideoGenerationService();
@@ -3206,7 +3242,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         storyId: parseInt(storyId),
         userId,
         duration: 10 // Default 10 seconds, enforced by cost protection
-      });
+      }, req.body.forceRegenerate || false);
 
       res.json(result);
     } catch (error: any) {
