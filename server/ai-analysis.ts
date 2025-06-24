@@ -248,7 +248,25 @@ export async function generateCharacterImage(character: ExtractedCharacter, stor
         quality: "standard",
       });
 
-      return response.data?.[0]?.url || generateRoleBasedAvatar(character);
+      const originalImageUrl = response.data?.[0]?.url;
+      if (!originalImageUrl) {
+        return generateRoleBasedAvatar(character);
+      }
+
+      // Cache the generated image locally
+      try {
+        const { imageAssetService } = await import('./image-asset-service');
+        const cachedAsset = await imageAssetService.cacheImage(originalImageUrl, `character-${character.name}`);
+        
+        // Return the local cached URL
+        const baseUrl = process.env.REPLIT_DEV_DOMAIN ? 
+          `https://${process.env.REPLIT_DEV_DOMAIN}` : 
+          'http://localhost:5000';
+        return imageAssetService.getAbsoluteUrl(cachedAsset.publicUrl, baseUrl);
+      } catch (cacheError) {
+        console.warn('Failed to cache character image, using original URL:', cacheError.message);
+        return originalImageUrl;
+      }
     } catch (error: any) {
       console.error("Character image generation error:", error);
       
