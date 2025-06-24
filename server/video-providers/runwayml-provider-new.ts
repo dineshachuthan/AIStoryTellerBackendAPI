@@ -91,32 +91,54 @@ export class RunwayMLProvider extends BaseVideoProvider {
       
       // Try text-to-video endpoint first, fallback to image-to-video without image
       let endpoint = '/v1/text_to_video';
-      let requestBody = {
-        model: 'gen3a_turbo',
-        promptText: prompt,
-        duration: Math.min(request.duration || 10, 20),
-        seed: Math.floor(Math.random() * 2147483647),
-        watermark: false,
-        ratio: this.getValidAspectRatio(request.aspectRatio)
+      // Start with minimal request body to avoid parameter issues
+      let requestBody: any = {
+        promptText: prompt
       };
+      
+      // Add optional parameters only if they're likely to be supported
+      const duration = Math.min(request.duration || 10, 20);
+      if (duration >= 5 && duration <= 20) {
+        requestBody.duration = duration;
+      }
+      
+      // Try with basic ratio format
+      const aspectRatio = this.getValidAspectRatio(request.aspectRatio);
+      if (aspectRatio) {
+        requestBody.ratio = aspectRatio;
+      }
 
       console.log('Trying text-to-video endpoint first...');
       
       let task;
       try {
+        console.log(`Making request to ${endpoint} with body:`, JSON.stringify(requestBody, null, 2));
         task = await this.runwayApiRequest(endpoint, {
           method: 'POST',
           body: requestBody
         });
+        console.log('Text-to-video endpoint succeeded:', task);
       } catch (textToVideoError) {
-        console.log('Text-to-video endpoint failed, trying image-to-video without image:', textToVideoError.message);
+        console.log('Text-to-video endpoint failed:', textToVideoError.message);
+        
+        // Parse error to see details
+        try {
+          const errorObj = JSON.parse(textToVideoError.message);
+          console.log('Detailed text-to-video error:', errorObj);
+        } catch (e) {
+          console.log('Raw text-to-video error:', textToVideoError.message);
+        }
+        
+        console.log('Trying image-to-video without promptImage...');
         
         // Fallback to image-to-video endpoint without promptImage
         endpoint = '/v1/image_to_video';
+        console.log(`Fallback request to ${endpoint} with body:`, JSON.stringify(requestBody, null, 2));
         task = await this.runwayApiRequest(endpoint, {
           method: 'POST',
           body: requestBody
         });
+        console.log('Image-to-video endpoint succeeded:', task);
       }
         
       console.log('RunwayML task created, waiting for completion...');
@@ -312,7 +334,7 @@ export class RunwayMLProvider extends BaseVideoProvider {
   }
 
   private getValidAspectRatio(requestedRatio?: string): string {
-    return this.runwayConfig.aspectRatioMappings[requestedRatio || '16:9'] || '1280:768';
+    return this.runwayConfig.aspectRatioMappings[requestedRatio || '16:9'] || '16:9';
   }
 
   private async convertImageUrlToDataUri(imageUrl: string): Promise<string> {
