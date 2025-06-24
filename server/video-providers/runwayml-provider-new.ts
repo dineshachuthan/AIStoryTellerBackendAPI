@@ -26,8 +26,8 @@ export class RunwayMLProvider extends BaseVideoProvider {
       console.log(`Generating video using RunwayML API with SDK authentication`);
       console.log('Comprehensive prompt:', prompt);
 
-      // Use RunwayML text-to-video generation endpoint
-      const response = await fetch('https://api.dev.runwayml.com/v1/generate', {
+      // Use RunwayML tasks endpoint for video generation
+      const response = await fetch('https://api.dev.runwayml.com/v1/tasks', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${this.client.apiKey}`,
@@ -35,15 +35,18 @@ export class RunwayMLProvider extends BaseVideoProvider {
           'X-Runway-Version': this.config.apiVersion || '2024-11-06'
         },
         body: JSON.stringify({
-          model: 'gen3a_turbo',
-          prompt: prompt,
-          seconds: Math.min(request.duration || 10, 20),
-          seed: Math.floor(Math.random() * 2147483647),
-          watermark: false,
-          width: request.aspectRatio === '9:16' ? 768 : 
-                 request.aspectRatio === '1:1' ? 1024 : 1280,
-          height: request.aspectRatio === '9:16' ? 1344 : 
-                  request.aspectRatio === '1:1' ? 1024 : 720
+          taskType: 'gen3a_turbo',
+          internal: false,
+          options: {
+            promptText: prompt,
+            seconds: Math.min(request.duration || 10, 20),
+            seed: Math.floor(Math.random() * 2147483647),
+            watermark: false,
+            width: request.aspectRatio === '9:16' ? 768 : 
+                   request.aspectRatio === '1:1' ? 1024 : 1280,
+            height: request.aspectRatio === '9:16' ? 1344 : 
+                    request.aspectRatio === '1:1' ? 1024 : 720
+          }
         })
       });
 
