@@ -86,7 +86,10 @@ export class RunwayMLProvider extends BaseVideoProvider {
         console.log(`Enhanced prompt with ${request.characters.length} character descriptions`);
       }
       
-      console.log('Creating video task with enhanced prompt:', prompt.substring(0, 100) + '...');
+      console.log('Creating video task with story-specific prompt');
+      console.log('=== COMPLETE PROMPT BEING SENT TO RUNWAYML ===');
+      console.log(prompt);
+      console.log('=== END PROMPT ===');
       
       // Use a simple solid color PNG to avoid any image validation issues
       console.log('Using simple solid color PNG to avoid content moderation issues');
@@ -108,10 +111,7 @@ export class RunwayMLProvider extends BaseVideoProvider {
 
       console.log('Making RunwayML API request with minimal image and text prompt');
       console.log('Prompt length:', prompt.length, 'Duration:', requestBody.duration);
-      console.log('Full prompt being sent to RunwayML:');
-      console.log('====================================');
-      console.log(prompt);
-      console.log('====================================');
+      // Prompt already logged above
       
       const task = await this.runwayApiRequest('/v1/image_to_video', {
         method: 'POST',

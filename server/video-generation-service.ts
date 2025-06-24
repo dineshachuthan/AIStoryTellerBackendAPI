@@ -684,7 +684,11 @@ export class VideoGenerationService {
       const audioUrl = null; // Temporarily disable audio generation to focus on video
       
       // Create human-readable description of what was sent to RunwayML
-      const videoExpectation = `Video generated from story "${story.title}" with ${roleplayAnalysis?.scenes?.length || 0} scenes`;
+      const characters = roleplayAnalysis?.characters?.map((c: any) => c.name).join(', ') || 'none';
+      const scenes = roleplayAnalysis?.scenes?.length || 0;
+      const storyLength = story.content?.length || 0;
+      
+      const videoExpectation = `Video generated from "${story.title}" (${storyLength} chars) featuring characters: ${characters}, with ${scenes} scenes. Complete story content and detailed character descriptions were sent to RunwayML for accurate visualization.`;
       
       // CRITICAL: Save to database to prevent regeneration costs
       console.log(`Saving video to database for story ${story.id} to prevent regeneration costs`);
