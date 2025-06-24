@@ -3260,20 +3260,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Use proper video generation service with strict duration control
+      console.log(`Generating video for story ${storyId} by user ${userId}`);
+      
       const { VideoGenerationService } = await import("./video-generation-service");
       const videoService = new VideoGenerationService();
+      
       const result = await videoService.generateVideo({
         storyId: parseInt(storyId),
         userId,
-        duration: 10 // Default 10 seconds, enforced by cost protection
+        duration: 10, // Default 10 seconds, enforced by cost protection
+        quality: req.body.quality || 'standard'
       }, req.body.forceRegenerate || false);
 
+      console.log(`Video generation completed for story ${storyId}`);
       res.json(result);
+      
     } catch (error: any) {
       console.error("Video generation failed:", error);
+      console.error("Error stack:", error.stack);
+      
       res.status(500).json({ 
         message: "Video generation failed", 
-        error: error?.message || 'Unknown error'
+        error: error?.message || 'Unknown error',
+        canRetry: !error.message?.includes('Content may violate guidelines'),
+        timestamp: new Date().toISOString()
       });
     }
   });

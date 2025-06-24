@@ -705,10 +705,10 @@ export class VideoGenerationService {
             model: 'gen3a_turbo'
           },
           characterAssetsSnapshot: {
-            hasAudio: !!audioUrl,
-            dialogueCount: roleplayAnalysis?.scenes?.reduce((total, scene) => total + (scene.dialogues?.length || 0), 0) || 0,
+            hasAudio: false,
+            dialogueCount: roleplayAnalysis?.scenes?.reduce((total: number, scene: any) => total + (scene.dialogues?.length || 0), 0) || 0,
             videoExpectation: videoExpectation,
-            audioUrl: audioUrl
+            audioUrl: null
           },
           cacheKey: `story-${story.id}-user-${request.userId}`,
           expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days from now
@@ -732,10 +732,10 @@ export class VideoGenerationService {
               model: 'gen3a_turbo'
             },
             characterAssetsSnapshot: {
-              hasAudio: !!audioUrl,
-              dialogueCount: roleplayAnalysis?.scenes?.reduce((total, scene) => total + (scene.dialogues?.length || 0), 0) || 0,
+              hasAudio: false,
+              dialogueCount: roleplayAnalysis?.scenes?.reduce((total: number, scene: any) => total + (scene.dialogues?.length || 0), 0) || 0,
               videoExpectation: videoExpectation,
-              audioUrl: audioUrl
+              audioUrl: null
             },
             updatedAt: new Date()
           })
@@ -750,16 +750,10 @@ export class VideoGenerationService {
       // Return the video data with proper caching indication
       return {
         videoUrl: result.videoUrl,
-        audioUrl: audioUrl,
         thumbnailUrl: result.thumbnailUrl || '',
         duration: result.duration,
         status: result.status,
-        cacheHit: false,
-        metadata: {
-          hasAudio: !!audioUrl,
-          dialogueCount: roleplayAnalysis?.scenes?.reduce((total, scene) => total + (scene.dialogues?.length || 0), 0) || 0,
-          videoExpectation: videoExpectation
-        }
+        cacheHit: false
       };
 
     } catch (error: any) {
