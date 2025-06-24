@@ -23,69 +23,41 @@ export class RunwayMLProvider extends BaseVideoProvider {
     try {
       const prompt = this.createPrompt(request);
       
-      console.log(`Generating video using RunwayML API with SDK authentication`);
+      console.log(`Generating video using RunwayML SDK textToVideo method`);
       console.log('Comprehensive prompt:', prompt);
 
-      // Use RunwayML video generation endpoint
-      const response = await fetch('https://api.dev.runwayml.com/v1/text_to_video', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.client.apiKey}`,
-          'Content-Type': 'application/json',
-          'X-Runway-Version': this.config.apiVersion || '2024-11-06'
-        },
-        body: JSON.stringify({
+      // Use RunwayML SDK for text-to-video generation
+      const task = await this.client.textToVideo
+        .create({
           model: 'gen3a_turbo',
-          prompt: prompt,
+          promptText: prompt,
           duration: Math.min(request.duration || 10, 20),
           seed: Math.floor(Math.random() * 2147483647),
           watermark: false,
-          aspect_ratio: request.aspectRatio || '16:9'
+          ratio: request.aspectRatio === '9:16' ? '720:1280' : 
+                 request.aspectRatio === '1:1' ? '1024:1024' : '1280:720'
         })
-      });
+        .waitForTaskOutput();
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`RunwayML API error: ${response.status} ${response.statusText}`, errorText);
-        throw new Error(`RunwayML API error: ${response.status} ${response.statusText}: ${errorText}`);
-      }
+      console.log('RunwayML task completed:', task);
 
-      const result = await response.json();
-      console.log('RunwayML generation result:', result);
-
-      // Handle different response formats based on API endpoint
-      let videoUrl = '';
-      let taskId = '';
-
-      if (result.id) {
-        // If we get a task ID, poll for completion
-        taskId = result.id;
-        const completedTask = await this.waitForCompletion(taskId);
-        videoUrl = completedTask.output?.[0] || completedTask.artifacts?.[0]?.url || completedTask.video_url || '';
-      } else if (result.video_url || result.url) {
-        // Direct video URL response
-        videoUrl = result.video_url || result.url;
-        taskId = result.task_id || 'direct-generation';
-      } else if (result.data?.video_url) {
-        // Nested response structure
-        videoUrl = result.data.video_url;
-        taskId = result.data.id || 'nested-generation';
-      }
+      // Extract video URL from task output
+      const videoUrl = task.output?.[0] || task.artifacts?.[0]?.url || '';
       
       if (!videoUrl) {
-        throw new Error('No video URL returned from RunwayML');
+        throw new Error('No video URL returned from RunwayML task');
       }
 
       return {
         videoUrl: videoUrl,
-        thumbnailUrl: result.thumbnail || result.data?.thumbnail || '',
+        thumbnailUrl: task.thumbnails?.[0] || '',
         duration: request.duration || 10,
         status: 'completed',
         metadata: {
           provider: 'runwayml',
-          providerJobId: taskId,
+          providerJobId: task.id,
           format: 'mp4',
-          resolution: request.aspectRatio === '9:16' ? '768x1344' : 
+          resolution: request.aspectRatio === '9:16' ? '720x1280' : 
                      request.aspectRatio === '1:1' ? '1024x1024' : '1280x720',
           codec: 'h264',
           generatedAt: new Date()
