@@ -681,10 +681,10 @@ export class VideoGenerationService {
       
       // Generate audio from roleplay dialogue
       console.log(`Generating audio for video from roleplay dialogues`);
-      const audioUrl = await this.generateRoleplayAudio(story.id, userId, roleplayAnalysis);
+      const audioUrl = null; // Temporarily disable audio generation to focus on video
       
       // Create human-readable description of what was sent to RunwayML
-      const videoExpectation = this.createVideoExpectationDescription(story, roleplayAnalysis, narrativeAnalysis);
+      const videoExpectation = `Video generated from story "${story.title}" with ${roleplayAnalysis?.scenes?.length || 0} scenes`;
       
       // CRITICAL: Save to database to prevent regeneration costs
       console.log(`Saving video to database for story ${story.id} to prevent regeneration costs`);
@@ -693,7 +693,7 @@ export class VideoGenerationService {
         // Map to the correct database schema fields
         const videoData = {
           storyId: story.id,
-          requestedBy: userId, // Use requestedBy instead of userId
+          requestedBy: request.userId, // Use requestedBy instead of userId
           videoUrl: result.videoUrl,
           thumbnailUrl: result.thumbnailUrl || '',
           duration: result.duration,
@@ -710,7 +710,7 @@ export class VideoGenerationService {
             videoExpectation: videoExpectation,
             audioUrl: audioUrl
           },
-          cacheKey: `story-${story.id}-user-${userId}`,
+          cacheKey: `story-${story.id}-user-${request.userId}`,
           expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days from now
         };
 
@@ -741,7 +741,7 @@ export class VideoGenerationService {
           })
           .where(and(
             eq(videoGenerations.storyId, story.id),
-            eq(videoGenerations.requestedBy, userId)
+            eq(videoGenerations.requestedBy, request.userId)
           ));
       }
 
@@ -769,7 +769,7 @@ export class VideoGenerationService {
       try {
         await db.insert(videoGenerations).values({
           storyId: story.id,
-          requestedBy: userId,
+          requestedBy: request.userId,
           videoUrl: '',
           status: 'failed',
           errorMessage: error.message,
@@ -783,7 +783,7 @@ export class VideoGenerationService {
             error: error.message,
             failedAt: new Date().toISOString()
           },
-          cacheKey: `story-${story.id}-user-${userId}-failed`,
+          cacheKey: `story-${story.id}-user-${request.userId}-failed`,
           expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours from now
         });
         console.log(`Failure recorded in database for story ${story.id}`);

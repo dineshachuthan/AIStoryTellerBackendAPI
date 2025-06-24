@@ -138,6 +138,12 @@ export class RunwayMLProvider extends BaseVideoProvider {
         throw new Error(`No video URL returned from RunwayML task. Task structure: ${JSON.stringify(completedTask)}`);
       }
       
+      // Get resolution info for metadata first
+      const resolutionTier = request.quality === 'high' ? 'high' : 
+                            request.quality === 'standard' ? 'standard' : 
+                            this.runwayConfig.defaultResolution;
+      const resolutionConfig = this.runwayConfig.resolution[resolutionTier];
+
       console.log('Video generation successful! URL:', videoUrl);
       console.log('Video metadata summary:');
       console.log('- Generated from prompt:', prompt.substring(0, 100) + '...');
@@ -145,12 +151,6 @@ export class RunwayMLProvider extends BaseVideoProvider {
       console.log('- Scenes requested:', request.scenes?.length || 0);
       console.log('- Resolution tier:', resolutionTier);
       console.log('- Aspect ratio:', aspectRatio);
-
-      // Get resolution info for metadata
-      const resolutionTier = request.quality === 'high' ? 'high' : 
-                            request.quality === 'standard' ? 'standard' : 
-                            this.runwayConfig.defaultResolution;
-      const resolutionConfig = this.runwayConfig.resolution[resolutionTier];
       
       return {
         videoUrl: videoUrl,
