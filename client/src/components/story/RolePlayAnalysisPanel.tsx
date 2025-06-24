@@ -743,7 +743,7 @@ export function RolePlayAnalysisPanel({
                 <div className="border rounded-lg p-4 bg-blue-50 dark:bg-blue-950">
                   <h4 className="font-medium text-blue-900 dark:text-blue-200 mb-2">Video Generation Details</h4>
                   <div className="text-sm text-blue-800 dark:text-blue-300 space-y-2">
-                    <p><strong>Story Content:</strong> {analysis.title} ({story?.content?.length || 0} characters)</p>
+                    <p><strong>Story Content:</strong> {analysis.title} (Full story narrative sent to AI)</p>
                     <p><strong>Characters Used:</strong> {analysis.characters?.map(c => c.name).join(', ') || 'None'}</p>
                     <p><strong>Scenes Generated:</strong> {analysis.scenes?.length || 0}</p>
                     <p><strong>Generated with:</strong> Complete story narrative, character descriptions, personality traits, and scene settings</p>
