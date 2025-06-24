@@ -738,8 +738,29 @@ export function RolePlayAnalysisPanel({
                   duration={videoResult.duration}
                   className="w-full"
                 />
+                
+                {/* Audio player if available */}
+                {videoResult.audioUrl && (
+                  <div className="border rounded-lg p-3 bg-blue-50 dark:bg-blue-950">
+                    <h5 className="font-medium text-blue-900 dark:text-blue-200 mb-2 text-sm">Character Audio</h5>
+                    <audio src={videoResult.audioUrl} controls className="w-full" />
+                  </div>
+                )}
+                
+                {/* Video expectation description */}
+                {videoResult.metadata?.videoExpectation && (
+                  <div className="border rounded-lg p-3 bg-amber-50 dark:bg-amber-950">
+                    <h5 className="font-medium text-amber-900 dark:text-amber-200 mb-2 text-sm">What This Video Should Show</h5>
+                    <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
+                      {videoResult.metadata.videoExpectation}
+                    </p>
+                  </div>
+                )}
+                
                 <div className="text-sm text-green-700 dark:text-green-300">
                   Characters used: {videoResult.charactersUsed?.map((c: any) => c.name).join(', ')}
+                  {videoResult.metadata?.hasAudio && " | Audio included"}
+                  {videoResult.metadata?.dialogueCount && ` | ${videoResult.metadata.dialogueCount} dialogues`}
                 </div>
                 {videoResult.cacheHit && (
                   <div className="text-xs text-green-600">
@@ -1045,6 +1066,24 @@ export function RolePlayAnalysisPanel({
                     duration={videoResult.duration}
                     className="w-full rounded-lg"
                   />
+                  
+                  {/* Audio player if available */}
+                  {videoResult.audioUrl && (
+                    <div className="border rounded-lg p-4 bg-blue-50 dark:bg-blue-950">
+                      <h4 className="font-medium text-blue-900 dark:text-blue-200 mb-2">Character Audio</h4>
+                      <audio src={videoResult.audioUrl} controls className="w-full" />
+                    </div>
+                  )}
+                  
+                  {/* Video expectation description for preview */}
+                  {videoResult.metadata?.videoExpectation && (
+                    <div className="border rounded-lg p-4 bg-amber-50 dark:bg-amber-950">
+                      <h4 className="font-medium text-amber-900 dark:text-amber-200 mb-2">Expected Content</h4>
+                      <p className="text-sm text-amber-800 dark:text-amber-300 leading-relaxed">
+                        {videoResult.metadata.videoExpectation}
+                      </p>
+                    </div>
+                  )}
                   <div className="flex gap-2">
                     <Button
                       onClick={approveVideo}
@@ -1078,6 +1117,38 @@ export function RolePlayAnalysisPanel({
                     duration={videoResult.duration}
                     className="w-full rounded-lg"
                   />
+                  
+                  {/* Audio player if available */}
+                  {videoResult.audioUrl && (
+                    <div className="border rounded-lg p-4 bg-blue-50 dark:bg-blue-950">
+                      <h4 className="font-medium text-blue-900 dark:text-blue-200 mb-2">Character Audio</h4>
+                      <audio 
+                        src={videoResult.audioUrl} 
+                        controls 
+                        className="w-full"
+                      >
+                        Your browser does not support the audio tag.
+                      </audio>
+                      <p className="text-sm text-blue-700 dark:text-blue-300 mt-2">
+                        Character dialogue from the story roleplay
+                      </p>
+                    </div>
+                  )}
+                  
+                  {/* Video expectation description */}
+                  {videoResult.metadata?.videoExpectation && (
+                    <div className="border rounded-lg p-4 bg-amber-50 dark:bg-amber-950">
+                      <h4 className="font-medium text-amber-900 dark:text-amber-200 mb-2">What This Video Should Show</h4>
+                      <p className="text-sm text-amber-800 dark:text-amber-300 leading-relaxed">
+                        {videoResult.metadata.videoExpectation}
+                      </p>
+                      <div className="mt-3 pt-3 border-t border-amber-200 dark:border-amber-800">
+                        <p className="text-xs text-amber-700 dark:text-amber-400">
+                          Compare this description with the actual video above to validate if the AI generated content matches your story expectations.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                   <div className="flex gap-2">
                     <Button
                       onClick={handleGenerateVideoClick}
