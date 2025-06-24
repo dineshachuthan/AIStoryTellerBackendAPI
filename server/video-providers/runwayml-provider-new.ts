@@ -91,11 +91,15 @@ export class RunwayMLProvider extends BaseVideoProvider {
       // RunwayML requires promptImage even for text-to-video, use minimal transparent pixel
       const transparentPixel = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
       
+      // Get resolution based on quality setting
+      const aspectRatio = this.getValidAspectRatio(request.aspectRatio, request.quality);
+      
       const requestBody = {
-        model: 'gen3a', // Explicit model specification
+        model: 'gen3a_turbo', // Working model name
         promptImage: transparentPixel,
         promptText: prompt,
-        duration: Math.min(request.duration || 10, 10) // Max 10 seconds
+        duration: Math.min(request.duration || this.runwayConfig.defaultDuration, this.runwayConfig.maxDuration),
+        aspectRatio: aspectRatio
       };
 
       console.log('Making RunwayML API request with minimal image and text prompt');
@@ -119,20 +123,27 @@ export class RunwayMLProvider extends BaseVideoProvider {
         throw new Error('No video URL returned from RunwayML task');
       }
 
+      // Get resolution info for metadata
+      const resolutionTier = request.quality === 'high' ? 'high' : 
+                            request.quality === 'standard' ? 'standard' : 
+                            this.runwayConfig.defaultResolution;
+      const resolutionConfig = this.runwayConfig.resolution[resolutionTier];
+      
       return {
         videoUrl: videoUrl,
         thumbnailUrl: completedTask.thumbnails?.[0] || '',
-        duration: request.duration || 10,
+        duration: request.duration || this.runwayConfig.defaultDuration,
         status: 'completed',
         metadata: {
           provider: 'runwayml',
           providerJobId: completedTask.id,
           format: 'mp4',
-          resolution: request.aspectRatio === '9:16' ? '720x1280' : 
-                     request.aspectRatio === '1:1' ? '1024x1024' : '1280x720',
+          resolution: aspectRatio,
+          resolutionTier: resolutionTier,
           codec: 'h264',
           generatedAt: new Date(),
-          generationType: 'text-to-video'
+          generationType: 'image-to-video',
+          model: 'gen3a_turbo'
         }
       };
 
@@ -298,8 +309,13 @@ export class RunwayMLProvider extends BaseVideoProvider {
     return prompt;
   }
 
-  private getValidAspectRatio(requestedRatio?: string): string {
-    return this.runwayConfig.aspectRatioMappings[requestedRatio || '16:9'] || '16:9';
+  private getValidAspectRatio(requestedRatio?: string, quality?: string): string {
+    const resolutionTier = quality === 'high' ? 'high' : 
+                          quality === 'standard' ? 'standard' : 
+                          this.runwayConfig.defaultResolution;
+    
+    const aspectRatios = this.runwayConfig.resolution[resolutionTier].aspectRatios;
+    return aspectRatios[requestedRatio || '16:9'] || aspectRatios['16:9'];
   }
 
   private async convertImageUrlToDataUri(imageUrl: string): Promise<string> {

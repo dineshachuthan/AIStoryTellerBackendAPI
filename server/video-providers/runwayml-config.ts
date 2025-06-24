@@ -1,5 +1,8 @@
 export interface RunwayMLConfig {
   apiVersion: string;
+  baseUrl: string;
+  maxDuration: number;
+  defaultDuration: number;
   supportedAspectRatios: {
     gen3a_turbo: string[];
     gen4_turbo: string[];
@@ -9,11 +12,41 @@ export interface RunwayMLConfig {
     urlMaxSize: number; // in bytes
   };
   supportedFormats: string[];
-  aspectRatioMappings: Record<string, string>;
+  resolution: {
+    low: {
+      width: number;
+      height: number;
+      aspectRatios: Record<string, string>;
+    };
+    standard: {
+      width: number;
+      height: number;
+      aspectRatios: Record<string, string>;
+    };
+    high: {
+      width: number;
+      height: number;
+      aspectRatios: Record<string, string>;
+    };
+  };
+  defaultResolution: 'low' | 'standard' | 'high';
+  rateLimit: {
+    requestsPerMinute: number;
+    burstLimit: number;
+  };
+  timeout: {
+    requestTimeout: number;
+    generationTimeout: number;
+  };
 }
 
 export const runwayMLConfig: RunwayMLConfig = {
   apiVersion: '2024-11-06',
+  baseUrl: 'https://api.dev.runwayml.com',
+  
+  // Cost control settings
+  maxDuration: 10, // Maximum video duration in seconds
+  defaultDuration: 5, // Default duration for requests
   
   supportedAspectRatios: {
     gen3a_turbo: ['1280:768', '768:1280'],
@@ -27,13 +60,59 @@ export const runwayMLConfig: RunwayMLConfig = {
   
   supportedFormats: ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'],
   
-  aspectRatioMappings: {
-    // Common ratios to RunwayML Gen-3 Alpha Turbo supported ratios
-    '16:9': '1280:768',
-    '9:16': '768:1280', 
-    '1:1': '768:1280', // Default to portrait for square requests
-    'landscape': '1280:768',
-    'portrait': '768:1280'
+  // Resolution settings - configurable for cost control
+  resolution: {
+    // Low resolution for cost savings (50% of standard)
+    low: {
+      width: 640,
+      height: 384,
+      aspectRatios: {
+        '16:9': '640:384',
+        '9:16': '384:640', 
+        '1:1': '512:512',
+        '4:3': '512:384',
+        '3:4': '384:512'
+      }
+    },
+    // Standard resolution 
+    standard: {
+      width: 1280,
+      height: 768,
+      aspectRatios: {
+        '16:9': '1280:768',
+        '9:16': '768:1280', 
+        '1:1': '1024:1024',
+        '4:3': '1024:768',
+        '3:4': '768:1024'
+      }
+    },
+    // High resolution (RunwayML native resolution)
+    high: {
+      width: 1280,
+      height: 768,
+      aspectRatios: {
+        '16:9': '1280:768',
+        '9:16': '768:1280', 
+        '1:1': '1280:768', // Use landscape for square on high
+        '4:3': '1280:768',
+        '3:4': '768:1280'
+      }
+    }
+  },
+  
+  // Default resolution tier (change this to control cost)
+  defaultResolution: 'low', // Options: 'low', 'standard', 'high'
+  
+  // Rate limiting
+  rateLimit: {
+    requestsPerMinute: 10,
+    burstLimit: 3
+  },
+  
+  // Timeout settings
+  timeout: {
+    requestTimeout: 30000, // 30 seconds for API requests
+    generationTimeout: 300000 // 5 minutes for video generation
   }
 };
 
