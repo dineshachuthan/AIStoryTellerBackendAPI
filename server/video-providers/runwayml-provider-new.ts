@@ -14,14 +14,27 @@ export class RunwayMLProvider extends BaseVideoProvider {
     }
     
     // Initialize RunwayML SDK client
-    this.client = new RunwayML({
-      apiKey: config.apiKey
-    });
+    try {
+      this.client = new RunwayML({
+        apiKey: config.apiKey
+      });
+      
+      // Verify client has required methods
+      if (!this.client.imageToVideo) {
+        console.error('RunwayML client missing required methods. Client structure:', Object.keys(this.client));
+        throw new Error('RunwayML client initialization failed - missing imageToVideo method');
+      }
+      
+    } catch (error) {
+      console.error('RunwayML client initialization error:', error);
+      throw new Error(`RunwayML client initialization failed: ${error.message}`);
+    }
     
     this.runwayConfig = runwayMLConfig;
     
     console.log('RunwayML provider initialized with API key:', config.apiKey ? 'present' : 'missing');
     console.log('RunwayML config loaded - API version:', this.runwayConfig.apiVersion);
+    console.log('RunwayML client methods available:', this.client.imageToVideo ? 'imageToVideo: yes' : 'imageToVideo: no');
   }
 
   async generateVideo(request: VideoGenerationRequest): Promise<VideoGenerationResult> {
@@ -59,6 +72,12 @@ export class RunwayMLProvider extends BaseVideoProvider {
             promptImage = imageAssetService.getAbsoluteUrl(cachedAsset.publicUrl, baseUrl);
             console.log('Using cached image URL as fallback:', promptImage);
           }
+          
+          if (!this.client.imageToVideo) {
+            throw new Error('RunwayML client imageToVideo method is not available');
+          }
+          
+          console.log('Creating image-to-video task with prompt:', prompt.substring(0, 100) + '...');
           
           const task = await this.client.imageToVideo
             .create({
@@ -111,8 +130,14 @@ export class RunwayMLProvider extends BaseVideoProvider {
           'Character images were found but failed to process, using text-to-video generation' : 
           'No character images found, using text-to-video generation');
 
-        // Use RunwayML SDK for text-to-video generation
-        const task = await this.client.textToVideo
+        // Use RunwayML SDK for text-to-video generation (using imageToVideo with no image)
+        if (!this.client.imageToVideo) {
+          throw new Error('RunwayML client imageToVideo method is not available');
+        }
+        
+        console.log('Creating text-to-video task with prompt:', prompt.substring(0, 100) + '...');
+        
+        const task = await this.client.imageToVideo
           .create({
             model: 'gen3a_turbo',
             promptText: prompt,
