@@ -731,6 +731,33 @@ export class VideoGenerationService {
 
     } catch (error: any) {
       console.error('Video generation failed:', error);
+      
+      // Store failure in database to prevent retries
+      try {
+        await db.insert(videoGenerations).values({
+          storyId: story.id,
+          requestedBy: userId,
+          videoUrl: '',
+          status: 'failed',
+          errorMessage: error.message,
+          generationParams: {
+            quality: 'standard',
+            provider: 'runwayml',
+            model: 'gen3a_turbo',
+            error: error.message
+          },
+          characterAssetsSnapshot: {
+            error: error.message,
+            failedAt: new Date().toISOString()
+          },
+          cacheKey: `story-${story.id}-user-${userId}-failed`,
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours from now
+        });
+        console.log(`Failure recorded in database for story ${story.id}`);
+      } catch (dbError) {
+        console.error('Failed to record error in database:', dbError);
+      }
+      
       throw new Error(`Video generation failed: ${error.message}`);
     }
   }

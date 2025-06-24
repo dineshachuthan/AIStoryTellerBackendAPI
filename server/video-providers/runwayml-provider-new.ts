@@ -178,8 +178,12 @@ export class RunwayMLProvider extends BaseVideoProvider {
   }
 
   private async waitForCompletion(taskId: string): Promise<any> {
-    const maxAttempts = 60; // 5 minutes with 5-second intervals
+    const maxAttempts = 24; // 4 minutes with 10-second intervals - reduced to prevent infinite loops
     let attempts = 0;
+    let consecutiveErrors = 0;
+    const maxConsecutiveErrors = 3;
+
+    console.log(`Polling RunwayML task ${taskId} for completion (max ${maxAttempts} attempts)`);
 
     while (attempts < maxAttempts) {
       try {
@@ -188,10 +192,12 @@ export class RunwayMLProvider extends BaseVideoProvider {
         if (task.status === 'SUCCEEDED') {
           return task;
         } else if (task.status === 'FAILED') {
-          throw new Error(`Task failed: ${task.failure?.reason || 'Unknown error'}`);
+          const failureReason = task.failure?.reason || task.failure?.message || 'Content may violate guidelines or exceed limits';
+          console.log(`RunwayML task ${taskId} failed: ${failureReason}`);
+          throw new Error(`RunwayML generation failed: ${failureReason}`);
         }
         
-        console.log(`Task ${taskId} status: ${task.status}, waiting...`);
+        console.log(`Task ${taskId} status: ${task.status}, waiting... (attempt ${attempts + 1}/${maxAttempts})`);
         
         // Wait 5 seconds before next poll
         await new Promise(resolve => setTimeout(resolve, 5000));

@@ -3213,26 +3213,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .orderBy(desc(videoGenerations.createdAt))
         .limit(1);
 
-      if (existingVideo && 
-          existingVideo.status === 'completed' && 
-          existingVideo.videoUrl && 
-          existingVideo.videoUrl.trim() !== '' &&
-          !req.body.forceRegenerate) {
+      // Check for both completed videos and recent failures to prevent repeated attempts
+      if (existingVideo && !req.body.forceRegenerate) {
+        if (existingVideo.status === 'completed' && 
+            existingVideo.videoUrl && 
+            existingVideo.videoUrl.trim() !== '') {
         console.log(`COST PROTECTION: Using existing video for story ${storyId}, preventing unnecessary RunwayML API call`);
         
-        return res.json({
-          videoUrl: existingVideo.videoUrl,
-          audioUrl: existingVideo.characterAssetsSnapshot?.audioUrl || null,
-          thumbnailUrl: existingVideo.thumbnailUrl || '',
-          duration: existingVideo.duration,
-          status: existingVideo.status,
-          cacheHit: true,
-          metadata: {
-            hasAudio: !!existingVideo.characterAssetsSnapshot?.audioUrl,
-            dialogueCount: existingVideo.characterAssetsSnapshot?.dialogueCount || 0,
-            videoExpectation: existingVideo.characterAssetsSnapshot?.videoExpectation || ''
+          return res.json({
+            videoUrl: existingVideo.videoUrl,
+            audioUrl: existingVideo.characterAssetsSnapshot?.audioUrl || null,
+            thumbnailUrl: existingVideo.thumbnailUrl || '',
+            duration: existingVideo.duration,
+            status: existingVideo.status,
+            cacheHit: true,
+            metadata: {
+              hasAudio: !!existingVideo.characterAssetsSnapshot?.audioUrl,
+              dialogueCount: existingVideo.characterAssetsSnapshot?.dialogueCount || 0,
+              videoExpectation: existingVideo.characterAssetsSnapshot?.videoExpectation || ''
+            }
+          });
+        }
+        
+        // Check if recent failure - prevent immediate retry
+        if (existingVideo.status === 'failed') {
+          const failureTime = new Date(existingVideo.createdAt || existingVideo.updatedAt || 0);
+          const timeSinceFailure = Date.now() - failureTime.getTime();
+          const waitTime = 60 * 60 * 1000; // 1 hour cooldown after failure
+          
+          if (timeSinceFailure < waitTime) {
+            const minutesLeft = Math.ceil((waitTime - timeSinceFailure) / (60 * 1000));
+            return res.status(429).json({
+              message: `Video generation failed recently. Please wait ${minutesLeft} minutes before trying again.`,
+              error: existingVideo.errorMessage || 'Previous generation failed',
+              retryAfter: minutesLeft
+            });
           }
-        });
+        }
       }
 
       // Only generate new video if explicitly requested or none exists
