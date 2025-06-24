@@ -748,11 +748,12 @@ export class VideoGenerationService {
       console.log(`Video successfully saved to database for story ${story.id}`);
 
       // Return the video data with proper caching indication
+      console.log(`Video generation successful for story ${story.id}`);
       return {
         videoUrl: result.videoUrl,
         thumbnailUrl: result.thumbnailUrl || '',
         duration: result.duration,
-        status: result.status,
+        status: 'completed',
         cacheHit: false
       };
 
@@ -785,6 +786,7 @@ export class VideoGenerationService {
         console.error('Failed to record error in database:', dbError);
       }
       
+      console.error(`Critical video generation failure for story ${story.id}:`, error.message);
       throw new Error(`Video generation failed: ${error.message}`);
     }
   }
