@@ -118,7 +118,22 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Cleanup Jobs**: Automatic cleanup of expired cache files
 - **Asset Serving**: Optimized static file serving with proper headers
 
+## Future Roadmap
+
+### User Emotion Images (Future Enhancement)
+- **Feature**: Allow users to upload their own images for each emotion
+- **Purpose**: Personalized emotion representation in stories and roleplays
+- **Technical Notes**: Would extend the current image caching system to handle user-uploaded content
+- **Priority**: Medium (requested but deferred for future implementation)
+
 ## Changelog
+- June 24, 2025: Fixed application startup and implemented robust image caching system
+  - Created comprehensive ImageAssetService for local image storage and caching
+  - Fixed expired OpenAI image URL issues by implementing automatic local caching
+  - Enhanced RunwayML provider with graceful fallback from image-to-video to text-to-video
+  - Updated character image generation to automatically cache all generated images locally
+  - Added proper static file serving for cached images with appropriate headers
+  - Application now successfully starts and video generation works reliably
 - June 24, 2025: Optimized RunwayML integration per official documentation requirements
   - Implemented proper aspect ratio mapping for Gen-3 Alpha Turbo (1280:768, 768:1280)
   - Added size validation with 3.3MB data URI limit and 16MB URL limit per RunwayML specs
