@@ -3,9 +3,13 @@ export interface RunwayMLConfig {
   baseUrl: string;
   maxDuration: number;
   defaultDuration: number;
-  supportedAspectRatios: {
-    gen3a_turbo: string[];
-    gen4_turbo: string[];
+  models: {
+    gen3a_turbo: {
+      name: string;
+      supportedAspectRatios: string[];
+      costMultiplier: number;
+      available: boolean;
+    };
   };
   sizeLimits: {
     dataUriMaxSize: number; // in bytes
@@ -30,6 +34,7 @@ export interface RunwayMLConfig {
     };
   };
   defaultResolution: 'low' | 'standard' | 'high';
+  defaultModel: 'gen3a_turbo';
   rateLimit: {
     requestsPerMinute: number;
     burstLimit: number;
@@ -48,9 +53,14 @@ export const runwayMLConfig: RunwayMLConfig = {
   maxDuration: 10, // Maximum video duration in seconds
   defaultDuration: 5, // Default duration for requests
   
-  supportedAspectRatios: {
-    gen3a_turbo: ['1280:768', '768:1280'],
-    gen4_turbo: ['1280:720', '1584:672', '1104:832', '720:1280', '832:1104', '960:960']
+  // Available models for image_to_video endpoint
+  models: {
+    gen3a_turbo: {
+      name: 'gen3a_turbo',
+      supportedAspectRatios: ['1280:768', '768:1280'],
+      costMultiplier: 1.0,
+      available: true
+    }
   },
   
   sizeLimits: {
@@ -102,6 +112,9 @@ export const runwayMLConfig: RunwayMLConfig = {
   
   // Default resolution tier (change this to control cost)
   defaultResolution: 'low', // Options: 'low', 'standard', 'high'
+  
+  // Default model (change this to control cost and quality)
+  defaultModel: 'gen3a_turbo', // Currently only gen3a_turbo is available
   
   // Rate limiting
   rateLimit: {

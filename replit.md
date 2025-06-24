@@ -127,11 +127,12 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Priority**: Medium (requested but deferred for future implementation)
 
 ## Changelog
-- June 24, 2025: Investigating RunwayML API model requirements and parameter formats
-  - Removed placeholder system per user request to focus on real API integration
-  - Testing various parameter combinations to identify correct RunwayML API usage
-  - Working to resolve "Model variant not available" errors through proper API calls
-  - Maintaining focus on authentic video generation without fallback systems
+- June 24, 2025: Successfully implemented RunwayML API integration with configurable low-resolution video generation
+  - Verified gen3a_turbo model works with current API key tier
+  - Implemented configurable resolution settings (low/standard/high) in runwayml-config.ts
+  - Added cost control through defaultResolution: 'low' setting for cheaper video generation
+  - Enhanced video generation with proper model selection and metadata tracking
+  - Resolution can be changed in config file: defaultResolution: 'low' | 'standard' | 'high'
 - June 24, 2025: Resolved RunwayML API integration issues and stabilized video generation
   - Fixed "promptImage: Invalid input" error by temporarily disabling image-to-video generation
   - Enhanced text-to-video prompts to include character descriptions for better results

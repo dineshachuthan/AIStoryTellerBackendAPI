@@ -94,8 +94,11 @@ export class RunwayMLProvider extends BaseVideoProvider {
       // Get resolution based on quality setting
       const aspectRatio = this.getValidAspectRatio(request.aspectRatio, request.quality);
       
+      // Use the available model
+      const modelName = this.runwayConfig.defaultModel;
+      
       const requestBody = {
-        model: 'gen3a_turbo', // Working model name
+        model: modelName,
         promptImage: transparentPixel,
         promptText: prompt,
         duration: Math.min(request.duration || this.runwayConfig.defaultDuration, this.runwayConfig.maxDuration),
@@ -143,7 +146,8 @@ export class RunwayMLProvider extends BaseVideoProvider {
           codec: 'h264',
           generatedAt: new Date(),
           generationType: 'image-to-video',
-          model: 'gen3a_turbo'
+          model: modelName,
+          costEstimate: this.runwayConfig.models.gen3a_turbo.costMultiplier
         }
       };
 
