@@ -3252,9 +3252,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Only generate new video if explicitly requested or none exists
+      // Handle force regeneration with cache and database clearing
       if (req.body.forceRegenerate) {
-        console.log(`Force regeneration requested for story ${storyId} - API COST WILL BE INCURRED`);
+        console.log(`Force regeneration requested for story ${storyId} - CLEARING CACHE AND DATABASE - API COST WILL BE INCURRED`);
+        
+        // Clear existing video from database
+        await db.delete(videoGenerations)
+          .where(and(
+            eq(videoGenerations.storyId, parseInt(storyId)),
+            eq(videoGenerations.requestedBy, userId)
+          ));
+        
+        // Clear video cache
+        try {
+          const { videoCache } = await import("./cache-with-fallback");
+          const cacheKey = `story-${storyId}-user-${userId}`;
+          await videoCache.clearAll(); // Clear all video cache for safety
+          console.log(`Cleared video cache for story ${storyId}`);
+        } catch (cacheError) {
+          console.log("Cache clearing failed (non-critical):", cacheError);
+        }
       } else {
         console.log(`No existing video found for story ${storyId} - generating new video - API COST WILL BE INCURRED`);
       }
