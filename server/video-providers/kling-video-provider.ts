@@ -193,6 +193,7 @@ export class KlingVideoProvider implements IVideoProvider {
     
     console.log('Making request to:', `${this.config!.baseUrl}${uri}`);
     console.log('Request body:', requestBody);
+    console.log('Authorization header format:', `Bearer ${jwtToken.substring(0, 20)}...`);
     
     const response = await fetch(`${this.config!.baseUrl}${uri}`, {
       method: 'POST',
@@ -241,7 +242,13 @@ export class KlingVideoProvider implements IVideoProvider {
     // Combine to create JWT
     const jwtToken = `${encodedHeader}.${encodedPayload}.${signature}`;
     
-    console.log('Generated JWT token matching Java pattern for Kling API');
+    console.log('Generated JWT token matching Java pattern for Kling API:', {
+      headerAlg: header.alg,
+      issuer: this.config!.apiKey!.substring(0, 8) + '...',
+      expiry: new Date((currentTime + 1800) * 1000).toISOString(),
+      notBefore: new Date((currentTime - 5) * 1000).toISOString(),
+      tokenLength: jwtToken.length
+    });
     return jwtToken;
   }
 
