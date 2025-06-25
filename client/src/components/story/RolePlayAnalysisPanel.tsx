@@ -246,28 +246,19 @@ export function RolePlayAnalysisPanel({
       setVideoResult(result);
       
       if (result.cacheHit) {
-        toast({
-          title: "Video Retrieved from Library",
-          description: "Using existing video to save costs",
-        });
+        setVideoStatusMessage("Video retrieved from library - using existing video to save costs");
       } else if (result.status === 'pending_approval') {
-        toast({
-          title: "Video Generated - Pending Review",
-          description: "Please review and approve the generated video",
-        });
+        setVideoStatusMessage("Video generated - pending review. Please review and approve the generated video");
       } else {
-        toast({
-          title: "Video Generated Successfully", 
-          description: `New 3-minute video created with AI video generation`,
-        });
+        if (regenerate) {
+          setVideoStatusMessage("Video regenerated successfully - new version created");
+        } else {
+          setVideoStatusMessage("Video generated successfully with AI video generation");
+        }
       }
     } catch (error: any) {
       console.error("Video generation failed:", error);
-      toast({
-        title: "Video Generation Failed",
-        description: error.message || "Failed to generate video",
-        variant: "destructive",
-      });
+      setVideoStatusMessage(`Video generation failed: ${error.message || "Failed to generate video"}`);
     } finally {
       setGeneratingVideo(false);
       setShowCostWarning(false);
@@ -285,17 +276,10 @@ export function RolePlayAnalysisPanel({
       });
 
       setVideoResult(result);
-      toast({
-        title: "Video Approved",
-        description: "Video has been approved and saved",
-      });
+      setVideoStatusMessage("Video approved and saved successfully");
     } catch (error: any) {
       console.error("Video approval failed:", error);
-      toast({
-        title: "Approval Failed",
-        description: error.message || "Failed to approve video",
-        variant: "destructive",
-      });
+      setVideoStatusMessage(`Video approval failed: ${error.message || "Failed to approve video"}`);
     }
   };
 
@@ -316,11 +300,7 @@ export function RolePlayAnalysisPanel({
       });
     } catch (error: any) {
       console.error("Video rejection failed:", error);
-      toast({
-        title: "Rejection Failed",
-        description: error.message || "Failed to reject video",
-        variant: "destructive",
-      });
+      setVideoStatusMessage(`Video rejection failed: ${error.message || "Failed to reject video"}`);
     }
   };
 
@@ -719,6 +699,12 @@ export function RolePlayAnalysisPanel({
           )}
         </CardHeader>
         <CardContent>
+          {/* Video Status Message */}
+          {videoStatusMessage && (
+            <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+              <p className="text-sm text-blue-800 dark:text-blue-200">{videoStatusMessage}</p>
+            </div>
+          )}
           {/* Video Generation Result */}
           {videoResult && (
             <div className="mb-6 p-4 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
@@ -1180,25 +1166,8 @@ export function RolePlayAnalysisPanel({
             <div className="text-center py-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
               <Film className="w-12 h-12 mx-auto text-gray-400 mb-4" />
               <p className="text-gray-500 dark:text-gray-400 mb-4">
-                No video available yet
+                No video available yet. Use the Generate Video button above to create one.
               </p>
-              <Button
-                onClick={() => generateVideo(false)}
-                disabled={generatingVideo || !analysis?.characters?.length}
-                className="bg-purple-600 hover:bg-purple-700"
-              >
-                {generatingVideo ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Generating Video...
-                  </>
-                ) : (
-                  <>
-                    <Play className="w-4 h-4 mr-2" />
-                    Generate Video
-                  </>
-                )}
-              </Button>
               {!analysis?.characters?.length && (
                 <p className="text-xs text-gray-400 mt-2">
                   Characters required for video generation

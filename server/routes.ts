@@ -3294,6 +3294,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const analysisData = roleplayAnalysis.analysisData;
 
+      // Get story content for video generation
+      const story = await storage.getStory(parseInt(storyId));
+      if (!story) {
+        return res.status(404).json({ message: "Story not found" });
+      }
+
       const result = await videoService.generateVideo({
         storyId: parseInt(storyId),
         userId,
