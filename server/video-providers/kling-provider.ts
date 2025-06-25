@@ -3,6 +3,7 @@ import { VideoRequest, VideoResponse } from './types';
 
 interface KlingConfig {
   apiKey: string;
+  secretKey: string;
   baseUrl: string;
   models: {
     [key: string]: {
@@ -159,19 +160,45 @@ export class KlingProvider extends BaseVideoProvider {
     
     console.log(`Calling Kling API: ${this.config.baseUrl}${endpoint}`);
     
-    const response = await fetch(`${this.config.baseUrl}${endpoint}`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${this.config.apiKey}`,
-        'Content-Type': 'application/json',
-        'User-Agent': 'Storytelling-App/1.0'
-      },
-      body: JSON.stringify(request)
-    });
+    // Try different authentication methods based on Kling documentation
+    const authHeaders = [
+      { 'Authorization': this.config.apiKey },
+      { 'X-API-Key': this.config.apiKey },
+      { 'Authorization': `Bearer ${this.config.apiKey}` },
+      { 'Authorization': `${this.config.apiKey}:${this.config.secretKey}` }
+    ];
 
-    const responseText = await response.text();
-    console.log('Kling API response status:', response.status);
-    console.log('Kling API response:', responseText.substring(0, 500));
+    let response: Response | null = null;
+    let responseText = '';
+
+    for (const authHeader of authHeaders) {
+      console.log(`Trying Kling auth method:`, Object.keys(authHeader)[0]);
+      
+      response = await fetch(`${this.config.baseUrl}${endpoint}`, {
+        method: 'POST',
+        headers: {
+          ...authHeader,
+          'Content-Type': 'application/json',
+          'User-Agent': 'Storytelling-App/1.0'
+        },
+        body: JSON.stringify(request)
+      });
+
+      responseText = await response.text();
+      console.log(`Auth method response:`, response.status, responseText.substring(0, 200));
+
+      // If we don't get auth failed, this method works
+      if (!responseText.includes("Auth failed")) {
+        break;
+      }
+    }
+
+    if (!response) {
+      throw new Error('No valid authentication method found for Kling API');
+    }
+
+    console.log('Final Kling API response status:', response.status);
+    console.log('Final Kling API response:', responseText.substring(0, 500));
 
     if (!response.ok) {
       throw new Error(`Kling API error: ${response.status} ${response.statusText} - ${responseText}`);
@@ -190,7 +217,7 @@ export class KlingProvider extends BaseVideoProvider {
       try {
         const response = await fetch(`${this.config.baseUrl}/v1/videos/${taskId}`, {
           headers: {
-            'Authorization': `Bearer ${this.config.apiKey}`
+            'Authorization': this.config.apiKey // Use the working auth method
           }
         });
 
