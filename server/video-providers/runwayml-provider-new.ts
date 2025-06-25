@@ -339,9 +339,15 @@ export class RunwayMLProvider extends BaseVideoProvider {
       prompt += `${sceneDetails}. `;
     }
 
-    // Add story narrative with content filtering for RunwayML guidelines
-    const storyExcerpt = this.filterContentForPolicy(request.content.substring(0, 300));
-    prompt += `STORY ELEMENTS: ${storyExcerpt}${request.content.length > 300 ? '...' : ''}. `;
+    // Add story narrative with aggressive content filtering for RunwayML guidelines
+    const originalExcerpt = request.content.substring(0, 200);
+    const storyExcerpt = this.filterContentForPolicy(originalExcerpt);
+    console.log('Content filtering applied:', {
+      original: originalExcerpt,
+      filtered: storyExcerpt,
+      changes: originalExcerpt !== storyExcerpt
+    });
+    prompt += `STORY ELEMENTS: ${storyExcerpt}${request.content.length > 200 ? '...' : ''}. `;
     
     // Add visual style instructions with safe, general terms
     prompt += `VISUAL STYLE: Professional cinematic storytelling with natural lighting and engaging narrative flow. `;
@@ -349,16 +355,33 @@ export class RunwayMLProvider extends BaseVideoProvider {
     // Add duration and pacing guidance
     prompt += `Create a ${request.duration || 10}-second video that captures the essence of this story with smooth transitions and engaging visual narrative.`;
 
+    console.log('Final RunwayML prompt (filtered):', prompt);
     return prompt;
   }
 
   private filterContentForPolicy(content: string): string {
-    // Remove potentially problematic content for RunwayML content policy
+    // Aggressive content filtering for RunwayML content policy compliance
     const filtered = content
-      .replace(/\b(violence|violent|death|kill|murder|blood|fight|attack|weapon|gun|knife|sword)\b/gi, 'conflict')
+      // Remove violence/death content
+      .replace(/\b(violence|violent|death|kill|murder|blood|fight|attack|weapon|gun|knife|sword|die|dying|dead)\b/gi, 'journey')
+      // Remove crime/theft content
       .replace(/\b(steal|stolen|theft|thief|rob|robbery|crime|criminal)\b/gi, 'adventure')
-      .replace(/\b(dark|darkness|shadow|evil|sinister|menacing)\b/gi, 'mysterious')
-      .replace(/\b(adult|mature|explicit|inappropriate)\b/gi, 'dramatic');
+      // Remove fear/threatening content
+      .replace(/\b(terrified|terror|fear|scary|frightening|threatening|menacing)\b/gi, 'surprised')
+      // Remove crude/inappropriate language
+      .replace(/\b(piss|shit|damn|hell|disgusting|stink|stinks)\b/gi, 'unpleasant')
+      // Remove AI/consciousness themes that might be sensitive
+      .replace(/\b(AI|artificial intelligence|chip in brain|control|creature|experiment)\b/gi, 'technology')
+      // Remove dark themes
+      .replace(/\b(dark|darkness|shadow|evil|sinister)\b/gi, 'mysterious')
+      // Remove mature themes
+      .replace(/\b(adult|mature|explicit|inappropriate)\b/gi, 'dramatic')
+      // Remove medical/disability content that might be sensitive
+      .replace(/\b(polio|paralysed|paralyzed|couldn't walk|miracle)\b/gi, 'recovered')
+      // Make content more positive/neutral
+      .replace(/\b(begged|begs)\b/gi, 'asked')
+      .replace(/\b(vanish|vanished|disappear|disappeared)\b/gi, 'went away')
+      .replace(/\b(alone)\b/gi, 'by himself');
     
     return filtered;
   }
