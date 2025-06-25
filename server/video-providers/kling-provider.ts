@@ -68,7 +68,7 @@ export class KlingProvider extends BaseVideoProvider {
 
     this.config = {
       apiKey: `${process.env.KLING_ACCESS_KEY}:${process.env.KLING_SECRET_KEY}`,
-      baseUrl: 'https://api.piapi.ai/api/kling',
+      baseUrl: 'https://klingai.com/api',
       models: {
         'kling-v1': {
           maxDuration: 20, // Updated to 20 seconds as requested
