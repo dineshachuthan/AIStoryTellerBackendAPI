@@ -164,7 +164,8 @@ export class KlingProvider extends BaseVideoProvider {
     
     // Create signature for Kling API (following Chinese API patterns)
     const stringToSign = `POST\n${endpoint}\n${timestamp}\n${nonce}\n${requestBody}`;
-    const signature = require('crypto').createHmac('sha256', this.config.secretKey).update(stringToSign).digest('hex');
+    const crypto = await import('crypto');
+    const signature = crypto.createHmac('sha256', this.config.secretKey).update(stringToSign).digest('hex');
     
     console.log('Using Kling signature-based authentication');
     

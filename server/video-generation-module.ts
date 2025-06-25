@@ -22,26 +22,28 @@ export class VideoGenerationModule {
       }
     };
 
-    // Use shared business logic with Kling-specific data preparation
-    const enhancedRequest = {
-      ...request,
-      prepareData: (req: VideoGenerationRequest) => {
-        // Extract prompt data from roleplay analysis
-        const promptData = KlingPromptTemplate.extractFromRoleplayAnalysis(
-          req.roleplayAnalysis,
-          req.storyContent,
-          req.duration || 20,
-          req.quality || 'std'
-        );
+    // Prepare Kling-specific data
+    const promptData = KlingPromptTemplate.extractFromRoleplayAnalysis(
+      request.roleplayAnalysis,
+      request.storyContent,
+      request.duration || 20,
+      request.quality || 'std'
+    );
 
-        // Generate optimized Kling prompt
-        const prompt = KlingPromptTemplate.generatePrompt(promptData);
+    const prompt = KlingPromptTemplate.generatePrompt(promptData);
 
-        return { promptData, prompt };
+    // Create enhanced provider with data
+    const enhancedProvider = {
+      name: 'kling',
+      generateVideo: async (data: any) => {
+        return await this.callKlingAPI(promptData, prompt);
+      },
+      checkStatus: async (taskId: string) => {
+        return await this.checkVideoStatus(taskId);
       }
     };
 
-    return VideoBusinessLogic.generateVideo(enhancedRequest, klingProvider);
+    return VideoBusinessLogic.generateVideo(request, enhancedProvider);
   }
 
   /**

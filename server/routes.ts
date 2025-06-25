@@ -3282,12 +3282,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { VideoGenerationService } = await import("./video-generation-service");
       const videoService = new VideoGenerationService();
       
-      const result = await videoService.generateVideo({
+      // Use new shared video business logic
+      const { VideoProviderFactory } = await import('./video-provider-factory');
+      
+      const result = await VideoProviderFactory.generateVideo({
         storyId: parseInt(storyId),
         userId,
-        duration: 10, // Default 10 seconds, enforced by cost protection
-        quality: req.body.quality || 'standard'
-      }, req.body.forceRegenerate || false);
+        roleplayAnalysis: existingAnalysis,
+        storyContent: story.content,
+        duration: req.body.duration || 20,
+        quality: req.body.quality || 'std',
+        regenerate: req.body.forceRegenerate || false
+      });
 
       console.log(`Video generation completed for story ${storyId}`);
       res.json(result);
