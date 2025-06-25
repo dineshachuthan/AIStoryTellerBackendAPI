@@ -84,6 +84,19 @@ export class KlingVideoProvider implements IVideoProvider {
   async generateVideo(request: StandardVideoRequest): Promise<StandardVideoResponse> {
     this.validateRequest(request);
 
+    console.log('=== KLING VIDEO GENERATION START ===');
+    console.log('Request details:', {
+      prompt: request.prompt.substring(0, 100) + '...',
+      quality: request.quality,
+      aspectRatio: request.aspectRatio
+    });
+    console.log('Config check:', {
+      hasApiKey: !!this.config?.apiKey,
+      hasSecretKey: !!this.config?.secretKey,
+      apiKeyPreview: this.config?.apiKey?.substring(0, 8) + '...',
+      secretKeyLength: this.config?.secretKey?.length
+    });
+
     try {
       // Prepare Kling-specific request
       const klingRequest = this.prepareKlingRequest(request);
@@ -103,6 +116,7 @@ export class KlingVideoProvider implements IVideoProvider {
         }
       };
     } catch (error: any) {
+      console.error('=== KLING VIDEO GENERATION ERROR ===', error);
       throw this.handleKlingError(error);
     }
   }
@@ -184,14 +198,18 @@ export class KlingVideoProvider implements IVideoProvider {
   }
 
   private async createVideoTask(request: any): Promise<any> {
+    console.log('=== CREATING VIDEO TASK ===');
     const currentTime = Math.floor(Date.now() / 1000); // Unix timestamp in seconds
+    console.log('Current timestamp:', currentTime);
     
-    // Create JWT Token for authentication
+    // Create JWT Token for authentication - exactly like working standalone script
     const jwtToken = await this.generateJWTToken(currentTime);
+    console.log('JWT token generated, length:', jwtToken.length);
     
     const uri = '/v1/videos/text2video';
     const requestBody = JSON.stringify(request);
     
+    console.log('=== API REQUEST DETAILS ===');
     console.log('Making request to:', `${this.config!.baseUrl}${uri}`);
     console.log('Request body:', requestBody);
     console.log('Authorization header format:', `Bearer ${jwtToken.substring(0, 20)}...`);
@@ -206,9 +224,19 @@ export class KlingVideoProvider implements IVideoProvider {
     });
 
     const responseText = await response.text();
-    console.log('Kling API response:', response.status, responseText);
+    console.log('=== API RESPONSE ===');
+    console.log('Status:', response.status);
+    console.log('Response:', responseText);
     
     if (!response.ok) {
+      console.error('=== API ERROR ===');
+      try {
+        const errorData = JSON.parse(responseText);
+        console.error('Error code:', errorData.code);
+        console.error('Error message:', errorData.message);
+      } catch (e) {
+        console.error('Raw error:', responseText);
+      }
       throw new Error(`Kling API error: ${response.status} - ${responseText}`);
     }
 
