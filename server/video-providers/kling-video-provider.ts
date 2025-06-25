@@ -216,24 +216,32 @@ export class KlingVideoProvider implements IVideoProvider {
   }
 
   private async generateJWTToken(currentTime: number): Promise<string> {
-    // JWT Header - matches Python example exactly
+    // JWT Header - exactly like working standalone script
     const header = {
       alg: 'HS256',
       typ: 'JWT'
     };
 
-    // JWT Payload - matches Java withIssuer, withNotBefore, withExpiresAt
+    // JWT Payload - exactly like working standalone script
     const payload = {
-      iss: this.config!.apiKey, // AccessKey as issuer (withIssuer)
-      exp: currentTime + 1800, // Token expires in 30 minutes (withExpiresAt)
-      nbf: currentTime - 5 // Not before current time - 5 seconds (withNotBefore)
+      iss: this.config!.apiKey!, // AccessKey as issuer
+      exp: currentTime + 1800, // Token expires in 30 minutes
+      nbf: currentTime - 5 // Not before current time - 5 seconds
     };
 
-    // Base64 encode header and payload
+    console.log('JWT Generation Debug:', {
+      currentTime,
+      accessKey: this.config!.apiKey!.substring(0, 8) + '...',
+      secretKeyLength: this.config!.secretKey!.length,
+      expiry: payload.exp,
+      notBefore: payload.nbf
+    });
+
+    // Base64 encode header and payload - exactly like working script
     const encodedHeader = Buffer.from(JSON.stringify(header)).toString('base64url');
     const encodedPayload = Buffer.from(JSON.stringify(payload)).toString('base64url');
     
-    // Create signature using SecretKey
+    // Create signature using SecretKey - exactly like working script
     const crypto = await import('crypto');
     const signatureInput = `${encodedHeader}.${encodedPayload}`;
     const signature = crypto
@@ -241,17 +249,14 @@ export class KlingVideoProvider implements IVideoProvider {
       .update(signatureInput)
       .digest('base64url');
 
-    // Combine to create JWT
+    // Combine to create JWT - exactly like working script
     const jwtToken = `${encodedHeader}.${encodedPayload}.${signature}`;
     
-    console.log('Generated JWT token matching Python pattern for Kling API:', {
-      headerAlg: header.alg,
-      headerTyp: header.typ,
-      issuer: this.config!.apiKey!.substring(0, 8) + '...',
-      expiry: new Date((currentTime + 1800) * 1000).toISOString(),
-      notBefore: new Date((currentTime - 5) * 1000).toISOString(),
-      tokenLength: jwtToken.length
+    console.log('Generated JWT token for Kling API:', {
+      tokenLength: jwtToken.length,
+      preview: jwtToken.substring(0, 50) + '...'
     });
+    
     return jwtToken;
   }
 
