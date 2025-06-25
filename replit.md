@@ -127,15 +127,16 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Priority**: Medium (requested but deferred for future implementation)
 
 ## Changelog
-- June 25, 2025: Completed shared video business logic architecture
-  - Implemented VideoBusinessLogic class for provider-agnostic operations (status, access, errors)
-  - Created VideoProviderFactory for seamless provider switching without business logic changes
-  - Standardized video lifecycle: draft → processing → complete → shareable
-  - Unified error handling, access control, and regeneration across all providers
-  - Provider-specific modules (Kling, RunwayML) delegate business logic to shared system
-  - Fixed Kling provider crypto import issue for proper authentication
-  - Updated existing video generation routes to use new architecture
-  - Architecture supports easy addition of new providers without code duplication
+- June 25, 2025: Implemented plug-and-play video provider architecture
+  - Created IVideoProvider interface for true plug-and-play compatibility
+  - Built VideoProviderRegistry for configuration-based provider management
+  - Implemented provider-agnostic routes that work with any enabled provider
+  - Providers auto-configure from environment variables with health checks
+  - Generic video service abstracts all provider differences from routes
+  - Routes remain constant regardless of enabled providers (Kling, RunwayML, future providers)
+  - Configuration flags enable/disable providers without code changes
+  - Automatic fallback between providers on failure
+  - Standardized error handling and status management across all providers
 - June 25, 2025: Completed Kling AI integration with enhanced character and scene support
   - Disabled all other video providers (RunwayML, Pika, Luma) as requested
   - Implemented proper Kling API structure with signature-based authentication

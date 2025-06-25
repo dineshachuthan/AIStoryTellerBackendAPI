@@ -3279,13 +3279,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Use proper video generation service with strict duration control
       console.log(`Generating video for story ${storyId} by user ${userId}`);
       
-      const { VideoGenerationService } = await import("./video-generation-service");
-      const videoService = new VideoGenerationService();
+      // Use generic video service that works with any provider
+      const { GenericVideoService } = await import('./generic-video-service');
+      const videoService = GenericVideoService.getInstance();
+      await videoService.initialize();
       
-      // Use new shared video business logic
-      const { VideoProviderFactory } = await import('./video-provider-factory');
-      
-      const result = await VideoProviderFactory.generateVideo({
+      const result = await videoService.generateVideo({
         storyId: parseInt(storyId),
         userId,
         roleplayAnalysis: existingAnalysis,

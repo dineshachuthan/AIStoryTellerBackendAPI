@@ -269,6 +269,20 @@ export class VideoBusinessLogic {
   }
 
   /**
+   * Save video record to database
+   */
+  static async saveVideoRecord(storyId: number, userId: string, videoData: VideoGenerationResult): Promise<void> {
+    return await storage.saveVideoGeneration(storyId, userId, videoData);
+  }
+
+  /**
+   * Delete video record
+   */
+  static async deleteVideoRecord(storyId: number): Promise<void> {
+    return await storage.deleteVideoGeneration(storyId);
+  }
+
+  /**
    * Handle provider errors consistently
    */
   static handleProviderError(error: any, providerName: string): Error {
