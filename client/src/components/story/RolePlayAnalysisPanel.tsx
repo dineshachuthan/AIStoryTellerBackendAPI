@@ -131,6 +131,7 @@ export function RolePlayAnalysisPanel({
   const [generatingVideo, setGeneratingVideo] = useState(false);
   const [videoResult, setVideoResult] = useState<any>(null);
   const [showCostWarning, setShowCostWarning] = useState(false);
+  const [videoStatusMessage, setVideoStatusMessage] = useState<string>("");
 
   // Edit mode state
   const [isEditMode, setIsEditMode] = useState(false);
