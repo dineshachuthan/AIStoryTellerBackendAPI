@@ -294,10 +294,7 @@ export function RolePlayAnalysisPanel({
       });
 
       setVideoResult(null);
-      toast({
-        title: "Video Rejected",
-        description: "Video has been rejected. You can generate a new one.",
-      });
+      setVideoStatusMessage("Video rejected - you can generate a new one");
     } catch (error: any) {
       console.error("Video rejection failed:", error);
       setVideoStatusMessage(`Video rejection failed: ${error.message || "Failed to reject video"}`);
@@ -670,7 +667,7 @@ export function RolePlayAnalysisPanel({
                   {shouldShowGenerateButton && (
                     <Button
                       size="sm"
-                      onClick={generateVideo}
+                      onClick={handleGenerateVideoClick}
                       disabled={generatingVideo}
                       className="bg-purple-600 hover:bg-purple-700"
                     >
@@ -725,15 +722,39 @@ export function RolePlayAnalysisPanel({
                   className="w-full"
                 />
                 
-                {/* Video Generation Details */}
-                <div className="border rounded-lg p-4 bg-blue-50 dark:bg-blue-950">
-                  <h4 className="font-medium text-blue-900 dark:text-blue-200 mb-2">Video Generation Details</h4>
-                  <div className="text-sm text-blue-800 dark:text-blue-300 space-y-2">
-                    <p><strong>Story Content:</strong> {analysis.title} (Full story narrative sent to AI)</p>
-                    <p><strong>Characters Used:</strong> {analysis.characters?.map(c => c.name).join(', ') || 'None'}</p>
-                    <p><strong>Scenes Generated:</strong> {analysis.scenes?.length || 0}</p>
-                    <p><strong>Generated with:</strong> Complete story narrative, character descriptions, personality traits, and scene settings</p>
-                  </div>
+                {/* Video Actions */}
+                <div className="flex flex-wrap gap-2 pt-2">
+                  {videoResult.status === 'pending_approval' && (
+                    <>
+                      <Button
+                        onClick={approveVideo}
+                        size="sm"
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        <Check className="w-4 h-4 mr-2" />
+                        Approve Video
+                      </Button>
+                      <Button
+                        onClick={rejectVideo}
+                        variant="outline"
+                        size="sm"
+                        className="border-red-300 hover:bg-red-50"
+                      >
+                        <X className="w-4 h-4 mr-2" />
+                        Reject Video
+                      </Button>
+                    </>
+                  )}
+                  
+                  <Button
+                    onClick={() => setShowCostWarning(true)}
+                    variant="outline"
+                    size="sm"
+                    disabled={generatingVideo}
+                  >
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    {generatingVideo ? 'Regenerating...' : 'Regenerate Video'}
+                  </Button>
                 </div>
                 
                 {/* Audio player if available */}
