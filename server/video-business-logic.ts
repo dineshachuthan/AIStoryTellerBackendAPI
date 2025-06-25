@@ -283,6 +283,51 @@ export class VideoBusinessLogic {
   }
 
   /**
+   * Generate user-friendly video description (provider-agnostic)
+   */
+  static generateVideoDescription(analysis: RolePlayAnalysis): string {
+    const characters = analysis.characters?.map((c: any) => c.name).join(', ') || 'the characters';
+    const genre = analysis.genre || 'story';
+    const scenes = analysis.scenes?.length || 0;
+    
+    let description = `A ${scenes}-scene ${genre.toLowerCase()} video featuring ${characters}. `;
+    
+    if (analysis.overallTone) {
+      description += `The video has a ${analysis.overallTone.toLowerCase()} tone. `;
+    }
+    
+    if (analysis.scenes && analysis.scenes.length > 0) {
+      const firstScene = analysis.scenes[0];
+      if (firstScene.background?.location) {
+        description += `It begins in ${firstScene.background.location.toLowerCase()}`;
+        if (firstScene.background.timeOfDay) {
+          description += ` during ${firstScene.background.timeOfDay.toLowerCase()}`;
+        }
+        description += '. ';
+      }
+    }
+    
+    description += 'The video brings your story to life with AI-generated visuals that match the narrative and character descriptions.';
+    
+    return description;
+  }
+
+  /**
+   * Extract characters for video generation (provider-agnostic)
+   */
+  static extractCharactersUsed(analysis: RolePlayAnalysis): any[] {
+    return analysis.characters || [];
+  }
+
+  /**
+   * Calculate dialogue count (provider-agnostic)
+   */
+  static calculateDialogueCount(analysis: RolePlayAnalysis): number {
+    return analysis.scenes?.reduce((total: number, scene: any) => 
+      total + (scene.dialogueSequence?.length || 0), 0) || 0;
+  }
+
+  /**
    * Handle provider errors consistently
    */
   static handleProviderError(error: any, providerName: string): Error {

@@ -3310,6 +3310,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         regenerate: req.body.forceRegenerate || false
       });
 
+      // Enhance result with provider-agnostic business logic
+      result.charactersUsed = VideoBusinessLogic.extractCharactersUsed(analysisData);
+      result.metadata = {
+        ...result.metadata,
+        videoDescription: VideoBusinessLogic.generateVideoDescription(analysisData),
+        hasAudio: false,
+        dialogueCount: VideoBusinessLogic.calculateDialogueCount(analysisData)
+      };
+
       console.log(`Video generation completed for story ${storyId}`);
       res.json(result);
       
