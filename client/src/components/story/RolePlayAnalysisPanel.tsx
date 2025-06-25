@@ -219,8 +219,8 @@ export function RolePlayAnalysisPanel({
     }
   }, [analysis, editedAnalysis]);
 
-  // Determine when to show generate video button
-  const shouldShowGenerateButton = !videoResult || (hasMetadataChanges && hasUnsavedChanges === false);
+  // Always show generate/regenerate video button
+  const shouldShowGenerateButton = true;
 
   // Video generation function with cost control
   const generateVideo = async (forceRegenerate: boolean = false) => {
@@ -250,7 +250,7 @@ export function RolePlayAnalysisPanel({
       } else if (result.status === 'pending_approval') {
         setVideoStatusMessage("Video generated - pending review. Please review and approve the generated video");
       } else {
-        if (regenerate) {
+        if (forceRegenerate) {
           setVideoStatusMessage("Video regenerated successfully - new version created");
         } else {
           setVideoStatusMessage("Video generated successfully with AI video generation");
@@ -301,18 +301,15 @@ export function RolePlayAnalysisPanel({
     }
   };
 
-  // Handle video generation with cost warning
-  const handleVideoGeneration = () => {
-    if (videoResult && !showCostWarning) {
+  // Handle video generation with cost warning for regeneration
+  const handleGenerateVideoClick = () => {
+    if (videoResult) {
+      // If video exists, show cost warning for regeneration
       setShowCostWarning(true);
     } else {
-      generateVideo(showCostWarning);
+      // If no video exists, generate directly
+      generateVideo(false);
     }
-  };
-
-  // Safe button click handler
-  const handleGenerateVideoClick = () => {
-    handleVideoGeneration();
   };
 
   // Edit mode functions
@@ -678,8 +675,17 @@ export function RolePlayAnalysisPanel({
                         </>
                       ) : (
                         <>
-                          <Play className="w-4 h-4 mr-2" />
-                          Generate Video
+                          {videoResult ? (
+                            <>
+                              <RefreshCw className="w-4 h-4 mr-2" />
+                              Regenerate Video
+                            </>
+                          ) : (
+                            <>
+                              <Play className="w-4 h-4 mr-2" />
+                              Generate Video
+                            </>
+                          )}
                         </>
                       )}
                     </Button>
@@ -722,40 +728,7 @@ export function RolePlayAnalysisPanel({
                   className="w-full"
                 />
                 
-                {/* Video Actions */}
-                <div className="flex flex-wrap gap-2 pt-2">
-                  {videoResult.status === 'pending_approval' && (
-                    <>
-                      <Button
-                        onClick={approveVideo}
-                        size="sm"
-                        className="bg-green-600 hover:bg-green-700"
-                      >
-                        <Check className="w-4 h-4 mr-2" />
-                        Approve Video
-                      </Button>
-                      <Button
-                        onClick={rejectVideo}
-                        variant="outline"
-                        size="sm"
-                        className="border-red-300 hover:bg-red-50"
-                      >
-                        <X className="w-4 h-4 mr-2" />
-                        Reject Video
-                      </Button>
-                    </>
-                  )}
-                  
-                  <Button
-                    onClick={() => setShowCostWarning(true)}
-                    variant="outline"
-                    size="sm"
-                    disabled={generatingVideo}
-                  >
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                    {generatingVideo ? 'Regenerating...' : 'Regenerate Video'}
-                  </Button>
-                </div>
+
                 
                 {/* Audio player if available */}
                 {videoResult.audioUrl && (
@@ -1057,147 +1030,6 @@ export function RolePlayAnalysisPanel({
           </CardContent>
         </Card>
       )}
-
-      {/* Video Generation Section */}
-      <Card className="border-purple-200 dark:border-purple-800">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Film className="h-5 w-5" />
-            Cinematic Video Generation
-          </CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Transform your roleplay into a cinematic video using AI video generation (3-minute max)
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {videoResult && videoResult.videoUrl && videoResult.duration > 0 ? (
-            <div className="space-y-4">
-              {videoResult.status === 'pending_approval' ? (
-                <>
-                  <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400">
-                    <AlertCircle className="w-4 h-4" />
-                    Video generated - pending your approval
-                  </div>
-                  <VideoPlayer 
-                    videoUrl={videoResult.videoUrl} 
-                    thumbnailUrl={videoResult.thumbnailUrl}
-                    title="Roleplay Cinematic Video (Preview)"
-                    duration={videoResult.duration}
-                    className="w-full rounded-lg"
-                  />
-                  
-                  {/* Audio player if available */}
-                  {videoResult.audioUrl && (
-                    <div className="border rounded-lg p-4 bg-blue-50 dark:bg-blue-950">
-                      <h4 className="font-medium text-blue-900 dark:text-blue-200 mb-2">Character Audio</h4>
-                      <audio src={videoResult.audioUrl} controls className="w-full" />
-                    </div>
-                  )}
-                  
-                  {/* Video expectation description for preview */}
-                  {videoResult.metadata?.videoExpectation && (
-                    <div className="border rounded-lg p-4 bg-amber-50 dark:bg-amber-950">
-                      <h4 className="font-medium text-amber-900 dark:text-amber-200 mb-2">Expected Content</h4>
-                      <p className="text-sm text-amber-800 dark:text-amber-300 leading-relaxed">
-                        {videoResult.metadata.videoExpectation}
-                      </p>
-                    </div>
-                  )}
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={approveVideo}
-                      size="sm"
-                      className="bg-green-600 hover:bg-green-700"
-                    >
-                      <CheckCircle className="w-4 h-4 mr-2" />
-                      Accept Video
-                    </Button>
-                    <Button
-                      onClick={rejectVideo}
-                      variant="outline"
-                      size="sm"
-                      className="text-red-600 border-red-300 hover:bg-red-50"
-                    >
-                      <X className="w-4 h-4 mr-2" />
-                      Reject & Regenerate
-                    </Button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
-                    <CheckCircle className="w-4 h-4" />
-                    Video ready ({videoResult.cacheHit ? 'cached' : 'generated'})
-                  </div>
-                  <VideoPlayer 
-                    videoUrl={videoResult.videoUrl} 
-                    thumbnailUrl={videoResult.thumbnailUrl}
-                    title="Roleplay Cinematic Video"
-                    duration={videoResult.duration}
-                    className="w-full rounded-lg"
-                  />
-                  
-                  {/* Audio player if available */}
-                  {videoResult.audioUrl && (
-                    <div className="border rounded-lg p-4 bg-blue-50 dark:bg-blue-950">
-                      <h4 className="font-medium text-blue-900 dark:text-blue-200 mb-2">Character Audio</h4>
-                      <audio 
-                        src={videoResult.audioUrl} 
-                        controls 
-                        className="w-full"
-                      >
-                        Your browser does not support the audio tag.
-                      </audio>
-                      <p className="text-sm text-blue-700 dark:text-blue-300 mt-2">
-                        Character dialogue from the story roleplay
-                      </p>
-                    </div>
-                  )}
-                  
-                  {/* Video expectation description */}
-                  {videoResult.metadata?.videoExpectation && (
-                    <div className="border rounded-lg p-4 bg-amber-50 dark:bg-amber-950">
-                      <h4 className="font-medium text-amber-900 dark:text-amber-200 mb-2">What This Video Should Show</h4>
-                      <p className="text-sm text-amber-800 dark:text-amber-300 leading-relaxed">
-                        {videoResult.metadata.videoExpectation}
-                      </p>
-                      <div className="mt-3 pt-3 border-t border-amber-200 dark:border-amber-800">
-                        <p className="text-xs text-amber-700 dark:text-amber-400">
-                          Compare this description with the actual video above to validate if the AI generated content matches your story expectations.
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={() => generateVideo(true)}
-                      variant="outline"
-                      size="sm"
-                      className="text-orange-600 border-orange-300 hover:bg-orange-50"
-                      disabled={generatingVideo}
-                    >
-                      <RefreshCw className="w-4 h-4 mr-2" />
-                      {generatingVideo ? 'Regenerating...' : 'Regenerate Video'}
-                    </Button>
-                  </div>
-                </>
-              )}
-            </div>
-          ) : (
-            <div className="text-center py-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
-              <Film className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-              <p className="text-gray-500 dark:text-gray-400 mb-4">
-                No video available yet. Use the Generate Video button above to create one.
-              </p>
-              {!analysis?.characters?.length && (
-                <p className="text-xs text-gray-400 mt-2">
-                  Characters required for video generation
-                </p>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
       {/* Cost Warning Dialog */}
       <Dialog open={showCostWarning} onOpenChange={setShowCostWarning}>
