@@ -49,6 +49,11 @@ export class KlingVideoProvider implements IVideoProvider {
       defaultQuality: 'std',
       ...config
     };
+    
+    // Ensure duration is capped at 20 seconds
+    if (this.config.maxDuration > 20) {
+      this.config.maxDuration = 20;
+    }
 
     console.log('Kling config initialized:', {
       baseUrl: this.config.baseUrl,
@@ -77,30 +82,6 @@ export class KlingVideoProvider implements IVideoProvider {
   }
 
   async generateVideo(request: StandardVideoRequest): Promise<StandardVideoResponse> {
-    console.log('Kling generateVideo called with credentials check:', {
-      hasApiKey: !!this.config?.apiKey,
-      hasSecretKey: !!this.config?.secretKey,
-      apiKeyEmpty: this.config?.apiKey === '',
-      secretKeyEmpty: this.config?.secretKey === ''
-    });
-
-    // For now, always return demo response until credentials are working
-    console.log('Returning demo response for testing - API credentials may need verification');
-    
-    return {
-      taskId: `demo_${Date.now()}`,
-      status: 'completed',
-      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-      thumbnailUrl: 'https://via.placeholder.com/1280x720/000000/FFFFFF?text=Demo+Video',
-      estimatedCompletion: new Date(),
-      metadata: {
-        provider: this.name,
-        model: 'kling-v1-demo',
-        mode: request.quality,
-        isDemo: true
-      }
-    };
-
     this.validateRequest(request);
 
     try {
@@ -189,12 +170,14 @@ export class KlingVideoProvider implements IVideoProvider {
   private prepareKlingRequest(request: StandardVideoRequest): any {
     // Map standard quality to std for Kling API
     const klingMode = (request.quality === 'pro') ? 'pro' : 'std';
+    // Ensure duration is exactly 20 seconds or less
+    const duration = Math.min(request.duration || 20, 20);
     
     return {
       model: 'kling-v1',
       prompt: this.sanitizePrompt(request.prompt),
-      aspect_ratio: request.aspectRatio,
-      duration: Math.min(request.duration, this.capabilities.maxDuration),
+      aspect_ratio: request.aspectRatio || '16:9',
+      duration: duration,
       mode: klingMode
     };
   }
