@@ -9,7 +9,7 @@ import path from "path";
 import crypto from "crypto";
 import OpenAI from "openai";
 import { VideoProviderManager } from './video-providers/provider-manager';
-import { defaultVideoConfig } from './video-config';
+import { getVideoProviderConfig } from './video-config';
 import { VideoGenerationRequest as ProviderVideoRequest } from './video-providers/base-provider';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -17,8 +17,8 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 // Initialize cache for video assets
 const videoCache = new CacheWithFallback<any>(path.join(process.cwd(), 'persistent-cache', 'video'));
 
-// Initialize video provider manager with default config
-export const videoProviderManager = new VideoProviderManager(defaultVideoConfig);
+// Initialize video provider manager with config
+export const videoProviderManager = new VideoProviderManager(getVideoProviderConfig());
 
 export interface VideoGenerationRequest {
   storyId: number;

@@ -71,12 +71,7 @@ export const defaultVideoConfig: VideoProviderConfiguration = {
   }
 };
 
-// Export function for compatibility with existing imports
-export function getVideoProviderConfig() {
-  return defaultVideoConfig;
-}
-
-// Extend the configuration if needed
+// Extend with roleplay configuration
 export const videoConfig = {
   ...defaultVideoConfig,
   roleplay: {
