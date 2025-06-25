@@ -3284,10 +3284,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const videoService = GenericVideoService.getInstance();
       await videoService.initialize();
       
+      // Get the roleplay analysis for video generation
+      const roleplayAnalysis = await storage.getRoleplayAnalysis(parseInt(storyId));
+      if (!roleplayAnalysis) {
+        return res.status(400).json({ 
+          message: "Roleplay analysis required for video generation" 
+        });
+      }
+
       const result = await videoService.generateVideo({
         storyId: parseInt(storyId),
         userId,
-        roleplayAnalysis: existingAnalysis,
+        roleplayAnalysis,
         storyContent: story.content,
         duration: req.body.duration || 20,
         quality: req.body.quality || 'std',
