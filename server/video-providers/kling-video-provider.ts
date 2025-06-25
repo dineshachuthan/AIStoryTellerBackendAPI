@@ -215,9 +215,10 @@ export class KlingVideoProvider implements IVideoProvider {
   }
 
   private async generateJWTToken(currentTime: number): Promise<string> {
-    // JWT Header - matches Java example exactly
+    // JWT Header - matches Python example exactly
     const header = {
-      alg: 'HS256'
+      alg: 'HS256',
+      typ: 'JWT'
     };
 
     // JWT Payload - matches Java withIssuer, withNotBefore, withExpiresAt
@@ -242,8 +243,9 @@ export class KlingVideoProvider implements IVideoProvider {
     // Combine to create JWT
     const jwtToken = `${encodedHeader}.${encodedPayload}.${signature}`;
     
-    console.log('Generated JWT token matching Java pattern for Kling API:', {
+    console.log('Generated JWT token matching Python pattern for Kling API:', {
       headerAlg: header.alg,
+      headerTyp: header.typ,
       issuer: this.config!.apiKey!.substring(0, 8) + '...',
       expiry: new Date((currentTime + 1800) * 1000).toISOString(),
       notBefore: new Date((currentTime - 5) * 1000).toISOString(),
