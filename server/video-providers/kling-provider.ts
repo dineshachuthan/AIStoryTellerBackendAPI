@@ -85,23 +85,28 @@ export class KlingProvider extends BaseVideoProvider {
   }
 
   async generateVideo(request: VideoRequest): Promise<VideoResponse> {
-    console.log('Starting Kling video generation:', {
+    console.log('Starting Kling video generation with enhanced character and scene support:', {
       contentLength: request.content.length,
+      charactersCount: request.characters?.length || 0,
+      scenesCount: request.scenes?.length || 0,
       duration: request.duration,
       quality: request.quality
     });
 
     try {
-      // Build prompt from story content
+      // Build enhanced prompt with character and scene details
       const prompt = this.buildPrompt(request);
       
-      // Create video generation task with low resolution settings
+      // Log the full prompt for debugging
+      console.log('Full Kling prompt being sent:', prompt);
+      
+      // Create video generation task with optimized settings
       const taskResponse = await this.createVideoTask({
-        model: 'kling-v1', // Use basic model for low resolution/cost testing
+        model: 'kling-v1', // Use basic model for cost-effective testing
         prompt,
         aspect_ratio: this.getAspectRatio(request.aspectRatio),
-        duration: Math.min(request.duration || 10, 20), // Max 20 seconds as requested
-        mode: 'std' // Use standard mode for low resolution
+        duration: Math.min(request.duration || 10, 20), // Max 20 seconds as configured
+        mode: 'std' // Standard mode for low cost, reliable results
       });
 
       if (taskResponse.code !== 0) {
@@ -141,20 +146,33 @@ export class KlingProvider extends BaseVideoProvider {
   }
 
   private async createVideoTask(request: KlingVideoRequest): Promise<KlingTaskResponse> {
+    console.log('Creating Kling video task with request:', {
+      model: request.model,
+      prompt: request.prompt.substring(0, 100) + '...',
+      duration: request.duration,
+      aspect_ratio: request.aspect_ratio,
+      mode: request.mode
+    });
+
     const response = await fetch(`${this.config.baseUrl}/v1/videos/text2video`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${this.config.apiKey}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'User-Agent': 'Storytelling-App/1.0'
       },
       body: JSON.stringify(request)
     });
 
+    const responseText = await response.text();
+    console.log('Kling API response status:', response.status);
+    console.log('Kling API response:', responseText.substring(0, 500));
+
     if (!response.ok) {
-      throw new Error(`Kling API error: ${response.status} ${response.statusText}`);
+      throw new Error(`Kling API error: ${response.status} ${response.statusText} - ${responseText}`);
     }
 
-    return await response.json();
+    return JSON.parse(responseText);
   }
 
   private async waitForCompletion(taskId: string): Promise<KlingTaskResult> {
@@ -208,43 +226,98 @@ export class KlingProvider extends BaseVideoProvider {
   private buildPrompt(request: VideoRequest): string {
     let prompt = '';
 
-    // Add character information
+    // Build detailed character descriptions with appearance and personality
     if (request.characters && request.characters.length > 0) {
-      const characterDesc = request.characters.map(char => 
-        `${char.name}: ${char.description || 'character'}`
-      ).join(', ');
-      prompt += `Characters: ${characterDesc}. `;
+      const characterDetails = request.characters.map(char => {
+        let charDesc = `${char.name}`;
+        
+        // Add physical description if available
+        if (char.description) {
+          charDesc += ` (${this.filterContent(char.description)})`;
+        }
+        
+        // Add personality traits
+        if (char.personality) {
+          charDesc += ` with ${this.filterContent(char.personality)} personality`;
+        }
+        
+        // Add role context
+        if (char.role) {
+          charDesc += ` as ${char.role}`;
+        }
+
+        return charDesc;
+      }).join(', ');
+      
+      prompt += `CHARACTERS: ${characterDetails}. `;
     }
 
-    // Add scene information
+    // Build detailed scene backgrounds with rich visual descriptions
     if (request.scenes && request.scenes.length > 0) {
-      const sceneDesc = request.scenes.slice(0, 2).map(scene => 
-        scene.backgroundDescription || scene.title || 'scene'
-      ).join(', ');
-      prompt += `Scenes: ${sceneDesc}. `;
+      const sceneDetails = request.scenes.slice(0, 2).map((scene, index) => {
+        let sceneDesc = `Scene ${index + 1}`;
+        
+        // Add location and setting
+        if (scene.backgroundDescription) {
+          sceneDesc += `: ${this.filterContent(scene.backgroundDescription)}`;
+        } else if (scene.title) {
+          sceneDesc += `: ${this.filterContent(scene.title)}`;
+        }
+        
+        // Add atmospheric details from background object
+        if (scene.background) {
+          const bg = scene.background;
+          if (bg.location) sceneDesc += ` in ${bg.location}`;
+          if (bg.timeOfDay) sceneDesc += ` during ${bg.timeOfDay}`;
+          if (bg.atmosphere) sceneDesc += ` with ${bg.atmosphere} atmosphere`;
+          if (bg.lighting) sceneDesc += `, ${bg.lighting} lighting`;
+          if (bg.visualDescription) sceneDesc += `, ${this.filterContent(bg.visualDescription)}`;
+        }
+
+        return sceneDesc;
+      }).join('. ');
+      
+      prompt += `SCENES: ${sceneDetails}. `;
     }
 
-    // Add story content (filtered for safety)
-    const storyExcerpt = this.filterContent(request.content.substring(0, 300));
-    prompt += `Story: ${storyExcerpt}. `;
+    // Add filtered story narrative for context
+    const storyExcerpt = this.filterContent(request.content.substring(0, 200));
+    prompt += `STORY CONTEXT: ${storyExcerpt}. `;
 
-    // Add visual style
-    prompt += 'Professional cinematic video with high quality visuals, smooth camera movements, and engaging storytelling.';
+    // Add cinematic style instructions optimized for Kling
+    prompt += `VISUAL STYLE: Professional cinematic video with dynamic camera movements, rich detailed environments, expressive character animations, natural lighting transitions, and immersive storytelling. High-quality production with smooth motion and engaging visual narrative.`;
 
-    console.log('Kling prompt generated:', {
+    console.log('Enhanced Kling prompt generated:', {
       length: prompt.length,
-      preview: prompt.substring(0, 100) + '...'
+      charactersCount: request.characters?.length || 0,
+      scenesCount: request.scenes?.length || 0,
+      preview: prompt.substring(0, 150) + '...'
     });
 
     return prompt;
   }
 
   private filterContent(content: string): string {
-    // Basic content filtering for video generation
+    // Enhanced content filtering for Kling AI compliance
     return content
-      .replace(/\b(violence|violent|kill|murder|death|blood|weapon)\b/gi, 'conflict')
-      .replace(/\b(steal|stolen|theft|crime|criminal)\b/gi, 'adventure')
-      .replace(/\b(explicit|inappropriate|adult)\b/gi, 'dramatic');
+      // Violence and conflict
+      .replace(/\b(violence|violent|kill|murder|death|blood|weapon|fight|attack)\b/gi, 'conflict')
+      .replace(/\b(steal|stolen|theft|crime|criminal|rob)\b/gi, 'adventure')
+      // Inappropriate content
+      .replace(/\b(explicit|inappropriate|adult|mature)\b/gi, 'dramatic')
+      // Fear and negative emotions
+      .replace(/\b(terrified|terror|fear|scary|frightening)\b/gi, 'surprised')
+      .replace(/\b(disgusting|revolting|horrible)\b/gi, 'unpleasant')
+      // AI/technology themes that might be sensitive
+      .replace(/\b(AI|artificial intelligence|robot|android|cyborg)\b/gi, 'technology')
+      .replace(/\b(control|controlling|manipulation|manipulate)\b/gi, 'influence')
+      // Dark themes
+      .replace(/\b(dark|darkness|shadow|evil|sinister|menacing)\b/gi, 'mysterious')
+      // Medical/disability content
+      .replace(/\b(disease|illness|disabled|paralyzed|paralysed)\b/gi, 'challenge')
+      // Enhance positive descriptors
+      .replace(/\b(beautiful|gorgeous|stunning)\b/gi, 'visually striking')
+      .replace(/\b(magical|mystical|enchanting)\b/gi, 'wondrous');
   }
 
   private getAspectRatio(requested?: string): string {
