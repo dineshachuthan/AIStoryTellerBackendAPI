@@ -20,7 +20,7 @@ export class KlingVideoProvider implements IVideoProvider {
   readonly capabilities: VideoProviderCapabilities = {
     maxDuration: 20,
     supportedAspectRatios: ['16:9', '9:16', '1:1'],
-    supportedQualities: ['std', 'pro'],
+    supportedQualities: ['std', 'pro', 'standard'], // Add standard support
     supportsImageToVideo: true,
     supportsTextToVideo: true,
     supportsVoiceIntegration: false, // Voice handled separately
@@ -146,26 +146,24 @@ export class KlingVideoProvider implements IVideoProvider {
     }
 
     if (!this.capabilities.supportedQualities.includes(request.quality)) {
-      // Map standard to a supported quality
-      if (request.quality === 'standard') {
-        request.quality = 'pro'; // Use pro as default for Kling
-      } else {
-        throw new VideoProviderException(
-          VideoProviderError.INVALID_REQUEST,
-          `Quality ${request.quality} not supported. Supported: ${this.capabilities.supportedQualities.join(', ')}`,
-          this.name
-        );
-      }
+      throw new VideoProviderException(
+        VideoProviderError.INVALID_REQUEST,
+        `Quality ${request.quality} not supported. Supported: ${this.capabilities.supportedQualities.join(', ')}`,
+        this.name
+      );
     }
   }
 
   private prepareKlingRequest(request: StandardVideoRequest): any {
+    // Map standard quality to std for Kling API
+    const klingMode = (request.quality === 'pro') ? 'pro' : 'std';
+    
     return {
       model: 'kling-v1',
       prompt: this.sanitizePrompt(request.prompt),
       aspect_ratio: request.aspectRatio,
       duration: Math.min(request.duration, this.capabilities.maxDuration),
-      mode: request.quality
+      mode: klingMode
     };
   }
 
