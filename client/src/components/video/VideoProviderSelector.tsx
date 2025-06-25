@@ -101,7 +101,7 @@ export function VideoProviderSelector() {
   const getProviderDisplayName = (provider: string) => {
     const names = {
       'kling': 'Kling AI',
-      'runwayml': 'RunwayML',
+      'runwayml': 'Video Provider B',
       'pika-labs': 'Pika Labs',
       'luma-ai': 'Luma AI'
     };
@@ -111,7 +111,7 @@ export function VideoProviderSelector() {
   const getProviderDescription = (provider: string) => {
     const descriptions = {
       'kling': 'Chinese AI video generator with flexible content policies',
-      'runwayml': 'Professional AI video generation with strict content guidelines',
+      'runwayml': 'Professional AI video generation with content guidelines',
       'pika-labs': 'Creative AI video generation with artistic focus',
       'luma-ai': 'High-quality AI video generation with realistic output'
     };

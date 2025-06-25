@@ -128,7 +128,7 @@ export function VideoProviderSettings() {
 
   const getProviderDisplayName = (name: string) => {
     const names: { [key: string]: string } = {
-      'runwayml': 'RunwayML Gen-3',
+      'runwayml': 'Video Provider B',
       'pika-labs': 'Pika Labs',
       'luma-ai': 'Luma AI Dream Machine'
     };

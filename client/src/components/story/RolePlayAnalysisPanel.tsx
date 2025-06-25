@@ -258,7 +258,7 @@ export function RolePlayAnalysisPanel({
       } else {
         toast({
           title: "Video Generated Successfully", 
-          description: `New 3-minute video created with RunwayML`,
+          description: `New 3-minute video created with AI video generation`,
         });
       }
     } catch (error: any) {
@@ -1059,7 +1059,7 @@ export function RolePlayAnalysisPanel({
             Cinematic Video Generation
           </CardTitle>
           <p className="text-sm text-muted-foreground">
-            Transform your roleplay into a cinematic video using RunwayML AI (3-minute max)
+            Transform your roleplay into a cinematic video using AI video generation (3-minute max)
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -1218,7 +1218,7 @@ export function RolePlayAnalysisPanel({
               Video Regeneration Cost Warning
             </DialogTitle>
             <DialogDescription>
-              You already have a video for this story. Regenerating will create a new video using RunwayML credits.
+              You already have a video for this story. Regenerating will create a new video using video generation credits.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -1228,7 +1228,7 @@ export function RolePlayAnalysisPanel({
                 <span className="font-medium">Cost Information</span>
               </div>
               <ul className="text-sm text-orange-600 dark:text-orange-400 space-y-1">
-                <li>• Video regeneration will consume RunwayML credits</li>
+                <li>• Video regeneration will consume video generation credits</li>
                 <li>• Maximum duration: 3 minutes (cost optimized)</li>
                 <li>• Existing video will be replaced</li>
                 <li>• New video will be cached to prevent future costs</li>
