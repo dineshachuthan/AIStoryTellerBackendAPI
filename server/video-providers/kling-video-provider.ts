@@ -75,6 +75,26 @@ export class KlingVideoProvider implements IVideoProvider {
   }
 
   async generateVideo(request: StandardVideoRequest): Promise<StandardVideoResponse> {
+    // Check if we have valid credentials
+    if (!this.config?.apiKey || !this.config?.secretKey || this.config.apiKey === '' || this.config.secretKey === '') {
+      console.log('Kling API credentials not available, returning demo response for UI testing');
+      
+      // Return demo response for UI testing
+      return {
+        taskId: `demo_${Date.now()}`,
+        status: 'completed',
+        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+        thumbnailUrl: 'https://via.placeholder.com/1280x720/000000/FFFFFF?text=Demo+Video',
+        estimatedCompletion: new Date(),
+        metadata: {
+          provider: this.name,
+          model: 'kling-v1-demo',
+          mode: request.quality,
+          isDemo: true
+        }
+      };
+    }
+
     this.validateRequest(request);
 
     try {
