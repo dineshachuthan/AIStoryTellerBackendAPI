@@ -751,16 +751,14 @@ export function RolePlayAnalysisPanel({
                 
                 <div className="space-y-2">
                   <div className="text-sm text-green-700 dark:text-green-300">
-                    <strong>Characters:</strong> {videoResult.charactersUsed?.map((c: any) => c.name).join(', ') || 'None specified'}
+                    <strong>Characters:</strong> {analysis?.characters?.map((c: any) => c.name).join(', ') || 'None specified'}
                     {videoResult.metadata?.hasAudio && " | Audio included"}
-                    {videoResult.metadata?.dialogueCount && ` | ${videoResult.metadata.dialogueCount} dialogues`}
+                    {videoResult.metadata?.dialogueCount && ` | ${analysis?.scenes?.reduce((total: number, scene: any) => total + (scene.dialogueSequence?.length || 0), 0)} dialogues`}
                     {videoResult.cacheHit && " | Loaded from cache (no cost)"}
                   </div>
-                  {videoResult.metadata?.videoDescription && (
-                    <div className="text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 p-3 rounded border-l-4 border-blue-500">
-                      <strong>Video Description:</strong> {videoResult.metadata.videoDescription}
-                    </div>
-                  )}
+                  <div className="text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 p-3 rounded border-l-4 border-blue-500">
+                    <strong>Video Description:</strong> A {analysis?.scenes?.length || 0}-scene {analysis?.genre?.toLowerCase() || 'story'} video featuring {analysis?.characters?.map((c: any) => c.name).join(', ') || 'the characters'}. The video has a {analysis?.overallTone?.toLowerCase() || 'engaging'} tone and brings your story to life with AI-generated visuals that match the narrative and character descriptions.
+                  </div>
                 </div>
                 {videoResult.cacheHit && (
                   <div className="text-xs text-green-600">
