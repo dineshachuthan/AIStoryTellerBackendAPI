@@ -95,11 +95,8 @@ export class KlingProvider extends BaseVideoProvider {
     });
 
     try {
-      // Build enhanced prompt with character and scene details
-      const prompt = this.buildPrompt(request);
-      
-      // Log the full prompt for debugging
-      console.log('Full Kling prompt being sent:', prompt);
+      // Use the provided content as the prompt (already optimized by template)
+      const prompt = request.content;
       
       // Create video generation task with optimized settings
       const taskResponse = await this.createVideoTask({
