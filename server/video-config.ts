@@ -18,46 +18,46 @@ export const defaultVideoConfig: VideoProviderConfiguration = {
       priority: 1
     },
     'runwayml': {
-      enabled: !!process.env.RUNWAYML_API_KEY,
+      enabled: false, // Disabled per user request
       config: {
-        apiKey: process.env.RUNWAYML_API_KEY || process.env.RUNWAY_API_KEY || '',
-        baseUrl: 'https://api.runway.team/v1',
-        maxDuration: 20,
-        defaultDuration: 10,
-        resolution: 'standard',
-        timeout: 60000,
-        retryCount: 2
+        apiKey: '',
+        baseUrl: '',
+        maxDuration: 0,
+        defaultDuration: 0,
+        resolution: 'disabled',
+        timeout: 0,
+        retryCount: 0
       },
-      priority: 2
+      priority: 999 // Lowest priority, effectively disabled
     },
     'pika-labs': {
-      enabled: !!process.env.PIKA_LABS_API_KEY,
+      enabled: false, // Disabled - only using Kling
       config: {
-        apiKey: process.env.PIKA_LABS_API_KEY || '',
-        baseUrl: 'https://api.pika.art',
-        maxDuration: 15,
-        defaultDuration: 8,
-        resolution: 'standard',
-        timeout: 45000,
-        retryCount: 2
+        apiKey: '',
+        baseUrl: '',
+        maxDuration: 0,
+        defaultDuration: 0,
+        resolution: 'disabled',
+        timeout: 0,
+        retryCount: 0
       },
-      priority: 3
+      priority: 999
     },
     'luma-ai': {
-      enabled: !!process.env.LUMA_AI_API_KEY,
+      enabled: false, // Disabled - only using Kling
       config: {
-        apiKey: process.env.LUMA_AI_API_KEY || '',
-        baseUrl: 'https://api.lumalabs.ai',
-        maxDuration: 10,
-        defaultDuration: 5,
-        resolution: 'high',
-        timeout: 90000,
-        retryCount: 1
+        apiKey: '',
+        baseUrl: '',
+        maxDuration: 0,
+        defaultDuration: 0,
+        resolution: 'disabled',
+        timeout: 0,
+        retryCount: 0
       },
-      priority: 4
+      priority: 999
     }
   },
-  fallbackOrder: ['kling', 'runwayml', 'pika-labs', 'luma-ai'],
+  fallbackOrder: ['kling'], // Only Kling enabled
   compatibility: {
     enforceMP4: true,
     enforceH264: true,
@@ -68,7 +68,17 @@ export const defaultVideoConfig: VideoProviderConfiguration = {
     minimum: 3,  // Minimum allowed duration
     maximum: 20, // Maximum allowed duration - 20 seconds as requested
     allowUserOverride: true // Allow users to specify custom duration within limits
-  },
+  }
+};
+
+// Export function for compatibility with existing imports
+export function getVideoProviderConfig() {
+  return defaultVideoConfig;
+}
+
+// Extend the configuration if needed
+export const videoConfig = {
+  ...defaultVideoConfig,
   roleplay: {
     targetDurationSeconds: 60, // Target duration for roleplay content generation (can be 60, 120, 240)
     maxDurationSeconds: 240, // Maximum roleplay duration allowed
@@ -87,14 +97,11 @@ export function getVideoProviderConfig(): VideoProviderConfiguration {
     config.activeProvider = process.env.VIDEO_PROVIDER;
   }
   
-  // Disable providers that don't have API keys
-  Object.keys(config.providers).forEach(providerName => {
-    const provider = config.providers[providerName];
-    if (!provider.config.apiKey) {
-      provider.enabled = false;
-      console.log(`Video provider ${providerName} disabled: missing API key`);
-    }
-  });
+  // Only check Kling provider for API keys, others are disabled
+  if (config.providers.kling && !config.providers.kling.config.apiKey) {
+    config.providers.kling.enabled = false;
+    console.log(`Kling provider disabled: missing API key`);
+  }
   
   return config;
 }

@@ -42,29 +42,42 @@ export class VideoProviderManager {
   }
 
   private initializeProviders(): void {
-    // Initialize all configured providers
+    // Initialize only enabled providers
     Object.entries(this.configuration.providers).forEach(([name, providerConfig]) => {
-      if (!providerConfig.enabled) return;
+      if (!providerConfig.enabled) {
+        console.log(`Video provider ${name} disabled in configuration`);
+        return;
+      }
 
       let provider: BaseVideoProvider;
       
       switch (name) {
+        case 'kling':
+          try {
+            provider = new KlingProvider();
+            this.providers.set(name, provider);
+            console.log(`Kling provider initialized successfully`);
+          } catch (error) {
+            console.error(`Failed to initialize Kling provider:`, error);
+          }
+          break;
         case 'runwayml':
-          provider = new RunwayMLProvider(providerConfig.config);
+          console.log(`RunwayML provider skipped - disabled per configuration`);
           break;
         case 'pika-labs':
-          provider = new PikaLabsProvider(providerConfig.config);
+          console.log(`Pika Labs provider skipped - disabled per configuration`);
           break;
         case 'luma-ai':
-          provider = new LumaAIProvider(providerConfig.config);
+          console.log(`Luma AI provider skipped - disabled per configuration`);
           break;
         default:
           console.warn(`Unknown video provider: ${name}`);
           return;
       }
-
-      this.providers.set(name, provider);
     });
+
+    console.log(`Initialized providers: ${Array.from(this.providers.keys()).join(', ')}`);
+    console.log(`Active provider: ${this.configuration.activeProvider}`);
   }
 
   /**
