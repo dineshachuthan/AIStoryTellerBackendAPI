@@ -68,7 +68,7 @@ export class KlingProvider extends BaseVideoProvider {
 
     this.config = {
       apiKey: `${process.env.KLING_ACCESS_KEY}:${process.env.KLING_SECRET_KEY}`,
-      baseUrl: 'https://klingai.com/api',
+      baseUrl: 'https://api.klingai.com',
       models: {
         'kling-v1': {
           maxDuration: 20, // Updated to 20 seconds as requested
@@ -154,7 +154,12 @@ export class KlingProvider extends BaseVideoProvider {
       mode: request.mode
     });
 
-    const response = await fetch(`${this.config.baseUrl}/v1/videos/text2video`, {
+    // Use the correct Kling API endpoint structure
+    const endpoint = '/v1/videos/text2video';
+    
+    console.log(`Calling Kling API: ${this.config.baseUrl}${endpoint}`);
+    
+    const response = await fetch(`${this.config.baseUrl}${endpoint}`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${this.config.apiKey}`,
