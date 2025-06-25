@@ -33,7 +33,22 @@ export class KlingVideoProvider implements IVideoProvider {
   private initialized = false;
 
   async initialize(config: VideoProviderConfig): Promise<void> {
+    console.log('=== KLING PROVIDER INITIALIZE ===');
+    console.log('Received config in initialize:', {
+      hasApiKey: !!config.apiKey,
+      hasSecretKey: !!config.secretKey,
+      apiKeyPreview: config.apiKey ? config.apiKey.substring(0, 8) + '...' : 'MISSING',
+      secretKeyLength: config.secretKey?.length || 0,
+      baseUrl: config.baseUrl
+    });
+    
+    console.log('Environment check:', {
+      KLING_ACCESS_KEY: process.env.KLING_ACCESS_KEY ? process.env.KLING_ACCESS_KEY.substring(0, 8) + '...' : 'MISSING',
+      KLING_SECRET_KEY: process.env.KLING_SECRET_KEY ? 'Present' : 'MISSING'
+    });
+    
     if (!config.apiKey || !config.secretKey) {
+      console.error('Missing credentials in initialize method');
       throw new VideoProviderException(
         VideoProviderError.AUTHENTICATION_FAILED,
         'Kling requires both access key and secret key',
@@ -51,16 +66,20 @@ export class KlingVideoProvider implements IVideoProvider {
     };
     
     // Ensure duration is capped at 20 seconds
-    if (this.config.maxDuration > 20) {
+    if (this.config.maxDuration! > 20) {
       this.config.maxDuration = 20;
     }
 
-    console.log('Kling config initialized:', {
+    console.log('Kling config finalized:', {
       baseUrl: this.config.baseUrl,
       hasApiKey: !!this.config.apiKey,
       hasSecretKey: !!this.config.secretKey,
       apiKeyLength: this.config.apiKey?.length || 0,
-      secretKeyLength: this.config.secretKey?.length || 0
+      secretKeyLength: this.config.secretKey?.length || 0,
+      credentialsMatch: {
+        apiKey: this.config.apiKey === process.env.KLING_ACCESS_KEY,
+        secretKey: this.config.secretKey === process.env.KLING_SECRET_KEY
+      }
     });
 
     this.initialized = true;
