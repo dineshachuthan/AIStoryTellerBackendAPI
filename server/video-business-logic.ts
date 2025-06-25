@@ -1,0 +1,415 @@
+import { storage } from './storage';
+import { RolePlayAnalysis } from './roleplay-analysis';
+
+export interface VideoGenerationRequest {
+  storyId: number;
+  userId: string;
+  roleplayAnalysis: RolePlayAnalysis;
+  storyContent: string;
+  duration?: number;
+  quality?: 'std' | 'pro';
+  regenerate?: boolean;
+  provider?: string; // Allow override of provider
+}
+
+export interface VideoGenerationResult {
+  videoId: string;
+  status: 'draft' | 'processing' | 'complete' | 'failed';
+  videoUrl?: string;
+  thumbnailUrl?: string;
+  duration: number;
+  createdAt: Date;
+  prompt: string;
+  provider: string;
+  taskId?: string;
+  errorMessage?: string;
+}
+
+export interface VideoProvider {
+  name: string;
+  generateVideo(request: any): Promise<any>;
+  checkStatus?(taskId: string): Promise<any>;
+  isHealthy?(): Promise<boolean>;
+}
+
+export type VideoStatus = 'draft' | 'processing' | 'complete' | 'failed';
+export type VideoAccessLevel = 'owner' | 'participant' | 'public' | 'denied';
+
+/**
+ * Shared video business logic that works with any provider
+ */
+export class VideoBusinessLogic {
+  /**
+   * Generate video using specified or active provider
+   */
+  static async generateVideo(
+    request: VideoGenerationRequest,
+    provider: VideoProvider
+  ): Promise<VideoGenerationResult> {
+    console.log('Starting video generation with provider:', provider.name, {
+      storyId: request.storyId,
+      userId: request.userId,
+      duration: request.duration || 20,
+      quality: request.quality || 'std',
+      regenerate: request.regenerate || false
+    });
+
+    try {
+      // 1. Check existing video (unless regenerating)
+      if (!request.regenerate) {
+        const existingVideo = await this.getVideoByStoryId(request.storyId);
+        if (existingVideo && existingVideo.status !== 'failed') {
+          console.log('Existing video found, returning current result');
+          return existingVideo;
+        }
+      }
+
+      // 2. Prepare video generation data
+      const videoData = await this.prepareVideoData(request);
+
+      // 3. Call provider to generate video
+      const providerResult = await this.callProvider(provider, videoData);
+
+      // 4. Create video record with initial status
+      const videoRecord = await this.createVideoRecord(
+        request,
+        provider.name,
+        providerResult,
+        videoData.prompt
+      );
+
+      // 5. Handle async processing if needed
+      if (providerResult.taskId && !providerResult.videoUrl) {
+        this.startStatusPolling(
+          provider,
+          providerResult.taskId,
+          request.storyId,
+          request.userId
+        );
+      }
+
+      console.log('Video generation initiated successfully:', {
+        videoId: videoRecord.videoId,
+        status: videoRecord.status,
+        provider: provider.name
+      });
+
+      return videoRecord;
+
+    } catch (error: any) {
+      console.error('Video generation failed:', error);
+      
+      // Create failed record
+      const failedRecord = await this.createFailedRecord(
+        request,
+        provider.name,
+        error.message
+      );
+      
+      throw new Error(`Video generation failed: ${error.message}`);
+    }
+  }
+
+  /**
+   * Update video status (provider-agnostic)
+   */
+  static async updateVideoStatus(
+    storyId: number,
+    status: VideoStatus,
+    updates: Partial<VideoGenerationResult> = {}
+  ): Promise<void> {
+    console.log('Updating video status:', { storyId, status, updates });
+
+    const updateData = {
+      status,
+      ...updates
+    };
+
+    // Add timestamp for completion
+    if (status === 'complete') {
+      updateData.acceptedAt = new Date();
+    }
+
+    await storage.updateVideoGeneration(storyId, updateData);
+    
+    console.log('Video status updated successfully');
+  }
+
+  /**
+   * Check video access permissions (provider-agnostic)
+   */
+  static async checkVideoAccess(storyId: number, userId: string): Promise<{
+    canView: boolean;
+    canShare: boolean;
+    accessLevel: VideoAccessLevel;
+    reason?: string;
+  }> {
+    const video = await this.getVideoByStoryId(storyId);
+    if (!video) {
+      return { 
+        canView: false, 
+        canShare: false, 
+        accessLevel: 'denied',
+        reason: 'Video not found' 
+      };
+    }
+
+    const story = await storage.getStory(storyId);
+    if (!story) {
+      return { 
+        canView: false, 
+        canShare: false, 
+        accessLevel: 'denied',
+        reason: 'Story not found' 
+      };
+    }
+
+    // Complete videos are shareable with anyone
+    if (video.status === 'complete') {
+      return { 
+        canView: true, 
+        canShare: true, 
+        accessLevel: 'public'
+      };
+    }
+
+    // Check ownership and participation
+    const isOwner = story.userId === userId;
+    const isParticipant = await storage.isRoleplayParticipant(storyId, userId);
+
+    if (isOwner) {
+      return { 
+        canView: true, 
+        canShare: false,
+        accessLevel: 'owner',
+        reason: 'Video is still in draft/processing status' 
+      };
+    }
+
+    if (isParticipant) {
+      return { 
+        canView: true, 
+        canShare: false,
+        accessLevel: 'participant',
+        reason: 'Video is still in draft/processing status' 
+      };
+    }
+
+    return { 
+      canView: false, 
+      canShare: false,
+      accessLevel: 'denied',
+      reason: 'Access denied - not owner or participant' 
+    };
+  }
+
+  /**
+   * Accept/finalize video (provider-agnostic)
+   */
+  static async acceptVideo(storyId: number, userId: string): Promise<void> {
+    console.log('Accepting video for story:', storyId);
+    
+    // Verify ownership
+    const story = await storage.getStory(storyId);
+    if (!story || story.userId !== userId) {
+      throw new Error('Access denied - not story owner');
+    }
+
+    // Verify video exists and is in acceptable state
+    const video = await this.getVideoByStoryId(storyId);
+    if (!video) {
+      throw new Error('Video not found');
+    }
+
+    if (video.status !== 'draft') {
+      throw new Error(`Cannot accept video in ${video.status} status`);
+    }
+
+    await this.updateVideoStatus(storyId, 'complete');
+    
+    console.log('Video marked as complete and can now be shared');
+  }
+
+  /**
+   * Regenerate video (provider-agnostic)
+   */
+  static async regenerateVideo(
+    storyId: number, 
+    userId: string,
+    provider: VideoProvider
+  ): Promise<VideoGenerationResult> {
+    console.log('Regenerating video for story:', storyId);
+    
+    // Get original data
+    const story = await storage.getStory(storyId);
+    if (!story || story.userId !== userId) {
+      throw new Error('Access denied - not story owner');
+    }
+
+    const roleplayAnalysis = await storage.getRoleplayAnalysis(storyId);
+    if (!roleplayAnalysis) {
+      throw new Error('Roleplay analysis not found');
+    }
+
+    // Clear existing video
+    await storage.deleteVideoGeneration(storyId);
+    
+    // Generate new video
+    return this.generateVideo({
+      storyId,
+      userId,
+      roleplayAnalysis,
+      storyContent: story.content,
+      regenerate: true
+    }, provider);
+  }
+
+  /**
+   * Get video by story ID (provider-agnostic)
+   */
+  static async getVideoByStoryId(storyId: number): Promise<VideoGenerationResult | null> {
+    return await storage.getVideoByStoryId(storyId);
+  }
+
+  /**
+   * Handle provider errors consistently
+   */
+  static handleProviderError(error: any, providerName: string): Error {
+    console.error(`${providerName} provider error:`, error);
+    
+    // Standardize error messages
+    if (error.message?.includes('Auth failed') || error.message?.includes('authentication')) {
+      return new Error(`${providerName} authentication failed. Please verify your API credentials.`);
+    }
+    
+    if (error.message?.includes('quota') || error.message?.includes('limit')) {
+      return new Error(`${providerName} quota exceeded. Please check your account limits.`);
+    }
+    
+    if (error.message?.includes('content') || error.message?.includes('policy')) {
+      return new Error(`${providerName} content policy violation. Please review your story content.`);
+    }
+    
+    return new Error(`${providerName} error: ${error.message}`);
+  }
+
+  // Private helper methods
+
+  private static async prepareVideoData(request: VideoGenerationRequest): Promise<{
+    prompt: string;
+    duration: number;
+    quality: string;
+    characters: any[];
+    scenes: any[];
+  }> {
+    // This would be implemented by each provider's template system
+    // For now, return basic structure
+    return {
+      prompt: request.storyContent.substring(0, 500),
+      duration: request.duration || 20,
+      quality: request.quality || 'std',
+      characters: request.roleplayAnalysis.characters || [],
+      scenes: request.roleplayAnalysis.scenes || []
+    };
+  }
+
+  private static async callProvider(provider: VideoProvider, data: any): Promise<any> {
+    try {
+      return await provider.generateVideo(data);
+    } catch (error) {
+      throw this.handleProviderError(error, provider.name);
+    }
+  }
+
+  private static async createVideoRecord(
+    request: VideoGenerationRequest,
+    providerName: string,
+    providerResult: any,
+    prompt: string
+  ): Promise<VideoGenerationResult> {
+    const videoRecord: VideoGenerationResult = {
+      videoId: this.generateVideoId(),
+      status: providerResult.videoUrl ? 'draft' : 'processing',
+      videoUrl: providerResult.videoUrl,
+      thumbnailUrl: providerResult.thumbnailUrl,
+      duration: request.duration || 20,
+      createdAt: new Date(),
+      prompt,
+      provider: providerName,
+      taskId: providerResult.taskId
+    };
+
+    await storage.saveVideoGeneration(request.storyId, request.userId, videoRecord);
+    return videoRecord;
+  }
+
+  private static async createFailedRecord(
+    request: VideoGenerationRequest,
+    providerName: string,
+    errorMessage: string
+  ): Promise<VideoGenerationResult> {
+    const failedRecord: VideoGenerationResult = {
+      videoId: this.generateVideoId(),
+      status: 'failed',
+      duration: request.duration || 20,
+      createdAt: new Date(),
+      prompt: 'Generation failed',
+      provider: providerName,
+      errorMessage
+    };
+
+    await storage.saveVideoGeneration(request.storyId, request.userId, failedRecord);
+    return failedRecord;
+  }
+
+  private static async startStatusPolling(
+    provider: VideoProvider,
+    taskId: string,
+    storyId: number,
+    userId: string
+  ): Promise<void> {
+    if (!provider.checkStatus) {
+      console.log('Provider does not support status checking');
+      return;
+    }
+
+    const maxAttempts = 60; // 5 minutes
+    let attempts = 0;
+
+    const pollInterval = setInterval(async () => {
+      attempts++;
+      
+      try {
+        const status = await provider.checkStatus!(taskId);
+        
+        if (status.completed) {
+          clearInterval(pollInterval);
+          
+          await this.updateVideoStatus(storyId, 'draft', {
+            videoUrl: status.videoUrl,
+            thumbnailUrl: status.thumbnailUrl
+          });
+          
+          console.log('Video generation completed:', { taskId, videoUrl: status.videoUrl });
+        }
+        
+        if (attempts >= maxAttempts) {
+          clearInterval(pollInterval);
+          
+          await this.updateVideoStatus(storyId, 'failed', {
+            errorMessage: 'Generation timeout'
+          });
+          
+          console.error('Video generation timeout:', { taskId });
+        }
+        
+      } catch (error) {
+        console.error('Error polling video status:', error);
+      }
+    }, 5000); // Poll every 5 seconds
+  }
+
+  private static generateVideoId(): string {
+    return `video_${Date.now()}_${Math.random().toString(36).substring(2)}`;
+  }
+}
