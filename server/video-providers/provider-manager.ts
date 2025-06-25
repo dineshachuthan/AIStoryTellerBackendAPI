@@ -2,6 +2,7 @@ import { BaseVideoProvider, VideoGenerationRequest, VideoGenerationResult, Provi
 import { RunwayMLProvider } from './runwayml-provider-new';
 import { PikaLabsProvider } from './pika-labs-provider';
 import { LumaAIProvider } from './luma-ai-provider';
+import { KlingProvider } from './kling-provider';
 
 export interface VideoProviderConfiguration {
   activeProvider: string;
