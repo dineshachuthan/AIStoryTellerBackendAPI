@@ -146,11 +146,16 @@ export class KlingVideoProvider implements IVideoProvider {
     }
 
     if (!this.capabilities.supportedQualities.includes(request.quality)) {
-      throw new VideoProviderException(
-        VideoProviderError.INVALID_REQUEST,
-        `Quality ${request.quality} not supported`,
-        this.name
-      );
+      // Map standard to a supported quality
+      if (request.quality === 'standard') {
+        request.quality = 'pro'; // Use pro as default for Kling
+      } else {
+        throw new VideoProviderException(
+          VideoProviderError.INVALID_REQUEST,
+          `Quality ${request.quality} not supported. Supported: ${this.capabilities.supportedQualities.join(', ')}`,
+          this.name
+        );
+      }
     }
   }
 

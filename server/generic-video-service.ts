@@ -72,9 +72,7 @@ export class GenericVideoService {
       return result;
     } catch (error: any) {
       console.error(`Video generation failed with provider ${provider.name}:`, error);
-      
-      // Try fallback providers
-      return this.tryFallbackProviders(request, error);
+      throw error;
     }
   }
 
@@ -224,27 +222,7 @@ export class GenericVideoService {
     return prompt;
   }
 
-  private async tryFallbackProviders(request: VideoGenerationRequest, originalError: Error): Promise<VideoGenerationResult> {
-    const enabledProviders = this.registry.getEnabledProviders();
-    const activeProvider = this.registry.getActiveProvider()?.name;
-    
-    // Try other enabled providers
-    for (const providerName of enabledProviders) {
-      if (providerName === activeProvider) continue; // Skip the one that failed
-      
-      console.log(`Trying fallback provider: ${providerName}`);
-      
-      try {
-        this.registry.setActiveProvider(providerName);
-        return await this.generateVideo(request);
-      } catch (error) {
-        console.error(`Fallback provider ${providerName} also failed:`, error);
-      }
-    }
-    
-    // All providers failed
-    throw new Error(`All video providers failed. Original error: ${originalError.message}`);
-  }
+
 
   private startStatusPolling(taskId: string, storyId: number, userId: string, providerName: string): void {
     const maxAttempts = 60; // 5 minutes
