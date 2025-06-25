@@ -193,7 +193,12 @@ export class RunwayMLProvider extends BaseVideoProvider {
           return task;
         } else if (task.status === 'FAILED') {
           const failureReason = task.failure?.reason || task.failure?.message || 'Content may violate guidelines or exceed limits';
-          console.log(`RunwayML task ${taskId} failed immediately: ${failureReason}`);
+          const failureDetails = task.failure || {};
+          console.log(`RunwayML task ${taskId} failed:`, {
+            reason: failureReason,
+            details: failureDetails,
+            fullTask: task
+          });
           // Stop polling immediately on failure - don't retry
           throw new Error(`RunwayML generation failed: ${failureReason}`);
         }
@@ -339,23 +344,11 @@ export class RunwayMLProvider extends BaseVideoProvider {
       prompt += `${sceneDetails}. `;
     }
 
-    // Add story narrative with aggressive content filtering for RunwayML guidelines
-    const originalExcerpt = request.content.substring(0, 200);
-    const storyExcerpt = this.filterContentForPolicy(originalExcerpt);
-    console.log('Content filtering applied:', {
-      original: originalExcerpt,
-      filtered: storyExcerpt,
-      changes: originalExcerpt !== storyExcerpt
+    console.log('Final prompt details:', {
+      originalContentLength: request.content.length,
+      finalPromptLength: prompt.length,
+      prompt: prompt.substring(0, 200) + '...'
     });
-    prompt += `STORY ELEMENTS: ${storyExcerpt}${request.content.length > 200 ? '...' : ''}. `;
-    
-    // Add visual style instructions with safe, general terms
-    prompt += `VISUAL STYLE: Professional cinematic storytelling with natural lighting and engaging narrative flow. `;
-    
-    // Add duration and pacing guidance
-    prompt += `Create a ${request.duration || 10}-second video that captures the essence of this story with smooth transitions and engaging visual narrative.`;
-
-    console.log('Final RunwayML prompt (filtered):', prompt);
     return prompt;
   }
 
