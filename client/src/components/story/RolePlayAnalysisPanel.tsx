@@ -749,11 +749,18 @@ export function RolePlayAnalysisPanel({
                   </div>
                 )}
                 
-                <div className="text-sm text-green-700 dark:text-green-300">
-                  Characters used: {videoResult.charactersUsed?.map((c: any) => c.name).join(', ')}
-                  {videoResult.metadata?.hasAudio && " | Audio included"}
-                  {videoResult.metadata?.dialogueCount && ` | ${videoResult.metadata.dialogueCount} dialogues`}
-                  {videoResult.cacheHit && " | Loaded from cache (no cost)"}
+                <div className="space-y-2">
+                  <div className="text-sm text-green-700 dark:text-green-300">
+                    <strong>Characters:</strong> {videoResult.charactersUsed?.map((c: any) => c.name).join(', ') || 'None specified'}
+                    {videoResult.metadata?.hasAudio && " | Audio included"}
+                    {videoResult.metadata?.dialogueCount && ` | ${videoResult.metadata.dialogueCount} dialogues`}
+                    {videoResult.cacheHit && " | Loaded from cache (no cost)"}
+                  </div>
+                  {videoResult.metadata?.videoDescription && (
+                    <div className="text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 p-3 rounded border-l-4 border-blue-500">
+                      <strong>Video Description:</strong> {videoResult.metadata.videoDescription}
+                    </div>
+                  )}
                 </div>
                 {videoResult.cacheHit && (
                   <div className="text-xs text-green-600">

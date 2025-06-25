@@ -58,7 +58,14 @@ export class GenericVideoService {
         createdAt: new Date(),
         prompt: standardRequest.prompt,
         provider: provider.name,
-        taskId: response.taskId
+        taskId: response.taskId,
+        charactersUsed: request.analysis?.characters || [],
+        metadata: {
+          ...response.metadata,
+          videoDescription: this.generateUserFriendlyDescription(standardRequest.prompt, request.analysis),
+          hasAudio: false,
+          dialogueCount: request.analysis?.scenes?.reduce((total, scene) => total + (scene.dialogues?.length || 0), 0) || 0
+        }
       };
 
       // Save to database using business logic
@@ -220,6 +227,37 @@ export class GenericVideoService {
     prompt += 'Professional cinematic video with engaging storytelling.';
     
     return prompt;
+  }
+
+  private generateUserFriendlyDescription(prompt: string, analysis?: any): string {
+    if (!analysis) {
+      return "A cinematic video based on your story content.";
+    }
+
+    const characters = analysis.characters?.map((c: any) => c.name).join(', ') || 'the characters';
+    const genre = analysis.genre || 'story';
+    const scenes = analysis.scenes?.length || 0;
+    
+    let description = `A ${scenes}-scene ${genre.toLowerCase()} video featuring ${characters}. `;
+    
+    if (analysis.overallTone) {
+      description += `The video has a ${analysis.overallTone.toLowerCase()} tone. `;
+    }
+    
+    if (analysis.scenes && analysis.scenes.length > 0) {
+      const firstScene = analysis.scenes[0];
+      if (firstScene.background?.location) {
+        description += `It begins in ${firstScene.background.location.toLowerCase()}`;
+        if (firstScene.background.timeOfDay) {
+          description += ` during ${firstScene.background.timeOfDay.toLowerCase()}`;
+        }
+        description += '. ';
+      }
+    }
+    
+    description += 'The video brings your story to life with AI-generated visuals that match the narrative and character descriptions you provided.';
+    
+    return description;
   }
 
 
