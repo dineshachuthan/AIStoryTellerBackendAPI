@@ -160,51 +160,53 @@ export class KlingProvider extends BaseVideoProvider {
     
     console.log(`Calling Kling API: ${this.config.baseUrl}${endpoint}`);
     
-    // Try different authentication methods based on Kling documentation
-    const authHeaders = [
-      { 'Authorization': this.config.apiKey },
-      { 'X-API-Key': this.config.apiKey },
-      { 'Authorization': `Bearer ${this.config.apiKey}` },
-      { 'Authorization': `${this.config.apiKey}:${this.config.secretKey}` }
-    ];
+    // Use proper Kling API authentication format
+    const timestamp = Date.now();
+    const nonce = Math.random().toString(36).substring(2);
+    const requestBody = JSON.stringify(request);
+    
+    // Create signature for Kling API (following Chinese API patterns)
+    const stringToSign = `POST\n${endpoint}\n${timestamp}\n${nonce}\n${requestBody}`;
+    const signature = require('crypto').createHmac('sha256', this.config.secretKey).update(stringToSign).digest('hex');
+    
+    console.log('Using Kling signature-based authentication');
+    
+    const response = await fetch(`${this.config.baseUrl}${endpoint}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `${this.config.apiKey}:${signature}`,
+        'X-Timestamp': timestamp.toString(),
+        'X-Nonce': nonce,
+        'Content-Type': 'application/json',
+        'User-Agent': 'Storytelling-App/1.0'
+      },
+      body: requestBody
+    });
 
-    let response: Response | null = null;
-    let responseText = '';
+    const responseText = await response.text();
 
-    for (const authHeader of authHeaders) {
-      console.log(`Trying Kling auth method:`, Object.keys(authHeader)[0]);
-      
-      response = await fetch(`${this.config.baseUrl}${endpoint}`, {
-        method: 'POST',
-        headers: {
-          ...authHeader,
-          'Content-Type': 'application/json',
-          'User-Agent': 'Storytelling-App/1.0'
-        },
-        body: JSON.stringify(request)
-      });
+    console.log('Kling API response status:', response.status);
+    console.log('Kling API response:', responseText.substring(0, 500));
 
-      responseText = await response.text();
-      console.log(`Auth method response:`, response.status, responseText.substring(0, 200));
-
-      // If we don't get auth failed, this method works
-      if (!responseText.includes("Auth failed")) {
-        break;
-      }
+    // Parse response for detailed error analysis
+    let jsonResponse;
+    try {
+      jsonResponse = JSON.parse(responseText);
+    } catch (e) {
+      throw new Error(`Kling API returned invalid JSON: ${responseText}`);
     }
 
-    if (!response) {
-      throw new Error('No valid authentication method found for Kling API');
+    // Handle authentication errors specifically
+    if (jsonResponse.code >= 1000 && jsonResponse.code <= 1099) {
+      throw new Error(`Kling API authentication failed (Code ${jsonResponse.code}): ${jsonResponse.message}. Please verify your KLING_ACCESS_KEY and KLING_SECRET_KEY are correctly configured and activated in your Kling account.`);
     }
 
-    console.log('Final Kling API response status:', response.status);
-    console.log('Final Kling API response:', responseText.substring(0, 500));
-
-    if (!response.ok) {
-      throw new Error(`Kling API error: ${response.status} ${response.statusText} - ${responseText}`);
+    // Handle other API errors
+    if (!response.ok || jsonResponse.code !== 0) {
+      throw new Error(`Kling API error (Code ${jsonResponse.code}): ${jsonResponse.message}`);
     }
 
-    return JSON.parse(responseText);
+    return jsonResponse;
   }
 
   private async waitForCompletion(taskId: string): Promise<KlingTaskResult> {

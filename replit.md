@@ -127,6 +127,13 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Priority**: Medium (requested but deferred for future implementation)
 
 ## Changelog
+- June 25, 2025: Completed Kling AI integration with enhanced character and scene support
+  - Disabled all other video providers (RunwayML, Pika, Luma) as requested
+  - Implemented proper Kling API structure with signature-based authentication
+  - Added comprehensive character personality and appearance integration in video prompts
+  - Enhanced scene backgrounds with atmospheric details, lighting, and visual descriptions
+  - Created cost-controlled testing environment (20-second max, low resolution)
+  - Ready for video generation pending API credential verification
 - June 24, 2025: Implemented video regeneration functionality with cache clearing and database cleanup
   - Added regenerate video button that appears when video exists
   - Implemented force regeneration with complete cache and database clearing
