@@ -127,6 +127,11 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Priority**: Medium (requested but deferred for future implementation)
 
 ## Changelog
+- June 25, 2025: Fixed Kling API authentication and parameter validation
+  - Resolved JWT token generation to match Python/Java patterns exactly
+  - Authentication now working with proper KLING_ACCESS_KEY and KLING_SECRET_KEY
+  - Removed invalid duration parameter based on API testing
+  - System ready for video generation with real API calls
 - June 25, 2025: Implemented plug-and-play video provider architecture
   - Created IVideoProvider interface for true plug-and-play compatibility
   - Built VideoProviderRegistry for configuration-based provider management
