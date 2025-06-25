@@ -170,14 +170,15 @@ export class KlingVideoProvider implements IVideoProvider {
   private prepareKlingRequest(request: StandardVideoRequest): any {
     // Map standard quality to std for Kling API
     const klingMode = (request.quality === 'pro') ? 'pro' : 'std';
-    // Ensure duration is exactly 20 seconds or less
-    const duration = Math.min(request.duration || 20, 20);
+    // Kling accepts 10, 15, or 20 seconds - default to 10 for faster/cheaper generation
+    const duration = Math.min(request.duration || 10, 20);
+    const validDuration = duration <= 10 ? 10 : (duration <= 15 ? 15 : 20);
     
     return {
       model: 'kling-v1',
       prompt: this.sanitizePrompt(request.prompt),
       aspect_ratio: request.aspectRatio || '16:9',
-      duration: duration,
+      duration: validDuration,
       mode: klingMode
     };
   }
