@@ -48,8 +48,8 @@ export class VideoGenerationService {
   private readonly ASSET_VALIDATION_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours
   private readonly MAX_ROLEPLAY_DURATION = 180; // 3 minutes maximum for roleplay videos to control costs
   
-  // STRICT COST PROTECTION - CANNOT BE EXCEEDED WITHOUT AUTHORIZATION
-  private readonly ABSOLUTE_MAX_DURATION = 20; // Hard limit: 20 seconds maximum
+  // STRICT COST PROTECTION - CONFIGURABLE DURATION LIMITS
+  private readonly ABSOLUTE_MAX_DURATION = 20; // Hard limit: 20 seconds maximum for testing
   private readonly COST_PROTECTION_ENABLED = true; // Master switch for cost protection
 
   /**

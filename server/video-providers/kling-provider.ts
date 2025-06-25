@@ -62,21 +62,21 @@ export class KlingProvider extends BaseVideoProvider {
   constructor() {
     super('kling');
     
-    if (!process.env.KLING_API_KEY) {
-      throw new Error('KLING_API_KEY environment variable is required');
+    if (!process.env.KLING_ACCESS_KEY || !process.env.KLING_SECRET_KEY) {
+      throw new Error('KLING_ACCESS_KEY and KLING_SECRET_KEY environment variables are required');
     }
 
     this.config = {
-      apiKey: process.env.KLING_API_KEY,
+      apiKey: `${process.env.KLING_ACCESS_KEY}:${process.env.KLING_SECRET_KEY}`,
       baseUrl: 'https://api.piapi.ai/api/kling',
       models: {
         'kling-v1': {
-          maxDuration: 10, // Kling supports up to 10 seconds
+          maxDuration: 20, // Updated to 20 seconds as requested
           aspectRatios: ['16:9', '9:16', '1:1'],
           features: ['text-to-video', 'image-to-video']
         },
         'kling-v1-5': {
-          maxDuration: 10,
+          maxDuration: 20, // Updated to 20 seconds as requested
           aspectRatios: ['16:9', '9:16', '1:1'],
           features: ['text-to-video', 'image-to-video', 'camera-control']
         }
@@ -95,13 +95,13 @@ export class KlingProvider extends BaseVideoProvider {
       // Build prompt from story content
       const prompt = this.buildPrompt(request);
       
-      // Create video generation task
+      // Create video generation task with low resolution settings
       const taskResponse = await this.createVideoTask({
-        model: request.quality === 'high' ? 'kling-v1-5' : 'kling-v1',
+        model: 'kling-v1', // Use basic model for low resolution/cost testing
         prompt,
         aspect_ratio: this.getAspectRatio(request.aspectRatio),
-        duration: Math.min(request.duration || 5, 10), // Max 10 seconds
-        mode: request.quality === 'high' ? 'pro' : 'std'
+        duration: Math.min(request.duration || 10, 20), // Max 20 seconds as requested
+        mode: 'std' // Use standard mode for low resolution
       });
 
       if (taskResponse.code !== 0) {
@@ -127,7 +127,9 @@ export class KlingProvider extends BaseVideoProvider {
         provider: 'kling',
         metadata: {
           taskId,
-          model: request.quality === 'high' ? 'kling-v1-5' : 'kling-v1',
+          model: 'kling-v1',
+          mode: 'std',
+          resolution: 'low',
           promptUsed: prompt
         }
       };
@@ -269,6 +271,6 @@ export class KlingProvider extends BaseVideoProvider {
   }
 
   getMaxDuration(): number {
-    return 10; // Kling max duration
+    return 20; // Updated max duration for testing
   }
 }

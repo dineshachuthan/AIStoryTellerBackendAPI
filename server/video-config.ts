@@ -1,41 +1,63 @@
 import { VideoProviderConfiguration } from './video-providers/provider-manager';
 
 export const defaultVideoConfig: VideoProviderConfiguration = {
-  activeProvider: 'runwayml', // Default to RunwayML for cinematic quality
+  activeProvider: 'kling', // Default to Kling for testing
   providers: {
-    'runwayml': {
-      enabled: true,
+    'kling': {
+      enabled: !!(process.env.KLING_ACCESS_KEY && process.env.KLING_SECRET_KEY),
       config: {
-        apiKey: process.env.RUNWAYML_API_KEY || process.env.RUNWAY_API_KEY || '',
-        baseUrl: 'https://api.runway.team/v1',
-
-        timeout: 60000,
+        apiKey: process.env.KLING_ACCESS_KEY && process.env.KLING_SECRET_KEY ? 
+          `${process.env.KLING_ACCESS_KEY}:${process.env.KLING_SECRET_KEY}` : '',
+        baseUrl: 'https://api.piapi.ai/api/kling',
+        maxDuration: 20, // 20 seconds maximum as requested
+        defaultDuration: 10, // Default 10 seconds
+        resolution: 'low', // Use low resolution for testing
+        timeout: 120000, // Kling may take longer
         retryCount: 2
       },
       priority: 1
     },
-    'pika-labs': {
-      enabled: true,
+    'runwayml': {
+      enabled: !!process.env.RUNWAYML_API_KEY,
       config: {
-        apiKey: process.env.PIKA_LABS_API_KEY || '',
-        baseUrl: 'https://api.pika.art',
-        timeout: 45000,
+        apiKey: process.env.RUNWAYML_API_KEY || process.env.RUNWAY_API_KEY || '',
+        baseUrl: 'https://api.runway.team/v1',
+        maxDuration: 20,
+        defaultDuration: 10,
+        resolution: 'standard',
+        timeout: 60000,
         retryCount: 2
       },
       priority: 2
     },
+    'pika-labs': {
+      enabled: !!process.env.PIKA_LABS_API_KEY,
+      config: {
+        apiKey: process.env.PIKA_LABS_API_KEY || '',
+        baseUrl: 'https://api.pika.art',
+        maxDuration: 15,
+        defaultDuration: 8,
+        resolution: 'standard',
+        timeout: 45000,
+        retryCount: 2
+      },
+      priority: 3
+    },
     'luma-ai': {
-      enabled: true,
+      enabled: !!process.env.LUMA_AI_API_KEY,
       config: {
         apiKey: process.env.LUMA_AI_API_KEY || '',
         baseUrl: 'https://api.lumalabs.ai',
+        maxDuration: 10,
+        defaultDuration: 5,
+        resolution: 'high',
         timeout: 90000,
         retryCount: 1
       },
-      priority: 3
+      priority: 4
     }
   },
-  fallbackOrder: ['runwayml', 'pika-labs', 'luma-ai'],
+  fallbackOrder: ['kling', 'runwayml', 'pika-labs', 'luma-ai'],
   compatibility: {
     enforceMP4: true,
     enforceH264: true,
@@ -44,7 +66,7 @@ export const defaultVideoConfig: VideoProviderConfiguration = {
   duration: {
     default: 10, // Default video duration in seconds
     minimum: 3,  // Minimum allowed duration
-    maximum: 20, // Maximum allowed duration per story - keep low for cost protection
+    maximum: 20, // Maximum allowed duration - 20 seconds as requested
     allowUserOverride: true // Allow users to specify custom duration within limits
   },
   roleplay: {
