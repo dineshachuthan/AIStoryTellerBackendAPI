@@ -304,6 +304,7 @@ export class GenericVideoService {
   private async getRoleplayAnalysis(storyId: number): Promise<any> {
     // This would use your existing storage system
     const { storage } = await import('./storage');
-    return await storage.getRoleplayAnalysis(storyId);
+    const analysis = await storage.getStoryAnalysis(storyId, 'roleplay');
+    return analysis?.analysisData || null;
   }
 }

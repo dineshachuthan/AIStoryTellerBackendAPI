@@ -3265,8 +3265,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Clear video cache
         try {
-          const { videoCache } = await import("./cache-with-fallback");
-          const cacheKey = `story-${storyId}-user-${userId}`;
+          const { CacheWithFallback } = await import("./cache-with-fallback");
+          const videoCache = new CacheWithFallback('video');
           await videoCache.clearAll(); // Clear all video cache for safety
           console.log(`Cleared video cache for story ${storyId}`);
         } catch (cacheError) {
@@ -3285,17 +3285,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await videoService.initialize();
       
       // Get the roleplay analysis for video generation
-      const roleplayAnalysis = await storage.getRoleplayAnalysis(parseInt(storyId));
-      if (!roleplayAnalysis) {
+      const roleplayAnalysis = await storage.getStoryAnalysis(parseInt(storyId), 'roleplay');
+      if (!roleplayAnalysis?.analysisData) {
         return res.status(400).json({ 
           message: "Roleplay analysis required for video generation" 
         });
       }
 
+      const analysisData = roleplayAnalysis.analysisData;
+
       const result = await videoService.generateVideo({
         storyId: parseInt(storyId),
         userId,
-        roleplayAnalysis,
+        roleplayAnalysis: analysisData,
         storyContent: story.content,
         duration: req.body.duration || 20,
         quality: req.body.quality || 'std',
