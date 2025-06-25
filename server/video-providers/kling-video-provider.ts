@@ -42,7 +42,7 @@ export class KlingVideoProvider implements IVideoProvider {
     }
 
     this.config = {
-      baseUrl: 'https://api.klingai.com',
+      baseUrl: 'https://api-singapore.klingai.com',
       timeout: 120000,
       retryCount: 2,
       maxDuration: 20,
@@ -194,43 +194,21 @@ export class KlingVideoProvider implements IVideoProvider {
   }
 
   private async createVideoTask(request: any): Promise<any> {
-    const timestamp = Math.floor(Date.now() / 1000); // Unix timestamp in seconds
-    const nonce = Math.random().toString(36).substring(2, 15);
+    const currentTime = Math.floor(Date.now() / 1000); // Unix timestamp in seconds
     
-    console.log('Kling API request:', {
-      timestamp,
-      nonce,
-      request: JSON.stringify(request, null, 2)
-    });
+    // Create JWT Token for authentication
+    const jwtToken = await this.generateJWTToken(currentTime);
     
-    // Kling AI signature format - check official docs
-    const method = 'POST';
     const uri = '/v1/videos/text2video';
     const requestBody = JSON.stringify(request);
     
-    // Create string to sign according to Kling spec
-    const stringToSign = `${method}\n${uri}\n${timestamp}\n${nonce}\n${requestBody}`;
-    
-    console.log('String to sign:', stringToSign);
-    
-    const crypto = await import('crypto');
-    const signature = crypto
-      .createHmac('sha256', this.config!.secretKey!)
-      .update(stringToSign, 'utf-8')
-      .digest('hex');
-    
-    console.log('Generated signature:', signature);
-    
-    const authHeader = `${this.config!.apiKey}:${signature}`;
-    
     console.log('Making request to:', `${this.config!.baseUrl}${uri}`);
+    console.log('Request body:', requestBody);
     
     const response = await fetch(`${this.config!.baseUrl}${uri}`, {
       method: 'POST',
       headers: {
-        'Authorization': authHeader,
-        'X-Timestamp': timestamp.toString(),
-        'X-Nonce': nonce,
+        'Authorization': `Bearer ${jwtToken}`,
         'Content-Type': 'application/json'
       },
       body: requestBody
@@ -244,6 +222,39 @@ export class KlingVideoProvider implements IVideoProvider {
     }
 
     return JSON.parse(responseText);
+  }
+
+  private async generateJWTToken(currentTime: number): Promise<string> {
+    // JWT Header
+    const header = {
+      alg: 'HS256',
+      typ: 'JWT'
+    };
+
+    // JWT Payload
+    const payload = {
+      iss: this.config!.apiKey, // AccessKey as issuer
+      exp: currentTime + 1800, // Token expires in 30 minutes
+      nbf: currentTime // Not before current time
+    };
+
+    // Base64 encode header and payload
+    const encodedHeader = Buffer.from(JSON.stringify(header)).toString('base64url');
+    const encodedPayload = Buffer.from(JSON.stringify(payload)).toString('base64url');
+    
+    // Create signature using SecretKey
+    const crypto = await import('crypto');
+    const signatureInput = `${encodedHeader}.${encodedPayload}`;
+    const signature = crypto
+      .createHmac('sha256', this.config!.secretKey!)
+      .update(signatureInput)
+      .digest('base64url');
+
+    // Combine to create JWT
+    const jwtToken = `${encodedHeader}.${encodedPayload}.${signature}`;
+    
+    console.log('Generated JWT token for Kling API');
+    return jwtToken;
   }
 
   private sanitizePrompt(prompt: string): string {
