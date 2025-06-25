@@ -50,6 +50,12 @@ export class KlingVideoProvider implements IVideoProvider {
       ...config
     };
 
+    console.log('Kling config initialized:', {
+      baseUrl: this.config.baseUrl,
+      hasApiKey: !!this.config.apiKey,
+      hasSecretKey: !!this.config.secretKey
+    });
+
     this.initialized = true;
     console.log('Kling provider initialized successfully');
   }
@@ -168,28 +174,50 @@ export class KlingVideoProvider implements IVideoProvider {
   }
 
   private async createVideoTask(request: any): Promise<any> {
-    const timestamp = Date.now();
-    const nonce = Math.random().toString(36).substring(2);
+    const timestamp = Math.floor(Date.now() / 1000); // Unix timestamp in seconds
+    const nonce = Math.random().toString(36).substring(2, 15);
+    
+    console.log('Kling API request:', {
+      timestamp,
+      nonce,
+      request: JSON.stringify(request, null, 2)
+    });
+    
+    // Kling AI signature format - check official docs
+    const method = 'POST';
+    const uri = '/v1/videos/text2video';
     const requestBody = JSON.stringify(request);
     
-    // Create signature
-    const stringToSign = `POST\n/v1/videos/text2video\n${timestamp}\n${nonce}\n${requestBody}`;
-    const crypto = await import('crypto');
-    const signature = crypto.createHmac('sha256', this.config!.secretKey!).update(stringToSign).digest('hex');
+    // Create string to sign according to Kling spec
+    const stringToSign = `${method}\n${uri}\n${timestamp}\n${nonce}\n${requestBody}`;
     
-    const response = await fetch(`${this.config!.baseUrl}/v1/videos/text2video`, {
+    console.log('String to sign:', stringToSign);
+    
+    const crypto = await import('crypto');
+    const signature = crypto
+      .createHmac('sha256', this.config!.secretKey!)
+      .update(stringToSign, 'utf-8')
+      .digest('hex');
+    
+    console.log('Generated signature:', signature);
+    
+    const authHeader = `${this.config!.apiKey}:${signature}`;
+    
+    console.log('Making request to:', `${this.config!.baseUrl}${uri}`);
+    
+    const response = await fetch(`${this.config!.baseUrl}${uri}`, {
       method: 'POST',
       headers: {
-        'Authorization': `${this.config!.apiKey}:${signature}`,
+        'Authorization': authHeader,
         'X-Timestamp': timestamp.toString(),
         'X-Nonce': nonce,
-        'Content-Type': 'application/json',
-        'User-Agent': 'VideoProvider/1.0'
+        'Content-Type': 'application/json'
       },
       body: requestBody
     });
 
     const responseText = await response.text();
+    console.log('Kling API response:', response.status, responseText);
     
     if (!response.ok) {
       throw new Error(`Kling API error: ${response.status} - ${responseText}`);
