@@ -1,4 +1,4 @@
-import { users, localUsers, userProviders, userVoiceSamples, stories, storyCharacters, storyEmotions, characters, conversations, messages, storyCollaborations, storyGroups, storyGroupMembers, characterVoiceAssignments, storyPlaybacks, storyAnalyses, type User, type InsertUser, type UpsertUser, type UserProvider, type InsertUserProvider, type LocalUser, type InsertLocalUser, type UserVoiceSample, type InsertUserVoiceSample, type Story, type InsertStory, type StoryCharacter, type InsertStoryCharacter, type StoryEmotion, type InsertStoryEmotion, type Character, type InsertCharacter, type Conversation, type InsertConversation, type Message, type InsertMessage, type StoryCollaboration, type InsertStoryCollaboration, type StoryGroup, type InsertStoryGroup, type StoryGroupMember, type InsertStoryGroupMember, type CharacterVoiceAssignment, type InsertCharacterVoiceAssignment, type StoryPlayback, type InsertStoryPlayback, type StoryAnalysis, type InsertStoryAnalysis } from "@shared/schema";
+import { users, localUsers, userProviders, userVoiceSamples, stories, storyCharacters, storyEmotions, characters, conversations, messages, storyCollaborations, storyGroups, storyGroupMembers, characterVoiceAssignments, storyPlaybacks, storyAnalyses, videoGenerations, type User, type InsertUser, type UpsertUser, type UserProvider, type InsertUserProvider, type LocalUser, type InsertLocalUser, type UserVoiceSample, type InsertUserVoiceSample, type Story, type InsertStory, type StoryCharacter, type InsertStoryCharacter, type StoryEmotion, type InsertStoryEmotion, type Character, type InsertCharacter, type Conversation, type InsertConversation, type Message, type InsertMessage, type StoryCollaboration, type InsertStoryCollaboration, type StoryGroup, type InsertStoryGroup, type StoryGroupMember, type InsertStoryGroupMember, type CharacterVoiceAssignment, type InsertCharacterVoiceAssignment, type StoryPlayback, type InsertStoryPlayback, type StoryAnalysis, type InsertStoryAnalysis } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, like } from "drizzle-orm";
 
@@ -127,6 +127,11 @@ export interface IStorage {
     isPrivate: boolean;
   }): Promise<void>;
   getStoryCustomization(storyId: number, userId: string): Promise<any>;
+
+  // Video Generation
+  saveVideoGeneration(storyId: number, userId: string, videoData: any): Promise<void>;
+  getVideoByStoryId(storyId: number): Promise<any>;
+  deleteVideoGeneration(storyId: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -560,6 +565,79 @@ export class DatabaseStorage implements IStorage {
       return story.metadata.customizations[userId];
     }
     return null;
+  }
+
+  // Video Generation Methods
+  async saveVideoGeneration(storyId: number, userId: string, videoData: any): Promise<void> {
+    const { videoGenerations } = await import("@shared/schema");
+    
+    try {
+      await db.insert(videoGenerations).values({
+        storyId,
+        requestedBy: userId,
+        videoUrl: videoData.videoUrl,
+        thumbnailUrl: videoData.thumbnailUrl,
+        duration: videoData.duration,
+        status: videoData.status,
+        provider: videoData.provider,
+        taskId: videoData.taskId,
+        generationParams: {
+          quality: 'std',
+          duration: videoData.duration,
+          provider: videoData.provider
+        },
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+    } catch (error: any) {
+      // If insert fails, try update
+      await db.update(videoGenerations)
+        .set({
+          videoUrl: videoData.videoUrl,
+          thumbnailUrl: videoData.thumbnailUrl,
+          duration: videoData.duration,
+          status: videoData.status,
+          provider: videoData.provider,
+          taskId: videoData.taskId,
+          updatedAt: new Date()
+        })
+        .where(and(
+          eq(videoGenerations.storyId, storyId),
+          eq(videoGenerations.requestedBy, userId)
+        ));
+    }
+  }
+
+  async getVideoByStoryId(storyId: number): Promise<any> {
+    const { videoGenerations } = await import("@shared/schema");
+    
+    const [video] = await db
+      .select()
+      .from(videoGenerations)
+      .where(eq(videoGenerations.storyId, storyId))
+      .orderBy(desc(videoGenerations.createdAt))
+      .limit(1);
+
+    if (!video) return null;
+
+    return {
+      videoId: video.id?.toString() || 'unknown',
+      status: video.status === 'completed' ? 'draft' : video.status,
+      videoUrl: video.videoUrl,
+      thumbnailUrl: video.thumbnailUrl,
+      duration: video.duration || 20,
+      createdAt: video.createdAt || new Date(),
+      prompt: video.generationParams?.prompt || '',
+      provider: video.provider || 'kling',
+      taskId: video.taskId
+    };
+  }
+
+  async deleteVideoGeneration(storyId: number): Promise<void> {
+    const { videoGenerations } = await import("@shared/schema");
+    
+    await db.delete(videoGenerations)
+      .where(eq(videoGenerations.storyId, storyId));
   }
 }
 
