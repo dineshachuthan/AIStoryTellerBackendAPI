@@ -316,7 +316,7 @@ export function RolePlayAnalysisPanel({
           setIsVideoProcessing(false);
         } else if (pollCount >= maxPolls) {
           clearInterval(pollInterval);
-          setVideoError("Video generation is taking longer than expected (2+ minutes). The video may still be processing - please check your Kling dashboard or refresh the page later.");
+          setVideoError("Video generation timed out after 2 minutes. This may happen if Kling's servers are busy. Please try generating again in a few minutes, or check your Kling dashboard for the video.");
           setVideoStatusMessage("");
           setIsVideoProcessing(false);
         } else {

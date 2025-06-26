@@ -181,6 +181,16 @@ export class KlingVideoProvider implements IVideoProvider {
       const taskData = result.data;
       const taskStatus = taskData?.task_status;
       
+      // Check if task has been processing for too long (over 3 minutes)
+      const createdAt = taskData?.created_at;
+      const updatedAt = taskData?.updated_at;
+      const currentTime = Math.floor(Date.now() / 1000);
+      
+      if (createdAt && currentTime - createdAt > 180) { // 3 minutes
+        console.log(`⚠️ Task ${taskId} has been processing for ${currentTime - createdAt}s (over 3 minutes)`);
+        console.log(`Last update: ${updatedAt ? new Date(updatedAt * 1000).toISOString() : 'N/A'}`);
+      }
+      
       // Try multiple possible video URL locations
       let videoUrl = undefined;
       if (taskData) {

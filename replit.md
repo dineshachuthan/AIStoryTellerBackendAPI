@@ -127,6 +127,13 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Priority**: Medium (requested but deferred for future implementation)
 
 ## Changelog
+- June 26, 2025: Identified and resolved Kling API duration parameter and timeout issues
+  - Fixed authentication in video status endpoint to use requireAuth middleware
+  - Discovered Kling API doesn't support custom duration parameters (20s, 10s both invalid)
+  - Removed duration parameter - Kling generates default 5-second videos
+  - Added comprehensive timeout handling for stuck video tasks (2-minute limit)
+  - Enhanced logging to detect tasks stuck in Kling's processing queue
+  - Video generation working with proper status polling and timeout error messages
 - June 26, 2025: Fixed Kling API endpoint and extended timeout for video generation
   - Changed API endpoint from api-singapore.klingai.com to api.klingai.com for production calls
   - Confirmed API calls now appear in user's Kling dashboard with credits being consumed

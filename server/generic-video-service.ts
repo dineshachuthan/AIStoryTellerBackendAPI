@@ -268,6 +268,12 @@ export class GenericVideoService {
         
         if (attempts >= maxAttempts) {
           clearInterval(pollInterval);
+          
+          const { VideoBusinessLogic } = await import('./video-business-logic');
+          await VideoBusinessLogic.updateVideoStatus(storyId, 'failed', {
+            errorMessage: `Video generation timeout after ${attempts} attempts (${maxAttempts * 10}s). Task may still be processing on Kling servers.`
+          });
+          
           console.log(`Polling timeout for task ${taskId} after ${attempts} attempts`);
           return;
         }
