@@ -3564,16 +3564,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Check video generation status by task ID
-  app.get('/api/videos/status/:taskId', requireAuth, async (req, res) => {
+  app.get('/api/videos/status/:taskId', async (req, res) => {
     try {
       const taskId = req.params.taskId;
-      const userId = (req.session as any)?.user?.id;
+      
+      // Debug session info
+      console.log('Session debug:', {
+        sessionExists: !!req.session,
+        sessionUser: (req.session as any)?.user?.id,
+        sessionPassport: (req.session as any)?.passport,
+        cookies: req.headers.cookie
+      });
 
+      // Check if user is authenticated via session
+      const userId = (req.session as any)?.user?.id || (req.session as any)?.passport?.user;
+      
       if (!userId) {
+        console.log('Authentication failed for video status check');
         return res.status(401).json({ message: 'Not authenticated' });
       }
 
-      console.log(`Frontend checking video status for task: ${taskId}`);
+      console.log(`Frontend checking video status for task: ${taskId}, user: ${userId}`);
 
       // Use the generic video service to check status
       const videoService = await import('./generic-video-service');
