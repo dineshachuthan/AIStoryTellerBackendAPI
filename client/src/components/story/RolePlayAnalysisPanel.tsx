@@ -132,6 +132,8 @@ export function RolePlayAnalysisPanel({
   const [videoResult, setVideoResult] = useState<any>(null);
   const [showCostWarning, setShowCostWarning] = useState(false);
   const [videoStatusMessage, setVideoStatusMessage] = useState<string>("");
+  const [videoError, setVideoError] = useState<string>("");
+  const [isVideoProcessing, setIsVideoProcessing] = useState(false);
 
   // Edit mode state
   const [isEditMode, setIsEditMode] = useState(false);
@@ -223,13 +225,21 @@ export function RolePlayAnalysisPanel({
   // Always show generate/regenerate video button
   const shouldShowGenerateButton = true;
 
-  // Video generation function with cost control
+  // Video generation function with proper status handling
   const generateVideo = async (forceRegenerate: boolean = false) => {
     if (!analysis) return;
 
     setGeneratingVideo(true);
+    setVideoError("");
+    setVideoStatusMessage("");
+    setIsVideoProcessing(false);
+    
     try {
-      // Ensure clean serializable data
+      // Clear any existing video result if regenerating
+      if (forceRegenerate) {
+        setVideoResult(null);
+      }
+
       const requestData = {
         storyId: Number(storyId),
         quality: 'standard' as const,
@@ -244,26 +254,73 @@ export function RolePlayAnalysisPanel({
         body: JSON.stringify(requestData)
       });
 
-      setVideoResult(result);
-      
-      if (result.cacheHit) {
-        setVideoStatusMessage("Video retrieved from library - using existing video to save costs");
-      } else if (result.status === 'pending_approval') {
-        setVideoStatusMessage("Video generated - pending review. Please review and approve the generated video");
+      // Handle different response types
+      if (result.videoUrl) {
+        // Video already completed
+        setVideoResult(result);
+        setVideoStatusMessage("Video generated successfully");
+      } else if (result.taskId) {
+        // Video is processing
+        setIsVideoProcessing(true);
+        setVideoStatusMessage("Video is being generated. This may take up to 60 seconds...");
+        
+        // Start polling for completion
+        startVideoPolling(result.taskId);
       } else {
-        if (forceRegenerate) {
-          setVideoStatusMessage("Video regenerated successfully - new version created");
-        } else {
-          setVideoStatusMessage("Video generated successfully with AI video generation");
-        }
+        throw new Error("Unexpected response from video generation service");
       }
+      
     } catch (error: any) {
       console.error("Video generation failed:", error);
-      setVideoStatusMessage(`Video generation failed: ${error.message || "Failed to generate video"}`);
+      setVideoError(`Video generation failed: ${error.message || "Failed to generate video"}`);
+      setVideoStatusMessage("");
     } finally {
       setGeneratingVideo(false);
       setShowCostWarning(false);
     }
+  };
+
+  // Poll for video completion with 60-second timeout
+  const startVideoPolling = (taskId: string) => {
+    let pollCount = 0;
+    const maxPolls = 12; // 60 seconds (12 * 5 seconds)
+    
+    const pollInterval = setInterval(async () => {
+      pollCount++;
+      
+      try {
+        const result = await apiRequest(`/api/videos/status/${taskId}`);
+        
+        if (result.status === 'completed' && result.videoUrl) {
+          clearInterval(pollInterval);
+          setVideoResult(result);
+          setVideoStatusMessage("Video generated successfully");
+          setIsVideoProcessing(false);
+        } else if (result.status === 'failed') {
+          clearInterval(pollInterval);
+          setVideoError("Video generation failed. Please try again.");
+          setVideoStatusMessage("");
+          setIsVideoProcessing(false);
+        } else if (pollCount >= maxPolls) {
+          clearInterval(pollInterval);
+          setVideoError("Video generation timed out after 60 seconds. Please try again.");
+          setVideoStatusMessage("");
+          setIsVideoProcessing(false);
+        } else {
+          // Still processing, update status message
+          setVideoStatusMessage(`Video is being generated (${pollCount * 5}s / 60s)...`);
+        }
+      } catch (error: any) {
+        console.error("Error checking video status:", error);
+        
+        if (pollCount >= 3) {
+          clearInterval(pollInterval);
+          setVideoError("Failed to check video status. Please try again.");
+          setVideoStatusMessage("");  
+          setIsVideoProcessing(false);
+        }
+      }
+    }, 5000); // Poll every 5 seconds
   };
 
   // Video approval functions
@@ -666,13 +723,13 @@ export function RolePlayAnalysisPanel({
                     <Button
                       size="sm"
                       onClick={handleGenerateVideoClick}
-                      disabled={generatingVideo}
+                      disabled={generatingVideo || isVideoProcessing}
                       className="bg-purple-600 hover:bg-purple-700"
                     >
-                      {generatingVideo ? (
+                      {generatingVideo || isVideoProcessing ? (
                         <>
                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Generating...
+                          {isVideoProcessing ? 'Processing...' : 'Generating...'}
                         </>
                       ) : (
                         <>
@@ -703,10 +760,25 @@ export function RolePlayAnalysisPanel({
           )}
         </CardHeader>
         <CardContent>
-          {/* Video Status Message */}
+          {/* Video Status Messages */}
           {videoStatusMessage && (
             <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
-              <p className="text-sm text-blue-800 dark:text-blue-200">{videoStatusMessage}</p>
+              <div className="flex items-center">
+                {isVideoProcessing && (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin text-blue-600 dark:text-blue-400" />
+                )}
+                <p className="text-sm text-blue-800 dark:text-blue-200">{videoStatusMessage}</p>
+              </div>
+            </div>
+          )}
+          
+          {/* Video Error Messages */}
+          {videoError && (
+            <div className="mb-4 p-3 bg-red-50 dark:bg-red-950 rounded-lg border border-red-200 dark:border-red-800">
+              <div className="flex items-center">
+                <AlertCircle className="w-4 h-4 mr-2 text-red-600 dark:text-red-400" />
+                <p className="text-sm text-red-800 dark:text-red-200">{videoError}</p>
+              </div>
             </div>
           )}
           {/* Video Generation Result */}
@@ -1071,13 +1143,13 @@ export function RolePlayAnalysisPanel({
             </Button>
             <Button 
               onClick={() => generateVideo(true)}
-              disabled={generatingVideo}
+              disabled={generatingVideo || isVideoProcessing}
               className="bg-orange-600 hover:bg-orange-700"
             >
-              {generatingVideo ? (
+              {generatingVideo || isVideoProcessing ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Generating...
+                  {isVideoProcessing ? 'Processing...' : 'Generating...'}
                 </>
               ) : (
                 'Proceed with Regeneration'

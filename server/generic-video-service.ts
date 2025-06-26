@@ -231,7 +231,7 @@ export class GenericVideoService {
     
     let attempts = 0;
     let consecutiveErrors = 0;
-    const maxAttempts = 18; // 3 minutes (18 * 10 seconds) 
+    const maxAttempts = 6; // 60 seconds (6 * 10 seconds) 
     const maxConsecutiveErrors = 3;
 
     const pollInterval = setInterval(async () => {
