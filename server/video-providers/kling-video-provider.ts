@@ -246,6 +246,7 @@ export class KlingVideoProvider implements IVideoProvider {
     
     console.log('=== API REQUEST DETAILS ===');
     console.log('Making request to:', `${this.config!.baseUrl}${uri}`);
+    console.log('Base URL configured as:', this.config!.baseUrl);
     console.log('Request body:', requestBody);
     console.log('Authorization header format:', `Bearer ${jwtToken.substring(0, 20)}...`);
     
