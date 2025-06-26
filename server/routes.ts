@@ -3563,26 +3563,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Check video generation status by task ID
-  app.get('/api/videos/status/:taskId', async (req, res) => {
+  // Check video generation status by task ID - use requireAuth middleware
+  app.get('/api/videos/status/:taskId', requireAuth, async (req, res) => {
     try {
       const taskId = req.params.taskId;
-      
-      // Debug session info
-      console.log('Session debug:', {
-        sessionExists: !!req.session,
-        sessionUser: (req.session as any)?.user?.id,
-        sessionPassport: (req.session as any)?.passport,
-        cookies: req.headers.cookie
-      });
-
-      // Check if user is authenticated via session
-      const userId = (req.session as any)?.user?.id || (req.session as any)?.passport?.user;
-      
-      if (!userId) {
-        console.log('Authentication failed for video status check');
-        return res.status(401).json({ message: 'Not authenticated' });
-      }
+      const userId = (req.user as any)?.id;
 
       console.log(`Frontend checking video status for task: ${taskId}, user: ${userId}`);
 
