@@ -184,14 +184,26 @@ export class VideoProviderRegistry {
 
     // Kling configuration
     if (process.env.KLING_ACCESS_KEY && process.env.KLING_SECRET_KEY) {
+      console.log('=== CONFIGURING KLING PROVIDER FROM ENVIRONMENT ===');
+      console.log('KLING_ACCESS_KEY present:', !!process.env.KLING_ACCESS_KEY);
+      console.log('KLING_SECRET_KEY present:', !!process.env.KLING_SECRET_KEY);
+      console.log('KLING_ACCESS_KEY preview:', process.env.KLING_ACCESS_KEY?.substring(0, 8) + '...');
+      
       await this.configureProvider('kling', {
         apiKey: process.env.KLING_ACCESS_KEY,
         secretKey: process.env.KLING_SECRET_KEY,
-        baseUrl: 'https://api.klingai.com',
+        baseUrl: 'https://api-singapore.klingai.com',
         timeout: 120000,
         retryCount: 2,
         maxDuration: 20,
         defaultQuality: 'std'
+      });
+      
+      console.log('Kling provider configuration completed');
+    } else {
+      console.log('Kling environment variables missing:', {
+        hasAccessKey: !!process.env.KLING_ACCESS_KEY,
+        hasSecretKey: !!process.env.KLING_SECRET_KEY
       });
     }
 
