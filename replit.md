@@ -127,6 +127,12 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Priority**: Medium (requested but deferred for future implementation)
 
 ## Changelog
+- June 26, 2025: Fixed Kling API endpoint and extended timeout for video generation
+  - Changed API endpoint from api-singapore.klingai.com to api.klingai.com for production calls
+  - Confirmed API calls now appear in user's Kling dashboard with credits being consumed
+  - Extended timeout from 60 seconds to 3 minutes (Kling videos taking longer than expected)
+  - Improved polling system with better error messages and status tracking
+  - Video generation now working correctly with real API calls consuming credits
 - June 26, 2025: Implemented proper user experience for video generation
   - Fixed frontend to show loading states instead of empty/dummy videos
   - Added real-time processing status with countdown (60-second timeout)
