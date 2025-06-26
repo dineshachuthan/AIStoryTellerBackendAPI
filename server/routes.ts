@@ -3567,7 +3567,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/videos/status/:taskId', requireAuth, async (req, res) => {
     try {
       const taskId = req.params.taskId;
-      const userId = req.session?.user?.id;
+      const userId = (req.session as any)?.user?.id;
 
       if (!userId) {
         return res.status(401).json({ message: 'Not authenticated' });

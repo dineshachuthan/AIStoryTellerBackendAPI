@@ -292,8 +292,16 @@ export function RolePlayAnalysisPanel({
       pollCount++;
       
       try {
-        const result = await apiRequest(`/api/videos/status/${taskId}`);
+        const response = await fetch(`/api/videos/status/${taskId}`, {
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' }
+        });
         
+        if (!response.ok) {
+          throw new Error(`Status ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
         console.log(`Poll ${pollCount}: status=${result.status}, videoUrl=${result.videoUrl}`);
         
         if (result.status === 'completed' && result.videoUrl) {
