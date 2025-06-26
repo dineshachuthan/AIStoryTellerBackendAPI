@@ -227,48 +227,62 @@ export class GenericVideoService {
 
 
   private startStatusPolling(taskId: string, storyId: number, userId: string, providerName: string): void {
-    const maxAttempts = 60; // 5 minutes
+    console.log(`Starting status polling for task ${taskId}`);
+    
     let attempts = 0;
+    let consecutiveErrors = 0;
+    const maxAttempts = 18; // 3 minutes (18 * 10 seconds) 
+    const maxConsecutiveErrors = 3;
 
     const pollInterval = setInterval(async () => {
       attempts++;
       
       try {
         const status = await this.checkVideoStatus(taskId, providerName);
+        consecutiveErrors = 0; // Reset on successful call
         
-        if (status.status === 'completed') {
+        console.log(`Poll ${attempts}/${maxAttempts} - Status: ${status.status}`);
+        
+        if (status.status === 'completed' && status.videoUrl) {
           clearInterval(pollInterval);
           
-          await VideoBusinessLogic.updateVideoStatus(storyId, 'draft', {
+          const { VideoBusinessLogic } = await import('./video-business-logic');
+          await VideoBusinessLogic.updateVideoStatus(storyId, 'complete', {
             videoUrl: status.videoUrl,
             thumbnailUrl: status.thumbnailUrl
           });
           
           console.log(`Video generation completed: ${taskId}`);
-        } else if (status.status === 'failed') {
+          return;
+        } 
+        
+        if (status.status === 'failed') {
           clearInterval(pollInterval);
           
-          await VideoBusinessLogic.updateVideoStatus(storyId, 'failed', {
-            errorMessage: status.errorMessage || 'Generation failed'
-          });
+          const { VideoBusinessLogic } = await import('./video-business-logic');
+          await VideoBusinessLogic.updateVideoStatus(storyId, 'failed');
           
-          console.error(`Video generation failed: ${taskId}`);
+          console.log(`Video generation failed: ${taskId}`);
+          return;
         }
         
         if (attempts >= maxAttempts) {
           clearInterval(pollInterval);
-          
-          await VideoBusinessLogic.updateVideoStatus(storyId, 'failed', {
-            errorMessage: 'Generation timeout'
-          });
-          
-          console.error(`Video generation timeout: ${taskId}`);
+          console.log(`Polling timeout for task ${taskId} after ${attempts} attempts`);
+          return;
         }
         
-      } catch (error) {
-        console.error('Error polling video status:', error);
+      } catch (error: any) {
+        consecutiveErrors++;
+        console.error(`Poll error ${consecutiveErrors}/${maxConsecutiveErrors}:`, error.message);
+        
+        if (consecutiveErrors >= maxConsecutiveErrors) {
+          clearInterval(pollInterval);
+          console.log(`Stopping polling for task ${taskId} - too many consecutive errors`);
+          return;
+        }
       }
-    }, 5000); // Poll every 5 seconds
+    }, 10000); // Poll every 10 seconds
   }
 
   private generateVideoId(): string {

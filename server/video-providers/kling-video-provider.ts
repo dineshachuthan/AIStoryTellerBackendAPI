@@ -159,11 +159,13 @@ export class KlingVideoProvider implements IVideoProvider {
         notBeforeSeconds: 5
       });
 
-      const response = await fetch(`${this.config.baseUrl}/v1/videos/${taskId}`, {
+      const response = await fetch(`${this.config.baseUrl}/v1/videos/text2video/${taskId}`, {
         headers: {
           'Authorization': `Bearer ${jwtToken}`
         }
       });
+
+      console.log(`Status check response for task ${taskId}:`, response.status);
 
       if (!response.ok) {
         throw new Error(`Status check failed: ${response.status}`);
