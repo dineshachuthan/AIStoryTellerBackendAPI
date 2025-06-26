@@ -262,13 +262,49 @@ export class KlingVideoProvider implements IVideoProvider {
     return JSON.parse(responseText);
   }
 
-  private sanitizePrompt(prompt: string): string {
-    return prompt
-      .replace(/\b(violence|violent|kill|murder|death|blood|weapon|fight|attack)\b/gi, 'conflict')
-      .replace(/\b(steal|stolen|theft|crime|criminal|rob)\b/gi, 'adventure')
-      .replace(/\b(explicit|inappropriate|adult|mature)\b/gi, 'dramatic')
-      .replace(/\b(terrified|terror|fear|scary|frightening)\b/gi, 'surprised')
-      .replace(/\b(AI|artificial intelligence|robot|android|cyborg)\b/gi, 'technology');
+  private async generateJWTToken(currentTime: number): Promise<string> {
+    // JWT Header - exactly like working standalone script
+    const header = {
+      alg: 'HS256',
+      typ: 'JWT'
+    };
+
+    // JWT Payload - exactly like working standalone script
+    const payload = {
+      iss: this.config!.apiKey!, // AccessKey as issuer
+      exp: currentTime + 1800, // Token expires in 30 minutes
+      nbf: currentTime - 5 // Not before current time - 5 seconds
+    };
+
+    console.log('JWT Generation Debug:', {
+      currentTime,
+      accessKey: this.config!.apiKey!.substring(0, 8) + '...',
+      secretKeyLength: this.config!.secretKey!.length,
+      expiry: payload.exp,
+      notBefore: payload.nbf
+    });
+
+    // Base64 encode header and payload - exactly like working script
+    const encodedHeader = Buffer.from(JSON.stringify(header)).toString('base64url');
+    const encodedPayload = Buffer.from(JSON.stringify(payload)).toString('base64url');
+    
+    // Create signature using SecretKey - exactly like working script
+    const crypto = await import('crypto');
+    const signatureInput = `${encodedHeader}.${encodedPayload}`;
+    const signature = crypto
+      .createHmac('sha256', this.config!.secretKey!)
+      .update(signatureInput)
+      .digest('base64url');
+
+    // Combine to create JWT - exactly like working script
+    const jwtToken = `${encodedHeader}.${encodedPayload}.${signature}`;
+    
+    console.log('Generated JWT token for Kling API:', {
+      tokenLength: jwtToken.length,
+      preview: jwtToken.substring(0, 50) + '...'
+    });
+    
+    return jwtToken;
   }
 
   private sanitizePrompt(prompt: string): string {
