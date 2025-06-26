@@ -151,9 +151,17 @@ export class KlingVideoProvider implements IVideoProvider {
     }
 
     try {
+      // Create JWT Token for status check
+      const jwtToken = await JWTAuthUtil.generateJWTToken('kling', {
+        apiKey: this.config.apiKey!,
+        secretKey: this.config.secretKey!,
+        expirationMinutes: 30,
+        notBeforeSeconds: 5
+      });
+
       const response = await fetch(`${this.config.baseUrl}/v1/videos/${taskId}`, {
         headers: {
-          'Authorization': this.config.apiKey!
+          'Authorization': `Bearer ${jwtToken}`
         }
       });
 

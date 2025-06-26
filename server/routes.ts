@@ -3311,6 +3311,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Enhance result with provider-agnostic business logic
+      const { VideoBusinessLogic } = await import('./video-business-logic');
       result.charactersUsed = VideoBusinessLogic.extractCharactersUsed(analysisData);
       result.metadata = {
         ...result.metadata,
