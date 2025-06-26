@@ -8,7 +8,7 @@ export const defaultVideoConfig: VideoProviderConfiguration = {
       config: {
         apiKey: process.env.KLING_ACCESS_KEY || '',
         secretKey: process.env.KLING_SECRET_KEY || '',
-        baseUrl: 'https://api.klingai.com',
+        baseUrl: 'https://api-singapore.klingai.com',
         maxDuration: 20, // 20 seconds maximum as requested
         defaultDuration: 20, // Default 20 seconds as requested
         resolution: 'low', // Use low resolution for testing
