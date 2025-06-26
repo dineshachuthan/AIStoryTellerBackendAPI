@@ -173,13 +173,58 @@ export class KlingVideoProvider implements IVideoProvider {
 
       const result = await response.json();
       
-      return {
+      // Log complete response structure for debugging
+      console.log('=== COMPLETE KLING RESPONSE ===');
+      console.log('Task ID:', taskId);
+      console.log('Full Response:', JSON.stringify(result, null, 2));
+      
+      const taskData = result.data;
+      const taskStatus = taskData?.task_status;
+      
+      // Try multiple possible video URL locations
+      let videoUrl = undefined;
+      if (taskData) {
+        // Check various possible locations in the response
+        const possiblePaths = [
+          taskData.task_result?.videos?.[0]?.url,
+          taskData.task_result?.url,
+          taskData.result?.videos?.[0]?.url,
+          taskData.result?.url,
+          taskData.videos?.[0]?.url,
+          taskData.video_url,
+          taskData.url
+        ];
+        
+        for (const path of possiblePaths) {
+          if (path) {
+            videoUrl = path;
+            console.log('✓ Found video URL at path:', path);
+            break;
+          }
+        }
+        
+        if (!videoUrl && taskStatus === 'succeed') {
+          console.log('⚠️ Video marked as succeed but no URL found in any of these paths:');
+          console.log('- taskData.task_result?.videos?.[0]?.url');
+          console.log('- taskData.task_result?.url');
+          console.log('- taskData.result?.videos?.[0]?.url');
+          console.log('- taskData.result?.url');
+          console.log('- taskData.videos?.[0]?.url');
+          console.log('- taskData.video_url');
+          console.log('- taskData.url');
+        }
+      }
+      
+      const statusResponse = {
         taskId,
-        status: this.mapKlingStatus(result.data?.task_status),
-        progress: this.calculateProgress(result.data?.task_status),
-        videoUrl: result.data?.task_result?.videos?.[0]?.url,
-        thumbnailUrl: result.data?.task_result?.videos?.[0]?.cover_image_url
+        status: this.mapKlingStatus(taskStatus),
+        progress: this.calculateProgress(taskStatus),
+        videoUrl: videoUrl,
+        thumbnailUrl: taskData?.task_result?.videos?.[0]?.cover_image_url
       };
+      
+      console.log('Returning status response:', statusResponse);
+      return statusResponse;
     } catch (error: any) {
       throw this.handleKlingError(error);
     }

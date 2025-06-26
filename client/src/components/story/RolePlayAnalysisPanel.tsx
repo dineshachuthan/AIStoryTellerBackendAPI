@@ -283,10 +283,10 @@ export function RolePlayAnalysisPanel({
     }
   };
 
-  // Poll for video completion with 3-minute timeout
+  // Poll for video completion with 2-minute timeout
   const startVideoPolling = (taskId: string) => {
     let pollCount = 0;
-    const maxPolls = 36; // 180 seconds (36 * 5 seconds)
+    const maxPolls = 24; // 120 seconds (24 * 5 seconds)
     
     const pollInterval = setInterval(async () => {
       pollCount++;
@@ -316,13 +316,13 @@ export function RolePlayAnalysisPanel({
           setIsVideoProcessing(false);
         } else if (pollCount >= maxPolls) {
           clearInterval(pollInterval);
-          setVideoError("Video generation is taking longer than expected (3+ minutes). The video may still be processing - please check your Kling dashboard or refresh the page later.");
+          setVideoError("Video generation is taking longer than expected (2+ minutes). The video may still be processing - please check your Kling dashboard or refresh the page later.");
           setVideoStatusMessage("");
           setIsVideoProcessing(false);
         } else {
           // Still processing, update status message
           const timeElapsed = pollCount * 5;
-          setVideoStatusMessage(`Video is being generated (${timeElapsed}s / 180s)... Status: ${result.status || 'processing'}`);
+          setVideoStatusMessage(`Video is being generated (${timeElapsed}s / 120s)... Status: ${result.status || 'processing'}`);
         }
       } catch (error: any) {
         console.error("Error checking video status:", error);
