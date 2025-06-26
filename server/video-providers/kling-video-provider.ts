@@ -260,15 +260,16 @@ export class KlingVideoProvider implements IVideoProvider {
     // Map standard quality to std for Kling API
     const klingMode = (request.quality === 'pro') ? 'pro' : 'std';
     
-    // Remove duration parameter - Kling uses default duration (~5-10 seconds)
+    // Include duration parameter for 20-second videos
     const klingRequest = {
       model: 'kling-v1',
       prompt: this.sanitizePrompt(request.prompt),
       aspect_ratio: request.aspectRatio || '16:9',
-      mode: klingMode
+      mode: klingMode,
+      duration: 20 // Explicitly request 20 seconds
     };
     
-    console.log('Prepared Kling request:', klingRequest);
+    console.log('Prepared Kling request with 20-second duration:', klingRequest);
     return klingRequest;
   }
 
