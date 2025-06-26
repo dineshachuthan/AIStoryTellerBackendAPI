@@ -3564,7 +3564,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Check video generation status by task ID
-  app.get('/api/videos/status/:taskId', requireAuth, async (req: Request, res: Response) => {
+  app.get('/api/videos/status/:taskId', requireAuth, async (req, res) => {
     try {
       const taskId = req.params.taskId;
       const userId = req.session?.user?.id;

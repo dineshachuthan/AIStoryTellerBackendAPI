@@ -254,18 +254,21 @@ export function RolePlayAnalysisPanel({
         body: JSON.stringify(requestData)
       });
 
+      console.log('Video generation response:', result);
+      
       // Handle different response types
-      if (result.videoUrl) {
+      if (result.videoUrl && result.status === 'completed') {
         // Video already completed
         setVideoResult(result);
         setVideoStatusMessage("Video generated successfully");
-      } else if (result.taskId) {
+      } else if (result.videoId || result.taskId) {
         // Video is processing
         setIsVideoProcessing(true);
-        setVideoStatusMessage("Video is being generated. This may take up to 60 seconds...");
+        setVideoStatusMessage("Video generation started. This may take up to 60 seconds...");
         
         // Start polling for completion
-        startVideoPolling(result.taskId);
+        const taskId = result.videoId || result.taskId;
+        startVideoPolling(taskId);
       } else {
         throw new Error("Unexpected response from video generation service");
       }
@@ -291,6 +294,8 @@ export function RolePlayAnalysisPanel({
       try {
         const result = await apiRequest(`/api/videos/status/${taskId}`);
         
+        console.log(`Poll ${pollCount}: status=${result.status}, videoUrl=${result.videoUrl}`);
+        
         if (result.status === 'completed' && result.videoUrl) {
           clearInterval(pollInterval);
           setVideoResult(result);
@@ -308,7 +313,8 @@ export function RolePlayAnalysisPanel({
           setIsVideoProcessing(false);
         } else {
           // Still processing, update status message
-          setVideoStatusMessage(`Video is being generated (${pollCount * 5}s / 60s)...`);
+          const timeElapsed = pollCount * 5;
+          setVideoStatusMessage(`Video is being generated (${timeElapsed}s / 60s)... Status: ${result.status || 'processing'}`);
         }
       } catch (error: any) {
         console.error("Error checking video status:", error);
