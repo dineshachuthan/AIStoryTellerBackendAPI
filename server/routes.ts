@@ -3563,6 +3563,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Check video generation status by task ID
+  app.get('/api/videos/status/:taskId', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const taskId = req.params.taskId;
+      const userId = req.session?.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({ message: 'Not authenticated' });
+      }
+
+      console.log(`Frontend checking video status for task: ${taskId}`);
+
+      // Use the generic video service to check status
+      const videoService = await import('./generic-video-service');
+      const status = await videoService.GenericVideoService.getInstance().checkVideoStatus(taskId);
+
+      res.json(status);
+    } catch (error: any) {
+      console.error('Error checking video status:', error);
+      res.status(500).json({ 
+        message: 'Failed to check video status',
+        status: 'failed'
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
