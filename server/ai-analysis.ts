@@ -29,6 +29,7 @@ export interface ExtractedEmotion {
 }
 
 export interface StoryAnalysis {
+  title: string; // AI-generated title for the story
   characters: ExtractedCharacter[];
   emotions: ExtractedEmotion[];
   summary: string;
@@ -62,6 +63,7 @@ export async function analyzeStoryContent(content: string): Promise<StoryAnalysi
 
     Respond with valid JSON in this exact format:
     {
+      "title": "A compelling, creative title for the story (3-8 words, engaging and descriptive)",
       "characters": [
         {
           "name": "Character name",
@@ -88,6 +90,10 @@ export async function analyzeStoryContent(content: string): Promise<StoryAnalysi
     }
 
     Guidelines:
+    - CREATE COMPELLING TITLE: Generate a creative, engaging title that captures the essence of the story (3-8 words)
+    - Title should be descriptive but not spoil the plot
+    - Use evocative language that matches the story's tone and genre
+    - Examples: "The Last Dance", "Shadows of Tomorrow", "A Mother's Choice", "The Secret Garden"
     - Extract all significant characters (minimum 1, maximum 8)
     - EXTRACT ALL EMOTIONS: Identify every emotion present in the story, no matter how subtle
     - Use specific emotion names (grief, sympathy, empathy, melancholy, despair, hope, relief, guilt, shame, regret, acceptance, compassion, betrayal, vulnerability, longing, nostalgia, contentment, etc.)

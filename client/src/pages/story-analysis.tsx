@@ -14,6 +14,7 @@ import { StoryAnalysisPanel } from "@/components/story/StoryAnalysisPanel";
 import { RolePlayAnalysisPanel } from "@/components/story/RolePlayAnalysisPanel";
 
 interface StoryAnalysis {
+  title: string; // AI-generated title for the story
   characters: Array<{
     name: string;
     description: string;
@@ -357,7 +358,8 @@ export default function StoryAnalysis() {
     }
 
     try {
-      const finalTitle = title.trim() || generateTitleFromContent(content, analysisData) || "Untitled Story";
+      // Use AI-generated title first, then user-provided title, then fallback
+      const finalTitle = analysisData.title?.trim() || title.trim() || generateTitleFromContent(content, analysisData) || "Untitled Story";
       const storyData = {
         title: finalTitle,
         content: content,
