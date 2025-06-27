@@ -155,7 +155,7 @@ export class KlingVideoProvider implements IVideoProvider {
       // Use cached JWT Token for status check
       const jwtToken = await this.getJWTToken();
 
-      const response = await fetch(`${this.config.baseUrl}/v1/videos/text2video/${taskId}`, {
+      const response = await fetch(`${this.config.baseUrl}/v1/videos/text2video?pageNum=1&pageSize=30`, {
         headers: {
           'Authorization': `Bearer ${jwtToken}`
         }
@@ -174,7 +174,8 @@ export class KlingVideoProvider implements IVideoProvider {
       console.log('Task ID:', taskId);
       console.log('Full Response:', JSON.stringify(result, null, 2));
       
-      const taskData = result.data;
+      // Find our specific task in the list response
+      const taskData = result.data?.list?.find((task: any) => task.task_id === taskId) || result.data;
       const taskStatus = taskData?.task_status;
       
       // Check if task has been processing for too long (over 3 minutes)
