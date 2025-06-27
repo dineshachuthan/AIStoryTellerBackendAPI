@@ -149,7 +149,7 @@ export function RolePlayAnalysisPanel({
     }
   }, [existingAnalysis, analysis]);
 
-  // Check for existing video when component loads
+  // Check for existing video when component loads and poll if processing
   useEffect(() => {
     const checkExistingVideo = async () => {
       if (!storyId || videoResult) return;
@@ -158,6 +158,19 @@ export function RolePlayAnalysisPanel({
         const result = await apiRequest(`/api/videos/story/${storyId}`);
         if (result && result.videoUrl) {
           setVideoResult(result);
+        } else if (result && result.status === 'processing' && result.taskId) {
+          // Auto-poll once when user visits page with processing video
+          console.log("Found processing video, auto-polling once:", result.taskId);
+          setVideoResult({ 
+            ...result, 
+            taskId: result.taskId,
+            showCheckButton: true 
+          });
+          setIsVideoProcessing(true);
+          setVideoStatusMessage("Video generation started. Please come back after 10 minutes to check for the video.");
+          
+          // Perform one automatic status check when user visits the page
+          await checkVideoStatus(result.taskId);
         }
       } catch (error) {
         // No existing video found, which is normal
@@ -262,13 +275,15 @@ export function RolePlayAnalysisPanel({
         setVideoResult(result);
         setVideoStatusMessage("Video generated successfully");
       } else if (result.videoId || result.taskId) {
-        // Video is processing
-        setIsVideoProcessing(true);
-        setVideoStatusMessage("Video generation started. This may take up to 60 seconds...");
-        
-        // Start polling for completion
+        // Video is processing - store task ID and show friendly message
         const taskId = result.videoId || result.taskId;
-        startVideoPolling(taskId);
+        setIsVideoProcessing(true);
+        setVideoResult({ 
+          ...result, 
+          taskId,
+          showCheckButton: true 
+        });
+        setVideoStatusMessage("Video generation started. Please come back after 10 minutes to check for the video.");
       } else {
         throw new Error("Unexpected response from video generation service");
       }
@@ -283,58 +298,37 @@ export function RolePlayAnalysisPanel({
     }
   };
 
-  // Poll for video completion with 2-minute timeout
-  const startVideoPolling = (taskId: string) => {
-    let pollCount = 0;
-    const maxPolls = 24; // 120 seconds (24 * 5 seconds)
-    
-    const pollInterval = setInterval(async () => {
-      pollCount++;
+  // Manual polling function for checking video status on demand
+  const checkVideoStatus = async (taskId: string) => {
+    try {
+      const response = await fetch(`/api/videos/status/${taskId}`, {
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' }
+      });
       
-      try {
-        const response = await fetch(`/api/videos/status/${taskId}`, {
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' }
-        });
-        
-        if (!response.ok) {
-          throw new Error(`Status ${response.status}: ${response.statusText}`);
-        }
-        
-        const result = await response.json();
-        console.log(`Poll ${pollCount}: status=${result.status}, videoUrl=${result.videoUrl}`);
-        
-        if (result.status === 'completed' && result.videoUrl) {
-          clearInterval(pollInterval);
-          setVideoResult(result);
-          setVideoStatusMessage("Video generated successfully");
-          setIsVideoProcessing(false);
-        } else if (result.status === 'failed') {
-          clearInterval(pollInterval);
-          setVideoError("Video generation failed. Please try again.");
-          setVideoStatusMessage("");
-          setIsVideoProcessing(false);
-        } else if (pollCount >= maxPolls) {
-          clearInterval(pollInterval);
-          setVideoError("Video generation timed out after 2 minutes. This may happen if Kling's servers are busy. Please try generating again in a few minutes, or check your Kling dashboard for the video.");
-          setVideoStatusMessage("");
-          setIsVideoProcessing(false);
-        } else {
-          // Still processing, update status message
-          const timeElapsed = pollCount * 5;
-          setVideoStatusMessage(`Video is being generated (${timeElapsed}s / 120s)... Status: ${result.status || 'processing'}`);
-        }
-      } catch (error: any) {
-        console.error("Error checking video status:", error);
-        
-        if (pollCount >= 3) {
-          clearInterval(pollInterval);
-          setVideoError("Failed to check video status. Please try again.");
-          setVideoStatusMessage("");  
-          setIsVideoProcessing(false);
-        }
+      if (!response.ok) {
+        throw new Error(`Status ${response.status}: ${response.statusText}`);
       }
-    }, 5000); // Poll every 5 seconds
+      
+      const result = await response.json();
+      console.log(`Manual status check: status=${result.status}, videoUrl=${result.videoUrl}`);
+      
+      if (result.status === 'completed' && result.videoUrl) {
+        setVideoResult(result);
+        setVideoStatusMessage("Video generated successfully");
+        setIsVideoProcessing(false);
+      } else if (result.status === 'failed') {
+        setVideoError("Video generation failed. Please try again.");
+        setVideoStatusMessage("");
+        setIsVideoProcessing(false);
+      } else {
+        setVideoStatusMessage(`Video is still processing. Please check back later.`);
+      }
+    } catch (error: any) {
+      console.error("Error checking video status:", error);
+      setVideoError("Failed to check video status. Please try again.");
+      setVideoStatusMessage("");  
+    }
   };
 
   // Video approval functions
@@ -777,11 +771,25 @@ export function RolePlayAnalysisPanel({
           {/* Video Status Messages */}
           {videoStatusMessage && (
             <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
-              <div className="flex items-center">
-                {isVideoProcessing && (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin text-blue-600 dark:text-blue-400" />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  {isVideoProcessing && (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin text-blue-600 dark:text-blue-400" />
+                  )}
+                  <p className="text-sm text-blue-800 dark:text-blue-200">{videoStatusMessage}</p>
+                </div>
+                {/* Show Check Video Status button when processing */}
+                {isVideoProcessing && videoResult?.taskId && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => checkVideoStatus(videoResult.taskId)}
+                    className="border-blue-300 text-blue-700 hover:bg-blue-100 dark:border-blue-600 dark:text-blue-300 dark:hover:bg-blue-900"
+                  >
+                    <RefreshCw className="w-3 h-3 mr-2" />
+                    Check Status
+                  </Button>
                 )}
-                <p className="text-sm text-blue-800 dark:text-blue-200">{videoStatusMessage}</p>
               </div>
             </div>
           )}
