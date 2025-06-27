@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { Mic, MicOff } from "lucide-react";
+import { AUDIO_PROCESSING_CONFIG } from "@shared/audio-config";
 
 interface PressHoldRecorderProps {
   onRecordingComplete: (audioBlob: Blob, audioUrl: string) => void;
@@ -62,7 +63,16 @@ export function PressHoldRecorder({
     holdTimerRef.current = setTimeout(async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        const mediaRecorder = new MediaRecorder(stream);
+        // Try to use the best available format from configuration
+        let mimeType = AUDIO_PROCESSING_CONFIG.fallbackRecordingFormat;
+        for (const format of AUDIO_PROCESSING_CONFIG.preferredRecordingFormats) {
+          if (MediaRecorder.isTypeSupported(format)) {
+            mimeType = format;
+            break;
+          }
+        }
+        
+        const mediaRecorder = new MediaRecorder(stream, { mimeType });
         mediaRecorderRef.current = mediaRecorder;
         audioChunksRef.current = [];
 
@@ -73,7 +83,9 @@ export function PressHoldRecorder({
         };
 
         mediaRecorder.onstop = () => {
-          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+          // Use the actual MIME type that MediaRecorder supports
+          const mimeType = mediaRecorder.mimeType || 'audio/webm';
+          const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
           const url = URL.createObjectURL(audioBlob);
           onRecordingComplete(audioBlob, url);
           

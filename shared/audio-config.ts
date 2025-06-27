@@ -95,6 +95,17 @@ export const AUDIO_PROCESSING_CONFIG = {
   // Supported formats by OpenAI Whisper
   supportedFormats: ['flac', 'm4a', 'mp3', 'mp4', 'mpeg', 'mpga', 'oga', 'ogg', 'wav', 'webm'],
   
+  // Preferred recording formats (in order of preference for MediaRecorder)
+  preferredRecordingFormats: [
+    'audio/wav',
+    'audio/mp4', 
+    'audio/ogg',
+    'audio/webm'
+  ],
+  
+  // Fallback recording format
+  fallbackRecordingFormat: 'audio/webm',
+  
   // Minimum transcription length before considering it low quality
   minimumTranscriptionLength: 5,
   

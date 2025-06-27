@@ -132,6 +132,9 @@ This is a full-stack collaborative storytelling platform that enables users to c
   - Audio format detection now uses configurable format patterns instead of hardcoded logic
   - Error messages, thresholds, and supported formats now centralized in configuration
   - File extension detection properly identifies WebM, WAV, MP3, M4A, OGG, and FLAC formats
+  - Fixed character voice recording component to use proper audio format detection instead of hardcoded WebM
+  - PressHoldRecorder now tries preferred formats (WAV, MP4, OGG) before falling back to WebM
+  - Recording format selection based on MediaRecorder.isTypeSupported() capabilities
   - Eliminated hardcoding violations by making all audio processing parameters configurable
 - June 27, 2025: Created shared press-and-hold recording component for consistent user experience
   - Built reusable PressHoldRecorder component with customizable button text and recording duration
