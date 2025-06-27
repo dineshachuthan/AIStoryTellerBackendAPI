@@ -127,6 +127,12 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Priority**: Medium (requested but deferred for future implementation)
 
 ## Changelog
+- June 27, 2025: Moved audio format detection logic from hardcoded functions to configuration-based system
+  - Created shared/audio-config.ts with comprehensive format signatures and processing settings
+  - Audio format detection now uses configurable format patterns instead of hardcoded logic
+  - Error messages, thresholds, and supported formats now centralized in configuration
+  - File extension detection properly identifies WebM, WAV, MP3, M4A, OGG, and FLAC formats
+  - Eliminated hardcoding violations by making all audio processing parameters configurable
 - June 27, 2025: Created shared press-and-hold recording component for consistent user experience
   - Built reusable PressHoldRecorder component with customizable button text and recording duration
   - Unified recording interaction pattern across voice recording and character voice sample collection

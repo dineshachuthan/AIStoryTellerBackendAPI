@@ -1,34 +1,35 @@
 import OpenAI from "openai";
 import { getCachedAnalysis, cacheAnalysis } from './content-cache';
+import { AUDIO_FORMAT_CONFIG, AUDIO_PROCESSING_CONFIG } from '@shared/audio-config';
 
-// Audio format detection based on file headers
+// Audio format detection using configuration
 function detectAudioFormat(buffer: Buffer): string {
   const header = buffer.subarray(0, 12);
   
-  // Check for common audio format signatures
-  if (header.subarray(0, 4).toString() === 'RIFF' && header.subarray(8, 12).toString() === 'WAVE') {
-    return 'wav';
-  }
-  if (header.subarray(0, 3).toString() === 'ID3' || (header[0] === 0xFF && (header[1] & 0xE0) === 0xE0)) {
-    return 'mp3';
-  }
-  if (header.subarray(4, 8).toString() === 'ftyp') {
-    return 'm4a';
-  }
-  if (header.subarray(0, 4).toString() === 'OggS') {
-    return 'ogg';
-  }
-  if (header.subarray(0, 4).toString() === 'fLaC') {
-    return 'flac';
-  }
-  // WebM/Matroska container (can contain audio or video)
-  if (header.subarray(0, 4).equals(Buffer.from([0x1A, 0x45, 0xDF, 0xA3]))) {
-    return 'webm';
+  for (const format of AUDIO_FORMAT_CONFIG) {
+    let matches = true;
+    
+    for (const signature of format.signatures) {
+      const signatureBuffer = typeof signature.pattern === 'string' 
+        ? Buffer.from(signature.pattern) 
+        : signature.pattern;
+      
+      const headerSection = header.subarray(signature.offset, signature.offset + signatureBuffer.length);
+      
+      if (!headerSection.equals(signatureBuffer)) {
+        matches = false;
+        break;
+      }
+    }
+    
+    if (matches) {
+      console.log(`Audio format detected: ${format.name} (.${format.extension})`);
+      return format.extension;
+    }
   }
   
-  // Default to wav if format can't be determined
-  console.log('Unknown audio format, defaulting to wav. Header:', header.toString('hex'));
-  return 'wav';
+  console.log('Unknown audio format, using default. Header:', header.toString('hex'));
+  return AUDIO_PROCESSING_CONFIG.defaultFormat;
 }
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
@@ -349,10 +350,10 @@ export async function transcribeAudio(audioBuffer: Buffer): Promise<string> {
       console.log("- Text length:", transcription.text.length);
       console.log("- Transcribed text:", JSON.stringify(transcription.text));
       
-      // Check for poor quality transcription results
-      if (transcription.text.trim().length < 5) {
+      // Check for poor quality transcription results using configuration
+      if (transcription.text.trim().length < AUDIO_PROCESSING_CONFIG.minimumTranscriptionLength) {
         console.log("Warning: Very short transcription result, audio may be unclear or too quiet");
-        throw new Error("No clear speech was detected in your audio recording. Please ensure you speak clearly and loudly enough, and try again.");
+        throw new Error(AUDIO_PROCESSING_CONFIG.errorMessages.noSpeechDetected);
       }
       
       // Return the exact transcription without any defaults or modifications
