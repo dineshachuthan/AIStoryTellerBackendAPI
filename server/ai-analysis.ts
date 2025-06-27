@@ -314,15 +314,11 @@ export async function transcribeAudio(audioBuffer: Buffer): Promise<string> {
         prompt: "This is a story or narrative being told. Please transcribe all spoken words accurately.", // Help Whisper understand context
       });
 
-      console.log("Transcription successful, text length:", transcription.text.length);
-      console.log("Transcribed text:", transcription.text);
+      console.log("OpenAI Whisper transcription successful:");
+      console.log("- Text length:", transcription.text.length);
+      console.log("- Transcribed text:", JSON.stringify(transcription.text));
       
-      // Check if transcription is too short (might indicate audio issues)
-      if (transcription.text.trim().length < 10) {
-        console.warn("Very short transcription received:", transcription.text);
-        console.warn("This might indicate audio quality issues or very brief recording");
-      }
-      
+      // Return the exact transcription without any defaults or modifications
       return transcription.text;
     } finally {
       // Clean up temporary file
@@ -339,7 +335,23 @@ export async function transcribeAudio(audioBuffer: Buffer): Promise<string> {
       stack: error instanceof Error ? error.stack : undefined,
       errorObject: error
     });
-    throw new Error(`Failed to transcribe audio: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    
+    // Provide user-friendly error messages based on the error type
+    if (error instanceof Error) {
+      if (error.message.includes('invalid_request_error')) {
+        throw new Error('Audio format is not supported. Please try recording again or use a different audio format.');
+      } else if (error.message.includes('rate_limit')) {
+        throw new Error('Too many transcription requests. Please wait a moment and try again.');
+      } else if (error.message.includes('insufficient_quota')) {
+        throw new Error('Audio transcription service is temporarily unavailable. Please try again later.');
+      } else if (error.message.includes('network') || error.message.includes('timeout')) {
+        throw new Error('Network connection issue. Please check your internet connection and try again.');
+      } else {
+        throw new Error(`Audio transcription failed: ${error.message}`);
+      }
+    } else {
+      throw new Error('Audio transcription failed due to an unexpected error. Please try again.');
+    }
   }
 }
 

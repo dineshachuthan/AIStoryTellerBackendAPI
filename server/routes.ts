@@ -939,18 +939,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Convert audio buffer to transcription using OpenAI Whisper
       const transcriptionText = await transcribeAudio(req.file.buffer);
       
+      // Log the actual transcribed text for debugging
+      console.log("Transcription completed successfully:");
+      console.log("Text length:", transcriptionText.length);
+      console.log("Transcribed content:", transcriptionText);
+      
       if (!transcriptionText || transcriptionText.trim().length === 0) {
-        return res.status(400).json({ message: "No speech detected in audio file. Please try recording again with clear speech." });
+        return res.status(400).json({ 
+          message: "No speech was detected in your audio recording. Please ensure you speak clearly and try again.",
+          details: "The audio file was processed but no recognizable speech was found."
+        });
       }
       
       if (transcriptionText.trim().length < 10) {
         return res.status(400).json({ 
-          message: `Very short transcription received: "${transcriptionText}". This might indicate the recording was too brief or unclear. Please try recording a longer, clearer message.`,
-          text: transcriptionText // Still return the text so user can see what was detected
+          message: "Very brief speech detected. Please record a longer message with clear speech.",
+          details: `Only ${transcriptionText.trim().length} characters were transcribed: "${transcriptionText}"`
         });
       }
-      
-      console.log("Transcription completed, length:", transcriptionText.length);
       
       res.json({ 
         text: transcriptionText,

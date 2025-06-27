@@ -72,9 +72,24 @@ export default function UploadStory() {
     },
     onError: (error: any) => {
       setIsLoadingContent(false);
+      console.error('Transcription error details:', error);
+      
+      // Extract meaningful error message from server response
+      let errorMessage = "Could not convert audio to text. Please try again.";
+      let errorDetails = "";
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+        if (error.response.data.details) {
+          errorDetails = error.response.data.details;
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
-        title: "Transcription Failed",
-        description: error.message || "Could not convert audio to text. Please try again.",
+        title: "Audio Processing Failed",
+        description: errorDetails ? `${errorMessage} ${errorDetails}` : errorMessage,
         variant: "destructive",
       });
     },
