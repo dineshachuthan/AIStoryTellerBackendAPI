@@ -127,6 +127,13 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Priority**: Medium (requested but deferred for future implementation)
 
 ## Changelog
+- June 27, 2025: Eliminated architectural violations and implemented proper JWT caching
+  - Removed duplicate Kling provider (kling-provider.ts) that violated single responsibility principle
+  - Eliminated all hardcoded base URLs and model names - now sourced from video-config.ts only
+  - Added modelName to VideoProviderConfig interface for proper configuration management
+  - Implemented JWT token caching to reduce generation from every 5 seconds to every 25 minutes
+  - Fixed provider registry to use single KlingVideoProvider implementation
+  - Restored true plug-and-play architecture - all configuration comes from config files
 - June 27, 2025: Fixed backend polling timeout and preserved plug-and-play architecture
   - Corrected endpoints to use config-based URLs instead of hardcoded values
   - Synchronized backend polling timeout (2 minutes) to match frontend timeout

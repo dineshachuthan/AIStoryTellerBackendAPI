@@ -54,7 +54,7 @@ export class VideoProviderManager {
       switch (name) {
         case 'kling':
           try {
-            provider = new KlingProvider();
+            provider = new KlingVideoProvider();
             this.providers.set(name, provider);
             console.log(`Kling provider initialized successfully`);
           } catch (error) {

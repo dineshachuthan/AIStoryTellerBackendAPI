@@ -132,7 +132,7 @@ export class KlingVideoProvider implements IVideoProvider {
         estimatedCompletion: new Date(Date.now() + 5 * 60 * 1000), // 5 minutes
         metadata: {
           provider: this.name,
-          model: 'kling-v1',
+          model: this.config!.modelName || 'kling-v1',
           mode: request.quality
         }
       };
@@ -268,7 +268,7 @@ export class KlingVideoProvider implements IVideoProvider {
     
     // Kling API doesn't support duration parameter - use their default length
     const klingRequest = {
-      model: 'kling-v1',
+      model: this.config!.modelName || 'kling-v1',
       prompt: this.sanitizePrompt(request.prompt),
       aspect_ratio: request.aspectRatio || '16:9',
       mode: klingMode

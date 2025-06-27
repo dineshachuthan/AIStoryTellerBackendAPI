@@ -54,6 +54,7 @@ export interface VideoProviderConfig {
   apiKey: string;
   secretKey?: string;
   baseUrl?: string;
+  modelName?: string;
   timeout?: number;
   retryCount?: number;
   maxDuration?: number;
