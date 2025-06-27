@@ -269,6 +269,7 @@ export class KlingProvider extends BaseVideoProvider {
         
         if (result.data.task_status === 'succeed') {
           console.log(`Kling task ${taskId} completed successfully`);
+          console.log('Complete task result:', JSON.stringify(result.data, null, 2));
           return result;
         } else if (result.data.task_status === 'failed') {
           throw new Error(`Kling task failed: ${result.data.task_status_msg || 'Unknown error'}`);
