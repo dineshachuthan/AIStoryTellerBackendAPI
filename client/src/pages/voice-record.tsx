@@ -12,7 +12,7 @@ export function VoiceRecordPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [isRecording, setIsRecording] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
+  const [isHolding, setIsHolding] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
@@ -21,6 +21,7 @@ export function VoiceRecordPage() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const holdTimerRef = useRef<NodeJS.Timeout | null>(null);
   const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
 
   const MAX_RECORDING_TIME = 300; // 5 minutes in seconds
@@ -29,6 +30,7 @@ export function VoiceRecordPage() {
   useEffect(() => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
+      if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
       if (audioUrl) URL.revokeObjectURL(audioUrl);
       if (audioPlayerRef.current) {
         audioPlayerRef.current.pause();
@@ -69,64 +71,38 @@ export function VoiceRecordPage() {
     },
   });
 
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
+  const startHoldTimer = () => {
+    setIsHolding(true);
+    
+    // Start recording after a brief hold delay (300ms)
+    holdTimerRef.current = setTimeout(async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const mediaRecorder = new MediaRecorder(stream);
+        mediaRecorderRef.current = mediaRecorder;
+        audioChunksRef.current = [];
 
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-
-      mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        setAudioBlob(audioBlob);
-        const url = URL.createObjectURL(audioBlob);
-        setAudioUrl(url);
-        
-        // Clean up stream
-        stream.getTracks().forEach(track => track.stop());
-      };
-
-      mediaRecorder.start();
-      setIsRecording(true);
-      setRecordingTime(0);
-
-      // Start timer
-      timerRef.current = setInterval(() => {
-        setRecordingTime(prev => {
-          if (prev >= MAX_RECORDING_TIME) {
-            stopRecording();
-            return prev;
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            audioChunksRef.current.push(event.data);
           }
-          return prev + 1;
-        });
-      }, 1000);
+        };
 
-      toast({
-        title: "Recording Started",
-        description: "You can record for up to 5 minutes.",
-      });
-    } catch (error) {
-      console.error('Error starting recording:', error);
-      toast({
-        title: "Error",
-        description: "Could not access microphone. Please check your permissions.",
-        variant: "destructive",
-      });
-    }
-  };
+        mediaRecorder.onstop = () => {
+          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+          setAudioBlob(audioBlob);
+          const url = URL.createObjectURL(audioBlob);
+          setAudioUrl(url);
+          
+          // Clean up stream
+          stream.getTracks().forEach(track => track.stop());
+        };
 
-  const pauseRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      if (isPaused) {
-        mediaRecorderRef.current.resume();
-        setIsPaused(false);
-        // Resume timer
+        mediaRecorder.start();
+        setIsRecording(true);
+        setRecordingTime(0);
+
+        // Start timer
         timerRef.current = setInterval(() => {
           setRecordingTime(prev => {
             if (prev >= MAX_RECORDING_TIME) {
@@ -136,22 +112,35 @@ export function VoiceRecordPage() {
             return prev + 1;
           });
         }, 1000);
-      } else {
-        mediaRecorderRef.current.pause();
-        setIsPaused(true);
-        // Pause timer
-        if (timerRef.current) clearInterval(timerRef.current);
+
+        toast({
+          title: "Recording Started",
+          description: "Keep holding the button while speaking. Release to stop.",
+        });
+      } catch (error) {
+        console.error('Error starting recording:', error);
+        setIsHolding(false);
+        toast({
+          title: "Error",
+          description: "Could not access microphone. Please check your permissions.",
+          variant: "destructive",
+        });
       }
-    }
+    }, 300);
   };
 
   const stopRecording = () => {
+    if (holdTimerRef.current) {
+      clearTimeout(holdTimerRef.current);
+    }
+    
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
-      setIsPaused(false);
       if (timerRef.current) clearInterval(timerRef.current);
     }
+    
+    setIsHolding(false);
   };
 
   const resetRecording = () => {
@@ -222,49 +211,77 @@ export function VoiceRecordPage() {
               </div>
             </div>
 
-            {/* Recording Controls */}
+            {/* Press and Hold Recording Button */}
             <div className="text-center space-y-4">
-              {!isRecording && !audioBlob && (
-                <Button 
-                  onClick={startRecording}
-                  size="lg"
-                  className="bg-green-600 hover:bg-green-700 text-white h-16 w-16 rounded-full"
-                >
-                  <Mic className="w-8 h-8" />
-                </Button>
-              )}
-
-              {isRecording && (
+              {!audioBlob && (
                 <div className="space-y-4">
-                  <div className="flex justify-center space-x-4">
-                    <Button 
-                      onClick={pauseRecording}
-                      variant="outline"
-                      className="border-yellow-500 text-yellow-500 hover:bg-yellow-500/20"
-                    >
-                      {isPaused ? <Play className="w-5 h-5" /> : <Pause className="w-5 h-5" />}
-                      {isPaused ? 'Resume' : 'Pause'}
-                    </Button>
-                    <Button 
-                      onClick={stopRecording}
-                      variant="outline"
-                      className="border-red-500 text-red-500 hover:bg-red-500/20"
-                    >
-                      <MicOff className="w-5 h-5" />
-                      Stop
-                    </Button>
+                  <Button
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      if (!isHolding && !isRecording) {
+                        startHoldTimer();
+                      }
+                    }}
+                    onMouseUp={(e) => {
+                      e.preventDefault();
+                      stopRecording();
+                    }}
+                    onMouseLeave={(e) => {
+                      e.preventDefault();
+                      stopRecording();
+                    }}
+                    onTouchStart={(e) => {
+                      e.preventDefault();
+                      if (!isHolding && !isRecording) {
+                        startHoldTimer();
+                      }
+                    }}
+                    onTouchEnd={(e) => {
+                      e.preventDefault();
+                      stopRecording();
+                    }}
+                    onContextMenu={(e) => e.preventDefault()}
+                    className={`h-20 w-20 rounded-full text-white font-semibold transition-all ${
+                      isRecording 
+                        ? 'bg-red-600 hover:bg-red-700 animate-pulse' 
+                        : isHolding
+                        ? 'bg-yellow-600 hover:bg-yellow-700'
+                        : 'bg-green-600 hover:bg-green-700'
+                    }`}
+                    size="lg"
+                  >
+                    {isRecording ? (
+                      <div className="flex flex-col items-center">
+                        <MicOff className="w-8 h-8 mb-1" />
+                        <span className="text-xs">Release</span>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center">
+                        <Mic className="w-8 h-8 mb-1" />
+                        <span className="text-xs">Hold</span>
+                      </div>
+                    )}
+                  </Button>
+
+                  {/* Instructions */}
+                  <div className="text-sm text-gray-300 space-y-1">
+                    <p className="font-medium">
+                      {isRecording ? "🎙️ Recording... Release to stop" : "Press and hold to record your story"}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Maximum recording time: 5 minutes
+                    </p>
                   </div>
 
-                  {/* Recording Progress */}
-                  <div className="space-y-2">
-                    <div className="text-xl font-mono">
-                      {formatTime(recordingTime)} / {formatTime(MAX_RECORDING_TIME)}
+                  {/* Recording Progress (only show when recording) */}
+                  {isRecording && (
+                    <div className="space-y-2">
+                      <div className="text-lg font-mono text-red-400">
+                        {formatTime(recordingTime)} / {formatTime(MAX_RECORDING_TIME)}
+                      </div>
+                      <Progress value={progressPercentage} className="w-full" />
                     </div>
-                    <Progress value={progressPercentage} className="w-full" />
-                    {isPaused && (
-                      <p className="text-yellow-400 text-sm">Recording paused</p>
-                    )}
-                  </div>
+                  )}
                 </div>
               )}
 
