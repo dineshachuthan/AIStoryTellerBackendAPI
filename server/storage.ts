@@ -622,15 +622,24 @@ export class DatabaseStorage implements IStorage {
     if (!video) return null;
 
     return {
-      videoId: video.id?.toString() || 'unknown',
-      status: video.status === 'completed' ? 'draft' : video.status,
+      id: video.id,
+      storyId: video.storyId,
+      taskId: video.taskId,
+      provider: video.provider || 'kling',
+      status: video.status || 'pending',
       videoUrl: video.videoUrl,
       thumbnailUrl: video.thumbnailUrl,
-      duration: video.duration || 20,
+      duration: video.duration || 5,
+      userApproved: video.userApproved || false,
+      approvedAt: video.approvedAt,
+      regenerationCount: video.regenerationCount || 0,
+      lastPolledAt: video.lastPolledAt,
+      estimatedCompletionAt: video.estimatedCompletionAt,
+      errorMessage: video.errorMessage,
+      generationParams: video.generationParams,
+      characterAssetsSnapshot: video.characterAssetsSnapshot,
       createdAt: video.createdAt || new Date(),
-      prompt: video.generationParams?.prompt || '',
-      provider: video.provider || 'kling',
-      taskId: video.taskId
+      updatedAt: video.updatedAt
     };
   }
 

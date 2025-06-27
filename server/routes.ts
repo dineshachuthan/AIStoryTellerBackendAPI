@@ -3335,24 +3335,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Enhance result with provider-agnostic business logic
-      const { VideoBusinessLogic } = await import('./video-business-logic');
-      const enhancedResult = {
-        ...result,
-        status: 'processing',
-        message: 'Video generation started. Please check back in 10 minutes.',
-        estimatedCompletion: new Date(Date.now() + 10 * 60 * 1000),
-        charactersUsed: VideoBusinessLogic.extractCharactersUsed(analysisData),
-        metadata: {
-          ...result.metadata,
-          videoDescription: VideoBusinessLogic.generateVideoDescription(analysisData),
-          hasAudio: false,
-          dialogueCount: VideoBusinessLogic.calculateDialogueCount(analysisData)
-        }
-      };
+      console.log(`✅ Video generation started for story ${storyId}, task ID: ${result.taskId}`);
 
-      console.log(`Video generation started for story ${storyId}, task ID: ${result.taskId}`);
-      res.json(enhancedResult);
+      // Return immediate response - no polling on frontend
+      res.json({
+        success: true,
+        status: 'processing',
+        message: 'Video is being generated. Please come back after 10 minutes.',
+        taskId: result.taskId,
+        estimatedCompletion: new Date(Date.now() + 10 * 60 * 1000),
+        duration: 5,
+        provider: 'kling'
+      });
       
     } catch (error: any) {
       console.error("Video generation failed:", error);
@@ -3408,21 +3402,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // For processing videos, poll Kling API
+      // For processing videos, poll using stored provider and taskId
       if (videoRecord.status === 'processing') {
-        const { GenericVideoService } = await import('./generic-video-service');
-        const videoService = GenericVideoService.getInstance();
+        const providerName = videoRecord.provider || 'kling';
         
         try {
-          // Get Kling provider and poll for completion
-          const providers = videoService.getActiveProviders();
-          const klingProvider = providers.find(p => p.name === 'kling');
+          console.log(`🔄 Polling ${providerName} provider for task ${videoRecord.taskId}`);
           
-          if (!klingProvider) {
-            throw new Error('Kling provider not available');
+          // Get the specific provider that was used for generation
+          let pollResult = null;
+          
+          if (providerName === 'kling') {
+            const { KlingVideoProvider } = await import('./video-providers/kling-video-provider');
+            const klingProvider = new KlingVideoProvider();
+            
+            // Initialize with fresh JWT token
+            const { getVideoProviderConfig } = await import('./video-config');
+            const config = getVideoProviderConfig();
+            await klingProvider.initialize(config);
+            
+            // Poll for completion using stored taskId
+            pollResult = await klingProvider.pollForCompletion(videoRecord.taskId);
+          } else {
+            throw new Error(`Provider ${providerName} not supported for polling`);
           }
-
-          const pollResult = await klingProvider.pollForCompletion(videoRecord.taskId);
           
           if (pollResult && pollResult.status === 'completed' && pollResult.videoUrl) {
             // Update database with completed video
