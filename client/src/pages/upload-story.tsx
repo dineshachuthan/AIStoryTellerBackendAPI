@@ -49,12 +49,16 @@ export default function UploadStory() {
 
   // Handle extracted content from audio processing
   useEffect(() => {
+    console.log('Upload story page loaded, checking session storage...');
     // Check both session storage keys for compatibility
     const extractedContent = sessionStorage.getItem('extractedContent');
     const uploadedContent = sessionStorage.getItem('uploadedStoryContent');
     
+    console.log('Session storage check:', { extractedContent, uploadedContent });
+    
     const content = extractedContent || uploadedContent;
     if (content) {
+      console.log('Found content, setting story text:', content.length, 'characters');
       setStoryContent(content);
       // Clear both possible session storage keys after using them
       sessionStorage.removeItem('extractedContent');
@@ -63,8 +67,10 @@ export default function UploadStory() {
       // Show success message
       toast({
         title: "Audio Processed Successfully",
-        description: `Your audio has been converted to text and is ready for editing.`,
+        description: `Your audio has been converted to text (${content.length} characters) and is ready for editing.`,
       });
+    } else {
+      console.log('No content found in session storage');
     }
   }, [toast]);
 
