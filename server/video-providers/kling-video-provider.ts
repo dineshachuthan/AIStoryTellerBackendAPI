@@ -175,8 +175,24 @@ export class KlingVideoProvider implements IVideoProvider {
       console.log('Full Response:', JSON.stringify(result, null, 2));
       
       // Find our specific task in the list response
-      const taskData = result.data?.list?.find((task: any) => task.task_id === taskId) || result.data;
-      const taskStatus = taskData?.task_status;
+      const taskData = result.data?.list?.find((task: any) => task.task_id === taskId);
+      
+      if (!taskData) {
+        console.log(`⚠️ Task ${taskId} not found in list of ${result.data?.list?.length || 0} tasks`);
+        console.log('Available task IDs:', result.data?.list?.map((t: any) => t.task_id).slice(0, 3) || []);
+        
+        // Return processing status when task not found in list (still processing)
+        return {
+          taskId,
+          status: 'processing',
+          progress: 25,
+          videoUrl: undefined,
+          thumbnailUrl: undefined
+        };
+      }
+      
+      const taskStatus = taskData.task_status;
+      console.log(`✓ Found task ${taskId} with status: ${taskStatus}`);
       
       // Check if task has been processing for too long (over 3 minutes)
       const createdAt = taskData?.created_at;
