@@ -282,7 +282,7 @@ export async function generateCharacterImage(character: ExtractedCharacter, stor
   });
 }
 
-export async function transcribeAudio(audioBuffer: Buffer, mimeType?: string): Promise<string> {
+export async function transcribeAudio(audioBuffer: Buffer): Promise<string> {
   console.log("Starting audio transcription, buffer size:", audioBuffer.length);
   
   try {
@@ -291,19 +291,9 @@ export async function transcribeAudio(audioBuffer: Buffer, mimeType?: string): P
     const path = await import('path');
     const os = await import('os');
     
-    // Determine file extension based on MIME type
-    let extension = '.wav'; // default
-    if (mimeType) {
-      if (mimeType.includes('webm')) extension = '.webm';
-      else if (mimeType.includes('mp4')) extension = '.mp4';
-      else if (mimeType.includes('m4a')) extension = '.m4a';
-      else if (mimeType.includes('ogg')) extension = '.ogg';
-      else if (mimeType.includes('mp3')) extension = '.mp3';
-    }
-    
-    // Create temporary file with proper extension
-    const tempFilePath = path.join(os.tmpdir(), `audio_${Date.now()}${extension}`);
-    console.log("Creating temporary file:", tempFilePath, "with mime type:", mimeType);
+    // Create temporary file - OpenAI Whisper can handle various formats regardless of extension
+    const tempFilePath = path.join(os.tmpdir(), `audio_${Date.now()}.webm`);
+    console.log("Creating temporary file:", tempFilePath);
     
     await fs.promises.writeFile(tempFilePath, audioBuffer);
     console.log("Temporary file created successfully");

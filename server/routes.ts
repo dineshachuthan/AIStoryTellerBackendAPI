@@ -937,7 +937,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       // Convert audio buffer to transcription using OpenAI Whisper
-      const transcriptionText = await transcribeAudio(req.file.buffer, req.file.mimetype);
+      const transcriptionText = await transcribeAudio(req.file.buffer);
       
       if (!transcriptionText || transcriptionText.trim().length === 0) {
         return res.status(400).json({ message: "No speech detected in audio file. Please try recording again with clear speech." });
