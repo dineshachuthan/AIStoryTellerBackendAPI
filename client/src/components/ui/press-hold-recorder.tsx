@@ -71,11 +71,12 @@ export function PressHoldRecorder({
           }
         });
         
-        console.log('Microphone stream obtained:', {
-          active: stream.active,
-          audioTracks: stream.getAudioTracks().length,
-          trackSettings: stream.getAudioTracks()[0]?.getSettings()
-        });
+        // Disable console logging during recording to prevent screen reflow
+        // console.log('Microphone stream obtained:', {
+        //   active: stream.active,
+        //   audioTracks: stream.getAudioTracks().length,
+        //   trackSettings: stream.getAudioTracks()[0]?.getSettings()
+        // });
         // Try to use the best available format from configuration
         let mimeType = AUDIO_PROCESSING_CONFIG.fallbackRecordingFormat;
         for (const format of AUDIO_PROCESSING_CONFIG.preferredRecordingFormats) {
@@ -86,9 +87,10 @@ export function PressHoldRecorder({
           }
         }
         
-        if (mimeType === AUDIO_PROCESSING_CONFIG.fallbackRecordingFormat) {
-          console.log(`Using fallback audio format: ${mimeType}`);
-        }
+        // Disable all console logging during recording to prevent screen reflow
+        // if (mimeType === AUDIO_PROCESSING_CONFIG.fallbackRecordingFormat) {
+        //   console.log(`Using fallback audio format: ${mimeType}`);
+        // }
         
         const mediaRecorder = new MediaRecorder(stream, { mimeType });
         mediaRecorderRef.current = mediaRecorder;
@@ -110,8 +112,8 @@ export function PressHoldRecorder({
             for (let i = 0; i < dataArray.length; i++) {
               if (dataArray[i] > max) max = dataArray[i];
             }
-            // Log even very low levels to debug microphone sensitivity
-            console.log(`Audio levels - Average: ${average.toFixed(2)}, Max: ${max}, Range: 0-255`);
+            // Disable audio level logging during recording to prevent screen reflow
+            // console.log(`Audio levels - Average: ${average.toFixed(2)}, Max: ${max}, Range: 0-255`);
             setTimeout(checkAudioLevel, 200); // Check more frequently
           }
         };
@@ -189,6 +191,7 @@ export function PressHoldRecorder({
         <Button
           onMouseDown={(e) => {
             e.preventDefault();
+            e.stopPropagation();
             if (!isHolding && !isRecording) {
               startHoldTimer();
             }
