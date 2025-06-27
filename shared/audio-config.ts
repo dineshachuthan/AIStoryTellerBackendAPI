@@ -4,7 +4,7 @@ export interface AudioFormatSignature {
   extension: string;
   signatures: Array<{
     offset: number;
-    pattern: string | Buffer;
+    pattern: string | Uint8Array;
     description: string;
   }>;
 }
@@ -37,7 +37,7 @@ export const AUDIO_FORMAT_CONFIG: AudioFormatSignature[] = [
       },
       {
         offset: 0,
-        pattern: Buffer.from([0xFF, 0xE0]),
+        pattern: new Uint8Array([0xFF, 0xE0]),
         description: 'MP3 frame sync (partial)'
       }
     ]
@@ -81,7 +81,7 @@ export const AUDIO_FORMAT_CONFIG: AudioFormatSignature[] = [
     signatures: [
       {
         offset: 0,
-        pattern: Buffer.from([0x1A, 0x45, 0xDF, 0xA3]),
+        pattern: new Uint8Array([0x1A, 0x45, 0xDF, 0xA3]),
         description: 'EBML/Matroska/WebM header'
       }
     ]

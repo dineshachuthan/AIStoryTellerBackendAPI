@@ -68,8 +68,13 @@ export function PressHoldRecorder({
         for (const format of AUDIO_PROCESSING_CONFIG.preferredRecordingFormats) {
           if (MediaRecorder.isTypeSupported(format)) {
             mimeType = format;
+            console.log(`Using preferred audio format: ${format}`);
             break;
           }
+        }
+        
+        if (mimeType === AUDIO_PROCESSING_CONFIG.fallbackRecordingFormat) {
+          console.log(`Using fallback audio format: ${mimeType}`);
         }
         
         const mediaRecorder = new MediaRecorder(stream, { mimeType });
@@ -84,8 +89,14 @@ export function PressHoldRecorder({
 
         mediaRecorder.onstop = () => {
           // Use the actual MIME type that MediaRecorder supports
-          const mimeType = mediaRecorder.mimeType || 'audio/webm';
-          const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
+          const actualMimeType = mediaRecorder.mimeType || 'audio/webm';
+          const audioBlob = new Blob(audioChunksRef.current, { type: actualMimeType });
+          console.log(`Audio blob created:`, {
+            size: audioBlob.size,
+            type: audioBlob.type,
+            chunks: audioChunksRef.current.length
+          });
+          
           const url = URL.createObjectURL(audioBlob);
           onRecordingComplete(audioBlob, url);
           

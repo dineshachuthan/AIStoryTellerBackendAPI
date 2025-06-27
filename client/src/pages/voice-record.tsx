@@ -31,27 +31,62 @@ export function VoiceRecordPage() {
 
 
   const handleRecordingComplete = (audioBlob: Blob, audioUrl: string) => {
+    console.log('Recording completed:', {
+      blobSize: audioBlob.size,
+      blobType: audioBlob.type,
+      url: audioUrl
+    });
     setAudioBlob(audioBlob);
     setAudioUrl(audioUrl);
   };
 
   const togglePlayback = () => {
-    if (!audioUrl) return;
+    if (!audioUrl) {
+      console.log('No audio URL available for playback');
+      return;
+    }
+    
+    console.log('Attempting playback:', { audioUrl, isPlaying });
     
     if (audioPlayerRef.current) {
       if (isPlaying) {
         audioPlayerRef.current.pause();
         setIsPlaying(false);
+        console.log('Audio paused');
       } else {
-        audioPlayerRef.current.play();
-        setIsPlaying(true);
+        audioPlayerRef.current.play()
+          .then(() => {
+            setIsPlaying(true);
+            console.log('Audio playback started successfully');
+          })
+          .catch(error => {
+            console.error('Error playing audio:', error);
+            setIsPlaying(false);
+          });
       }
     } else {
       const audio = new Audio(audioUrl);
       audioPlayerRef.current = audio;
-      audio.onended = () => setIsPlaying(false);
-      audio.play();
-      setIsPlaying(true);
+      
+      audio.onended = () => {
+        setIsPlaying(false);
+        console.log('Audio playback ended');
+      };
+      
+      audio.onerror = (error) => {
+        console.error('Audio error:', error);
+        setIsPlaying(false);
+      };
+      
+      audio.play()
+        .then(() => {
+          setIsPlaying(true);
+          console.log('New audio playback started successfully');
+        })
+        .catch(error => {
+          console.error('Error starting new audio playback:', error);
+          setIsPlaying(false);
+        });
     }
   };
 

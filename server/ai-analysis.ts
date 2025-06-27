@@ -10,9 +10,13 @@ function detectAudioFormat(buffer: Buffer): string {
     let matches = true;
     
     for (const signature of format.signatures) {
-      const signatureBuffer = typeof signature.pattern === 'string' 
-        ? Buffer.from(signature.pattern) 
-        : signature.pattern;
+      let signatureBuffer: Buffer;
+      if (typeof signature.pattern === 'string') {
+        signatureBuffer = Buffer.from(signature.pattern);
+      } else {
+        // Convert Uint8Array to Buffer for server-side processing
+        signatureBuffer = Buffer.from(signature.pattern);
+      }
       
       const headerSection = header.subarray(signature.offset, signature.offset + signatureBuffer.length);
       
