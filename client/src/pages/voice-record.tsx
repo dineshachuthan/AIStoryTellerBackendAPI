@@ -226,6 +226,26 @@ export function VoiceRecordPage() {
                     >
                       Test Audio
                     </Button>
+                    <Button 
+                      onClick={async () => {
+                        try {
+                          const devices = await navigator.mediaDevices.enumerateDevices();
+                          const audioInputs = devices.filter(device => device.kind === 'audioinput');
+                          console.log('Available microphones:', audioInputs.map(d => ({
+                            deviceId: d.deviceId,
+                            label: d.label || 'Unknown device',
+                            groupId: d.groupId
+                          })));
+                        } catch (error) {
+                          console.error('Error listing devices:', error);
+                        }
+                      }}
+                      variant="outline"
+                      className="border-yellow-500 text-yellow-500 hover:bg-yellow-500/20"
+                      size="sm"
+                    >
+                      List Mics
+                    </Button>
                   </div>
                   
                   {/* Audio quality indicator */}

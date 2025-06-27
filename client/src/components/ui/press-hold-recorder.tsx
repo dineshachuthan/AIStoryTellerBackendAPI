@@ -105,10 +105,13 @@ export function PressHoldRecorder({
           if (mediaRecorderRef.current?.state === 'recording') {
             analyser.getByteFrequencyData(dataArray);
             const average = dataArray.reduce((sum, value) => sum + value, 0) / dataArray.length;
-            if (average > 0) {
-              console.log(`Audio level detected: ${average.toFixed(2)}`);
+            let max = 0;
+            for (let i = 0; i < dataArray.length; i++) {
+              if (dataArray[i] > max) max = dataArray[i];
             }
-            setTimeout(checkAudioLevel, 500);
+            // Log even very low levels to debug microphone sensitivity
+            console.log(`Audio levels - Average: ${average.toFixed(2)}, Max: ${max}, Range: 0-255`);
+            setTimeout(checkAudioLevel, 200); // Check more frequently
           }
         };
         checkAudioLevel();
