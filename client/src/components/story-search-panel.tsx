@@ -80,28 +80,28 @@ export function StorySearchPanel({
 
   return (
     <div className={`bg-gray-900/50 border-r border-gray-800 transition-all duration-300 ${
-      isCollapsed ? 'w-12' : 'w-80'
-    } ${className}`}>
+      isCollapsed ? 'w-12 sm:w-16' : 'w-64 sm:w-72 md:w-80 lg:w-96'
+    } ${className} hidden sm:block`}>
       <div className="h-full flex flex-col">
         {/* Toggle Button */}
         {showToggle && (
-          <div className="p-2 border-b border-gray-800">
+          <div className="p-1 sm:p-2 border-b border-gray-800">
             <Button
               onClick={onToggleCollapse}
               variant="ghost"
               size="sm"
-              className="w-full justify-center hover:bg-gray-800"
+              className="w-full justify-center hover:bg-gray-800 h-8 sm:h-10"
             >
-              {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+              {isCollapsed ? <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4" /> : <ChevronLeft className="w-3 h-3 sm:w-4 sm:h-4" />}
             </Button>
           </div>
         )}
 
         {!isCollapsed && (
-          <div className="flex-1 p-4 space-y-4 overflow-y-auto">
+          <div className="flex-1 p-2 sm:p-4 space-y-3 sm:space-y-4 overflow-y-auto">
             <div className="flex items-center space-x-2">
-              <Book className="w-6 h-6 text-tiktok-red" />
-              <h1 className="text-xl font-bold text-white">Story Library</h1>
+              <Book className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-tiktok-red" />
+              <h1 className="text-base sm:text-lg lg:text-xl font-bold text-white">Story Library</h1>
             </div>
             
             <div className="relative">

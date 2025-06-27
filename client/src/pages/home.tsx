@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CharacterFeed } from "@/components/character-feed";
 import { StorySearchPanel } from "@/components/story-search-panel";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,32 @@ export default function Home() {
   const { toast } = useToast();
   const [isSearchPanelCollapsed, setIsSearchPanelCollapsed] = useState(false);
   const [isCreatingStory, setIsCreatingStory] = useState(false);
+  const [windowDimensions, setWindowDimensions] = useState({
+    width: typeof window !== 'undefined' ? window.innerWidth : 1024,
+    height: typeof window !== 'undefined' ? window.innerHeight : 768
+  });
+
+  // Dynamic screen size detection
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowDimensions({
+        width: window.innerWidth,
+        height: window.innerHeight
+      });
+      
+      // Auto-collapse sidebar on smaller screens
+      if (window.innerWidth < 768) {
+        setIsSearchPanelCollapsed(true);
+      } else if (window.innerWidth >= 1024) {
+        setIsSearchPanelCollapsed(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    handleResize(); // Call on initial load
+
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const getUserInitials = () => {
     if (!user) return 'U';
@@ -74,9 +100,26 @@ export default function Home() {
     }
   };
 
+  // Dynamic styling based on screen size
+  const getResponsiveStyles = () => {
+    const { width, height } = windowDimensions;
+    
+    return {
+      containerPadding: width < 640 ? 'p-2' : width < 1024 ? 'p-3' : 'p-4',
+      headerHeight: width < 640 ? 'h-14' : width < 1024 ? 'h-16' : 'h-20',
+      buttonSize: width < 640 ? 'h-14' : width < 768 ? 'h-16' : width < 1024 ? 'h-18' : 'h-20',
+      textSize: width < 640 ? 'text-xs' : width < 768 ? 'text-sm' : 'text-base',
+      gridCols: width < 640 ? 'grid-cols-1' : width < 768 ? 'grid-cols-2' : width < 1024 ? 'grid-cols-2' : 'grid-cols-4',
+      cardTopOffset: width < 640 ? 'top-14' : width < 1024 ? 'top-16' : 'top-20'
+    };
+  };
+
+  const styles = getResponsiveStyles();
+
   return (
-    <div className="relative w-full h-screen bg-dark-bg text-dark-text overflow-hidden">
-      <div className="flex h-screen">
+    <div className="relative w-full min-h-screen bg-dark-bg text-dark-text overflow-hidden" 
+         style={{ minHeight: windowDimensions.height }}>
+      <div className="flex min-h-screen">
         {/* Collapsible Search Panel */}
         <StorySearchPanel
           isCollapsed={isSearchPanelCollapsed}
@@ -86,20 +129,28 @@ export default function Home() {
         />
 
         {/* Main Content Area */}
-        <div className="flex-1 relative overflow-hidden pb-20">
+        <div className="flex-1 relative overflow-hidden pb-16 sm:pb-20">
           {/* Header */}
-          <div className="absolute top-0 left-0 right-0 z-50 bg-dark-bg/80 backdrop-blur-lg border-b border-gray-800 p-4">
+          <div className={`absolute top-0 left-0 right-0 z-50 bg-dark-bg/80 backdrop-blur-lg border-b border-gray-800 ${styles.containerPadding}`}>
             <div className="flex items-center justify-between">
-              <h1 className="text-2xl font-bold text-white">DeeVee</h1>
-              <div className="flex items-center space-x-3">
+              <h1 className={`${windowDimensions.width < 640 ? 'text-lg' : windowDimensions.width < 1024 ? 'text-xl' : 'text-2xl'} font-bold text-white`}>DeeVee</h1>
+              <div className="flex items-center space-x-2 sm:space-x-3">
                 <Button
                   onClick={() => setLocation("/voice-samples")}
                   variant="outline"
                   size="sm"
-                  className="border-tiktok-cyan text-tiktok-cyan hover:bg-tiktok-cyan/20"
+                  className="border-tiktok-cyan text-tiktok-cyan hover:bg-tiktok-cyan/20 hidden sm:flex"
                 >
                   <AudioLines className="w-4 h-4 mr-2" />
                   Voice Samples
+                </Button>
+                <Button
+                  onClick={() => setLocation("/voice-samples")}
+                  variant="outline"
+                  size="sm"
+                  className="border-tiktok-cyan text-tiktok-cyan hover:bg-tiktok-cyan/20 sm:hidden p-2"
+                >
+                  <AudioLines className="w-4 h-4" />
                 </Button>
                 
                 <Button
@@ -108,7 +159,7 @@ export default function Home() {
                   size="sm"
                   className="relative h-8 w-8 rounded-full p-0"
                 >
-                  <Avatar className="h-8 w-8">
+                  <Avatar className="h-6 w-6 sm:h-8 sm:w-8">
                     <AvatarImage 
                       src={user?.profileImageUrl || undefined} 
                       alt={user?.displayName || user?.email || 'User'} 
@@ -123,58 +174,58 @@ export default function Home() {
           </div>
 
           {/* Quick Actions Overlay */}
-          <div className="absolute top-20 left-0 right-0 z-40 p-4">
+          <div className="absolute top-16 sm:top-20 left-0 right-0 z-40 p-2 sm:p-4">
             <Card className="bg-dark-card/90 backdrop-blur-lg border-gray-800">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-white flex items-center text-lg">
-                  <Users className="w-5 h-5 mr-2 text-tiktok-pink" />
+              <CardHeader className="pb-2 sm:pb-3 p-3 sm:p-6">
+                <CardTitle className="text-white flex items-center text-base sm:text-lg">
+                  <Users className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-tiktok-pink" />
                   Collaborative Storytelling
                 </CardTitle>
-                <CardDescription className="text-gray-text text-sm">
+                <CardDescription className="text-gray-text text-xs sm:text-sm">
                   Create stories with friends where each person voices a unique character
                 </CardDescription>
               </CardHeader>
-              <CardContent className="pt-0">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <CardContent className="pt-0 p-3 sm:p-6">
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
                   <Button
                     onClick={() => createStoryAndNavigate("text", "/upload-story")}
                     disabled={isCreatingStory}
                     variant="outline"
-                    className="border-blue-500 text-blue-500 hover:bg-blue-500/20 h-20 p-3 flex flex-col items-center justify-center space-y-1"
+                    className="border-blue-500 text-blue-500 hover:bg-blue-500/20 h-16 sm:h-20 lg:h-24 p-2 sm:p-3 flex flex-col items-center justify-center space-y-1"
                     size="sm"
                   >
-                    {isCreatingStory ? <Loader2 className="w-4 h-4 animate-spin" /> : <PenTool className="w-4 h-4" />}
-                    <span className="text-xs text-center leading-tight break-words">Write Story</span>
+                    {isCreatingStory ? <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" /> : <PenTool className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />}
+                    <span className="text-xs sm:text-xs lg:text-sm text-center leading-tight break-words">Write Story</span>
                   </Button>
                   <Button
                     onClick={() => createStoryAndNavigate("voice", "/voice-record")}
                     disabled={isCreatingStory}
                     variant="outline"
-                    className="border-green-500 text-green-500 hover:bg-green-500/20 h-20 p-3 flex flex-col items-center justify-center space-y-1"
+                    className="border-green-500 text-green-500 hover:bg-green-500/20 h-16 sm:h-20 lg:h-24 p-2 sm:p-3 flex flex-col items-center justify-center space-y-1"
                     size="sm"
                   >
-                    {isCreatingStory ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mic className="w-4 h-4" />}
-                    <span className="text-xs text-center leading-tight break-words">Voice Record</span>
-                    <span className="text-xs opacity-70 leading-tight">(5 min)</span>
+                    {isCreatingStory ? <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" /> : <Mic className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />}
+                    <span className="text-xs sm:text-xs lg:text-sm text-center leading-tight break-words">Voice Record</span>
+                    <span className="text-xs opacity-70 leading-tight hidden sm:block">(5 min)</span>
                   </Button>
                   <Button
                     onClick={() => createStoryAndNavigate("text", "/upload-story")}
                     disabled={isCreatingStory}
                     variant="outline"
-                    className="border-purple-500 text-purple-500 hover:bg-purple-500/20 h-20 p-3 flex flex-col items-center justify-center space-y-1"
+                    className="border-purple-500 text-purple-500 hover:bg-purple-500/20 h-16 sm:h-20 lg:h-24 p-2 sm:p-3 flex flex-col items-center justify-center space-y-1"
                     size="sm"
                   >
-                    {isCreatingStory ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
-                    <span className="text-xs text-center leading-tight break-words">Upload Text</span>
+                    {isCreatingStory ? <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" /> : <FileText className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />}
+                    <span className="text-xs sm:text-xs lg:text-sm text-center leading-tight break-words">Upload Text</span>
                   </Button>
                   <Button
                     onClick={() => createStoryAndNavigate("audio", "/upload-audio")}
                     disabled={isCreatingStory}
-                    className="bg-tiktok-red hover:bg-tiktok-red/80 h-20 p-3 flex flex-col items-center justify-center space-y-1"
+                    className="bg-tiktok-red hover:bg-tiktok-red/80 h-16 sm:h-20 lg:h-24 p-2 sm:p-3 flex flex-col items-center justify-center space-y-1"
                     size="sm"
                   >
-                    {isCreatingStory ? <Loader2 className="w-4 h-4 animate-spin" /> : <AudioLines className="w-4 h-4" />}
-                    <span className="text-xs text-center leading-tight break-words">Upload Audio</span>
+                    {isCreatingStory ? <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" /> : <AudioLines className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />}
+                    <span className="text-xs sm:text-xs lg:text-sm text-center leading-tight break-words">Upload Audio</span>
                   </Button>
                 </div>
               </CardContent>
