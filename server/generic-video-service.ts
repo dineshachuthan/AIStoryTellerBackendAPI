@@ -231,7 +231,7 @@ export class GenericVideoService {
     
     let attempts = 0;
     let consecutiveErrors = 0;
-    const maxAttempts = 6; // 60 seconds (6 * 10 seconds) 
+    const maxAttempts = 12; // 2 minutes (12 * 10 seconds) to match frontend timeout 
     const maxConsecutiveErrors = 3;
 
     const pollInterval = setInterval(async () => {
@@ -271,10 +271,10 @@ export class GenericVideoService {
           
           const { VideoBusinessLogic } = await import('./video-business-logic');
           await VideoBusinessLogic.updateVideoStatus(storyId, 'failed', {
-            errorMessage: `Video generation timeout after ${attempts} attempts (${maxAttempts * 10}s). Task may still be processing on Kling servers.`
+            errorMessage: `Video generation timeout after 2 minutes. This may happen if Kling's servers are busy. Please try generating again in a few minutes.`
           });
           
-          console.log(`Polling timeout for task ${taskId} after ${attempts} attempts`);
+          console.log(`⏰ Backend polling timeout for task ${taskId} after ${attempts} attempts (2 minutes)`);
           return;
         }
         
