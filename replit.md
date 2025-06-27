@@ -127,6 +127,15 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Priority**: Medium (requested but deferred for future implementation)
 
 ## Changelog
+- June 27, 2025: Completely eliminated automatic polling and implemented pure task ID storage workflow
+  - Removed all automatic frontend polling (setInterval/setTimeout) as explicitly requested by user
+  - Implemented "store task ID and show friendly message" approach with no automatic polling
+  - Users see "Please come back after 10 minutes to check for the video" message immediately 
+  - Added manual "Check Status" button for on-demand polling when users return
+  - Automatic single poll occurs only when user visits roleplay summary page with existing processing video
+  - No continuous polling loops - completely eliminated resource waste from automatic checks
+  - Video generation now stores task ID in database and responds immediately with friendly message
+  - Frontend shows clean processing state with manual status check option instead of polling loops
 - June 27, 2025: Successfully implemented polling-based video generation system with validation workflow
   - Completely removed callback-based logic as requested by user
   - Implemented "store task ID and come back in 10 minutes" workflow with immediate response
