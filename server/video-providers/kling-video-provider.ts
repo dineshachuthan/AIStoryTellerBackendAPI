@@ -105,68 +105,63 @@ export class KlingVideoProvider implements IVideoProvider {
   async generateVideo(request: StandardVideoRequest): Promise<StandardVideoResponse> {
     this.validateRequest(request);
 
-    console.log('=== KLING VIDEO GENERATION START ===');
+    console.log('=== KLING VIDEO GENERATION START (POLLING MODE) ===');
     console.log('Request details:', {
       prompt: request.prompt.substring(0, 100) + '...',
       quality: request.quality,
-      aspectRatio: request.aspectRatio
-    });
-    console.log('Config check:', {
-      hasApiKey: !!this.config?.apiKey,
-      hasSecretKey: !!this.config?.secretKey,
-      apiKeyPreview: this.config?.apiKey?.substring(0, 8) + '...',
-      secretKeyLength: this.config?.secretKey?.length
+      duration: `${request.duration}s (using Kling default 5s)`
     });
 
     try {
-      // Prepare Kling-specific request with callback URL
-      const klingRequest = this.prepareKlingRequest(request);
+      const token = await this.getJWTToken();
       
-      // Create video task with callback URL
-      const taskResponse = await this.createVideoTask(klingRequest);
-      const taskId = taskResponse.data?.task_id;
-      
+      const response = await fetch(`${this.config!.baseUrl}/v1/videos/text2video`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          prompt: request.prompt,
+          model: this.config!.modelName
+          // Note: No callback_url - using polling-based approach
+          // Note: Kling generates 5-second videos by default
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('=== KLING API RESPONSE ===');
+      console.log('Response data:', JSON.stringify(data, null, 2));
+
+      if (data.code !== 0) {
+        throw new Error(`API Error: ${data.message}`);
+      }
+
+      const taskId = data.data?.task_id;
       if (!taskId) {
         throw new Error('No task ID returned from Kling API');
       }
-      
-      console.log(`🔔 Video task created: ${taskId}, waiting for callback with 120s timeout`);
-      
-      // Import callback manager and wait for webhook completion
-      const { videoCallbackManager } = await import('../video-callback-manager');
-      
-      try {
-        // Wait up to 120 seconds for webhook callback
-        const result = await videoCallbackManager.waitForCallback(taskId, 120000);
-        
-        console.log(`✅ Video completed via callback: ${taskId}`);
-        
-        // Return successful response with actual video URL
-        return {
-          taskId,
-          status: 'completed',
-          videoUrl: result.videoUrl,
-          thumbnailUrl: result.thumbnailUrl,
-          estimatedCompletion: new Date(),
-          metadata: {
-            provider: this.name,
-            model: this.config!.modelName || 'kling-v1',
-            mode: request.quality,
-            completionMethod: 'webhook',
-            duration: result.duration
-          }
-        };
-        
-      } catch (timeoutError: any) {
-        console.log(`⏰ Video generation timed out after 120 seconds: ${taskId}`);
-        
-        // Pure callback-based system - no polling fallback
-        throw new VideoProviderException(
-          VideoProviderError.NETWORK_ERROR,
-          'Video generation timed out after 2 minutes. This usually means the video is taking longer than expected to process. Please try again in a few minutes.',
-          this.name
-        );
-      }
+
+      console.log(`✅ Video generation started with task ID: ${taskId}`);
+      console.log(`📅 Task will be ready in approximately 10 minutes`);
+      console.log(`🔄 Use polling to check status with this task ID`);
+
+      // Return immediately with task ID - no waiting
+      return {
+        taskId,
+        status: 'processing',
+        estimatedCompletion: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes from now
+        metadata: {
+          provider: this.name,
+          model: this.config!.modelName || 'kling-v1-5',
+          completionMethod: 'polling',
+          message: 'Video generation started. Please check back in 10 minutes.'
+        }
+      };
       
     } catch (error: any) {
       console.error('=== KLING VIDEO GENERATION ERROR ===', error);

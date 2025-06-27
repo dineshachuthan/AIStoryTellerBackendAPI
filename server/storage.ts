@@ -651,6 +651,18 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(videoGenerations.storyId, storyId));
   }
+
+  async createVideoGeneration(videoData: any): Promise<any> {
+    const { videoGenerations } = await import("@shared/schema");
+    
+    const [created] = await db.insert(videoGenerations).values({
+      ...videoData,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }).returning();
+    
+    return created;
+  }
 }
 
 export const storage = new DatabaseStorage();

@@ -127,6 +127,15 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Priority**: Medium (requested but deferred for future implementation)
 
 ## Changelog
+- June 27, 2025: Implemented polling-based video generation system with validation workflow
+  - Removed callback-based logic entirely as requested by user
+  - Implemented "store task ID and come back in 10 minutes" workflow
+  - Added automatic polling when user visits roleplay summary page
+  - Created video validation workflow: processing → completed → FINAL status
+  - Users can regenerate videos until they mark them as FINAL
+  - Configured 5-second video duration (expandable to 10 seconds later)
+  - Enhanced database schema with task tracking, user approval, and regeneration counting
+  - Added comprehensive API endpoints for polling, accepting, and regenerating videos
 - June 27, 2025: Implemented efficient callback-based video generation system
   - Replaced inefficient polling with webhook callbacks for instant completion notifications
   - Added VideoCallbackManager with 120-second timeout and friendly error messages

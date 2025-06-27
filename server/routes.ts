@@ -3306,23 +3306,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId,
         roleplayAnalysis: analysisData,
         storyContent: story.content,
-        duration: req.body.duration || 20,
+        duration: 5, // Use 5 seconds as configured
         quality: req.body.quality || 'std',
         regenerate: req.body.forceRegenerate || false
       });
 
+      // Store task ID in database for polling
+      if (result.taskId) {
+        try {
+          await storage.createVideoGeneration({
+            storyId: parseInt(storyId),
+            requestedBy: userId,
+            taskId: result.taskId,
+            provider: 'kling',
+            status: 'processing',
+            generationParams: {
+              prompt: result.metadata?.prompt || '',
+              quality: req.body.quality || 'std',
+              duration: 5
+            },
+            characterAssetsSnapshot: analysisData || {},
+            estimatedCompletionAt: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
+            regenerationCount: req.body.forceRegenerate ? 1 : 0
+          });
+          console.log(`✅ Stored task ${result.taskId} in database for polling`);
+        } catch (dbError: any) {
+          console.warn(`Failed to store task in database: ${dbError.message}`);
+        }
+      }
+
       // Enhance result with provider-agnostic business logic
       const { VideoBusinessLogic } = await import('./video-business-logic');
-      result.charactersUsed = VideoBusinessLogic.extractCharactersUsed(analysisData);
-      result.metadata = {
-        ...result.metadata,
-        videoDescription: VideoBusinessLogic.generateVideoDescription(analysisData),
-        hasAudio: false,
-        dialogueCount: VideoBusinessLogic.calculateDialogueCount(analysisData)
+      const enhancedResult = {
+        ...result,
+        status: 'processing',
+        message: 'Video generation started. Please check back in 10 minutes.',
+        estimatedCompletion: new Date(Date.now() + 10 * 60 * 1000),
+        charactersUsed: VideoBusinessLogic.extractCharactersUsed(analysisData),
+        metadata: {
+          ...result.metadata,
+          videoDescription: VideoBusinessLogic.generateVideoDescription(analysisData),
+          hasAudio: false,
+          dialogueCount: VideoBusinessLogic.calculateDialogueCount(analysisData)
+        }
       };
 
-      console.log(`Video generation completed for story ${storyId}`);
-      res.json(result);
+      console.log(`Video generation started for story ${storyId}, task ID: ${result.taskId}`);
+      res.json(enhancedResult);
       
     } catch (error: any) {
       console.error("Video generation failed:", error);
@@ -3333,6 +3363,204 @@ export async function registerRoutes(app: Express): Promise<Server> {
         error: error?.message || 'Unknown error',
         canRetry: !error.message?.includes('Content may violate guidelines'),
         timestamp: new Date().toISOString()
+      });
+    }
+  });
+
+  // Poll video status by task ID - For automatic polling on roleplay summary page
+  app.get('/api/videos/poll/:storyId', requireAuth, async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.storyId);
+      const userId = (req.user as any)?.id;
+
+      if (!storyId || !userId) {
+        return res.status(400).json({ message: "Story ID and authentication required" });
+      }
+
+      console.log(`🔄 Polling video status for story ${storyId}`);
+
+      // Get video record from database
+      const videoRecord = await storage.getVideoByStoryId(storyId);
+      if (!videoRecord || !videoRecord.taskId) {
+        return res.json({
+          status: 'not_found',
+          message: 'No video generation task found for this story'
+        });
+      }
+
+      // If already completed and approved (FINAL), return immediately
+      if (videoRecord.status === 'FINAL') {
+        return res.json({
+          status: 'FINAL',
+          videoUrl: videoRecord.videoUrl,
+          thumbnailUrl: videoRecord.thumbnailUrl,
+          message: 'Video is finalized and approved'
+        });
+      }
+
+      // If already completed but not approved, return for user validation
+      if (videoRecord.status === 'completed' && videoRecord.videoUrl) {
+        return res.json({
+          status: 'completed',
+          videoUrl: videoRecord.videoUrl,
+          thumbnailUrl: videoRecord.thumbnailUrl,
+          message: 'Video is ready for your approval. Please validate and accept or regenerate.'
+        });
+      }
+
+      // For processing videos, poll Kling API
+      if (videoRecord.status === 'processing') {
+        const { GenericVideoService } = await import('./generic-video-service');
+        const videoService = GenericVideoService.getInstance();
+        
+        try {
+          // Get Kling provider and poll for completion
+          const providers = videoService.getActiveProviders();
+          const klingProvider = providers.find(p => p.name === 'kling');
+          
+          if (!klingProvider) {
+            throw new Error('Kling provider not available');
+          }
+
+          const pollResult = await klingProvider.pollForCompletion(videoRecord.taskId);
+          
+          if (pollResult && pollResult.status === 'completed' && pollResult.videoUrl) {
+            // Update database with completed video
+            await storage.updateVideoGeneration(storyId, {
+              status: 'completed',
+              videoUrl: pollResult.videoUrl,
+              thumbnailUrl: pollResult.thumbnailUrl,
+              lastPolledAt: new Date()
+            });
+
+            console.log(`✅ Video completed for story ${storyId}: ${pollResult.videoUrl}`);
+
+            return res.json({
+              status: 'completed',
+              videoUrl: pollResult.videoUrl,
+              thumbnailUrl: pollResult.thumbnailUrl,
+              message: 'Video is ready for your approval. Please validate and accept or regenerate.'
+            });
+          } else if (pollResult && pollResult.status === 'failed') {
+            // Update database with failed status
+            await storage.updateVideoGeneration(storyId, {
+              status: 'failed',
+              errorMessage: pollResult.metadata?.error || 'Video generation failed',
+              lastPolledAt: new Date()
+            });
+
+            return res.json({
+              status: 'failed',
+              message: 'Video generation failed. Please try regenerating.'
+            });
+          } else {
+            // Still processing - update last polled time
+            await storage.updateVideoGeneration(storyId, {
+              lastPolledAt: new Date()
+            });
+
+            return res.json({
+              status: 'processing',
+              message: 'Video is still being generated. Please check back in a few minutes.',
+              estimatedCompletion: videoRecord.estimatedCompletionAt
+            });
+          }
+        } catch (pollError: any) {
+          console.error(`Polling error for story ${storyId}:`, pollError);
+          
+          // Update last polled time even on error
+          await storage.updateVideoGeneration(storyId, {
+            lastPolledAt: new Date()
+          });
+
+          return res.json({
+            status: 'processing',
+            message: 'Unable to check status right now. Please try again later.',
+            estimatedCompletion: videoRecord.estimatedCompletionAt
+          });
+        }
+      }
+
+      // Default response for unknown status
+      return res.json({
+        status: videoRecord.status || 'unknown',
+        message: 'Video status unknown. Please try regenerating.'
+      });
+
+    } catch (error: any) {
+      console.error(`Video polling failed for story ${req.params.storyId}:`, error);
+      res.status(500).json({ 
+        message: "Video polling failed", 
+        error: error.message || 'Unknown error'
+      });
+    }
+  });
+
+  // Accept video (mark as FINAL)
+  app.post('/api/videos/:storyId/accept', requireAuth, async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.storyId);
+      const userId = (req.user as any)?.id;
+
+      if (!storyId || !userId) {
+        return res.status(400).json({ message: "Story ID and authentication required" });
+      }
+
+      // Update video status to FINAL
+      await storage.updateVideoGeneration(storyId, {
+        status: 'FINAL',
+        userApproved: true,
+        approvedAt: new Date()
+      });
+
+      console.log(`✅ Video marked as FINAL for story ${storyId} by user ${userId}`);
+
+      res.json({
+        success: true,
+        message: 'Video approved and finalized'
+      });
+
+    } catch (error: any) {
+      console.error(`Video approval failed for story ${req.params.storyId}:`, error);
+      res.status(500).json({ 
+        message: "Video approval failed", 
+        error: error.message || 'Unknown error'
+      });
+    }
+  });
+
+  // Regenerate video (only allowed if not FINAL)
+  app.post('/api/videos/:storyId/regenerate', requireAuth, async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.storyId);
+      const userId = (req.user as any)?.id;
+
+      if (!storyId || !userId) {
+        return res.status(400).json({ message: "Story ID and authentication required" });
+      }
+
+      // Check current video status
+      const videoRecord = await storage.getVideoByStoryId(storyId);
+      if (videoRecord && videoRecord.status === 'FINAL') {
+        return res.status(400).json({ 
+          message: "Cannot regenerate: Video is already finalized" 
+        });
+      }
+
+      console.log(`🔄 Regenerating video for story ${storyId}`);
+
+      // Force regenerate by calling the generation endpoint
+      req.body.forceRegenerate = true;
+      req.body.storyId = storyId;
+      
+      // Forward to generation endpoint
+      return req.url = '/api/videos/generate';
+
+    } catch (error: any) {
+      console.error(`Video regeneration failed for story ${req.params.storyId}:`, error);
+      res.status(500).json({ 
+        message: "Video regeneration failed", 
+        error: error.message || 'Unknown error'
       });
     }
   });
