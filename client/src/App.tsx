@@ -55,8 +55,8 @@ function Router() {
             <Route path="/create" component={CreateCharacter} />
             <Route path="/upload-story" component={UploadStory} />
             <Route path="/:storyId/upload-story" component={UploadStory} />
-            <Route path="/:storyId/voice-record" component={UploadStory} />
-            <Route path="/:storyId/upload-audio" component={UploadStory} />
+            <Route path="/voice-record" component={VoiceRecordPage} />
+            <Route path="/upload-audio" component={UploadAudioPage} />
             <Route path="/story-analysis" component={StoryAnalysis} />
             <Route path="/analysis/:storyId" component={StoryAnalysis} />
             <Route path="/voice-setup" component={VoiceSetup} />
