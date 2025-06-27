@@ -167,6 +167,12 @@ export function VoiceRecordPage() {
               <CardDescription className="text-gray-400">
                 Your audio is processed for text extraction only and not stored permanently
               </CardDescription>
+              {/* Microphone troubleshooting hint */}
+              <div className="mt-2 p-3 bg-blue-900/20 border border-blue-500/30 rounded-lg">
+                <p className="text-xs text-blue-300">
+                  💡 If you can't hear your recording: Check your system microphone settings and make sure the microphone isn't muted
+                </p>
+              </div>
             </CardHeader>
             <CardContent className="space-y-6">
 

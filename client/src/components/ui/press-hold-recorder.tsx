@@ -64,8 +64,9 @@ export function PressHoldRecorder({
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ 
           audio: {
+            deviceId: 'communications', // Try communications microphone specifically
             echoCancellation: true,
-            noiseSuppression: true,
+            noiseSuppression: false, // Disable noise suppression to capture more audio
             autoGainControl: true
           }
         });
