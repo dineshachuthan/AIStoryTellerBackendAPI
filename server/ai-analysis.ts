@@ -310,14 +310,19 @@ export async function transcribeAudio(audioBuffer: Buffer): Promise<string> {
       const transcription = await openai.audio.transcriptions.create({
         file: audioReadStream,
         model: "whisper-1",
-        language: "en",
-        prompt: "This is a story or narrative being told. Please transcribe all spoken words accurately.", // Help Whisper understand context
+        // Removed prompt to get authentic transcription without fallback text
       });
 
       console.log("OpenAI Whisper transcription successful:");
       console.log("- Full API response:", JSON.stringify(transcription, null, 2));
       console.log("- Text length:", transcription.text.length);
       console.log("- Transcribed text:", JSON.stringify(transcription.text));
+      
+      // Check for poor quality transcription results
+      if (transcription.text.trim().length < 5) {
+        console.log("Warning: Very short transcription result, audio may be unclear or too quiet");
+        throw new Error("No clear speech was detected in your audio recording. Please ensure you speak clearly and loudly enough, and try again.");
+      }
       
       // Return the exact transcription without any defaults or modifications
       return transcription.text;
