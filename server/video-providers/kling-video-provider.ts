@@ -32,6 +32,8 @@ export class KlingVideoProvider implements IVideoProvider {
 
   private config: VideoProviderConfig | null = null;
   private initialized = false;
+  private cachedJwtToken?: string;
+  private tokenExpiryTime?: number;
 
   async initialize(config: VideoProviderConfig): Promise<void> {
     console.log('=== KLING PROVIDER INITIALIZE ===');
@@ -150,13 +152,8 @@ export class KlingVideoProvider implements IVideoProvider {
     }
 
     try {
-      // Create JWT Token for status check
-      const jwtToken = await JWTAuthUtil.generateJWTToken('kling', {
-        apiKey: this.config.apiKey!,
-        secretKey: this.config.secretKey!,
-        expirationMinutes: 30,
-        notBeforeSeconds: 5
-      });
+      // Use cached JWT Token for status check
+      const jwtToken = await this.getJWTToken();
 
       const response = await fetch(`${this.config.baseUrl}/v1/videos/text2video/${taskId}`, {
         headers: {
@@ -282,19 +279,39 @@ export class KlingVideoProvider implements IVideoProvider {
     return klingRequest;
   }
 
-  private async createVideoTask(request: any): Promise<any> {
-    console.log('=== CREATING VIDEO TASK ===');
-    const currentTime = Math.floor(Date.now() / 1000); // Unix timestamp in seconds
-    console.log('Current timestamp:', currentTime);
+  private async getJWTToken(): Promise<string> {
+    const currentTime = Math.floor(Date.now() / 1000);
     
-    // Create JWT Token for authentication using shared utility
-    const jwtToken = await JWTAuthUtil.generateJWTToken('kling', {
+    // Check if we have a valid cached token (expires 5 minutes before actual expiry)
+    if (this.cachedJwtToken && this.tokenExpiryTime && currentTime < (this.tokenExpiryTime - 300)) {
+      console.log('Using cached JWT token');
+      return this.cachedJwtToken;
+    }
+    
+    // Generate new token
+    console.log('Generating new JWT token...');
+    this.cachedJwtToken = await JWTAuthUtil.generateJWTToken('kling', {
       apiKey: this.config!.apiKey!,
       secretKey: this.config!.secretKey!,
       expirationMinutes: 30,
       notBeforeSeconds: 5
     });
-    console.log('JWT token generated, length:', jwtToken.length);
+    
+    // Cache expiry time (30 minutes from now)
+    this.tokenExpiryTime = currentTime + (30 * 60);
+    console.log('JWT token cached until:', new Date(this.tokenExpiryTime * 1000).toISOString());
+    
+    return this.cachedJwtToken;
+  }
+
+  private async createVideoTask(request: any): Promise<any> {
+    console.log('=== CREATING VIDEO TASK ===');
+    const currentTime = Math.floor(Date.now() / 1000); // Unix timestamp in seconds
+    console.log('Current timestamp:', currentTime);
+    
+    // Get JWT Token (cached or generate new)
+    const jwtToken = await this.getJWTToken();
+    console.log('Using JWT token, length:', jwtToken.length);
     
     const uri = '/v1/videos/text2video';
     const requestBody = JSON.stringify(request);
