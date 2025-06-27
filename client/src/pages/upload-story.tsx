@@ -133,7 +133,8 @@ export default function UploadStory() {
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
       <AppTopNavigation />
       
-      <div className="container mx-auto px-4 py-8">
+      {/* Proper top padding to account for fixed navigation */}
+      <div className="container mx-auto px-4 pt-20 pb-28">
         <div className="max-w-4xl mx-auto">
           <Card className="bg-white/10 backdrop-blur-lg border-white/20 text-white">
             <CardHeader>
@@ -155,7 +156,7 @@ export default function UploadStory() {
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-4">
               {/* Title Input */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-white">Story Title (Optional)</label>
@@ -174,7 +175,7 @@ export default function UploadStory() {
                   value={storyContent}
                   onChange={(e) => setStoryContent(e.target.value)}
                   placeholder="Write your story here... (500-1000 words recommended)"
-                  className="min-h-[400px] bg-white/10 border-white/20 text-white placeholder-white/50 resize-none"
+                  className="min-h-[300px] bg-white/10 border-white/20 text-white placeholder-white/50 resize-none"
                 />
                 <div className="flex justify-between text-sm text-white/60">
                   <span>Word count: {storyContent.trim() ? storyContent.trim().split(/\s+/).length : 0}</span>
@@ -182,19 +183,19 @@ export default function UploadStory() {
                 </div>
               </div>
               
-              {/* Story Status */}
+              {/* Compact Story Status */}
               {story && (
-                <div className="p-4 bg-green-500/20 border border-green-500/30 rounded-lg">
-                  <div className="flex items-center gap-2 text-green-400">
-                    <FileText className="w-4 h-4" />
-                    <span className="text-sm font-medium">Story: {story.title}</span>
-                  </div>
-                  <p className="text-xs text-green-300 mt-1">Status: {story.status || 'draft'}</p>
+                <div className="flex items-center gap-2 px-3 py-2 bg-green-500/10 border border-green-500/20 rounded-md">
+                  <FileText className="w-3 h-3 text-green-400" />
+                  <span className="text-sm text-green-300">{story.title}</span>
+                  <span className="text-xs text-green-400/70 ml-auto">
+                    {story.status === 'draft' ? 'Draft' : story.status || 'Draft'}
+                  </span>
                 </div>
               )}
               
               {/* Action Buttons */}
-              <div className="space-y-4 pt-6">
+              <div className="space-y-3 pt-4">
                 {storyId ? (
                   <div className="space-y-3">
                     {/* Step 1: Save content */}
@@ -202,7 +203,7 @@ export default function UploadStory() {
                       onClick={updateStoryContent}
                       disabled={!storyContent.trim() || storyLoading}
                       variant="outline"
-                      className="w-full border-white/20 text-white hover:bg-white/10"
+                      className="w-full border-white/20 text-white hover:bg-white/10 h-11"
                     >
                       <Upload className="w-4 h-4 mr-2" />
                       Save Content
@@ -212,7 +213,7 @@ export default function UploadStory() {
                     <Button
                       onClick={analyzeStory}
                       disabled={isAnalyzing || !storyContent.trim() || storyLoading}
-                      className="w-full bg-purple-600 hover:bg-purple-700"
+                      className="w-full bg-purple-600 hover:bg-purple-700 h-11"
                     >
                       {isAnalyzing ? (
                         <>
