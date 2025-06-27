@@ -943,6 +943,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No speech detected in audio file. Please try recording again with clear speech." });
       }
       
+      if (transcriptionText.trim().length < 10) {
+        return res.status(400).json({ 
+          message: `Very short transcription received: "${transcriptionText}". This might indicate the recording was too brief or unclear. Please try recording a longer, clearer message.`,
+          text: transcriptionText // Still return the text so user can see what was detected
+        });
+      }
+      
       console.log("Transcription completed, length:", transcriptionText.length);
       
       res.json({ 

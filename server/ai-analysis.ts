@@ -311,9 +311,18 @@ export async function transcribeAudio(audioBuffer: Buffer): Promise<string> {
         file: audioReadStream,
         model: "whisper-1",
         language: "en",
+        prompt: "This is a story or narrative being told. Please transcribe all spoken words accurately.", // Help Whisper understand context
       });
 
       console.log("Transcription successful, text length:", transcription.text.length);
+      console.log("Transcribed text:", transcription.text);
+      
+      // Check if transcription is too short (might indicate audio issues)
+      if (transcription.text.trim().length < 10) {
+        console.warn("Very short transcription received:", transcription.text);
+        console.warn("This might indicate audio quality issues or very brief recording");
+      }
+      
       return transcription.text;
     } finally {
       // Clean up temporary file

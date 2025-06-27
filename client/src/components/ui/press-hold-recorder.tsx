@@ -186,6 +186,11 @@ export function PressHoldRecorder({
           <p className="text-xs text-gray-500">
             Maximum recording time: {formatTime(maxRecordingTime)}
           </p>
+          {!isRecording && (
+            <p className="text-xs text-blue-400 mt-2">
+              💡 Tip: Speak clearly and record for at least 3-5 seconds for best results
+            </p>
+          )}
         </div>
 
         {/* Recording Progress (only show when recording) */}
@@ -195,6 +200,16 @@ export function PressHoldRecorder({
               {formatTime(recordingTime)} / {formatTime(maxRecordingTime)}
             </div>
             <Progress value={progressPercentage} className="w-full" />
+            {recordingTime < 3 && (
+              <p className="text-xs text-yellow-400 animate-pulse">
+                Keep recording for at least 3 seconds for good transcription...
+              </p>
+            )}
+            {recordingTime >= 3 && recordingTime < 10 && (
+              <p className="text-xs text-green-400">
+                Good! You can release now or continue for longer content.
+              </p>
+            )}
           </div>
         )}
       </div>
