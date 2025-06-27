@@ -174,58 +174,70 @@ export default function Home() {
           </div>
 
           {/* Quick Actions Overlay */}
-          <div className="absolute top-16 sm:top-20 left-0 right-0 z-40 p-2 sm:p-4">
+          <div className={`absolute ${styles.cardTopOffset} left-0 right-0 z-40 ${styles.containerPadding}`}>
             <Card className="bg-dark-card/90 backdrop-blur-lg border-gray-800">
-              <CardHeader className="pb-2 sm:pb-3 p-3 sm:p-6">
-                <CardTitle className="text-white flex items-center text-base sm:text-lg">
-                  <Users className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-tiktok-pink" />
+              <CardHeader className={`pb-2 ${styles.containerPadding}`}>
+                <CardTitle className={`text-white flex items-center ${windowDimensions.width < 640 ? 'text-sm' : windowDimensions.width < 1024 ? 'text-base' : 'text-lg'}`}>
+                  <Users className={`${windowDimensions.width < 640 ? 'w-3 h-3' : windowDimensions.width < 1024 ? 'w-4 h-4' : 'w-5 h-5'} mr-2 text-tiktok-pink`} />
                   Collaborative Storytelling
                 </CardTitle>
-                <CardDescription className="text-gray-text text-xs sm:text-sm">
+                <CardDescription className={`text-gray-text ${windowDimensions.width < 640 ? 'text-xs' : 'text-sm'}`}>
                   Create stories with friends where each person voices a unique character
                 </CardDescription>
               </CardHeader>
-              <CardContent className="pt-0 p-3 sm:p-6">
-                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
+              <CardContent className={`pt-0 ${styles.containerPadding}`}>
+                <div className={`grid ${styles.gridCols} gap-2 ${windowDimensions.width >= 768 ? 'sm:gap-3' : ''}`}>
                   <Button
                     onClick={() => createStoryAndNavigate("text", "/upload-story")}
                     disabled={isCreatingStory}
                     variant="outline"
-                    className="border-blue-500 text-blue-500 hover:bg-blue-500/20 h-16 sm:h-20 lg:h-24 p-2 sm:p-3 flex flex-col items-center justify-center space-y-1"
+                    className={`border-blue-500 text-blue-500 hover:bg-blue-500/20 ${styles.buttonSize} p-2 flex flex-col items-center justify-center space-y-1`}
                     size="sm"
                   >
-                    {isCreatingStory ? <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" /> : <PenTool className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />}
-                    <span className="text-xs sm:text-xs lg:text-sm text-center leading-tight break-words">Write Story</span>
+                    {isCreatingStory ? 
+                      <Loader2 className={`${windowDimensions.width < 640 ? 'w-3 h-3' : windowDimensions.width < 1024 ? 'w-4 h-4' : 'w-5 h-5'} animate-spin`} /> : 
+                      <PenTool className={`${windowDimensions.width < 640 ? 'w-3 h-3' : windowDimensions.width < 1024 ? 'w-4 h-4' : 'w-5 h-5'}`} />
+                    }
+                    <span className={`${styles.textSize} text-center leading-tight break-words`}>Write Story</span>
                   </Button>
                   <Button
                     onClick={() => createStoryAndNavigate("voice", "/voice-record")}
                     disabled={isCreatingStory}
                     variant="outline"
-                    className="border-green-500 text-green-500 hover:bg-green-500/20 h-16 sm:h-20 lg:h-24 p-2 sm:p-3 flex flex-col items-center justify-center space-y-1"
+                    className={`border-green-500 text-green-500 hover:bg-green-500/20 ${styles.buttonSize} p-2 flex flex-col items-center justify-center space-y-1`}
                     size="sm"
                   >
-                    {isCreatingStory ? <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" /> : <Mic className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />}
-                    <span className="text-xs sm:text-xs lg:text-sm text-center leading-tight break-words">Voice Record</span>
-                    <span className="text-xs opacity-70 leading-tight hidden sm:block">(5 min)</span>
+                    {isCreatingStory ? 
+                      <Loader2 className={`${windowDimensions.width < 640 ? 'w-3 h-3' : windowDimensions.width < 1024 ? 'w-4 h-4' : 'w-5 h-5'} animate-spin`} /> : 
+                      <Mic className={`${windowDimensions.width < 640 ? 'w-3 h-3' : windowDimensions.width < 1024 ? 'w-4 h-4' : 'w-5 h-5'}`} />
+                    }
+                    <span className={`${styles.textSize} text-center leading-tight break-words`}>Voice Record</span>
+                    {windowDimensions.width >= 640 && <span className="text-xs opacity-70 leading-tight">(5 min)</span>}
                   </Button>
                   <Button
                     onClick={() => createStoryAndNavigate("text", "/upload-story")}
                     disabled={isCreatingStory}
                     variant="outline"
-                    className="border-purple-500 text-purple-500 hover:bg-purple-500/20 h-16 sm:h-20 lg:h-24 p-2 sm:p-3 flex flex-col items-center justify-center space-y-1"
+                    className={`border-purple-500 text-purple-500 hover:bg-purple-500/20 ${styles.buttonSize} p-2 flex flex-col items-center justify-center space-y-1`}
                     size="sm"
                   >
-                    {isCreatingStory ? <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" /> : <FileText className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />}
-                    <span className="text-xs sm:text-xs lg:text-sm text-center leading-tight break-words">Upload Text</span>
+                    {isCreatingStory ? 
+                      <Loader2 className={`${windowDimensions.width < 640 ? 'w-3 h-3' : windowDimensions.width < 1024 ? 'w-4 h-4' : 'w-5 h-5'} animate-spin`} /> : 
+                      <FileText className={`${windowDimensions.width < 640 ? 'w-3 h-3' : windowDimensions.width < 1024 ? 'w-4 h-4' : 'w-5 h-5'}`} />
+                    }
+                    <span className={`${styles.textSize} text-center leading-tight break-words`}>Upload Text</span>
                   </Button>
                   <Button
                     onClick={() => createStoryAndNavigate("audio", "/upload-audio")}
                     disabled={isCreatingStory}
-                    className="bg-tiktok-red hover:bg-tiktok-red/80 h-16 sm:h-20 lg:h-24 p-2 sm:p-3 flex flex-col items-center justify-center space-y-1"
+                    className={`bg-tiktok-red hover:bg-tiktok-red/80 ${styles.buttonSize} p-2 flex flex-col items-center justify-center space-y-1`}
                     size="sm"
                   >
-                    {isCreatingStory ? <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" /> : <AudioLines className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />}
-                    <span className="text-xs sm:text-xs lg:text-sm text-center leading-tight break-words">Upload Audio</span>
+                    {isCreatingStory ? 
+                      <Loader2 className={`${windowDimensions.width < 640 ? 'w-3 h-3' : windowDimensions.width < 1024 ? 'w-4 h-4' : 'w-5 h-5'} animate-spin`} /> : 
+                      <AudioLines className={`${windowDimensions.width < 640 ? 'w-3 h-3' : windowDimensions.width < 1024 ? 'w-4 h-4' : 'w-5 h-5'}`} />
+                    }
+                    <span className={`${styles.textSize} text-center leading-tight break-words`}>Upload Audio</span>
                   </Button>
                 </div>
               </CardContent>
