@@ -140,41 +140,41 @@ export default function Home() {
                     onClick={() => createStoryAndNavigate("text", "/upload-story")}
                     disabled={isCreatingStory}
                     variant="outline"
-                    className="border-blue-500 text-blue-500 hover:bg-blue-500/20 h-auto p-3 flex flex-col items-center space-y-1"
+                    className="border-blue-500 text-blue-500 hover:bg-blue-500/20 h-20 p-3 flex flex-col items-center justify-center space-y-1"
                     size="sm"
                   >
-                    {isCreatingStory ? <Loader2 className="w-5 h-5 animate-spin" /> : <PenTool className="w-5 h-5" />}
-                    <span className="text-xs text-center">{defaultStoryConfig.writtenStory.label}</span>
+                    {isCreatingStory ? <Loader2 className="w-4 h-4 animate-spin" /> : <PenTool className="w-4 h-4" />}
+                    <span className="text-xs text-center leading-tight break-words">Write Story</span>
                   </Button>
                   <Button
                     onClick={() => createStoryAndNavigate("voice", "/voice-record")}
                     disabled={isCreatingStory}
                     variant="outline"
-                    className="border-green-500 text-green-500 hover:bg-green-500/20 h-auto p-3 flex flex-col items-center space-y-1"
+                    className="border-green-500 text-green-500 hover:bg-green-500/20 h-20 p-3 flex flex-col items-center justify-center space-y-1"
                     size="sm"
                   >
-                    {isCreatingStory ? <Loader2 className="w-5 h-5 animate-spin" /> : <Mic className="w-5 h-5" />}
-                    <span className="text-xs text-center">{defaultStoryConfig.voiceRecord.label}</span>
-                    <span className="text-xs opacity-70">({defaultStoryConfig.voiceRecord.maxDurationMinutes} min limit)</span>
+                    {isCreatingStory ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mic className="w-4 h-4" />}
+                    <span className="text-xs text-center leading-tight break-words">Voice Record</span>
+                    <span className="text-xs opacity-70 leading-tight">(5 min)</span>
                   </Button>
                   <Button
                     onClick={() => createStoryAndNavigate("text", "/upload-story")}
                     disabled={isCreatingStory}
                     variant="outline"
-                    className="border-purple-500 text-purple-500 hover:bg-purple-500/20 h-auto p-3 flex flex-col items-center space-y-1"
+                    className="border-purple-500 text-purple-500 hover:bg-purple-500/20 h-20 p-3 flex flex-col items-center justify-center space-y-1"
                     size="sm"
                   >
-                    {isCreatingStory ? <Loader2 className="w-5 h-5 animate-spin" /> : <FileText className="w-5 h-5" />}
-                    <span className="text-xs text-center">{defaultStoryConfig.uploadText.label}</span>
+                    {isCreatingStory ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
+                    <span className="text-xs text-center leading-tight break-words">Upload Text</span>
                   </Button>
                   <Button
                     onClick={() => createStoryAndNavigate("audio", "/upload-audio")}
                     disabled={isCreatingStory}
-                    className="bg-tiktok-red hover:bg-tiktok-red/80 h-auto p-3 flex flex-col items-center space-y-1"
+                    className="bg-tiktok-red hover:bg-tiktok-red/80 h-20 p-3 flex flex-col items-center justify-center space-y-1"
                     size="sm"
                   >
-                    {isCreatingStory ? <Loader2 className="w-5 h-5 animate-spin" /> : <AudioLines className="w-5 h-5" />}
-                    <span className="text-xs text-center">{defaultStoryConfig.uploadAudio.label}</span>
+                    {isCreatingStory ? <Loader2 className="w-4 h-4 animate-spin" /> : <AudioLines className="w-4 h-4" />}
+                    <span className="text-xs text-center leading-tight break-words">Upload Audio</span>
                   </Button>
                 </div>
               </CardContent>
