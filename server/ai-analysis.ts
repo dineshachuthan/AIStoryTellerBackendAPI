@@ -1,6 +1,36 @@
 import OpenAI from "openai";
 import { getCachedAnalysis, cacheAnalysis } from './content-cache';
 
+// Audio format detection based on file headers
+function detectAudioFormat(buffer: Buffer): string {
+  const header = buffer.subarray(0, 12);
+  
+  // Check for common audio format signatures
+  if (header.subarray(0, 4).toString() === 'RIFF' && header.subarray(8, 12).toString() === 'WAVE') {
+    return 'wav';
+  }
+  if (header.subarray(0, 3).toString() === 'ID3' || (header[0] === 0xFF && (header[1] & 0xE0) === 0xE0)) {
+    return 'mp3';
+  }
+  if (header.subarray(4, 8).toString() === 'ftyp') {
+    return 'm4a';
+  }
+  if (header.subarray(0, 4).toString() === 'OggS') {
+    return 'ogg';
+  }
+  if (header.subarray(0, 4).toString() === 'fLaC') {
+    return 'flac';
+  }
+  // WebM/Matroska container (can contain audio or video)
+  if (header.subarray(0, 4).equals(Buffer.from([0x1A, 0x45, 0xDF, 0xA3]))) {
+    return 'webm';
+  }
+  
+  // Default to wav if format can't be determined
+  console.log('Unknown audio format, defaulting to wav. Header:', header.toString('hex'));
+  return 'wav';
+}
+
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 if (!process.env.OPENAI_API_KEY) {
   throw new Error("OPENAI_API_KEY environment variable is required");
@@ -291,9 +321,10 @@ export async function transcribeAudio(audioBuffer: Buffer): Promise<string> {
     const path = await import('path');
     const os = await import('os');
     
-    // Create temporary file - OpenAI Whisper can handle various formats regardless of extension
-    const tempFilePath = path.join(os.tmpdir(), `audio_${Date.now()}.webm`);
-    console.log("Creating temporary file:", tempFilePath);
+    // Detect file format and use appropriate extension
+    const fileExtension = detectAudioFormat(audioBuffer);
+    const tempFilePath = path.join(os.tmpdir(), `audio_${Date.now()}.${fileExtension}`);
+    console.log("Creating temporary file:", tempFilePath, "Format detected:", fileExtension);
     
     await fs.promises.writeFile(tempFilePath, audioBuffer);
     console.log("Temporary file created successfully");
