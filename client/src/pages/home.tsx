@@ -214,19 +214,7 @@ export default function Home() {
                     <span className={`${styles.textSize} text-center leading-tight break-words`}>Voice Record</span>
                     {windowDimensions.width >= 640 && <span className="text-xs opacity-70 leading-tight">(5 min)</span>}
                   </Button>
-                  <Button
-                    onClick={() => createStoryAndNavigate("text", "/upload-story")}
-                    disabled={isCreatingStory}
-                    variant="outline"
-                    className={`border-purple-500 text-purple-500 hover:bg-purple-500/20 ${styles.buttonSize} p-2 flex flex-col items-center justify-center space-y-1`}
-                    size="sm"
-                  >
-                    {isCreatingStory ? 
-                      <Loader2 className={`${windowDimensions.width < 640 ? 'w-3 h-3' : windowDimensions.width < 1024 ? 'w-4 h-4' : 'w-5 h-5'} animate-spin`} /> : 
-                      <FileText className={`${windowDimensions.width < 640 ? 'w-3 h-3' : windowDimensions.width < 1024 ? 'w-4 h-4' : 'w-5 h-5'}`} />
-                    }
-                    <span className={`${styles.textSize} text-center leading-tight break-words`}>Upload Text</span>
-                  </Button>
+
                   <Button
                     onClick={() => createStoryAndNavigate("audio", "/upload-audio")}
                     disabled={isCreatingStory}
