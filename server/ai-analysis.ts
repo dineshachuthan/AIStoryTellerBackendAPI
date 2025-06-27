@@ -315,6 +315,7 @@ export async function transcribeAudio(audioBuffer: Buffer): Promise<string> {
       });
 
       console.log("OpenAI Whisper transcription successful:");
+      console.log("- Full API response:", JSON.stringify(transcription, null, 2));
       console.log("- Text length:", transcription.text.length);
       console.log("- Transcribed text:", JSON.stringify(transcription.text));
       
