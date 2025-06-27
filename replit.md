@@ -127,6 +127,13 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Priority**: Medium (requested but deferred for future implementation)
 
 ## Changelog
+- June 27, 2025: Created shared press-and-hold recording component for consistent user experience
+  - Built reusable PressHoldRecorder component with customizable button text and recording duration
+  - Unified recording interaction pattern across voice recording and character voice sample collection
+  - Component supports both mouse and touch events for mobile/desktop compatibility
+  - Maintains different behaviors: story recording transcribes to text, character voices store permanently
+  - Recording pattern: press and hold button → start recording after 300ms → release to stop
+  - Enhanced with visual feedback (color changes, progress bars, file size indicators)
 - June 27, 2025: Implemented modular audio processing workflow with dedicated intermediate screens
   - Created separate voice recording page (/voice-record) with 5-minute recording capability and privacy notice
   - Created separate audio upload page (/upload-audio) with drag-and-drop support for MP3, WAV, M4A, OGG, WebM files

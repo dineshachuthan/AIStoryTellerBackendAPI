@@ -3,34 +3,23 @@ import { useLocation } from "wouter";
 import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Mic, MicOff, Play, Pause, RotateCcw, ArrowRight, Shield } from "lucide-react";
+import { Play, Pause, RotateCcw, ArrowRight, Shield } from "lucide-react";
+import { PressHoldRecorder } from "@/components/ui/press-hold-recorder";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 export function VoiceRecordPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const [isRecording, setIsRecording] = useState(false);
-  const [isHolding, setIsHolding] = useState(false);
-  const [recordingTime, setRecordingTime] = useState(0);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const holdTimerRef = useRef<NodeJS.Timeout | null>(null);
   const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
-
-  const MAX_RECORDING_TIME = 300; // 5 minutes in seconds
 
   // Clean up on unmount
   useEffect(() => {
     return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-      if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
       if (audioUrl) URL.revokeObjectURL(audioUrl);
       if (audioPlayerRef.current) {
         audioPlayerRef.current.pause();
@@ -44,316 +33,223 @@ export function VoiceRecordPage() {
       const formData = new FormData();
       formData.append('audio', audioBlob, 'recording.webm');
       
-      const response = await apiRequest("POST", "/api/audio/transcribe", formData);
+      const response = await apiRequest('/api/audio/transcribe', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to transcribe audio');
+      }
+
       return await response.json();
     },
     onSuccess: (data) => {
-      // Navigate to upload-story with the transcribed content
-      const storyId = sessionStorage.getItem('currentStoryId');
-      if (storyId && data.text) {
-        sessionStorage.setItem('extractedContent', data.text);
-        setLocation(`/upload-story?id=${storyId}&source=voice`);
-      } else {
-        toast({
-          title: "Error",
-          description: "Failed to process the recorded audio. Please try again.",
-          variant: "destructive",
-        });
-      }
-    },
-    onError: (error) => {
-      console.error('Transcription error:', error);
+      sessionStorage.setItem('uploadedStoryContent', data.text);
       toast({
-        title: "Error",
-        description: "Failed to transcribe audio. Please try again.",
+        title: "Audio Transcribed!",
+        description: `Text extracted successfully. Redirecting to story creation...`,
+      });
+      
+      setTimeout(() => {
+        setLocation('/upload-story');
+      }, 1500);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Transcription Failed",
+        description: error.message || "Could not convert audio to text. Please try again.",
         variant: "destructive",
       });
     },
   });
 
-  const startHoldTimer = () => {
-    setIsHolding(true);
-    
-    // Start recording after a brief hold delay (300ms)
-    holdTimerRef.current = setTimeout(async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        const mediaRecorder = new MediaRecorder(stream);
-        mediaRecorderRef.current = mediaRecorder;
-        audioChunksRef.current = [];
-
-        mediaRecorder.ondataavailable = (event) => {
-          if (event.data.size > 0) {
-            audioChunksRef.current.push(event.data);
-          }
-        };
-
-        mediaRecorder.onstop = () => {
-          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-          setAudioBlob(audioBlob);
-          const url = URL.createObjectURL(audioBlob);
-          setAudioUrl(url);
-          
-          // Clean up stream
-          stream.getTracks().forEach(track => track.stop());
-        };
-
-        mediaRecorder.start();
-        setIsRecording(true);
-        setRecordingTime(0);
-
-        // Start timer
-        timerRef.current = setInterval(() => {
-          setRecordingTime(prev => {
-            if (prev >= MAX_RECORDING_TIME) {
-              stopRecording();
-              return prev;
-            }
-            return prev + 1;
-          });
-        }, 1000);
-
-        toast({
-          title: "Recording Started",
-          description: "Keep holding the button while speaking. Release to stop.",
-        });
-      } catch (error) {
-        console.error('Error starting recording:', error);
-        setIsHolding(false);
-        toast({
-          title: "Error",
-          description: "Could not access microphone. Please check your permissions.",
-          variant: "destructive",
-        });
-      }
-    }, 300);
-  };
-
-  const stopRecording = () => {
-    if (holdTimerRef.current) {
-      clearTimeout(holdTimerRef.current);
-    }
-    
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-      if (timerRef.current) clearInterval(timerRef.current);
-    }
-    
-    setIsHolding(false);
-  };
-
-  const resetRecording = () => {
-    if (audioUrl) URL.revokeObjectURL(audioUrl);
-    setAudioBlob(null);
-    setAudioUrl(null);
-    setRecordingTime(0);
-    setIsPlaying(false);
-    if (audioPlayerRef.current) {
-      audioPlayerRef.current.pause();
-      audioPlayerRef.current = null;
-    }
+  const handleRecordingComplete = (audioBlob: Blob, audioUrl: string) => {
+    setAudioBlob(audioBlob);
+    setAudioUrl(audioUrl);
   };
 
   const togglePlayback = () => {
     if (!audioUrl) return;
-
-    if (isPlaying) {
-      audioPlayerRef.current?.pause();
-      setIsPlaying(false);
-    } else {
-      if (!audioPlayerRef.current) {
-        audioPlayerRef.current = new Audio(audioUrl);
-        audioPlayerRef.current.onended = () => setIsPlaying(false);
+    
+    if (audioPlayerRef.current) {
+      if (isPlaying) {
+        audioPlayerRef.current.pause();
+        setIsPlaying(false);
+      } else {
+        audioPlayerRef.current.play();
+        setIsPlaying(true);
       }
-      audioPlayerRef.current.play();
+    } else {
+      const audio = new Audio(audioUrl);
+      audioPlayerRef.current = audio;
+      audio.onended = () => setIsPlaying(false);
+      audio.play();
       setIsPlaying(true);
     }
   };
 
-  const processRecording = () => {
+  const resetRecording = () => {
+    if (audioUrl) {
+      URL.revokeObjectURL(audioUrl);
+    }
+    if (audioPlayerRef.current) {
+      audioPlayerRef.current.pause();
+      audioPlayerRef.current = null;
+    }
+    setAudioBlob(null);
+    setAudioUrl(null);
+    setIsPlaying(false);
+  };
+
+  const processAudio = () => {
     if (audioBlob) {
       transcribeMutation.mutate(audioBlob);
     }
   };
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const progressPercentage = (recordingTime / MAX_RECORDING_TIME) * 100;
-
   return (
-    <div className="min-h-screen bg-dark-bg text-white p-4">
-      <div className="max-w-2xl mx-auto">
-        <Card className="bg-dark-card border-gray-800">
-          <CardHeader>
-            <CardTitle className="text-2xl text-center">Voice Recording</CardTitle>
-            <CardDescription className="text-center text-gray-400">
-              Record your story and we'll convert it to text automatically
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+      <div className="container mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <Button
+            onClick={() => setLocation('/')}
+            variant="ghost"
+            className="absolute top-4 left-4 text-white hover:bg-white/10"
+          >
+            ← Back to Home
+          </Button>
+
+          <h1 className="text-4xl font-bold text-white mb-2">
+            Voice Record Story
+          </h1>
+          <p className="text-gray-300 text-lg">
+            Record your story using voice, then convert it to text
+          </p>
+        </div>
+
+        <div className="max-w-2xl mx-auto">
+          <Card className="bg-gray-900/50 border-gray-700 backdrop-blur-sm">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-2">
+                <Shield className="w-5 h-5" />
+                Voice Recording
+              </CardTitle>
+              <CardDescription className="text-gray-400">
+                Your audio is processed for text extraction only and not stored permanently
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+
+            {/* Recording Section */}
+            {!audioBlob && (
+              <PressHoldRecorder
+                onRecordingComplete={handleRecordingComplete}
+                maxRecordingTime={300}
+                buttonText={{
+                  hold: "Hold",
+                  recording: "Release",
+                  instructions: "Press and hold to record your story"
+                }}
+              />
+            )}
+
+            {audioBlob && (
+              <div className="space-y-4">
+                {/* Audio File Info */}
+                <div className="bg-gray-800/50 rounded-lg p-4">
+                  <h4 className="text-sm font-medium mb-2 text-center">Recording Complete</h4>
+                  <div className="flex justify-center items-center space-x-4 text-sm text-gray-300">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span>Size: {formatFileSize(audioBlob.size)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Audio Preview Section */}
+                <div className="bg-gray-800/30 rounded-lg p-4">
+                  <h4 className="text-sm font-medium mb-3 text-center">Audio Preview</h4>
+                  <div className="flex justify-center space-x-4 mb-3">
+                    <Button 
+                      onClick={togglePlayback}
+                      variant="outline"
+                      className="border-blue-500 text-blue-500 hover:bg-blue-500/20"
+                      size="sm"
+                    >
+                      {isPlaying ? <Pause className="w-4 h-4 mr-2" /> : <Play className="w-4 h-4 mr-2" />}
+                      {isPlaying ? 'Pause Preview' : 'Play Preview'}
+                    </Button>
+                  </div>
+                  
+                  {/* Audio quality indicator */}
+                  <div className="text-center">
+                    {audioBlob.size < 10000 && (
+                      <div className="text-yellow-400 text-xs bg-yellow-400/10 rounded px-2 py-1 inline-block mb-2">
+                        ⚠️ Recording seems very short - ensure it contains clear speech
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex space-x-3">
+                  <Button 
+                    onClick={resetRecording}
+                    variant="outline"
+                    className="border-gray-500 text-gray-500 hover:bg-gray-500/20 flex-1"
+                  >
+                    <RotateCcw className="w-4 h-4 mr-2" />
+                    Record Again
+                  </Button>
+                  <Button 
+                    onClick={processAudio}
+                    disabled={transcribeMutation.isPending}
+                    className="bg-tiktok-red hover:bg-tiktok-red/80 flex-1"
+                  >
+                    {transcribeMutation.isPending ? (
+                      <>Processing...</>
+                    ) : (
+                      <>
+                        Convert to Text
+                        <ArrowRight className="w-4 h-4 ml-2" />
+                      </>
+                    )}
+                  </Button>
+                </div>
+
+                {/* Instructions */}
+                <div className="text-xs text-gray-500 text-center bg-blue-500/10 rounded p-3">
+                  <strong>Before converting:</strong> Please play the preview to ensure your recording contains clear speech. 
+                  If it sounds unclear or silent, record again for better results.
+                </div>
+              </div>
+            )}
+
             {/* Privacy Notice */}
-            <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
-              <div className="flex items-start space-x-3">
-                <Shield className="w-5 h-5 text-blue-400 mt-0.5" />
-                <div>
-                  <h4 className="text-blue-400 font-medium">Privacy Notice</h4>
-                  <p className="text-sm text-gray-300 mt-1">
-                    Your audio recording is processed for text extraction only and is not stored on our servers. 
-                    The audio data is discarded immediately after conversion.
-                  </p>
+            <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 text-sm">
+              <div className="flex items-start space-x-2">
+                <Shield className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
+                <div className="text-blue-200">
+                  <strong>Privacy Notice:</strong> Your voice recordings are processed temporarily to extract text content. 
+                  Audio files are automatically deleted after processing and are never stored permanently on our servers.
                 </div>
               </div>
             </div>
 
-            {/* Press and Hold Recording Button */}
-            <div className="text-center space-y-4">
-              {!audioBlob && (
-                <div className="space-y-4">
-                  <Button
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      if (!isHolding && !isRecording) {
-                        startHoldTimer();
-                      }
-                    }}
-                    onMouseUp={(e) => {
-                      e.preventDefault();
-                      stopRecording();
-                    }}
-                    onMouseLeave={(e) => {
-                      e.preventDefault();
-                      stopRecording();
-                    }}
-                    onTouchStart={(e) => {
-                      e.preventDefault();
-                      if (!isHolding && !isRecording) {
-                        startHoldTimer();
-                      }
-                    }}
-                    onTouchEnd={(e) => {
-                      e.preventDefault();
-                      stopRecording();
-                    }}
-                    onContextMenu={(e) => e.preventDefault()}
-                    className={`h-20 w-20 rounded-full text-white font-semibold transition-all ${
-                      isRecording 
-                        ? 'bg-red-600 hover:bg-red-700 animate-pulse' 
-                        : isHolding
-                        ? 'bg-yellow-600 hover:bg-yellow-700'
-                        : 'bg-green-600 hover:bg-green-700'
-                    }`}
-                    size="lg"
-                  >
-                    {isRecording ? (
-                      <div className="flex flex-col items-center">
-                        <MicOff className="w-8 h-8 mb-1" />
-                        <span className="text-xs">Release</span>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center">
-                        <Mic className="w-8 h-8 mb-1" />
-                        <span className="text-xs">Hold</span>
-                      </div>
-                    )}
-                  </Button>
-
-                  {/* Instructions */}
-                  <div className="text-sm text-gray-300 space-y-1">
-                    <p className="font-medium">
-                      {isRecording ? "🎙️ Recording... Release to stop" : "Press and hold to record your story"}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      Maximum recording time: 5 minutes
-                    </p>
-                  </div>
-
-                  {/* Recording Progress (only show when recording) */}
-                  {isRecording && (
-                    <div className="space-y-2">
-                      <div className="text-lg font-mono text-red-400">
-                        {formatTime(recordingTime)} / {formatTime(MAX_RECORDING_TIME)}
-                      </div>
-                      <Progress value={progressPercentage} className="w-full" />
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {audioBlob && !isRecording && (
-                <div className="space-y-4">
-                  {/* Audio Preview Section */}
-                  <div className="bg-gray-800/30 rounded-lg p-4">
-                    <h4 className="text-sm font-medium mb-3 text-center">Recording Preview</h4>
-                    <div className="flex items-center justify-center space-x-4 mb-3">
-                      <Button 
-                        onClick={togglePlayback}
-                        variant="outline"
-                        className="border-blue-500 text-blue-500 hover:bg-blue-500/20"
-                        size="sm"
-                      >
-                        {isPlaying ? <Pause className="w-4 h-4 mr-2" /> : <Play className="w-4 h-4 mr-2" />}
-                        {isPlaying ? 'Pause Preview' : 'Play Preview'}
-                      </Button>
-                      <div className="text-sm text-gray-400">
-                        Duration: {formatTime(recordingTime)}
-                      </div>
-                    </div>
-                    
-                    {/* Audio quality indicator */}
-                    <div className="text-center">
-                      <div className="text-xs text-gray-500 mb-2">
-                        File size: {Math.round(audioBlob.size / 1024)} KB
-                      </div>
-                      {audioBlob.size < 1000 && (
-                        <div className="text-yellow-400 text-xs bg-yellow-400/10 rounded px-2 py-1 inline-block">
-                          ⚠️ Recording seems very short - ensure you spoke clearly
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex space-x-3">
-                    <Button 
-                      onClick={resetRecording}
-                      variant="outline"
-                      className="border-gray-500 text-gray-500 hover:bg-gray-500/20 flex-1"
-                    >
-                      <RotateCcw className="w-4 h-4 mr-2" />
-                      Record Again
-                    </Button>
-                    <Button 
-                      onClick={processRecording}
-                      disabled={transcribeMutation.isPending}
-                      className="bg-tiktok-red hover:bg-tiktok-red/80 flex-1"
-                    >
-                      {transcribeMutation.isPending ? (
-                        <>Processing...</>
-                      ) : (
-                        <>
-                          Convert to Text
-                          <ArrowRight className="w-4 h-4 ml-2" />
-                        </>
-                      )}
-                    </Button>
-                  </div>
-
-                  {/* Instructions */}
-                  <div className="text-xs text-gray-500 text-center bg-blue-500/10 rounded p-3">
-                    <strong>Before converting:</strong> Please play the preview to ensure your recording captured clearly. 
-                    If it sounds unclear or empty, record again for better results.
-                  </div>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
