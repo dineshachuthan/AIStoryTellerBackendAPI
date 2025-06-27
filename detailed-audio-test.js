@@ -4,37 +4,49 @@
 import fs from 'fs';
 import path from 'path';
 
-async function analyzeAudioFiles() {
-  console.log('=== Detailed Audio Analysis ===\n');
-  
-  const uploadsDir = './uploads';
-  if (!fs.existsSync(uploadsDir)) {
-    console.log('No uploads directory found');
-    return;
-  }
-  
-  // Find all audio files
-  const findAudioFiles = (dir, files = []) => {
-    const items = fs.readdirSync(dir);
-    for (const item of items) {
-      const fullPath = path.join(dir, item);
-      const stat = fs.statSync(fullPath);
-      
-      if (stat.isDirectory()) {
-        findAudioFiles(fullPath, files);
-      } else if (item.match(/\.(wav|webm|mp3|m4a|ogg|flac)$/i)) {
-        files.push(fullPath);
+// Find all audio files
+const findAudioFiles = (dir, files = []) => {
+    try {
+      const items = fs.readdirSync(dir);
+      for (const item of items) {
+        const fullPath = path.join(dir, item);
+        const stat = fs.statSync(fullPath);
+        
+        if (stat.isDirectory()) {
+          findAudioFiles(fullPath, files);
+        } else if (item.match(/\.(wav|webm|mp3|m4a|ogg|flac)$/i)) {
+          files.push(fullPath);
+        }
       }
+    } catch (error) {
+      console.log(`Error reading directory ${dir}: ${error.message}`);
     }
     return files;
   };
+
+async function analyzeAudioFiles() {
+  console.log('=== Detailed Audio Analysis ===\n');
   
-  const audioFiles = findAudioFiles(uploadsDir);
-  console.log(`Found ${audioFiles.length} audio files:`);
+  // Check multiple locations for audio files
+  const searchDirs = ['./uploads', '/tmp'];
+  let allAudioFiles = [];
+  
+  for (const dir of searchDirs) {
+    console.log(`Checking directory: ${dir}`);
+    if (fs.existsSync(dir)) {
+      const files = findAudioFiles(dir);
+      console.log(`Found ${files.length} audio files in ${dir}`);
+      allAudioFiles = allAudioFiles.concat(files);
+    } else {
+      console.log(`Directory ${dir} does not exist`);
+    }
+  }
+  
+  console.log(`\nTotal audio files found: ${allAudioFiles.length}`);
   
   const { transcribeAudio } = await import('./server/ai-analysis.ts');
   
-  for (const audioFile of audioFiles) {
+  for (const audioFile of allAudioFiles) {
     console.log(`\n--- Analyzing: ${audioFile} ---`);
     
     const stat = fs.statSync(audioFile);
