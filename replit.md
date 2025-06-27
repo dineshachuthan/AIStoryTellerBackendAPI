@@ -127,6 +127,13 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Priority**: Medium (requested but deferred for future implementation)
 
 ## Changelog
+- June 27, 2025: Implemented efficient callback-based video generation system
+  - Replaced inefficient polling with webhook callbacks for instant completion notifications
+  - Added VideoCallbackManager with 120-second timeout and friendly error messages
+  - Integrated callback URL parameter in Kling API requests for webhook notifications
+  - Enhanced user experience with immediate responses instead of polling delays
+  - Reduced API calls and server resource usage through webhook-based architecture
+  - System now waits for Kling completion webhooks instead of constant status checks
 - June 27, 2025: Eliminated architectural violations and implemented proper JWT caching
   - Removed duplicate Kling provider (kling-provider.ts) that violated single responsibility principle
   - Eliminated all hardcoded base URLs and model names - now sourced from video-config.ts only

@@ -147,13 +147,13 @@ export class KlingVideoProvider implements IVideoProvider {
           status: 'completed',
           videoUrl: result.videoUrl,
           thumbnailUrl: result.thumbnailUrl,
-          duration: result.duration,
           estimatedCompletion: new Date(),
           metadata: {
             provider: this.name,
             model: this.config!.modelName || 'kling-v1',
             mode: request.quality,
-            completionMethod: 'webhook'
+            completionMethod: 'webhook',
+            duration: result.duration
           }
         };
         
@@ -162,7 +162,7 @@ export class KlingVideoProvider implements IVideoProvider {
         
         // Return timeout error with friendly message
         throw new VideoProviderException(
-          VideoProviderError.TIMEOUT,
+          VideoProviderError.NETWORK_ERROR,
           timeoutError.message || 'Video generation timed out after 2 minutes. This usually means the video is taking longer than expected to process. Please try again in a few minutes.',
           this.name
         );
@@ -315,16 +315,21 @@ export class KlingVideoProvider implements IVideoProvider {
     // Map standard quality to std for Kling API
     const klingMode = (request.quality === 'pro') ? 'pro' : 'std';
     
+    // Generate callback URL for webhook notifications
+    const baseUrl = process.env.REPLIT_DOMAIN ? `https://${process.env.REPLIT_DOMAIN}` : 'http://localhost:3000';
+    const callbackUrl = `${baseUrl}/api/webhooks/kling/video-complete`;
+    
     // Kling API doesn't support duration parameter - use their default length
     const klingRequest = {
       model: this.config!.modelName || 'kling-v1',
       prompt: this.sanitizePrompt(request.prompt),
       aspect_ratio: request.aspectRatio || '16:9',
-      mode: klingMode
+      mode: klingMode,
+      callback_url: callbackUrl // Tell Kling where to send completion notification
       // No duration parameter - Kling uses their default (~5 seconds)
     };
     
-    console.log('Prepared Kling request with 20-second duration:', klingRequest);
+    console.log(`Prepared Kling request with callback URL: ${callbackUrl}`);
     return klingRequest;
   }
 
