@@ -64,8 +64,13 @@ export default function UploadStory() {
       sessionStorage.removeItem('extractedContent');
       sessionStorage.removeItem('uploadedStoryContent');
       
-      // Don't show duplicate toast - the voice recording page already shows success
-      console.log('Session storage content loaded successfully');
+      // Show success message for audio upload flow only (not voice recording)
+      if (!sourceType || sourceType === 'upload') {
+        toast({
+          title: "Audio Processed Successfully",
+          description: `Your audio has been converted to text (${content.length} characters) and is ready for editing.`,
+        });
+      }
     } else {
       console.log('No content found in session storage');
     }
