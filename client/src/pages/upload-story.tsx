@@ -49,20 +49,31 @@ export default function UploadStory() {
 
   // Handle extracted content from audio processing
   useEffect(() => {
+    console.log('Checking session storage for audio content...');
+    // Check both session storage keys for compatibility
     const extractedContent = sessionStorage.getItem('extractedContent');
-    if (extractedContent && (sourceType === 'voice' || sourceType === 'upload')) {
-      setStoryContent(extractedContent);
-      // Clear the extracted content from session storage after using it
+    const uploadedContent = sessionStorage.getItem('uploadedStoryContent');
+    
+    console.log('extractedContent:', extractedContent);
+    console.log('uploadedStoryContent:', uploadedContent);
+    
+    const content = extractedContent || uploadedContent;
+    if (content) {
+      console.log('Found audio content, setting story content:', content);
+      setStoryContent(content);
+      // Clear both possible session storage keys after using them
       sessionStorage.removeItem('extractedContent');
+      sessionStorage.removeItem('uploadedStoryContent');
       
-      // Show success message based on source
-      const sourceLabel = sourceType === 'voice' ? 'voice recording' : 'audio file';
+      // Show success message
       toast({
         title: "Audio Processed Successfully",
-        description: `Your ${sourceLabel} has been converted to text and is ready for editing.`,
+        description: `Your audio has been converted to text and is ready for editing.`,
       });
+    } else {
+      console.log('No audio content found in session storage');
     }
-  }, [sourceType, toast]);
+  }, [toast]);
 
   // Update story content
   async function updateStoryContent() {
