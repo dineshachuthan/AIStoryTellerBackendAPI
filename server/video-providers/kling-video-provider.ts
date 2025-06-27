@@ -58,7 +58,7 @@ export class KlingVideoProvider implements IVideoProvider {
     }
 
     this.config = {
-      baseUrl: 'https://api-singapore.klingai.com',
+      baseUrl: 'https://api.klingai.com',
       timeout: 120000,
       retryCount: 2,
       maxDuration: 20,
