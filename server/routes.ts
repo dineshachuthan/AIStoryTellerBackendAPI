@@ -21,6 +21,7 @@ import { storyNarrator } from "./story-narrator";
 import { grandmaVoiceNarrator } from "./voice-narrator";
 import { getEnvironment, getBaseUrl, getOAuthConfig } from "./oauth-config";
 import { videoGenerationService } from "./video-generation-service";
+import { setupVideoWebhooks } from "./video-webhook-handler";
 
 import multer from "multer";
 import path from "path";
@@ -3584,6 +3585,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+
+  // Setup video webhook handlers for callback-based notifications
+  setupVideoWebhooks(app);
 
   const httpServer = createServer(app);
   return httpServer;
