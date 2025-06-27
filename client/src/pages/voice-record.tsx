@@ -33,7 +33,7 @@ export function VoiceRecordPage() {
       const formData = new FormData();
       formData.append('audio', audioBlob, 'recording.webm');
       
-      const response = await apiRequest('/api/audio/transcribe', {
+      const response = await fetch('/api/audio/transcribe', {
         method: 'POST',
         body: formData,
       });

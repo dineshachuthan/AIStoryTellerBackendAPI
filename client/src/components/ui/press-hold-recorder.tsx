@@ -96,10 +96,8 @@ export function PressHoldRecorder({
           });
         }, 1000);
 
-        toast({
-          title: "Recording Started",
-          description: "Keep holding the button while speaking. Release to stop.",
-        });
+        // Don't show popup toast during recording - it's annoying
+        // Visual feedback is provided by button color change and progress bar
       } catch (error) {
         console.error('Error starting recording:', error);
         setIsHolding(false);
