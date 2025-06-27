@@ -283,19 +283,29 @@ export async function generateCharacterImage(character: ExtractedCharacter, stor
 }
 
 export async function transcribeAudio(audioBuffer: Buffer): Promise<string> {
+  console.log("Starting audio transcription, buffer size:", audioBuffer.length);
+  
   try {
     // Convert buffer to a stream for OpenAI API
     const fs = await import('fs');
     const path = await import('path');
     const os = await import('os');
     
-    // Create temporary file
-    const tempFilePath = path.join(os.tmpdir(), `audio_${Date.now()}.webm`);
+    // Create temporary file with proper extension
+    const tempFilePath = path.join(os.tmpdir(), `audio_${Date.now()}.wav`);
+    console.log("Creating temporary file:", tempFilePath);
+    
     await fs.promises.writeFile(tempFilePath, audioBuffer);
+    console.log("Temporary file created successfully");
     
     try {
+      // Verify file exists and has content
+      const stats = await fs.promises.stat(tempFilePath);
+      console.log("Temp file stats:", { size: stats.size, path: tempFilePath });
+      
       // Create a readable stream from the file
       const audioReadStream = fs.createReadStream(tempFilePath);
+      console.log("Created read stream, calling OpenAI API...");
       
       const transcription = await openai.audio.transcriptions.create({
         file: audioReadStream,
@@ -303,18 +313,24 @@ export async function transcribeAudio(audioBuffer: Buffer): Promise<string> {
         language: "en",
       });
 
+      console.log("Transcription successful, text length:", transcription.text.length);
       return transcription.text;
     } finally {
       // Clean up temporary file
       try {
         await fs.promises.unlink(tempFilePath);
+        console.log("Temporary file cleaned up");
       } catch (cleanupError) {
         console.warn("Failed to clean up temp file:", cleanupError);
       }
     }
   } catch (error) {
-    console.error("Audio transcription error:", error);
-    throw new Error("Failed to transcribe audio");
+    console.error("Audio transcription error details:", {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      errorObject: error
+    });
+    throw new Error(`Failed to transcribe audio: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 
