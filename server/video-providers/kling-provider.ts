@@ -154,7 +154,7 @@ export class KlingProvider extends BaseVideoProvider {
     });
 
     const endpoint = '/v1/videos/text2video';
-    const baseUrl = 'https://api-singapore.klingai.com';
+    const baseUrl = this.config.baseUrl;
     
     console.log(`Calling Kling API: ${baseUrl}${endpoint}`);
     

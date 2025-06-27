@@ -127,12 +127,12 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Priority**: Medium (requested but deferred for future implementation)
 
 ## Changelog
-- June 27, 2025: Fixed backend polling timeout and API endpoint consistency issues
-  - Resolved critical API endpoint mismatch (api.klingai.com vs api-singapore.klingai.com)
+- June 27, 2025: Fixed backend polling timeout and preserved plug-and-play architecture
+  - Corrected endpoints to use config-based URLs instead of hardcoded values
   - Synchronized backend polling timeout (2 minutes) to match frontend timeout
   - Backend now stops polling when frontend times out, preventing resource waste
   - Enhanced timeout messages for better user experience
-  - All configurations now use consistent api-singapore.klingai.com endpoint
+  - Maintained plug-and-play architecture principle - all endpoints come from video-config.ts
 - June 26, 2025: Identified and resolved Kling API duration parameter and timeout issues
   - Fixed authentication in video status endpoint to use requireAuth middleware
   - Discovered Kling API doesn't support custom duration parameters (20s, 10s both invalid)
