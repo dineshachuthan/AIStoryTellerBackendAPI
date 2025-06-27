@@ -98,7 +98,7 @@ export function StorySearchPanel({
         )}
 
         {!isCollapsed && (
-          <div className="flex-1 p-2 sm:p-4 space-y-3 sm:space-y-4 overflow-y-auto">
+          <div className="flex-1 p-2 sm:p-4 space-y-3 sm:space-y-4 overflow-y-auto pb-20 sm:pb-24">
             <div className="flex items-center space-x-2">
               <Book className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-tiktok-red" />
               <h1 className="text-base sm:text-lg lg:text-xl font-bold text-white">Story Library</h1>
