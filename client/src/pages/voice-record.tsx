@@ -68,13 +68,26 @@ export function VoiceRecordPage() {
       const audio = new Audio(audioUrl);
       audioPlayerRef.current = audio;
       
+      // Set volume to maximum to ensure audibility
+      audio.volume = 1.0;
+      
+      // Add detailed debugging for audio properties
+      audio.onloadedmetadata = () => {
+        console.log('Audio metadata loaded:', {
+          duration: audio.duration,
+          volume: audio.volume,
+          muted: audio.muted,
+          readyState: audio.readyState
+        });
+      };
+      
       audio.onended = () => {
         setIsPlaying(false);
         console.log('Audio playback ended');
       };
       
       audio.onerror = (error) => {
-        console.error('Audio error:', error);
+        console.error('Audio error:', error, audio.error);
         setIsPlaying(false);
       };
       
@@ -195,6 +208,23 @@ export function VoiceRecordPage() {
                     >
                       {isPlaying ? <Pause className="w-4 h-4 mr-2" /> : <Play className="w-4 h-4 mr-2" />}
                       {isPlaying ? 'Pause Preview' : 'Play Preview'}
+                    </Button>
+                    <Button 
+                      onClick={() => {
+                        // Test browser audio with a simple beep
+                        const audioContext = new AudioContext();
+                        const oscillator = audioContext.createOscillator();
+                        oscillator.connect(audioContext.destination);
+                        oscillator.frequency.value = 800;
+                        oscillator.start();
+                        oscillator.stop(audioContext.currentTime + 0.2);
+                        console.log('Test beep played');
+                      }}
+                      variant="outline"
+                      className="border-green-500 text-green-500 hover:bg-green-500/20"
+                      size="sm"
+                    >
+                      Test Audio
                     </Button>
                   </div>
                   

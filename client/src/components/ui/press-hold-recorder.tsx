@@ -62,7 +62,19 @@ export function PressHoldRecorder({
     // Start recording after a brief hold delay (300ms)
     holdTimerRef.current = setTimeout(async () => {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true
+          }
+        });
+        
+        console.log('Microphone stream obtained:', {
+          active: stream.active,
+          audioTracks: stream.getAudioTracks().length,
+          trackSettings: stream.getAudioTracks()[0]?.getSettings()
+        });
         // Try to use the best available format from configuration
         let mimeType = AUDIO_PROCESSING_CONFIG.fallbackRecordingFormat;
         for (const format of AUDIO_PROCESSING_CONFIG.preferredRecordingFormats) {
@@ -80,6 +92,26 @@ export function PressHoldRecorder({
         const mediaRecorder = new MediaRecorder(stream, { mimeType });
         mediaRecorderRef.current = mediaRecorder;
         audioChunksRef.current = [];
+        
+        // Add audio level monitoring to detect if microphone is actually picking up sound
+        const audioContext = new AudioContext();
+        const source = audioContext.createMediaStreamSource(stream);
+        const analyser = audioContext.createAnalyser();
+        source.connect(analyser);
+        
+        const dataArray = new Uint8Array(analyser.frequencyBinCount);
+        
+        const checkAudioLevel = () => {
+          if (mediaRecorderRef.current?.state === 'recording') {
+            analyser.getByteFrequencyData(dataArray);
+            const average = dataArray.reduce((sum, value) => sum + value, 0) / dataArray.length;
+            if (average > 0) {
+              console.log(`Audio level detected: ${average.toFixed(2)}`);
+            }
+            setTimeout(checkAudioLevel, 500);
+          }
+        };
+        checkAudioLevel();
 
         mediaRecorder.ondataavailable = (event) => {
           if (event.data.size > 0) {
