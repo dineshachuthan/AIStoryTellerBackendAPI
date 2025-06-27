@@ -10,8 +10,8 @@ export const defaultVideoConfig: VideoProviderConfiguration = {
         secretKey: process.env.KLING_SECRET_KEY || '',
         baseUrl: 'https://api-singapore.klingai.com',
         modelName: 'kling-v1-5', // Enhanced model for better quality (upgraded from kling-v1)
-        maxDuration: 20, // 20 seconds maximum as requested
-        defaultDuration: 20, // Default 20 seconds as requested
+        maxDuration: 10, // Kling supports up to 10 seconds
+        defaultDuration: 5, // Use 5 seconds as requested (can be changed to 10 later)
         resolution: 'low', // Use low resolution for testing
         timeout: 120000, // Kling may take longer
         retryCount: 2
@@ -65,9 +65,9 @@ export const defaultVideoConfig: VideoProviderConfiguration = {
     maxFileSize: 100 // 100MB max file size
   },
   duration: {
-    default: 10, // Default video duration in seconds
+    default: 5, // Default 5 seconds as requested
     minimum: 3,  // Minimum allowed duration
-    maximum: 20, // Maximum allowed duration - 20 seconds as requested
+    maximum: 10, // Maximum 10 seconds (Kling limit)
     allowUserOverride: true // Allow users to specify custom duration within limits
   }
 };
@@ -78,7 +78,7 @@ export const videoConfig = {
   roleplay: {
     targetDurationSeconds: 60, // Target duration for roleplay content generation (can be 60, 120, 240)
     maxDurationSeconds: 240, // Maximum roleplay duration allowed
-    videoGenerationSeconds: 20 // Actual video generation duration (separate from roleplay content)
+    videoGenerationSeconds: 5 // Actual video generation duration - 5 seconds as requested
   }
 };
 

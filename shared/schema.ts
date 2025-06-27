@@ -810,15 +810,28 @@ export const videoGenerations = pgTable("video_generations", {
   generationParams: jsonb("generation_params").notNull(),
   characterAssetsSnapshot: jsonb("character_assets_snapshot").notNull(),
   
-  // Status and outputs
-  status: varchar("status").default("pending"), // pending, processing, pending_approval, completed, failed
+  // Kling API task tracking
+  taskId: varchar("task_id"), // Kling API task ID for polling
+  provider: varchar("provider").default("kling"), // Video provider used
+  
+  // Status and outputs - Updated for validation workflow
+  status: varchar("status").default("pending"), // pending, processing, completed, FINAL, failed
   videoUrl: text("video_url"),
   thumbnailUrl: text("thumbnail_url"),
   duration: integer("duration"), // in seconds
   
+  // User validation workflow
+  userApproved: boolean("user_approved").default(false), // Has user approved the video?
+  approvedAt: timestamp("approved_at"), // When user approved the video
+  regenerationCount: integer("regeneration_count").default(0), // How many times regenerated
+  
   // Error handling and retries
   errorMessage: text("error_message"),
   retryCount: integer("retry_count").default(0),
+  
+  // Polling and timing
+  lastPolledAt: timestamp("last_polled_at"), // Last time we checked status
+  estimatedCompletionAt: timestamp("estimated_completion_at"), // When we expect completion
   
   // Caching and expiration
   cacheKey: varchar("cache_key").unique(),
@@ -828,7 +841,9 @@ export const videoGenerations = pgTable("video_generations", {
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [
   index("idx_video_cache_key").on(table.cacheKey),
-  index("idx_video_story_status").on(table.storyId, table.status)
+  index("idx_video_story_status").on(table.storyId, table.status),
+  index("idx_video_task_id").on(table.taskId), // For polling by task ID
+  index("idx_video_pending_poll").on(table.status, table.lastPolledAt) // For finding videos that need polling
 ]);
 
 // Scene data for video generation
