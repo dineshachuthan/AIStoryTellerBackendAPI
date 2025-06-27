@@ -3569,7 +3569,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const taskId = req.params.taskId;
       const userId = (req.user as any)?.id;
 
-      console.log(`Frontend checking video status for task: ${taskId}, user: ${userId}`);
+      console.log(`Checking video status using list endpoint for task: ${taskId}, user: ${userId}`);
 
       // Use the generic video service to check status
       const videoService = await import('./generic-video-service');
