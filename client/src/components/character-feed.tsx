@@ -108,7 +108,7 @@ export function CharacterFeed() {
       <div className="w-full h-full flex items-center justify-center">
         <div className="text-center">
           <p className="text-dark-text mb-4">No characters available</p>
-          <p className="text-gray-text text-sm">Create your first character to get started!</p>
+          <p className="text-gray-text text-sm">Write a story to automatically extract characters!</p>
         </div>
       </div>
     );
