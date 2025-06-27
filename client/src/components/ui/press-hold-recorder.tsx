@@ -62,12 +62,14 @@ export function PressHoldRecorder({
     // Start recording after a brief hold delay (300ms)
     holdTimerRef.current = setTimeout(async () => {
       try {
+        // Use similar constraints to mictests.com for optimal microphone capture
         const stream = await navigator.mediaDevices.getUserMedia({ 
           audio: {
-            deviceId: 'communications', // Try communications microphone specifically
-            echoCancellation: true,
-            noiseSuppression: false, // Disable noise suppression to capture more audio
-            autoGainControl: true
+            echoCancellation: false, // Disable echo cancellation like mictests.com
+            noiseSuppression: false, // Disable noise suppression like mictests.com
+            autoGainControl: false,  // Disable auto gain control for raw audio
+            sampleRate: 44100,      // Use CD quality sample rate
+            channelCount: 1         // Mono recording
           }
         });
         
@@ -96,28 +98,16 @@ export function PressHoldRecorder({
         mediaRecorderRef.current = mediaRecorder;
         audioChunksRef.current = [];
         
-        // Add audio level monitoring to detect if microphone is actually picking up sound
+        // Implement microphone monitoring like mictests.com - direct audio feedback
         const audioContext = new AudioContext();
         const source = audioContext.createMediaStreamSource(stream);
         const analyser = audioContext.createAnalyser();
+        analyser.fftSize = 256;
+        analyser.smoothingTimeConstant = 0.8;
         source.connect(analyser);
         
-        const dataArray = new Uint8Array(analyser.frequencyBinCount);
-        
-        const checkAudioLevel = () => {
-          if (mediaRecorderRef.current?.state === 'recording') {
-            analyser.getByteFrequencyData(dataArray);
-            const average = dataArray.reduce((sum, value) => sum + value, 0) / dataArray.length;
-            let max = 0;
-            for (let i = 0; i < dataArray.length; i++) {
-              if (dataArray[i] > max) max = dataArray[i];
-            }
-            // Disable audio level logging during recording to prevent screen reflow
-            // console.log(`Audio levels - Average: ${average.toFixed(2)}, Max: ${max}, Range: 0-255`);
-            setTimeout(checkAudioLevel, 200); // Check more frequently
-          }
-        };
-        checkAudioLevel();
+        // Store for cleanup
+        (mediaRecorderRef.current as any).audioContext = audioContext;
 
         mediaRecorder.ondataavailable = (event) => {
           if (event.data.size > 0) {
@@ -129,6 +119,7 @@ export function PressHoldRecorder({
           // Use the actual MIME type that MediaRecorder supports
           const actualMimeType = mediaRecorder.mimeType || 'audio/webm';
           const audioBlob = new Blob(audioChunksRef.current, { type: actualMimeType });
+          // Log recording results after completion
           console.log(`Audio blob created:`, {
             size: audioBlob.size,
             type: audioBlob.type,
@@ -138,8 +129,11 @@ export function PressHoldRecorder({
           const url = URL.createObjectURL(audioBlob);
           onRecordingComplete(audioBlob, url);
           
-          // Clean up stream
+          // Clean up stream and audio context
           stream.getTracks().forEach(track => track.stop());
+          if ((mediaRecorderRef.current as any)?.audioContext) {
+            (mediaRecorderRef.current as any).audioContext.close();
+          }
         };
 
         mediaRecorder.start();
