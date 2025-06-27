@@ -32,7 +32,7 @@ export function AppTopNavigation() {
         
         <div className="flex items-center space-x-3">
           <Button
-            onClick={() => setLocation("/voice-samples")}
+            onClick={() => setLocation("/voice-setup")}
             variant="outline"
             size="sm"
             className="border-tiktok-cyan text-tiktok-cyan hover:bg-tiktok-cyan/20"
