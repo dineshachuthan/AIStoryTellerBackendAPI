@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
-import { useMutation } from "@tanstack/react-query";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Play, Pause, RotateCcw, ArrowRight, Shield } from "lucide-react";
@@ -185,17 +185,10 @@ export function VoiceRecordPage() {
                   </Button>
                   <Button 
                     onClick={processAudio}
-                    disabled={transcribeMutation.isPending}
                     className="bg-tiktok-red hover:bg-tiktok-red/80 flex-1"
                   >
-                    {transcribeMutation.isPending ? (
-                      <>Processing...</>
-                    ) : (
-                      <>
-                        Convert to Text
-                        <ArrowRight className="w-4 h-4 ml-2" />
-                      </>
-                    )}
+                    Convert to Text
+                    <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </div>
 

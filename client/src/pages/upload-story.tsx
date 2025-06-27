@@ -80,68 +80,80 @@ export default function UploadStory() {
     },
   });
 
+  // Track if OnLoad has already been executed to prevent infinite loops
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
+
   // Modular OnLoad function to handle different page entry flows
-  const handlePageLoad = useCallback(async () => {
+  useEffect(() => {
+    if (hasLoadedOnce) return; // Prevent multiple executions
+    
     console.log('OnLoad triggered - analyzing page context...');
     
-    // Flow 1: Existing story (from database/search)
-    if (storyId && story && !storyLoading) {
-      console.log('Flow: Loading existing story from database');
-      setStoryTitle(story.title || "");
-      setStoryContent(story.content || "");
-      return;
-    }
-    
-    // Flow 2: Audio intermediate pages (voice recording or audio upload)
-    if (sourceType === 'voice' || sourceType === 'upload') {
-      console.log('Flow: Audio intermediate page redirect');
-      setIsLoadingContent(true);
-      
-      // Check for pending audio blob from intermediate pages
-      const pendingAudioData = sessionStorage.getItem('pendingAudioBlob');
-      if (pendingAudioData) {
-        try {
-          // Convert base64 back to blob and transcribe
-          const response = await fetch(pendingAudioData);
-          const audioBlob = await response.blob();
-          transcribeAudioMutation.mutate(audioBlob);
-        } catch (error) {
-          console.error('Error processing pending audio:', error);
-          setIsLoadingContent(false);
-          toast({
-            title: "Audio Processing Failed",
-            description: "Could not process the audio file.",
-            variant: "destructive",
-          });
-        }
+    const handlePageLoad = async () => {
+      // Flow 1: Existing story (from database/search)
+      if (storyId && story && !storyLoading) {
+        console.log('Flow: Loading existing story from database');
+        setStoryTitle(story.title || "");
+        setStoryContent(story.content || "");
+        setHasLoadedOnce(true);
         return;
       }
       
-      // Fallback: Check session storage for pre-transcribed content
-      const extractedContent = sessionStorage.getItem('extractedContent') || sessionStorage.getItem('uploadedStoryContent');
-      if (extractedContent) {
-        console.log('Found pre-transcribed content in session storage');
-        setStoryContent(extractedContent);
-        sessionStorage.removeItem('extractedContent');
-        sessionStorage.removeItem('uploadedStoryContent');
+      // Flow 2: Audio intermediate pages (voice recording or audio upload)
+      if (sourceType === 'voice' || sourceType === 'upload') {
+        console.log('Flow: Audio intermediate page redirect');
+        setIsLoadingContent(true);
         
-        toast({
-          title: "Audio Processed Successfully",
-          description: `Your audio has been converted to text (${extractedContent.length} characters).`,
-        });
+        // Check for pending audio blob from intermediate pages
+        const pendingAudioData = sessionStorage.getItem('pendingAudioBlob');
+        if (pendingAudioData) {
+          try {
+            // Convert base64 back to blob and transcribe
+            const response = await fetch(pendingAudioData);
+            const audioBlob = await response.blob();
+            // Clear immediately to prevent reprocessing
+            sessionStorage.removeItem('pendingAudioBlob');
+            transcribeAudioMutation.mutate(audioBlob);
+            setHasLoadedOnce(true);
+          } catch (error) {
+            console.error('Error processing pending audio:', error);
+            setIsLoadingContent(false);
+            sessionStorage.removeItem('pendingAudioBlob');
+            toast({
+              title: "Audio Processing Failed",
+              description: "Could not process the audio file.",
+              variant: "destructive",
+            });
+            setHasLoadedOnce(true);
+          }
+          return;
+        }
+        
+        // Fallback: Check session storage for pre-transcribed content
+        const extractedContent = sessionStorage.getItem('extractedContent') || sessionStorage.getItem('uploadedStoryContent');
+        if (extractedContent) {
+          console.log('Found pre-transcribed content in session storage');
+          setStoryContent(extractedContent);
+          sessionStorage.removeItem('extractedContent');
+          sessionStorage.removeItem('uploadedStoryContent');
+          
+          toast({
+            title: "Audio Processed Successfully",
+            description: `Your audio has been converted to text (${extractedContent.length} characters).`,
+          });
+        }
+        setIsLoadingContent(false);
+        setHasLoadedOnce(true);
+        return;
       }
-      setIsLoadingContent(false);
-      return;
-    }
-    
-    // Flow 3: Normal write text flow (default)
-    console.log('Flow: Normal write text flow - no action needed');
-  }, [storyId, story, storyLoading, sourceType, transcribeAudioMutation, toast]);
+      
+      // Flow 3: Normal write text flow (default)
+      console.log('Flow: Normal write text flow - no action needed');
+      setHasLoadedOnce(true);
+    };
 
-  // Trigger OnLoad when page loads or dependencies change
-  useEffect(() => {
     handlePageLoad();
-  }, [handlePageLoad]);
+  }, [storyId, story, storyLoading, sourceType, transcribeAudioMutation, toast, hasLoadedOnce]);
 
   // Update story content
   async function updateStoryContent() {
