@@ -3416,12 +3416,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const { KlingVideoProvider } = await import('./video-providers/kling-video-provider');
             const klingProvider = new KlingVideoProvider();
             
-            // Initialize with fresh JWT token
-            const { getVideoProviderConfig } = await import('./video-config');
-            const config = getVideoProviderConfig();
-            await klingProvider.initialize(config);
+            // Initialize with fresh JWT token for polling
+            const providerConfig = {
+              name: 'kling',
+              apiKey: process.env.KLING_ACCESS_KEY,
+              secretKey: process.env.KLING_SECRET_KEY,
+              baseUrl: 'https://api.klingai.com',
+              modelName: 'kling-v1-5',
+              maxDuration: 10
+            };
             
-            // Poll for completion using stored taskId
+            console.log(`🔑 Creating fresh JWT token for polling task ${videoRecord.taskId}`);
+            await klingProvider.initialize(providerConfig);
+            
+            // Poll for completion using stored taskId with fresh JWT
             pollResult = await klingProvider.pollForCompletion(videoRecord.taskId);
           } else {
             throw new Error(`Provider ${providerName} not supported for polling`);

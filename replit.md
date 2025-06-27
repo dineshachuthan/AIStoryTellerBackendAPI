@@ -136,7 +136,10 @@ This is a full-stack collaborative storytelling platform that enables users to c
   - Configured 5-second video duration (expandable to 10 seconds later)
   - Enhanced database schema with required columns: task_id, provider, user_approved, regeneration_count, last_polled_at, estimated_completion_at
   - Added comprehensive API endpoints: generate, poll, accept, regenerate
-  - System tested and fully operational with Kling API integration
+  - Implemented fresh JWT token generation for each polling request as requested
+  - System uses stored provider information for plug-and-play architecture
+  - Fixed database schema issues and tested complete workflow
+  - Frontend shows clean "come back in 10 minutes" message without polling loops
 - June 27, 2025: Implemented efficient callback-based video generation system
   - Replaced inefficient polling with webhook callbacks for instant completion notifications
   - Added VideoCallbackManager with 120-second timeout and friendly error messages
