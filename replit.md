@@ -273,3 +273,9 @@ This is a full-stack collaborative storytelling platform that enables users to c
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
+
+**Responsive Design Requirements:**
+- All components must be responsive and mobile-compatible by default
+- No need to ask specifically for mobile compatibility - it's always required
+- Components should automatically adjust to screen size and resolution dynamically
+- Use responsive grid systems and breakpoints for optimal user experience across all devices

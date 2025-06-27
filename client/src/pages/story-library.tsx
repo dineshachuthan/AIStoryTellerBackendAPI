@@ -49,6 +49,7 @@ interface Story {
   readingTimeMinutes?: number;
   summary?: string;
   collaborators?: number;
+  createdAt?: string;
 }
 
 export default function StoryLibrary() {
@@ -176,22 +177,20 @@ export default function StoryLibrary() {
     enabled: !!user?.id,
   });
 
-  // Filter stories based on search query
+  // Filter stories based on search query and get most recent 10
   const filteredStories = stories.filter(story => 
     story.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     story.content?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     story.category?.toLowerCase().includes(searchQuery.toLowerCase())
-  ).slice(0, 100);
+  )
+  // Sort by ID (most recent first) and limit to 10
+  .sort((a, b) => b.id - a.id)
+  .slice(0, 10);
 
-  // Group stories by genre/category
-  const storiesByGenre = filteredStories.reduce((acc, story) => {
-    const genre = story.category || 'Uncategorized';
-    if (!acc[genre]) {
-      acc[genre] = [];
-    }
-    acc[genre].push(story);
-    return acc;
-  }, {} as Record<string, Story[]>);
+  // Group recent stories under single heading
+  const storiesByGenre = {
+    'Your recent stories': filteredStories
+  };
 
   if (isLoading) {
     return (
@@ -211,7 +210,216 @@ export default function StoryLibrary() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-dark-bg via-gray-900 to-black">
-      <div className="flex h-screen">
+      {/* Mobile Layout */}
+      <div className="block lg:hidden">
+        <div className="p-4 pb-24 space-y-4">
+          <div className="flex items-center space-x-2">
+            <Book className="w-5 h-5 text-tiktok-red" />
+            <h1 className="text-lg font-bold text-white">Story Library</h1>
+          </div>
+          
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Input
+              type="text"
+              placeholder="Search stories..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 bg-gray-800 border-gray-700 text-white placeholder-gray-400 focus:border-tiktok-red"
+            />
+          </div>
+
+          <div className="text-sm text-gray-400">
+            {filteredStories.length} stories
+          </div>
+
+          <Button
+            onClick={() => createStoryAndNavigate("text", "/upload-story")}
+            disabled={isCreatingStory}
+            className="w-full bg-tiktok-red hover:bg-tiktok-red/80"
+          >
+            {isCreatingStory ? (
+              <>
+                <div className="w-4 h-4 animate-spin border-2 border-white border-t-transparent rounded-full mr-2" />
+                Creating...
+              </>
+            ) : (
+              "Create New Story"
+            )}
+          </Button>
+
+          {/* Mobile Story Grid */}
+          {filteredStories.length === 0 ? (
+            <div className="text-center py-12">
+              <Book className="w-16 h-16 mx-auto text-gray-600 mb-4" />
+              <h2 className="text-xl font-semibold text-white mb-2">
+                {searchQuery ? 'No Stories Found' : 'No Stories Yet'}
+              </h2>
+              <p className="text-gray-400 mb-6">
+                {searchQuery 
+                  ? 'Try adjusting your search terms to find more stories'
+                  : 'Create your first interactive story and bring it to life with voices'
+                }
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {Object.entries(storiesByGenre).map(([genre, genreStories]) => (
+                <div key={genre} className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-lg font-bold text-white">{genre}</h2>
+                    <span className="text-sm text-gray-400">
+                      {genreStories.length}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 gap-3">
+                    {genreStories.map((story: Story) => (
+                      <Card key={story.id} className="bg-dark-card border-gray-800 hover:border-gray-700 transition-colors">
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-white text-base leading-tight line-clamp-2">
+                            {story.title}
+                          </CardTitle>
+                          {story.category && (
+                            <Badge variant="secondary" className="bg-gray-700 text-gray-300 text-xs w-fit">
+                              {story.category}
+                            </Badge>
+                          )}
+                        </CardHeader>
+                        <CardContent className="pt-0 space-y-3">
+                          {story.summary && (
+                            <p className="text-gray-400 text-sm line-clamp-2">
+                              {story.summary}
+                            </p>
+                          )}
+                          
+                          <div className="flex items-center justify-between text-xs text-gray-500">
+                            <div className="flex items-center space-x-3">
+                              {story.readingTimeMinutes && (
+                                <div className="flex items-center">
+                                  <Clock className="w-3 h-3 mr-1" />
+                                  {story.readingTimeMinutes}m
+                                </div>
+                              )}
+                              {story.collaborators && story.collaborators > 0 && (
+                                <div className="flex items-center">
+                                  <Users className="w-3 h-3 mr-1" />
+                                  {story.collaborators}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <div className="flex space-x-2">
+                              <Button
+                                size="sm"
+                                onClick={() => setLocation(`/story/${story.id}`)}
+                                className="flex-1 bg-tiktok-red hover:bg-tiktok-red/80 text-white text-xs"
+                              >
+                                <Play className="w-3 h-3 mr-1" />
+                                Play
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setLocation(`/analysis/${story.id}`)}
+                                className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-800 text-xs"
+                              >
+                                <Eye className="w-3 h-3 mr-1" />
+                                Edit
+                              </Button>
+                            </div>
+                            
+                            <div className="flex space-x-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => convertToCollaborative(story.id)}
+                                disabled={convertingStories.has(story.id)}
+                                className="flex-1 border-purple-600 text-purple-400 hover:bg-purple-900/20 text-xs"
+                              >
+                                {convertingStories.has(story.id) ? (
+                                  <>
+                                    <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                    Converting...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Users className="w-3 h-3 mr-1" />
+                                    Collaborate
+                                  </>
+                                )}
+                              </Button>
+                              
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    disabled={deletingStories.has(story.id)}
+                                    className="border-red-600 text-red-400 hover:bg-red-900/20 px-3"
+                                  >
+                                    {deletingStories.has(story.id) ? (
+                                      <Loader2 className="w-3 h-3 animate-spin" />
+                                    ) : (
+                                      <Trash2 className="w-3 h-3" />
+                                    )}
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent className="bg-dark-card border-gray-800">
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle className="text-white flex items-center">
+                                      <AlertTriangle className="w-5 h-5 mr-2 text-red-400" />
+                                      Delete Story
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription className="text-gray-400">
+                                      Are you sure you want to delete "{story.title}"? This will move the story to your archive.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel className="bg-gray-700 text-gray-300 hover:bg-gray-600">
+                                      Cancel
+                                    </AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => deleteStory(story.id)}
+                                      className="bg-red-600 text-white hover:bg-red-700"
+                                    >
+                                      Delete
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
+                          </div>
+
+                          {story.isPublic ? (
+                            <div className="text-center py-2">
+                              <div className="text-sm text-green-400 flex items-center justify-center">
+                                <Globe className="w-4 h-4 mr-1" />
+                                Published
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="text-center py-2">
+                              <div className="text-sm text-gray-400 flex items-center justify-center">
+                                <Lock className="w-4 h-4 mr-1" />
+                                Private
+                              </div>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Desktop Layout */}
+      <div className="hidden lg:flex h-screen">
         {/* Left Sidebar - Search */}
         <div className="w-80 bg-gray-900/50 border-r border-gray-800 p-4">
           <div className="space-y-4">
@@ -233,7 +441,6 @@ export default function StoryLibrary() {
 
             <div className="text-sm text-gray-400">
               {filteredStories.length} of {stories.length} stories
-              {filteredStories.length === 100 && stories.length > 100 && " (limited to 100)"}
             </div>
 
             <Button
@@ -253,7 +460,7 @@ export default function StoryLibrary() {
           </div>
         </div>
 
-        {/* Right Content Area */}
+        {/* Desktop Content Area */}
         <div className="flex-1 p-4 pb-24 overflow-y-auto">
           {filteredStories.length === 0 ? (
             <div className="text-center py-12">
@@ -362,17 +569,17 @@ export default function StoryLibrary() {
                                 variant="outline"
                                 onClick={() => convertToCollaborative(story.id)}
                                 disabled={convertingStories.has(story.id)}
-                                className="flex-1 border-purple-600 text-purple-400 hover:bg-purple-900/20"
+                                className="flex-1 border-purple-600 text-purple-400 hover:bg-purple-900/20 text-xs"
                               >
                                 {convertingStories.has(story.id) ? (
                                   <>
-                                    <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                                    <Loader2 className="w-3 h-3 mr-1 animate-spin" />
                                     Converting...
                                   </>
                                 ) : (
                                   <>
-                                    <Users className="w-4 h-4 mr-1" />
-                                    Convert to Collaborative
+                                    <Users className="w-3 h-3 mr-1" />
+                                    Collaborate
                                   </>
                                 )}
                               </Button>
