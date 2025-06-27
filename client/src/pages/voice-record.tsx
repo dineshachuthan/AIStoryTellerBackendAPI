@@ -46,29 +46,14 @@ export function VoiceRecordPage() {
       return await response.json();
     },
     onSuccess: (data) => {
-      console.log('Transcription completed:', data);
-      // Store the transcribed text in session storage for the upload page
-      if (data.text) {
-        sessionStorage.setItem('uploadedStoryContent', data.text);
-        console.log('Set session storage, verifying:', sessionStorage.getItem('uploadedStoryContent'));
-        
-        // Show success toast with character count
-        toast({
-          title: "Audio Transcribed Successfully",
-          description: `Converted ${data.text.length} characters of text. Redirecting...`,
-        });
-        
-        // Redirect with a small delay to ensure session storage is set
-        setTimeout(() => {
-          console.log('About to redirect, final session storage check:', sessionStorage.getItem('uploadedStoryContent'));
+      // Store the audio blob for transcription on the upload-story page
+      if (audioBlob) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          sessionStorage.setItem('pendingAudioBlob', reader.result as string);
           setLocation('/upload-story?source=voice');
-        }, 800);
-      } else {
-        toast({
-          title: "Transcription Failed",
-          description: "No text was extracted from the audio.",
-          variant: "destructive",
-        });
+        };
+        reader.readAsDataURL(audioBlob);
       }
     },
     onError: (error: any) => {

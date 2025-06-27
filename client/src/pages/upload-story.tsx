@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useLocation, useRoute } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +9,7 @@ import { ArrowLeft, RefreshCw, Loader2, FileText, Upload, Plus } from "lucide-re
 import { AppTopNavigation } from "@/components/app-top-navigation";
 import { BottomNavigation } from "@/components/bottom-navigation";
 import { useAuth } from "@/hooks/useAuth";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 
 export default function UploadStory() {
@@ -29,6 +29,7 @@ export default function UploadStory() {
   const [storyContent, setStoryContent] = useState("");
   const [storyTitle, setStoryTitle] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isLoadingContent, setIsLoadingContent] = useState(false);
   
   // Fetch existing story if storyId is present
   const { data: existingStory, isLoading: storyLoading } = useQuery({
@@ -39,42 +40,108 @@ export default function UploadStory() {
   // Type guard for existingStory
   const story = existingStory as any;
 
-  // Initialize story content from existing story
-  useEffect(() => {
-    if (story && !storyLoading) {
+  // Audio transcription mutation for intermediate pages
+  const transcribeAudioMutation = useMutation({
+    mutationFn: async (audioBlob: Blob) => {
+      const formData = new FormData();
+      formData.append('audio', audioBlob, 'audio.webm');
+      
+      const response = await fetch('/api/audio/transcribe', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to transcribe audio');
+      }
+
+      return await response.json();
+    },
+    onSuccess: (data) => {
+      setStoryContent(data.text || '');
+      setIsLoadingContent(false);
+      
+      toast({
+        title: "Audio Transcribed Successfully",
+        description: `Converted ${data.text ? data.text.length : 0} characters of text.`,
+      });
+      
+      // Clear session storage after successful transcription
+      sessionStorage.removeItem('pendingAudioBlob');
+    },
+    onError: (error: any) => {
+      setIsLoadingContent(false);
+      toast({
+        title: "Transcription Failed",
+        description: error.message || "Could not convert audio to text. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Modular OnLoad function to handle different page entry flows
+  const handlePageLoad = useCallback(async () => {
+    console.log('OnLoad triggered - analyzing page context...');
+    
+    // Flow 1: Existing story (from database/search)
+    if (storyId && story && !storyLoading) {
+      console.log('Flow: Loading existing story from database');
       setStoryTitle(story.title || "");
       setStoryContent(story.content || "");
+      return;
     }
-  }, [story, storyLoading]);
-
-  // Handle extracted content from audio processing
-  useEffect(() => {
-    console.log('Upload story page loaded, checking session storage...');
-    // Check both session storage keys for compatibility
-    const extractedContent = sessionStorage.getItem('extractedContent');
-    const uploadedContent = sessionStorage.getItem('uploadedStoryContent');
     
-    console.log('Session storage check:', { extractedContent, uploadedContent });
-    
-    const content = extractedContent || uploadedContent;
-    if (content) {
-      console.log('Found content, setting story text:', content.length, 'characters');
-      setStoryContent(content);
-      // Clear both possible session storage keys after using them
-      sessionStorage.removeItem('extractedContent');
-      sessionStorage.removeItem('uploadedStoryContent');
+    // Flow 2: Audio intermediate pages (voice recording or audio upload)
+    if (sourceType === 'voice' || sourceType === 'upload') {
+      console.log('Flow: Audio intermediate page redirect');
+      setIsLoadingContent(true);
       
-      // Show success message for audio upload flow only (not voice recording)
-      if (!sourceType || sourceType === 'upload') {
+      // Check for pending audio blob from intermediate pages
+      const pendingAudioData = sessionStorage.getItem('pendingAudioBlob');
+      if (pendingAudioData) {
+        try {
+          // Convert base64 back to blob and transcribe
+          const response = await fetch(pendingAudioData);
+          const audioBlob = await response.blob();
+          transcribeAudioMutation.mutate(audioBlob);
+        } catch (error) {
+          console.error('Error processing pending audio:', error);
+          setIsLoadingContent(false);
+          toast({
+            title: "Audio Processing Failed",
+            description: "Could not process the audio file.",
+            variant: "destructive",
+          });
+        }
+        return;
+      }
+      
+      // Fallback: Check session storage for pre-transcribed content
+      const extractedContent = sessionStorage.getItem('extractedContent') || sessionStorage.getItem('uploadedStoryContent');
+      if (extractedContent) {
+        console.log('Found pre-transcribed content in session storage');
+        setStoryContent(extractedContent);
+        sessionStorage.removeItem('extractedContent');
+        sessionStorage.removeItem('uploadedStoryContent');
+        
         toast({
           title: "Audio Processed Successfully",
-          description: `Your audio has been converted to text (${content.length} characters) and is ready for editing.`,
+          description: `Your audio has been converted to text (${extractedContent.length} characters).`,
         });
       }
-    } else {
-      console.log('No content found in session storage');
+      setIsLoadingContent(false);
+      return;
     }
-  }, [toast]);
+    
+    // Flow 3: Normal write text flow (default)
+    console.log('Flow: Normal write text flow - no action needed');
+  }, [storyId, story, storyLoading, sourceType, transcribeAudioMutation, toast]);
+
+  // Trigger OnLoad when page loads or dependencies change
+  useEffect(() => {
+    handlePageLoad();
+  }, [handlePageLoad]);
 
   // Update story content
   async function updateStoryContent() {
@@ -204,12 +271,27 @@ export default function UploadStory() {
               {/* Story Content */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-white">Your Story</label>
-                <Textarea
-                  value={storyContent}
-                  onChange={(e) => setStoryContent(e.target.value)}
-                  placeholder="Write your story here... (500-1000 words recommended)"
-                  className="min-h-[300px] bg-white/10 border-white/20 text-white placeholder-white/50 resize-none"
-                />
+                
+                {/* Loading state for audio transcription */}
+                {isLoadingContent ? (
+                  <div className="min-h-[300px] bg-white/10 border-white/20 rounded-md flex items-center justify-center border-2 border-dashed">
+                    <div className="text-center space-y-4">
+                      <Loader2 className="w-8 h-8 animate-spin text-white mx-auto" />
+                      <div className="space-y-2">
+                        <p className="text-white font-medium">Processing your audio...</p>
+                        <p className="text-white/60 text-sm">Converting speech to text using AI transcription</p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <Textarea
+                    value={storyContent}
+                    onChange={(e) => setStoryContent(e.target.value)}
+                    placeholder="Write your story here... (500-1000 words recommended)"
+                    className="min-h-[300px] bg-white/10 border-white/20 text-white placeholder-white/50 resize-none"
+                  />
+                )}
+                
                 <div className="flex justify-between text-sm text-white/60">
                   <span>Word count: {storyContent.trim() ? storyContent.trim().split(/\s+/).length : 0}</span>
                   <span>Recommended: 500-1000 words</span>
