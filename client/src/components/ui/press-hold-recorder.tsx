@@ -84,15 +84,12 @@ export function PressHoldRecorder({
         for (const format of AUDIO_PROCESSING_CONFIG.preferredRecordingFormats) {
           if (MediaRecorder.isTypeSupported(format)) {
             mimeType = format;
-            console.log(`Using preferred audio format: ${format}`);
+            // Silent recording - no console output
             break;
           }
         }
         
-        // Disable all console logging during recording to prevent screen reflow
-        // if (mimeType === AUDIO_PROCESSING_CONFIG.fallbackRecordingFormat) {
-        //   console.log(`Using fallback audio format: ${mimeType}`);
-        // }
+        // Completely silent during recording - no console output to prevent screen movement
         
         const mediaRecorder = new MediaRecorder(stream, { mimeType });
         mediaRecorderRef.current = mediaRecorder;
