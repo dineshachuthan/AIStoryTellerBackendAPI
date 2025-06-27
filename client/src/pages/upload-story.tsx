@@ -21,6 +21,10 @@ export default function UploadStory() {
   const [match, params] = useRoute("/:storyId/upload-story");
   const storyId = params?.storyId;
   
+  // Check for URL parameters to detect source
+  const urlParams = new URLSearchParams(window.location.search);
+  const sourceType = urlParams.get('source'); // 'voice' or 'upload'
+  
   // Story management states
   const [storyContent, setStoryContent] = useState("");
   const [storyTitle, setStoryTitle] = useState("");
@@ -42,6 +46,23 @@ export default function UploadStory() {
       setStoryContent(story.content || "");
     }
   }, [story, storyLoading]);
+
+  // Handle extracted content from audio processing
+  useEffect(() => {
+    const extractedContent = sessionStorage.getItem('extractedContent');
+    if (extractedContent && (sourceType === 'voice' || sourceType === 'upload')) {
+      setStoryContent(extractedContent);
+      // Clear the extracted content from session storage after using it
+      sessionStorage.removeItem('extractedContent');
+      
+      // Show success message based on source
+      const sourceLabel = sourceType === 'voice' ? 'voice recording' : 'audio file';
+      toast({
+        title: "Audio Processed Successfully",
+        description: `Your ${sourceLabel} has been converted to text and is ready for editing.`,
+      });
+    }
+  }, [sourceType, toast]);
 
   // Update story content
   async function updateStoryContent() {

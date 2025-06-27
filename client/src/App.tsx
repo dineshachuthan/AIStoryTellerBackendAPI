@@ -12,6 +12,8 @@ import CreateCharacter from "@/pages/create-character";
 import UploadStory from "@/pages/upload-story";
 import StoryAnalysis from "@/pages/story-analysis";
 import VoiceSetup from "@/pages/voice-setup";
+import { VoiceRecordPage } from "@/pages/voice-record";
+import { UploadAudioPage } from "@/pages/upload-audio";
 import StoryPlayer from "@/pages/story-player";
 import StoryLibrary from "@/pages/story-library";
 import StoryCollaboration from "@/pages/story-collaboration";

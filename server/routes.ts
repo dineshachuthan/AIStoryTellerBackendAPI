@@ -913,6 +913,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Audio transcription endpoint for voice recording and file upload
+  app.post("/api/audio/transcribe", upload.single('audio'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "Audio file is required" });
+      }
+
+      console.log("Processing audio transcription:", req.file.originalname);
+      
+      // Convert audio buffer to transcription using OpenAI Whisper
+      const transcriptionText = await transcribeAudio(req.file.buffer);
+      
+      console.log("Transcription completed, length:", transcriptionText.length);
+      
+      res.json({ 
+        text: transcriptionText,
+        filename: req.file.originalname,
+        size: req.file.size
+      });
+    } catch (error) {
+      console.error("Audio transcription error:", error);
+      res.status(500).json({ message: "Failed to transcribe audio" });
+    }
+  });
+
   // Default emotion sound endpoint
   app.get("/api/emotions/default-sound", (req, res) => {
     const { emotion, intensity } = req.query;
