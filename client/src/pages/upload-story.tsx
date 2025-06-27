@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
+
 import { ArrowLeft, RefreshCw, Loader2, FileText, Upload, Plus } from "lucide-react";
 import { AppTopNavigation } from "@/components/app-top-navigation";
 import { BottomNavigation } from "@/components/bottom-navigation";
@@ -14,7 +14,6 @@ import { apiRequest } from "@/lib/queryClient";
 
 export default function UploadStory() {
   const [, setLocation] = useLocation();
-  const { toast } = useToast();
   const { user } = useAuth();
   
   // Extract story ID from URL if present
@@ -62,11 +61,6 @@ export default function UploadStory() {
       setStoryContent(data.text || '');
       setIsLoadingContent(false);
       
-      toast({
-        title: "Audio Transcribed Successfully",
-        description: `Converted ${data.text ? data.text.length : 0} characters of text.`,
-      });
-      
       // Clear session storage after successful transcription
       sessionStorage.removeItem('pendingAudioBlob');
     },
@@ -87,11 +81,7 @@ export default function UploadStory() {
         errorMessage = error.message;
       }
       
-      toast({
-        title: "Audio Processing Failed",
-        description: errorDetails ? `${errorMessage} ${errorDetails}` : errorMessage,
-        variant: "destructive",
-      });
+      console.error('Audio processing failed:', errorDetails ? `${errorMessage} ${errorDetails}` : errorMessage);
     },
   });
 
