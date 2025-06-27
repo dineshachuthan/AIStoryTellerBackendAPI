@@ -28,42 +28,7 @@ export function VoiceRecordPage() {
     };
   }, [audioUrl]);
 
-  const transcribeMutation = useMutation({
-    mutationFn: async (audioBlob: Blob) => {
-      const formData = new FormData();
-      formData.append('audio', audioBlob, 'recording.webm');
-      
-      const response = await fetch('/api/audio/transcribe', {
-        method: 'POST',
-        body: formData,
-      });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to transcribe audio');
-      }
-
-      return await response.json();
-    },
-    onSuccess: (data) => {
-      // Store the audio blob for transcription on the upload-story page
-      if (audioBlob) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          sessionStorage.setItem('pendingAudioBlob', reader.result as string);
-          setLocation('/upload-story?source=voice');
-        };
-        reader.readAsDataURL(audioBlob);
-      }
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Transcription Failed",
-        description: error.message || "Could not convert audio to text. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
 
   const handleRecordingComplete = (audioBlob: Blob, audioUrl: string) => {
     setAudioBlob(audioBlob);
@@ -105,7 +70,13 @@ export function VoiceRecordPage() {
 
   const processAudio = () => {
     if (audioBlob) {
-      transcribeMutation.mutate(audioBlob);
+      // Store the audio blob for transcription on the upload-story page
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        sessionStorage.setItem('pendingAudioBlob', reader.result as string);
+        setLocation('/upload-story?source=voice');
+      };
+      reader.readAsDataURL(audioBlob);
     }
   };
 
