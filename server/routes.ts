@@ -920,7 +920,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Audio file is required" });
       }
 
-      console.log("Processing audio transcription:", req.file.originalname);
+      console.log("Processing audio transcription:", {
+        filename: req.file.originalname,
+        mimetype: req.file.mimetype,
+        size: req.file.size,
+        bufferLength: req.file.buffer.length
+      });
       
       // Convert audio buffer to transcription using OpenAI Whisper
       const transcriptionText = await transcribeAudio(req.file.buffer);
@@ -934,7 +939,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Audio transcription error:", error);
-      res.status(500).json({ message: "Failed to transcribe audio" });
+      res.status(500).json({ message: error instanceof Error ? error.message : "Failed to transcribe audio" });
     }
   });
 

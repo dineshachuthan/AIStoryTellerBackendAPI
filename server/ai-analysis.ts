@@ -284,16 +284,34 @@ export async function generateCharacterImage(character: ExtractedCharacter, stor
 
 export async function transcribeAudio(audioBuffer: Buffer): Promise<string> {
   try {
-    // Create a temporary file from buffer
-    const tempFile = new File([audioBuffer], "audio.mp3", { type: "audio/mpeg" });
+    // Convert buffer to a stream for OpenAI API
+    const fs = await import('fs');
+    const path = await import('path');
+    const os = await import('os');
     
-    const transcription = await openai.audio.transcriptions.create({
-      file: tempFile,
-      model: "whisper-1",
-      language: "en",
-    });
+    // Create temporary file
+    const tempFilePath = path.join(os.tmpdir(), `audio_${Date.now()}.webm`);
+    await fs.promises.writeFile(tempFilePath, audioBuffer);
+    
+    try {
+      // Create a readable stream from the file
+      const audioReadStream = fs.createReadStream(tempFilePath);
+      
+      const transcription = await openai.audio.transcriptions.create({
+        file: audioReadStream,
+        model: "whisper-1",
+        language: "en",
+      });
 
-    return transcription.text;
+      return transcription.text;
+    } finally {
+      // Clean up temporary file
+      try {
+        await fs.promises.unlink(tempFilePath);
+      } catch (cleanupError) {
+        console.warn("Failed to clean up temp file:", cleanupError);
+      }
+    }
   } catch (error) {
     console.error("Audio transcription error:", error);
     throw new Error("Failed to transcribe audio");

@@ -127,6 +127,15 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Priority**: Medium (requested but deferred for future implementation)
 
 ## Changelog
+- June 27, 2025: Implemented modular audio processing workflow with dedicated intermediate screens
+  - Created separate voice recording page (/voice-record) with 5-minute recording capability and privacy notice
+  - Created separate audio upload page (/upload-audio) with drag-and-drop support for MP3, WAV, M4A, OGG, WebM files
+  - Added audio transcription API endpoint using OpenAI Whisper for text extraction
+  - Enhanced upload-story page to auto-populate from extracted audio content via session storage
+  - Updated routing so Voice Record and Upload Audio have proper intermediate screens before story creation
+  - Audio files are processed for text extraction only and not stored permanently (privacy-focused)
+  - Fixed transcribeAudio function to use proper Node.js file streams instead of browser File objects
+  - All three story creation paths now work correctly: Write Story (direct), Voice Record (audio→text), Upload Audio (file→text)
 - June 27, 2025: Completely eliminated automatic polling and implemented pure task ID storage workflow
   - Removed all automatic frontend polling (setInterval/setTimeout) as explicitly requested by user
   - Implemented "store task ID and show friendly message" approach with no automatic polling
