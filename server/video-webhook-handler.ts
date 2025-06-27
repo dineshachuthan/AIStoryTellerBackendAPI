@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { db } from "./db";
 import { videoGenerations } from "@shared/schema";
 import { eq } from "drizzle-orm";
+import { videoCallbackManager } from "./video-callback-manager";
 
 /**
  * Webhook handler for Kling AI video completion callbacks
@@ -21,11 +22,11 @@ export function setupVideoWebhooks(app: Express) {
         return res.status(400).json({ error: 'Missing task_id' });
       }
       
-      // Find the video generation record in our database
+      // Find the video generation record in our database by searching cacheKey which contains the task_id
       const [videoRecord] = await db
         .select()
         .from(videoGenerations)
-        .where(eq(videoGenerations.taskId, task_id));
+        .where(eq(videoGenerations.cacheKey, task_id));
       
       if (!videoRecord) {
         console.error(`No video record found for task_id: ${task_id}`);
@@ -51,6 +52,13 @@ export function setupVideoWebhooks(app: Express) {
         });
         
         console.log(`✅ Video completed successfully: ${videoUrl}`);
+        
+        // Notify callback manager for immediate resolution
+        videoCallbackManager.notifyCompletion(task_id, {
+          videoUrl,
+          duration,
+          thumbnailUrl: task_result.videos[0].cover_image_url
+        });
       } else if (task_status === 'failed') {
         updateData.status = 'failed';
         updateData.metadata = JSON.stringify({
@@ -60,6 +68,12 @@ export function setupVideoWebhooks(app: Express) {
         });
         
         console.log(`❌ Video generation failed for task: ${task_id}`);
+        
+        // Notify callback manager of failure
+        videoCallbackManager.notifyFailure(task_id, {
+          message: task_result?.error || 'Unknown error',
+          task_result
+        });
       } else {
         console.log(`⏳ Video status update: ${task_status} for task: ${task_id}`);
         // For other statuses (processing, etc.), just update the timestamp
@@ -69,7 +83,7 @@ export function setupVideoWebhooks(app: Express) {
       await db
         .update(videoGenerations)
         .set(updateData)
-        .where(eq(videoGenerations.taskId, task_id));
+        .where(eq(videoGenerations.cacheKey, task_id));
       
       console.log(`Database updated for task: ${task_id}, status: ${task_status}`);
       

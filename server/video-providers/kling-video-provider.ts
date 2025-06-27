@@ -119,23 +119,55 @@ export class KlingVideoProvider implements IVideoProvider {
     });
 
     try {
-      // Prepare Kling-specific request
+      // Prepare Kling-specific request with callback URL
       const klingRequest = this.prepareKlingRequest(request);
       
-      // Create video task
+      // Create video task with callback URL
       const taskResponse = await this.createVideoTask(klingRequest);
+      const taskId = taskResponse.data?.task_id;
       
-      // Return standardized response
-      return {
-        taskId: taskResponse.data?.task_id,
-        status: 'processing',
-        estimatedCompletion: new Date(Date.now() + 5 * 60 * 1000), // 5 minutes
-        metadata: {
-          provider: this.name,
-          model: this.config!.modelName || 'kling-v1',
-          mode: request.quality
-        }
-      };
+      if (!taskId) {
+        throw new Error('No task ID returned from Kling API');
+      }
+      
+      console.log(`🔔 Video task created: ${taskId}, waiting for callback with 120s timeout`);
+      
+      // Import callback manager and wait for webhook completion
+      const { videoCallbackManager } = await import('../video-callback-manager');
+      
+      try {
+        // Wait up to 120 seconds for webhook callback
+        const result = await videoCallbackManager.waitForCallback(taskId, 120000);
+        
+        console.log(`✅ Video completed via callback: ${taskId}`);
+        
+        // Return successful response with actual video URL
+        return {
+          taskId,
+          status: 'completed',
+          videoUrl: result.videoUrl,
+          thumbnailUrl: result.thumbnailUrl,
+          duration: result.duration,
+          estimatedCompletion: new Date(),
+          metadata: {
+            provider: this.name,
+            model: this.config!.modelName || 'kling-v1',
+            mode: request.quality,
+            completionMethod: 'webhook'
+          }
+        };
+        
+      } catch (timeoutError: any) {
+        console.log(`⏰ Video generation timed out after 120 seconds: ${taskId}`);
+        
+        // Return timeout error with friendly message
+        throw new VideoProviderException(
+          VideoProviderError.TIMEOUT,
+          timeoutError.message || 'Video generation timed out after 2 minutes. This usually means the video is taking longer than expected to process. Please try again in a few minutes.',
+          this.name
+        );
+      }
+      
     } catch (error: any) {
       console.error('=== KLING VIDEO GENERATION ERROR ===', error);
       throw this.handleKlingError(error);
