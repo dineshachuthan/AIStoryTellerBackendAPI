@@ -238,42 +238,62 @@ export function UploadAudioPage() {
                   </div>
                 </div>
 
-                {/* Audio Controls */}
-                <div className="flex justify-center space-x-4">
-                  <Button 
-                    onClick={togglePlayback}
-                    variant="outline"
-                    className="border-blue-500 text-blue-500 hover:bg-blue-500/20"
-                  >
-                    {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
-                    {isPlaying ? 'Pause' : 'Play Preview'}
-                  </Button>
+                {/* Audio Preview Section */}
+                <div className="bg-gray-800/30 rounded-lg p-4">
+                  <h4 className="text-sm font-medium mb-3 text-center">Audio Preview</h4>
+                  <div className="flex justify-center space-x-4 mb-3">
+                    <Button 
+                      onClick={togglePlayback}
+                      variant="outline"
+                      className="border-blue-500 text-blue-500 hover:bg-blue-500/20"
+                      size="sm"
+                    >
+                      {isPlaying ? <Pause className="w-4 h-4 mr-2" /> : <Play className="w-4 h-4 mr-2" />}
+                      {isPlaying ? 'Pause Preview' : 'Play Preview'}
+                    </Button>
+                  </div>
+                  
+                  {/* Audio quality indicator */}
+                  <div className="text-center">
+                    {selectedFile.size < 10000 && (
+                      <div className="text-yellow-400 text-xs bg-yellow-400/10 rounded px-2 py-1 inline-block mb-2">
+                        ⚠️ File seems very small - ensure it contains clear speech
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex space-x-3">
                   <Button 
                     onClick={resetFile}
                     variant="outline"
-                    className="border-gray-500 text-gray-500 hover:bg-gray-500/20"
+                    className="border-gray-500 text-gray-500 hover:bg-gray-500/20 flex-1"
                   >
-                    <RotateCcw className="w-5 h-5" />
+                    <RotateCcw className="w-4 h-4 mr-2" />
                     Change File
+                  </Button>
+                  <Button 
+                    onClick={processAudio}
+                    disabled={transcribeMutation.isPending}
+                    className="bg-tiktok-red hover:bg-tiktok-red/80 flex-1"
+                  >
+                    {transcribeMutation.isPending ? (
+                      <>Processing...</>
+                    ) : (
+                      <>
+                        Convert to Text
+                        <ArrowRight className="w-4 h-4 ml-2" />
+                      </>
+                    )}
                   </Button>
                 </div>
 
-                {/* Process Button */}
-                <Button 
-                  onClick={processAudio}
-                  disabled={transcribeMutation.isPending}
-                  className="bg-tiktok-red hover:bg-tiktok-red/80 w-full"
-                  size="lg"
-                >
-                  {transcribeMutation.isPending ? (
-                    <>Processing...</>
-                  ) : (
-                    <>
-                      Convert to Text
-                      <ArrowRight className="w-5 h-5 ml-2" />
-                    </>
-                  )}
-                </Button>
+                {/* Instructions */}
+                <div className="text-xs text-gray-500 text-center bg-blue-500/10 rounded p-3">
+                  <strong>Before converting:</strong> Please play the preview to ensure your audio file contains clear speech. 
+                  If it sounds unclear or silent, try a different file for better results.
+                </div>
               </div>
             )}
 

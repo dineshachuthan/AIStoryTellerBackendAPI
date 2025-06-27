@@ -920,6 +920,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Audio file is required" });
       }
 
+      // Basic file validation
+      if (req.file.size === 0) {
+        return res.status(400).json({ message: "Audio file is empty. Please record or upload a valid audio file." });
+      }
+
+      if (req.file.size < 1000) {
+        return res.status(400).json({ message: "Audio file is too small (less than 1KB). Please ensure you have recorded clear speech." });
+      }
+
       console.log("Processing audio transcription:", {
         filename: req.file.originalname,
         mimetype: req.file.mimetype,
@@ -929,6 +938,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Convert audio buffer to transcription using OpenAI Whisper
       const transcriptionText = await transcribeAudio(req.file.buffer);
+      
+      if (!transcriptionText || transcriptionText.trim().length === 0) {
+        return res.status(400).json({ message: "No speech detected in audio file. Please try recording again with clear speech." });
+      }
       
       console.log("Transcription completed, length:", transcriptionText.length);
       
