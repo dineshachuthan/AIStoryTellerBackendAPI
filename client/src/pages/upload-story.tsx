@@ -153,7 +153,7 @@ export default function UploadStory() {
     };
 
     handlePageLoad();
-  }, [storyId, story, storyLoading, sourceType, transcribeAudioMutation, toast, hasLoadedOnce]);
+  }, [storyId, story, storyLoading, sourceType, hasLoadedOnce]);
 
   // Update story content
   async function updateStoryContent() {
