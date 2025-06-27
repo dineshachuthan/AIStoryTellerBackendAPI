@@ -132,6 +132,7 @@ export interface IStorage {
   saveVideoGeneration(storyId: number, userId: string, videoData: any): Promise<void>;
   getVideoByStoryId(storyId: number): Promise<any>;
   deleteVideoGeneration(storyId: number): Promise<void>;
+  updateVideoGeneration(storyId: number, updates: any): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -637,6 +638,17 @@ export class DatabaseStorage implements IStorage {
     const { videoGenerations } = await import("@shared/schema");
     
     await db.delete(videoGenerations)
+      .where(eq(videoGenerations.storyId, storyId));
+  }
+
+  async updateVideoGeneration(storyId: number, updates: any): Promise<void> {
+    const { videoGenerations } = await import("@shared/schema");
+    
+    await db.update(videoGenerations)
+      .set({
+        ...updates,
+        updatedAt: new Date()
+      })
       .where(eq(videoGenerations.storyId, storyId));
   }
 }
