@@ -160,10 +160,10 @@ export class KlingVideoProvider implements IVideoProvider {
       } catch (timeoutError: any) {
         console.log(`⏰ Video generation timed out after 120 seconds: ${taskId}`);
         
-        // Return timeout error with friendly message
+        // Pure callback-based system - no polling fallback
         throw new VideoProviderException(
           VideoProviderError.NETWORK_ERROR,
-          timeoutError.message || 'Video generation timed out after 2 minutes. This usually means the video is taking longer than expected to process. Please try again in a few minutes.',
+          'Video generation timed out after 2 minutes. This usually means the video is taking longer than expected to process. Please try again in a few minutes.',
           this.name
         );
       }
@@ -285,6 +285,60 @@ export class KlingVideoProvider implements IVideoProvider {
     }
   }
 
+  /**
+   * Poll for video completion when we have a specific task ID
+   * This is for manual polling when callback isn't available or fails
+   */
+  async pollForCompletion(taskId: string, timeoutMs: number = 120000): Promise<StandardVideoResponse> {
+    console.log(`🔄 Starting manual polling for task: ${taskId}, timeout: ${timeoutMs}ms`);
+    
+    const startTime = Date.now();
+    const pollInterval = 5000; // Poll every 5 seconds
+    
+    while (Date.now() - startTime < timeoutMs) {
+      try {
+        const status = await this.checkStatus(taskId);
+        
+        if (status.status === 'completed' && status.videoUrl) {
+          console.log(`✅ Video completed via polling: ${taskId}`);
+          return {
+            taskId,
+            status: 'completed',
+            videoUrl: status.videoUrl,
+            thumbnailUrl: status.thumbnailUrl,
+            estimatedCompletion: new Date(),
+            metadata: {
+              provider: this.name,
+              model: this.config!.modelName || 'kling-v1',
+              completionMethod: 'polling'
+            }
+          };
+        } else if (status.status === 'failed') {
+          throw new VideoProviderException(
+            VideoProviderError.NETWORK_ERROR,
+            'Video generation failed on Kling servers',
+            this.name
+          );
+        }
+        
+        // Still processing, wait before next poll
+        console.log(`⏳ Video still processing: ${taskId}, waiting ${pollInterval}ms...`);
+        await new Promise(resolve => setTimeout(resolve, pollInterval));
+        
+      } catch (error: any) {
+        console.error(`❌ Polling error for task ${taskId}:`, error);
+        throw error;
+      }
+    }
+    
+    // Timeout reached
+    throw new VideoProviderException(
+      VideoProviderError.NETWORK_ERROR,
+      `Video generation polling timed out after ${timeoutMs / 1000} seconds`,
+      this.name
+    );
+  }
+
   private validateRequest(request: StandardVideoRequest): void {
     if (!this.initialized || !this.config) {
       throw new VideoProviderException(
@@ -316,7 +370,9 @@ export class KlingVideoProvider implements IVideoProvider {
     const klingMode = (request.quality === 'pro') ? 'pro' : 'std';
     
     // Generate callback URL for webhook notifications
-    const baseUrl = process.env.REPLIT_DOMAIN ? `https://${process.env.REPLIT_DOMAIN}` : 'http://localhost:3000';
+    // Use REPLIT_DEV_DOMAIN or fallback to a placeholder (won't work locally but needed for production)
+    const domain = process.env.REPLIT_DEV_DOMAIN || process.env.REPLIT_DOMAIN;
+    const baseUrl = domain ? `https://${domain}` : 'https://placeholder-domain.replit.app';
     const callbackUrl = `${baseUrl}/api/webhooks/kling/video-complete`;
     
     // Kling API doesn't support duration parameter - use their default length
