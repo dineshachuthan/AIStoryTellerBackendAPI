@@ -723,7 +723,7 @@ export default function StoryAnalysis() {
             <TabsContent value="roleplay" className="space-y-6">
               <RolePlayAnalysisPanel
                 storyId={parseInt(storyId!)}
-                storyContent={storyData?.content || ""}
+                storyContent={storyDataFromQuery?.content || ""}
                 existingCharacters={analysisData.analysis.characters}
                 existingAnalysis={rolePlayAnalysis}
                 onAnalysisGenerated={(analysis) => {
