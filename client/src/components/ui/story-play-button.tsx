@@ -238,8 +238,12 @@ export function StoryPlayButton({
     }
   }, [currentSegment]);
 
+  // Debug rendering
+  console.log('StoryPlayButton render:', { user: !!user, storyId, variant, isCheckingStatus, narrationStatus });
+  
   // Don't render if no user
   if (!user) {
+    console.log('StoryPlayButton: No user, not rendering');
     return null;
   }
 
