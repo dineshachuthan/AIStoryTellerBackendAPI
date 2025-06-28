@@ -2504,6 +2504,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/stories/:id/narration", requireAuth, async (req, res) => {
+    console.log('=== SECOND OLD NARRATION ENDPOINT HIT ===', req.params, req.path);
     try {
       const storyId = parseInt(req.params.id);
       const userId = (req.user as any)?.id;
