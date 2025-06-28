@@ -4089,7 +4089,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
           
           hasVoices = uniqueEmotions.some(emotion => 
-            userEmotions.includes(emotion.toLowerCase())
+            userEmotions.map(e => e.toLowerCase()).includes(emotion.toLowerCase())
           );
         }
       } catch (error) {
