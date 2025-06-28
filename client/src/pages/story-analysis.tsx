@@ -684,10 +684,18 @@ export default function StoryAnalysis() {
             </div>
           </div>
 
-          {/* Story Narration Player - Only show for saved stories */}
+          {/* Story Narration Player - Always show for debugging */}
           {storyId && (
-            <div className="mb-6">
+            <div className="mb-6 p-4 bg-white/10 rounded-lg">
+              <div className="text-white text-sm mb-2">Story Player (ID: {storyId})</div>
               <CompactStoryPlayer storyId={parseInt(storyId)} showTitle={false} />
+            </div>
+          )}
+          
+          {/* Fallback if no storyId */}
+          {!storyId && (
+            <div className="mb-6 p-4 bg-red-500/20 rounded-lg">
+              <div className="text-white text-sm">No story ID found</div>
             </div>
           )}
 
