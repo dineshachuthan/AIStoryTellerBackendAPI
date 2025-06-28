@@ -249,107 +249,130 @@ export default function StoryNarratorControls({
   const hasAnyNarration = tempNarration || savedNarration;
 
   return (
-    <div className={`space-y-4 bg-white/10 p-6 rounded-lg border border-purple-500/30 ${className}`}>
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-white">Story Narration</h3>
-        <div className="text-sm text-gray-300">
-          {activeNarration ? `${activeNarration.segments.length} segments` : 'No narration'}
+    <div className={`bg-gradient-to-br from-purple-900/20 to-blue-900/20 p-6 rounded-xl border border-purple-500/30 ${className}`}>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-xl font-bold text-white flex items-center">
+          <Headphones className="w-5 h-5 mr-2 text-purple-400" />
+          Story Narration
+        </h3>
+        <div className="text-sm text-purple-200 bg-purple-900/30 px-3 py-1 rounded-full">
+          {activeNarration ? `${activeNarration.segments.length} segments` : 'Ready to create'}
         </div>
       </div>
 
-      {/* Progress bar */}
+      {/* Progress visualization */}
       {hasAnyNarration && (
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm text-gray-300">
+        <div className="mb-6 p-4 bg-white/5 rounded-lg border border-purple-400/20">
+          <div className="flex justify-between text-sm text-purple-200 mb-2">
             <span>Segment {currentSegment + 1} of {activeNarration?.segments.length || 0}</span>
-            <span>{Math.round(progress)}%</span>
+            <span>{Math.round(progress)}% complete</span>
           </div>
-          <div className="w-full bg-gray-600 rounded-full h-2">
+          <div className="w-full bg-gray-700 rounded-full h-3 overflow-hidden">
             <div 
-              className="bg-purple-500 h-2 rounded-full transition-all duration-300"
+              className="bg-gradient-to-r from-purple-500 to-blue-500 h-3 rounded-full transition-all duration-500 ease-out shadow-lg"
               style={{ width: `${progress}%` }}
             />
           </div>
         </div>
       )}
 
-      {/* Control buttons */}
-      <div className="grid grid-cols-2 gap-3">
-        {/* Generate Narration */}
-        <Button
-          onClick={generateNarration}
-          disabled={isGenerating || !canNarrate}
-          className="bg-orange-600 hover:bg-orange-700 text-white"
-        >
-          {isGenerating ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Generating...
-            </>
-          ) : (
-            <>
-              <Download className="w-4 h-4 mr-2" />
-              Generate Narration
-            </>
-          )}
-        </Button>
+      {/* Main layout: Prominent play button + smaller controls */}
+      <div className="space-y-4">
+        {/* Prominent Play Button */}
+        <div className="flex justify-center">
+          <Button
+            onClick={savedNarration ? playStory : (isPlaying ? pauseNarration : playNarration)}
+            disabled={!hasAnyNarration}
+            className={`
+              h-16 px-8 text-lg font-semibold shadow-2xl transform transition-all duration-200 
+              ${hasAnyNarration 
+                ? 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 hover:scale-105 active:scale-95' 
+                : 'bg-gray-600 cursor-not-allowed'
+              }
+            `}
+          >
+            {isPlaying ? (
+              <>
+                <Pause className="w-6 h-6 mr-3" />
+                Pause Story
+              </>
+            ) : (
+              <>
+                <Play className="w-6 h-6 mr-3" />
+                {savedNarration ? 'Play Story' : (tempNarration ? 'Play Preview' : 'Generate First')}
+              </>
+            )}
+          </Button>
+        </div>
 
-        {/* Play/Pause Narration */}
-        <Button
-          onClick={isPlaying ? pauseNarration : playNarration}
-          disabled={!hasAnyNarration}
-          className="bg-blue-600 hover:bg-blue-700 text-white"
-        >
-          {isPlaying ? (
-            <>
-              <Pause className="w-4 h-4 mr-2" />
-              Pause
-            </>
-          ) : (
-            <>
-              <Play className="w-4 h-4 mr-2" />
-              Play Narration
-            </>
-          )}
-        </Button>
+        {/* Secondary controls in a creative arc layout */}
+        <div className="grid grid-cols-3 gap-3 mt-6">
+          {/* Generate - Left */}
+          <Button
+            onClick={generateNarration}
+            disabled={isGenerating || !canNarrate}
+            variant="outline"
+            className={`
+              h-12 text-sm border-orange-400/50 bg-orange-900/20 text-orange-200 
+              hover:bg-orange-900/40 hover:border-orange-400 transition-all duration-200
+              ${isGenerating ? 'animate-pulse' : 'hover:scale-105'}
+            `}
+          >
+            {isGenerating ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <>
+                <Download className="w-4 h-4 mr-2" />
+                Generate
+              </>
+            )}
+          </Button>
 
-        {/* Save Narration */}
-        <Button
-          onClick={saveNarration}
-          disabled={!tempNarration || isSaving}
-          className="bg-green-600 hover:bg-green-700 text-white"
-        >
-          {isSaving ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Saving...
-            </>
-          ) : (
-            <>
-              <Save className="w-4 h-4 mr-2" />
-              Save Narration
-            </>
-          )}
-        </Button>
+          {/* Save - Center */}
+          <Button
+            onClick={saveNarration}
+            disabled={!tempNarration || isSaving}
+            variant="outline"
+            className={`
+              h-12 text-sm border-green-400/50 bg-green-900/20 text-green-200 
+              hover:bg-green-900/40 hover:border-green-400 transition-all duration-200
+              ${isSaving ? 'animate-pulse' : 'hover:scale-105'}
+              ${tempNarration ? 'ring-2 ring-green-400/30' : ''}
+            `}
+          >
+            {isSaving ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <>
+                <Save className="w-4 h-4 mr-2" />
+                {tempNarration ? 'Save' : 'Saved'}
+              </>
+            )}
+          </Button>
 
-        {/* Play Story */}
-        <Button
-          onClick={playStory}
-          disabled={!savedNarration || isLoadingSaved}
-          className="bg-purple-600 hover:bg-purple-700 text-white"
-        >
-          {isLoadingSaved ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Loading...
-            </>
-          ) : (
-            <>
-              <Headphones className="w-4 h-4 mr-2" />
-              Play Story
-            </>
-          )}
-        </Button>
+          {/* Status indicator - Right */}
+          <div className={`
+            h-12 flex items-center justify-center text-sm rounded-md border transition-all duration-200
+            ${savedNarration 
+              ? 'border-emerald-400/50 bg-emerald-900/20 text-emerald-200' 
+              : tempNarration 
+                ? 'border-yellow-400/50 bg-yellow-900/20 text-yellow-200'
+                : 'border-gray-500/50 bg-gray-900/20 text-gray-400'
+            }
+          `}>
+            <div className="text-center">
+              <div className="font-medium">
+                {savedNarration ? '✓ Saved' : tempNarration ? '⚡ Preview' : '○ Empty'}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Cost notice */}
+        <div className="text-xs text-center text-gray-400 mt-4 bg-gray-900/30 p-3 rounded-lg">
+          💡 Generate creates AI narration (~$0.30) • Save stores permanently • Play uses your saved version
+        </div>
       </div>
 
       {/* Status indicators */}
