@@ -16,9 +16,11 @@ export default function UploadStory() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
   
-  // Extract story ID from URL if present
+  // Extract story ID from URL if present, or from sessionStorage
   const [match, params] = useRoute("/:storyId/upload-story");
-  const storyId = params?.storyId;
+  const urlStoryId = params?.storyId;
+  const sessionStoryId = sessionStorage.getItem('currentStoryId');
+  const storyId = urlStoryId || sessionStoryId;
   
   // Check for URL parameters to detect source
   const urlParams = new URLSearchParams(window.location.search);
