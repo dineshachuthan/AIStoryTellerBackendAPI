@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, jsonb, varchar, index, doublePrecision } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, jsonb, varchar, index, doublePrecision, real } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -290,7 +290,7 @@ export const voiceGenerationCache = pgTable("voice_generation_cache", {
   voiceId: varchar("voice_id"),
   emotion: varchar("emotion"),
   textHash: varchar("text_hash").notNull(),
-  audioData: bytea("audio_data").notNull(),
+  audioData: text("audio_data").notNull(), // Base64 encoded audio data
   audioUrl: varchar("audio_url"),
   provider: varchar("provider").notNull(),
   duration: real("duration"),
