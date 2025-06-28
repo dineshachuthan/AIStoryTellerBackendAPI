@@ -85,8 +85,9 @@ export default function Home() {
 
       console.log('Empty story created:', story);
       
-      // Navigate to upload page with story ID
-      setLocation(`/${story.id}${targetPath}`);
+      // Store story ID in sessionStorage and navigate to the correct path
+      sessionStorage.setItem('currentStoryId', story.id.toString());
+      setLocation(targetPath);
     } catch (error) {
       console.error("Story creation error:", error);
       console.error("Error details:", error.message);
