@@ -2321,6 +2321,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Story narration generation endpoint (unique path to avoid conflicts)
   app.post('/api/generate-story-narration/:storyId', async (req, res) => {
     console.log('=== NARRATION GENERATE ENDPOINT HIT ===');
+    console.log('Request user:', req.user);
+    console.log('Request body:', req.body);
+    console.log('Request params:', req.params);
     try {
       const storyId = parseInt(req.params.storyId);
       const userId = (req.user as any)?.id;
