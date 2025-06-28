@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PressHoldRecorder } from '@/components/press-hold-recorder';
+import { PressHoldRecorder } from '@/components/ui/press-hold-recorder';
 import { Mic, Play, Pause, Check, AlertCircle, Settings, TestTube } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { EmotionConfig } from '@shared/voice-config';
@@ -136,30 +136,36 @@ export default function VoiceCloning() {
     }
   });
 
-  const handleRecordingComplete = (audioData: string, duration: number) => {
-    const sample: EmotionSample = {
-      emotion: selectedEmotion,
-      audioData,
-      intensity: 5,
-      duration
+  const handleRecordingComplete = (audioBlob: Blob, audioUrl: string) => {
+    // Convert blob to base64 for storage
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64Data = reader.result as string;
+      const sample: EmotionSample = {
+        emotion: selectedEmotion,
+        audioData: base64Data,
+        intensity: 5,
+        duration: audioBlob.size / 1000 // Rough estimate
+      };
+
+      // Replace existing sample for this emotion or add new one
+      setEmotionSamples(prev => {
+        const filtered = prev.filter(s => s.emotion !== selectedEmotion);
+        return [...filtered, sample];
+      });
+
+      toast({
+        title: 'Recording Saved',
+        description: `${selectedEmotion} emotion sample recorded successfully`
+      });
+
+      // Auto-advance to next emotion
+      const currentIndex = priorityEmotions.indexOf(selectedEmotion);
+      if (currentIndex < priorityEmotions.length - 1) {
+        setSelectedEmotion(priorityEmotions[currentIndex + 1]);
+      }
     };
-
-    // Replace existing sample for this emotion or add new one
-    setEmotionSamples(prev => {
-      const filtered = prev.filter(s => s.emotion !== selectedEmotion);
-      return [...filtered, sample];
-    });
-
-    toast({
-      title: 'Recording Saved',
-      description: `${selectedEmotion} emotion sample recorded successfully`
-    });
-
-    // Auto-advance to next emotion
-    const currentIndex = priorityEmotions.indexOf(selectedEmotion);
-    if (currentIndex < priorityEmotions.length - 1) {
-      setSelectedEmotion(priorityEmotions[currentIndex + 1]);
-    }
+    reader.readAsDataURL(audioBlob);
   };
 
   const getEmotionStatus = (emotion: string) => {

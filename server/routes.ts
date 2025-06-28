@@ -4130,6 +4130,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get user's voice profile
+  app.get('/api/user/voice-profile', requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.user!.id;
+      const profile = await storage.getUserVoiceProfile(userId);
+      res.json(profile || null);
+    } catch (error: any) {
+      console.error('Error getting voice profile:', error);
+      res.status(500).json({ error: 'Failed to get voice profile' });
+    }
+  });
+
   // Voice cloning endpoint - create voice clone from user samples
   app.post('/api/voice/create-clone', requireAuth, async (req, res) => {
     try {

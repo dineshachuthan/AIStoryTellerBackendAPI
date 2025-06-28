@@ -62,6 +62,7 @@ function Router() {
             <Route path="/analysis/:storyId" component={StoryAnalysis} />
             <Route path="/voice-setup" component={VoiceSetup} />
             <Route path="/voice-samples" component={VoiceSetup} />
+            <Route path="/voice-cloning" component={VoiceCloning} />
             <Route path="/story/:storyId" component={StoryPlayer} />
             <Route path="/story/:storyId/play" component={StoryPlayer} />
             <Route path="/story/:storyId/collaborate" component={StoryCollaboration} />

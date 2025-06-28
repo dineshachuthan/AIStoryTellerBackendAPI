@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { AudioLines, LogOut, User } from "lucide-react";
+import { AudioLines, LogOut, User, Mic } from "lucide-react";
 
 export function AppTopNavigation() {
   const [, setLocation] = useLocation();
@@ -31,6 +31,16 @@ export function AppTopNavigation() {
         </Button>
         
         <div className="flex items-center space-x-3">
+          <Button
+            onClick={() => setLocation("/voice-cloning")}
+            variant="outline"
+            size="sm"
+            className="border-purple-500 text-purple-500 hover:bg-purple-500/20"
+          >
+            <Mic className="w-4 h-4 mr-2" />
+            Voice Clone
+          </Button>
+          
           <Button
             onClick={() => setLocation("/voice-setup")}
             variant="outline"
