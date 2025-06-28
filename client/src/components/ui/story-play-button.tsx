@@ -103,13 +103,13 @@ export function StoryPlayButton({
 
     setIsLoading(true);
     try {
-      // Get story content and analysis
+      // Get story content and narrative analysis
       const [storyResponse, analysisResponse] = await Promise.all([
         apiRequest(`/api/stories/${storyId}`, { method: 'GET' }),
-        apiRequest(`/api/stories/${storyId}/analysis`, { method: 'GET' })
+        apiRequest(`/api/stories/${storyId}/narrative`, { method: 'GET' })
       ]);
 
-      if (!storyResponse.content || !analysisResponse.analysis?.emotions) {
+      if (!storyResponse.content || !analysisResponse.emotions) {
         throw new Error('Story content or analysis not found');
       }
 
@@ -118,7 +118,7 @@ export function StoryPlayButton({
         method: 'POST',
         body: JSON.stringify({
           content: storyResponse.content,
-          emotions: analysisResponse.analysis.emotions
+          emotions: analysisResponse.emotions
         })
       });
 
