@@ -1215,7 +1215,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "User ID required" });
       }
 
-      const userVoiceDir = path.join(process.cwd(), 'persistent-cache', 'user-voice-samples');
+      // Fix: Use the correct directory where files are actually saved
+      const userVoiceDir = path.join(process.cwd(), 'persistent-cache', 'user-voice-emotions');
       
       try {
         const files = await fs.readdir(userVoiceDir);
@@ -1238,7 +1239,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         const samples = sortedFiles.map(filename => ({
           emotion: filename.split('-')[1], // Extract emotion from filename
-          audioUrl: `/api/emotions/user-voice-sample/${filename}`,
+          audioUrl: `/api/user-voice-emotions/${filename}`, // Fix: Use correct endpoint
           filename: filename,
           timestamp: filename.split('-').pop()?.split('.')[0]
         }));
@@ -1274,11 +1275,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Voice emotion file not found" });
       }
       
-      // Set appropriate content type based on file extension
+      // Set appropriate content type and headers for audio playback
       const contentType = fileName.endsWith('.webm') ? 'audio/webm' : 'audio/mpeg';
       res.setHeader('Content-Type', contentType);
       res.setHeader('Accept-Ranges', 'bytes');
-      res.setHeader('Cache-Control', 'public, max-age=3600');
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
       res.sendFile(path.resolve(filePath));
     } catch (error) {
       console.error("Voice emotion serve error:", error);
