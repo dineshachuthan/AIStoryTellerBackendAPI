@@ -116,7 +116,7 @@ export interface IStorage {
   // Story Analyses
   getStoryAnalysis(storyId: number, analysisType: 'narrative' | 'roleplay'): Promise<StoryAnalysis | undefined>;
   createStoryAnalysis(analysis: InsertStoryAnalysis): Promise<StoryAnalysis>;
-  updateStoryAnalysis(storyId: number, analysisType: 'narrative' | 'roleplay', analysisData: any): Promise<StoryAnalysis>;
+  updateStoryAnalysis(storyId: number, analysisType: 'narrative' | 'roleplay', analysisData: any, userId: string): Promise<StoryAnalysis>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -655,7 +655,7 @@ export class DatabaseStorage implements IStorage {
     return analysis;
   }
 
-  async updateStoryAnalysis(storyId: number, analysisType: 'narrative' | 'roleplay', analysisData: any): Promise<StoryAnalysis> {
+  async updateStoryAnalysis(storyId: number, analysisType: 'narrative' | 'roleplay', analysisData: any, userId: string): Promise<StoryAnalysis> {
     const existing = await this.getStoryAnalysis(storyId, analysisType);
     
     if (existing) {
@@ -673,51 +673,13 @@ export class DatabaseStorage implements IStorage {
         storyId,
         analysisType,
         analysisData,
-        generatedBy: 'system'
+        generatedBy: userId
       });
     }
   }
 }
 
 export const storage = new DatabaseStorage();
-    const results = await db
-      .select()
-      .from(storyUserConfidence)
-      .where(and(
-        eq(storyUserConfidence.storyId, storyId),
-        eq(storyUserConfidence.userId, userId)
-      ));
-    return results[0];
-  }
-
-  async createStoryUserConfidence(confidenceData: InsertStoryUserConfidence): Promise<StoryUserConfidence> {
-    const results = await db
-      .insert(storyUserConfidence)
-      .values(confidenceData)
-      .returning();
-    return results[0];
-  }
-
-  async updateStoryUserConfidence(storyId: number, userId: string, updates: Partial<InsertStoryUserConfidence>): Promise<void> {
-    await db
-      .update(storyUserConfidence)
-      .set({ ...updates, updatedAt: new Date() })
-      .where(and(
-        eq(storyUserConfidence.storyId, storyId),
-        eq(storyUserConfidence.userId, userId)
-      ));
-  }
-
-  async incrementConfidenceMetric(
-    storyId: number, 
-    userId: string, 
-    metric: 'totalInteractions' | 'voiceRecordingsCompleted' | 'emotionsRecorded' | 'playbacksCompleted',
-    timeSpentSeconds?: number
-  ): Promise<void> {
-    // Get or create confidence record
-    let confidence = await this.getStoryUserConfidence(storyId, userId);
-    
-    if (!confidence) {
       confidence = await this.createStoryUserConfidence({
         storyId,
         userId,
@@ -780,7 +742,7 @@ export const storage = new DatabaseStorage();
     return analysis;
   }
 
-  async updateStoryAnalysis(storyId: number, analysisType: 'narrative' | 'roleplay', analysisData: any): Promise<StoryAnalysis> {
+  async updateStoryAnalysis(storyId: number, analysisType: 'narrative' | 'roleplay', analysisData: any, userId: string): Promise<StoryAnalysis> {
     // First try to update existing analysis
     const existing = await this.getStoryAnalysis(storyId, analysisType);
     
@@ -800,7 +762,7 @@ export const storage = new DatabaseStorage();
         storyId,
         analysisType,
         analysisData,
-        generatedBy: 'system' // Default value, should be overridden
+        generatedBy: userId
       });
     }
   }

@@ -2310,6 +2310,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/stories/:id/narration", requireAuth, async (req, res) => {
     try {
       const storyId = parseInt(req.params.id);
+      const userId = (req.user as any)?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "User authentication required" });
+      }
+      
       const story = await storage.getStory(storyId);
       
       if (!story) {
