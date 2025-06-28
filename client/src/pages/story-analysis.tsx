@@ -684,20 +684,18 @@ export default function StoryAnalysis() {
             </div>
           </div>
 
-          {/* Story Narration Player - Always show for debugging */}
-          {storyId && (
-            <div className="mb-6 p-4 bg-white/10 rounded-lg">
-              <div className="text-white text-sm mb-2">Story Player (ID: {storyId})</div>
+          {/* Story Narration Player - Always show prominently */}
+          <div className="mb-8 p-6 bg-gradient-to-r from-purple-900/30 to-blue-900/30 rounded-xl border-2 border-purple-500/50">
+            <div className="text-white text-lg font-bold mb-4 flex items-center">
+              🎵 Story Narration Player
+              {storyId && <span className="ml-2 text-sm text-purple-300">(Story #{storyId})</span>}
+            </div>
+            {storyId ? (
               <CompactStoryPlayer storyId={parseInt(storyId)} showTitle={false} />
-            </div>
-          )}
-          
-          {/* Fallback if no storyId */}
-          {!storyId && (
-            <div className="mb-6 p-4 bg-red-500/20 rounded-lg">
-              <div className="text-white text-sm">No story ID found</div>
-            </div>
-          )}
+            ) : (
+              <div className="text-red-400 font-medium">⚠ No story ID found</div>
+            )}
+          </div>
 
           {/* Main Analysis Tabs */}
           <Tabs defaultValue="narrative" className="w-full">
