@@ -1147,6 +1147,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Serve narration audio files
+  app.get("/api/narration-audio/:filename", async (req, res) => {
+    try {
+      const { filename } = req.params;
+      const filePath = path.join(process.cwd(), 'persistent-cache', 'narrations', filename);
+      
+      // Check if file exists
+      try {
+        await fs.access(filePath);
+      } catch {
+        return res.status(404).json({ message: "Narration audio file not found" });
+      }
+      
+      res.setHeader('Content-Type', 'audio/mpeg');
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+      res.setHeader('Accept-Ranges', 'bytes');
+      res.sendFile(path.resolve(filePath));
+    } catch (error) {
+      console.error("Error serving narration audio:", error);
+      res.status(404).json({ message: "Narration audio file not found" });
+    }
+  });
+
   // Save user voice emotion to repository (cross-story)
   app.post("/api/user-voice-emotions", upload.single('audio'), async (req, res) => {
     try {

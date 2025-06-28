@@ -53,7 +53,8 @@ export class StoryNarrator {
     
     const totalDuration = segments.reduce((sum, segment) => sum + (segment.duration || 0), 0);
 
-    return {
+    // 5. Save narration to database for future access
+    const narrationResult = {
       storyId,
       segments,
       totalDuration,
@@ -61,6 +62,10 @@ export class StoryNarrator {
       narratorVoiceType,
       generatedAt: new Date()
     };
+    
+    await this.saveNarrationToDatabase(narrationResult, userId);
+
+    return narrationResult;
   }
 
   /**
@@ -206,6 +211,7 @@ export class StoryNarrator {
 
   /**
    * Generate audio for narration segment using narrator voice
+   * CRITICAL: Downloads and stores audio locally to prevent OpenAI URL expiration
    */
   private async generateNarrationAudio(
     text: string,
@@ -216,37 +222,90 @@ export class StoryNarrator {
     segmentIndex: number
   ): Promise<{ audioUrl: string; duration?: number }> {
     
-    if (narratorVoiceType === 'user') {
-      // Use user voice sample for generation
-      const audioResult = await audioService.generateEmotionAudio({
-        text,
-        emotion: 'neutral', // Neutral emotion for narration
-        intensity: 5, // Medium intensity
+    // Use audio service to get the audio buffer directly (not URL)
+    const { buffer, voice } = await audioService.getAudioBuffer({
+      text,
+      emotion: 'neutral',
+      intensity: 5,
+      voice: narratorVoice,
+      userId,
+      storyId
+    });
+    
+    // Store audio locally with narration-specific naming
+    const localAudioUrl = await this.storeNarrationAudio(buffer, storyId, segmentIndex, voice);
+    
+    return {
+      audioUrl: localAudioUrl,
+      duration: 3000 // Estimate based on text length, could be improved
+    };
+  }
+
+  /**
+   * Store narration audio buffer to local filesystem
+   * Returns local URL for serving
+   */
+  private async storeNarrationAudio(
+    buffer: Buffer, 
+    storyId: number, 
+    segmentIndex: number, 
+    voice: string
+  ): Promise<string> {
+    const fs = require('fs').promises;
+    const path = require('path');
+    
+    // Create narration-specific directory
+    const narrationDir = path.join(process.cwd(), 'persistent-cache', 'narrations');
+    await fs.mkdir(narrationDir, { recursive: true });
+    
+    // Generate filename with story ID, segment, and timestamp for uniqueness
+    const timestamp = Date.now();
+    const fileName = `story-${storyId}-segment-${segmentIndex}-${voice}-${timestamp}.mp3`;
+    const filePath = path.join(narrationDir, fileName);
+    
+    // Write audio buffer to file
+    await fs.writeFile(filePath, buffer);
+    
+    // Store metadata for debugging and management
+    const metadata = {
+      storyId,
+      segmentIndex,
+      voice,
+      fileName,
+      fileSize: buffer.length,
+      createdAt: new Date().toISOString(),
+      textLength: 0 // Could store text length for duration estimates
+    };
+    
+    const metadataPath = path.join(narrationDir, `${fileName}.json`);
+    await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2));
+    
+    console.log(`Stored narration audio locally: ${fileName} (${buffer.length} bytes)`);
+    
+    // Return local serving URL
+    return `/api/narration-audio/${fileName}`;
+  }
+
+  /**
+   * Save narration to database for future access and replay
+   */
+  private async saveNarrationToDatabase(narrationResult: StoryNarrationResult, userId: string): Promise<void> {
+    const { storage } = require('./storage');
+
+    try {
+      await storage.saveNarration({
+        storyId: narrationResult.storyId,
         userId,
-        storyId,
-        voice: narratorVoice
+        narratorVoice: narrationResult.narratorVoice,
+        narratorVoiceType: narrationResult.narratorVoiceType,
+        segments: narrationResult.segments,
+        totalDuration: narrationResult.totalDuration
       });
       
-      return {
-        audioUrl: audioResult.audioUrl,
-        duration: 3000 // Estimate, could be calculated from actual audio
-      };
-      
-    } else {
-      // Use AI voice for generation
-      const audioResult = await audioService.generateEmotionAudio({
-        text,
-        emotion: 'neutral',
-        intensity: 5,
-        voice: narratorVoice, // AI voice name (alloy, echo, etc.)
-        userId,
-        storyId
-      });
-      
-      return {
-        audioUrl: audioResult.audioUrl,
-        duration: 3000
-      };
+      console.log(`Saved narration to database: Story ${narrationResult.storyId}, ${narrationResult.segments.length} segments, ${narrationResult.totalDuration}ms total`);
+    } catch (error) {
+      console.error('Failed to save narration to database:', error);
+      // Don't throw error - narration generation still worked
     }
   }
 
