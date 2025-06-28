@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
@@ -39,6 +39,18 @@ export function EmotionVoiceRecorder({
   const recordingStartTimeRef = useRef<number>(0);
   const holdTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isHoldingRef = useRef<boolean>(false);
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (holdTimeoutRef.current) {
+        clearTimeout(holdTimeoutRef.current);
+      }
+      if (recordingIntervalRef.current) {
+        clearInterval(recordingIntervalRef.current);
+      }
+    };
+  }, []);
 
   const startRecording = async () => {
     try {
@@ -84,10 +96,14 @@ export function EmotionVoiceRecorder({
         const recordingDuration = Date.now() - recordingStartTimeRef.current;
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm;codecs=opus' });
         
+        console.log('Recording stopped - Duration:', recordingDuration, 'ms, Blob size:', audioBlob.size, 'bytes');
+        
         // Only save recording if it's at least 1 second long
         if (recordingDuration >= 1000) {
+          console.log('Recording duration valid, calling onRecordingComplete');
           onRecordingComplete?.(audioBlob);
         } else {
+          console.log('Recording too short, showing error');
           toast({
             title: "Recording Too Short",
             description: "Please hold the button for at least 1 second to record.",
@@ -139,22 +155,52 @@ export function EmotionVoiceRecorder({
     }
   };
 
+  const handlePressStart = () => {
+    isHoldingRef.current = true;
+    
+    // Start recording after 300ms hold delay
+    holdTimeoutRef.current = setTimeout(() => {
+      if (isHoldingRef.current) {
+        startRecording();
+      }
+    }, 300);
+  };
+
+  const handlePressEnd = () => {
+    isHoldingRef.current = false;
+    
+    // Clear the hold timeout if user releases before 300ms
+    if (holdTimeoutRef.current) {
+      clearTimeout(holdTimeoutRef.current);
+      holdTimeoutRef.current = null;
+    }
+    
+    // Stop recording if it was started
+    if (isRecording) {
+      stopRecording();
+    }
+  };
+
   const handleMouseDown = () => {
-    startRecording();
+    handlePressStart();
   };
 
   const handleMouseUp = () => {
-    stopRecording();
+    handlePressEnd();
+  };
+
+  const handleMouseLeave = () => {
+    handlePressEnd();
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
     e.preventDefault();
-    startRecording();
+    handlePressStart();
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
     e.preventDefault();
-    stopRecording();
+    handlePressEnd();
   };
 
   return (
@@ -207,6 +253,7 @@ export function EmotionVoiceRecorder({
             size="sm"
             onMouseDown={handleMouseDown}
             onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseLeave}
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
             className="gap-2 select-none"

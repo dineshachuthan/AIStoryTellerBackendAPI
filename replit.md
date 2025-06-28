@@ -127,6 +127,13 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Priority**: Medium (requested but deferred for future implementation)
 
 ## Changelog
+- June 28, 2025: Fixed accidental voice recording bug with proper press-and-hold implementation
+  - Added 300ms hold delay before recording starts to prevent accidental triggers
+  - Implemented minimum 1-second recording duration requirement with clear error messaging
+  - Fixed click-and-release behavior - no recording occurs for quick clicks
+  - Added proper mouse leave handling to stop recording if user drags off button
+  - Added cleanup logic for timeouts and intervals to prevent memory leaks
+  - Voice recording button now requires deliberate press-and-hold action for all recordings
 - June 28, 2025: Implemented database-first caching architecture 
   - Fixed user voice emotion save to write database record BEFORE file save
   - Ensures data integrity by preventing orphaned cache files if database writes fail
