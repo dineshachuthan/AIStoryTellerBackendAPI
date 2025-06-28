@@ -309,7 +309,21 @@ export const requireAuth: RequestHandler = (req, res, next) => {
   if (req.isAuthenticated()) {
     return next();
   }
-  res.status(401).json({ message: 'Authentication required' });
+  
+  // Store the original URL for redirect after login
+  const originalUrl = req.originalUrl;
+  const redirectUrl = `/login?redirect=${encodeURIComponent(originalUrl)}`;
+  
+  // For API requests, return JSON with redirect URL
+  if (req.headers.accept?.includes('application/json') || req.originalUrl.startsWith('/api/')) {
+    return res.status(401).json({ 
+      message: 'Authentication required',
+      redirectUrl: redirectUrl
+    });
+  }
+  
+  // For non-API requests, redirect to login page
+  res.redirect(redirectUrl);
 };
 
 // Admin middleware

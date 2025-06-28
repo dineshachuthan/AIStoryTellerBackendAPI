@@ -259,7 +259,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/auth/login", passport.authenticate('local'), async (req, res) => {
-    res.json({ user: req.user, message: "Login successful" });
+    const redirectUrl = req.body.redirectUrl || '/';
+    res.json({ 
+      user: req.user, 
+      message: "Login successful",
+      redirectUrl: redirectUrl
+    });
   });
 
   app.post("/api/auth/logout", (req, res) => {
@@ -282,6 +287,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Social login routes
   app.get("/api/auth/google", (req, res, next) => {
     console.log('[OAuth] Initiating Google authentication');
+    // Store the redirect URL in session before authentication
+    if (req.query.redirect) {
+      req.session.redirectAfterAuth = req.query.redirect as string;
+    }
     passport.authenticate('google', { 
       scope: ['profile', 'email'],
       prompt: 'select_account'
@@ -293,6 +302,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     (req, res) => {
       console.log('[OAuth] Google callback successful');
       console.log('[OAuth] User authenticated:', !!req.user);
+      
+      // Get redirect URL from session or default to home
+      const redirectUrl = req.session.redirectAfterAuth || '/';
+      delete req.session.redirectAfterAuth; // Clean up
       
       // Send HTML that handles both popup and regular tab scenarios
       res.send(`
@@ -307,10 +320,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             if (window.opener && !window.opener.closed) {
               console.log('Popup detected - notifying parent and closing');
               try {
-                // Send message to parent window
+                // Send message to parent window with redirect URL
                 window.opener.postMessage({ 
                   type: 'OAUTH_SUCCESS', 
-                  provider: 'google' 
+                  provider: 'google',
+                  redirectUrl: '${redirectUrl}'
                 }, window.location.origin);
                 
                 // Close popup after short delay
@@ -322,13 +336,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 window.close();
               }
             } else {
-              console.log('Regular tab - redirecting to home');
-              window.location.href = '/';
+              console.log('Regular tab - redirecting to intended page');
+              window.location.href = '${redirectUrl}';
             }
           </script>
           <div style="text-align: center; font-family: Arial, sans-serif; margin-top: 50px;">
             <h2>Login Successful!</h2>
-            <p>Closing window...</p>
+            <p>Redirecting...</p>
           </div>
         </body>
         </html>
