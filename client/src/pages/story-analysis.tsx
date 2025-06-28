@@ -70,6 +70,7 @@ export default function StoryAnalysis() {
   }>({ narrative: false, roleplay: false });
   const [userVoiceEmotions, setUserVoiceEmotions] = useState<Record<string, boolean>>({});
   const [playingSample, setPlayingSample] = useState<string>("");
+  const [playingUserRecording, setPlayingUserRecording] = useState<string>("");
   const [audioEnabled, setAudioEnabled] = useState(false);
 
   // Enable audio context on first user interaction
@@ -198,6 +199,80 @@ export default function StoryAnalysis() {
       toast({
         title: "Playback Error",
         description: "Could not play emotion sample.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle user voice recording playback
+  const handlePlayUserRecording = async (emotion: string) => {
+    if (!user?.id) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to play your voice recordings.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    await enableAudio();
+    
+    try {
+      setPlayingUserRecording(emotion);
+      console.log(`Playing user recording for emotion: ${emotion}`);
+      
+      // Generate the user voice sample URL directly
+      const userVoiceUrl = `/api/emotions/user-voice-sample/${user.id}-${emotion}-5-${Date.now()}.mp3`;
+      
+      // Find the actual user voice file
+      const response = await fetch(`/api/user-voice-emotions/${user.id}?emotion=${emotion}`, {
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('User voice data:', data);
+        
+        // Use the audioUrl from the response if available
+        const audioUrl = data.audioUrl || userVoiceUrl;
+        
+        const audio = new Audio(audioUrl);
+        
+        audio.onloadstart = () => {
+          console.log('Audio loading started');
+        };
+        
+        audio.oncanplay = () => {
+          console.log('Audio can play');
+        };
+        
+        audio.onended = () => {
+          console.log('User recording playback ended');
+          setPlayingUserRecording("");
+        };
+        
+        audio.onerror = (e) => {
+          console.error('Audio error:', e);
+          setPlayingUserRecording("");
+          toast({
+            title: "Playback Error",
+            description: "Could not play your voice recording.",
+            variant: "destructive",
+          });
+        };
+        
+        audio.volume = 0.8;
+        await audio.play();
+        console.log('User recording playback started successfully');
+      } else {
+        throw new Error('User voice recording not found');
+      }
+    } catch (error) {
+      console.error('Error playing user recording:', error);
+      setPlayingUserRecording("");
+      toast({
+        title: "Playback Error",
+        description: "Could not play your voice recording.",
         variant: "destructive",
       });
     }

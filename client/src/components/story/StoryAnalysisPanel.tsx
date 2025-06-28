@@ -41,7 +41,9 @@ interface StoryAnalysisPanelProps {
   userVoiceEmotions?: Record<string, boolean>;
   onEmotionRecorded?: (emotion: string, audioBlob: Blob) => void;
   onPlayEmotionSample?: (emotion: string, intensity: number) => void;
+  onPlayUserRecording?: (emotion: string) => void;
   isPlayingSample?: string;
+  isPlayingUserRecording?: string;
   className?: string;
 }
 
@@ -50,7 +52,9 @@ export function StoryAnalysisPanel({
   userVoiceEmotions = {},
   onEmotionRecorded,
   onPlayEmotionSample,
+  onPlayUserRecording,
   isPlayingSample,
+  isPlayingUserRecording,
   className
 }: StoryAnalysisPanelProps) {
   const { toast } = useToast();
@@ -170,8 +174,10 @@ export function StoryAnalysisPanel({
                   intensity={emotion.intensity}
                   hasUserRecording={userVoiceEmotions[emotion.emotion]}
                   isPlayingSample={isPlayingSample === emotion.emotion}
+                  isPlayingUserRecording={isPlayingUserRecording === emotion.emotion}
                   onRecordingComplete={(audioBlob) => handleEmotionRecording(emotion.emotion, audioBlob)}
                   onPlaySample={() => handlePlaySample(emotion.emotion, emotion.intensity)}
+                  onPlayUserRecording={() => onPlayUserRecording?.(emotion.emotion)}
                 />
               ))}
               
