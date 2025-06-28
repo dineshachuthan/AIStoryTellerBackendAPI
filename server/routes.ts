@@ -2381,7 +2381,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             text: paragraph,
             emotion: "neutral",
             intensity: 5,
-            voiceUrl: audioUrl,
+            audioUrl: audioUrl,
             startTime: currentTime,
             duration: estimatedDuration,
             characterName: "Narrator"
