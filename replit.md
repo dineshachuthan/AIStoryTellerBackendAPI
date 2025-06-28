@@ -127,6 +127,12 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Priority**: Medium (requested but deferred for future implementation)
 
 ## Changelog
+- June 28, 2025: Implemented story-specific vs global voice sample contexts
+  - Story analysis pages now show only voice recordings relevant to emotions detected in that specific story
+  - Global profile voice samples (near user profile) will show ALL user emotion voices across all stories
+  - Added proper API endpoint to retrieve user voice recordings by emotion with story-specific filtering
+  - Fixed user voice playback functionality with "Play Your Voice" button for recorded emotions
+  - Added automatic story title updates using AI-generated titles instead of "Untitled Story"
 - June 28, 2025: Successfully resolved microphone recording issues with mictests.com approach
   - CRITICAL: Voice recording now working perfectly - DO NOT MODIFY the press-hold-recorder logic
   - Implemented raw microphone access: disabled echo cancellation, noise suppression, auto gain control

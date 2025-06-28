@@ -91,6 +91,38 @@ export default function StoryAnalysis() {
     }
   };
 
+  // Load story-specific user voice emotions
+  const loadStoryVoiceEmotions = async (storyEmotions: string[]) => {
+    if (!user?.id || !storyEmotions.length) return;
+
+    try {
+      // Check each emotion from this story specifically
+      const emotionChecks = storyEmotions.map(async (emotion) => {
+        const response = await fetch(`/api/user-voice-emotions/${user.id}?emotion=${emotion}`, {
+          credentials: 'include'
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          return { emotion, hasRecording: data.samples && data.samples.length > 0 };
+        }
+        return { emotion, hasRecording: false };
+      });
+
+      const results = await Promise.all(emotionChecks);
+      const emotionMap: Record<string, boolean> = {};
+      
+      results.forEach(({ emotion, hasRecording }) => {
+        emotionMap[emotion] = hasRecording;
+      });
+      
+      setUserVoiceEmotions(emotionMap);
+      console.log('Story-specific voice emotions loaded:', emotionMap);
+    } catch (error) {
+      console.error('Failed to load story voice emotions:', error);
+    }
+  };
+
   // Handler for when user records an emotion voice
   const handleEmotionRecorded = (emotion: string, audioBlob: Blob) => {
     setUserVoiceEmotions(prev => ({ ...prev, [emotion]: true }));
@@ -322,6 +354,12 @@ export default function StoryAnalysis() {
       };
       setAnalysisData(narrativeAnalysis);
       setAnalysisProgress(prev => ({ ...prev, narrative: true }));
+
+      // Load story-specific user voice emotions
+      if (narrativeResponse.emotions) {
+        const storyEmotions = narrativeResponse.emotions.map((e: any) => e.emotion);
+        await loadStoryVoiceEmotions(storyEmotions);
+      }
 
       // Update story title in database if AI generated a new one
       if (narrativeResponse.title && narrativeResponse.title !== story.title) {
