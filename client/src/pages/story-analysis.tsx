@@ -273,22 +273,22 @@ export default function StoryAnalysis() {
         // Use the audioUrl from the most recent sample
         const audioUrl = data.samples[0].audioUrl;
         
-        const audio = new Audio(audioUrl);
+        // Stop any currently playing audio
+        if (userAudioPlayerRef.current) {
+          userAudioPlayerRef.current.pause();
+          userAudioPlayerRef.current = null;
+        }
         
-        audio.onloadstart = () => {
-          console.log('Audio loading started');
-        };
+        // Use simple working pattern from upload-audio page
+        userAudioPlayerRef.current = new Audio(audioUrl);
+        userAudioPlayerRef.current.volume = 0.8;
         
-        audio.oncanplay = () => {
-          console.log('Audio can play');
-        };
-        
-        audio.onended = () => {
+        userAudioPlayerRef.current.onended = () => {
           console.log('User recording playback ended');
           setPlayingUserRecording("");
         };
         
-        audio.onerror = (e) => {
+        userAudioPlayerRef.current.onerror = (e) => {
           console.error('Audio error:', e);
           setPlayingUserRecording("");
           toast({
@@ -298,8 +298,7 @@ export default function StoryAnalysis() {
           });
         };
         
-        audio.volume = 0.8;
-        await audio.play();
+        await userAudioPlayerRef.current.play();
         console.log('User recording playback started successfully');
       } else {
         throw new Error('User voice recording not found');
