@@ -2320,7 +2320,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
 
-  // Story Narration routes - POST to generate narration with actual audio (general route)
+  // Story Narration routes - POST to generate narration following user requirements
   app.post("/api/stories/:id/narration", requireAuth, async (req, res) => {
     try {
       const storyId = parseInt(req.params.id);
@@ -2330,99 +2330,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "User authentication required" });
       }
       
-      const story = await storage.getStory(storyId);
+      // Use the proper story narrator flow as specified by user
+      const narrationResult = await storyNarrator.generateStoryNarration(storyId, userId);
       
-      if (!story) {
-        return res.status(404).json({ message: "Story not found" });
-      }
-
-      console.log("Generating audio narration for story:", story.title);
-
-      // Get story content and split into manageable chunks
-      const content = story.content;
-      const paragraphs = content.split('\n').filter(p => p.trim().length > 0);
-      
-      const segments = [];
-      let currentTime = 0;
-      
-      // Generate audio for each paragraph using OpenAI TTS
-      for (let i = 0; i < paragraphs.length; i++) {
-        const paragraph = paragraphs[i].trim();
-        if (paragraph.length === 0) continue;
-        
-        console.log(`Generating audio for paragraph ${i + 1}/${paragraphs.length}`);
-        
-        try {
-          // Generate audio using OpenAI TTS
-          const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-          const response = await openai.audio.speech.create({
-            model: "tts-1",
-            voice: "nova", // Use a consistent voice for the narrator
-            input: paragraph,
-            speed: 1.0,
-          });
-
-          // Save audio file
-          const audioBuffer = Buffer.from(await response.arrayBuffer());
-          const audioDir = path.join(process.cwd(), 'persistent-cache', 'story-audio');
-          await fs.mkdir(audioDir, { recursive: true });
-          
-          const audioFileName = `story_${storyId}_segment_${i}_${Date.now()}.mp3`;
-          const audioPath = path.join(audioDir, audioFileName);
-          await fs.writeFile(audioPath, audioBuffer);
-          
-          const audioUrl = `/api/story-audio/${audioFileName}`;
-          
-          // Estimate duration (rough calculation: 150 words per minute)
-          const wordCount = paragraph.split(' ').length;
-          const estimatedDuration = (wordCount / 150) * 60 * 1000; // in milliseconds
-          
-          segments.push({
-            text: paragraph,
-            emotion: "neutral",
-            intensity: 5,
-            audioUrl: audioUrl,
-            startTime: currentTime,
-            duration: estimatedDuration,
-            characterName: "Narrator"
-          });
-          
-          currentTime += estimatedDuration;
-          
-        } catch (audioError) {
-          console.error(`Failed to generate audio for segment ${i}:`, audioError);
-          // Add segment without audio as fallback
-          const wordCount = paragraph.split(' ').length;
-          const estimatedDuration = (wordCount / 150) * 60 * 1000;
-          
-          segments.push({
-            text: paragraph,
-            emotion: "neutral",
-            intensity: 5,
-            startTime: currentTime,
-            duration: estimatedDuration,
-            characterName: "Narrator"
-          });
-          
-          currentTime += estimatedDuration;
-        }
-      }
-
+      // Convert to expected format for frontend
       const narration = {
-        storyId,
-        totalDuration: currentTime,
-        segments,
-        pacing: 'normal'
+        storyId: narrationResult.storyId,
+        totalDuration: narrationResult.totalDuration,
+        segments: narrationResult.segments,
+        narratorVoice: narrationResult.narratorVoice,
+        narratorVoiceType: narrationResult.narratorVoiceType
       };
 
-      // Save the generated narration as playback
-      await storage.createStoryPlayback({
-        storyId: storyId,
-        createdByUserId: userId,
-        narrationData: narration
-      });
-
-      console.log(`Generated narration with ${segments.length} segments, total duration: ${Math.round(currentTime / 1000)}s`);
       res.json(narration);
     } catch (error) {
       console.error("Error generating story narration:", error);
