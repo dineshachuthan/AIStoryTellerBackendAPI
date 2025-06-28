@@ -66,11 +66,12 @@ export class AuthService {
 
       // Create new user
       const newUser = await storage.createUser({
+        id: `${authInfo.provider}_${authInfo.providerId}`,
         email: authInfo.email,
         firstName: authInfo.firstName || '',
         lastName: authInfo.lastName || '',
         displayName: authInfo.displayName || authInfo.email,
-        avatarUrl: authInfo.avatarUrl || null
+        profileImageUrl: authInfo.avatarUrl || null
       });
 
       // Link provider to new user

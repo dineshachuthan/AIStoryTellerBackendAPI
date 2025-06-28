@@ -1,15 +1,12 @@
 import passport from 'passport';
 import { Strategy as LocalStrategy } from 'passport-local';
-import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
-import { Strategy as FacebookStrategy } from 'passport-facebook';
-import { Strategy as MicrosoftStrategy } from 'passport-microsoft';
 import bcrypt from 'bcryptjs';
 import session from 'express-session';
 import ConnectPgSimple from 'connect-pg-simple';
 import type { Express, RequestHandler } from 'express';
 import { storage } from './storage';
 import { pool } from './db';
-import { getOAuthConfig } from './oauth-config';
+import { authService } from './auth-providers/auth-service';
 
 // Session configuration
 export function getSession() {
@@ -98,210 +95,9 @@ export async function setupAuth(app: Express) {
     }
   ));
 
-  const oauthConfig = getOAuthConfig();
-  
-  // Log configuration for debugging
-  console.log(`[Auth] Environment: ${oauthConfig.environment}`);
-  console.log(`[Auth] Base URL: ${oauthConfig.baseUrl}`);
-  console.log(`[Auth] Google OAuth configured: ${!!(oauthConfig.google.clientID && oauthConfig.google.clientSecret)}`);
-  console.log(`[Auth] Google callback URL: ${oauthConfig.google.callbackURL}`);
+  // Setup modular authentication providers
+  await authService.setupAuthentication(app);
 
-  // Google OAuth strategy
-  if (oauthConfig.google.clientID && oauthConfig.google.clientSecret) {
-    console.log(`[Auth] Google Client ID: ${oauthConfig.google.clientID.substring(0, 20)}...`);
-    console.log(`[Auth] Google Callback URL: ${oauthConfig.google.callbackURL}`);
-    
-    passport.use(new GoogleStrategy(
-      {
-        clientID: oauthConfig.google.clientID,
-        clientSecret: oauthConfig.google.clientSecret,
-        callbackURL: oauthConfig.google.callbackURL,
-      },
-      async (accessToken: any, refreshToken: any, profile: any, done: any) => {
-        try {
-          // Check if user exists with this Google provider
-          let user = await storage.getUserByProvider('google', profile.id);
-          
-          if (user) {
-            // Update last login time
-            await storage.updateUser(user.id, { lastLoginAt: new Date() });
-            return done(null, user);
-          }
-
-          // Check if user exists with same email
-          const email = profile.emails?.[0]?.value;
-          if (email) {
-            user = await storage.getUserByEmail(email);
-            if (user) {
-              // Link Google account to existing user
-              await storage.createUserProvider({
-                userId: user.id,
-                provider: 'google',
-                providerId: profile.id,
-                providerData: profile._json,
-              });
-              await storage.updateUser(user.id, { lastLoginAt: new Date() });
-              return done(null, user);
-            }
-          }
-
-          // Create new user
-          const newUser = await storage.createUser({
-            id: `google_${profile.id}`,
-            email: email || null,
-            firstName: profile.name?.givenName || null,
-            lastName: profile.name?.familyName || null,
-            displayName: profile.displayName || null,
-            profileImageUrl: profile.photos?.[0]?.value || null,
-            isEmailVerified: email ? true : false,
-            lastLoginAt: new Date(),
-          });
-
-          // Create provider link
-          await storage.createUserProvider({
-            userId: newUser.id,
-            provider: 'google',
-            providerId: profile.id,
-            providerData: profile._json,
-          });
-
-          return done(null, newUser);
-        } catch (error) {
-          return done(error);
-        }
-      }
-    ));
-  }
-
-  // Facebook OAuth strategy
-  if (oauthConfig.facebook.clientID && oauthConfig.facebook.clientSecret) {
-    passport.use(new FacebookStrategy(
-      {
-        clientID: oauthConfig.facebook.clientID,
-        clientSecret: oauthConfig.facebook.clientSecret,
-        callbackURL: oauthConfig.facebook.callbackURL,
-        profileFields: oauthConfig.facebook.profileFields,
-      },
-      async (accessToken, refreshToken, profile, done) => {
-        try {
-          // Check if user exists with this Facebook provider
-          let user = await storage.getUserByProvider('facebook', profile.id);
-          
-          if (user) {
-            // Update last login time
-            await storage.updateUser(user.id, { lastLoginAt: new Date() });
-            return done(null, user);
-          }
-
-          // Check if user exists with same email
-          const email = profile.emails?.[0]?.value;
-          if (email) {
-            user = await storage.getUserByEmail(email);
-            if (user) {
-              // Link Facebook account to existing user
-              await storage.createUserProvider({
-                userId: user.id,
-                provider: 'facebook',
-                providerId: profile.id,
-                providerData: profile._json,
-              });
-              await storage.updateUser(user.id, { lastLoginAt: new Date() });
-              return done(null, user);
-            }
-          }
-
-          // Create new user
-          const newUser = await storage.createUser({
-            id: `facebook_${profile.id}`,
-            email: email || null,
-            firstName: profile.name?.givenName || null,
-            lastName: profile.name?.familyName || null,
-            displayName: profile.displayName || null,
-            profileImageUrl: profile.photos?.[0]?.value || null,
-            isEmailVerified: email ? true : false,
-            lastLoginAt: new Date(),
-          });
-
-          // Create provider link
-          await storage.createUserProvider({
-            userId: newUser.id,
-            provider: 'facebook',
-            providerId: profile.id,
-            providerData: profile._json,
-          });
-
-          return done(null, newUser);
-        } catch (error) {
-          return done(error);
-        }
-      }
-    ));
-  }
-
-  // Microsoft OAuth strategy
-  if (oauthConfig.microsoft.clientID && oauthConfig.microsoft.clientSecret) {
-    passport.use(new MicrosoftStrategy(
-      {
-        clientID: oauthConfig.microsoft.clientID,
-        clientSecret: oauthConfig.microsoft.clientSecret,
-        callbackURL: oauthConfig.microsoft.callbackURL,
-        scope: oauthConfig.microsoft.scope,
-      },
-      async (accessToken: any, refreshToken: any, profile: any, done: any) => {
-        try {
-          // Check if user exists with this Microsoft provider
-          let user = await storage.getUserByProvider('microsoft', profile.id);
-          
-          if (user) {
-            // Update last login time
-            await storage.updateUser(user.id, { lastLoginAt: new Date() });
-            return done(null, user);
-          }
-
-          // Check if user exists with same email
-          const email = profile.emails?.[0]?.value;
-          if (email) {
-            user = await storage.getUserByEmail(email);
-            if (user) {
-              // Link Microsoft account to existing user
-              await storage.createUserProvider({
-                userId: user.id,
-                provider: 'microsoft',
-                providerId: profile.id,
-                providerData: profile._json,
-              });
-              await storage.updateUser(user.id, { lastLoginAt: new Date() });
-              return done(null, user);
-            }
-          }
-
-          // Create new user
-          const newUser = await storage.createUser({
-            id: `microsoft_${profile.id}`,
-            email: email || null,
-            firstName: profile.name?.givenName || null,
-            lastName: profile.name?.familyName || null,
-            displayName: profile.displayName || null,
-            profileImageUrl: profile.photos?.[0]?.value || null,
-            isEmailVerified: email ? true : false,
-            lastLoginAt: new Date(),
-          });
-
-          // Create provider link
-          await storage.createUserProvider({
-            userId: newUser.id,
-            provider: 'microsoft',
-            providerId: profile.id,
-            providerData: profile._json,
-          });
-
-          return done(null, newUser);
-        } catch (error) {
-          return done(error);
-        }
-      }
-    ));
-  }
 }
 
 // Authentication middleware
