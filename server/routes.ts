@@ -4048,19 +4048,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Story not found' });
       }
 
-      // Get story analysis for emotions - try narrative analysis first
+      // Get story analysis for emotions - use the same approach as the working narrative endpoint
       let analysis;
       try {
-        analysis = await storage.getStoryAnalysis(storyId, 'narrative');
+        // Try the same method that works for the narrative endpoint
+        const { analysisCache } = await import('./cache-with-fallback');
+        
+        const cacheKey = `narrative-${storyId}`;
+        analysis = await analysisCache.getOrSet(
+          cacheKey,
+          async () => {
+            try {
+              return await storage.getStoryAnalysis(storyId, 'narrative');
+            } catch (error) {
+              console.log('Storage method failed, checking database directly');
+              return null;
+            }
+          },
+          { ttl: 300000 } // 5 minutes
+        );
       } catch (error) {
-        console.log('Failed to get analysis via storage, trying alternative method');
-        analysis = null;
+        console.log('Cache method failed, trying direct storage access');
+        try {
+          analysis = await storage.getStoryAnalysis(storyId, 'narrative');
+        } catch (storageError) {
+          analysis = null;
+        }
       }
       
       if (!analysis) {
-        console.log('No analysis found, returning canNarrate: false');
+        console.log('No analysis found for story', storyId);
         return res.json({ canNarrate: false, reason: 'Story analysis not found' });
       }
+      
+      console.log('Found analysis for story', storyId, 'with', analysis.analysisData ? 'data' : 'no data');
 
       // Extract emotions from the analysis data
       let emotions: any[] = [];
