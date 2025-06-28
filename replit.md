@@ -127,6 +127,13 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Priority**: Medium (requested but deferred for future implementation)
 
 ## Changelog
+- June 28, 2025: Successfully resolved story narration route conflicts and cleaned up debug code
+  - Fixed route conflicts by updating frontend to use existing working `/api/stories/:id/narration` endpoint
+  - Restored all commented routes that were needed for other functionality
+  - Updated existing narration routes to work with new StoryNarrator.generateStoryNarration method
+  - Removed custom `/api/generate-story-narration/:storyId` endpoint that was causing conflicts
+  - Story narration system now properly integrates with existing application architecture
+  - Cleaned up all debug logging and temporary routes as requested by user
 - June 28, 2025: Created completely self-contained story narration component with audio visualizer
   - Built independent StoryPlayButton component that works with just story ID
   - Component automatically fetches story content, analysis, and checks user voice recordings
