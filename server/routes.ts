@@ -4048,15 +4048,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Story not found' });
       }
 
-      // Get story analysis for emotions
-      const analysis = await storage.getStoryAnalysis(storyId);
-      if (!analysis || !analysis.emotions) {
+      // Get story analysis for emotions - try narrative analysis first
+      let analysis = await storage.getStoryAnalysis(storyId);
+      if (!analysis) {
         return res.json({ canNarrate: false, reason: 'Story analysis not found' });
       }
 
-      const uniqueEmotions = [...new Set(analysis.emotions.map((e: any) => e.emotion))];
-      const { storyNarrator } = await import('./story-narrator');
-      const hasVoices = await storyNarrator.hasUserVoicesForStory(userId, uniqueEmotions);
+      // Extract emotions from the analysis data
+      let emotions: any[] = [];
+      if (analysis.analysisData && typeof analysis.analysisData === 'object') {
+        const analysisObj = analysis.analysisData as any;
+        emotions = analysisObj.emotions || [];
+      }
+
+      if (emotions.length === 0) {
+        return res.json({ canNarrate: false, reason: 'No emotions found in analysis' });
+      }
+
+      const uniqueEmotions = [...new Set(emotions.map((e: any) => e.emotion))];
+      
+      // Check if user has recorded any of these emotions by calling existing endpoint
+      let hasVoices = false;
+      try {
+        const fs = await import('fs/promises');
+        const path = await import('path');
+        
+        // Use the same logic as the existing user voice emotions endpoint
+        const userVoiceDir = path.join(process.cwd(), 'persistent-cache', 'user-voice-emotions');
+        
+        const files = await fs.readdir(userVoiceDir);
+        const userFiles = files.filter(file => 
+          file.startsWith(`${userId}-`) && file.endsWith('.mp3')
+        );
+        
+        if (userFiles.length > 0) {
+          // Extract emotions from filenames (format: userId-emotion-intensity-timestamp.mp3)
+          const userEmotions = userFiles.map(filename => {
+            const parts = filename.split('-');
+            return parts[1]; // emotion is second part
+          });
+          
+          hasVoices = uniqueEmotions.some(emotion => 
+            userEmotions.includes(emotion.toLowerCase())
+          );
+        }
+      } catch (error) {
+        console.error('Error checking user voices:', error);
+      }
 
       res.json({ 
         canNarrate: hasVoices,
