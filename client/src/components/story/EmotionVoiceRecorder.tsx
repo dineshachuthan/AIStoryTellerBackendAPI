@@ -58,7 +58,7 @@ export function EmotionVoiceRecorder({
         audio: {
           echoCancellation: false,
           noiseSuppression: false,
-          autoGainControl: true,
+          autoGainControl: false,  // Disable auto gain control for raw audio like PressHoldRecorder
           sampleRate: 44100,
           channelCount: 1
         }
@@ -96,14 +96,10 @@ export function EmotionVoiceRecorder({
         const recordingDuration = Date.now() - recordingStartTimeRef.current;
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm;codecs=opus' });
         
-        console.log('Recording stopped - Duration:', recordingDuration, 'ms, Blob size:', audioBlob.size, 'bytes');
-        
         // Only save recording if it's at least 1 second long
         if (recordingDuration >= 1000) {
-          console.log('Recording duration valid, calling onRecordingComplete');
           onRecordingComplete?.(audioBlob);
         } else {
-          console.log('Recording too short, showing error');
           toast({
             title: "Recording Too Short",
             description: "Please hold the button for at least 1 second to record.",
