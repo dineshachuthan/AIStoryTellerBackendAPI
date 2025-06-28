@@ -2398,7 +2398,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Save the generated narration as playback
       await storage.createStoryPlayback({
         storyId: storyId,
-        createdByUserId: 'system',
+        createdByUserId: userId,
         narrationData: narration
       });
 
