@@ -271,46 +271,64 @@ export function StoryPlayButton({
   // Compact variant - horizontal button with basic info
   if (variant === 'compact') {
     return (
-      <div className={`flex items-center space-x-3 ${className}`}>
+      <div className={`flex items-center space-x-3 bg-white/10 p-4 rounded-lg border border-purple-500/30 ${className}`}>
         <Button
-          onClick={isPlaying ? pauseNarration : playNarration}
-          disabled={isLoading || !narrationStatus?.canNarrate}
-          size="sm"
+          onClick={narrationStatus?.canNarrate ? (isPlaying ? pauseNarration : playNarration) : checkNarrationStatus}
+          disabled={isLoading}
+          size="lg"
           className={narrationStatus?.canNarrate 
-            ? "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700" 
-            : "bg-gray-600 hover:bg-gray-700"
+            ? "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white" 
+            : "bg-orange-600 hover:bg-orange-700 text-white"
           }
         >
-          {isLoading ? (
+          {isLoading || isCheckingStatus ? (
             <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Generating...
+              <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+              {isCheckingStatus ? 'Checking Voice...' : 'Generating...'}
             </>
           ) : isPlaying ? (
             <>
-              <Pause className="w-4 h-4 mr-2" />
-              Pause
+              <Pause className="w-5 h-5 mr-2" />
+              Pause Story
             </>
           ) : (
             <>
-              <Headphones className="w-4 h-4 mr-2" />
-              {narrationStatus?.canNarrate ? 'Play Story' : 'Voice Needed'}
+              <Headphones className="w-5 h-5 mr-2" />
+              {narrationStatus?.canNarrate ? 'Play Story' : 'Check Voice Status'}
             </>
           )}
         </Button>
 
-        {showTitle && narrationStatus?.storyTitle && (
-          <span className="text-sm text-gray-300 truncate">
-            {narrationStatus.storyTitle}
-          </span>
-        )}
+        {/* Audio visualizer bars - always visible */}
+        <div className="flex items-center space-x-1">
+          {Array.from({ length: 20 }, (_, index) => (
+            <div
+              key={index}
+              className={`w-1 bg-gradient-to-t transition-all duration-100 ${
+                isPlaying 
+                  ? 'from-purple-500 to-pink-500' 
+                  : narrationStatus?.canNarrate 
+                    ? 'from-purple-400/50 to-pink-400/50'
+                    : 'from-gray-500 to-gray-400'
+              }`}
+              style={{ 
+                height: `${isPlaying 
+                  ? Math.max(4, (audioVisualData[index] || 0) * 30) 
+                  : Math.max(4, Math.random() * 20)
+                }px` 
+              }}
+            />
+          ))}
+        </div>
 
-        {!narrationStatus?.canNarrate && (
-          <div className="flex items-center text-xs text-yellow-400">
-            <Mic className="w-3 h-3 mr-1" />
-            Record voice emotions to enable
+        <div className="text-sm text-white">
+          <div className="font-medium">Story Narration</div>
+          <div className="text-xs text-gray-300">
+            {narrationStatus?.canNarrate 
+              ? '✓ Voice ready' 
+              : narrationStatus?.reason || 'Checking voices...'}
           </div>
-        )}
+        </div>
       </div>
     );
   }
