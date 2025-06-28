@@ -2517,6 +2517,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // COMMENTED OUT: Second conflicting route that intercepts /api/stories/:storyId/narration/generate
+  /*
   app.post("/api/stories/:id/narration", requireAuth, async (req, res) => {
     console.log('=== SECOND OLD NARRATION ENDPOINT HIT ===', req.params, req.path);
     try {
@@ -2557,6 +2559,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to generate narration instructions" });
     }
   });
+  */
 
   // Route to assign user voice samples to story emotions
   app.post("/api/stories/:id/assign-voices", requireAuth, async (req, res) => {
