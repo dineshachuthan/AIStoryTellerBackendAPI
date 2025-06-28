@@ -114,7 +114,7 @@ export interface IStorage {
   // Story Analyses
   getStoryAnalysis(storyId: number, analysisType: 'narrative' | 'roleplay'): Promise<StoryAnalysis | undefined>;
   createStoryAnalysis(analysis: InsertStoryAnalysis): Promise<StoryAnalysis>;
-  updateStoryAnalysis(storyId: number, analysisType: 'narrative' | 'roleplay', analysisData: any): Promise<StoryAnalysis>;
+  updateStoryAnalysis(storyId: number, analysisType: 'narrative' | 'roleplay', analysisData: any, userId: string): Promise<StoryAnalysis>;
 
   // Story Customizations
   createOrUpdateStoryCustomization(customization: {
@@ -198,7 +198,7 @@ export class DatabaseStorage implements IStorage {
     return analysis;
   }
 
-  async updateStoryAnalysis(storyId: number, analysisType: 'narrative' | 'roleplay', analysisData: any): Promise<StoryAnalysis> {
+  async updateStoryAnalysis(storyId: number, analysisType: 'narrative' | 'roleplay', analysisData: any, userId: string): Promise<StoryAnalysis> {
     const existing = await this.getStoryAnalysis(storyId, analysisType);
     
     if (existing) {
@@ -216,7 +216,7 @@ export class DatabaseStorage implements IStorage {
         storyId,
         analysisType,
         analysisData,
-        generatedBy: 'system'
+        generatedBy: userId
       });
     }
   }
