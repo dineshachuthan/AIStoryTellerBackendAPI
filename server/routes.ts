@@ -1149,48 +1149,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const emotionDir = path.join(process.cwd(), 'persistent-cache', 'user-voice-emotions');
       await fs.mkdir(emotionDir, { recursive: true });
       
+      // Prepare file names but don't write files yet (database-first approach)
       let finalFileName: string;
       let finalFilePath: string;
+      let processedBuffer: Buffer;
       
       if (audioFile.mimetype.includes('webm')) {
-        // Convert webm to high-quality MP3
+        // Convert webm to high-quality MP3 in memory first
         const tempWebmFile = path.join(emotionDir, `temp-${timestamp}.webm`);
         const mp3FileName = `${userId}-${emotion}-${intensity || 5}-${timestamp}.mp3`;
         const mp3FilePath = path.join(emotionDir, mp3FileName);
         
-        // Save temporary webm file
-        await fs.writeFile(tempWebmFile, audioFile.buffer);
-        
-        // Convert to MP3 using FFmpeg with aggressive volume amplification
         try {
+          // Save temporary webm file for conversion
+          await fs.writeFile(tempWebmFile, audioFile.buffer);
+          
+          // Convert to MP3 using FFmpeg with aggressive volume amplification
           const ffmpegCommand = `ffmpeg -i "${tempWebmFile}" -acodec libmp3lame -b:a 192k -ar 44100 -af "volume=20.0" -y "${mp3FilePath}"`;
           await execAsync(ffmpegCommand);
+          
+          // Read converted file into buffer
+          processedBuffer = await fs.readFile(mp3FilePath);
+          
+          // Clean up temporary files
+          await fs.unlink(tempWebmFile);
+          await fs.unlink(mp3FilePath);
+          
+          finalFileName = mp3FileName;
+          finalFilePath = mp3FilePath;
           console.log(`Successfully converted webm to MP3 with 20x volume boost: ${mp3FileName}`);
         } catch (ffmpegError) {
           console.error('FFmpeg conversion error:', ffmpegError);
-          // Fallback: save as webm if conversion fails
+          // Fallback: use original webm
           finalFileName = `${userId}-${emotion}-${intensity || 5}-${timestamp}.webm`;
           finalFilePath = path.join(emotionDir, finalFileName);
-          await fs.writeFile(finalFilePath, audioFile.buffer);
+          processedBuffer = audioFile.buffer;
         }
-        
-        // Clean up temporary webm file
-        await fs.unlink(tempWebmFile);
-        
-        finalFileName = mp3FileName;
-        finalFilePath = mp3FilePath;
       } else {
         // Already MP3 or other format
         finalFileName = `${userId}-${emotion}-${intensity || 5}-${timestamp}.mp3`;
         finalFilePath = path.join(emotionDir, finalFileName);
-        await fs.writeFile(finalFilePath, audioFile.buffer);
+        processedBuffer = audioFile.buffer;
       }
       
-      // Store in database
+      // DATABASE FIRST: Store in database before writing file
       await pool.query(`
         INSERT INTO user_voice_emotions (user_id, emotion, intensity, audio_url, file_name, story_id_recorded, created_at)
         VALUES ($1, $2, $3, $4, $5, $6, NOW())
       `, [userId, emotion, parseInt(intensity) || 5, `/api/user-voice-emotions/${finalFileName}`, finalFileName, storyId ? parseInt(storyId) : null]);
+      
+      // Only write file AFTER successful database write
+      await fs.writeFile(finalFilePath, processedBuffer);
 
       console.log(`Saved user voice emotion: ${emotion} for user ${userId} (converted to MP3)`);
       res.json({ 

@@ -127,6 +127,11 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Priority**: Medium (requested but deferred for future implementation)
 
 ## Changelog
+- June 28, 2025: Implemented database-first caching architecture 
+  - Fixed user voice emotion save to write database record BEFORE file save
+  - Ensures data integrity by preventing orphaned cache files if database writes fail
+  - Maintains transactional consistency across all persistent data operations
+  - Cache operations now serve as secondary optimization, not primary storage
 - June 28, 2025: Implemented story-specific vs global voice sample contexts
   - Story analysis pages now show only voice recordings relevant to emotions detected in that specific story
   - Global profile voice samples (near user profile) will show ALL user emotion voices across all stories
