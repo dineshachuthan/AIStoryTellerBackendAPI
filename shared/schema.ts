@@ -80,11 +80,22 @@ export const storyNarrations = pgTable("story_narrations", {
   userId: varchar("user_id", { length: 255 }).notNull().references(() => users.id),
   narratorVoice: varchar("narrator_voice", { length: 255 }).notNull(),
   narratorVoiceType: varchar("narrator_voice_type", { length: 20 }).notNull(), // 'ai' | 'user'
-  segments: jsonb("segments").notNull(), // Array of narration segments with audioUrl
+  segments: jsonb("segments").notNull(), // Array of narration segments with audioId references
   totalDuration: integer("total_duration").notNull(), // Total duration in milliseconds
-  audioFileUrl: text("audio_file_url"), // Combined audio file URL (optional)
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Audio Files Table - Store audio binary data directly in database
+export const audioFiles = pgTable("audio_files", {
+  id: serial("id").primaryKey(),
+  fileName: varchar("file_name", { length: 255 }).notNull(),
+  mimeType: varchar("mime_type", { length: 100 }).notNull().default("audio/mpeg"),
+  audioData: text("audio_data").notNull(), // Base64 encoded audio data
+  fileSize: integer("file_size").notNull(), // Size in bytes
+  duration: integer("duration"), // Duration in milliseconds (optional)
+  metadata: jsonb("metadata"), // Additional metadata (narrator voice, segment info, etc.)
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 // Stories table for user-uploaded content
@@ -792,6 +803,15 @@ export const insertStoryNarrationSchema = createInsertSchema(storyNarrations).om
 
 export type StoryNarration = typeof storyNarrations.$inferSelect;
 export type InsertStoryNarration = z.infer<typeof insertStoryNarrationSchema>;
+
+// Audio Files schemas
+export const insertAudioFileSchema = createInsertSchema(audioFiles).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type AudioFile = typeof audioFiles.$inferSelect;
+export type InsertAudioFile = z.infer<typeof insertAudioFileSchema>;
 
 // =============================================================================
 // VIDEO GENERATION SYSTEM - Character Assets & Caching

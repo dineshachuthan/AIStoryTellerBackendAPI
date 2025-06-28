@@ -139,6 +139,11 @@ export interface IStorage {
   saveNarration(narrationData: InsertStoryNarration): Promise<StoryNarration>;
   updateNarration(id: number, updates: Partial<InsertStoryNarration>): Promise<void>;
   deleteNarration(id: number): Promise<void>;
+
+  // Audio Files - Database-based storage
+  saveAudioFile(audioData: InsertAudioFile): Promise<AudioFile>;
+  getAudioFile(id: number): Promise<AudioFile | undefined>;
+  deleteAudioFile(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {

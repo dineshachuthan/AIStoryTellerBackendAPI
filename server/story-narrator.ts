@@ -80,13 +80,13 @@ export class StoryNarrator {
         // Prefer narrator-type voices, fallback to any emotion voice
         const narratorVoice = userVoices.find(v => v.sampleType === 'narrator' || v.label === 'narrator');
         if (narratorVoice) {
-          return { voice: narratorVoice.id.toString(), type: 'user' };
+          return { voice: narratorVoice.audioUrl || narratorVoice.id.toString(), type: 'user' };
         }
         
         // Use first available emotion voice as narrator base
         const emotionVoice = userVoices.find(v => v.sampleType === 'emotion');
         if (emotionVoice) {
-          return { voice: emotionVoice.id.toString(), type: 'user' };
+          return { voice: emotionVoice.audioUrl || emotionVoice.id.toString(), type: 'user' };
         }
       }
     } catch (error) {
@@ -290,7 +290,7 @@ export class StoryNarrator {
    * Save narration to database for future access and replay
    */
   private async saveNarrationToDatabase(narrationResult: StoryNarrationResult, userId: string): Promise<void> {
-    const { storage } = require('./storage');
+    const { storage } = await import('./storage');
 
     try {
       await storage.saveNarration({
