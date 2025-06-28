@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation, useRoute } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -72,6 +72,9 @@ export default function StoryAnalysis() {
   const [playingSample, setPlayingSample] = useState<string>("");
   const [playingUserRecording, setPlayingUserRecording] = useState<string>("");
   const [audioEnabled, setAudioEnabled] = useState(false);
+  
+  // Simple audio player ref pattern (from working upload-audio page)
+  const userAudioPlayerRef = useRef<HTMLAudioElement | null>(null);
 
   // Enable audio context on first user interaction
   const enableAudio = async () => {
