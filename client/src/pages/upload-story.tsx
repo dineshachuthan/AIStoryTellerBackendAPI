@@ -333,37 +333,23 @@ export default function UploadStory() {
               {/* Action Buttons */}
               <div className="space-y-3 pt-4">
                 {storyId ? (
-                  <div className="space-y-3">
-                    {/* Step 1: Save content */}
-                    <Button
-                      onClick={updateStoryContent}
-                      disabled={!storyContent.trim() || storyLoading}
-                      variant="outline"
-                      className="w-full border-white/20 text-white hover:bg-white/10 h-11"
-                    >
-                      <Upload className="w-4 h-4 mr-2" />
-                      Save Content
-                    </Button>
-                    
-                    {/* Step 2: Analyze story */}
-                    <Button
-                      onClick={analyzeStory}
-                      disabled={isAnalyzing || !storyContent.trim() || storyLoading}
-                      className="w-full bg-purple-600 hover:bg-purple-700 h-11"
-                    >
-                      {isAnalyzing ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Starting Analysis...
-                        </>
-                      ) : (
-                        <>
-                          <RefreshCw className="w-4 h-4 mr-2" />
-                          Analyze Story
-                        </>
-                      )}
-                    </Button>
-                  </div>
+                  <Button
+                    onClick={analyzeStory}
+                    disabled={isAnalyzing || !storyContent.trim() || storyLoading}
+                    className="w-full bg-purple-600 hover:bg-purple-700 h-11"
+                  >
+                    {isAnalyzing ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Starting Analysis...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        Analyze Story
+                      </>
+                    )}
+                  </Button>
                 ) : (
                   // Fallback for direct navigation without story ID
                   <div className="text-center p-6">
