@@ -4013,25 +4013,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/stories/:storyId/narration/generate', requireAuth, async (req, res) => {
-    try {
-      const storyId = parseInt(req.params.storyId);
-      const userId = (req.user as any)?.id;
-      const { content, emotions } = req.body;
-
-      if (!userId || isNaN(storyId) || !content || !emotions) {
-        return res.status(400).json({ message: 'Missing required parameters' });
-      }
-
-      const { storyNarrator } = await import('./story-narrator');
-      const narration = await storyNarrator.generateStoryNarration(storyId, userId, content, emotions);
-      
-      res.json(narration);
-    } catch (error: any) {
-      console.error('Error generating narration:', error);
-      res.status(500).json({ message: 'Failed to generate narration' });
-    }
-  });
+  // Removed duplicate endpoint - using the one below with better logging
 
   app.get('/api/stories/:storyId/narration/check', requireAuth, async (req, res) => {
     try {
@@ -4139,8 +4121,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = (req.user as any)?.id;
       const { content, emotions } = req.body;
 
-      if (!userId || isNaN(storyId) || !content || !emotions) {
-        return res.status(400).json({ message: 'Missing required parameters' });
+      console.log('Narration request debug:', { 
+        userId, 
+        storyId, 
+        hasContent: !!content, 
+        hasEmotions: !!emotions, 
+        emotionsType: typeof emotions,
+        emotionsLength: emotions?.length,
+        contentLength: content?.length,
+        firstEmotion: emotions?.[0]
+      });
+
+      if (!userId || isNaN(storyId)) {
+        return res.status(400).json({ message: 'Invalid user or story ID' });
+      }
+
+      if (!content) {
+        return res.status(400).json({ message: 'Story content is required' });
+      }
+
+      if (!emotions || !Array.isArray(emotions) || emotions.length === 0) {
+        return res.status(400).json({ message: 'Story emotions are required' });
       }
 
       console.log(`Generating narration for story ${storyId} with ${emotions.length} emotions`);
