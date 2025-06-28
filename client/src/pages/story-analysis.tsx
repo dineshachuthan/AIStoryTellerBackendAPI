@@ -416,6 +416,7 @@ export default function StoryAnalysis() {
       // Fallback to basic story data for narrative
       const analysis: AnalysisData = {
         analysis: {
+          title: story.title || "Untitled Story",
           characters: [],
           emotions: [],
           summary: story.summary || "",
