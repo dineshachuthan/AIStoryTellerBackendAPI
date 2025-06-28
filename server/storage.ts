@@ -133,6 +133,12 @@ export interface IStorage {
   getVideoByStoryId(storyId: number): Promise<any>;
   deleteVideoGeneration(storyId: number): Promise<void>;
   updateVideoGeneration(storyId: number, updates: any): Promise<void>;
+
+  // Story Narrations
+  getSavedNarration(storyId: number, userId: string): Promise<StoryNarration | undefined>;
+  saveNarration(narrationData: InsertStoryNarration): Promise<StoryNarration>;
+  updateNarration(id: number, updates: Partial<InsertStoryNarration>): Promise<void>;
+  deleteNarration(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {

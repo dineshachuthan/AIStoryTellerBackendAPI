@@ -73,6 +73,20 @@ export const userVoiceSamples = pgTable("user_voice_samples", {
   recordedAt: timestamp("recorded_at").defaultNow(),
 });
 
+// Story Narrations Table - Saved narrations for cost-effective playback
+export const storyNarrations = pgTable("story_narrations", {
+  id: serial("id").primaryKey(),
+  storyId: integer("story_id").notNull().references(() => stories.id),
+  userId: varchar("user_id", { length: 255 }).notNull().references(() => users.id),
+  narratorVoice: varchar("narrator_voice", { length: 255 }).notNull(),
+  narratorVoiceType: varchar("narrator_voice_type", { length: 20 }).notNull(), // 'ai' | 'user'
+  segments: jsonb("segments").notNull(), // Array of narration segments with audioUrl
+  totalDuration: integer("total_duration").notNull(), // Total duration in milliseconds
+  audioFileUrl: text("audio_file_url"), // Combined audio file URL (optional)
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Stories table for user-uploaded content
 export const stories = pgTable("stories", {
   id: serial("id").primaryKey(),
@@ -768,6 +782,16 @@ export const insertStoryAnalysisSchema = createInsertSchema(storyAnalyses).omit(
 
 export type StoryAnalysis = typeof storyAnalyses.$inferSelect;
 export type InsertStoryAnalysis = z.infer<typeof insertStoryAnalysisSchema>;
+
+// Story Narrations schemas
+export const insertStoryNarrationSchema = createInsertSchema(storyNarrations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type StoryNarration = typeof storyNarrations.$inferSelect;
+export type InsertStoryNarration = z.infer<typeof insertStoryNarrationSchema>;
 
 // =============================================================================
 // VIDEO GENERATION SYSTEM - Character Assets & Caching
