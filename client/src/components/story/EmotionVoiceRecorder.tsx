@@ -36,6 +36,9 @@ export function EmotionVoiceRecorder({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const recordingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const recordingStartTimeRef = useRef<number>(0);
+  const holdTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isHoldingRef = useRef<boolean>(false);
 
   const startRecording = async () => {
     try {
@@ -78,13 +81,28 @@ export function EmotionVoiceRecorder({
       };
 
       mediaRecorder.onstop = () => {
+        const recordingDuration = Date.now() - recordingStartTimeRef.current;
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm;codecs=opus' });
-        onRecordingComplete?.(audioBlob);
+        
+        // Only save recording if it's at least 1 second long
+        if (recordingDuration >= 1000) {
+          onRecordingComplete?.(audioBlob);
+        } else {
+          toast({
+            title: "Recording Too Short",
+            description: "Please hold the button for at least 1 second to record.",
+            variant: "destructive",
+          });
+        }
+        
         stream.getTracks().forEach(track => track.stop());
+        audioChunksRef.current = []; // Clear audio chunks for next recording
       };
 
       setIsRecording(true);
       setRecordingProgress(0);
+      recordingStartTimeRef.current = Date.now();
+      audioChunksRef.current = []; // Clear previous audio chunks
       mediaRecorder.start();
 
       // Progress timer (max 10 seconds)
