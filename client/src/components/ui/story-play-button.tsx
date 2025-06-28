@@ -113,8 +113,8 @@ export function StoryPlayButton({
         throw new Error('Story content or analysis not found');
       }
 
-      // Generate narration
-      const response = await apiRequest(`/api/generate-story-narration/${storyId}`, {
+      // Generate narration using existing working route
+      const response = await apiRequest(`/api/stories/${storyId}/narration`, {
         method: 'POST',
         body: JSON.stringify({
           content: storyResponse.content,

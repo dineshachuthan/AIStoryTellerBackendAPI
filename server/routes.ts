@@ -2304,49 +2304,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
 
-  // IMPORTANT: More specific routes must come BEFORE general routes
-  // Story narration generation endpoint (unique path to avoid conflicts)
-  app.post('/api/generate-story-narration/:storyId', requireAuth, async (req, res) => {
-    try {
-      const storyId = parseInt(req.params.storyId);
-      const userId = (req.user as any)?.id;
-      const { content, emotions } = req.body;
 
-      console.log('Narration request debug:', { 
-        userId, 
-        storyId, 
-        hasContent: !!content, 
-        hasEmotions: !!emotions, 
-        emotionsType: typeof emotions,
-        emotionsLength: emotions?.length,
-        contentLength: content?.length,
-        firstEmotion: emotions?.[0]
-      });
-
-      if (!userId || isNaN(storyId)) {
-        return res.status(400).json({ message: 'Invalid user or story ID' });
-      }
-
-      if (!content) {
-        return res.status(400).json({ message: 'Story content is required' });
-      }
-
-      if (!emotions || !Array.isArray(emotions) || emotions.length === 0) {
-        return res.status(400).json({ message: 'Story emotions are required' });
-      }
-
-      console.log(`Generating narration for story ${storyId} with ${emotions.length} emotions`);
-
-      const { storyNarrator } = await import('./story-narrator');
-      const narration = await storyNarrator.generateStoryNarration(storyId, userId, content, emotions);
-      
-      console.log(`Narration generated with ${narration.segments.length} segments`);
-      res.json(narration);
-    } catch (error: any) {
-      console.error('Error generating narration:', error);
-      res.status(500).json({ message: 'Failed to generate narration', error: error.message });
-    }
-  });
 
   // Story Narration routes - POST to generate narration with actual audio (general route)
   app.post("/api/stories/:id/narration", async (req, res) => {
@@ -2452,7 +2410,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to generate story narration" });
     }
   });
-  */
 
   // Story Narration routes - GET to retrieve existing narration
   app.get("/api/stories/:id/narration", async (req, res) => {
@@ -2542,7 +2499,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to generate narration instructions" });
     }
   });
-  */
 
   // Route to assign user voice samples to story emotions
   app.post("/api/stories/:id/assign-voices", requireAuth, async (req, res) => {
