@@ -10,7 +10,9 @@ interface EmotionVoiceRecorderProps {
   intensity: number;
   onRecordingComplete?: (audioBlob: Blob) => void;
   onPlaySample?: () => void;
+  onPlayUserRecording?: () => void;
   isPlayingSample?: boolean;
+  isPlayingUserRecording?: boolean;
   hasUserRecording?: boolean;
   className?: string;
 }
@@ -20,7 +22,9 @@ export function EmotionVoiceRecorder({
   intensity,
   onRecordingComplete,
   onPlaySample,
+  onPlayUserRecording,
   isPlayingSample = false,
+  isPlayingUserRecording = false,
   hasUserRecording = false,
   className
 }: EmotionVoiceRecorderProps) {
@@ -146,21 +150,38 @@ export function EmotionVoiceRecorder({
       
       <div className="flex-1 space-y-2">
         <div className="flex items-center gap-2">
-          {/* Play Sample Button */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onPlaySample}
-            disabled={isPlayingSample}
-            className="gap-2"
-          >
-            {isPlayingSample ? (
-              <Volume2 className="h-4 w-4 animate-pulse" />
-            ) : (
-              <Play className="h-4 w-4" />
-            )}
-            Play Sample
-          </Button>
+          {/* Show Play User Recording if available, otherwise show Play Sample */}
+          {hasUserRecording ? (
+            <Button
+              variant="default"
+              size="sm"
+              onClick={onPlayUserRecording}
+              disabled={isPlayingUserRecording}
+              className="gap-2 bg-blue-600 hover:bg-blue-700"
+            >
+              {isPlayingUserRecording ? (
+                <Volume2 className="h-4 w-4 animate-pulse" />
+              ) : (
+                <Play className="h-4 w-4" />
+              )}
+              Play Your Voice
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onPlaySample}
+              disabled={isPlayingSample}
+              className="gap-2"
+            >
+              {isPlayingSample ? (
+                <Volume2 className="h-4 w-4 animate-pulse" />
+              ) : (
+                <Play className="h-4 w-4" />
+              )}
+              Play Sample
+            </Button>
+          )}
 
           {/* Record Button */}
           <Button

@@ -215,43 +215,7 @@ export function VoiceRecordPage() {
                       {isPlaying ? <Pause className="w-4 h-4 mr-2" /> : <Play className="w-4 h-4 mr-2" />}
                       {isPlaying ? 'Pause Preview' : 'Play Preview'}
                     </Button>
-                    <Button 
-                      onClick={() => {
-                        // Test browser audio with a simple beep
-                        const audioContext = new AudioContext();
-                        const oscillator = audioContext.createOscillator();
-                        oscillator.connect(audioContext.destination);
-                        oscillator.frequency.value = 800;
-                        oscillator.start();
-                        oscillator.stop(audioContext.currentTime + 0.2);
-                        console.log('Test beep played');
-                      }}
-                      variant="outline"
-                      className="border-green-500 text-green-500 hover:bg-green-500/20"
-                      size="sm"
-                    >
-                      Test Audio
-                    </Button>
-                    <Button 
-                      onClick={async () => {
-                        try {
-                          const devices = await navigator.mediaDevices.enumerateDevices();
-                          const audioInputs = devices.filter(device => device.kind === 'audioinput');
-                          console.log('Available microphones:', audioInputs.map(d => ({
-                            deviceId: d.deviceId,
-                            label: d.label || 'Unknown device',
-                            groupId: d.groupId
-                          })));
-                        } catch (error) {
-                          console.error('Error listing devices:', error);
-                        }
-                      }}
-                      variant="outline"
-                      className="border-yellow-500 text-yellow-500 hover:bg-yellow-500/20"
-                      size="sm"
-                    >
-                      List Mics
-                    </Button>
+
                   </div>
                   
                   {/* Audio quality indicator */}
