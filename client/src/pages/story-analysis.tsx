@@ -338,7 +338,7 @@ export default function StoryAnalysis() {
 
   // Fetch story data if storyId is provided
   const { data: storyDataFromQuery, isLoading: storyLoading } = useQuery({
-    queryKey: ["/api/stories", storyId],
+    queryKey: [`/api/stories/${storyId}`],
     enabled: !!storyId && !!user?.id,
   });
 
