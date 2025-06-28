@@ -270,8 +270,14 @@ export default function StoryAnalysis() {
           throw new Error('No voice recordings found for this emotion');
         }
         
-        // Use the audioUrl from the most recent sample
-        const audioUrl = data.samples[0].audioUrl;
+        // Use the audioUrl from the most recent sample and convert old format to new format
+        let audioUrl = data.samples[0].audioUrl;
+        
+        // Convert old URL format to new format for compatibility
+        if (audioUrl.includes('/api/user-voice-emotions/') && !audioUrl.includes('/files/')) {
+          const filename = audioUrl.split('/api/user-voice-emotions/')[1];
+          audioUrl = `/api/user-voice-emotions/files/${filename}`;
+        }
         
         // Stop any currently playing audio
         if (userAudioPlayerRef.current) {
