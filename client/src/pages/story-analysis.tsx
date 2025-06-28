@@ -279,18 +279,32 @@ export default function StoryAnalysis() {
           userAudioPlayerRef.current = null;
         }
         
-        // Use simple working pattern from upload-audio page
-        userAudioPlayerRef.current = new Audio(audioUrl);
+        // Fetch audio with credentials and create blob URL (like upload-audio page)
+        const audioResponse = await fetch(audioUrl, {
+          credentials: 'include'
+        });
+        
+        if (!audioResponse.ok) {
+          throw new Error('Failed to fetch audio file');
+        }
+        
+        const audioBlob = await audioResponse.blob();
+        const blobUrl = URL.createObjectURL(audioBlob);
+        
+        // Use blob URL pattern like upload-audio page
+        userAudioPlayerRef.current = new Audio(blobUrl);
         userAudioPlayerRef.current.volume = 0.8;
         
         userAudioPlayerRef.current.onended = () => {
           console.log('User recording playback ended');
           setPlayingUserRecording("");
+          URL.revokeObjectURL(blobUrl); // Clean up blob URL
         };
         
         userAudioPlayerRef.current.onerror = (e) => {
           console.error('Audio error:', e);
           setPlayingUserRecording("");
+          URL.revokeObjectURL(blobUrl); // Clean up blob URL
           toast({
             title: "Playback Error",
             description: "Could not play your voice recording.",
