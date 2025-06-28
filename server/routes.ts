@@ -2305,7 +2305,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // IMPORTANT: More specific routes must come BEFORE general routes
   // Story narration generation endpoint (specific route)
-  app.post('/api/stories/:storyId/narration/generate', async (req, res) => {
+  app.post('/api/stories/:storyId/narration/generate', requireAuth, async (req, res) => {
     console.log('=== NARRATION GENERATE ENDPOINT HIT ===');
     try {
       const storyId = parseInt(req.params.storyId);
@@ -2349,6 +2349,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Story Narration routes - POST to generate narration with actual audio (general route)
+  // COMMENTED OUT: This route conflicts with /api/stories/:storyId/narration/generate
+  /*
   app.post("/api/stories/:id/narration", async (req, res) => {
     console.log('=== OLD NARRATION ENDPOINT HIT ===', req.params, req.path);
     try {
@@ -2452,6 +2454,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to generate story narration" });
     }
   });
+  */
 
   // Story Narration routes - GET to retrieve existing narration
   app.get("/api/stories/:id/narration", async (req, res) => {
