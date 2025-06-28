@@ -4107,6 +4107,106 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ElevenLabs voice provider test endpoint
+  app.get('/api/voice/test-elevenlabs', requireAuth, async (req, res) => {
+    try {
+      const { VoiceProviderRegistry } = await import('./voice-providers/voice-provider-registry');
+      const registry = VoiceProviderRegistry.getInstance();
+      
+      const provider = registry.getProvider('elevenlabs');
+      if (!provider) {
+        return res.status(404).json({ error: 'ElevenLabs provider not available' });
+      }
+
+      const status = await provider.checkHealth();
+      res.json({
+        provider: 'elevenlabs',
+        status,
+        capabilities: provider.getCapabilities()
+      });
+    } catch (error: any) {
+      console.error('ElevenLabs test error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Voice cloning endpoint - create voice clone from user samples
+  app.post('/api/voice/create-clone', requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.user!.id;
+      const { voiceName, emotionSamples } = req.body;
+
+      if (!voiceName || !emotionSamples || emotionSamples.length === 0) {
+        return res.status(400).json({ error: 'Voice name and emotion samples required' });
+      }
+
+      const { VoiceProviderRegistry } = await import('./voice-providers/voice-provider-registry');
+      const registry = VoiceProviderRegistry.getInstance();
+      
+      const provider = registry.getProvider('elevenlabs');
+      if (!provider) {
+        return res.status(404).json({ error: 'ElevenLabs provider not available' });
+      }
+
+      // Create voice clone request
+      const cloneRequest = {
+        userId,
+        voiceName,
+        samples: emotionSamples.map((sample: any) => ({
+          emotion: sample.emotion,
+          audioData: sample.audioData,
+          intensity: sample.intensity || 5
+        }))
+      };
+
+      const result = await provider.cloneVoice(cloneRequest);
+      res.json(result);
+    } catch (error: any) {
+      console.error('Voice cloning error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Generate speech with cloned voice
+  app.post('/api/voice/generate-speech', requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.user!.id;
+      const { text, emotion, intensity = 5 } = req.body;
+
+      if (!text) {
+        return res.status(400).json({ error: 'Text is required' });
+      }
+
+      const { VoiceProviderRegistry } = await import('./voice-providers/voice-provider-registry');
+      const registry = VoiceProviderRegistry.getInstance();
+      
+      const provider = registry.getProvider('elevenlabs');
+      if (!provider) {
+        return res.status(404).json({ error: 'ElevenLabs provider not available' });
+      }
+
+      // Get user's voice profile
+      const voiceProfile = await storage.getUserVoiceProfile(userId);
+      if (!voiceProfile) {
+        return res.status(404).json({ error: 'No voice profile found. Please create a voice clone first.' });
+      }
+
+      const request = {
+        userId,
+        voiceId: voiceProfile.elevenLabsVoiceId!,
+        text,
+        emotion,
+        intensity
+      };
+
+      const result = await provider.generateSpeech(request);
+      res.json(result);
+    } catch (error: any) {
+      console.error('Speech generation error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // Removed duplicate endpoint - using the one at line 2308 which now comes first
 
   // Setup video webhook handlers for callback-based notifications
