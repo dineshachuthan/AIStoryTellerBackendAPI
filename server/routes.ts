@@ -1288,10 +1288,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const contentType = fileName.endsWith('.webm') ? 'audio/webm' : 'audio/mpeg';
       res.setHeader('Content-Type', contentType);
       res.setHeader('Accept-Ranges', 'bytes');
-      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-      res.setHeader('Pragma', 'no-cache');
-      res.setHeader('Expires', '0');
-      res.sendFile(path.resolve(filePath));
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Range');
+      res.setHeader('Cache-Control', 'public, max-age=300'); // 5 minutes cache for audio
+      
+      // Handle range requests for audio streaming
+      const stat = await fs.stat(filePath);
+      const fileSize = stat.size;
+      const range = req.headers.range;
+      
+      if (range) {
+        const parts = range.replace(/bytes=/, "").split("-");
+        const start = parseInt(parts[0], 10);
+        const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+        const chunksize = (end - start) + 1;
+        
+        res.status(206);
+        res.setHeader('Content-Range', `bytes ${start}-${end}/${fileSize}`);
+        res.setHeader('Content-Length', chunksize);
+        
+        const stream = require('fs').createReadStream(filePath, { start, end });
+        stream.pipe(res);
+      } else {
+        res.setHeader('Content-Length', fileSize);
+        res.sendFile(path.resolve(filePath));
+      }
     } catch (error) {
       console.error("Voice emotion serve error:", error);
       res.status(500).json({ message: "Failed to serve voice emotion" });
