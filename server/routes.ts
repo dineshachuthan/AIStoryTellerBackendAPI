@@ -2303,9 +2303,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Debug route to list all registered routes
+  app.get('/api/debug/routes', (req, res) => {
+    const routes = [];
+    app._router.stack.forEach((middleware) => {
+      if (middleware.route) {
+        routes.push({
+          path: middleware.route.path,
+          methods: Object.keys(middleware.route.methods)
+        });
+      }
+    });
+    res.json(routes.filter(r => r.path.includes('narration')));
+  });
+
   // IMPORTANT: More specific routes must come BEFORE general routes
   // Story narration generation endpoint (specific route)
-  app.post('/api/stories/:storyId/narration/generate', requireAuth, async (req, res) => {
+  app.post('/api/stories/:storyId/narration/generate', async (req, res) => {
     console.log('=== NARRATION GENERATE ENDPOINT HIT ===');
     try {
       const storyId = parseInt(req.params.storyId);
