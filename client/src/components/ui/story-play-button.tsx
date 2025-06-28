@@ -122,7 +122,9 @@ export function StoryPlayButton({
         })
       });
 
+      console.log('Narration response:', response);
       if (response.segments) {
+        console.log('Setting segments:', response.segments);
         setNarrationSegments(response.segments);
         toast({
           title: "Narration Ready",
@@ -167,14 +169,17 @@ export function StoryPlayButton({
   };
 
   const playNarration = async () => {
+    console.log('playNarration called with segments:', narrationSegments.length);
     if (narrationSegments.length === 0) {
       await generateNarration();
       return;
     }
 
+    console.log('Current segment:', currentSegment, 'Segment data:', narrationSegments[currentSegment]);
     if (audioRef.current && narrationSegments[currentSegment]?.audioUrl) {
       try {
         const segment = narrationSegments[currentSegment];
+        console.log('Playing segment with audioUrl:', segment.audioUrl);
         audioRef.current.src = segment.audioUrl;
         audioRef.current.muted = isMuted;
         
