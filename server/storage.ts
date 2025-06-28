@@ -1,4 +1,4 @@
-import { users, localUsers, userProviders, userVoiceSamples, stories, storyCharacters, storyEmotions, characters, conversations, messages, storyCollaborations, storyGroups, storyGroupMembers, characterVoiceAssignments, storyPlaybacks, storyAnalyses, videoGenerations, type User, type InsertUser, type UpsertUser, type UserProvider, type InsertUserProvider, type LocalUser, type InsertLocalUser, type UserVoiceSample, type InsertUserVoiceSample, type Story, type InsertStory, type StoryCharacter, type InsertStoryCharacter, type StoryEmotion, type InsertStoryEmotion, type Character, type InsertCharacter, type Conversation, type InsertConversation, type Message, type InsertMessage, type StoryCollaboration, type InsertStoryCollaboration, type StoryGroup, type InsertStoryGroup, type StoryGroupMember, type InsertStoryGroupMember, type CharacterVoiceAssignment, type InsertCharacterVoiceAssignment, type StoryPlayback, type InsertStoryPlayback, type StoryAnalysis, type InsertStoryAnalysis } from "@shared/schema";
+import { users, localUsers, userProviders, userVoiceSamples, stories, storyCharacters, storyEmotions, characters, conversations, messages, storyCollaborations, storyGroups, storyGroupMembers, characterVoiceAssignments, storyPlaybacks, storyAnalyses, storyNarrations, videoGenerations, type User, type InsertUser, type UpsertUser, type UserProvider, type InsertUserProvider, type LocalUser, type InsertLocalUser, type UserVoiceSample, type InsertUserVoiceSample, type Story, type InsertStory, type StoryCharacter, type InsertStoryCharacter, type StoryEmotion, type InsertStoryEmotion, type Character, type InsertCharacter, type Conversation, type InsertConversation, type Message, type InsertMessage, type StoryCollaboration, type InsertStoryCollaboration, type StoryGroup, type InsertStoryGroup, type StoryGroupMember, type InsertStoryGroupMember, type CharacterVoiceAssignment, type InsertCharacterVoiceAssignment, type StoryPlayback, type InsertStoryPlayback, type StoryAnalysis, type InsertStoryAnalysis, type StoryNarration, type InsertStoryNarration } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, like } from "drizzle-orm";
 
@@ -677,6 +677,43 @@ export class DatabaseStorage implements IStorage {
     }).returning();
     
     return created;
+  }
+
+  // Story Narrations
+  async getSavedNarration(storyId: number, userId: string): Promise<StoryNarration | undefined> {
+    const [narration] = await db
+      .select()
+      .from(storyNarrations)
+      .where(and(eq(storyNarrations.storyId, storyId), eq(storyNarrations.userId, userId)))
+      .orderBy(desc(storyNarrations.createdAt))
+      .limit(1);
+    return narration || undefined;
+  }
+
+  async saveNarration(narrationData: InsertStoryNarration): Promise<StoryNarration> {
+    const [narration] = await db
+      .insert(storyNarrations)
+      .values({
+        ...narrationData,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
+      .returning();
+    return narration;
+  }
+
+  async updateNarration(id: number, updates: Partial<InsertStoryNarration>): Promise<void> {
+    await db
+      .update(storyNarrations)
+      .set({
+        ...updates,
+        updatedAt: new Date()
+      })
+      .where(eq(storyNarrations.id, id));
+  }
+
+  async deleteNarration(id: number): Promise<void> {
+    await db.delete(storyNarrations).where(eq(storyNarrations.id, id));
   }
 }
 

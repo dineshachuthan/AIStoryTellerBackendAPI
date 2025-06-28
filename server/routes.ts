@@ -2382,6 +2382,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get saved narration from database (no cost)
+  app.get('/api/stories/:id/narration/saved', requireAuth, async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.id);
+      const userId = (req.user as any)?.id;
+
+      if (!userId || isNaN(storyId)) {
+        return res.status(400).json({ message: 'Invalid parameters' });
+      }
+
+      const savedNarration = await storage.getSavedNarration(storyId, userId);
+      
+      if (!savedNarration) {
+        return res.status(404).json({ message: 'No saved narration found' });
+      }
+
+      res.json(savedNarration);
+    } catch (error: any) {
+      console.error('Error getting saved narration:', error);
+      res.status(500).json({ message: 'Failed to get saved narration' });
+    }
+  });
+
+  // Save narration to database for permanent storage
+  app.post('/api/stories/:id/narration/save', requireAuth, async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.id);
+      const userId = (req.user as any)?.id;
+      const { segments, totalDuration, narratorVoice, narratorVoiceType } = req.body;
+
+      if (!userId || isNaN(storyId) || !segments) {
+        return res.status(400).json({ message: 'Invalid parameters' });
+      }
+
+      // Check if narration already exists and update, or create new
+      const existingNarration = await storage.getSavedNarration(storyId, userId);
+      
+      let savedNarration;
+      if (existingNarration) {
+        await storage.updateNarration(existingNarration.id, {
+          segments,
+          totalDuration,
+          narratorVoice,
+          narratorVoiceType
+        });
+        savedNarration = await storage.getSavedNarration(storyId, userId);
+      } else {
+        savedNarration = await storage.saveNarration({
+          storyId,
+          userId,
+          segments,
+          totalDuration,
+          narratorVoice,
+          narratorVoiceType
+        });
+      }
+
+      res.json(savedNarration);
+    } catch (error: any) {
+      console.error('Error saving narration:', error);
+      res.status(500).json({ message: 'Failed to save narration' });
+    }
+  });
+
   // Grandma voice narration endpoint
   app.post('/api/stories/:id/grandma-narration', async (req, res) => {
     try {
