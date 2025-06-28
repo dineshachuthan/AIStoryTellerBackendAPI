@@ -4081,6 +4081,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           file.startsWith(`${userId}-`) && file.endsWith('.mp3')
         );
         
+        console.log(`DEBUG - Narration check for story ${storyId}:`);
+        console.log(`- Story emotions: ${uniqueEmotions.join(', ')}`);
+        console.log(`- User files found: ${userFiles.length}`);
+        
         if (userFiles.length > 0) {
           // Extract emotions from filenames (format: userId-emotion-intensity-timestamp.mp3)
           const userEmotions = userFiles.map(filename => {
@@ -4088,9 +4092,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             return parts[1]; // emotion is second part
           });
           
+          console.log(`- User emotions: ${userEmotions.join(', ')}`);
+          
           hasVoices = uniqueEmotions.some(emotion => 
             userEmotions.map(e => e.toLowerCase()).includes(emotion.toLowerCase())
           );
+          
+          console.log(`- Can narrate: ${hasVoices}`);
         }
       } catch (error) {
         console.error('Error checking user voices:', error);

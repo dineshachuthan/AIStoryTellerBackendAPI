@@ -238,8 +238,8 @@ export function StoryPlayButton({
     }
   }, [currentSegment]);
 
-  // Don't render if checking status or no user
-  if (!user || isCheckingStatus) {
+  // Don't render if no user
+  if (!user) {
     return null;
   }
 
