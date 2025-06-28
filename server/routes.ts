@@ -1205,6 +1205,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get user voice recordings by emotion
+  app.get("/api/user-voice-emotions/:userId", requireAuth, async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const emotion = req.query.emotion as string;
+      
+      if (!userId) {
+        return res.status(400).json({ message: "User ID required" });
+      }
+
+      const userVoiceDir = path.join(process.cwd(), 'persistent-cache', 'user-voice-samples');
+      
+      try {
+        const files = await fs.readdir(userVoiceDir);
+        
+        // Filter files for this user and emotion
+        const emotionPattern = emotion ? `${userId}-${emotion}-` : `${userId}-`;
+        const matchingFiles = files.filter(file => 
+          file.startsWith(emotionPattern) && file.endsWith('.mp3')
+        );
+        
+        // Sort by timestamp (newest first)
+        const sortedFiles = matchingFiles.sort((a, b) => {
+          const getTimestamp = (filename: string) => {
+            const parts = filename.split('-');
+            const lastPart = parts[parts.length - 1];
+            return parseInt(lastPart.split('.')[0] || '0');
+          };
+          return getTimestamp(b) - getTimestamp(a);
+        });
+        
+        const samples = sortedFiles.map(filename => ({
+          emotion: filename.split('-')[1], // Extract emotion from filename
+          audioUrl: `/api/emotions/user-voice-sample/${filename}`,
+          filename: filename,
+          timestamp: filename.split('-').pop()?.split('.')[0]
+        }));
+        
+        res.json({
+          userId,
+          emotion: emotion || 'all',
+          samples
+        });
+      } catch (error) {
+        console.log('No user voice samples found');
+        res.json({
+          userId,
+          emotion: emotion || 'all',
+          samples: []
+        });
+      }
+    } catch (error) {
+      console.error("Failed to get user voice samples:", error);
+      res.status(500).json({ message: "Failed to retrieve voice samples" });
+    }
+  });
+
   // Serve user voice emotion files
   app.get("/api/user-voice-emotions/:fileName", async (req, res) => {
     try {

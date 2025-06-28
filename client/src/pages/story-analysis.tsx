@@ -221,10 +221,7 @@ export default function StoryAnalysis() {
       setPlayingUserRecording(emotion);
       console.log(`Playing user recording for emotion: ${emotion}`);
       
-      // Generate the user voice sample URL directly
-      const userVoiceUrl = `/api/emotions/user-voice-sample/${user.id}-${emotion}-5-${Date.now()}.mp3`;
-      
-      // Find the actual user voice file
+      // Find the actual user voice file using the correct endpoint
       const response = await fetch(`/api/user-voice-emotions/${user.id}?emotion=${emotion}`, {
         credentials: 'include'
       });
@@ -233,8 +230,13 @@ export default function StoryAnalysis() {
         const data = await response.json();
         console.log('User voice data:', data);
         
-        // Use the audioUrl from the response if available
-        const audioUrl = data.audioUrl || userVoiceUrl;
+        // Check if we have samples for this emotion
+        if (!data.samples || data.samples.length === 0) {
+          throw new Error('No voice recordings found for this emotion');
+        }
+        
+        // Use the audioUrl from the most recent sample
+        const audioUrl = data.samples[0].audioUrl;
         
         const audio = new Audio(audioUrl);
         
@@ -316,10 +318,25 @@ export default function StoryAnalysis() {
       const narrativeAnalysis: AnalysisData = {
         analysis: narrativeResponse,
         content: story.content || "",
-        title: story.title || "Untitled Story"
+        title: narrativeResponse.title || story.title || "Untitled Story"
       };
       setAnalysisData(narrativeAnalysis);
       setAnalysisProgress(prev => ({ ...prev, narrative: true }));
+
+      // Update story title in database if AI generated a new one
+      if (narrativeResponse.title && narrativeResponse.title !== story.title) {
+        try {
+          await apiRequest(`/api/stories/${storyId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title: narrativeResponse.title }),
+            credentials: 'include'
+          });
+          console.log('Story title updated to:', narrativeResponse.title);
+        } catch (titleUpdateError) {
+          console.error('Failed to update story title:', titleUpdateError);
+        }
+      }
 
       // Try to fetch existing roleplay analysis first
       try {
@@ -618,7 +635,9 @@ export default function StoryAnalysis() {
                 userVoiceEmotions={userVoiceEmotions}
                 onEmotionRecorded={handleEmotionRecorded}
                 onPlayEmotionSample={handlePlayEmotionSample}
+                onPlayUserRecording={handlePlayUserRecording}
                 isPlayingSample={playingSample}
+                isPlayingUserRecording={playingUserRecording}
               />
             </TabsContent>
 
