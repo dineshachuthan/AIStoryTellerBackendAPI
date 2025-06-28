@@ -11,10 +11,12 @@ import { BottomNavigation } from "@/components/bottom-navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 export default function UploadStory() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
+  const { toast } = useToast();
   
   // Extract story ID from URL if present, or from sessionStorage
   const [match, params] = useRoute("/:storyId/upload-story");
