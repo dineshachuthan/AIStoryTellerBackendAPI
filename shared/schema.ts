@@ -266,6 +266,43 @@ export const userVoiceEmotions = pgTable("user_voice_emotions", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Voice cloning profiles - Links users to their cloned voices
+export const userVoiceProfiles = pgTable("user_voice_profiles", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  provider: varchar("provider").notNull(), // elevenlabs, openai, etc.
+  voiceId: varchar("voice_id").notNull(), // Provider-specific voice ID
+  voiceName: varchar("voice_name").notNull(),
+  status: varchar("status").notNull().default("training"), // training, completed, failed
+  emotionCount: integer("emotion_count").default(0),
+  emotionsCovered: jsonb("emotions_covered").$type<string[]>().default([]),
+  metadata: jsonb("metadata"), // Provider-specific metadata
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Voice generation cache for performance optimization
+export const voiceGenerationCache = pgTable("voice_generation_cache", {
+  id: serial("id").primaryKey(),
+  cacheKey: varchar("cache_key").notNull().unique(),
+  userId: varchar("user_id").references(() => users.id),
+  voiceId: varchar("voice_id"),
+  emotion: varchar("emotion"),
+  textHash: varchar("text_hash").notNull(),
+  audioData: bytea("audio_data").notNull(),
+  audioUrl: varchar("audio_url"),
+  provider: varchar("provider").notNull(),
+  duration: real("duration"),
+  format: varchar("format").notNull().default("mp3"),
+  size: integer("size").notNull(),
+  generationSettings: jsonb("generation_settings"),
+  hitCount: integer("hit_count").default(1),
+  lastAccessed: timestamp("last_accessed").defaultNow(),
+  expiresAt: timestamp("expires_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // User customizations for public stories - allows users to personalize without modifying original
 export const storyCustomizations = pgTable("story_customizations", {
   id: serial("id").primaryKey(),
