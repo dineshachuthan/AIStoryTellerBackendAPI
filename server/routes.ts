@@ -575,6 +575,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         generatedBy: userId
       });
       
+      // Update story title with AI-generated title if the story currently has default title
+      if (story.title === "New Story" || story.title === "Untitled Story" || !story.title.trim()) {
+        await storage.updateStory(storyId, {
+          title: analysis.title,
+          summary: analysis.summary,
+          genre: analysis.genre,
+          category: analysis.category,
+          ageRating: analysis.ageRating,
+          readingTime: analysis.readingTime,
+          extractedCharacters: analysis.characters,
+          extractedEmotions: analysis.emotions,
+          tags: analysis.suggestedTags,
+          emotionalTags: analysis.emotionalTags,
+          isAdultContent: analysis.isAdultContent
+        });
+        console.log(`Updated story ${storyId} title to: "${analysis.title}"`);
+      }
+      
       console.log("Narrative analysis generated successfully");
       res.json(analysis);
     } catch (error) {
