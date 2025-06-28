@@ -12,7 +12,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { AppTopNavigation } from "@/components/app-top-navigation";
 import { StoryAnalysisPanel } from "@/components/story/StoryAnalysisPanel";
 import { RolePlayAnalysisPanel } from "@/components/story/RolePlayAnalysisPanel";
-import { CompactStoryPlayer, FullStoryPlayer } from "@/components/ui/story-play-button";
+import StoryNarratorControls from "@/components/ui/story-narrator-controls";
 
 interface StoryAnalysis {
   title: string; // AI-generated title for the story
@@ -684,18 +684,19 @@ export default function StoryAnalysis() {
             </div>
           </div>
 
-          {/* Story Narration Player - Always show prominently */}
-          <div className="mb-8 p-6 bg-gradient-to-r from-purple-900/30 to-blue-900/30 rounded-xl border-2 border-purple-500/50">
-            <div className="text-white text-lg font-bold mb-4 flex items-center">
-              🎵 Story Narration Player
-              {storyId && <span className="ml-2 text-sm text-purple-300">(Story #{storyId})</span>}
-            </div>
-            {storyId ? (
-              <CompactStoryPlayer storyId={parseInt(storyId)} showTitle={false} />
-            ) : (
+          {/* Story Narration Controls - Cost-Optimized */}
+          {storyId ? (
+            <StoryNarratorControls 
+              storyId={parseInt(storyId)} 
+              user={user}
+              canNarrate={true}
+              className="mb-8"
+            />
+          ) : (
+            <div className="mb-8 p-6 bg-red-900/30 rounded-xl border border-red-500/50">
               <div className="text-red-400 font-medium">⚠ No story ID found</div>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Main Analysis Tabs */}
           <Tabs defaultValue="narrative" className="w-full">
