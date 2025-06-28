@@ -680,32 +680,6 @@ export class DatabaseStorage implements IStorage {
 }
 
 export const storage = new DatabaseStorage();
-      confidence = await this.createStoryUserConfidence({
-        storyId,
-        userId,
-        totalInteractions: 0,
-        voiceRecordingsCompleted: 0,
-        emotionsRecorded: 0,
-        playbacksCompleted: 0,
-        timeSpentSeconds: 0,
-        voiceConfidence: 0,
-        storyEngagement: 0,
-        overallConfidence: 0,
-        sessionCount: 1,
-        lastInteractionAt: new Date(),
-        firstInteractionAt: new Date(),
-      });
-    }
-
-    // Increment the specific metric
-    const updates: Partial<InsertStoryUserConfidence> = {
-      [metric]: (confidence[metric] || 0) + 1,
-      lastInteractionAt: new Date(),
-    };
-
-    // Add time spent if provided
-    if (timeSpentSeconds !== undefined) {
-      updates.timeSpentSeconds = (confidence.timeSpentSeconds || 0) + timeSpentSeconds;
     }
 
     // Calculate confidence scores based on metrics

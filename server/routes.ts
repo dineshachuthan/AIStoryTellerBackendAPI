@@ -2463,57 +2463,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Second narration route with different parameters
-  app.post("/api/stories/:id/narration", requireAuth, async (req, res) => {
-    console.log('=== SECOND OLD NARRATION ENDPOINT HIT ===', req.params, req.path);
-    try {
-      const storyId = parseInt(req.params.id);
-      const userId = (req.user as any)?.id;
-      const { pacing, includeCharacterVoices } = req.body;
 
-      if (!userId) {
-        return res.status(401).json({ message: "User authentication required" });
-      }
-
-      // Get story and analysis to pass to generateStoryNarration
-      const story = await storage.getStory(storyId);
-      
-      if (!story) {
-        return res.status(404).json({ message: "Story not found" });
-      }
-
-      // Try to get existing analysis, if not found, analyze the story first
-      let analysisData;
-      try {
-        const analysis = await storage.getStoryAnalysis(storyId, userId);
-        if (analysis && analysis.analysisData) {
-          analysisData = analysis.analysisData as any;
-        }
-      } catch (error) {
-        console.log("No existing analysis found, will analyze story first");
-      }
-
-      if (!analysisData || !analysisData.emotions) {
-        // Need to analyze the story first
-        const { analyzeStoryContent } = await import('./ai-analysis');
-        analysisData = await analyzeStoryContent(story.content);
-        
-        // Note: Analysis will be cached automatically by the story analysis system
-      }
-
-      const narration = await storyNarrator.generateStoryNarration(
-        storyId, 
-        userId, 
-        story.content, 
-        analysisData.emotions
-      );
-
-      res.json(narration);
-    } catch (error) {
-      console.error("Narration generation error:", error);
-      res.status(500).json({ message: "Failed to generate story narration" });
-    }
-  });
 
   // Instructions endpoint removed - not needed for current story narration functionality
 
