@@ -3992,6 +3992,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Story narration API endpoints
+  app.post('/api/stories/:storyId/narration/preview', requireAuth, async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.storyId);
+      const userId = (req.user as any)?.id;
+      const { emotions } = req.body;
+
+      if (!userId || isNaN(storyId)) {
+        return res.status(400).json({ message: 'Invalid parameters' });
+      }
+
+      const { storyNarrator } = await import('./story-narrator');
+      const preview = await storyNarrator.getNarrationPreview(storyId, userId, emotions);
+      
+      res.json(preview);
+    } catch (error: any) {
+      console.error('Error getting narration preview:', error);
+      res.status(500).json({ message: 'Failed to get narration preview' });
+    }
+  });
+
+  app.post('/api/stories/:storyId/narration/generate', requireAuth, async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.storyId);
+      const userId = (req.user as any)?.id;
+      const { content, emotions } = req.body;
+
+      if (!userId || isNaN(storyId) || !content || !emotions) {
+        return res.status(400).json({ message: 'Missing required parameters' });
+      }
+
+      const { storyNarrator } = await import('./story-narrator');
+      const narration = await storyNarrator.generateStoryNarration(storyId, userId, content, emotions);
+      
+      res.json(narration);
+    } catch (error: any) {
+      console.error('Error generating narration:', error);
+      res.status(500).json({ message: 'Failed to generate narration' });
+    }
+  });
+
+  app.get('/api/stories/:storyId/narration/check', requireAuth, async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.storyId);
+      const userId = (req.user as any)?.id;
+
+      if (!userId || isNaN(storyId)) {
+        return res.status(400).json({ message: 'Invalid parameters' });
+      }
+
+      // Get story data
+      const story = await storage.getStory(storyId);
+      if (!story) {
+        return res.status(404).json({ message: 'Story not found' });
+      }
+
+      // Get story analysis for emotions
+      const analysis = await storage.getStoryAnalysis(storyId);
+      if (!analysis || !analysis.emotions) {
+        return res.json({ canNarrate: false, reason: 'Story analysis not found' });
+      }
+
+      const uniqueEmotions = [...new Set(analysis.emotions.map((e: any) => e.emotion))];
+      const { storyNarrator } = await import('./story-narrator');
+      const hasVoices = await storyNarrator.hasUserVoicesForStory(userId, uniqueEmotions);
+
+      res.json({ 
+        canNarrate: hasVoices,
+        emotions: uniqueEmotions,
+        storyTitle: story.title || 'Untitled Story'
+      });
+    } catch (error: any) {
+      console.error('Error checking narration capability:', error);
+      res.status(500).json({ message: 'Failed to check narration capability' });
+    }
+  });
+
   // Setup video webhook handlers for callback-based notifications
   setupVideoWebhooks(app);
 

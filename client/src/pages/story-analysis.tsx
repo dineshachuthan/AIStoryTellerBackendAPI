@@ -12,6 +12,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { AppTopNavigation } from "@/components/app-top-navigation";
 import { StoryAnalysisPanel } from "@/components/story/StoryAnalysisPanel";
 import { RolePlayAnalysisPanel } from "@/components/story/RolePlayAnalysisPanel";
+import { CompactStoryPlayer, FullStoryPlayer } from "@/components/ui/story-play-button";
 
 interface StoryAnalysis {
   title: string; // AI-generated title for the story
@@ -682,6 +683,13 @@ export default function StoryAnalysis() {
               <p className="text-white/70">Character & Emotion Analysis</p>
             </div>
           </div>
+
+          {/* Story Narration Player - Only show for saved stories */}
+          {storyId && (
+            <div className="mb-6">
+              <CompactStoryPlayer storyId={parseInt(storyId)} showTitle={false} />
+            </div>
+          )}
 
           {/* Main Analysis Tabs */}
           <Tabs defaultValue="narrative" className="w-full">
