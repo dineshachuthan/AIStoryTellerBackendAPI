@@ -13,15 +13,6 @@ app.use(express.urlencoded({ extended: false }));
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
-  
-  // Debug narration endpoint specifically
-  if (path.includes('/narration/generate') && req.method === 'POST') {
-    console.log('=== MIDDLEWARE: Narration generate request ===');
-    console.log('Path:', path);
-    console.log('Method:', req.method);
-    console.log('Headers:', req.headers);
-    console.log('Body exists:', !!req.body);
-  }
   let capturedJsonResponse: Record<string, any> | undefined = undefined;
 
   const originalResJson = res.json;

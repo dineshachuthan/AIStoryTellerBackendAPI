@@ -2303,27 +2303,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Debug route to list all registered routes
-  app.get('/api/debug/routes', (req, res) => {
-    const routes = [];
-    app._router.stack.forEach((middleware) => {
-      if (middleware.route) {
-        routes.push({
-          path: middleware.route.path,
-          methods: Object.keys(middleware.route.methods)
-        });
-      }
-    });
-    res.json(routes.filter(r => r.path.includes('narration')));
-  });
 
   // IMPORTANT: More specific routes must come BEFORE general routes
   // Story narration generation endpoint (unique path to avoid conflicts)
   app.post('/api/generate-story-narration/:storyId', requireAuth, async (req, res) => {
-    console.log('=== NARRATION GENERATE ENDPOINT HIT ===');
-    console.log('Request user:', req.user);
-    console.log('Request body:', req.body);
-    console.log('Request params:', req.params);
     try {
       const storyId = parseInt(req.params.storyId);
       const userId = (req.user as any)?.id;
@@ -2366,8 +2349,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Story Narration routes - POST to generate narration with actual audio (general route)
-  // COMMENTED OUT: This route conflicts with /api/stories/:storyId/narration/generate
-  /*
   app.post("/api/stories/:id/narration", async (req, res) => {
     console.log('=== OLD NARRATION ENDPOINT HIT ===', req.params, req.path);
     try {
@@ -2520,8 +2501,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // COMMENTED OUT: Second conflicting route that intercepts /api/stories/:storyId/narration/generate
-  /*
+  // Second narration route with different parameters
   app.post("/api/stories/:id/narration", requireAuth, async (req, res) => {
     console.log('=== SECOND OLD NARRATION ENDPOINT HIT ===', req.params, req.path);
     try {
