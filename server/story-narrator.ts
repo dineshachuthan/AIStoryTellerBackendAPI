@@ -79,14 +79,16 @@ export class StoryNarrator {
       if (userVoices && userVoices.length > 0) {
         // Prefer narrator-type voices, fallback to any emotion voice
         const narratorVoice = userVoices.find(v => v.sampleType === 'narrator' || v.label === 'narrator');
-        if (narratorVoice) {
-          return { voice: narratorVoice.audioUrl || narratorVoice.id.toString(), type: 'user' };
+        if (narratorVoice && narratorVoice.audioUrl) {
+          // User has recorded narrator voice - use it directly for authentic custom voice
+          return { voice: narratorVoice.audioUrl, type: 'user' };
         }
         
         // Use first available emotion voice as narrator base
-        const emotionVoice = userVoices.find(v => v.sampleType === 'emotion');
-        if (emotionVoice) {
-          return { voice: emotionVoice.audioUrl || emotionVoice.id.toString(), type: 'user' };
+        const emotionVoice = userVoices.find(v => v.sampleType === 'emotion' && v.audioUrl);
+        if (emotionVoice && emotionVoice.audioUrl) {
+          // User has emotion voice recording - use it for narration
+          return { voice: emotionVoice.audioUrl, type: 'user' };
         }
       }
     } catch (error) {
