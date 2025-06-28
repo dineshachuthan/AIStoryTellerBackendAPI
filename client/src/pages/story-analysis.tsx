@@ -61,6 +61,7 @@ export default function StoryAnalysis() {
   console.log('Extracted storyId:', storyId);
   
   const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
+  // Story data will come from the query
   const [rolePlayAnalysis, setRolePlayAnalysis] = useState<any>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -336,7 +337,7 @@ export default function StoryAnalysis() {
   };
 
   // Fetch story data if storyId is provided
-  const { data: storyData, isLoading: storyLoading } = useQuery({
+  const { data: storyDataFromQuery, isLoading: storyLoading } = useQuery({
     queryKey: ["/api/stories", storyId],
     enabled: !!storyId && !!user?.id,
   });
@@ -461,12 +462,12 @@ export default function StoryAnalysis() {
   };
 
   useEffect(() => {
-    console.log('StoryAnalysis useEffect triggered:', { storyId, hasStoryData: !!storyData, userId: user?.id });
+    console.log('StoryAnalysis useEffect triggered:', { storyId, hasStoryData: !!storyDataFromQuery, userId: user?.id });
     
-    if (storyId && storyData && user?.id) {
+    if (storyId && storyDataFromQuery && user?.id) {
       console.log('Triggering dual analysis for existing story');
       // Automatically generate both analyses when story data is available
-      generateComprehensiveAnalysis(storyData);
+      generateComprehensiveAnalysis(storyDataFromQuery);
     } else if (!storyId) {
       console.log('No storyId - checking localStorage for upload flow');
       // Fall back to localStorage for upload flow
@@ -486,7 +487,7 @@ export default function StoryAnalysis() {
     } else {
       console.log('Waiting for story data or user auth...');
     }
-  }, [storyId, storyData, user?.id, setLocation]);
+  }, [storyId, storyDataFromQuery, user?.id, setLocation]);
 
   const generateTitleFromContent = (content: string, analysis: StoryAnalysis): string => {
     // Use the first character name + category as a simple title
@@ -684,19 +685,21 @@ export default function StoryAnalysis() {
             </div>
           </div>
 
-          {/* Story Narration Controls - Cost-Optimized */}
-          {storyId ? (
+          {/* Story Narration Controls - Cost-Optimized (Author Only) */}
+          {storyId && storyDataFromQuery && user?.id === storyDataFromQuery.authorId ? (
             <StoryNarratorControls 
               storyId={parseInt(storyId)} 
               user={user}
               canNarrate={true}
               className="mb-8"
             />
-          ) : (
-            <div className="mb-8 p-6 bg-red-900/30 rounded-xl border border-red-500/50">
-              <div className="text-red-400 font-medium">⚠ No story ID found</div>
+          ) : storyId && storyDataFromQuery && user?.id !== storyDataFromQuery.authorId ? (
+            <div className="mb-8 p-4 bg-blue-900/30 rounded-xl border border-blue-500/50">
+              <div className="text-blue-300 text-sm">
+                <span className="font-medium">📖 Story Narration:</span> Only the story author can generate narrations
+              </div>
             </div>
-          )}
+          ) : null}
 
           {/* Main Analysis Tabs */}
           <Tabs defaultValue="narrative" className="w-full">
