@@ -4132,6 +4132,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Story narration generation endpoint
+  app.post('/api/stories/:storyId/narration/generate', requireAuth, async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.storyId);
+      const userId = (req.user as any)?.id;
+      const { content, emotions } = req.body;
+
+      if (!userId || isNaN(storyId) || !content || !emotions) {
+        return res.status(400).json({ message: 'Missing required parameters' });
+      }
+
+      console.log(`Generating narration for story ${storyId} with ${emotions.length} emotions`);
+
+      const { storyNarrator } = await import('./story-narrator');
+      const narration = await storyNarrator.generateStoryNarration(storyId, userId, content, emotions);
+      
+      console.log(`Narration generated with ${narration.segments.length} segments`);
+      res.json(narration);
+    } catch (error: any) {
+      console.error('Error generating narration:', error);
+      res.status(500).json({ message: 'Failed to generate narration', error: error.message });
+    }
+  });
+
   // Setup video webhook handlers for callback-based notifications
   setupVideoWebhooks(app);
 
