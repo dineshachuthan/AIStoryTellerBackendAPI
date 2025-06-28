@@ -4049,8 +4049,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get story analysis for emotions - try narrative analysis first
-      let analysis = await storage.getStoryAnalysis(storyId, 'narrative');
+      let analysis;
+      try {
+        analysis = await storage.getStoryAnalysis(storyId, 'narrative');
+      } catch (error) {
+        console.log('Failed to get analysis via storage, trying alternative method');
+        analysis = null;
+      }
+      
       if (!analysis) {
+        console.log('No analysis found, returning canNarrate: false');
         return res.json({ canNarrate: false, reason: 'Story analysis not found' });
       }
 
