@@ -4082,6 +4082,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       console.log('Found analysis for story', storyId, 'with', analysis.analysisData ? 'data' : 'no data');
+      console.log('Analysis type:', typeof analysis.analysisData);
+      if (analysis.analysisData) {
+        console.log('Analysis keys:', Object.keys(analysis.analysisData));
+      }
 
       // Extract emotions from the analysis data
       let emotions: any[] = [];
