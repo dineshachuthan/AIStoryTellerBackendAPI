@@ -4048,51 +4048,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Story not found' });
       }
 
-      // Get story analysis for emotions - use the same approach as the working narrative endpoint
+      // Use the exact same approach as the working /api/stories/:id/narrative endpoint
+      const { analysisCache } = await import('./cache-with-fallback');
+      const cacheKey = `narrative-${storyId}`;
+      
       let analysis;
       try {
-        // Try the same method that works for the narrative endpoint
-        const { analysisCache } = await import('./cache-with-fallback');
-        
-        const cacheKey = `narrative-${storyId}`;
         analysis = await analysisCache.getOrSet(
           cacheKey,
           async () => {
-            try {
-              return await storage.getStoryAnalysis(storyId, 'narrative');
-            } catch (error) {
-              console.log('Storage method failed, checking database directly');
-              return null;
-            }
+            const { analyzeStoryContent } = await import('./ai-analysis');
+            return await analyzeStoryContent(story.content);
           },
-          { ttl: 300000 } // 5 minutes
+          { ttl: 300000 }
         );
+        
+        console.log('Successfully retrieved analysis with emotions:', analysis?.emotions?.length || 0);
       } catch (error) {
-        console.log('Cache method failed, trying direct storage access');
-        try {
-          analysis = await storage.getStoryAnalysis(storyId, 'narrative');
-        } catch (storageError) {
-          analysis = null;
-        }
+        console.log('Analysis retrieval failed:', error);
+        return res.json({ canNarrate: false, reason: 'Failed to retrieve story analysis' });
       }
       
-      if (!analysis) {
-        console.log('No analysis found for story', storyId);
-        return res.json({ canNarrate: false, reason: 'Story analysis not found' });
-      }
-      
-      console.log('Found analysis for story', storyId, 'with', analysis.analysisData ? 'data' : 'no data');
-      console.log('Analysis type:', typeof analysis.analysisData);
-      if (analysis.analysisData) {
-        console.log('Analysis keys:', Object.keys(analysis.analysisData));
+      if (!analysis || !analysis.emotions) {
+        console.log('No emotions found in analysis');
+        return res.json({ canNarrate: false, reason: 'No emotions found in story' });
       }
 
-      // Extract emotions from the analysis data
-      let emotions: any[] = [];
-      if (analysis.analysisData && typeof analysis.analysisData === 'object') {
-        const analysisObj = analysis.analysisData as any;
-        emotions = analysisObj.emotions || [];
-      }
+      // Extract emotions from the analysis (direct structure)
+      const emotions = analysis.emotions || [];
+      console.log('Found emotions:', emotions.map((e: any) => e.emotion));
 
       if (emotions.length === 0) {
         return res.json({ canNarrate: false, reason: 'No emotions found in analysis' });
