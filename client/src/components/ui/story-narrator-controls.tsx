@@ -144,10 +144,7 @@ export default function StoryNarratorControls({
         setCurrentSegment(0);
         setProgress(0);
         
-        toast({
-          title: "Narration Generated",
-          description: "Your story narration has been generated. You can now play it or save it for later."
-        });
+        // Don't show annoying toast - user can see the narration is ready from UI state
       }
     } catch (error) {
       console.error('Error generating narration:', error);
@@ -261,8 +258,8 @@ export default function StoryNarratorControls({
         </div>
       </div>
 
-      {/* Progress visualization */}
-      {hasAnyNarration && (
+      {/* Progress visualization - only show when actually playing */}
+      {hasAnyNarration && isPlaying && (
         <div className="mb-6 p-4 bg-white/5 rounded-lg border border-purple-400/20">
           <div className="flex justify-between text-sm text-purple-200 mb-2">
             <span>Segment {currentSegment + 1} of {activeNarration?.segments.length || 0}</span>
