@@ -114,7 +114,7 @@ export function StoryPlayButton({
       }
 
       // Generate narration
-      const response = await apiRequest(`/api/stories/${storyId}/narration/generate`, {
+      const response = await apiRequest(`/api/generate-story-narration/${storyId}`, {
         method: 'POST',
         body: JSON.stringify({
           content: storyResponse.content,
