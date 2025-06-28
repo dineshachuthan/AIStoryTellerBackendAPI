@@ -2319,7 +2319,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // IMPORTANT: More specific routes must come BEFORE general routes
   // Story narration generation endpoint (unique path to avoid conflicts)
-  app.post('/api/generate-story-narration/:storyId', async (req, res) => {
+  app.post('/api/generate-story-narration/:storyId', requireAuth, async (req, res) => {
     console.log('=== NARRATION GENERATE ENDPOINT HIT ===');
     console.log('Request user:', req.user);
     console.log('Request body:', req.body);
