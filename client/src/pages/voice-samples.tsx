@@ -276,56 +276,33 @@ export default function VoiceSamples() {
                 const isRecorded = !!recordedSample;
 
                 return (
-                  <Card 
-                    key={template.modulationKey} 
-                    className={cn(
-                      "transition-all duration-200 hover:shadow-md",
-                      isRecorded && "ring-2 ring-green-500 ring-opacity-50"
-                    )}
-                  >
-                    <CardHeader className="pb-4">
-                      <CardTitle className="flex items-center justify-between">
-                        <span className="flex items-center gap-2">
-                          {isRecorded ? (
-                            <CheckCircle className="w-5 h-5 text-green-600" />
-                          ) : (
-                            <Circle className="w-5 h-5 text-muted-foreground" />
-                          )}
-                          {template.displayName}
-                        </span>
-                        <Badge variant={isRecorded ? "default" : "secondary"}>
-                          {template.category}
-                        </Badge>
-                      </CardTitle>
-
-                    </CardHeader>
-
-                    <CardContent className="space-y-3">
-                      {/* Enhanced Voice Recorder - Always Show with Radio Style */}
-                      <EnhancedVoiceRecorder
-                        buttonText={{
-                          hold: isRecorded ? `Re-record ${template.displayName}` : `Record ${template.displayName}`,
-                          recording: "Recording...",
-                          instructions: isRecorded ? "Hold to re-record" : "Hold button to record"
-                        }}
-                        sampleText={template.sampleText}
-                        emotionDescription={template.description}
-                        onRecordingComplete={(audioBlob) => {
-                          saveVoiceModulation.mutate({
-                            emotion: template.modulationKey,
-                            audioBlob
-                          });
-                        }}
-                        className="w-full"
-                        disabled={saveVoiceModulation.isPending}
-                        maxRecordingTime={template.targetDuration}
-                        existingRecording={isRecorded && recordedSample ? {
-                          url: recordedSample.audioUrl,
-                          recordedAt: new Date(recordedSample.recordedAt)
-                        } : undefined}
-                      />
-                    </CardContent>
-                  </Card>
+                  <div key={template.modulationKey}>
+                    <EnhancedVoiceRecorder
+                      buttonText={{
+                        hold: isRecorded ? `Re-record ${template.displayName}` : `Record ${template.displayName}`,
+                        recording: "Recording...",
+                        instructions: isRecorded ? "Hold to re-record" : "Hold button to record"
+                      }}
+                      sampleText={template.sampleText}
+                      emotionDescription={template.description}
+                      emotionName={template.displayName}
+                      category={template.category}
+                      isRecorded={isRecorded}
+                      onRecordingComplete={(audioBlob) => {
+                        saveVoiceModulation.mutate({
+                          emotion: template.modulationKey,
+                          audioBlob
+                        });
+                      }}
+                      className="w-full"
+                      disabled={saveVoiceModulation.isPending}
+                      maxRecordingTime={template.targetDuration}
+                      existingRecording={isRecorded && recordedSample ? {
+                        url: recordedSample.audioUrl,
+                        recordedAt: new Date(recordedSample.recordedAt)
+                      } : undefined}
+                    />
+                  </div>
                 );
               })}
             </div>

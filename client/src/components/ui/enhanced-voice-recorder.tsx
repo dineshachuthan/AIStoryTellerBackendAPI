@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
-import { Mic, Play, RotateCcw, Save, Radio, Volume2 } from "lucide-react";
+import { Mic, Play, RotateCcw, Save, Radio, Volume2, CheckCircle, Circle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { AUDIO_PROCESSING_CONFIG } from "@shared/audio-config";
 
 interface EnhancedVoiceRecorderProps {
@@ -22,6 +23,9 @@ interface EnhancedVoiceRecorderProps {
   };
   sampleText?: string;
   emotionDescription?: string;
+  emotionName?: string;
+  category?: string;
+  isRecorded?: boolean;
 }
 
 export function EnhancedVoiceRecorder({
@@ -36,7 +40,10 @@ export function EnhancedVoiceRecorder({
   },
   existingRecording,
   sampleText,
-  emotionDescription
+  emotionDescription,
+  emotionName,
+  category,
+  isRecorded = false
 }: EnhancedVoiceRecorderProps) {
   const [recordingState, setRecordingState] = useState<'idle' | 'countdown' | 'recording' | 'recorded'>('idle');
   const [countdownTime, setCountdownTime] = useState(3);
@@ -259,11 +266,27 @@ export function EnhancedVoiceRecorder({
         {/* Radio/TV Style Voice Recorder Panel */}
         <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-4 shadow-2xl border border-gray-700">
         
-        {/* Header with Radio Icon */}
+        {/* Header with Emotion Info */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center">
             <Radio className="w-5 h-5 text-red-400 mr-2" />
-            <span className="text-sm font-medium text-gray-300">Voice Recorder</span>
+            <div className="flex items-center gap-2">
+              {isRecorded ? (
+                <CheckCircle className="w-4 h-4 text-green-400" />
+              ) : (
+                <Circle className="w-4 h-4 text-gray-400" />
+              )}
+              <span className="text-sm font-medium text-gray-300">
+                {emotionName || 'Voice Recorder'}
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {category && (
+              <Badge variant={isRecorded ? "default" : "secondary"} className="text-xs">
+                {category}
+              </Badge>
+            )}
           </div>
           
           {/* Horizontal Equalizer Visual in Header */}
