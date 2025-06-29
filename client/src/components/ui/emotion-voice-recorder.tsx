@@ -269,10 +269,27 @@ export function EmotionVoiceRecorder({
       </CardHeader>
       
       <CardContent className="space-y-4">
+        {/* Emotion Text to Read */}
+        <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Read this text aloud with {emotion} emotion:
+          </h4>
+          <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed italic">
+            "{getEmotionText(emotion)}"
+          </p>
+          <div className="mt-2 text-xs text-gray-500 dark:text-gray-500">
+            Duration: 10-20 seconds • Hold the button while reading
+          </div>
+        </div>
+
         {/* Recording Interface */}
         <div className="flex flex-col space-y-3">
           <PressHoldRecorder
-            buttonText={recording?.isNew ? "Re-record" : "Hold to Record"}
+            buttonText={{
+              hold: recording?.isNew ? "Hold to Re-record" : "Hold to Record",
+              recording: "Recording... (release when done)",
+              instructions: recording?.isNew ? "Press and hold to record again" : "Press and hold while reading the text above"
+            }}
             maxDuration={20000} // 20 seconds max
             minDuration={10000} // 10 seconds minimum
             onRecordingComplete={handleRecordingComplete}

@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PressHoldRecorder } from '@/components/ui/press-hold-recorder';
+import { EmotionVoiceRecorder } from '@/components/ui/emotion-voice-recorder';
 import { Mic, Play, Pause, Check, AlertCircle, Settings, TestTube } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { EmotionConfig } from '@shared/voice-config';
@@ -234,7 +234,7 @@ export default function VoiceCloning() {
             <CardHeader>
               <CardTitle>Record Emotion Samples</CardTitle>
               <CardDescription>
-                Record yourself expressing different emotions. We need at least 3 emotions to create your voice clone.
+                Record yourself expressing different emotions with the provided text prompts. Each recording should be 10-20 seconds.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -247,58 +247,39 @@ export default function VoiceCloning() {
                 <Progress value={progressPercentage} />
               </div>
 
-              {/* Emotion Selection */}
-              <div className="space-y-3">
-                <Label>Select Emotion to Record</Label>
-                <div className="grid grid-cols-5 gap-2">
-                  {priorityEmotions.map(emotion => (
-                    <button
-                      key={emotion}
-                      onClick={() => setSelectedEmotion(emotion)}
-                      className={`p-3 rounded-lg border text-sm font-medium transition-colors ${
-                        selectedEmotion === emotion
-                          ? 'bg-primary text-primary-foreground border-primary'
-                          : getEmotionStatus(emotion)
-                          ? 'bg-green-50 border-green-200 text-green-700'
-                          : 'bg-background border-border hover:bg-accent'
-                      }`}
-                    >
-                      <div className="flex items-center justify-center gap-1">
-                        <span className="capitalize">{emotion}</span>
-                        {getEmotionStatus(emotion) && <Check className="h-3 w-3" />}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Recording Interface */}
-              <div className="space-y-4">
-                <div>
-                  <Label className="text-lg">Recording: {selectedEmotion}</Label>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Express this emotion naturally. Speak for 10-30 seconds about anything that makes you feel {selectedEmotion}.
-                  </p>
-                </div>
-
-                <div className="flex justify-center">
-                  <PressHoldRecorder
-                    onRecordingComplete={handleRecordingComplete}
-                    buttonText={`Record ${selectedEmotion}`}
-                    minDuration={3000}
-                    maxDuration={30000}
-                    className="w-48 h-48 rounded-full text-lg"
+              {/* Emotion Recording Grid */}
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-1">
+                {priorityEmotions.map(emotion => (
+                  <EmotionVoiceRecorder
+                    key={emotion}
+                    emotion={emotion}
+                    intensity={7}
+                    onSave={(recording) => {
+                      // Update emotion samples when saved
+                      setEmotionSamples(prev => {
+                        const filtered = prev.filter(s => s.emotion !== emotion);
+                        return [...filtered, {
+                          emotion,
+                          intensity: 7,
+                          audioData: recording.audioUrl || '',
+                          duration: 15000 // placeholder
+                        }];
+                      });
+                    }}
+                    onDelete={(recordingId) => {
+                      // Remove from emotion samples when deleted
+                      setEmotionSamples(prev => prev.filter(s => s.emotion !== emotion));
+                    }}
+                    existingRecording={
+                      getEmotionStatus(emotion) ? {
+                        emotion,
+                        intensity: 7,
+                        audioUrl: '',
+                        id: 1 // placeholder
+                      } : undefined
+                    }
                   />
-                </div>
-
-                {getEmotionStatus(selectedEmotion) && (
-                  <Alert>
-                    <Check className="h-4 w-4" />
-                    <AlertDescription>
-                      {selectedEmotion} emotion sample recorded! You can re-record to replace it.
-                    </AlertDescription>
-                  </Alert>
-                )}
+                ))}
               </div>
             </CardContent>
           </Card>
