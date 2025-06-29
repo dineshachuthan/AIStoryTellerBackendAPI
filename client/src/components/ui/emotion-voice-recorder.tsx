@@ -151,20 +151,20 @@ export function EmotionVoiceRecorder({
   };
 
   return (
-    <Card className={`${className} border border-gray-200 dark:border-gray-700`}>
+    <Card className={`${className} border border-gray-200 dark:border-gray-700 w-full max-w-none`}>
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
+        <CardTitle className="flex items-center justify-between text-sm">
+          <div className="flex items-center space-x-2 min-w-0 flex-1">
             <Badge 
               variant="outline" 
-              className={`px-3 py-1 text-xs font-medium border ${getEmotionColor(emotion)}`}
+              className={`px-2 py-1 text-xs font-medium border flex-shrink-0 ${getEmotionColor(emotion)}`}
             >
               {emotion.charAt(0).toUpperCase() + emotion.slice(1)}
             </Badge>
-            <span className="text-sm text-gray-500">Intensity: {intensity}</span>
+            <span className="text-xs text-gray-500 flex-shrink-0">Intensity: {intensity}</span>
           </div>
           {recording && !recording.isNew && (
-            <div className="flex items-center space-x-1 text-xs text-green-600 dark:text-green-400">
+            <div className="flex items-center space-x-1 text-xs text-green-600 dark:text-green-400 flex-shrink-0">
               <Check className="w-3 h-3" />
               <span>Saved</span>
             </div>
@@ -172,15 +172,15 @@ export function EmotionVoiceRecorder({
         </CardTitle>
       </CardHeader>
       
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-3 px-4 pb-4">
         {/* Emotion Text to Read */}
         <div className="bg-gray-50 dark:bg-gray-900 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
           <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Read this text aloud with {emotion} emotion:
           </h4>
-          <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed italic break-words">
+          <div className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed italic break-words whitespace-normal overflow-hidden">
             "{getEmotionText(emotion)}"
-          </p>
+          </div>
           <div className="mt-2 text-xs text-gray-500 dark:text-gray-500">
             Duration: 10-20 seconds • Hold the button while reading
           </div>
@@ -188,15 +188,18 @@ export function EmotionVoiceRecorder({
 
         {/* Recording Section */}
         {!recording && (
-          <PressHoldRecorder
-            onRecordingComplete={handleRecordingComplete}
-            maxRecordingTime={20}
-            buttonText={{
-              hold: "Hold to Record",
-              recording: "Recording... (release when done)",
-              instructions: "Press and hold while reading the text above"
-            }}
-          />
+          <div className="w-full">
+            <PressHoldRecorder
+              onRecordingComplete={handleRecordingComplete}
+              maxRecordingTime={20}
+              buttonText={{
+                hold: "Hold to Record",
+                recording: "Recording... (release when done)",
+                instructions: "Press and hold while reading the text above"
+              }}
+              className="w-full"
+            />
+          </div>
         )}
 
         {recording && (
