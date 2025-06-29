@@ -4243,24 +4243,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Set cloning in progress (disables voice samples button)
           VoiceCloningSessionManager.setCloningInProgress(req, category);
           
-          // Trigger ElevenLabs training asynchronously
+          // Trigger ElevenLabs training asynchronously (fully background processing)
           const { voiceTrainingService } = await import('./voice-training-service');
-          voiceTrainingService.trainUserVoice(userId)
-            .then(result => {
+          
+          // Start background thread for training - user can continue using app
+          setTimeout(async () => {
+            try {
+              const result = await voiceTrainingService.triggerAutomaticTraining(userId);
+              
               if (result.success) {
                 console.log(`✅ ElevenLabs cloning completed for user ${userId}, category '${category}', voice ID: ${result.voiceId}`);
                 
                 // Complete cloning process (resets counter, enables button)
+                // Note: This will be picked up by the next session status check
                 VoiceCloningSessionManager.completeCategoryCloning(req, category, true);
               } else {
                 console.error(`❌ ElevenLabs cloning failed for user ${userId}, category '${category}': ${result.error}`);
                 VoiceCloningSessionManager.completeCategoryCloning(req, category, false);
               }
-            })
-            .catch(error => {
+            } catch (error) {
               console.error(`❌ ElevenLabs cloning error for user ${userId}, category '${category}':`, error);
               VoiceCloningSessionManager.completeCategoryCloning(req, category, false);
-            });
+            }
+          }, 100); // Small delay to ensure response is sent before background processing
         }
       } catch (error) {
         console.error('Error in session-based voice cloning trigger:', error);
