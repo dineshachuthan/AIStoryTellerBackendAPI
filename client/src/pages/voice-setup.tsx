@@ -11,6 +11,8 @@ import { ArrowLeft, Mic, Play, Square, RotateCcw, Check } from "lucide-react";
 import { ConfigurableAudioRecorder } from "@/lib/audioRecorder";
 import { AudioConfigManager } from "@/lib/audioConfig";
 import { DEFAULT_PLATFORM_CONFIG } from "@shared/audioConfig";
+import { EmotionVoiceRecorder } from "@/components/ui/emotion-voice-recorder";
+import { getEmotionConfig } from "@shared/voice-config";
 
 interface VoiceSample {
   label: string;
