@@ -357,7 +357,7 @@ export default function VoiceSamples() {
                           <h3 className="font-medium text-sm">{template.displayName}</h3>
                           {getStatusIcon()}
                         </div>
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="secondary" className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
                           {template.category || 'basic'}
                         </Badge>
                       </div>
