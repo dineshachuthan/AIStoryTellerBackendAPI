@@ -301,67 +301,46 @@ export default function VoiceSamples() {
                     </CardHeader>
 
                     <CardContent className="space-y-3">
-                      {isRecorded && recordedSample ? (
-                          <div className="space-y-2">
-                            <div className="flex gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => playAudioSample(recordedSample.audioUrl, template.modulationKey)}
-                                className="flex items-center gap-2 flex-1"
-                              >
-                                <Play className="w-4 h-4" />
-                                {playingAudio === template.modulationKey ? "Stop" : "Play Sample"}
-                              </Button>
-                              
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                onClick={() => deleteVoiceModulation.mutate(template.modulationKey)}
-                                disabled={deleteVoiceModulation.isPending}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                            
-                            <p className="text-xs text-muted-foreground">
-                              Recorded: {new Date(recordedSample.recordedAt).toLocaleDateString()}
+                      {/* Sample Text to Read - Always Show */}
+                      <div className="bg-muted/50 p-3 rounded-lg border border-dashed border-muted-foreground/30">
+                        <p className="text-xs text-muted-foreground mb-2 font-medium">
+                          📖 Read this with {template.displayName.toLowerCase()} emotion:
+                        </p>
+                        <p className="text-sm font-medium text-foreground italic leading-relaxed">
+                          "{template.sampleText}"
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Target: {template.targetDuration} seconds
+                          {isRecorded && recordedSample && (
+                            <span className="ml-2 text-green-600">
+                              ✓ Recorded: {new Date(recordedSample.recordedAt).toLocaleDateString()}
                               {recordedSample.duration > 0 && ` • ${recordedSample.duration}ms`}
-                            </p>
-                          </div>
-                        ) : (
-                          <div className="space-y-3">
-                            {/* Sample Text to Read */}
-                            <div className="bg-muted/50 p-3 rounded-lg border border-dashed border-muted-foreground/30">
-                              <p className="text-xs text-muted-foreground mb-2 font-medium">
-                                📖 Read this with {template.displayName.toLowerCase()} emotion:
-                              </p>
-                              <p className="text-sm font-medium text-foreground italic leading-relaxed">
-                                "{template.sampleText}"
-                              </p>
-                              <p className="text-xs text-muted-foreground mt-2">
-                                Target: {template.targetDuration} seconds
-                              </p>
-                            </div>
-                            
-                            <EnhancedVoiceRecorder
-                              buttonText={{
-                                hold: `Record ${template.displayName}`,
-                                recording: "Recording...",
-                                instructions: "Hold button to record"
-                              }}
-                              onRecordingComplete={(audioBlob) => {
-                                saveVoiceModulation.mutate({
-                                  emotion: template.modulationKey,
-                                  audioBlob
-                                });
-                              }}
-                              className="w-full"
-                              disabled={saveVoiceModulation.isPending}
-                              maxRecordingTime={template.targetDuration}
-                            />
-                          </div>
-                        )}
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                      
+                      {/* Enhanced Voice Recorder - Always Show with Radio Style */}
+                      <EnhancedVoiceRecorder
+                        buttonText={{
+                          hold: isRecorded ? `Re-record ${template.displayName}` : `Record ${template.displayName}`,
+                          recording: "Recording...",
+                          instructions: isRecorded ? "Hold to re-record" : "Hold button to record"
+                        }}
+                        onRecordingComplete={(audioBlob) => {
+                          saveVoiceModulation.mutate({
+                            emotion: template.modulationKey,
+                            audioBlob
+                          });
+                        }}
+                        className="w-full"
+                        disabled={saveVoiceModulation.isPending}
+                        maxRecordingTime={template.targetDuration}
+                        existingRecording={isRecorded && recordedSample ? {
+                          url: recordedSample.audioUrl,
+                          recordedAt: new Date(recordedSample.recordedAt)
+                        } : undefined}
+                      />
                     </CardContent>
                   </Card>
                 );

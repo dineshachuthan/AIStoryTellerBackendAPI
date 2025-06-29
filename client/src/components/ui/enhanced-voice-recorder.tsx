@@ -16,6 +16,10 @@ interface EnhancedVoiceRecorderProps {
     recording: string;
     instructions: string;
   };
+  existingRecording?: {
+    url: string;
+    recordedAt: Date;
+  };
 }
 
 export function EnhancedVoiceRecorder({
@@ -27,13 +31,15 @@ export function EnhancedVoiceRecorder({
     hold: "Hold to Record",
     recording: "Recording...",
     instructions: "Press and hold to record"
-  }
+  },
+  existingRecording
 }: EnhancedVoiceRecorderProps) {
   const [recordingState, setRecordingState] = useState<'idle' | 'countdown' | 'recording' | 'recorded'>('idle');
   const [countdownTime, setCountdownTime] = useState(3);
   const [recordingTime, setRecordingTime] = useState(0);
   const [tempRecording, setTempRecording] = useState<{blob: Blob, url: string} | null>(null);
   const [isPlayingTemp, setIsPlayingTemp] = useState(false);
+  const [isPlayingExisting, setIsPlayingExisting] = useState(false);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -161,6 +167,21 @@ export function EnhancedVoiceRecorder({
     audioRef.current.onended = () => setIsPlayingTemp(false);
     audioRef.current.play();
     setIsPlayingTemp(true);
+  };
+
+  const playExistingRecording = () => {
+    if (!existingRecording) return;
+    
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+      setIsPlayingExisting(false);
+    }
+
+    audioRef.current = new Audio(existingRecording.url);
+    audioRef.current.onended = () => setIsPlayingExisting(false);
+    audioRef.current.play();
+    setIsPlayingExisting(true);
   };
 
   const reRecord = () => {
