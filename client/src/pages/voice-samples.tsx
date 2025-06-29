@@ -52,21 +52,22 @@ export default function VoiceSamples() {
     queryKey: ["/api/voice-modulations/progress"],
   });
 
-  // Save voice sample mutation
-  const saveVoiceSample = useMutation({
+  // Save voice modulation mutation
+  const saveVoiceModulation = useMutation({
     mutationFn: async ({ emotion, audioBlob }: { emotion: string; audioBlob: Blob }) => {
       const formData = new FormData();
-      formData.append("emotion", emotion);
+      formData.append("modulationKey", emotion);
       formData.append("audio", audioBlob, `${emotion}_sample.webm`);
       formData.append("duration", "10"); // Default duration
+      formData.append("modulationType", "emotion"); // Default type
 
-      const response = await fetch("/api/voice-samples", {
+      const response = await fetch("/api/voice-modulations/record", {
         method: "POST",
         body: formData,
       });
 
       if (!response.ok) {
-        throw new Error("Failed to save voice sample");
+        throw new Error("Failed to save voice modulation");
       }
 
       return response.json();
@@ -78,26 +79,30 @@ export default function VoiceSamples() {
     },
   });
 
-  // Delete voice sample mutation
-  const deleteVoiceSample = useMutation({
-    mutationFn: async (emotion: string) => {
-      const response = await fetch(`/api/voice-samples/${emotion}`, {
+  // Delete voice modulation mutation
+  const deleteVoiceModulation = useMutation({
+    mutationFn: async (modulationKey: string) => {
+      const response = await fetch(`/api/voice-modulations/delete`, {
         method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ modulationKey }),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to delete voice sample");
+        throw new Error("Failed to delete voice modulation");
       }
 
       return response.json();
     },
-    onSuccess: (data, emotion) => {
+    onSuccess: (data, modulationKey) => {
       // Refresh progress data to update the UI
       queryClient.invalidateQueries({ queryKey: ["/api/voice-modulations/progress"] });
       queryClient.invalidateQueries({ queryKey: ["/api/voice-modulations/templates"] });
     },
     onError: (error) => {
-      console.error("Delete voice sample error:", error);
+      console.error("Delete voice modulation error:", error);
     },
   });
 
@@ -177,16 +182,16 @@ export default function VoiceSamples() {
     return recordedSamples.find((sample: any) => sample.emotion === modulationKey);
   };
 
-  // Handler for recording new voice samples
-  const handleRecord = async (template: VoiceTemplate, audioBlob: Blob): Promise<void> => {
-    await saveVoiceSample.mutateAsync({
+  // Handler for recording new voice modulations
+  const handleRecord = async (template: any, audioBlob: Blob): Promise<void> => {
+    await saveVoiceModulation.mutateAsync({
       emotion: template.modulationKey,
       audioBlob
     });
   };
 
   // Get user voice samples data - fix progress data structure
-  const userVoiceSamples: RecordedSample[] = (progress as any)?.recordedSamples?.map((sample: any) => ({
+  const userVoiceSamples: any[] = (progress as any)?.recordedSamples?.map((sample: any) => ({
     modulationKey: sample.emotion,
     audioUrl: sample.audioUrl,
     recordedAt: new Date(sample.recordedAt),
@@ -312,8 +317,8 @@ export default function VoiceSamples() {
                               <Button
                                 variant="destructive"
                                 size="sm"
-                                onClick={() => deleteVoiceSample.mutate(template.modulationKey)}
-                                disabled={deleteVoiceSample.isPending}
+                                onClick={() => deleteVoiceModulation.mutate(template.modulationKey)}
+                                disabled={deleteVoiceModulation.isPending}
                               >
                                 <Trash2 className="w-4 h-4" />
                               </Button>
