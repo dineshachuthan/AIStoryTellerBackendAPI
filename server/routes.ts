@@ -4133,8 +4133,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get user's voice profile
   app.get('/api/user/voice-profile', requireAuth, async (req, res) => {
     try {
-      const userId = req.session.user!.id;
-      const profile = await storage.getUserVoiceProfile(userId);
+      const user = (req as any).user;
+      if (!user || !user.id) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+      
+      const profile = await storage.getUserVoiceProfile(user.id);
       res.json(profile || null);
     } catch (error: any) {
       console.error('Error getting voice profile:', error);
@@ -4142,10 +4146,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Save voice emotion recording
+  app.post('/api/user/voice-emotions', requireAuth, upload.single('audio'), async (req, res) => {
+    try {
+      const user = (req as any).user;
+      if (!user || !user.id) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+
+      const { emotion, intensity } = req.body;
+      const audioFile = req.file;
+
+      if (!audioFile || !emotion) {
+        return res.status(400).json({ error: 'Audio file and emotion are required' });
+      }
+
+      // Save voice emotion to database first (database-first architecture)
+      const voiceEmotion = await storage.saveUserVoiceEmotion(
+        user.id,
+        emotion,
+        parseInt(intensity) || 5,
+        audioFile.buffer,
+        audioFile.mimetype
+      );
+
+      res.json({ 
+        success: true, 
+        voiceEmotion,
+        message: `${emotion} voice sample saved successfully` 
+      });
+    } catch (error: any) {
+      console.error('Error saving voice emotion:', error);
+      res.status(500).json({ error: 'Failed to save voice emotion' });
+    }
+  });
+
+  // Get user's voice emotions
+  app.get('/api/user/voice-emotions', requireAuth, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      if (!user || !user.id) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+
+      const emotions = await storage.getUserVoiceEmotions(user.id);
+      res.json(emotions);
+    } catch (error: any) {
+      console.error('Error getting voice emotions:', error);
+      res.status(500).json({ error: 'Failed to get voice emotions' });
+    }
+  });
+
+  // Get specific voice emotion audio
+  app.get('/api/user/voice-emotions/:emotionId/audio', requireAuth, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      if (!user || !user.id) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+
+      const emotionId = parseInt(req.params.emotionId);
+      const voiceEmotion = await storage.getUserVoiceEmotion(user.id, emotionId);
+      
+      if (!voiceEmotion) {
+        return res.status(404).json({ error: 'Voice emotion not found' });
+      }
+
+      res.json({ audioUrl: voiceEmotion.audioUrl });
+    } catch (error: any) {
+      console.error('Error getting voice emotion audio:', error);
+      res.status(500).json({ error: 'Failed to get voice emotion audio' });
+    }
+  });
+
   // Voice cloning endpoint - create voice clone from user samples
   app.post('/api/voice/create-clone', requireAuth, async (req, res) => {
     try {
-      const userId = req.session.user!.id;
+      const user = (req as any).user;
+      if (!user || !user.id) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+      const userId = user.id;
       const { voiceName, emotionSamples } = req.body;
 
       if (!voiceName || !emotionSamples || emotionSamples.length === 0) {
@@ -4182,7 +4263,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Generate speech with cloned voice
   app.post('/api/voice/generate-speech', requireAuth, async (req, res) => {
     try {
-      const userId = req.session.user!.id;
+      const user = (req as any).user;
+      if (!user || !user.id) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+      const userId = user.id;
       const { text, emotion, intensity = 5 } = req.body;
 
       if (!text) {

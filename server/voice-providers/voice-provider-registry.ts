@@ -16,13 +16,24 @@ export interface VoiceProviderHealth {
 }
 
 export class VoiceProviderRegistry {
+  private static instance: VoiceProviderRegistry;
   private providers: Map<string, BaseVoiceProvider> = new Map();
   private healthStatus: Map<string, VoiceProviderHealth> = new Map();
   private lastHealthCheck: Date = new Date(0);
   private healthCheckInterval: number = 5 * 60 * 1000; // 5 minutes
 
-  constructor() {
+  private constructor() {
     this.initializeProviders();
+  }
+
+  /**
+   * Get singleton instance
+   */
+  public static getInstance(): VoiceProviderRegistry {
+    if (!VoiceProviderRegistry.instance) {
+      VoiceProviderRegistry.instance = new VoiceProviderRegistry();
+    }
+    return VoiceProviderRegistry.instance;
   }
 
   /**
