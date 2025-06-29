@@ -38,7 +38,7 @@ interface VoiceProgress {
 }
 
 export default function VoiceSamples() {
-  const [selectedCategory, setSelectedCategory] = useState<string>("basic");
+  const [selectedCategory, setSelectedCategory] = useState<string>("emotion");
   const [playingAudio, setPlayingAudio] = useState<string | null>(null);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
   const { toast } = useToast();
@@ -177,7 +177,13 @@ export default function VoiceSamples() {
   ) : [];
 
   // Get unique categories
-  const categories = Array.isArray(templates) ? Array.from(new Set(templates.map((t: EmotionTemplate) => t.category))) : ['basic'];
+  const categories = Array.isArray(templates) ? Array.from(new Set(templates.map((t: EmotionTemplate) => t.category))) : ['emotion'];
+  
+  // Debug logging
+  console.log('Templates:', templates);
+  console.log('Categories:', categories);
+  console.log('Selected category:', selectedCategory);
+  console.log('Filtered templates:', filteredTemplates);
 
   // Check if emotion is recorded
   const isEmotionRecorded = (emotion: string): boolean => {
@@ -360,7 +366,6 @@ export default function VoiceSamples() {
                             }}
                             className="w-full"
                             disabled={saveVoiceSample.isPending}
-                            icon={<Mic className="w-4 h-4" />}
                           />
                         )}
                       </div>

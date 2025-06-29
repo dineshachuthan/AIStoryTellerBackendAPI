@@ -3828,16 +3828,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get voice sample templates
   app.get("/api/voice-samples/templates", async (req, res) => {
     try {
-      const { getAllEmotionConfigs } = await import('@shared/voice-config');
-      const configs = getAllEmotionConfigs();
+      const { getAllVoiceSamples } = await import('./voice-samples');
+      const allSamples = getAllVoiceSamples();
       
-      const templates = configs.map(config => ({
-        emotion: config.emotion,
-        displayName: config.displayName,
-        description: config.description,
-        sampleText: config.sampleText,
-        targetDuration: config.targetDuration,
-        category: config.category
+      const templates = allSamples.map(sample => ({
+        emotion: sample.label,
+        displayName: sample.label.charAt(0).toUpperCase() + sample.label.slice(1).replace('_', ' '),
+        description: `Record your voice with ${sample.label} emotion`,
+        sampleText: sample.prompt,
+        targetDuration: 10,
+        category: sample.sampleType
       }));
       
       res.json(templates);
