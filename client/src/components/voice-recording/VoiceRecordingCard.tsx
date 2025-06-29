@@ -1,10 +1,11 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Mic, Play, Pause, CheckCircle, RotateCcw, Volume2 } from 'lucide-react';
+import { Mic, Play, Pause, CheckCircle, RotateCcw, Volume2, Save, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 export interface VoiceTemplate {
   id: number;
@@ -34,6 +35,15 @@ interface VoiceRecordingCardProps {
   className?: string;
 }
 
+// Recording states for user verification workflow
+type RecordingState = 'idle' | 'recording' | 'recorded' | 'playing' | 'saving' | 'saved';
+
+interface TempRecording {
+  blob: Blob;
+  url: string;
+  duration: number;
+}
+
 export function VoiceRecordingCard({
   template,
   recordedSample,
@@ -42,158 +52,221 @@ export function VoiceRecordingCard({
   onPlayRecorded,
   className
 }: VoiceRecordingCardProps) {
+  const [recordingState, setRecordingState] = useState<RecordingState>(
+    isRecorded ? 'saved' : 'idle'
+  );
+  const [tempRecording, setTempRecording] = useState<TempRecording | null>(null);
+  const [isPlayingTemp, setIsPlayingTemp] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const { toast } = useToast();
   
+  // Recording refs - following the proven PressHoldRecorder pattern
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const recordingIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const holdTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const holdTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const tempAudioRef = useRef<HTMLAudioElement | null>(null);
   
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: false,
-          noiseSuppression: false,
-          autoGainControl: false,
-          sampleRate: 44100,
-          channelCount: 1
-        }
-      });
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+      if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
+      if (tempRecording?.url) {
+        URL.revokeObjectURL(tempRecording.url);
+      }
+    };
+  }, [tempRecording]);
 
-      const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: MediaRecorder.isTypeSupported('audio/webm; codecs=opus') 
-          ? 'audio/webm; codecs=opus'
-          : MediaRecorder.isTypeSupported('audio/mp4')
-          ? 'audio/mp4'
-          : 'audio/webm'
-      });
-
-      const audioChunks: Blob[] = [];
-      
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunks.push(event.data);
-        }
-      };
-
-      mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType });
+  // Recording functions using proven PressHoldRecorder pattern
+  const startHoldTimer = () => {
+    if (recordingState !== 'idle') return;
+    
+    setRecordingState('recording');
+    
+    // Start recording after 300ms hold delay
+    holdTimerRef.current = setTimeout(async () => {
+      try {
+        // Use proven microphone settings from PressHoldRecorder
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          audio: {
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false,
+            sampleRate: 44100,
+            channelCount: 1
+          }
+        });
         
-        if (recordingTime >= 1000) { // Minimum 1 second
-          setIsProcessing(true);
-          try {
-            await onRecord(template.modulationKey, audioBlob);
-          } catch (error) {
-            console.error('Recording save failed:', error);
-          } finally {
-            setIsProcessing(false);
+        // Try best available format
+        let mimeType = 'audio/webm';
+        const preferredFormats = ['audio/webm; codecs=opus', 'audio/mp4', 'audio/ogg'];
+        for (const format of preferredFormats) {
+          if (MediaRecorder.isTypeSupported(format)) {
+            mimeType = format;
+            break;
           }
         }
         
-        stream.getTracks().forEach(track => track.stop());
-      };
+        const mediaRecorder = new MediaRecorder(stream, { mimeType });
+        mediaRecorderRef.current = mediaRecorder;
+        audioChunksRef.current = [];
+        
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            audioChunksRef.current.push(event.data);
+          }
+        };
 
-      mediaRecorderRef.current = mediaRecorder;
-      mediaRecorder.start();
-      setIsRecording(true);
-      setRecordingTime(0);
+        mediaRecorder.onstop = () => {
+          const audioBlob = new Blob(audioChunksRef.current, { type: mediaRecorder.mimeType });
+          const url = URL.createObjectURL(audioBlob);
+          
+          // Store temporary recording for user verification
+          setTempRecording({
+            blob: audioBlob,
+            url: url,
+            duration: recordingTime
+          });
+          
+          setRecordingState('recorded');
+          stream.getTracks().forEach(track => track.stop());
+        };
 
-      // Start recording timer
-      recordingIntervalRef.current = setInterval(() => {
-        setRecordingTime(prev => prev + 100);
-      }, 100);
+        mediaRecorder.start();
+        setIsRecording(true);
+        setRecordingTime(0);
 
-    } catch (error) {
-      console.error('Failed to start recording:', error);
-    }
+        // Start timer
+        timerRef.current = setInterval(() => {
+          setRecordingTime(prev => {
+            const newTime = prev + 1;
+            if (newTime >= template.targetDuration + 5) { // Auto-stop after target + 5 seconds
+              stopRecording();
+              return newTime;
+            }
+            return newTime;
+          });
+        }, 1000);
+
+      } catch (error) {
+        console.error('Error starting recording:', error);
+        setRecordingState('idle');
+        toast({
+          title: "Error",
+          description: "Could not access microphone. Please check your permissions.",
+          variant: "destructive",
+        });
+      }
+    }, 300);
   };
 
   const stopRecording = () => {
+    if (holdTimerRef.current) {
+      clearTimeout(holdTimerRef.current);
+    }
+    
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
+      if (timerRef.current) clearInterval(timerRef.current);
+    }
+  };
+
+  // User verification workflow functions
+  const playTempRecording = () => {
+    if (!tempRecording || isPlayingTemp) return;
+    
+    if (tempAudioRef.current) {
+      tempAudioRef.current.pause();
+      tempAudioRef.current.currentTime = 0;
+    }
+    
+    const audio = new Audio(tempRecording.url);
+    tempAudioRef.current = audio;
+    
+    audio.onplay = () => setIsPlayingTemp(true);
+    audio.onpause = () => setIsPlayingTemp(false);
+    audio.onended = () => setIsPlayingTemp(false);
+    
+    audio.play().catch(error => {
+      console.error('Error playing audio:', error);
+      setIsPlayingTemp(false);
+    });
+  };
+
+  const stopTempRecording = () => {
+    if (tempAudioRef.current) {
+      tempAudioRef.current.pause();
+      tempAudioRef.current.currentTime = 0;
+      setIsPlayingTemp(false);
+    }
+  };
+
+  const discardRecording = () => {
+    if (tempRecording?.url) {
+      URL.revokeObjectURL(tempRecording.url);
+    }
+    setTempRecording(null);
+    setRecordingState('idle');
+    setRecordingTime(0);
+  };
+
+  const saveRecording = async () => {
+    if (!tempRecording) return;
+    
+    setRecordingState('saving');
+    try {
+      await onRecord(template.modulationKey, tempRecording.blob);
+      setRecordingState('saved');
       
-      if (recordingIntervalRef.current) {
-        clearInterval(recordingIntervalRef.current);
-        recordingIntervalRef.current = null;
+      // Clean up temp recording
+      if (tempRecording.url) {
+        URL.revokeObjectURL(tempRecording.url);
       }
+      setTempRecording(null);
+      
+      toast({
+        title: "Success",
+        description: "Voice sample saved successfully!",
+      });
+    } catch (error) {
+      console.error('Error saving recording:', error);
+      setRecordingState('recorded'); // Go back to recorded state
+      toast({
+        title: "Error",
+        description: "Failed to save voice sample. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
-  const handleMouseDown = () => {
-    holdTimeoutRef.current = setTimeout(() => {
-      startRecording();
-    }, 300); // 300ms hold delay
+  const startNewRecording = () => {
+    discardRecording();
+    setRecordingState('idle');
   };
 
-  const handleMouseUp = () => {
-    if (holdTimeoutRef.current) {
-      clearTimeout(holdTimeoutRef.current);
-      holdTimeoutRef.current = null;
-    }
-    
-    if (isRecording) {
-      stopRecording();
-    }
+  // Format time helper
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleMouseLeave = () => {
-    handleMouseUp();
-  };
-
-  const playRecordedSample = () => {
-    if (!recordedSample?.audioUrl) return;
-    
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
-
-    const audio = new Audio(recordedSample.audioUrl);
-    audioRef.current = audio;
-    
-    audio.onplay = () => setIsPlaying(true);
-    audio.onended = () => setIsPlaying(false);
-    audio.onerror = () => setIsPlaying(false);
-    
-    audio.play().catch(console.error);
-    
-    if (onPlayRecorded) {
-      onPlayRecorded(recordedSample.audioUrl);
-    }
-  };
-
-  const stopPlayback = () => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      setIsPlaying(false);
-    }
-  };
-
-  const formatTime = (ms: number) => {
-    const seconds = Math.floor(ms / 1000);
-    const tenths = Math.floor((ms % 1000) / 100);
-    return `${seconds}.${tenths}s`;
-  };
-
-  const progressPercentage = Math.min((recordingTime / (template.targetDuration * 1000)) * 100, 100);
+  const progressPercentage = Math.min((recordingTime / template.targetDuration) * 100, 100);
 
   return (
     <Card className={cn(
       "transition-all duration-200 hover:shadow-lg",
-      isRecorded && "ring-2 ring-green-500 ring-opacity-50",
+      recordingState === 'saved' && "ring-2 ring-green-500 ring-opacity-50",
       className
     )}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex-1">
             <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-              {isRecorded ? (
+              {recordingState === 'saved' ? (
                 <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
               ) : (
                 <Mic className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
@@ -204,7 +277,7 @@ export function VoiceRecordingCard({
               {template.description}
             </CardDescription>
           </div>
-          <Badge variant={isRecorded ? "default" : "secondary"} className="ml-2">
+          <Badge variant={recordingState === 'saved' ? "default" : "secondary"} className="ml-2">
             {template.modulationType}
           </Badge>
         </div>
@@ -223,7 +296,7 @@ export function VoiceRecordingCard({
         </div>
 
         {/* Recording Progress */}
-        {isRecording && (
+        {recordingState === 'recording' && (
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span>Recording...</span>
@@ -233,93 +306,122 @@ export function VoiceRecordingCard({
           </div>
         )}
 
-        {/* Controls */}
-        <div className="flex flex-col gap-3">
-          {!isRecorded ? (
-            /* No Voice Recorded State */
-            <div className="space-y-2">
+        {/* Controls based on state */}
+        {recordingState === 'idle' && (
+          <div className="space-y-2">
+            <Button
+              size="lg"
+              className="w-full h-14 text-base font-medium bg-green-600 hover:bg-green-700"
+              onMouseDown={startHoldTimer}
+              onMouseUp={stopRecording}
+              onMouseLeave={stopRecording}
+              onTouchStart={startHoldTimer}
+              onTouchEnd={stopRecording}
+            >
+              <Mic className="w-5 h-5 mr-3" />
+              Hold to Record Your Voice
+            </Button>
+            <p className="text-xs text-center text-muted-foreground">
+              Press and hold for at least 1 second to record
+            </p>
+          </div>
+        )}
+
+        {recordingState === 'recording' && (
+          <div className="space-y-2">
+            <Button
+              size="lg"
+              className="w-full h-14 text-base font-medium bg-red-600 hover:bg-red-700 animate-pulse"
+              onMouseUp={stopRecording}
+              onMouseLeave={stopRecording}
+              onTouchEnd={stopRecording}
+            >
+              <Mic className="w-5 h-5 mr-3 animate-pulse" />
+              Release to Stop Recording
+            </Button>
+            <p className="text-xs text-center text-muted-foreground">
+              Keep recording for at least 3 seconds for best results
+            </p>
+          </div>
+        )}
+
+        {recordingState === 'recorded' && tempRecording && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-center gap-2 text-blue-600 bg-blue-50 dark:bg-blue-950 py-2 rounded-md">
+              <Volume2 className="w-4 h-4" />
+              <span className="text-sm font-medium">Test Your Recording</span>
+            </div>
+            
+            <div className="flex gap-2">
               <Button
                 size="lg"
-                variant={isRecording ? "destructive" : "default"}
-                className={cn(
-                  "w-full h-14 text-base font-medium transition-all duration-200",
-                  isRecording && "bg-red-600 hover:bg-red-700 animate-pulse"
-                )}
-                onMouseDown={handleMouseDown}
-                onMouseUp={handleMouseUp}
-                onMouseLeave={handleMouseLeave}
-                onTouchStart={handleMouseDown}
-                onTouchEnd={handleMouseUp}
-                disabled={isProcessing}
+                variant="outline"
+                className="flex-1 h-12"
+                onClick={isPlayingTemp ? stopTempRecording : playTempRecording}
               >
-                <Mic className={cn("w-5 h-5 mr-3", isRecording && "animate-pulse")} />
-                {isProcessing ? 'Saving Your Voice...' : 
-                 isRecording ? 'Release to Stop Recording' : 
-                 'Hold to Record Your Voice'}
+                {isPlayingTemp ? <Pause className="w-4 h-4 mr-2" /> : <Play className="w-4 h-4 mr-2" />}
+                {isPlayingTemp ? 'Stop' : 'Replay'}
               </Button>
-              {!isRecording && !isProcessing && (
-                <p className="text-xs text-center text-muted-foreground">
-                  Press and hold for at least 1 second to record
-                </p>
-              )}
-            </div>
-          ) : (
-            /* Voice Recorded State */
-            <div className="space-y-3">
-              {/* Success Indicator */}
-              <div className="flex items-center justify-center gap-2 text-green-600 bg-green-50 dark:bg-green-950 py-2 rounded-md">
-                <CheckCircle className="w-4 h-4" />
-                <span className="text-sm font-medium">Voice Recorded Successfully</span>
-              </div>
               
-              {/* Playback and Re-record Controls */}
-              <div className="flex gap-2">
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="flex-1 h-12"
-                  onClick={isPlaying ? stopPlayback : playRecordedSample}
-                  disabled={isProcessing}
-                >
-                  {isPlaying ? (
-                    <>
-                      <Pause className="w-4 h-4 mr-2" />
-                      Stop Playback
-                    </>
-                  ) : (
-                    <>
-                      <Play className="w-4 h-4 mr-2" />
-                      Play Your Voice
-                    </>
-                  )}
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="h-12 px-4"
-                  onMouseDown={handleMouseDown}
-                  onMouseUp={handleMouseUp}
-                  onMouseLeave={handleMouseLeave}
-                  onTouchStart={handleMouseDown}
-                  onTouchEnd={handleMouseUp}
-                  disabled={isProcessing}
-                  title="Hold to re-record"
-                >
-                  <RotateCcw className="w-4 h-4" />
-                </Button>
-              </div>
+              <Button
+                size="lg"
+                variant="outline"
+                className="flex-1 h-12"
+                onClick={startNewRecording}
+              >
+                <RotateCcw className="w-4 h-4 mr-2" />
+                Re-record
+              </Button>
             </div>
-          )}
-        </div>
 
-        {/* Recorded Sample Info */}
-        {recordedSample && (
-          <div className="flex items-center justify-between text-xs text-muted-foreground bg-green-50 dark:bg-green-950 p-2 rounded">
-            <div className="flex items-center gap-1">
-              <Volume2 className="w-3 h-3" />
-              <span>Recorded {formatTime(recordedSample.duration * 1000)}</span>
+            <Button
+              size="lg"
+              className="w-full h-12 bg-green-600 hover:bg-green-700"
+              onClick={saveRecording}
+            >
+              <Save className="w-4 h-4 mr-2" />
+              Save Voice Sample
+            </Button>
+          </div>
+        )}
+
+        {recordingState === 'saving' && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-center gap-2 text-blue-600 bg-blue-50 dark:bg-blue-950 py-2 rounded-md">
+              <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+              <span className="text-sm font-medium">Saving Your Voice...</span>
             </div>
-            <span>{new Date(recordedSample.recordedAt).toLocaleDateString()}</span>
+          </div>
+        )}
+
+        {recordingState === 'saved' && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-center gap-2 text-green-600 bg-green-50 dark:bg-green-950 py-2 rounded-md">
+              <CheckCircle className="w-4 h-4" />
+              <span className="text-sm font-medium">Voice Saved Successfully</span>
+            </div>
+            
+            {recordedSample && (
+              <Button
+                size="lg"
+                variant="outline"
+                className="w-full h-12"
+                onClick={() => onPlayRecorded?.(recordedSample.audioUrl)}
+              >
+                <Play className="w-4 h-4 mr-2" />
+                Play Your Voice
+              </Button>
+            )}
+
+            <Button
+              size="lg"
+              variant="outline"
+              className="w-full h-12"
+              onClick={startNewRecording}
+            >
+              <RotateCcw className="w-4 h-4 mr-2" />
+              Record New Sample
+            </Button>
           </div>
         )}
       </CardContent>
