@@ -3837,21 +3837,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get voice sample templates
-  app.get("/api/voice-samples/templates", async (req, res) => {
-    try {
-      const { voiceSamplesService } = await import('./voice-samples-service');
-      const templates = voiceSamplesService.getEmotionTemplates();
-      res.json(templates);
-    } catch (error: any) {
-      console.error("Failed to get voice templates:", error);
-      res.status(500).json({ 
-        message: "Failed to retrieve templates",
-        error: error?.message || 'Unknown error'
-      });
-    }
-  });
-
   // Get user voice sample progress
   app.get("/api/voice-samples/progress", requireAuth, async (req, res) => {
     try {

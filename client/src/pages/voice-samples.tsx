@@ -42,14 +42,14 @@ export default function VoiceSamples() {
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
   const queryClient = useQueryClient();
 
-  // Get voice sample templates (using existing voice-samples system)
+  // Get voice modulation templates (new system with three categories)
   const { data: templates = [], isLoading: templatesLoading } = useQuery({
-    queryKey: ["/api/voice-samples/templates"],
+    queryKey: ["/api/voice-modulations/templates"],
   });
 
-  // Get user's voice sample progress
+  // Get user's voice modulation progress
   const { data: progress, isLoading: progressLoading } = useQuery({
-    queryKey: ["/api/voice-samples/progress"],
+    queryKey: ["/api/voice-modulations/progress"],
   });
 
   // Save voice sample mutation
@@ -73,8 +73,8 @@ export default function VoiceSamples() {
     },
     onSuccess: (data, variables) => {
       // Refresh progress data to update the UI
-      queryClient.invalidateQueries({ queryKey: ["/api/voice-samples/progress"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/voice-samples/templates"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/voice-modulations/progress"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/voice-modulations/templates"] });
     },
   });
 
@@ -93,8 +93,8 @@ export default function VoiceSamples() {
     },
     onSuccess: (data, emotion) => {
       // Refresh progress data to update the UI
-      queryClient.invalidateQueries({ queryKey: ["/api/voice-samples/progress"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/voice-samples/templates"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/voice-modulations/progress"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/voice-modulations/templates"] });
     },
     onError: (error) => {
       console.error("Delete voice sample error:", error);
@@ -145,7 +145,7 @@ export default function VoiceSamples() {
 
   // Filter templates by modulation type (emotion, sound, modulation)
   const filteredTemplates = Array.isArray(templates) && templates.length > 0 ? templates.filter((template: any) => 
-    template?.category === selectedCategory
+    template?.modulationType === selectedCategory
   ) : [];
 
   // Get unique modulation types and map to friendly names
@@ -156,7 +156,7 @@ export default function VoiceSamples() {
   };
   
   const rawCategories = Array.isArray(templates) && templates.length > 0 ? 
-    Array.from(new Set(templates.map((t: any) => t?.category).filter(Boolean))) : ['emotion'];
+    Array.from(new Set(templates.map((t: any) => t?.modulationType).filter(Boolean))) : ['emotion'];
   const categories = rawCategories.filter(cat => categoryMapping[cat as keyof typeof categoryMapping]);
   
   // Debug logging
@@ -165,22 +165,22 @@ export default function VoiceSamples() {
   console.log('Selected category:', selectedCategory);
   console.log('Filtered templates:', filteredTemplates);
 
-  // Check if emotion is recorded
-  const isEmotionRecorded = (emotion: string): boolean => {
+  // Check if modulation is recorded
+  const isModulationRecorded = (modulationKey: string): boolean => {
     const recordedSamples = (progress as any)?.recordedSamples || [];
-    return recordedSamples.some((sample: any) => sample.emotion === emotion);
+    return recordedSamples.some((sample: any) => sample.emotion === modulationKey);
   };
 
-  // Get recorded sample for emotion
-  const getRecordedSample = (emotion: string): any | undefined => {
+  // Get recorded sample for modulation
+  const getRecordedSample = (modulationKey: string): any | undefined => {
     const recordedSamples = (progress as any)?.recordedSamples || [];
-    return recordedSamples.find((sample: any) => sample.emotion === emotion);
+    return recordedSamples.find((sample: any) => sample.emotion === modulationKey);
   };
 
-  // Handler for recording new voice samples  
-  const handleRecord = async (template: any, audioBlob: Blob): Promise<void> => {
+  // Handler for recording new voice samples
+  const handleRecord = async (template: VoiceTemplate, audioBlob: Blob): Promise<void> => {
     await saveVoiceSample.mutateAsync({
-      emotion: template.emotion,
+      emotion: template.modulationKey,
       audioBlob
     });
   };
@@ -267,12 +267,12 @@ export default function VoiceSamples() {
           <TabsContent key={category} value={category}>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {filteredTemplates.map((template: any) => {
-                const recordedSample = getRecordedSample(template.emotion);
+                const recordedSample = getRecordedSample(template.modulationKey);
                 const isRecorded = !!recordedSample;
 
                 return (
                   <Card 
-                    key={template.emotion} 
+                    key={template.modulationKey} 
                     className={cn(
                       "transition-all duration-200 hover:shadow-md",
                       isRecorded && "ring-2 ring-green-500 ring-opacity-50"
