@@ -261,7 +261,7 @@ export function EnhancedVoiceRecorder({
 
         {/* Main Recording Display */}
         <div className="bg-black rounded-lg p-4 mb-3 border border-gray-600">
-          <div className="flex items-start space-x-4">
+          <div className="flex items-center space-x-4">
             
             {/* Recording Button */}
             <div className="flex flex-col items-center">
@@ -316,13 +316,6 @@ export function EnhancedVoiceRecorder({
 
             {/* Sample Text Display */}
             <div className="flex-1">
-              <div className="text-green-400 text-xs font-mono uppercase tracking-wider mb-2">
-                {recordingState === 'idle' && "READY"}
-                {recordingState === 'countdown' && "STARTING"}
-                {recordingState === 'recording' && "RECORDING"}
-                {recordingState === 'recorded' && "COMPLETE"}
-              </div>
-              
               <div className="text-white text-sm leading-relaxed mb-2">
                 <span className="text-blue-300 text-xs uppercase tracking-wide">📖 Read this text:</span>
                 <br />
