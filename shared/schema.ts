@@ -293,7 +293,7 @@ export const userVoiceProfiles = pgTable("user_voice_profiles", {
   emotionCount: integer("emotion_count").default(0),
   emotionsCovered: jsonb("emotions_covered").$type<string[]>().default([]),
   totalSamples: integer("total_samples").default(0),
-  qualityScore: real("quality_score"), // Average quality of all samples
+  qualityScore: doublePrecision("quality_score"), // Average quality of all samples
   metadata: jsonb("metadata"), // Provider-specific metadata
   isActive: boolean("is_active").default(true),
   lastTrainingAt: timestamp("last_training_at"),
@@ -309,10 +309,10 @@ export const voiceGenerationCache = pgTable("voice_generation_cache", {
   voiceId: varchar("voice_id"),
   emotion: varchar("emotion"),
   textHash: varchar("text_hash").notNull(),
-  audioData: bytea("audio_data"),
+  audioData: text("audio_data"),
   audioUrl: varchar("audio_url"),
   provider: varchar("provider").notNull(),
-  duration: real("duration"),
+  duration: doublePrecision("duration"),
   format: varchar("format").notNull().default("mp3"),
   size: integer("size").notNull(),
   generationSettings: jsonb("generation_settings"),
