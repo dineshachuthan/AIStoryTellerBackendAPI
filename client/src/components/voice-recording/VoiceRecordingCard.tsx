@@ -83,6 +83,9 @@ export function VoiceRecordingCard({
   const startHoldTimer = () => {
     if (recordingState !== 'idle') return;
     
+    // Clear any previous errors
+    setMicError(null);
+    setSaveError(null);
     setRecordingState('recording');
     
     // Start recording after 300ms hold delay
@@ -123,14 +126,22 @@ export function VoiceRecordingCard({
           const audioBlob = new Blob(audioChunksRef.current, { type: mediaRecorder.mimeType });
           const url = URL.createObjectURL(audioBlob);
           
-          // Store temporary recording for user verification
-          setTempRecording({
-            blob: audioBlob,
-            url: url,
-            duration: recordingTime
-          });
+          // Only proceed if recording is at least 1 second
+          if (recordingTime >= 1) {
+            // Store temporary recording for user verification
+            setTempRecording({
+              blob: audioBlob,
+              url: url,
+              duration: recordingTime
+            });
+            
+            setRecordingState('recorded'); // Go to verification state
+          } else {
+            // Recording too short - go back to idle
+            setRecordingState('idle');
+            URL.revokeObjectURL(url);
+          }
           
-          setRecordingState('recorded');
           stream.getTracks().forEach(track => track.stop());
         };
 
@@ -153,11 +164,7 @@ export function VoiceRecordingCard({
       } catch (error) {
         console.error('Error starting recording:', error);
         setRecordingState('idle');
-        toast({
-          title: "Error",
-          description: "Could not access microphone. Please check your permissions.",
-          variant: "destructive",
-        });
+        setMicError('Could not access microphone. Please check your permissions.');
       }
     }, 300);
   };
@@ -213,10 +220,15 @@ export function VoiceRecordingCard({
     setRecordingTime(0);
   };
 
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [micError, setMicError] = useState<string | null>(null);
+
   const saveRecording = async () => {
     if (!tempRecording) return;
     
     setRecordingState('saving');
+    setSaveError(null);
+    
     try {
       await onRecord(template.modulationKey, tempRecording.blob);
       setRecordingState('saved');
@@ -227,18 +239,10 @@ export function VoiceRecordingCard({
       }
       setTempRecording(null);
       
-      toast({
-        title: "Success",
-        description: "Voice sample saved successfully!",
-      });
     } catch (error) {
       console.error('Error saving recording:', error);
+      setSaveError('Failed to save voice sample. Please try again.');
       setRecordingState('recorded'); // Go back to recorded state
-      toast({
-        title: "Error",
-        description: "Failed to save voice sample. Please try again.",
-        variant: "destructive",
-      });
     }
   };
 
