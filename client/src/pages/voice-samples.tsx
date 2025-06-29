@@ -44,14 +44,14 @@ export default function VoiceSamples() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Get emotion templates
+  // Get voice modulation templates (new system with three categories)
   const { data: templates = [], isLoading: templatesLoading } = useQuery({
-    queryKey: ["/api/voice-samples/templates"],
+    queryKey: ["/api/voice-modulations/templates"],
   });
 
-  // Get user's voice progress
-  const { data: progress, isLoading: progressLoading } = useQuery<VoiceProgress>({
-    queryKey: ["/api/voice-samples/progress"],
+  // Get user's voice modulation progress
+  const { data: progress, isLoading: progressLoading } = useQuery({
+    queryKey: ["/api/voice-modulations/progress"],
   });
 
   // Save voice sample mutation

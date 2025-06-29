@@ -4203,6 +4203,184 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Removed duplicate endpoint - using the one at line 2308 which now comes first
 
+  // =============================================================================
+  // VOICE MODULATION SYSTEM - Database-driven modular voice samples
+  // =============================================================================
+
+  // Initialize voice modulation templates
+  app.post('/api/voice-modulations/initialize', requireAuth, async (req, res) => {
+    try {
+      const { voiceModulationService } = await import('./voice-modulation-service');
+      await voiceModulationService.initializeTemplates();
+      res.json({ message: 'Voice modulation templates initialized successfully' });
+    } catch (error: any) {
+      console.error('Error initializing voice modulation templates:', error);
+      res.status(500).json({ message: 'Failed to initialize templates' });
+    }
+  });
+
+  // Get voice modulation templates
+  app.get('/api/voice-modulations/templates', requireAuth, async (req, res) => {
+    try {
+      const type = req.query.type as string;
+      const { voiceModulationService } = await import('./voice-modulation-service');
+      const templates = await voiceModulationService.getTemplates(type);
+      res.json(templates);
+    } catch (error: any) {
+      console.error('Error fetching voice modulation templates:', error);
+      res.status(500).json({ message: 'Failed to fetch templates' });
+    }
+  });
+
+  // Get user voice modulations (all recordings across stories)
+  app.get('/api/voice-modulations/user', requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any)?.id;
+      const type = req.query.type as string;
+      
+      if (!userId) {
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
+
+      const { voiceModulationService } = await import('./voice-modulation-service');
+      const modulations = await voiceModulationService.getUserVoiceModulations(userId, type);
+      res.json(modulations);
+    } catch (error: any) {
+      console.error('Error fetching user voice modulations:', error);
+      res.status(500).json({ message: 'Failed to fetch user modulations' });
+    }
+  });
+
+  // Get user voice modulations for specific story context
+  app.get('/api/voice-modulations/story/:storyId', requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any)?.id;
+      const storyId = parseInt(req.params.storyId);
+      
+      if (!userId || isNaN(storyId)) {
+        return res.status(400).json({ message: 'Invalid parameters' });
+      }
+
+      const { voiceModulationService } = await import('./voice-modulation-service');
+      const storyModulations = await voiceModulationService.getUserStoryVoiceModulations(userId, storyId);
+      res.json(storyModulations);
+    } catch (error: any) {
+      console.error('Error fetching story voice modulations:', error);
+      res.status(500).json({ message: 'Failed to fetch story modulations' });
+    }
+  });
+
+  // Record new voice modulation
+  app.post('/api/voice-modulations/record', requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any)?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
+
+      const { voiceModulationService } = await import('./voice-modulation-service');
+      const modulation = await voiceModulationService.recordVoiceModulation({
+        ...req.body,
+        userId
+      });
+      
+      res.json(modulation);
+    } catch (error: any) {
+      console.error('Error recording voice modulation:', error);
+      res.status(500).json({ message: 'Failed to record voice modulation' });
+    }
+  });
+
+  // Analyze story and create modulation requirements
+  app.post('/api/voice-modulations/analyze/:storyId', requireAuth, async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.storyId);
+      
+      if (isNaN(storyId)) {
+        return res.status(400).json({ message: 'Invalid story ID' });
+      }
+
+      // Get story data for analysis
+      const story = await storage.getStory(storyId);
+      if (!story) {
+        return res.status(404).json({ message: 'Story not found' });
+      }
+
+      // Get story analysis for emotions
+      const analysis = await storage.getStoryAnalysis(storyId);
+      const emotions = analysis?.emotions?.map((e: any) => e.emotion) || [];
+
+      const { voiceModulationService } = await import('./voice-modulation-service');
+      const requirements = await voiceModulationService.analyzeStoryModulations(
+        storyId, 
+        story.content, 
+        emotions
+      );
+      
+      res.json(requirements);
+    } catch (error: any) {
+      console.error('Error analyzing story modulations:', error);
+      res.status(500).json({ message: 'Failed to analyze story modulations' });
+    }
+  });
+
+  // Get user modulation progress
+  app.get('/api/voice-modulations/progress', requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any)?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
+
+      const { voiceModulationService } = await import('./voice-modulation-service');
+      const progress = await voiceModulationService.getUserModulationProgress(userId);
+      res.json(progress);
+    } catch (error: any) {
+      console.error('Error fetching modulation progress:', error);
+      res.status(500).json({ message: 'Failed to fetch progress' });
+    }
+  });
+
+  // Mark voice modulation as preferred
+  app.post('/api/voice-modulations/:modulationId/prefer', requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any)?.id;
+      const modulationId = parseInt(req.params.modulationId);
+      
+      if (!userId || isNaN(modulationId)) {
+        return res.status(400).json({ message: 'Invalid parameters' });
+      }
+
+      const { voiceModulationService } = await import('./voice-modulation-service');
+      await voiceModulationService.markAsPreferred(userId, modulationId);
+      res.json({ message: 'Voice modulation marked as preferred' });
+    } catch (error: any) {
+      console.error('Error marking modulation as preferred:', error);
+      res.status(500).json({ message: 'Failed to mark as preferred' });
+    }
+  });
+
+  // Get best voice modulation for a key
+  app.get('/api/voice-modulations/best/:modulationKey', requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any)?.id;
+      const modulationKey = req.params.modulationKey;
+      
+      if (!userId || !modulationKey) {
+        return res.status(400).json({ message: 'Invalid parameters' });
+      }
+
+      const { voiceModulationService } = await import('./voice-modulation-service');
+      const modulation = await voiceModulationService.getBestVoiceModulation(userId, modulationKey);
+      res.json(modulation);
+    } catch (error: any) {
+      console.error('Error fetching best voice modulation:', error);
+      res.status(500).json({ message: 'Failed to fetch best modulation' });
+    }
+  });
+
   // Setup video webhook handlers for callback-based notifications
   setupVideoWebhooks(app);
 

@@ -11,7 +11,7 @@ import {
   type InsertStoryModulationRequirement
 } from "@shared/schema";
 import { eq, and, or, desc, sql } from "drizzle-orm";
-import { voiceEmotions } from "@shared/voice-config";
+import { getAllEmotionConfigs } from "@shared/voice-config";
 
 /**
  * Voice Modulation Service - Database-driven modular voice sample system
@@ -38,9 +38,10 @@ export class VoiceModulationService {
       }
 
       // Create emotion templates from voice-config.ts
+      const voiceEmotions = getAllEmotionConfigs();
       const emotionTemplates: InsertVoiceModulationTemplate[] = voiceEmotions.map((emotion, index) => ({
         modulationType: 'emotion',
-        modulationKey: emotion.key,
+        modulationKey: emotion.emotion,
         displayName: emotion.displayName,
         description: emotion.description,
         sampleText: emotion.sampleText,
@@ -49,7 +50,7 @@ export class VoiceModulationService {
         voiceSettings: {
           speed_modifier: 1.0,
           pitch_modifier: 0.0,
-          emphasis: emotion.key === 'joy' ? 'high' : emotion.key === 'grief' ? 'low' : 'medium'
+          emphasis: emotion.emotion === 'happy' ? 'high' : emotion.emotion === 'sad' ? 'low' : 'medium'
         },
         sortOrder: index,
         isActive: true
@@ -328,7 +329,7 @@ export class VoiceModulationService {
       .from(voiceModulationTemplates)
       .where(
         and(
-          eq(voiceModulationTemplates.modulationType, 'description'),
+          eq(voiceModulationTemplates.modulationType, 'modulation'),
           eq(voiceModulationTemplates.modulationKey, narratorStyle)
         )
       )
@@ -337,7 +338,7 @@ export class VoiceModulationService {
     if (narratorTemplate.length > 0) {
       requirements.push({
         storyId,
-        modulationType: 'description',
+        modulationType: 'modulation',
         modulationKey: narratorStyle,
         templateId: narratorTemplate[0].id,
         isRequired: true,
