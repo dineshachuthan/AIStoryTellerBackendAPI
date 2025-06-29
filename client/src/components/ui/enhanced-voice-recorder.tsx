@@ -299,7 +299,17 @@ export function EnhancedVoiceRecorder({
             📖 Read this text{emotionDescription ? ` in ${emotionDescription.toLowerCase()}` : ''}
           </div>
           
-
+          {/* Static Progress Bar - Always visible */}
+          <div className="mb-3">
+            <div className="flex justify-between text-xs text-gray-400 mb-1">
+              <span>{recordingState === 'recording' ? formatTime(recordingTime) : '00:00'}</span>
+              <span>{formatTime(maxRecordingTime)}</span>
+            </div>
+            <Progress 
+              value={recordingState === 'recording' ? progressPercentage : 0} 
+              className="h-1 bg-gray-700" 
+            />
+          </div>
           
           <div className="flex items-start space-x-4">
             
