@@ -192,14 +192,16 @@ export default function VoiceSamples() {
   console.log('Selected category:', selectedCategory);
   console.log('Filtered templates:', filteredTemplates);
 
-  // Check if emotion is recorded
-  const isEmotionRecorded = (emotion: string): boolean => {
-    return progress?.recordedSamples.some(sample => sample.emotion === emotion) || false;
+  // Check if modulation is recorded
+  const isModulationRecorded = (modulationKey: string): boolean => {
+    // For now, return false as we'll implement user recordings later
+    return false;
   };
 
-  // Get recorded sample for emotion
-  const getRecordedSample = (emotion: string): UserVoiceSample | undefined => {
-    return progress?.recordedSamples.find(sample => sample.emotion === emotion);
+  // Get recorded sample for modulation
+  const getRecordedSample = (modulationKey: string): any | undefined => {
+    // For now, return undefined as we'll implement user recordings later
+    return undefined;
   };
 
   if (templatesLoading || progressLoading) {
@@ -238,7 +240,7 @@ export default function VoiceSamples() {
                 Your Voice Collection Progress
               </CardTitle>
               <CardDescription>
-                {progress.recordedEmotions} of {progress.totalEmotions} emotions recorded
+                {(progress as any).recordedTemplates || 0} of {(progress as any).totalTemplates || 0} voice samples recorded
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -246,28 +248,16 @@ export default function VoiceSamples() {
                 <div>
                   <div className="flex justify-between text-sm mb-2">
                     <span>Progress</span>
-                    <span>{progress.completionPercentage}%</span>
+                    <span>{(progress as any).completionPercentage || 0}%</span>
                   </div>
-                  <Progress value={progress.completionPercentage} className="h-2" />
+                  <Progress value={(progress as any).completionPercentage || 0} className="h-2" />
                 </div>
                 
-                {progress.missingEmotions.length > 0 && (
-                  <div>
-                    <p className="text-sm font-medium mb-2">Missing emotions:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {progress.missingEmotions.slice(0, 5).map((emotion) => (
-                        <Badge key={emotion} variant="outline" className="text-xs">
-                          {emotion}
-                        </Badge>
-                      ))}
-                      {progress.missingEmotions.length > 5 && (
-                        <Badge variant="outline" className="text-xs">
-                          +{progress.missingEmotions.length - 5} more
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                )}
+                <div>
+                  <p className="text-sm font-medium mb-2">
+                    Start recording voice samples for different emotions, sounds, and modulations to personalize your stories.
+                  </p>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -279,7 +269,7 @@ export default function VoiceSamples() {
         <TabsList className="grid w-full grid-cols-3 mb-6">
           {categories.map((category) => (
             <TabsTrigger key={category} value={category} className="capitalize">
-              {category}
+              {categoryMapping[category as keyof typeof categoryMapping]}
             </TabsTrigger>
           ))}
         </TabsList>
@@ -287,13 +277,13 @@ export default function VoiceSamples() {
         {categories.map((category) => (
           <TabsContent key={category} value={category}>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredTemplates.map((template: EmotionTemplate) => {
-                const isRecorded = isEmotionRecorded(template.emotion);
-                const recordedSample = getRecordedSample(template.emotion);
+              {filteredTemplates.map((template: any) => {
+                const isRecorded = isModulationRecorded(template.modulationKey);
+                const recordedSample = getRecordedSample(template.modulationKey);
 
                 return (
                   <Card 
-                    key={template.emotion} 
+                    key={template.modulationKey} 
                     className={cn(
                       "transition-all duration-200 hover:shadow-md",
                       isRecorded && "ring-2 ring-green-500 ring-opacity-50"
@@ -367,7 +357,7 @@ export default function VoiceSamples() {
                             }}
                             onRecordingComplete={(audioBlob) => {
                               saveVoiceSample.mutate({
-                                emotion: template.emotion,
+                                emotion: template.modulationKey,
                                 audioBlob
                               });
                             }}
@@ -394,15 +384,15 @@ export default function VoiceSamples() {
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
                     <span className="text-sm font-medium text-primary">
-                      {progress.recordedEmotions}
+                      {(progress as any).recordedTemplates || 0}
                     </span>
                   </div>
                   <div>
                     <p className="text-sm font-medium">
-                      {progress.recordedEmotions} of {progress.totalEmotions} emotions recorded
+                      {(progress as any).recordedTemplates || 0} of {(progress as any).totalTemplates || 0} voice samples recorded
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {progress.completionPercentage}% complete
+                      {(progress as any).completionPercentage || 0}% complete
                     </p>
                   </div>
                 </div>
