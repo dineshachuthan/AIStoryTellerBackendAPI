@@ -392,10 +392,10 @@ export default function VoiceSamples() {
                   </div>
                   <div>
                     <p className="text-sm font-medium">
-                      {(progress as any).recordedTemplates || 0} of {(progress as any).totalTemplates || 0} voice samples recorded
+                      {(progress as any).recordedTemplates || 0} of {(progress as any).totalTemplates || 0} voice samples
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {(progress as any).completionPercentage || 0}% complete
+                      {Math.round((progress as any).completionPercentage || 0)}% complete
                     </p>
                   </div>
                 </div>
@@ -412,7 +412,7 @@ export default function VoiceSamples() {
                 <div className="text-right">
                   <p className="text-sm font-medium">Keep recording</p>
                   <p className="text-xs text-muted-foreground">
-                    {12 - ((progress as any)?.recordedTemplates || 0)} voice samples remaining
+                    {12 - ((progress as any)?.recordedTemplates || 0)} samples remaining
                   </p>
                 </div>
               )}
@@ -421,8 +421,8 @@ export default function VoiceSamples() {
         </div>
       </div>
 
-        {/* Add bottom padding to prevent content from being hidden behind fixed navigation */}
-        <div className="h-20"></div>
+      {/* Add bottom padding to prevent content from being hidden behind fixed navigation */}
+      <div className="h-20"></div>
       </div>
     </>
   );
