@@ -44,12 +44,14 @@ export function EnhancedVoiceRecorder({
   const [tempRecording, setTempRecording] = useState<{blob: Blob, url: string} | null>(null);
   const [isPlayingTemp, setIsPlayingTemp] = useState(false);
   const [isPlayingExisting, setIsPlayingExisting] = useState(false);
+  const [equalizerBars, setEqualizerBars] = useState<number[]>(Array(8).fill(2));
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const equalizerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
 
   const formatTime = (seconds: number) => {
@@ -263,9 +265,36 @@ export function EnhancedVoiceRecorder({
 
         {/* Main Recording Display */}
         <div className="bg-black rounded-lg p-4 mb-3 border border-gray-600">
-          {/* Title Above Everything */}
-          <div className="text-blue-300 text-sm font-semibold mb-3 text-center uppercase tracking-wide">
-            📖 Read this text{emotionDescription ? ` in ${emotionDescription.toLowerCase()}` : ''}
+          {/* Title and Equalizer Row */}
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-blue-300 text-sm font-semibold uppercase tracking-wide">
+              📖 Read this text{emotionDescription ? ` in ${emotionDescription.toLowerCase()}` : ''}
+            </div>
+            
+            {/* Horizontal Equalizer Visual */}
+            <div className="flex items-end space-x-1 h-6">
+              {[...Array(8)].map((_, i) => {
+                const isActive = recordingState === 'recording' || recordingState === 'countdown';
+                const baseHeight = 2;
+                const maxHeight = 20;
+                const animationHeight = isActive ? baseHeight + (Math.sin(Date.now() / 200 + i) + 1) * (maxHeight - baseHeight) / 2 : baseHeight;
+                
+                return (
+                  <div
+                    key={i}
+                    className={`w-1 rounded-sm transition-all duration-100 ${
+                      isActive 
+                        ? 'bg-gradient-to-t from-green-600 to-green-400 opacity-100' 
+                        : 'bg-gray-600 opacity-40'
+                    }`}
+                    style={{
+                      height: `${animationHeight}px`,
+                      minHeight: `${baseHeight}px`
+                    }}
+                  />
+                );
+              })}
+            </div>
           </div>
           
           <div className="flex items-center space-x-4">
