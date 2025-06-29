@@ -36,6 +36,9 @@ export interface IStorage {
   getEmotionTemplate(emotion: string): Promise<any | null>;
   createEmotionTemplate(template: any): Promise<any>;
   
+  // Voice Modulation Templates
+  getVoiceModulationTemplates(): Promise<any[]>;
+  
   // Stories
   getPublicStories(filters?: {
     genre?: string;
@@ -774,6 +777,12 @@ export class DatabaseStorage implements IStorage {
   async createEmotionTemplate(template: any): Promise<any> {
     // For now, just return the template since templates are handled by voice-config
     return template;
+  }
+
+  async getVoiceModulationTemplates(): Promise<any[]> {
+    // Get templates from voice-config.ts since they're already configured there
+    const { getVoiceTemplates } = await import('../shared/voice-config');
+    return getVoiceTemplates();
   }
 }
 
