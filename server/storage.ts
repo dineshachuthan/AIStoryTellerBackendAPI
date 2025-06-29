@@ -817,7 +817,7 @@ export class DatabaseStorage implements IStorage {
   // Emotion text prompts methods
   async getEmotionTextPrompts(): Promise<any[]> {
     try {
-      const result = await db.select().from(emotionTextPrompts).where(eq(emotionTextPrompts.isActive, true));
+      const result = await db.select().from(schema.emotionTextPrompts).where(eq(schema.emotionTextPrompts.isActive, true));
       return result;
     } catch (error) {
       console.error('Error getting emotion text prompts:', error);
@@ -828,9 +828,8 @@ export class DatabaseStorage implements IStorage {
   async getEmotionTextPrompt(emotion: string): Promise<any | null> {
     try {
       const [result] = await db.select()
-        .from(emotionTextPrompts)
-        .where(eq(emotionTextPrompts.emotion, emotion))
-        .where(eq(emotionTextPrompts.isActive, true));
+        .from(schema.emotionTextPrompts)
+        .where(eq(schema.emotionTextPrompts.emotion, emotion));
       return result || null;
     } catch (error) {
       console.error('Error getting emotion text prompt:', error);
@@ -840,7 +839,7 @@ export class DatabaseStorage implements IStorage {
 
   async createEmotionTextPrompt(promptData: any): Promise<any> {
     try {
-      const [result] = await db.insert(emotionTextPrompts)
+      const [result] = await db.insert(schema.emotionTextPrompts)
         .values(promptData)
         .returning();
       return result;
@@ -852,9 +851,9 @@ export class DatabaseStorage implements IStorage {
 
   async updateEmotionTextPrompt(emotion: string, updates: any): Promise<any | null> {
     try {
-      const [result] = await db.update(emotionTextPrompts)
+      const [result] = await db.update(schema.emotionTextPrompts)
         .set({ ...updates, updatedAt: new Date() })
-        .where(eq(emotionTextPrompts.emotion, emotion))
+        .where(eq(schema.emotionTextPrompts.emotion, emotion))
         .returning();
       return result || null;
     } catch (error) {

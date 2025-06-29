@@ -294,6 +294,8 @@ export const userVoiceProfiles = pgTable("user_voice_profiles", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+
+
 // Voice generation cache for performance optimization
 export const voiceGenerationCache = pgTable("voice_generation_cache", {
   id: serial("id").primaryKey(),
