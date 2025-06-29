@@ -152,8 +152,9 @@ export class VoiceSamplesService {
    */
   private async getModulationTemplate(modulationKey: string): Promise<any> {
     try {
-      // Query the database for the template
-      const templates = await storage.getVoiceModulationTemplates();
+      // Use the voice modulation service directly
+      const { voiceModulationService } = await import('./voice-modulation-service');
+      const templates = await voiceModulationService.getTemplates();
       const template = templates.find((t: any) => t.modulationKey === modulationKey);
       return template || null;
     } catch (error) {
