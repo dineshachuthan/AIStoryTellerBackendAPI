@@ -171,13 +171,20 @@ export default function VoiceSamples() {
     };
   }, [audioElement]);
 
-  // Filter templates by category
-  const filteredTemplates = Array.isArray(templates) ? templates.filter((template: EmotionTemplate) => 
-    template.category === selectedCategory
+  // Filter templates by modulation type (emotion, sound, modulation)
+  const filteredTemplates = Array.isArray(templates) ? templates.filter((template: any) => 
+    template.modulationType === selectedCategory
   ) : [];
 
-  // Get unique categories
-  const categories = Array.isArray(templates) ? Array.from(new Set(templates.map((t: EmotionTemplate) => t.category))) : ['emotion'];
+  // Get unique modulation types and map to friendly names
+  const categoryMapping = {
+    'emotion': 'Emotions',
+    'sound': 'Sounds', 
+    'modulation': 'Modulations'
+  };
+  
+  const rawCategories = Array.isArray(templates) ? Array.from(new Set(templates.map((t: any) => t.modulationType))) : ['emotion'];
+  const categories = rawCategories.filter(cat => categoryMapping[cat as keyof typeof categoryMapping]);
   
   // Debug logging
   console.log('Templates:', templates);
