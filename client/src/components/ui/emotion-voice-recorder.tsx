@@ -39,28 +39,32 @@ export function EmotionVoiceRecorder({
 
   const getEmotionColor = (emotion: string) => {
     const colorMap: Record<string, string> = {
-      happiness: "bg-yellow-500/20 text-yellow-600 border-yellow-500/30",
-      sadness: "bg-blue-500/20 text-blue-600 border-blue-500/30",
-      anger: "bg-red-500/20 text-red-600 border-red-500/30",
-      excitement: "bg-orange-500/20 text-orange-600 border-orange-500/30",
+      happy: "bg-yellow-500/20 text-yellow-600 border-yellow-500/30",
+      sad: "bg-blue-500/20 text-blue-600 border-blue-500/30",
+      angry: "bg-red-500/20 text-red-600 border-red-500/30",
+      excited: "bg-orange-500/20 text-orange-600 border-orange-500/30",
       calm: "bg-green-500/20 text-green-600 border-green-500/30",
       nervous: "bg-purple-500/20 text-purple-600 border-purple-500/30",
       confident: "bg-teal-500/20 text-teal-600 border-teal-500/30",
-      surprised: "bg-pink-500/20 text-pink-600 border-pink-500/30"
+      surprised: "bg-pink-500/20 text-pink-600 border-pink-500/30",
+      loving: "bg-rose-500/20 text-rose-600 border-rose-500/30",
+      afraid: "bg-slate-500/20 text-slate-600 border-slate-500/30"
     };
     return colorMap[emotion.toLowerCase()] || "bg-gray-500/20 text-gray-600 border-gray-500/30";
   };
 
   const getEmotionText = (emotion: string) => {
     const emotionTexts: Record<string, string> = {
-      happiness: "Tom received a birthday present as a surprise and the happiness he felt is sky high! He couldn't stop smiling and laughing with pure joy.",
-      sadness: "Sarah lost her beloved pet and the sadness she feels is overwhelming. Her heart is heavy with grief and tears won't stop flowing.",
-      anger: "Mike discovered someone had stolen his work and the anger he feels is burning inside him. He is furious and his voice trembles with rage.",
-      excitement: "Lisa just got accepted to her dream university and the excitement she feels is electric! She can barely contain her energy and enthusiasm.",
+      happy: "Tom received a birthday present as a surprise and the happiness he felt is sky high! He couldn't stop smiling and laughing with pure joy.",
+      sad: "Sarah lost her beloved pet and the sadness she feels is overwhelming. Her heart is heavy with grief and tears won't stop flowing.",
+      angry: "Mike discovered someone had stolen his work and the anger he feels is burning inside him. He is furious and his voice trembles with rage.",
+      excited: "Lisa just got accepted to her dream university and the excitement she feels is electric! She can barely contain her energy and enthusiasm.",
       calm: "Emma sits by the peaceful lake and the calmness she feels washes over her completely. Her mind is clear and her heart is at peace.",
       nervous: "David has a big presentation tomorrow and the nervousness he feels makes his hands shake. His heart races with worry and anxiety.",
       confident: "Rachel knows she has prepared well for the interview and the confidence she feels radiates through her voice. She believes in herself completely.",
-      surprised: "Jack opened the door to find all his friends waiting and the surprise he felt left him speechless. He never expected this wonderful moment."
+      surprised: "Jack opened the door to find all his friends waiting and the surprise he felt left him speechless. He never expected this wonderful moment.",
+      loving: "Maria holds her newborn baby and the love she feels fills her entire being. Her voice is warm and tender with overwhelming affection.",
+      afraid: "Kevin hears strange noises in the dark and the fear he feels makes his voice shake. His heart pounds with terror and uncertainty."
     };
     return emotionTexts[emotion.toLowerCase()] || "Please read this text with the appropriate emotional tone to capture your voice for this emotion.";
   };
