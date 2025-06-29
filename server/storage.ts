@@ -813,6 +813,55 @@ export class DatabaseStorage implements IStorage {
     });
     return result.rows[0] || null;
   }
+
+  // Emotion text prompts methods
+  async getEmotionTextPrompts(): Promise<any[]> {
+    try {
+      const result = await db.select().from(emotionTextPrompts).where(eq(emotionTextPrompts.isActive, true));
+      return result;
+    } catch (error) {
+      console.error('Error getting emotion text prompts:', error);
+      return [];
+    }
+  }
+
+  async getEmotionTextPrompt(emotion: string): Promise<any | null> {
+    try {
+      const [result] = await db.select()
+        .from(emotionTextPrompts)
+        .where(eq(emotionTextPrompts.emotion, emotion))
+        .where(eq(emotionTextPrompts.isActive, true));
+      return result || null;
+    } catch (error) {
+      console.error('Error getting emotion text prompt:', error);
+      return null;
+    }
+  }
+
+  async createEmotionTextPrompt(promptData: any): Promise<any> {
+    try {
+      const [result] = await db.insert(emotionTextPrompts)
+        .values(promptData)
+        .returning();
+      return result;
+    } catch (error) {
+      console.error('Error creating emotion text prompt:', error);
+      throw error;
+    }
+  }
+
+  async updateEmotionTextPrompt(emotion: string, updates: any): Promise<any | null> {
+    try {
+      const [result] = await db.update(emotionTextPrompts)
+        .set({ ...updates, updatedAt: new Date() })
+        .where(eq(emotionTextPrompts.emotion, emotion))
+        .returning();
+      return result || null;
+    } catch (error) {
+      console.error('Error updating emotion text prompt:', error);
+      throw error;
+    }
+  }
 }
 
 export const storage = new DatabaseStorage();

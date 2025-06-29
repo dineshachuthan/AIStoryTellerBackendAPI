@@ -149,6 +149,18 @@ export const storyCharacters = pgTable("story_characters", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Emotion text prompts table for consistent voice recording
+export const emotionTextPrompts = pgTable("emotion_text_prompts", {
+  id: serial("id").primaryKey(),
+  emotion: text("emotion").unique().notNull(), // 'happiness', 'sadness', 'anger', etc.
+  promptText: text("prompt_text").notNull(), // Text for users to read aloud
+  description: text("description"), // What emotion should be expressed
+  category: text("category").default("primary"), // primary, secondary, advanced
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Generic emotions table for reusable emotion samples
 export const emotions = pgTable("emotions", {
   id: serial("id").primaryKey(),

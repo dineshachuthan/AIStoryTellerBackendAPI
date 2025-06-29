@@ -231,14 +231,14 @@ export function EmotionVoiceRecorder({
 
   const getEmotionText = (emotion: string) => {
     const emotionTexts: Record<string, string> = {
-      happy: "I'm absolutely thrilled about this amazing opportunity! This brings me so much joy and excitement. Everything is working out perfectly, and I couldn't be happier right now!",
-      sad: "I feel deeply disappointed and heartbroken about what happened. This loss weighs heavily on my heart, and I can't help but feel overwhelmed by sadness.",
-      angry: "I am furious and completely fed up with this situation! This is absolutely unacceptable, and I demand that something be done about it immediately!",
-      excited: "Oh my goodness, I can barely contain my excitement! This is incredible news, and I'm practically bouncing with anticipation and energy!",
-      calm: "I feel completely at peace and relaxed. Everything is flowing smoothly, and I'm in a state of perfect tranquility and balance.",
-      nervous: "I'm feeling really anxious and uncertain about what's going to happen. My heart is racing, and I can't shake this feeling of worry.",
-      confident: "I am absolutely certain that I can handle anything that comes my way. I have complete faith in my abilities and know I will succeed.",
-      surprised: "Wow, I never saw that coming! This is completely unexpected and has caught me totally off guard. I can hardly believe what just happened!"
+      happiness: "Tom received a birthday present as a surprise and the happiness he felt is sky high! He couldn't stop smiling and laughing with pure joy.",
+      sadness: "Sarah lost her beloved pet and the sadness she feels is overwhelming. Her heart is heavy with grief and tears won't stop flowing.",
+      anger: "Mike discovered someone had stolen his work and the anger he feels is burning inside him. He is furious and his voice trembles with rage.",
+      excitement: "Lisa just got accepted to her dream university and the excitement she feels is electric! She can barely contain her energy and enthusiasm.",
+      calm: "Emma sits by the peaceful lake and the calmness she feels washes over her completely. Her mind is clear and her heart is at peace.",
+      nervous: "David has a big presentation tomorrow and the nervousness he feels makes his hands shake. His heart races with worry and anxiety.",
+      confident: "Rachel knows she has prepared well for the interview and the confidence she feels radiates through her voice. She believes in herself completely.",
+      surprised: "Jack opened the door to find all his friends waiting and the surprise he felt left him speechless. He never expected this wonderful moment."
     };
     return emotionTexts[emotion.toLowerCase()] || "Please read this text with the appropriate emotional tone to capture your voice for this emotion.";
   };
@@ -270,11 +270,11 @@ export function EmotionVoiceRecorder({
       
       <CardContent className="space-y-4">
         {/* Emotion Text to Read */}
-        <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+        <div className="bg-gray-50 dark:bg-gray-900 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
           <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Read this text aloud with {emotion} emotion:
           </h4>
-          <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed italic">
+          <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed italic break-words">
             "{getEmotionText(emotion)}"
           </p>
           <div className="mt-2 text-xs text-gray-500 dark:text-gray-500">
@@ -285,15 +285,9 @@ export function EmotionVoiceRecorder({
         {/* Recording Interface */}
         <div className="flex flex-col space-y-3">
           <PressHoldRecorder
-            buttonText={{
-              hold: recording?.isNew ? "Hold to Re-record" : "Hold to Record",
-              recording: "Recording... (release when done)",
-              instructions: recording?.isNew ? "Press and hold to record again" : "Press and hold while reading the text above"
-            }}
-            maxDuration={20000} // 20 seconds max
-            minDuration={10000} // 10 seconds minimum
+            buttonText={recording?.isNew ? "Hold to Re-record" : "Hold to Record"}
             onRecordingComplete={handleRecordingComplete}
-            className="w-full"
+            className="w-full py-3"
             variant={recording?.isNew ? "secondary" : "default"}
           />
           
