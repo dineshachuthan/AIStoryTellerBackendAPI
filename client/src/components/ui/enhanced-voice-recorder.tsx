@@ -257,44 +257,43 @@ export function EnhancedVoiceRecorder({
         <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-4 shadow-2xl border border-gray-700">
         
         {/* Header with Radio Icon */}
-        <div className="flex items-center justify-center mb-3">
-          <Radio className="w-5 h-5 text-red-400 mr-2" />
-          <span className="text-sm font-medium text-gray-300">Voice Recorder</span>
-          <Volume2 className="w-4 h-4 text-green-400 ml-2" />
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center">
+            <Radio className="w-5 h-5 text-red-400 mr-2" />
+            <span className="text-sm font-medium text-gray-300">Voice Recorder</span>
+          </div>
+          
+          {/* Horizontal Equalizer Visual in Header */}
+          <div className="flex items-end space-x-1 h-4">
+            {[...Array(6)].map((_, i) => {
+              const isActive = recordingState === 'recording' || recordingState === 'countdown';
+              const baseHeight = 2;
+              const maxHeight = 12;
+              const animationHeight = isActive ? baseHeight + (Math.sin(Date.now() / 150 + i) + 1) * (maxHeight - baseHeight) / 2 : baseHeight;
+              
+              return (
+                <div
+                  key={i}
+                  className={`w-0.5 rounded-sm transition-all duration-100 ${
+                    isActive 
+                      ? 'bg-gradient-to-t from-green-600 to-green-400 opacity-100' 
+                      : 'bg-gray-600 opacity-40'
+                  }`}
+                  style={{
+                    height: `${animationHeight}px`,
+                    minHeight: `${baseHeight}px`
+                  }}
+                />
+              );
+            })}
+          </div>
         </div>
 
         {/* Main Recording Display */}
         <div className="bg-black rounded-lg p-4 mb-3 border border-gray-600">
-          {/* Title and Equalizer Row */}
-          <div className="flex items-center justify-between mb-3">
-            <div className="text-blue-300 text-sm font-semibold uppercase tracking-wide">
-              📖 Read this text{emotionDescription ? ` in ${emotionDescription.toLowerCase()}` : ''}
-            </div>
-            
-            {/* Horizontal Equalizer Visual */}
-            <div className="flex items-end space-x-1 h-6">
-              {[...Array(8)].map((_, i) => {
-                const isActive = recordingState === 'recording' || recordingState === 'countdown';
-                const baseHeight = 2;
-                const maxHeight = 20;
-                const animationHeight = isActive ? baseHeight + (Math.sin(Date.now() / 200 + i) + 1) * (maxHeight - baseHeight) / 2 : baseHeight;
-                
-                return (
-                  <div
-                    key={i}
-                    className={`w-1 rounded-sm transition-all duration-100 ${
-                      isActive 
-                        ? 'bg-gradient-to-t from-green-600 to-green-400 opacity-100' 
-                        : 'bg-gray-600 opacity-40'
-                    }`}
-                    style={{
-                      height: `${animationHeight}px`,
-                      minHeight: `${baseHeight}px`
-                    }}
-                  />
-                );
-              })}
-            </div>
+          {/* Title */}
+          <div className="text-blue-300 text-sm font-semibold mb-3 text-left uppercase tracking-wide">
+            📖 Read this text{emotionDescription ? ` in ${emotionDescription.toLowerCase()}` : ''}
           </div>
           
           <div className="flex items-center space-x-4">
