@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { EmotionVoiceRecorder } from "@/components/ui/emotion-voice-recorder";
+import { BottomNavigation } from "@/components/bottom-navigation";
 
 interface EmotionPrompt {
   id: number;
@@ -135,6 +136,8 @@ export default function VoiceSetup() {
           </Card>
         )}
       </div>
+
+      <BottomNavigation />
     </div>
   );
 }

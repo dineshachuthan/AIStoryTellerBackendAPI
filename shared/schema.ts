@@ -262,37 +262,7 @@ export const characterVoiceAssignments = pgTable("character_voice_assignments", 
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// User voice emotion repository - persistent across all stories
-export const userVoiceEmotions = pgTable("user_voice_emotions", {
-  id: serial("id").primaryKey(),
-  userId: varchar("user_id").references(() => users.id).notNull(),
-  emotion: varchar("emotion").notNull(), // joy, grief, shock, anger, fear, love, etc.
-  intensity: integer("intensity").notNull(), // 1-10 scale
-  audioUrl: text("audio_url").notNull(),
-  fileName: varchar("file_name").notNull(),
-  duration: integer("duration"), // in milliseconds
-  isBaseVoice: boolean("is_base_voice").default(false), // Primary voice for interpolation
-  storyIdRecorded: integer("story_id_recorded").references(() => stories.id), // Story where it was first recorded
-  usageCount: integer("usage_count").default(0), // How many times this voice has been used
-  lastUsedAt: timestamp("last_used_at"),
-  createdAt: timestamp("created_at").defaultNow(),
-});
 
-// Voice cloning profiles - Links users to their cloned voices
-export const userVoiceProfiles = pgTable("user_voice_profiles", {
-  id: serial("id").primaryKey(),
-  userId: varchar("user_id").references(() => users.id).notNull(),
-  provider: varchar("provider").notNull(), // elevenlabs, openai, etc.
-  voiceId: varchar("voice_id").notNull(), // Provider-specific voice ID
-  voiceName: varchar("voice_name").notNull(),
-  status: varchar("status").notNull().default("training"), // training, completed, failed
-  emotionCount: integer("emotion_count").default(0),
-  emotionsCovered: jsonb("emotions_covered").$type<string[]>().default([]),
-  metadata: jsonb("metadata"), // Provider-specific metadata
-  isActive: boolean("is_active").default(true),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
 
 
 
@@ -403,17 +373,7 @@ export const userCharacterPreferences = pgTable("user_character_preferences", {
 });
 
 // Global emotion-voice mappings for consistency
-export const emotionVoiceProfiles = pgTable("emotion_voice_profiles", {
-  id: serial("id").primaryKey(),
-  emotion: varchar("emotion").notNull(), // "wisdom", "anger", "joy", etc.
-  characterType: varchar("character_type"), // "mother", "king", "child", etc. (optional for specificity)
-  baseVoice: varchar("base_voice").notNull(), // OpenAI voice name
-  speedModifier: doublePrecision("speed_modifier").default(1.0),
-  styleInstructions: text("style_instructions"), // Text-to-speech style hints
-  usageCount: integer("usage_count").default(0),
-  successRate: doublePrecision("success_rate").default(1.0), // User satisfaction rating
-  createdAt: timestamp("created_at").defaultNow(),
-});
+
 
 // User schemas
 export const insertUserSchema = createInsertSchema(users).omit({
@@ -556,8 +516,7 @@ export type InsertCharacterArchetype = typeof characterArchetypes.$inferInsert;
 export type UserCharacterPreference = typeof userCharacterPreferences.$inferSelect;
 export type InsertUserCharacterPreference = typeof userCharacterPreferences.$inferInsert;
 
-export type EmotionVoiceProfile = typeof emotionVoiceProfiles.$inferSelect;
-export type InsertEmotionVoiceProfile = typeof emotionVoiceProfiles.$inferInsert;
+
 
 // Story User Confidence schemas
 export const insertStoryUserConfidenceSchema = createInsertSchema(storyUserConfidence).omit({
