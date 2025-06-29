@@ -347,7 +347,11 @@ export default function VoiceSamples() {
                           </div>
                         ) : (
                           <PressHoldRecorder
-                            buttonText={`Record ${template.displayName}`}
+                            buttonText={{
+                              hold: `Record ${template.displayName}`,
+                              recording: "Recording...",
+                              instructions: `Say: "${template.sampleText}"`
+                            }}
                             onRecordingComplete={(audioBlob) => {
                               saveVoiceSample.mutate({
                                 emotion: template.emotion,

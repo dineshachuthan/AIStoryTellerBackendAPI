@@ -747,13 +747,9 @@ export class DatabaseStorage implements IStorage {
 
   // User Voice Emotions (for voice samples service)
   async getUserVoiceEmotions(userId: string, storyId?: number): Promise<any[]> {
-    let query = db.select().from(userVoiceSamples).where(eq(userVoiceSamples.userId, userId));
-    
-    if (storyId) {
-      query = query.where(eq(userVoiceSamples.storyId, storyId));
-    }
-    
-    return await query;
+    // Note: userVoiceSamples table doesn't have storyId column, so we ignore storyId parameter
+    return await db.select().from(userVoiceSamples)
+      .where(eq(userVoiceSamples.userId, userId));
   }
 
   async createUserVoiceEmotion(emotion: any): Promise<any> {
