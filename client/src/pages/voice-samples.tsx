@@ -224,11 +224,11 @@ export default function VoiceSamples() {
       <AppHeader />
       <AppTopNavigation />
       
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <div className="container mx-auto px-4 py-4 sm:py-8 max-w-6xl">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Voice Samples Collection</h1>
-        <p className="text-muted-foreground mb-6">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-2">Voice Samples Collection</h1>
+        <p className="text-sm sm:text-base text-muted-foreground mb-4 sm:mb-6">
           Record your voice expressing different emotions to create personalized AI narration for your stories.
         </p>
 
@@ -267,9 +267,9 @@ export default function VoiceSamples() {
 
       {/* Category Tabs */}
       <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-6">
+        <TabsList className="grid w-full grid-cols-3 mb-4 sm:mb-6 h-auto">
           {categories.map((category) => (
-            <TabsTrigger key={category} value={category} className="capitalize">
+            <TabsTrigger key={category} value={category} className="text-xs sm:text-sm px-2 py-2 sm:px-4 sm:py-3">
               {categoryMapping[category as keyof typeof categoryMapping]}
             </TabsTrigger>
           ))}
@@ -277,7 +277,7 @@ export default function VoiceSamples() {
 
         {categories.map((category) => (
           <TabsContent key={category} value={category}>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {filteredTemplates.map((template: any) => {
                 const isRecorded = isModulationRecorded(template.modulationKey);
                 const recordedSample = getRecordedSample(template.modulationKey);
