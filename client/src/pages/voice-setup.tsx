@@ -372,12 +372,12 @@ export default function VoiceSetup() {
                 </CardHeader>
                 <CardContent>
                   <div className="grid gap-3">
-                    {getEmotionConfig().priority.map((emotion) => (
+                    {getPriorityEmotions().map((emotion) => (
                       <EmotionVoiceRecorder
                         key={emotion}
                         emotion={emotion}
                         intensity={5}
-                        onRecordingComplete={(audioBlob, audioUrl) => {
+                        onSave={(recording) => {
                           toast({
                             title: 'Emotion Sample Recorded',
                             description: `${emotion} emotion sample saved successfully`
