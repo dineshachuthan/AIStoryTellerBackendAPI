@@ -337,44 +337,21 @@ export default function VoiceSamples() {
                 .map((template: any) => {
                   const { recordedSample, isRecorded, isLocked } = template;
                   
-                  // Determine background color based on voice state
-                  const getCardBackgroundClass = () => {
+                  const getStatusIcon = () => {
                     if (isLocked) {
-                      return "bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800";
+                      return <CheckCircle className="w-5 h-5 text-blue-500" title="Locked for Cloning" />;
                     } else if (isRecorded) {
-                      return "bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800";
+                      return <CheckCircle className="w-5 h-5 text-green-500" title="Recorded" />;
                     } else {
-                      return "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700";
-                    }
-                  };
-
-                  const getStatusIndicator = () => {
-                    if (isLocked) {
-                      return (
-                        <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
-                          🔒 Locked for Cloning
-                        </Badge>
-                      );
-                    } else if (isRecorded) {
-                      return (
-                        <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
-                          ✓ Recorded
-                        </Badge>
-                      );
-                    } else {
-                      return (
-                        <Badge variant="outline" className="border-gray-300 text-gray-600 dark:border-gray-600 dark:text-gray-400">
-                          ○ Empty
-                        </Badge>
-                      );
+                      return <Circle className="w-5 h-5 text-gray-400" title="Empty" />;
                     }
                   };
 
                   return (
-                    <div key={template.modulationKey} className={`p-4 rounded-lg border ${getCardBackgroundClass()}`}>
+                    <div key={template.modulationKey} className="p-4 rounded-lg border border-gray-200 dark:border-gray-700">
                       <div className="mb-3 flex items-center justify-between">
                         <h3 className="font-medium text-sm">{template.displayName}</h3>
-                        {getStatusIndicator()}
+                        {getStatusIcon()}
                       </div>
                       
                       <EnhancedVoiceRecorder
