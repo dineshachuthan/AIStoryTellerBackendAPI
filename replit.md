@@ -374,6 +374,12 @@ Preferred communication style: Simple, everyday language.
 - No convenience hardcoding under any circumstances
 - Every function must connect to real data sources or fail authentically
 
+**CRITICAL ARCHITECTURE RULE: NO UNAUTHORIZED CHANGES**
+- NEVER create any endpoints or database schema changes without explicit user permission
+- Do not add new API routes or modify existing route structures
+- Do not alter database tables, columns, or relationships
+- Only use existing endpoints and data structures unless specifically authorized
+
 **Responsive Design Requirements:**
 - All components must be responsive and mobile-compatible by default
 - No need to ask specifically for mobile compatibility - it's always required

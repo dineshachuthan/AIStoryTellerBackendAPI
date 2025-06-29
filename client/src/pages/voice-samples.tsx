@@ -145,7 +145,7 @@ export default function VoiceSamples() {
 
   // Filter templates by modulation type (emotion, sound, modulation)
   const filteredTemplates = Array.isArray(templates) && templates.length > 0 ? templates.filter((template: any) => 
-    template?.modulationType === selectedCategory
+    template?.category === selectedCategory
   ) : [];
 
   // Get unique modulation types and map to friendly names
@@ -165,22 +165,22 @@ export default function VoiceSamples() {
   console.log('Selected category:', selectedCategory);
   console.log('Filtered templates:', filteredTemplates);
 
-  // Check if modulation is recorded
-  const isModulationRecorded = (modulationKey: string): boolean => {
+  // Check if emotion is recorded
+  const isEmotionRecorded = (emotion: string): boolean => {
     const recordedSamples = (progress as any)?.recordedSamples || [];
-    return recordedSamples.some((sample: any) => sample.emotion === modulationKey);
+    return recordedSamples.some((sample: any) => sample.emotion === emotion);
   };
 
-  // Get recorded sample for modulation
-  const getRecordedSample = (modulationKey: string): any | undefined => {
+  // Get recorded sample for emotion
+  const getRecordedSample = (emotion: string): any | undefined => {
     const recordedSamples = (progress as any)?.recordedSamples || [];
-    return recordedSamples.find((sample: any) => sample.emotion === modulationKey);
+    return recordedSamples.find((sample: any) => sample.emotion === emotion);
   };
 
-  // Handler for recording new voice samples
-  const handleRecord = async (template: VoiceTemplate, audioBlob: Blob): Promise<void> => {
+  // Handler for recording new voice samples  
+  const handleRecord = async (template: any, audioBlob: Blob): Promise<void> => {
     await saveVoiceSample.mutateAsync({
-      emotion: template.modulationKey,
+      emotion: template.emotion,
       audioBlob
     });
   };
@@ -267,12 +267,12 @@ export default function VoiceSamples() {
           <TabsContent key={category} value={category}>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {filteredTemplates.map((template: any) => {
-                const recordedSample = getRecordedSample(template.modulationKey);
+                const recordedSample = getRecordedSample(template.emotion);
                 const isRecorded = !!recordedSample;
 
                 return (
                   <Card 
-                    key={template.modulationKey} 
+                    key={template.emotion} 
                     className={cn(
                       "transition-all duration-200 hover:shadow-md",
                       isRecorded && "ring-2 ring-green-500 ring-opacity-50"
