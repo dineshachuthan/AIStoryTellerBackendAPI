@@ -1,4 +1,5 @@
 import type { Express } from "express";
+import express from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertCharacterSchema, insertConversationSchema, insertMessageSchema, insertStorySchema, insertUserVoiceSampleSchema, insertStoryCollaborationSchema, insertStoryGroupSchema, insertCharacterVoiceAssignmentSchema } from "@shared/schema";
@@ -200,6 +201,9 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Serve cached voice modulation files
+  app.use('/cache/user-voice-modulations', express.static(path.join(process.cwd(), 'persistent-cache', 'user-voice-modulations')));
+
   // Setup authentication
   await setupAuth(app);
 
@@ -4201,11 +4205,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Template not found' });
       }
 
-      // Save audio file and get URL
-      const audioUrl = `/uploads/voice-modulations/${userId}/${modulationKey}_${Date.now()}.webm`;
-      const audioPath = path.join(process.cwd(), 'uploads', 'voice-modulations', userId);
-      await fs.mkdir(audioPath, { recursive: true });
-      await fs.writeFile(path.join(process.cwd(), audioUrl), audioFile.buffer);
+      // Save audio file using the existing cache system
+      const fileName = `${modulationKey}_${Date.now()}.webm`;
+      const cacheDir = path.join(process.cwd(), 'persistent-cache', 'user-voice-modulations', userId);
+      await fs.mkdir(cacheDir, { recursive: true });
+      const filePath = path.join(cacheDir, fileName);
+      await fs.writeFile(filePath, audioFile.buffer);
+      const audioUrl = `/cache/user-voice-modulations/${userId}/${fileName}`;
 
       const modulation = await voiceModulationService.recordVoiceModulation({
         userId,
@@ -4213,6 +4219,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         modulationKey,
         modulationType: template.modulationType,
         audioUrl,
+        fileName,
         duration: parseInt(duration) || template.targetDuration || 10,
         qualityScore: 85, // Default quality score
         isPreferred: false,
