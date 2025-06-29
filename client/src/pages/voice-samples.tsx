@@ -294,20 +294,7 @@ export default function VoiceSamples() {
                       <CardDescription>{template.description}</CardDescription>
                     </CardHeader>
 
-                    <CardContent className="space-y-4">
-                      {/* Sample Text */}
-                      <div className="bg-muted p-4 rounded-lg">
-                        <p className="text-sm font-medium mb-2">Sample Text:</p>
-                        <p className="text-sm italic leading-relaxed">
-                          "{template.sampleText}"
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-2">
-                          Target duration: {template.targetDuration} seconds
-                        </p>
-                      </div>
-
-                      {/* Recording Controls */}
-                      <div className="space-y-3">
+                    <CardContent className="space-y-3">
                         {isRecorded && recordedSample ? (
                           <div className="space-y-2">
                             <div className="flex gap-2">

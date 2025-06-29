@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import { Mic, Play, RotateCcw, Save } from "lucide-react";
+import { Mic, Play, RotateCcw, Save, Radio, Volume2 } from "lucide-react";
 import { AUDIO_PROCESSING_CONFIG } from "@shared/audio-config";
 
 interface EnhancedVoiceRecorderProps {
@@ -42,9 +42,7 @@ export function EnhancedVoiceRecorder({
   const { toast } = useToast();
 
   const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    return `${seconds.toString().padStart(2, '0')}s`;
   };
 
   const progressPercentage = (recordingTime / maxRecordingTime) * 100;
@@ -190,12 +188,31 @@ export function EnhancedVoiceRecorder({
     }
   };
 
-  const handleMouseDown = () => {
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
     if (disabled || recordingState !== 'idle') return;
     startCountdown();
   };
 
-  const handleMouseUp = () => {
+  const handleMouseUp = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (recordingState === 'recording') {
+      stopRecording();
+    } else if (recordingState === 'countdown') {
+      if (countdownRef.current) clearInterval(countdownRef.current);
+      setRecordingState('idle');
+      setCountdownTime(3);
+    }
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    e.preventDefault();
+    if (disabled || recordingState !== 'idle') return;
+    startCountdown();
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    e.preventDefault();
     if (recordingState === 'recording') {
       stopRecording();
     } else if (recordingState === 'countdown') {
@@ -206,132 +223,129 @@ export function EnhancedVoiceRecorder({
   };
 
   return (
-    <div 
-      className={`flex flex-col items-center w-full max-w-xs mx-auto ${className}`}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
-      onTouchEnd={handleMouseUp}
-    >
-      {/* Fixed Height Container - NO RESIZING */}
-      <div className="h-[400px] w-full flex flex-col">
+    <div className={`w-full max-w-sm mx-auto ${className}`}>
+      {/* Radio/TV Style Voice Recorder Panel */}
+      <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-4 shadow-2xl border border-gray-700">
         
-        {/* Recording Button - Fixed Position */}
-        <div className="flex flex-col items-center space-y-4 mb-6">
-          <div className="w-20 h-20 flex items-center justify-center">
-            {recordingState === 'idle' && (
-              <button
-                onMouseDown={handleMouseDown}
-                onMouseUp={handleMouseUp}
-                onMouseLeave={handleMouseUp}
-                onTouchStart={handleMouseDown}
-                onTouchEnd={handleMouseUp}
-                disabled={disabled}
-                className="w-20 h-20 rounded-full bg-red-500 hover:bg-red-600 disabled:bg-gray-400 flex items-center justify-center text-white transition-colors duration-200 select-none touch-manipulation"
-              >
-                <Mic className="w-8 h-8" />
-              </button>
-            )}
-
-            {recordingState === 'countdown' && (
-              <div className="w-20 h-20 rounded-full bg-orange-500 flex items-center justify-center text-white text-2xl font-bold select-none">
-                {countdownTime}
-              </div>
-            )}
-
-            {recordingState === 'recording' && (
-              <div 
-                onMouseUp={handleMouseUp}
-                onMouseLeave={handleMouseUp}
-                onTouchEnd={handleMouseUp}
-                className="w-20 h-20 rounded-full bg-red-600 flex items-center justify-center text-white animate-pulse cursor-pointer select-none touch-manipulation"
-              >
-                <Mic className="w-8 h-8" />
-              </div>
-            )}
-          </div>
-
-          {/* Fixed Message Area */}
-          <div className="h-12 flex items-center justify-center text-center px-4">
-            {recordingState === 'idle' && (
-              <p className="text-sm text-gray-600">{buttonText.instructions}</p>
-            )}
-            {recordingState === 'countdown' && (
-              <p className="text-sm text-gray-600">Get ready...</p>
-            )}
-            {recordingState === 'recording' && (
-              <p className="text-sm text-gray-600">Release to stop or auto-stops at {maxRecordingTime}s</p>
-            )}
-            {recordingState === 'recorded' && (
-              <div className="text-center">
-                <p className="text-sm text-gray-600">Recording complete!</p>
-                <p className="text-xs text-gray-500">Duration: {formatTime(recordingTime)}</p>
-              </div>
-            )}
-          </div>
+        {/* Header with Radio Icon */}
+        <div className="flex items-center justify-center mb-3">
+          <Radio className="w-5 h-5 text-red-400 mr-2" />
+          <span className="text-sm font-medium text-gray-300">Voice Recorder</span>
+          <Volume2 className="w-4 h-4 text-green-400 ml-2" />
         </div>
 
-        {/* Progress Bar - Fixed Position */}
-        <div className="h-16 flex items-center justify-center mb-6">
-          {recordingState === 'recording' && (
-            <div className="w-full">
-              <Progress value={progressPercentage} className="h-2" />
-              <div className="flex justify-between text-sm text-gray-600 mt-1">
-                <span>{formatTime(recordingTime)}</span>
-                <span>{formatTime(maxRecordingTime)}</span>
-              </div>
+        {/* Main Recording Display */}
+        <div className="bg-black rounded-lg p-3 mb-3 border border-gray-600">
+          <div className="flex items-center justify-center space-x-4">
+            
+            {/* Recording Button */}
+            <div className="relative">
+              {recordingState === 'idle' && (
+                <button
+                  onMouseDown={handleMouseDown}
+                  onMouseUp={handleMouseUp}
+                  onMouseLeave={handleMouseUp}
+                  onTouchStart={handleTouchStart}
+                  onTouchEnd={handleTouchEnd}
+                  disabled={disabled}
+                  className="w-16 h-16 rounded-full bg-red-500 hover:bg-red-600 disabled:bg-gray-600 flex items-center justify-center text-white transition-all duration-200 select-none touch-manipulation shadow-lg hover:shadow-red-500/25"
+                >
+                  <Mic className="w-6 h-6" />
+                </button>
+              )}
+
+              {recordingState === 'countdown' && (
+                <div className="w-16 h-16 rounded-full bg-orange-500 flex items-center justify-center text-white text-xl font-bold select-none shadow-lg animate-pulse">
+                  {countdownTime}
+                </div>
+              )}
+
+              {recordingState === 'recording' && (
+                <button
+                  onMouseUp={handleMouseUp}
+                  onMouseLeave={handleMouseUp}
+                  onTouchEnd={handleTouchEnd}
+                  className="w-16 h-16 rounded-full bg-red-600 flex items-center justify-center text-white animate-pulse cursor-pointer select-none touch-manipulation shadow-lg shadow-red-500/50"
+                >
+                  <Mic className="w-6 h-6" />
+                </button>
+              )}
             </div>
-          )}
+
+            {/* Status Display */}
+            <div className="flex-1 text-center">
+              <div className="text-green-400 text-xs font-mono uppercase tracking-wider mb-1">
+                {recordingState === 'idle' && "READY"}
+                {recordingState === 'countdown' && "STARTING"}
+                {recordingState === 'recording' && "RECORDING"}
+                {recordingState === 'recorded' && "COMPLETE"}
+              </div>
+              
+              <div className="text-white text-sm">
+                {recordingState === 'idle' && "Hold to Record"}
+                {recordingState === 'countdown' && "Get Ready..."}
+                {recordingState === 'recording' && `${formatTime(recordingTime)} / ${formatTime(maxRecordingTime)}`}
+                {recordingState === 'recorded' && `Recorded ${formatTime(recordingTime)}`}
+              </div>
+
+              {/* Progress Bar */}
+              {recordingState === 'recording' && (
+                <div className="mt-2">
+                  <Progress value={progressPercentage} className="h-1 bg-gray-700" />
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* Always Show All 4 Buttons - Fixed Position */}
-        <div className="flex-1 flex flex-col justify-center space-y-3">
-          {/* Play Recording Button */}
+        {/* Control Buttons */}
+        <div className="grid grid-cols-4 gap-2">
           <Button
             onClick={playTempRecording}
             disabled={!tempRecording || isPlayingTemp}
             variant="outline"
-            size="lg"
-            className="w-full"
+            size="sm"
+            className="bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700 disabled:opacity-50"
           >
-            <Play className="w-5 h-5 mr-2" />
-            {isPlayingTemp ? 'Playing...' : 'Play Recording'}
+            <Play className="w-4 h-4" />
           </Button>
           
-          {/* Action Buttons Row */}
-          <div className="flex space-x-2">
-            <Button
-              onClick={reRecord}
-              disabled={recordingState === 'recording' || recordingState === 'countdown' || isPlayingTemp}
-              variant="outline"
-              size="sm"
-              className="flex-1"
-            >
-              <RotateCcw className="w-4 h-4 mr-1" />
-              Re-record
-            </Button>
-            
-            <Button
-              onClick={playTempRecording}
-              disabled={!tempRecording || isPlayingTemp}
-              variant="outline"
-              size="sm"
-              className="flex-1"
-            >
-              <Play className="w-4 h-4 mr-1" />
-              Replay
-            </Button>
-            
-            <Button
-              onClick={saveRecording}
-              disabled={!tempRecording || isPlayingTemp}
-              variant="default"
-              size="sm"
-              className="flex-1"
-            >
-              <Save className="w-4 h-4 mr-1" />
-              Save
-            </Button>
-          </div>
+          <Button
+            onClick={reRecord}
+            disabled={recordingState === 'recording' || recordingState === 'countdown' || isPlayingTemp}
+            variant="outline"
+            size="sm"
+            className="bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700 disabled:opacity-50"
+          >
+            <RotateCcw className="w-4 h-4" />
+          </Button>
+          
+          <Button
+            onClick={playTempRecording}
+            disabled={!tempRecording || isPlayingTemp}
+            variant="outline"
+            size="sm"
+            className="bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700 disabled:opacity-50"
+          >
+            <Volume2 className="w-4 h-4" />
+          </Button>
+          
+          <Button
+            onClick={saveRecording}
+            disabled={!tempRecording || isPlayingTemp}
+            variant="default"
+            size="sm"
+            className="bg-green-600 hover:bg-green-700 disabled:opacity-50"
+          >
+            <Save className="w-4 h-4" />
+          </Button>
+        </div>
+
+        {/* Status Indicator Lights */}
+        <div className="flex justify-center space-x-2 mt-3">
+          <div className={`w-2 h-2 rounded-full ${recordingState === 'recording' ? 'bg-red-500 animate-pulse' : 'bg-gray-600'}`}></div>
+          <div className={`w-2 h-2 rounded-full ${tempRecording ? 'bg-green-500' : 'bg-gray-600'}`}></div>
+          <div className={`w-2 h-2 rounded-full ${isPlayingTemp ? 'bg-blue-500 animate-pulse' : 'bg-gray-600'}`}></div>
         </div>
       </div>
     </div>
