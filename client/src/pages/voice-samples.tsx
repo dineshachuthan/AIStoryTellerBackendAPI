@@ -75,9 +75,11 @@ export default function VoiceSamples() {
       return response.json();
     },
     onSuccess: (data, variables) => {
-      // Refresh progress data to update the UI
-      queryClient.invalidateQueries({ queryKey: ["/api/voice-modulations/progress"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/voice-modulations/templates"] });
+      // Use setTimeout to delay query invalidation to prevent flickering
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["/api/voice-modulations/progress"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/voice-modulations/templates"] });
+      }, 100);
     },
   });
 

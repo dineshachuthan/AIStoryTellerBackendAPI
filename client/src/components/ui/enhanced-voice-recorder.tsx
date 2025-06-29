@@ -202,11 +202,17 @@ export function EnhancedVoiceRecorder({
 
   const saveRecording = () => {
     if (tempRecording) {
-      onRecordingComplete(tempRecording.blob, tempRecording.url);
+      // Optimistic update - immediately show saved state to prevent flickering
+      const blob = tempRecording.blob;
+      const url = tempRecording.url;
+      
       setTempRecording(null);
       setRecordingState('idle');
       setRecordingTime(0);
       setCountdownTime(3);
+      
+      // Then trigger the actual save
+      onRecordingComplete(blob, url);
     }
   };
 
