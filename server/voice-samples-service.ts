@@ -52,7 +52,7 @@ export class VoiceSamplesService {
       description: config.description,
       sampleText: config.sampleText,
       targetDuration: config.targetDuration,
-      category: config.category
+      category: 'emotion' // All emotion configs are in the 'emotion' category for the UI
     }));
   }
 

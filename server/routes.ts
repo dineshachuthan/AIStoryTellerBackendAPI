@@ -3825,18 +3825,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get voice sample templates
   app.get("/api/voice-samples/templates", async (req, res) => {
     try {
-      const { getAllVoiceSamples } = await import('./voice-samples');
-      const allSamples = getAllVoiceSamples();
-      
-      const templates = allSamples.map(sample => ({
-        emotion: sample.label,
-        displayName: sample.label.charAt(0).toUpperCase() + sample.label.slice(1).replace('_', ' '),
-        description: `Record your voice with ${sample.label} emotion`,
-        sampleText: sample.prompt,
-        targetDuration: 10,
-        category: sample.sampleType
-      }));
-      
+      const serviceModule = await import('./voice-samples-service');
+      const templates = serviceModule.voiceSamplesService.getEmotionTemplates();
+      console.log("Templates from service:", templates.slice(0, 2));
       res.json(templates);
     } catch (error: any) {
       console.error("Failed to get voice sample templates:", error);
