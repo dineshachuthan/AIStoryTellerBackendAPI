@@ -366,7 +366,7 @@ export default function VoiceSamples() {
                       return (
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <CheckCircle className="w-5 h-5 text-green-500 cursor-help" />
+                            <Unlock className="w-5 h-5 text-green-500 cursor-help" />
                           </TooltipTrigger>
                           <TooltipContent>
                             <div className="max-w-xs">
@@ -385,12 +385,15 @@ export default function VoiceSamples() {
                       return (
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <Circle className="w-5 h-5 text-gray-400 cursor-help" />
+                            <Unlock className="w-5 h-5 text-gray-400 cursor-help" />
                           </TooltipTrigger>
                           <TooltipContent>
                             <div className="max-w-xs">
                               <p className="font-semibold">Empty and unlocked</p>
                               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                {template.description}
+                              </p>
+                              <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
                                 No voice sample recorded yet. Hold the record button to capture your voice for this emotion.
                               </p>
                             </div>
