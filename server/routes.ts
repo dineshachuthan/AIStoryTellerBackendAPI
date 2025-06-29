@@ -4181,8 +4181,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get emotion prompts from database
+  app.get('/api/emotion-prompts', async (req, res) => {
+    try {
+      const prompts = await storage.getEmotionTextPrompts();
+      res.json(prompts);
+    } catch (error: any) {
+      console.error('Error getting emotion prompts:', error);
+      res.status(500).json({ error: 'Failed to get emotion prompts' });
+    }
+  });
+
   // Get user's voice emotions
-  app.get('/api/user/voice-emotions', requireAuth, async (req, res) => {
+  app.get('/api/users/voice-emotions', requireAuth, async (req, res) => {
     try {
       const user = (req as any).user;
       if (!user || !user.id) {
@@ -4194,6 +4205,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error('Error getting voice emotions:', error);
       res.status(500).json({ error: 'Failed to get voice emotions' });
+    }
+  });
+
+  // Save user voice emotion (updated path)
+  app.post('/api/users/voice-emotions', requireAuth, upload.single('audio'), async (req, res) => {
+    try {
+      const user = (req as any).user;
+      if (!user || !user.id) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+
+      const { emotion, intensity, duration } = req.body;
+      const audioFile = req.file;
+
+      if (!audioFile || !emotion) {
+        return res.status(400).json({ error: 'Audio file and emotion are required' });
+      }
+
+      // Save voice emotion to database first (database-first architecture)
+      const voiceEmotion = await storage.saveUserVoiceEmotion(
+        user.id,
+        emotion,
+        parseInt(intensity) || 5,
+        audioFile.buffer,
+        audioFile.mimetype
+      );
+
+      res.json({ 
+        success: true, 
+        ...voiceEmotion,
+        message: `${emotion} voice sample saved successfully` 
+      });
+    } catch (error: any) {
+      console.error('Error saving voice emotion:', error);
+      res.status(500).json({ error: 'Failed to save voice emotion' });
     }
   });
 

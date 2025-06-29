@@ -818,10 +818,67 @@ export class DatabaseStorage implements IStorage {
   async getEmotionTextPrompts(): Promise<any[]> {
     try {
       const result = await db.select().from(schema.emotionTextPrompts).where(eq(schema.emotionTextPrompts.isActive, true));
+      
+      // If no prompts exist, initialize with default data
+      if (result.length === 0) {
+        await this.initializeDefaultEmotionPrompts();
+        return await db.select().from(schema.emotionTextPrompts).where(eq(schema.emotionTextPrompts.isActive, true));
+      }
+      
       return result;
     } catch (error) {
       console.error('Error getting emotion text prompts:', error);
       return [];
+    }
+  }
+
+  async initializeDefaultEmotionPrompts(): Promise<void> {
+    const defaultPrompts = [
+      {
+        emotion: 'happy',
+        promptText: 'Say "I am so happy today!" with genuine joy and excitement',
+        displayName: 'Happy',
+        description: 'Express joy and excitement in your voice',
+        category: 'basic'
+      },
+      {
+        emotion: 'sad',
+        promptText: 'Say "I feel really sad about this" with a melancholic tone',
+        displayName: 'Sad',
+        description: 'Express sadness and melancholy in your voice',
+        category: 'basic'
+      },
+      {
+        emotion: 'angry',
+        promptText: 'Say "This makes me so angry!" with frustration and intensity',
+        displayName: 'Angry',
+        description: 'Express anger and frustration in your voice',
+        category: 'basic'
+      },
+      {
+        emotion: 'calm',
+        promptText: 'Say "I feel very calm and peaceful" with a serene, relaxed tone',
+        displayName: 'Calm',
+        description: 'Express calmness and tranquility in your voice',
+        category: 'basic'
+      },
+      {
+        emotion: 'fearful',
+        promptText: 'Say "I am really scared and nervous" with fear and trembling in your voice',
+        displayName: 'Fearful',
+        description: 'Express fear and nervousness in your voice',
+        category: 'basic'
+      }
+    ];
+
+    try {
+      for (const prompt of defaultPrompts) {
+        await db.insert(schema.emotionTextPrompts)
+          .values(prompt)
+          .onConflictDoNothing();
+      }
+    } catch (error) {
+      console.error('Error initializing emotion prompts:', error);
     }
   }
 
