@@ -365,8 +365,14 @@ export class VoiceModulationService {
    */
   async getUserModulationProgress(userId: string): Promise<{
     totalTemplates: number;
-    recordedCount: number;
-    progress: number;
+    recordedTemplates: number;
+    completionPercentage: number;
+    recordedSamples: Array<{
+      emotion: string;
+      audioUrl: string;
+      recordedAt: Date;
+      duration: number;
+    }>;
     byType: Record<string, { total: number; recorded: number; progress: number }>;
   }> {
     // Get all active templates
@@ -378,8 +384,16 @@ export class VoiceModulationService {
     // Calculate overall progress
     const totalTemplates = templates.length;
     const recordedKeys = new Set(recorded.map(r => r.modulationKey));
-    const recordedCount = templates.filter(t => recordedKeys.has(t.modulationKey)).length;
-    const progress = totalTemplates > 0 ? Math.round((recordedCount / totalTemplates) * 100) : 0;
+    const recordedTemplates = templates.filter(t => recordedKeys.has(t.modulationKey)).length;
+    const completionPercentage = totalTemplates > 0 ? Math.round((recordedTemplates / totalTemplates) * 100) : 0;
+
+    // Map recorded samples to frontend format
+    const recordedSamples = recorded.map(record => ({
+      emotion: record.modulationKey,
+      audioUrl: record.audioUrl,
+      recordedAt: record.recordedAt || new Date(),
+      duration: record.duration || 0
+    }));
 
     // Calculate progress by type
     const byType: Record<string, { total: number; recorded: number; progress: number }> = {};

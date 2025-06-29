@@ -365,6 +365,12 @@ This is a full-stack collaborative storytelling platform that enables users to c
 
 Preferred communication style: Simple, everyday language.
 
+**CRITICAL DEVELOPMENT RULE: NEVER HARDCODE ANYTHING**
+- All functions must be data-driven and configurable
+- No hardcoded return values or placeholder implementations
+- Always implement proper data flow from backend to frontend
+- Use configuration files and database-driven logic only
+
 **Responsive Design Requirements:**
 - All components must be responsive and mobile-compatible by default
 - No need to ask specifically for mobile compatibility - it's always required
