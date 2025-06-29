@@ -9,6 +9,7 @@ import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { EmotionVoiceRecorder } from '@/components/ui/emotion-voice-recorder';
+import { AppTopNavigation } from '@/components/app-top-navigation';
 import { Mic, Play, Pause, Check, AlertCircle, Settings, TestTube } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { EmotionConfig } from '@shared/voice-config';
@@ -182,13 +183,16 @@ export default function VoiceCloning() {
   const progressPercentage = (emotionSamples.length / priorityEmotions.length) * 100;
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Voice Cloning Studio</h1>
-        <p className="text-muted-foreground">
-          Create your personalized voice clone with emotion-aware speech generation
-        </p>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+      <AppTopNavigation />
+      <div className="pt-20 pb-8">
+        <div className="container mx-auto p-6 max-w-4xl">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold mb-2 text-white">Voice Cloning Studio</h1>
+            <p className="text-gray-300">
+              Create your personalized voice clone with emotion-aware speech generation
+            </p>
+          </div>
 
       {/* ElevenLabs Status */}
       <Card className="mb-6">
@@ -454,8 +458,10 @@ export default function VoiceCloning() {
               )}
             </CardContent>
           </Card>
-        </TabsContent>
-      </Tabs>
+          </TabsContent>
+        </Tabs>
+        </div>
+      </div>
     </div>
   );
 }
