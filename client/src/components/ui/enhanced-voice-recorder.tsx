@@ -212,53 +212,61 @@ export function EnhancedVoiceRecorder({
       onMouseLeave={handleMouseUp}
       onTouchEnd={handleMouseUp}
     >
-      {/* Recording Button */}
-      {recordingState === 'idle' && (
-        <div className="flex flex-col items-center space-y-2">
-          <button
-            onMouseDown={handleMouseDown}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
-            onTouchStart={handleMouseDown}
-            onTouchEnd={handleMouseUp}
-            disabled={disabled}
-            className="w-20 h-20 rounded-full bg-red-500 hover:bg-red-600 disabled:bg-gray-400 flex items-center justify-center text-white transition-colors duration-200 active:scale-95"
-          >
-            <Mic className="w-8 h-8" />
-          </button>
-          <p className="text-sm text-gray-600">{buttonText.instructions}</p>
-        </div>
-      )}
+      {/* Fixed Recording Button Container - prevents layout shift */}
+      <div className="flex flex-col items-center space-y-2 min-h-[120px] justify-center">
+        {/* Recording Button */}
+        {recordingState === 'idle' && (
+          <>
+            <button
+              onMouseDown={handleMouseDown}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
+              onTouchStart={handleMouseDown}
+              onTouchEnd={handleMouseUp}
+              disabled={disabled}
+              className="w-20 h-20 rounded-full bg-red-500 hover:bg-red-600 disabled:bg-gray-400 flex items-center justify-center text-white transition-colors duration-200 select-none touch-manipulation"
+              style={{ transform: 'none' }}
+            >
+              <Mic className="w-8 h-8" />
+            </button>
+            <p className="text-sm text-gray-600 text-center">{buttonText.instructions}</p>
+          </>
+        )}
 
-      {/* Countdown Display */}
-      {recordingState === 'countdown' && (
-        <div className="flex flex-col items-center space-y-2">
-          <div className="w-20 h-20 rounded-full bg-orange-500 flex items-center justify-center text-white text-2xl font-bold">
-            {countdownTime}
-          </div>
-          <p className="text-sm text-gray-600">Get ready...</p>
-        </div>
-      )}
-
-      {/* Recording Display */}
-      {recordingState === 'recording' && (
-        <div className="flex flex-col items-center space-y-4">
-          <div 
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
-            onTouchEnd={handleMouseUp}
-            className="w-20 h-20 rounded-full bg-red-600 flex items-center justify-center text-white animate-pulse cursor-pointer"
-          >
-            <Mic className="w-8 h-8" />
-          </div>
-          <div className="w-64">
-            <Progress value={progressPercentage} className="h-2" />
-            <div className="flex justify-between text-sm text-gray-600 mt-1">
-              <span>{formatTime(recordingTime)}</span>
-              <span>{formatTime(maxRecordingTime)}</span>
+        {/* Countdown Display */}
+        {recordingState === 'countdown' && (
+          <>
+            <div className="w-20 h-20 rounded-full bg-orange-500 flex items-center justify-center text-white text-2xl font-bold select-none">
+              {countdownTime}
             </div>
+            <p className="text-sm text-gray-600 text-center">Get ready...</p>
+          </>
+        )}
+
+        {/* Recording Display */}
+        {recordingState === 'recording' && (
+          <>
+            <div 
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
+              onTouchEnd={handleMouseUp}
+              className="w-20 h-20 rounded-full bg-red-600 flex items-center justify-center text-white animate-pulse cursor-pointer select-none touch-manipulation"
+            >
+              <Mic className="w-8 h-8" />
+            </div>
+            <p className="text-sm text-gray-600 text-center">Recording... Release to stop or auto-stops at {maxRecordingTime}s</p>
+          </>
+        )}
+      </div>
+
+      {/* Recording Progress - shown below the fixed button area */}
+      {recordingState === 'recording' && (
+        <div className="w-64">
+          <Progress value={progressPercentage} className="h-2" />
+          <div className="flex justify-between text-sm text-gray-600 mt-1">
+            <span>{formatTime(recordingTime)}</span>
+            <span>{formatTime(maxRecordingTime)}</span>
           </div>
-          <p className="text-sm text-gray-600">Recording... Release to stop or auto-stops at {maxRecordingTime}s</p>
         </div>
       )}
 
