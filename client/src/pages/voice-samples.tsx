@@ -9,6 +9,8 @@ import { Mic, Play, Trash2, CheckCircle, Circle, Volume2 } from "lucide-react";
 import { PressHoldRecorder } from "@/components/ui/press-hold-recorder";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { AppHeader } from "@/components/app-header";
+import { AppTopNavigation } from "@/components/app-top-navigation";
 
 interface EmotionTemplate {
   emotion: string;
@@ -170,12 +172,12 @@ export default function VoiceSamples() {
   }, [audioElement]);
 
   // Filter templates by category
-  const filteredTemplates = templates.filter((template: EmotionTemplate) => 
+  const filteredTemplates = Array.isArray(templates) ? templates.filter((template: EmotionTemplate) => 
     template.category === selectedCategory
-  );
+  ) : [];
 
   // Get unique categories
-  const categories = [...new Set(templates.map((t: EmotionTemplate) => t.category))];
+  const categories = Array.isArray(templates) ? [...new Set(templates.map((t: EmotionTemplate) => t.category))] : ['basic'];
 
   // Check if emotion is recorded
   const isEmotionRecorded = (emotion: string): boolean => {
@@ -201,7 +203,12 @@ export default function VoiceSamples() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
+    <>
+      {/* Header */}
+      <AppHeader />
+      <AppTopNavigation />
+      
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Voice Samples Collection</h1>
@@ -405,8 +412,9 @@ export default function VoiceSamples() {
         </div>
       </div>
 
-      {/* Add bottom padding to prevent content from being hidden behind fixed navigation */}
-      <div className="h-20"></div>
-    </div>
+        {/* Add bottom padding to prevent content from being hidden behind fixed navigation */}
+        <div className="h-20"></div>
+      </div>
+    </>
   );
 }
