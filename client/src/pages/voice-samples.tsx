@@ -42,14 +42,14 @@ export default function VoiceSamples() {
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
   const queryClient = useQueryClient();
 
-  // Get voice modulation templates (new system with three categories)
+  // Get voice sample templates (using existing voice-samples system)
   const { data: templates = [], isLoading: templatesLoading } = useQuery({
-    queryKey: ["/api/voice-modulations/templates"],
+    queryKey: ["/api/voice-samples/templates"],
   });
 
-  // Get user's voice modulation progress
+  // Get user's voice sample progress
   const { data: progress, isLoading: progressLoading } = useQuery({
-    queryKey: ["/api/voice-modulations/progress"],
+    queryKey: ["/api/voice-samples/progress"],
   });
 
   // Save voice sample mutation
@@ -73,8 +73,8 @@ export default function VoiceSamples() {
     },
     onSuccess: (data, variables) => {
       // Refresh progress data to update the UI
-      queryClient.invalidateQueries({ queryKey: ["/api/voice-modulations/progress"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/voice-modulations/templates"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/voice-samples/progress"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/voice-samples/templates"] });
     },
   });
 
@@ -93,8 +93,8 @@ export default function VoiceSamples() {
     },
     onSuccess: (data, emotion) => {
       // Refresh progress data to update the UI
-      queryClient.invalidateQueries({ queryKey: ["/api/voice-modulations/progress"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/voice-modulations/templates"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/voice-samples/progress"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/voice-samples/templates"] });
     },
     onError: (error) => {
       console.error("Delete voice sample error:", error);
@@ -156,7 +156,7 @@ export default function VoiceSamples() {
   };
   
   const rawCategories = Array.isArray(templates) && templates.length > 0 ? 
-    Array.from(new Set(templates.map((t: any) => t?.modulationType).filter(Boolean))) : ['emotion'];
+    Array.from(new Set(templates.map((t: any) => t?.category).filter(Boolean))) : ['emotion'];
   const categories = rawCategories.filter(cat => categoryMapping[cat as keyof typeof categoryMapping]);
   
   // Debug logging
