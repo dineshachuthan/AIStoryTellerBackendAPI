@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Mic, Play, Trash2, CheckCircle, Circle, Volume2, LogOut } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Mic, Play, Trash2, CheckCircle, Circle, Volume2, LogOut, Lock, Unlock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { EnhancedVoiceRecorder } from "@/components/ui/enhanced-voice-recorder";
 // import { VoiceTrainingStatus } from "@/components/voice-training-status";
@@ -217,8 +218,9 @@ export default function VoiceSamples() {
   }
 
   return (
-    <div className="relative w-full min-h-screen bg-dark-bg text-dark-text">
-      {/* Consistent Header matching Home page */}
+    <TooltipProvider>
+      <div className="relative w-full min-h-screen bg-dark-bg text-dark-text">
+        {/* Consistent Header matching Home page */}
       <div className="fixed top-0 left-0 right-0 bg-dark-bg/80 backdrop-blur-lg border-b border-gray-800 p-4 z-50">
         <div className="flex items-center justify-between">
           <Button
@@ -342,11 +344,43 @@ export default function VoiceSamples() {
                   
                   const getStatusIcon = () => {
                     if (isLocked) {
-                      return <CheckCircle className="w-5 h-5 text-blue-500" title="Locked for Cloning" />;
+                      return (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Lock className="w-5 h-5 text-blue-500 cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <div className="max-w-xs">
+                              <p className="font-semibold">Cloned and locked</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                This voice sample has been used to create a cloned voice and is now locked to prevent changes.
+                              </p>
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      );
                     } else if (isRecorded) {
-                      return <CheckCircle className="w-5 h-5 text-green-500" title="Recorded" />;
+                      return (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <CheckCircle className="w-5 h-5 text-green-500 cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Recorded and unlocked</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      );
                     } else {
-                      return <Circle className="w-5 h-5 text-gray-400" title="Empty" />;
+                      return (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Circle className="w-5 h-5 text-gray-400 cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Empty and unlocked</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      );
                     }
                   };
 
@@ -407,5 +441,6 @@ export default function VoiceSamples() {
         </Tabs>
       </div>
     </div>
+    </TooltipProvider>
   );
 }
