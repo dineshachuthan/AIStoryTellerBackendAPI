@@ -217,17 +217,17 @@ export default function VoiceSamples() {
       <AppHeader />
       <AppTopNavigation />
       
-      <div className="container mx-auto px-4 py-4 sm:py-8 max-w-6xl">
-      {/* Header */}
-      <div className="mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold mb-2">Voice Samples Collection</h1>
-        <p className="text-sm sm:text-base text-muted-foreground mb-4 sm:mb-6">
+      <div className="container mx-auto px-4 py-2 max-w-6xl">
+      {/* Compact Header */}
+      <div className="mb-3">
+        <h1 className="text-xl font-bold mb-1">Voice Samples Collection</h1>
+        <p className="text-sm text-muted-foreground mb-3">
           Record your voice expressing different emotions to create personalized AI narration for your stories.
         </p>
 
         {/* Compact Progress Overview */}
         {progress && (
-          <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border">
+          <div className="mb-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <Volume2 className="w-4 h-4 text-blue-600" />
@@ -244,12 +244,12 @@ export default function VoiceSamples() {
 
         {/* Category Tabs with Visual Separation */}
         <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-6 h-auto p-1 bg-gray-100 dark:bg-gray-800 rounded-lg">
+          <TabsList className="grid w-full grid-cols-3 mb-4 h-auto p-1 bg-gray-100 dark:bg-gray-800 rounded-lg">
             {categories.map((category) => (
               <TabsTrigger 
                 key={category} 
                 value={category} 
-                className="text-xs sm:text-sm px-3 py-3 font-medium rounded-md transition-all data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-blue-400"
+                className="text-xs sm:text-sm px-3 py-2 font-medium rounded-md transition-all data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-blue-400"
               >
                 {categoryMapping[category as keyof typeof categoryMapping]}
               </TabsTrigger>
@@ -296,9 +296,7 @@ export default function VoiceSamples() {
             </div>
           </TabsContent>
         ))}
-      </Tabs>
-
-
+        </Tabs>
       </div>
     </>
   );
