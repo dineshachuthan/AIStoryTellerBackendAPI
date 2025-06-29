@@ -173,9 +173,10 @@ export function EnhancedVoiceRecorder({
       URL.revokeObjectURL(tempRecording.url);
     }
     setTempRecording(null);
-    setRecordingState('idle');
     setRecordingTime(0);
     setCountdownTime(3);
+    // Start recording immediately without going back to idle
+    startCountdown();
   };
 
   const saveRecording = () => {
@@ -269,30 +270,46 @@ export function EnhancedVoiceRecorder({
             <p className="text-xs text-gray-500">Duration: {formatTime(recordingTime)}</p>
           </div>
           
-          <div className="flex space-x-3">
-            <Button
-              onClick={playTempRecording}
-              disabled={isPlayingTemp}
-              variant="outline"
-              size="sm"
-            >
-              <Play className="w-4 h-4 mr-1" />
-              {isPlayingTemp ? 'Playing...' : 'Replay'}
-            </Button>
-            
+          {/* Play button - separate and prominent */}
+          <Button
+            onClick={playTempRecording}
+            disabled={isPlayingTemp}
+            variant="outline"
+            size="lg"
+            className="w-full max-w-xs"
+          >
+            <Play className="w-5 h-5 mr-2" />
+            {isPlayingTemp ? 'Playing...' : 'Play Recording'}
+          </Button>
+          
+          {/* Action buttons - grouped together */}
+          <div className="flex space-x-2 w-full max-w-xs">
             <Button
               onClick={reRecord}
               variant="outline"
               size="sm"
+              className="flex-1"
             >
               <RotateCcw className="w-4 h-4 mr-1" />
               Re-record
             </Button>
             
             <Button
+              onClick={playTempRecording}
+              disabled={isPlayingTemp}
+              variant="outline"
+              size="sm"
+              className="flex-1"
+            >
+              <Play className="w-4 h-4 mr-1" />
+              Replay
+            </Button>
+            
+            <Button
               onClick={saveRecording}
               variant="default"
               size="sm"
+              className="flex-1"
             >
               <Save className="w-4 h-4 mr-1" />
               Save
