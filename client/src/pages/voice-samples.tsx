@@ -297,7 +297,7 @@ export default function VoiceSamples() {
                           {template.category}
                         </Badge>
                       </CardTitle>
-                      <CardDescription>{template.description}</CardDescription>
+
                     </CardHeader>
 
                     <CardContent className="space-y-3">
