@@ -4448,13 +4448,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get current session voice cloning status
+  // Get current session voice cloning status (with auto-initialization)
   app.get('/api/voice-cloning/session-status', requireAuth, async (req, res) => {
     try {
       const { VoiceCloningSessionManager } = await import('./voice-cloning-session-manager');
+      
+      // Auto-initialize session if not already done
+      if (!req.session.voiceCloning) {
+        const userId = (req.user as any)?.id;
+        console.log(`🔧 Auto-initializing voice cloning session for user ${userId}`);
+        await VoiceCloningSessionManager.initializeSessionData(req);
+      }
+      
       const sessionData = VoiceCloningSessionManager.getSessionData(req);
       const isAnyCloning = VoiceCloningSessionManager.isAnyCategoryCloning(req);
       const navigationButtonLabel = VoiceCloningSessionManager.getNavigationButtonLabel(req);
+      
+      console.log(`📊 Current session state: emotions=${sessionData.emotions_not_cloned}, sounds=${sessionData.sounds_not_cloned}, modulations=${sessionData.modulations_not_cloned}, isAnyCloning=${isAnyCloning}`);
       
       res.json({
         sessionData,
