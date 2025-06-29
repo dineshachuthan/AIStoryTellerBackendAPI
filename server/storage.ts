@@ -1,6 +1,6 @@
 import { users, localUsers, userProviders, userVoiceSamples, stories, storyCharacters, storyEmotions, characters, conversations, messages, storyCollaborations, storyGroups, storyGroupMembers, characterVoiceAssignments, storyPlaybacks, storyAnalyses, storyNarrations, audioFiles, videoGenerations, type User, type InsertUser, type UpsertUser, type UserProvider, type InsertUserProvider, type LocalUser, type InsertLocalUser, type UserVoiceSample, type InsertUserVoiceSample, type Story, type InsertStory, type StoryCharacter, type InsertStoryCharacter, type StoryEmotion, type InsertStoryEmotion, type Character, type InsertCharacter, type Conversation, type InsertConversation, type Message, type InsertMessage, type StoryCollaboration, type InsertStoryCollaboration, type StoryGroup, type InsertStoryGroup, type StoryGroupMember, type InsertStoryGroupMember, type CharacterVoiceAssignment, type InsertCharacterVoiceAssignment, type StoryPlayback, type InsertStoryPlayback, type StoryAnalysis, type InsertStoryAnalysis, type StoryNarration, type InsertStoryNarration, type AudioFile, type InsertAudioFile } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, like } from "drizzle-orm";
+import { eq, and, desc, like, lt } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -38,6 +38,36 @@ export interface IStorage {
   
   // Voice Modulation Templates
   getVoiceModulationTemplates(): Promise<any[]>;
+  
+  // ElevenLabs Voice Profiles
+  getUserVoiceProfiles(userId: string): Promise<any[]>;
+  createUserVoiceProfile(profile: any): Promise<any>;
+  updateUserVoiceProfile(id: number, profile: any): Promise<any>;
+  deleteUserVoiceProfile(id: number): Promise<void>;
+  
+  // ElevenLabs Emotion Voices
+  getUserEmotionVoices(userId: string): Promise<any[]>;
+  getUserEmotionVoice(userId: string, emotion: string): Promise<any | undefined>;
+  createUserEmotionVoice(emotionVoice: any): Promise<any>;
+  updateUserEmotionVoice(id: number, emotionVoice: any): Promise<any>;
+  deleteUserEmotionVoice(id: number): Promise<void>;
+  
+  // Voice Generation Cache
+  getVoiceGenerationCache(contentHash: string): Promise<any | undefined>;
+  createVoiceGenerationCache(cache: any): Promise<any>;
+  updateVoiceGenerationCacheAccess(id: number): Promise<void>;
+  cleanupExpiredVoiceCache(): Promise<number>;
+  
+  // Story Analysis Cache
+  getStoryAnalysisCache(contentHash: string): Promise<any | undefined>;
+  createStoryAnalysisCache(cache: any): Promise<any>;
+  updateStoryAnalysisCacheReuse(id: number): Promise<void>;
+  
+  // Enhanced Story Narrations
+  getStoryNarration(userId: string, storyId: number): Promise<any | undefined>;
+  createStoryNarration(narration: any): Promise<any>;
+  updateStoryNarration(id: number, narration: any): Promise<any>;
+  deleteStoryNarration(id: number): Promise<void>;
   
   // Stories
   getPublicStories(filters?: {
@@ -800,6 +830,169 @@ export class DatabaseStorage implements IStorage {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     }));
+  }
+
+  // ElevenLabs Voice Profiles
+  async getUserVoiceProfiles(userId: string): Promise<any[]> {
+    const userVoiceProfiles = await import("@shared/schema").then(m => m.userVoiceProfiles);
+    return await db.select().from(userVoiceProfiles)
+      .where(eq(userVoiceProfiles.userId, userId));
+  }
+
+  async createUserVoiceProfile(profile: any): Promise<any> {
+    const userVoiceProfiles = await import("@shared/schema").then(m => m.userVoiceProfiles);
+    const [created] = await db.insert(userVoiceProfiles).values(profile).returning();
+    return created;
+  }
+
+  async updateUserVoiceProfile(id: number, profile: any): Promise<any> {
+    const userVoiceProfiles = await import("@shared/schema").then(m => m.userVoiceProfiles);
+    const [updated] = await db.update(userVoiceProfiles)
+      .set({ ...profile, updatedAt: new Date() })
+      .where(eq(userVoiceProfiles.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteUserVoiceProfile(id: number): Promise<void> {
+    const userVoiceProfiles = await import("@shared/schema").then(m => m.userVoiceProfiles);
+    await db.delete(userVoiceProfiles).where(eq(userVoiceProfiles.id, id));
+  }
+
+  // ElevenLabs Emotion Voices
+  async getUserEmotionVoices(userId: string): Promise<any[]> {
+    const { userEmotionVoices, userVoiceProfiles } = await import("@shared/schema");
+    return await db.select({
+      id: userEmotionVoices.id,
+      emotion: userEmotionVoices.emotion,
+      elevenLabsVoiceId: userEmotionVoices.elevenLabsVoiceId,
+      status: userEmotionVoices.status,
+      sampleCount: userEmotionVoices.sampleCount,
+      qualityScore: userEmotionVoices.qualityScore,
+      voiceSettings: userEmotionVoices.voiceSettings,
+      lastUsedAt: userEmotionVoices.lastUsedAt,
+      usageCount: userEmotionVoices.usageCount,
+      createdAt: userEmotionVoices.createdAt,
+      updatedAt: userEmotionVoices.updatedAt
+    })
+    .from(userEmotionVoices)
+    .innerJoin(userVoiceProfiles, eq(userEmotionVoices.userVoiceProfileId, userVoiceProfiles.id))
+    .where(eq(userVoiceProfiles.userId, userId));
+  }
+
+  async getUserEmotionVoice(userId: string, emotion: string): Promise<any | undefined> {
+    const { userEmotionVoices, userVoiceProfiles } = await import("@shared/schema");
+    const [result] = await db.select()
+      .from(userEmotionVoices)
+      .innerJoin(userVoiceProfiles, eq(userEmotionVoices.userVoiceProfileId, userVoiceProfiles.id))
+      .where(and(
+        eq(userVoiceProfiles.userId, userId),
+        eq(userEmotionVoices.emotion, emotion)
+      ));
+    return result || undefined;
+  }
+
+  async createUserEmotionVoice(emotionVoice: any): Promise<any> {
+    const userEmotionVoices = await import("@shared/schema").then(m => m.userEmotionVoices);
+    const [created] = await db.insert(userEmotionVoices).values(emotionVoice).returning();
+    return created;
+  }
+
+  async updateUserEmotionVoice(id: number, emotionVoice: any): Promise<any> {
+    const userEmotionVoices = await import("@shared/schema").then(m => m.userEmotionVoices);
+    const [updated] = await db.update(userEmotionVoices)
+      .set({ ...emotionVoice, updatedAt: new Date() })
+      .where(eq(userEmotionVoices.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteUserEmotionVoice(id: number): Promise<void> {
+    const userEmotionVoices = await import("@shared/schema").then(m => m.userEmotionVoices);
+    await db.delete(userEmotionVoices).where(eq(userEmotionVoices.id, id));
+  }
+
+  // Voice Generation Cache
+  async getVoiceGenerationCache(contentHash: string): Promise<any | undefined> {
+    const generatedAudioCache = await import("@shared/schema").then(m => m.generatedAudioCache);
+    const [cached] = await db.select().from(generatedAudioCache)
+      .where(eq(generatedAudioCache.contentHash, contentHash));
+    return cached || undefined;
+  }
+
+  async createVoiceGenerationCache(cache: any): Promise<any> {
+    const generatedAudioCache = await import("@shared/schema").then(m => m.generatedAudioCache);
+    const [created] = await db.insert(generatedAudioCache).values(cache).returning();
+    return created;
+  }
+
+  async updateVoiceGenerationCacheAccess(id: number): Promise<void> {
+    const generatedAudioCache = await import("@shared/schema").then(m => m.generatedAudioCache);
+    await db.update(generatedAudioCache)
+      .set({ 
+        lastAccessedAt: new Date(),
+        accessCount: sql`${generatedAudioCache.accessCount} + 1`
+      })
+      .where(eq(generatedAudioCache.id, id));
+  }
+
+  async cleanupExpiredVoiceCache(): Promise<number> {
+    const generatedAudioCache = await import("@shared/schema").then(m => m.generatedAudioCache);
+    const result = await db.delete(generatedAudioCache)
+      .where(lt(generatedAudioCache.expiresAt, new Date()));
+    return result.rowCount || 0;
+  }
+
+  // Story Analysis Cache
+  async getStoryAnalysisCache(contentHash: string): Promise<any | undefined> {
+    const storyAnalysisCache = await import("@shared/schema").then(m => m.storyAnalysisCache);
+    const [cached] = await db.select().from(storyAnalysisCache)
+      .where(eq(storyAnalysisCache.storyContentHash, contentHash));
+    return cached || undefined;
+  }
+
+  async createStoryAnalysisCache(cache: any): Promise<any> {
+    const storyAnalysisCache = await import("@shared/schema").then(m => m.storyAnalysisCache);
+    const [created] = await db.insert(storyAnalysisCache).values(cache).returning();
+    return created;
+  }
+
+  async updateStoryAnalysisCacheReuse(id: number): Promise<void> {
+    const storyAnalysisCache = await import("@shared/schema").then(m => m.storyAnalysisCache);
+    await db.update(storyAnalysisCache)
+      .set({ reuseCount: (storyAnalysisCache.reuseCount ?? 0) + 1 })
+      .where(eq(storyAnalysisCache.id, id));
+  }
+
+  // Enhanced Story Narrations
+  async getStoryNarration(userId: string, storyId: number): Promise<any | undefined> {
+    const enhancedStoryNarrations = await import("@shared/schema").then(m => m.storyNarrations);
+    const [narration] = await db.select().from(enhancedStoryNarrations)
+      .where(and(
+        eq(enhancedStoryNarrations.userId, userId),
+        eq(enhancedStoryNarrations.storyId, storyId)
+      ));
+    return narration || undefined;
+  }
+
+  async createStoryNarration(narration: any): Promise<any> {
+    const enhancedStoryNarrations = await import("@shared/schema").then(m => m.storyNarrations);
+    const [created] = await db.insert(enhancedStoryNarrations).values(narration).returning();
+    return created;
+  }
+
+  async updateStoryNarration(id: number, narration: any): Promise<any> {
+    const enhancedStoryNarrations = await import("@shared/schema").then(m => m.storyNarrations);
+    const [updated] = await db.update(enhancedStoryNarrations)
+      .set({ ...narration, updatedAt: new Date() })
+      .where(eq(enhancedStoryNarrations.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteStoryNarration(id: number): Promise<void> {
+    const enhancedStoryNarrations = await import("@shared/schema").then(m => m.storyNarrations);
+    await db.delete(enhancedStoryNarrations).where(eq(enhancedStoryNarrations.id, id));
   }
 }
 
