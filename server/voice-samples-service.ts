@@ -108,37 +108,57 @@ export class VoiceSamplesService {
    */
   async saveVoiceSample(
     userId: string,
-    emotion: string,
+    modulationKey: string,
     audioBuffer: Buffer,
     duration: number,
     storyId?: number
   ): Promise<string> {
     try {
+      // Get template to determine modulation type
+      const template = await this.getModulationTemplate(modulationKey);
+      if (!template) {
+        throw new Error(`Template not found for modulation key: ${modulationKey}`);
+      }
+
       // Generate unique filename
       const timestamp = Date.now();
-      const filename = `${userId}_${emotion}_${timestamp}.webm`;
+      const filename = `${userId}_${modulationKey}_${timestamp}.webm`;
       const filePath = path.join(this.audioDir, filename);
       const audioUrl = `/uploads/voice-samples/${filename}`;
 
       // Save file to disk first (database-first architecture)
       await fs.promises.writeFile(filePath, audioBuffer);
 
-      // Create database record
-      await storage.createUserVoiceEmotion({
+      // Create database record using existing schema
+      await storage.createUserVoiceSample({
         userId,
-        emotion,
-        intensity: 5, // Default medium intensity
+        sampleType: template.modulationType, // Maps to the existing sampleType field
+        label: modulationKey, // Maps to the existing label field
         audioUrl,
-        fileName: filename,
-        duration: Math.round(duration),
-        storyIdRecorded: storyId
+        duration: Math.round(duration * 1000), // Convert to milliseconds
+        isCompleted: true
       });
 
-      console.log(`Voice sample saved for user ${userId}, emotion: ${emotion}`);
+      console.log(`Voice sample saved for user ${userId}, modulation: ${modulationKey}, type: ${template.modulationType}`);
       return audioUrl;
     } catch (error) {
       console.error('Error saving voice sample:', error);
       throw new Error('Failed to save voice sample');
+    }
+  }
+
+  /**
+   * Get modulation template by key
+   */
+  private async getModulationTemplate(modulationKey: string): Promise<any> {
+    try {
+      // Query the database for the template
+      const templates = await storage.getVoiceModulationTemplates();
+      const template = templates.find((t: any) => t.modulationKey === modulationKey);
+      return template || null;
+    } catch (error) {
+      console.error('Error fetching modulation template:', error);
+      return null;
     }
   }
 
