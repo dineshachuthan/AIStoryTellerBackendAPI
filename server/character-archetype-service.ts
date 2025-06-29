@@ -1,7 +1,7 @@
 // Service to initialize and manage reusable character archetypes for consistent voice assignment
 import { db } from './db';
-import { characterArchetypes, userCharacterPreferences } from '@shared/schema';
-import type { InsertCharacterArchetype } from '@shared/schema';
+import { characterArchetypes, emotionVoiceProfiles, userCharacterPreferences } from '@shared/schema';
+import type { InsertCharacterArchetype, InsertEmotionVoiceProfile } from '@shared/schema';
 import { eq, and, sql } from 'drizzle-orm';
 
 // Comprehensive character archetypes with voice assignments
@@ -263,81 +263,81 @@ const DEFAULT_CHARACTER_ARCHETYPES: InsertCharacterArchetype[] = [
   }
 ];
 
-// Voice cloning emotion profiles temporarily disabled
-// const DEFAULT_EMOTION_PROFILES: InsertEmotionVoiceProfile[] = [
-//   {
-//     emotion: "wisdom",
-//     characterType: null,
-//     baseVoice: "fable",
-//     speedModifier: 0.8,
-//     styleInstructions: "speak slowly and thoughtfully with natural pauses",
-//     usageCount: 0,
-//     successRate: 1.0
-//   },
-//   {
-//     emotion: "anger",
-//     characterType: "male",
-//     baseVoice: "onyx", 
-//     speedModifier: 1.2,
-//     styleInstructions: "speak with intensity and force",
-//     usageCount: 0,
-//     successRate: 1.0
-//   },
-//   {
-//     emotion: "anger",
-//     characterType: "female",
-//     baseVoice: "nova",
-//     speedModifier: 1.2,
-//     styleInstructions: "speak with sharp intensity",
-//     usageCount: 0,
-//     successRate: 1.0
-//   },
-//   {
-//     emotion: "joy",
-//     characterType: null,
-//     baseVoice: "shimmer",
-//     speedModifier: 1.1,
-//     styleInstructions: "speak with warmth and brightness",
-//     usageCount: 0,
-//     successRate: 1.0
-//   },
-//   {
-//     emotion: "sadness", 
-//     characterType: null,
-//     baseVoice: "nova",
-//     speedModifier: 0.9,
-//     styleInstructions: "speak softly with gentle melancholy",
-//     usageCount: 0,
-//     successRate: 1.0
-//   },
-//   {
-//     emotion: "fear",
-//     characterType: null,
-//     baseVoice: "echo",
-//     speedModifier: 1.3,
-//     styleInstructions: "speak with nervous energy and urgency",
-//     usageCount: 0,
-//     successRate: 1.0
-//   },
-//   {
-//     emotion: "authority",
-//     characterType: "king",
-//     baseVoice: "onyx",
-//     speedModifier: 0.9,
-//     styleInstructions: "speak with commanding authority and gravitas",
-//     usageCount: 0,
-//     successRate: 1.0
-//   },
-//   {
-//     emotion: "authority",
-//     characterType: "queen", 
-//     baseVoice: "nova",
-//     speedModifier: 0.9,
-//     styleInstructions: "speak with regal authority and dignity",
-//     usageCount: 0,
-//     successRate: 1.0
-//   }
-// ];
+// Default emotion-voice profiles for consistent emotional expression
+const DEFAULT_EMOTION_PROFILES: InsertEmotionVoiceProfile[] = [
+  {
+    emotion: "wisdom",
+    characterType: null,
+    baseVoice: "fable",
+    speedModifier: 0.8,
+    styleInstructions: "speak slowly and thoughtfully with natural pauses",
+    usageCount: 0,
+    successRate: 1.0
+  },
+  {
+    emotion: "anger",
+    characterType: "male",
+    baseVoice: "onyx", 
+    speedModifier: 1.2,
+    styleInstructions: "speak with intensity and force",
+    usageCount: 0,
+    successRate: 1.0
+  },
+  {
+    emotion: "anger",
+    characterType: "female",
+    baseVoice: "nova",
+    speedModifier: 1.2,
+    styleInstructions: "speak with sharp intensity",
+    usageCount: 0,
+    successRate: 1.0
+  },
+  {
+    emotion: "joy",
+    characterType: null,
+    baseVoice: "shimmer",
+    speedModifier: 1.1,
+    styleInstructions: "speak with warmth and brightness",
+    usageCount: 0,
+    successRate: 1.0
+  },
+  {
+    emotion: "sadness", 
+    characterType: null,
+    baseVoice: "nova",
+    speedModifier: 0.9,
+    styleInstructions: "speak softly with gentle melancholy",
+    usageCount: 0,
+    successRate: 1.0
+  },
+  {
+    emotion: "fear",
+    characterType: null,
+    baseVoice: "echo",
+    speedModifier: 1.3,
+    styleInstructions: "speak with nervous energy and urgency",
+    usageCount: 0,
+    successRate: 1.0
+  },
+  {
+    emotion: "authority",
+    characterType: "king",
+    baseVoice: "onyx",
+    speedModifier: 0.9,
+    styleInstructions: "speak with commanding authority and gravitas",
+    usageCount: 0,
+    successRate: 1.0
+  },
+  {
+    emotion: "authority",
+    characterType: "queen", 
+    baseVoice: "nova",
+    speedModifier: 0.9,
+    styleInstructions: "speak with regal authority and dignity",
+    usageCount: 0,
+    successRate: 1.0
+  }
+];
 
 export class CharacterArchetypeService {
   
@@ -362,11 +362,11 @@ export class CharacterArchetypeService {
       );
       console.log(`Initialized ${DEFAULT_CHARACTER_ARCHETYPES.length} character archetypes`);
 
-      // Voice cloning emotion profiles temporarily disabled
-      // await withRetry(async () => 
-      //   db.insert(emotionVoiceProfiles).values(DEFAULT_EMOTION_PROFILES)
-      // );
-      // console.log(`Initialized ${DEFAULT_EMOTION_PROFILES.length} emotion voice profiles`);
+      // Insert default emotion profiles with retry
+      await withRetry(async () => 
+        db.insert(emotionVoiceProfiles).values(DEFAULT_EMOTION_PROFILES)
+      );
+      console.log(`Initialized ${DEFAULT_EMOTION_PROFILES.length} emotion voice profiles`);
 
     } catch (error) {
       console.error('Failed to initialize character archetypes:', error);
@@ -439,19 +439,18 @@ export class CharacterArchetypeService {
       });
   }
 
-  // Voice cloning profile method temporarily disabled
-  // async getEmotionVoiceProfile(emotion: string, characterType?: string): Promise<any | null> {
-  //   const [profile] = await db.select()
-  //     .from(emotionVoiceProfiles)
-  //     .where(and(
-  //       eq(emotionVoiceProfiles.emotion, emotion),
-  //       characterType 
-  //         ? eq(emotionVoiceProfiles.characterType, characterType)
-  //         : sql`${emotionVoiceProfiles.characterType} IS NULL`
-  //     ));
-  //   
-  //   return profile || null;
-  // }
+  async getEmotionVoiceProfile(emotion: string, characterType?: string): Promise<any | null> {
+    const [profile] = await db.select()
+      .from(emotionVoiceProfiles)
+      .where(and(
+        eq(emotionVoiceProfiles.emotion, emotion),
+        characterType 
+          ? eq(emotionVoiceProfiles.characterType, characterType)
+          : sql`${emotionVoiceProfiles.characterType} IS NULL`
+      ));
+    
+    return profile || null;
+  }
 
   async updateArchetypeUsage(archetypeId: number): Promise<void> {
     await db.update(characterArchetypes)

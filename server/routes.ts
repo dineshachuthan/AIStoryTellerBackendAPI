@@ -1170,9 +1170,192 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Save user voice emotion to repository (cross-story)
+  app.post("/api/user-voice-emotions", upload.single('audio'), async (req, res) => {
+    try {
+      const { emotion, intensity, storyId } = req.body;
+      const userId = (req.user as any)?.id;
+      const audioFile = req.file;
+      
+      if (!audioFile || !emotion || !userId) {
+        return res.status(400).json({ message: "Audio file, emotion, and user authentication are required" });
+      }
 
+      // Save to user voice emotion repository
+      const timestamp = Date.now();
+      const emotionDir = path.join(process.cwd(), 'persistent-cache', 'user-voice-emotions');
+      await fs.mkdir(emotionDir, { recursive: true });
+      
+      // Prepare file names but don't write files yet (database-first approach)
+      let finalFileName: string;
+      let finalFilePath: string;
+      let processedBuffer: Buffer;
+      
+      if (audioFile.mimetype.includes('webm')) {
+        // Convert webm to high-quality MP3 in memory first
+        const tempWebmFile = path.join(emotionDir, `temp-${timestamp}.webm`);
+        const mp3FileName = `${userId}-${emotion}-${intensity || 5}-${timestamp}.mp3`;
+        const mp3FilePath = path.join(emotionDir, mp3FileName);
+        
+        try {
+          // Save temporary webm file for conversion
+          await fs.writeFile(tempWebmFile, audioFile.buffer);
+          
+          // Convert to MP3 using FFmpeg with aggressive volume amplification
+          const ffmpegCommand = `ffmpeg -i "${tempWebmFile}" -acodec libmp3lame -b:a 192k -ar 44100 -af "volume=20.0" -y "${mp3FilePath}"`;
+          await execAsync(ffmpegCommand);
+          
+          // Read converted file into buffer
+          processedBuffer = await fs.readFile(mp3FilePath);
+          
+          // Clean up temporary files
+          await fs.unlink(tempWebmFile);
+          await fs.unlink(mp3FilePath);
+          
+          finalFileName = mp3FileName;
+          finalFilePath = mp3FilePath;
+          console.log(`Successfully converted webm to MP3 with 20x volume boost: ${mp3FileName}`);
+        } catch (ffmpegError) {
+          console.error('FFmpeg conversion error:', ffmpegError);
+          // Fallback: use original webm
+          finalFileName = `${userId}-${emotion}-${intensity || 5}-${timestamp}.webm`;
+          finalFilePath = path.join(emotionDir, finalFileName);
+          processedBuffer = audioFile.buffer;
+        }
+      } else {
+        // Already MP3 or other format
+        finalFileName = `${userId}-${emotion}-${intensity || 5}-${timestamp}.mp3`;
+        finalFilePath = path.join(emotionDir, finalFileName);
+        processedBuffer = audioFile.buffer;
+      }
+      
+      // DATABASE FIRST: Store in database before writing file
+      await pool.query(`
+        INSERT INTO user_voice_emotions (user_id, emotion, intensity, audio_url, file_name, story_id_recorded, created_at)
+        VALUES ($1, $2, $3, $4, $5, $6, NOW())
+      `, [userId, emotion, parseInt(intensity) || 5, `/api/user-voice-emotions/${finalFileName}`, finalFileName, storyId ? parseInt(storyId) : null]);
+      
+      // Only write file AFTER successful database write
+      await fs.writeFile(finalFilePath, processedBuffer);
 
+      console.log(`Saved user voice emotion: ${emotion} for user ${userId} (converted to MP3)`);
+      res.json({ 
+        message: "Voice emotion saved successfully",
+        emotion,
+        fileName: finalFileName,
+        audioUrl: `/api/user-voice-emotions/files/${finalFileName}`
+      });
+    } catch (error) {
+      console.error("User voice emotion save error:", error);
+      res.status(500).json({ message: "Failed to save voice emotion" });
+    }
+  });
 
+  // Serve user voice emotion files (MUST be before /:userId route to avoid conflicts)
+  app.get("/api/user-voice-emotions/files/:fileName", async (req, res) => {
+    try {
+      const { fileName } = req.params;
+      const filePath = path.join(process.cwd(), 'persistent-cache', 'user-voice-emotions', fileName);
+      
+      try {
+        await fs.access(filePath);
+      } catch {
+        return res.status(404).json({ message: "Voice emotion file not found" });
+      }
+      
+      // Set appropriate content type and headers for audio playback
+      const contentType = fileName.endsWith('.webm') ? 'audio/webm' : 'audio/mpeg';
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Accept-Ranges', 'bytes');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Range');
+      res.setHeader('Cache-Control', 'public, max-age=300'); // 5 minutes cache for audio
+      
+      // Handle range requests for audio streaming
+      const stat = await fs.stat(filePath);
+      const fileSize = stat.size;
+      const range = req.headers.range;
+      
+      if (range) {
+        const parts = range.replace(/bytes=/, "").split("-");
+        const start = parseInt(parts[0], 10);
+        const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+        const chunksize = (end - start) + 1;
+        
+        res.status(206);
+        res.setHeader('Content-Range', `bytes ${start}-${end}/${fileSize}`);
+        res.setHeader('Content-Length', chunksize);
+        
+        const stream = require('fs').createReadStream(filePath, { start, end });
+        stream.pipe(res);
+      } else {
+        res.setHeader('Content-Length', fileSize);
+        res.sendFile(path.resolve(filePath));
+      }
+    } catch (error) {
+      console.error("Voice emotion serve error:", error);
+      res.status(500).json({ message: "Failed to serve voice emotion" });
+    }
+  });
+
+  // Get user voice recordings by emotion
+  app.get("/api/user-voice-emotions/:userId", requireAuth, async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const emotion = req.query.emotion as string;
+      
+      if (!userId) {
+        return res.status(400).json({ message: "User ID required" });
+      }
+
+      // Fix: Use the correct directory where files are actually saved
+      const userVoiceDir = path.join(process.cwd(), 'persistent-cache', 'user-voice-emotions');
+      
+      try {
+        const files = await fs.readdir(userVoiceDir);
+        
+        // Filter files for this user and emotion
+        const emotionPattern = emotion ? `${userId}-${emotion}-` : `${userId}-`;
+        const matchingFiles = files.filter(file => 
+          file.startsWith(emotionPattern) && file.endsWith('.mp3')
+        );
+        
+        // Sort by timestamp (newest first)
+        const sortedFiles = matchingFiles.sort((a, b) => {
+          const getTimestamp = (filename: string) => {
+            const parts = filename.split('-');
+            const lastPart = parts[parts.length - 1];
+            return parseInt(lastPart.split('.')[0] || '0');
+          };
+          return getTimestamp(b) - getTimestamp(a);
+        });
+        
+        const samples = sortedFiles.map(filename => ({
+          emotion: filename.split('-')[1], // Extract emotion from filename
+          audioUrl: `/api/user-voice-emotions/files/${filename}`, // Fix: Use correct endpoint
+          filename: filename,
+          timestamp: filename.split('-').pop()?.split('.')[0]
+        }));
+        
+        res.json({
+          userId,
+          emotion: emotion || 'all',
+          samples
+        });
+      } catch (error) {
+        console.log('No user voice samples found');
+        res.json({
+          userId,
+          emotion: emotion || 'all',
+          samples: []
+        });
+      }
+    } catch (error) {
+      console.error("Failed to get user voice samples:", error);
+      res.status(500).json({ message: "Failed to retrieve voice samples" });
+    }
+  });
 
 
 
@@ -3923,49 +4106,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: 'Failed to check narration capability' });
     }
   });
-
-  // ElevenLabs voice provider test endpoint
-  app.get('/api/voice/test-elevenlabs', requireAuth, async (req, res) => {
-    try {
-      const { VoiceProviderRegistry } = await import('./voice-providers/voice-provider-registry');
-      const registry = VoiceProviderRegistry.getInstance();
-      
-      const provider = registry.getProvider('elevenlabs');
-      if (!provider) {
-        return res.status(404).json({ error: 'ElevenLabs provider not available' });
-      }
-
-      const status = await provider.checkHealth();
-      res.json({
-        provider: 'elevenlabs',
-        status,
-        capabilities: provider.getCapabilities()
-      });
-    } catch (error: any) {
-      console.error('ElevenLabs test error:', error);
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  // Get user's voice profile
-  app.get('/api/user/voice-profile', requireAuth, async (req, res) => {
-    try {
-      const user = (req as any).user;
-      if (!user || !user.id) {
-        return res.status(401).json({ error: 'User not authenticated' });
-      }
-      
-      const profile = await storage.getUserVoiceProfile(user.id);
-      res.json(profile || null);
-    } catch (error: any) {
-      console.error('Error getting voice profile:', error);
-      res.status(500).json({ error: 'Failed to get voice profile' });
-    }
-  });
-
-
-
-
 
   // Removed duplicate endpoint - using the one at line 2308 which now comes first
 

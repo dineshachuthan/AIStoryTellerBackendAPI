@@ -1,8 +1,6 @@
-import { users, localUsers, userProviders, userVoiceSamples, stories, storyCharacters, storyEmotions, characters, conversations, messages, storyCollaborations, storyGroups, storyGroupMembers, characterVoiceAssignments, storyPlaybacks, storyAnalyses, storyNarrations, audioFiles, videoGenerations, emotionTextPrompts, type User, type InsertUser, type UpsertUser, type UserProvider, type InsertUserProvider, type LocalUser, type InsertLocalUser, type UserVoiceSample, type InsertUserVoiceSample, type Story, type InsertStory, type StoryCharacter, type InsertStoryCharacter, type StoryEmotion, type InsertStoryEmotion, type Character, type InsertCharacter, type Conversation, type InsertConversation, type Message, type InsertMessage, type StoryCollaboration, type InsertStoryCollaboration, type StoryGroup, type InsertStoryGroup, type StoryGroupMember, type InsertStoryGroupMember, type CharacterVoiceAssignment, type InsertCharacterVoiceAssignment, type StoryPlayback, type InsertStoryPlayback, type StoryAnalysis, type InsertStoryAnalysis, type StoryNarration, type InsertStoryNarration, type AudioFile, type InsertAudioFile } from "@shared/schema";
+import { users, localUsers, userProviders, userVoiceSamples, stories, storyCharacters, storyEmotions, characters, conversations, messages, storyCollaborations, storyGroups, storyGroupMembers, characterVoiceAssignments, storyPlaybacks, storyAnalyses, storyNarrations, audioFiles, videoGenerations, type User, type InsertUser, type UpsertUser, type UserProvider, type InsertUserProvider, type LocalUser, type InsertLocalUser, type UserVoiceSample, type InsertUserVoiceSample, type Story, type InsertStory, type StoryCharacter, type InsertStoryCharacter, type StoryEmotion, type InsertStoryEmotion, type Character, type InsertCharacter, type Conversation, type InsertConversation, type Message, type InsertMessage, type StoryCollaboration, type InsertStoryCollaboration, type StoryGroup, type InsertStoryGroup, type StoryGroupMember, type InsertStoryGroupMember, type CharacterVoiceAssignment, type InsertCharacterVoiceAssignment, type StoryPlayback, type InsertStoryPlayback, type StoryAnalysis, type InsertStoryAnalysis, type StoryNarration, type InsertStoryNarration, type AudioFile, type InsertAudioFile } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, like } from "drizzle-orm";
-import path from "path";
-import fs from "fs/promises";
 
 export interface IStorage {
   // Users
@@ -28,11 +26,6 @@ export interface IStorage {
   updateUserVoiceSample(id: number, sample: Partial<InsertUserVoiceSample>): Promise<void>;
   deleteUserVoiceSample(id: number): Promise<void>;
   getUserVoiceProgress(userId: string): Promise<{ completed: number; total: number; percentage: number }>;
-  
-  // Voice Profiles
-  getUserVoiceProfile(userId: string): Promise<any>;
-  createUserVoiceProfile(profile: any): Promise<any>;
-  updateUserVoiceProfile(userId: string, updates: any): Promise<any>;
   
   // Stories
   getPublicStories(filters?: {
@@ -151,15 +144,6 @@ export interface IStorage {
   saveAudioFile(audioData: InsertAudioFile): Promise<AudioFile>;
   getAudioFile(id: number): Promise<AudioFile | undefined>;
   deleteAudioFile(id: number): Promise<void>;
-
-
-
-  // Emotion Text Prompts
-  getEmotionTextPrompts(): Promise<any[]>;
-  initializeDefaultEmotionPrompts(): Promise<void>;
-  getEmotionTextPrompt(emotion: string): Promise<any | null>;
-  createEmotionTextPrompt(promptData: any): Promise<any>;
-  updateEmotionTextPrompt(emotion: string, updates: any): Promise<any | null>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -751,177 +735,6 @@ export class DatabaseStorage implements IStorage {
   async deleteAudioFile(id: number): Promise<void> {
     await db.delete(audioFiles).where(eq(audioFiles.id, id));
   }
-
-  // Voice Profiles
-  async getUserVoiceProfile(userId: string): Promise<any> {
-    const result = await db.execute({
-      sql: 'SELECT * FROM user_voice_profiles WHERE user_id = $1 AND is_active = true LIMIT 1',
-      args: [userId]
-    });
-    return result.rows[0] || null;
-  }
-
-  async createUserVoiceProfile(profile: any): Promise<any> {
-    const result = await db.execute({
-      sql: `INSERT INTO user_voice_profiles 
-            (user_id, elevenlabs_voice_id, voice_name, training_status, training_progress, sample_count, quality_score, settings) 
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
-            RETURNING *`,
-      args: [
-        profile.userId,
-        profile.elevenLabsVoiceId,
-        profile.voiceName,
-        profile.trainingStatus || 'pending',
-        profile.trainingProgress || 0,
-        profile.sampleCount || 0,
-        profile.qualityScore || null,
-        JSON.stringify(profile.settings || {})
-      ]
-    });
-    return result.rows[0];
-  }
-
-  async updateUserVoiceProfile(userId: string, updates: any): Promise<any> {
-    const setParts = [];
-    const args = [];
-    let argIndex = 1;
-
-    if (updates.elevenLabsVoiceId !== undefined) {
-      setParts.push(`elevenlabs_voice_id = $${argIndex++}`);
-      args.push(updates.elevenLabsVoiceId);
-    }
-    if (updates.trainingStatus !== undefined) {
-      setParts.push(`training_status = $${argIndex++}`);
-      args.push(updates.trainingStatus);
-    }
-    if (updates.trainingProgress !== undefined) {
-      setParts.push(`training_progress = $${argIndex++}`);
-      args.push(updates.trainingProgress);
-    }
-    if (updates.sampleCount !== undefined) {
-      setParts.push(`sample_count = $${argIndex++}`);
-      args.push(updates.sampleCount);
-    }
-    if (updates.qualityScore !== undefined) {
-      setParts.push(`quality_score = $${argIndex++}`);
-      args.push(updates.qualityScore);
-    }
-    if (updates.settings !== undefined) {
-      setParts.push(`settings = $${argIndex++}`);
-      args.push(JSON.stringify(updates.settings));
-    }
-
-    setParts.push(`updated_at = NOW()`);
-    if (updates.trainingStatus === 'completed') {
-      setParts.push(`last_trained_at = NOW()`);
-    }
-
-    args.push(userId);
-
-    const result = await db.execute({
-      sql: `UPDATE user_voice_profiles SET ${setParts.join(', ')} WHERE user_id = $${argIndex} AND is_active = true RETURNING *`,
-      args
-    });
-    return result.rows[0] || null;
-  }
-
-  // Emotion text prompts methods
-  async getEmotionTextPrompts(): Promise<any[]> {
-    try {
-      const result = await db.select().from(emotionTextPrompts).where(eq(emotionTextPrompts.isActive, true));
-      
-      // If no prompts exist, initialize with default data
-      if (result.length === 0) {
-        await this.initializeDefaultEmotionPrompts();
-        return await db.select().from(emotionTextPrompts).where(eq(emotionTextPrompts.isActive, true));
-      }
-      
-      return result;
-    } catch (error) {
-      console.error('Error getting emotion text prompts:', error);
-      return [];
-    }
-  }
-
-  async initializeDefaultEmotionPrompts(): Promise<void> {
-    const defaultPrompts = [
-      {
-        emotion: 'happy',
-        promptText: 'Say "I am so happy today!" with genuine joy and excitement',
-        description: 'Express joy and excitement in your voice',
-        category: 'primary'
-      },
-      {
-        emotion: 'sad',
-        promptText: 'Say "I feel really sad about this" with a melancholic tone',
-        description: 'Express sadness and melancholy in your voice',
-        category: 'primary'
-      },
-      {
-        emotion: 'angry',
-        promptText: 'Say "This makes me so angry!" with frustration and intensity',
-        description: 'Express anger and frustration in your voice',
-        category: 'primary'
-      },
-      {
-        emotion: 'calm',
-        promptText: 'Say "I feel very calm and peaceful" with a serene, relaxed tone',
-        description: 'Express calmness and tranquility in your voice',
-        category: 'primary'
-      },
-      {
-        emotion: 'fearful',
-        promptText: 'Say "I am really scared and nervous" with fear and trembling in your voice',
-        description: 'Express fear and nervousness in your voice',
-        category: 'primary'
-      }
-    ];
-
-    try {
-      for (const prompt of defaultPrompts) {
-        await db.insert(emotionTextPrompts)
-          .values(prompt)
-          .onConflictDoNothing();
-      }
-    } catch (error) {
-      console.error('Error initializing emotion prompts:', error);
-    }
-  }
-
-  async getEmotionTextPrompt(emotion: string): Promise<any | null> {
-    try {
-      const result = await db.select().from(emotionTextPrompts).where(eq(emotionTextPrompts.emotion, emotion));
-      return result[0] || null;
-    } catch (error) {
-      console.error('Error getting emotion text prompt:', error);
-      return null;
-    }
-  }
-
-  async createEmotionTextPrompt(promptData: any): Promise<any> {
-    try {
-      const result = await db.insert(emotionTextPrompts).values(promptData).returning();
-      return result[0];
-    } catch (error) {
-      console.error('Error creating emotion text prompt:', error);
-      throw error;
-    }
-  }
-
-  async updateEmotionTextPrompt(emotion: string, updates: any): Promise<any | null> {
-    try {
-      const result = await db.update(emotionTextPrompts)
-        .set(updates)
-        .where(eq(emotionTextPrompts.emotion, emotion))
-        .returning();
-      return result[0] || null;
-    } catch (error) {
-      console.error('Error updating emotion text prompt:', error);
-      return null;
-    }
-  }
-
-
 }
 
 export const storage = new DatabaseStorage();
