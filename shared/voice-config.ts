@@ -59,7 +59,7 @@ export const VOICE_PROVIDERS: Record<string, VoiceProviderConfig> = {
     priority: 1,
     apiConfig: {
       baseUrl: 'https://api.elevenlabs.io/v1',
-      apiKey: process.env.ELEVENLABS_API_KEY || '',
+      apiKey: '', // Set server-side only
       model: 'eleven_monolingual_v1',
       version: 'v1'
     },
@@ -87,7 +87,7 @@ export const VOICE_PROVIDERS: Record<string, VoiceProviderConfig> = {
     priority: 2,
     apiConfig: {
       baseUrl: 'https://api.openai.com/v1',
-      apiKey: process.env.OPENAI_API_KEY || '',
+      apiKey: '', // Set server-side only
       model: 'tts-1'
     },
     capabilities: {
@@ -300,4 +300,11 @@ export function getAllEmotionConfigs(): EmotionVoiceConfig[] {
 
 export function getEmotionsByCategory(category: 'basic' | 'advanced' | 'specialized'): EmotionVoiceConfig[] {
   return EMOTION_VOICE_CONFIGS.filter(config => config.category === category);
+}
+
+export function getPriorityEmotions(): string[] {
+  return EMOTION_VOICE_CONFIGS
+    .filter(config => config.category === 'basic')
+    .slice(0, 5) // Limit to first 5 basic emotions
+    .map(config => config.emotion);
 }

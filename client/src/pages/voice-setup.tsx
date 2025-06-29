@@ -12,7 +12,7 @@ import { ConfigurableAudioRecorder } from "@/lib/audioRecorder";
 import { AudioConfigManager } from "@/lib/audioConfig";
 import { DEFAULT_PLATFORM_CONFIG } from "@shared/audioConfig";
 import { EmotionVoiceRecorder } from "@/components/ui/emotion-voice-recorder";
-import { getEmotionConfig } from "@shared/voice-config";
+import { getPriorityEmotions } from "@shared/voice-config";
 
 interface VoiceSample {
   label: string;
@@ -345,21 +345,52 @@ export default function VoiceSetup() {
 
           {/* Completion Message */}
           {progress.percentage === 100 && (
-            <Card className="bg-green-900/20 border-green-500/30 mt-4">
-              <CardContent className="p-4 text-center">
-                <Check className="w-12 h-12 text-green-400 mx-auto mb-2" />
-                <h3 className="text-green-400 font-semibold">Voice Profile Complete!</h3>
-                <p className="text-gray-300 text-sm mt-1">
-                  You can now upload and narrate stories with your personal voice library.
-                </p>
-                <Button
-                  onClick={() => setLocation("/upload-story")}
-                  className="bg-green-600 hover:bg-green-500 mt-4"
-                >
-                  Create Your First Story
-                </Button>
-              </CardContent>
-            </Card>
+            <div className="space-y-4">
+              <Card className="bg-green-900/20 border-green-500/30 mt-4">
+                <CardContent className="p-4 text-center">
+                  <Check className="w-12 h-12 text-green-400 mx-auto mb-2" />
+                  <h3 className="text-green-400 font-semibold">Voice Profile Complete!</h3>
+                  <p className="text-gray-300 text-sm mt-1">
+                    You can now upload and narrate stories with your personal voice library.
+                  </p>
+                  <Button
+                    onClick={() => setLocation("/upload-story")}
+                    className="bg-green-600 hover:bg-green-500 mt-4"
+                  >
+                    Create Your First Story
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Emotion Voice Cloning Section */}
+              <Card className="bg-dark-card border-gray-800">
+                <CardHeader>
+                  <CardTitle className="text-dark-text">Emotion Voice Cloning</CardTitle>
+                  <CardDescription className="text-gray-text">
+                    Enhance your voice clone with emotion-specific samples for more expressive storytelling
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-3">
+                    {getEmotionConfig().priority.map((emotion) => (
+                      <EmotionVoiceRecorder
+                        key={emotion}
+                        emotion={emotion}
+                        intensity={5}
+                        onRecordingComplete={(audioBlob, audioUrl) => {
+                          toast({
+                            title: 'Emotion Sample Recorded',
+                            description: `${emotion} emotion sample saved successfully`
+                          });
+                          refetchVoiceData();
+                        }}
+                        className="w-full"
+                      />
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           )}
         </div>
       </div>
