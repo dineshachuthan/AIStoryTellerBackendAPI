@@ -4501,6 +4501,160 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Phase 6: API Integration Endpoints
+
+  // Enhanced Story Narration with Voice Cloning
+  app.post('/api/stories/:id/enhanced-narration', requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any)?.id;
+      const storyId = parseInt(req.params.id);
+      
+      if (!userId || isNaN(storyId)) {
+        return res.status(400).json({ message: 'Invalid parameters' });
+      }
+
+      const { enhancedStoryNarrator } = await import('./enhanced-story-narrator');
+      
+      // Check if user has voice clone ready
+      const { voiceSelectionService } = await import('./voice-selection-service');
+      const stats = await voiceSelectionService.getVoiceSelectionStats(userId);
+      
+      if (!stats.readyForNarration) {
+        return res.status(400).json({ 
+          message: 'Voice clone not ready for narration. Please record more voice samples.',
+          stats
+        });
+      }
+
+      // Generate enhanced narration
+      const result = await enhancedStoryNarrator.generateStoryNarration(storyId, userId, {
+        useUserVoice: true,
+        includeNarrator: true
+      });
+      
+      res.json(result);
+    } catch (error: any) {
+      console.error('Error generating enhanced narration:', error);
+      res.status(500).json({ message: 'Failed to generate narration', error: error.message });
+    }
+  });
+
+  // Voice Selection Statistics & Readiness
+  app.get('/api/voice-selection/stats', requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any)?.id;
+      if (!userId) {
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
+
+      const { voiceSelectionService } = await import('./voice-selection-service');
+      const stats = await voiceSelectionService.getVoiceSelectionStats(userId);
+      
+      res.json(stats);
+    } catch (error: any) {
+      console.error('Error fetching voice selection stats:', error);
+      res.status(500).json({ message: 'Failed to fetch voice selection stats' });
+    }
+  });
+
+  // Audio Cache Statistics & Management
+  app.get('/api/audio-cache/stats', requireAuth, async (req, res) => {
+    try {
+      const { audioCacheService } = await import('./audio-cache-service');
+      const stats = await audioCacheService.getCacheStats();
+      
+      res.json(stats);
+    } catch (error: any) {
+      console.error('Error fetching cache stats:', error);
+      res.status(500).json({ message: 'Failed to fetch cache stats' });
+    }
+  });
+
+  // Clean Audio Cache
+  app.post('/api/audio-cache/cleanup', requireAuth, async (req, res) => {
+    try {
+      const { audioCacheService } = await import('./audio-cache-service');
+      const result = await audioCacheService.cleanupCache();
+      
+      res.json(result);
+    } catch (error: any) {
+      console.error('Error cleaning cache:', error);
+      res.status(500).json({ message: 'Failed to clean cache' });
+    }
+  });
+
+  // Cost Tracking & API Usage
+  app.get('/api/narration/cost-tracking', requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any)?.id;
+      if (!userId) {
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
+
+      // Get user's narration history with cost estimates
+      const narrations = await storage.getUserStoryNarrations(userId);
+      
+      let totalApiCalls = 0;
+      let cachedCalls = 0;
+      let estimatedCost = 0;
+      
+      for (const narration of narrations) {
+        if (narration.segmentCount) {
+          totalApiCalls += narration.segmentCount;
+          cachedCalls += Math.round(narration.segmentCount * (narration.cacheHitRate || 0));
+          estimatedCost += (narration.segmentCount * 0.002); // Estimated $0.002 per segment
+        }
+      }
+      
+      const savings = cachedCalls * 0.002;
+      
+      res.json({
+        totalNarrations: narrations.length,
+        totalApiCalls,
+        cachedCalls,
+        estimatedCost: Math.round(estimatedCost * 100) / 100,
+        estimatedSavings: Math.round(savings * 100) / 100,
+        cacheEfficiency: totalApiCalls > 0 ? Math.round((cachedCalls / totalApiCalls) * 100) : 0
+      });
+    } catch (error: any) {
+      console.error('Error fetching cost tracking:', error);
+      res.status(500).json({ message: 'Failed to fetch cost tracking' });
+    }
+  });
+
+  // Narration Progress Tracking
+  app.get('/api/narration/:narrationId/progress', requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any)?.id;
+      const narrationId = parseInt(req.params.narrationId);
+      
+      if (!userId || isNaN(narrationId)) {
+        return res.status(400).json({ message: 'Invalid parameters' });
+      }
+
+      const narration = await storage.getStoryNarration(narrationId);
+      
+      if (!narration || narration.userId !== userId) {
+        return res.status(404).json({ message: 'Narration not found' });
+      }
+      
+      res.json({
+        id: narration.id,
+        status: narration.generationStatus,
+        progress: narration.generationStatus === 'completed' ? 100 : 
+                 narration.generationStatus === 'processing' ? 50 : 0,
+        segmentCount: narration.segmentCount,
+        duration: narration.duration,
+        audioUrl: narration.audioUrl,
+        emotionVoicesUsed: narration.emotionVoicesUsed,
+        cacheHitRate: narration.cacheHitRate
+      });
+    } catch (error: any) {
+      console.error('Error fetching narration progress:', error);
+      res.status(500).json({ message: 'Failed to fetch narration progress' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

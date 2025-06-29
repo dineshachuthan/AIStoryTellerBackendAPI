@@ -48,6 +48,16 @@ export interface IStorage {
   createUserVoiceProfile(profile: any): Promise<any>;
   updateUserVoiceProfile(id: number, profile: any): Promise<any>;
   deleteUserVoiceProfile(id: number): Promise<void>;
+
+  // Audio Cache Methods
+  getAudioCacheEntry(contentHash: string): Promise<any | null>;
+  createAudioCacheEntry(entry: any): Promise<any>;
+  updateAudioCacheUsage(id: number): Promise<void>;
+  deleteAudioCacheEntry(id: number): Promise<void>;
+  getAudioCacheStats(): Promise<any>;
+  getExpiredAudioCacheEntries(maxAge: number): Promise<any[]>;
+  getLeastRecentlyUsedAudioCache(limitMB: number): Promise<any[]>;
+  clearAudioCache(): Promise<void>;
   
   // ElevenLabs Emotion Voices
   getUserEmotionVoices(userId: string): Promise<any[]>;
