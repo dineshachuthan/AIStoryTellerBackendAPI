@@ -12,7 +12,7 @@ import { EmotionVoiceRecorder } from '@/components/ui/emotion-voice-recorder';
 import { AppTopNavigation } from '@/components/app-top-navigation';
 import { Mic, Play, Pause, Check, AlertCircle, Settings, TestTube } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { EmotionConfig } from '@shared/voice-config';
+import { getEmotionConfig } from '@shared/voice-config';
 
 interface VoiceProfile {
   id: number;
