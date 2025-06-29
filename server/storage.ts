@@ -200,6 +200,23 @@ export interface IStorage {
   saveAudioFile(audioData: InsertAudioFile): Promise<AudioFile>;
   getAudioFile(id: number): Promise<AudioFile | undefined>;
   deleteAudioFile(id: number): Promise<void>;
+
+  // Voice Cloning Integration - ElevenLabs
+  getUserVoiceProfile(userId: string): Promise<any | undefined>;
+  createUserVoiceProfile(userId: string, profileData: any): Promise<any>;
+  updateUserVoiceProfile(userId: string, updates: any): Promise<void>;
+  
+  // Audio Cache System
+  getAudioCacheEntry(contentHash: string): Promise<any | undefined>;
+  createAudioCacheEntry(cacheData: any): Promise<any>;
+  updateAudioCacheUsage(id: number): Promise<void>;
+  deleteAudioCacheEntry(id: number): Promise<void>;
+  getAudioCacheStats(): Promise<any>;
+  getExpiredAudioCacheEntries(maxAge: number): Promise<any[]>;
+  
+  // Story Narrations Enhanced
+  getStoryNarration(storyId: number): Promise<any | undefined>;
+  createStoryNarrationRecord(narrationData: any): Promise<any>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1032,6 +1049,100 @@ export class DatabaseStorage implements IStorage {
   async deleteStoryNarration(id: number): Promise<void> {
     const enhancedStoryNarrations = await import("@shared/schema").then(m => m.storyNarrations);
     await db.delete(enhancedStoryNarrations).where(eq(enhancedStoryNarrations.id, id));
+  }
+
+  // Voice Cloning Integration - ElevenLabs methods
+  async getUserVoiceProfile(userId: string): Promise<any | undefined> {
+    const userVoiceProfiles = await import("@shared/schema").then(m => m.userVoiceProfiles);
+    const [profile] = await db.select().from(userVoiceProfiles)
+      .where(eq(userVoiceProfiles.userId, userId));
+    return profile || undefined;
+  }
+
+  async createUserVoiceProfile(userId: string, profileData: any): Promise<any> {
+    const userVoiceProfiles = await import("@shared/schema").then(m => m.userVoiceProfiles);
+    const [created] = await db.insert(userVoiceProfiles).values({
+      userId,
+      ...profileData,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }).returning();
+    return created;
+  }
+
+  async updateUserVoiceProfile(userId: string, updates: any): Promise<void> {
+    const userVoiceProfiles = await import("@shared/schema").then(m => m.userVoiceProfiles);
+    await db.update(userVoiceProfiles)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(userVoiceProfiles.userId, userId));
+  }
+
+  // Audio Cache System methods
+  async getAudioCacheEntry(contentHash: string): Promise<any | undefined> {
+    const generatedAudioCache = await import("@shared/schema").then(m => m.generatedAudioCache);
+    const [entry] = await db.select().from(generatedAudioCache)
+      .where(eq(generatedAudioCache.contentHash, contentHash));
+    return entry || undefined;
+  }
+
+  async createAudioCacheEntry(cacheData: any): Promise<any> {
+    const generatedAudioCache = await import("@shared/schema").then(m => m.generatedAudioCache);
+    const [created] = await db.insert(generatedAudioCache).values({
+      ...cacheData,
+      createdAt: new Date(),
+      lastAccessedAt: new Date()
+    }).returning();
+    return created;
+  }
+
+  async updateAudioCacheUsage(id: number): Promise<void> {
+    const generatedAudioCache = await import("@shared/schema").then(m => m.generatedAudioCache);
+    await db.update(generatedAudioCache)
+      .set({
+        lastAccessedAt: new Date(),
+        accessCount: sql`${generatedAudioCache.accessCount} + 1`
+      })
+      .where(eq(generatedAudioCache.id, id));
+  }
+
+  async deleteAudioCacheEntry(id: number): Promise<void> {
+    const generatedAudioCache = await import("@shared/schema").then(m => m.generatedAudioCache);
+    await db.delete(generatedAudioCache).where(eq(generatedAudioCache.id, id));
+  }
+
+  async getAudioCacheStats(): Promise<any> {
+    const generatedAudioCache = await import("@shared/schema").then(m => m.generatedAudioCache);
+    const [stats] = await db.select({
+      totalEntries: sql`count(*)`,
+      totalSizeBytes: sql`sum(${generatedAudioCache.fileSizeBytes})`,
+      avgAccessCount: sql`avg(${generatedAudioCache.accessCount})`
+    }).from(generatedAudioCache);
+    return stats || { totalEntries: 0, totalSizeBytes: 0, avgAccessCount: 0 };
+  }
+
+  async getExpiredAudioCacheEntries(maxAge: number): Promise<any[]> {
+    const generatedAudioCache = await import("@shared/schema").then(m => m.generatedAudioCache);
+    const cutoffDate = new Date(Date.now() - maxAge);
+    return await db.select().from(generatedAudioCache)
+      .where(lt(generatedAudioCache.lastAccessedAt, cutoffDate));
+  }
+
+  // Story Narrations Enhanced methods
+  async getStoryNarration(storyId: number): Promise<any | undefined> {
+    const enhancedStoryNarrations = await import("@shared/schema").then(m => m.storyNarrations);
+    const [narration] = await db.select().from(enhancedStoryNarrations)
+      .where(eq(enhancedStoryNarrations.storyId, storyId));
+    return narration || undefined;
+  }
+
+  async createStoryNarrationRecord(narrationData: any): Promise<any> {
+    const enhancedStoryNarrations = await import("@shared/schema").then(m => m.storyNarrations);
+    const [created] = await db.insert(enhancedStoryNarrations).values({
+      ...narrationData,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }).returning();
+    return created;
   }
 }
 
