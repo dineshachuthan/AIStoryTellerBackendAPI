@@ -283,6 +283,17 @@ export function EnhancedVoiceRecorder({
             📖 Read this text{emotionDescription ? ` in ${emotionDescription.toLowerCase()}` : ''}
           </div>
           
+          {/* Progress indicator during recording - positioned under title */}
+          {recordingState === 'recording' && (
+            <div className="mb-3">
+              <div className="flex justify-between text-xs text-gray-400 mb-1">
+                <span>{formatTime(recordingTime)}</span>
+                <span>{formatTime(maxRecordingTime)}</span>
+              </div>
+              <Progress value={progressPercentage} className="h-1 bg-gray-700" />
+            </div>
+          )}
+          
           <div className="flex items-start space-x-4">
             
             {/* Recording Button */}
@@ -364,16 +375,7 @@ export function EnhancedVoiceRecorder({
                 <span className="italic text-blue-200">"{sampleText || 'Sample text not provided'}"</span>
               </div>
 
-              {/* Progress indicator only during recording */}
-              {recordingState === 'recording' && (
-                <div className="mt-2">
-                  <div className="flex justify-between text-xs text-gray-400 mb-1">
-                    <span>{formatTime(recordingTime)}</span>
-                    <span>{formatTime(maxRecordingTime)}</span>
-                  </div>
-                  <Progress value={progressPercentage} className="h-2 bg-gray-700" />
-                </div>
-              )}
+
             </div>
           </div>
         </div>
