@@ -141,8 +141,12 @@ export function EnhancedVoiceRecorder({
       });
       
       const audioUrl = URL.createObjectURL(audioBlob);
-      setTempRecording({ blob: audioBlob, url: audioUrl });
-      setRecordingState('recorded');
+      
+      // Use requestAnimationFrame to prevent flickering during state transition
+      requestAnimationFrame(() => {
+        setTempRecording({ blob: audioBlob, url: audioUrl });
+        setRecordingState('recorded');
+      });
       
       stream.getTracks().forEach(track => track.stop());
     };
@@ -163,6 +167,16 @@ export function EnhancedVoiceRecorder({
 
   const stopRecording = () => {
     if (timerRef.current) clearInterval(timerRef.current);
+    
+    // Smooth transition for equalizer before stopping
+    if (equalizerIntervalRef.current) {
+      clearInterval(equalizerIntervalRef.current);
+      // Gradually reduce equalizer bars to prevent abrupt stop
+      setTimeout(() => {
+        setEqualizerBars(Array(8).fill(1));
+      }, 100);
+    }
+    
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
       mediaRecorderRef.current.stop();
     }
