@@ -3,11 +3,19 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { AudioLines, LogOut, User } from "lucide-react";
+import { AudioLines, LogOut, User, Loader2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 export function AppTopNavigation() {
   const [, setLocation] = useLocation();
   const { user, logout } = useAuth();
+
+  // Get session-based voice cloning status
+  const { data: voiceCloningStatus } = useQuery({
+    queryKey: ["/api/voice-cloning/session-status"],
+    enabled: !!user,
+    refetchInterval: 3000, // Check every 3 seconds for cloning progress
+  });
 
   const getUserInitials = () => {
     if (!user) return 'U';
@@ -32,13 +40,25 @@ export function AppTopNavigation() {
         
         <div className="flex items-center space-x-3">
           <Button
-            onClick={() => setLocation("/voice-setup")}
+            onClick={() => {
+              // Users can freely navigate even during cloning
+              setLocation("/voice-samples");
+            }}
             variant="outline"
             size="sm"
-            className="border-tiktok-cyan text-tiktok-cyan hover:bg-tiktok-cyan/20"
+            className={`${
+              voiceCloningStatus?.isAnyCloning 
+                ? "border-orange-500 text-orange-500 hover:bg-orange-500/20" 
+                : "border-tiktok-cyan text-tiktok-cyan hover:bg-tiktok-cyan/20"
+            }`}
+            title={voiceCloningStatus?.isAnyCloning ? "ElevenLabs voice cloning in progress (you can still navigate)" : "Record voice samples for personalized narration"}
           >
-            <AudioLines className="w-4 h-4 mr-2" />
-            Voice Samples
+            {voiceCloningStatus?.isAnyCloning ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <AudioLines className="w-4 h-4 mr-2" />
+            )}
+            {voiceCloningStatus?.navigationButtonLabel || "Voice Samples"}
           </Button>
 
           <Button

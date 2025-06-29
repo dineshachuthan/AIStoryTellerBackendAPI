@@ -4226,31 +4226,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
         usageCount: 0
       });
 
-      // AUTOMATIC ELEVENLABS TRAINING TRIGGER
-      // Check if we should trigger voice training after this new sample
+      // SESSION-BASED ELEVENLABS TRAINING TRIGGER
       try {
-        const { voiceTrainingService } = await import('./voice-training-service');
-        const shouldTrigger = await voiceTrainingService.shouldTriggerTraining(userId);
+        const { VoiceCloningSessionManager } = await import('./voice-cloning-session-manager');
         
-        if (shouldTrigger) {
-          console.log(`🎯 Triggering automatic ElevenLabs voice training for user ${userId} - reached 5 sample threshold`);
+        // Determine category from modulation key
+        const category = VoiceCloningSessionManager.getCategoryFromModulationKey(modulationKey);
+        
+        // Increment session counter for this category
+        VoiceCloningSessionManager.incrementCategoryCounter(req, category);
+        
+        // Check if threshold reached for this category
+        if (VoiceCloningSessionManager.shouldTriggerCloning(req, category)) {
+          console.log(`🎯 Category '${category}' reached 5 samples threshold - triggering ElevenLabs cloning`);
           
-          // Trigger training asynchronously (don't block the response)
+          // Set cloning in progress (disables voice samples button)
+          VoiceCloningSessionManager.setCloningInProgress(req, category);
+          
+          // Trigger ElevenLabs training asynchronously
+          const { voiceTrainingService } = await import('./voice-training-service');
           voiceTrainingService.trainUserVoice(userId)
             .then(result => {
               if (result.success) {
-                console.log(`✅ ElevenLabs training completed for user ${userId}, voice ID: ${result.voiceId}`);
+                console.log(`✅ ElevenLabs cloning completed for user ${userId}, category '${category}', voice ID: ${result.voiceId}`);
+                
+                // Complete cloning process (resets counter, enables button)
+                VoiceCloningSessionManager.completeCategoryCloning(req, category, true);
               } else {
-                console.error(`❌ ElevenLabs training failed for user ${userId}: ${result.error}`);
+                console.error(`❌ ElevenLabs cloning failed for user ${userId}, category '${category}': ${result.error}`);
+                VoiceCloningSessionManager.completeCategoryCloning(req, category, false);
               }
             })
             .catch(error => {
-              console.error(`❌ ElevenLabs training error for user ${userId}:`, error);
+              console.error(`❌ ElevenLabs cloning error for user ${userId}, category '${category}':`, error);
+              VoiceCloningSessionManager.completeCategoryCloning(req, category, false);
             });
         }
       } catch (error) {
-        console.error('Error checking/triggering voice training:', error);
-        // Don't fail the request if training check fails
+        console.error('Error in session-based voice cloning trigger:', error);
+        // Don't fail the request if session management fails
       }
       
       res.json(modulation);
@@ -4392,6 +4406,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error('Error fetching voice training status:', error);
       res.status(500).json({ message: 'Failed to fetch training status' });
+    }
+  });
+
+  // SESSION-BASED VOICE CLONING MANAGEMENT ENDPOINTS
+
+  // Initialize session voice cloning data (called on login)
+  app.post('/api/voice-cloning/initialize-session', requireAuth, async (req, res) => {
+    try {
+      const { VoiceCloningSessionManager } = await import('./voice-cloning-session-manager');
+      const sessionData = await VoiceCloningSessionManager.initializeSessionData(req);
+      res.json({
+        success: true,
+        sessionData,
+        navigationButtonLabel: VoiceCloningSessionManager.getNavigationButtonLabel(req)
+      });
+    } catch (error: any) {
+      console.error('Error initializing voice cloning session:', error);
+      res.status(500).json({ message: 'Failed to initialize session data' });
+    }
+  });
+
+  // Get current session voice cloning status
+  app.get('/api/voice-cloning/session-status', requireAuth, async (req, res) => {
+    try {
+      const { VoiceCloningSessionManager } = await import('./voice-cloning-session-manager');
+      const sessionData = VoiceCloningSessionManager.getSessionData(req);
+      const isAnyCloning = VoiceCloningSessionManager.isAnyCategoryCloning(req);
+      const navigationButtonLabel = VoiceCloningSessionManager.getNavigationButtonLabel(req);
+      
+      res.json({
+        sessionData,
+        isAnyCloning,
+        navigationButtonLabel,
+        voiceSamplesButtonDisabled: isAnyCloning
+      });
+    } catch (error: any) {
+      console.error('Error fetching voice cloning session status:', error);
+      res.status(500).json({ message: 'Failed to fetch session status' });
     }
   });
 
