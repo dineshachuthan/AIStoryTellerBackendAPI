@@ -1,6 +1,6 @@
 import { users, localUsers, userProviders, userVoiceSamples, stories, storyCharacters, storyEmotions, characters, conversations, messages, storyCollaborations, storyGroups, storyGroupMembers, characterVoiceAssignments, storyPlaybacks, storyAnalyses, storyNarrations, audioFiles, videoGenerations, type User, type InsertUser, type UpsertUser, type UserProvider, type InsertUserProvider, type LocalUser, type InsertLocalUser, type UserVoiceSample, type InsertUserVoiceSample, type Story, type InsertStory, type StoryCharacter, type InsertStoryCharacter, type StoryEmotion, type InsertStoryEmotion, type Character, type InsertCharacter, type Conversation, type InsertConversation, type Message, type InsertMessage, type StoryCollaboration, type InsertStoryCollaboration, type StoryGroup, type InsertStoryGroup, type StoryGroupMember, type InsertStoryGroupMember, type CharacterVoiceAssignment, type InsertCharacterVoiceAssignment, type StoryPlayback, type InsertStoryPlayback, type StoryAnalysis, type InsertStoryAnalysis, type StoryNarration, type InsertStoryNarration, type AudioFile, type InsertAudioFile } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, like, lt } from "drizzle-orm";
+import { eq, and, desc, like, lt, sql } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -960,7 +960,7 @@ export class DatabaseStorage implements IStorage {
   async updateStoryAnalysisCacheReuse(id: number): Promise<void> {
     const storyAnalysisCache = await import("@shared/schema").then(m => m.storyAnalysisCache);
     await db.update(storyAnalysisCache)
-      .set({ reuseCount: (storyAnalysisCache.reuseCount ?? 0) + 1 })
+      .set({ reuseCount: sql`${storyAnalysisCache.reuseCount} + 1` })
       .where(eq(storyAnalysisCache.id, id));
   }
 
