@@ -21,6 +21,9 @@ export interface IStorage {
   
   // User Voice Samples
   getUserVoiceSamples(userId: string): Promise<UserVoiceSample[]>;
+  getAllUserVoiceSamples(userId: string): Promise<UserVoiceSample[]>;
+  getUserUnlockedSamplesCount(userId: string): Promise<number>;
+  getUserTotalSamplesCount(userId: string): Promise<number>;
   getUserVoiceSample(userId: string, label: string): Promise<UserVoiceSample | undefined>;
   createUserVoiceSample(sample: InsertUserVoiceSample): Promise<UserVoiceSample>;
   updateUserVoiceSample(id: number, sample: Partial<InsertUserVoiceSample>): Promise<void>;
@@ -306,6 +309,31 @@ export class DatabaseStorage implements IStorage {
 
   async getUserVoiceSamples(userId: string): Promise<UserVoiceSample[]> {
     return await db.select().from(userVoiceSamples).where(eq(userVoiceSamples.userId, userId));
+  }
+
+  async getAllUserVoiceSamples(userId: string): Promise<UserVoiceSample[]> {
+    return await db.select().from(userVoiceSamples).where(eq(userVoiceSamples.userId, userId));
+  }
+
+  async getUserUnlockedSamplesCount(userId: string): Promise<number> {
+    const result = await db.select({ count: sql<number>`count(*)` })
+      .from(userVoiceSamples)
+      .where(and(
+        eq(userVoiceSamples.userId, userId),
+        eq(userVoiceSamples.isLocked, false),
+        eq(userVoiceSamples.isCompleted, true)
+      ));
+    return result[0]?.count || 0;
+  }
+
+  async getUserTotalSamplesCount(userId: string): Promise<number> {
+    const result = await db.select({ count: sql<number>`count(*)` })
+      .from(userVoiceSamples)
+      .where(and(
+        eq(userVoiceSamples.userId, userId),
+        eq(userVoiceSamples.isCompleted, true)
+      ));
+    return result[0]?.count || 0;
   }
 
   async getUserVoiceSample(userId: string, label: string): Promise<UserVoiceSample | undefined> {

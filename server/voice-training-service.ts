@@ -23,7 +23,13 @@ export class VoiceTrainingService {
   private readonly TRAINING_THRESHOLD = 5;
 
   constructor() {
-    this.elevenLabsProvider = new ElevenLabsProvider();
+    this.elevenLabsProvider = new ElevenLabsProvider({
+      apiConfig: {
+        baseUrl: 'https://api.elevenlabs.io/v1',
+        apiKey: process.env.ELEVENLABS_API_KEY || '',
+        model: 'eleven_monolingual_v1'
+      }
+    });
   }
 
   /**
