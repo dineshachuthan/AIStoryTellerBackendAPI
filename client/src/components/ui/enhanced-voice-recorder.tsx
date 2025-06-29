@@ -279,11 +279,11 @@ export function EnhancedVoiceRecorder({
         {/* Main Recording Display - Fixed height container */}
         <div className="bg-black rounded-lg p-4 mb-3 border border-gray-600 min-h-[180px]">
           {/* Title */}
-          <div className="text-blue-300 text-xs font-medium mb-3 text-left uppercase tracking-wide">
+          <div className="text-blue-300 text-xs font-medium mb-2 text-left uppercase tracking-wide">
             📖 Read this text{emotionDescription ? ` in ${emotionDescription.toLowerCase()}` : ''}
           </div>
           
-          <div className="flex items-center space-x-4">
+          <div className="flex items-start space-x-4">
             
             {/* Recording Button */}
             <div className="flex flex-col items-center">
