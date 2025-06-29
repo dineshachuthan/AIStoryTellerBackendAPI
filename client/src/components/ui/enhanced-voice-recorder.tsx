@@ -414,45 +414,23 @@ export function EnhancedVoiceRecorder({
               </TooltipContent>
             </Tooltip>
             
-            {/* Play button for new recordings */}
-            {tempRecording && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    onClick={playTempRecording}
-                    disabled={isPlayingTemp}
-                    variant="outline"
-                    size="sm"
-                    className="bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700 disabled:opacity-50"
-                  >
-                    <Play className="w-4 h-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Play new recording</p>
-                </TooltipContent>
-              </Tooltip>
-            )}
-            
-            {/* Volume button for saved recordings */}
-            {existingRecording && !tempRecording && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    onClick={playExistingRecording}
-                    disabled={isPlayingExisting}
-                    variant="outline"
-                    size="sm"
-                    className="bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700 disabled:opacity-50"
-                  >
-                    <Volume2 className="w-4 h-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Play saved recording</p>
-                </TooltipContent>
-              </Tooltip>
-            )}
+            {/* Play button - handles both new and saved recordings */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={tempRecording ? playTempRecording : playExistingRecording}
+                  disabled={!tempRecording && !existingRecording || isPlayingTemp || isPlayingExisting}
+                  variant="outline"
+                  size="sm"
+                  className="bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700 disabled:opacity-50"
+                >
+                  <Play className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{tempRecording ? "Play new recording" : existingRecording ? "Play saved recording" : "No recording to play"}</p>
+              </TooltipContent>
+            </Tooltip>
             
             <Tooltip>
               <TooltipTrigger asChild>
