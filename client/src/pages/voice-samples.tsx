@@ -73,21 +73,8 @@ export default function VoiceSamples() {
       return response.json();
     },
     onSuccess: (data, variables) => {
-      toast({
-        title: "Voice sample saved!",
-        description: `Your ${variables.emotion} voice sample has been recorded successfully.`,
-      });
-      
       // Refresh progress data
       queryClient.invalidateQueries({ queryKey: ["/api/voice-samples/progress"] });
-    },
-    onError: (error) => {
-      toast({
-        title: "Recording failed",
-        description: "Failed to save your voice sample. Please try again.",
-        variant: "destructive",
-      });
-      console.error("Save voice sample error:", error);
     },
   });
 
@@ -105,20 +92,11 @@ export default function VoiceSamples() {
       return response.json();
     },
     onSuccess: (data, emotion) => {
-      toast({
-        title: "Voice sample deleted",
-        description: `Your ${emotion} voice sample has been removed.`,
-      });
       
       // Refresh progress data
       queryClient.invalidateQueries({ queryKey: ["/api/voice-samples/progress"] });
     },
     onError: (error) => {
-      toast({
-        title: "Delete failed",
-        description: "Failed to delete voice sample. Please try again.",
-        variant: "destructive",
-      });
       console.error("Delete voice sample error:", error);
     },
   });
@@ -145,11 +123,6 @@ export default function VoiceSamples() {
     audio.onended = () => setPlayingAudio(null);
     audio.onerror = () => {
       setPlayingAudio(null);
-      toast({
-        title: "Playback error",
-        description: "Could not play the audio sample.",
-        variant: "destructive",
-      });
     };
 
     audio.play().catch((error) => {
@@ -303,17 +276,14 @@ export default function VoiceSamples() {
                     key={template.modulationKey}
                     template={template as VoiceTemplate}
                     recordedSample={recordedSample}
-                    onRecord={async (template: VoiceTemplate, audioBlob: Blob) => {
+                    isRecorded={!!recordedSample}
+                    onRecord={async (modulationKey: string, audioBlob: Blob) => {
                       await saveVoiceSample.mutateAsync({
-                        emotion: template.modulationKey,
+                        emotion: modulationKey,
                         audioBlob
                       });
                     }}
-                    onPlayRecorded={playAudioSample}
-                    onDelete={async (modulationKey: string) => {
-                      await deleteVoiceSample.mutateAsync(modulationKey);
-                    }}
-                    isPlayingAudio={playingAudio === template.modulationKey}
+                    onPlayRecorded={(audioUrl: string) => playAudioSample(audioUrl, template.modulationKey)}
                   />
                 );
               })}
