@@ -104,7 +104,7 @@ export function EnhancedVoiceRecorder({
     setRecordingTime(0);
     setRecordingState('recording');
 
-    const options = AUDIO_PROCESSING_CONFIG.preferredRecordingFormats.find(format => 
+    const options = AUDIO_PROCESSING_CONFIG.preferredRecordingFormats.find((format: string) => 
       MediaRecorder.isTypeSupported(format)
     );
 
