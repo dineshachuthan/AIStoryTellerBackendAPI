@@ -356,7 +356,7 @@ export default function VoiceSamples() {
                                 {template.description}
                               </p>
                               <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
-                                This voice sample has been used to create a cloned voice and is now locked to prevent changes.
+                                User voice is cloned so locked and hence modification to this voice is not allowed.
                               </p>
                             </div>
                           </TooltipContent>
@@ -375,7 +375,7 @@ export default function VoiceSamples() {
                                 {template.description}
                               </p>
                               <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
-                                Voice sample has been recorded and can be re-recorded or used for voice cloning.
+                                User sample voice is recorded but not used for cloning yet so kept unlocked.
                               </p>
                             </div>
                           </TooltipContent>
@@ -394,7 +394,7 @@ export default function VoiceSamples() {
                                 {template.description}
                               </p>
                               <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
-                                No voice sample recorded yet. Hold the record button to capture your voice for this emotion.
+                                User sample voice for this emotion not recorded.
                               </p>
                             </div>
                           </TooltipContent>
