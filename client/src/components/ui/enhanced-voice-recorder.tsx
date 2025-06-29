@@ -205,7 +205,15 @@ export function EnhancedVoiceRecorder({
 
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (disabled || recordingState !== 'idle') return;
+    if (disabled) return;
+    if (recordingState !== 'idle' && recordingState !== 'recorded') return;
+    
+    // Reset temp recording if re-recording
+    if (tempRecording) {
+      URL.revokeObjectURL(tempRecording.url);
+      setTempRecording(null);
+    }
+    
     startCountdown();
   };
 
@@ -222,7 +230,15 @@ export function EnhancedVoiceRecorder({
 
   const handleTouchStart = (e: React.TouchEvent) => {
     e.preventDefault();
-    if (disabled || recordingState !== 'idle') return;
+    if (disabled) return;
+    if (recordingState !== 'idle' && recordingState !== 'recorded') return;
+    
+    // Reset temp recording if re-recording
+    if (tempRecording) {
+      URL.revokeObjectURL(tempRecording.url);
+      setTempRecording(null);
+    }
+    
     startCountdown();
   };
 
