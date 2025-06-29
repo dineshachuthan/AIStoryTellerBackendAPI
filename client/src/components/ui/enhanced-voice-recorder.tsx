@@ -281,66 +281,64 @@ export function EnhancedVoiceRecorder({
         </div>
       )}
 
-      {/* Verification Workflow */}
-      {recordingState === 'recorded' && tempRecording && (
-        <div className="flex flex-col items-center space-y-4 mt-4">
-          <div className="text-center">
-            <p className="text-sm text-gray-600 mb-2">Recording complete!</p>
-            <p className="text-xs text-gray-500">Duration: {formatTime(recordingTime)}</p>
-          </div>
-          
-          {/* All 4 buttons in clear layout */}
-          <div className="w-full max-w-xs space-y-3">
-            {/* Play button - prominent */}
-            <Button
-              onClick={playTempRecording}
-              disabled={isPlayingTemp}
-              variant="outline"
-              size="lg"
-              className="w-full"
-            >
-              <Play className="w-5 h-5 mr-2" />
-              {isPlayingTemp ? 'Playing...' : 'Play Recording'}
-            </Button>
-            
-            {/* Action buttons - 3 grouped together */}
-            <div className="flex space-x-2">
-              <Button
-                onClick={reRecord}
-                disabled={isPlayingTemp}
-                variant="outline"
-                size="sm"
-                className="flex-1"
-              >
-                <RotateCcw className="w-4 h-4 mr-1" />
-                Re-record
-              </Button>
-              
-              <Button
-                onClick={playTempRecording}
-                disabled={isPlayingTemp}
-                variant="outline"
-                size="sm"
-                className="flex-1"
-              >
-                <Play className="w-4 h-4 mr-1" />
-                Replay
-              </Button>
-              
-              <Button
-                onClick={saveRecording}
-                disabled={isPlayingTemp}
-                variant="default"
-                size="sm"
-                className="flex-1"
-              >
-                <Save className="w-4 h-4 mr-1" />
-                Save
-              </Button>
-            </div>
-          </div>
+      {/* Status Message */}
+      {recordingState === 'recorded' && (
+        <div className="text-center mt-4">
+          <p className="text-sm text-gray-600 mb-2">Recording complete!</p>
+          <p className="text-xs text-gray-500">Duration: {formatTime(recordingTime)}</p>
         </div>
       )}
+
+      {/* Always Show All 4 Buttons */}
+      <div className="w-full max-w-xs space-y-3 mt-6">
+        {/* Play button - prominent */}
+        <Button
+          onClick={playTempRecording}
+          disabled={!tempRecording || isPlayingTemp}
+          variant="outline"
+          size="lg"
+          className="w-full"
+        >
+          <Play className="w-5 h-5 mr-2" />
+          {isPlayingTemp ? 'Playing...' : 'Play Recording'}
+        </Button>
+        
+        {/* Action buttons - 3 grouped together */}
+        <div className="flex space-x-2">
+          <Button
+            onClick={reRecord}
+            disabled={recordingState === 'recording' || recordingState === 'countdown' || isPlayingTemp}
+            variant="outline"
+            size="sm"
+            className="flex-1"
+          >
+            <RotateCcw className="w-4 h-4 mr-1" />
+            Re-record
+          </Button>
+          
+          <Button
+            onClick={playTempRecording}
+            disabled={!tempRecording || isPlayingTemp}
+            variant="outline"
+            size="sm"
+            className="flex-1"
+          >
+            <Play className="w-4 h-4 mr-1" />
+            Replay
+          </Button>
+          
+          <Button
+            onClick={saveRecording}
+            disabled={!tempRecording || isPlayingTemp}
+            variant="default"
+            size="sm"
+            className="flex-1"
+          >
+            <Save className="w-4 h-4 mr-1" />
+            Save
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
