@@ -72,8 +72,9 @@ export default function VoiceSamples() {
       return response.json();
     },
     onSuccess: (data, variables) => {
-      // Refresh progress data
-      queryClient.invalidateQueries({ queryKey: ["/api/voice-samples/progress"] });
+      // Refresh progress data to update the UI
+      queryClient.invalidateQueries({ queryKey: ["/api/voice-modulations/progress"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/voice-modulations/templates"] });
     },
   });
 
@@ -91,9 +92,9 @@ export default function VoiceSamples() {
       return response.json();
     },
     onSuccess: (data, emotion) => {
-      
-      // Refresh progress data
-      queryClient.invalidateQueries({ queryKey: ["/api/voice-samples/progress"] });
+      // Refresh progress data to update the UI
+      queryClient.invalidateQueries({ queryKey: ["/api/voice-modulations/progress"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/voice-modulations/templates"] });
     },
     onError: (error) => {
       console.error("Delete voice sample error:", error);
@@ -172,8 +173,8 @@ export default function VoiceSamples() {
 
   // Get recorded sample for modulation
   const getRecordedSample = (modulationKey: string): any | undefined => {
-    // For now, return undefined as we'll implement user recordings later
-    return undefined;
+    const recordedSamples = (progress as any)?.recordedSamples || [];
+    return recordedSamples.find((sample: any) => sample.emotion === modulationKey);
   };
 
   // Handler for recording new voice samples
