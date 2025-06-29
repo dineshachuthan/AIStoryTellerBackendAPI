@@ -9,7 +9,7 @@ import { Mic, Play, Trash2, CheckCircle, Circle, Volume2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AppHeader } from "@/components/app-header";
 import { AppTopNavigation } from "@/components/app-top-navigation";
-import { PressHoldRecorder } from "@/components/ui/press-hold-recorder";
+import { EnhancedVoiceRecorder } from "@/components/ui/enhanced-voice-recorder";
 
 interface EmotionTemplate {
   emotion: string;
@@ -337,7 +337,7 @@ export default function VoiceSamples() {
                             </p>
                           </div>
                         ) : (
-                          <PressHoldRecorder
+                          <EnhancedVoiceRecorder
                             buttonText={{
                               hold: `Record ${template.displayName}`,
                               recording: "Recording...",
