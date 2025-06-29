@@ -127,6 +127,14 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Priority**: Medium (requested but deferred for future implementation)
 
 ## Changelog
+- June 29, 2025: Successfully completed voice cloning infrastructure cleanup and restoration to original voice samples system
+  - Removed duplicate voice cloning database tables (userVoiceEmotions, userVoiceProfiles, emotionVoiceProfiles) from schema
+  - Cleaned up voice cloning routes, storage methods, and type references that were duplicating original functionality
+  - Commented out voice cloning code in character-archetype-service.ts to maintain application stability
+  - Confirmed application startup working correctly with original voice samples functionality intact
+  - Voice-setup page retains proper navigation and is ready for ElevenLabs integration within existing voice samples system
+  - Preserved all original voice recording logic and database-first architecture principles
+  - System now has single unified voice samples architecture ready for ElevenLabs provider integration
 - June 28, 2025: Implemented ElevenLabs voice cloning architecture with configuration-driven design
   - Created comprehensive voice provider system with plug-and-play architecture (BaseVoiceProvider, ElevenLabsProvider, OpenAIProvider)
   - Built VoiceProviderRegistry for intelligent provider selection and fallback management
