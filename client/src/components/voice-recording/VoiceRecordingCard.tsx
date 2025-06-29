@@ -36,7 +36,7 @@ interface VoiceRecordingCardProps {
 }
 
 // Recording states for user verification workflow
-type RecordingState = 'idle' | 'recording' | 'recorded' | 'playing' | 'saving' | 'saved';
+type RecordingState = 'idle' | 'countdown' | 'recording' | 'recorded' | 'playing' | 'saving' | 'saved';
 
 interface TempRecording {
   blob: Blob;
@@ -58,6 +58,9 @@ export function VoiceRecordingCard({
   const [isPlayingTemp, setIsPlayingTemp] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
+  const [countdownTime, setCountdownTime] = useState(3);
+  const [micError, setMicError] = useState<string>('');
+  const [saveError, setSaveError] = useState<string>('');
   // Toast removed - using in-card status messages
   
   // Recording refs - following the proven PressHoldRecorder pattern
@@ -83,8 +86,8 @@ export function VoiceRecordingCard({
     if (recordingState !== 'idle') return;
     
     // Clear any previous errors
-    setMicError(null);
-    setSaveError(null);
+    setMicError('');
+    setSaveError('');
     setRecordingState('recording');
     
     // Start recording after 300ms hold delay
@@ -228,8 +231,7 @@ export function VoiceRecordingCard({
     setRecordingTime(0);
   };
 
-  const [saveError, setSaveError] = useState<string | null>(null);
-  const [micError, setMicError] = useState<string | null>(null);
+
 
   const saveRecording = async () => {
     if (!tempRecording) return;

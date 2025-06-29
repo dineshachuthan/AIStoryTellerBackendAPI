@@ -9,8 +9,7 @@ import { Mic, Play, Trash2, CheckCircle, Circle, Volume2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AppHeader } from "@/components/app-header";
 import { AppTopNavigation } from "@/components/app-top-navigation";
-import { VoiceRecordingCard } from "@/components/voice-recording/VoiceRecordingCard";
-import type { VoiceTemplate, RecordedSample } from "@/components/voice-recording/VoiceRecordingCard";
+import { PressHoldRecorder } from "@/components/ui/press-hold-recorder";
 
 interface EmotionTemplate {
   emotion: string;
@@ -272,19 +271,93 @@ export default function VoiceSamples() {
                 );
 
                 return (
-                  <VoiceRecordingCard
-                    key={template.modulationKey}
-                    template={template as VoiceTemplate}
-                    recordedSample={recordedSample}
-                    isRecorded={!!recordedSample}
-                    onRecord={async (modulationKey: string, audioBlob: Blob) => {
-                      await saveVoiceSample.mutateAsync({
-                        emotion: modulationKey,
-                        audioBlob
-                      });
-                    }}
-                    onPlayRecorded={(audioUrl: string) => playAudioSample(audioUrl, template.modulationKey)}
-                  />
+                  <Card 
+                    key={template.modulationKey} 
+                    className={cn(
+                      "transition-all duration-200 hover:shadow-md",
+                      isRecorded && "ring-2 ring-green-500 ring-opacity-50"
+                    )}
+                  >
+                    <CardHeader className="pb-4">
+                      <CardTitle className="flex items-center justify-between">
+                        <span className="flex items-center gap-2">
+                          {isRecorded ? (
+                            <CheckCircle className="w-5 h-5 text-green-600" />
+                          ) : (
+                            <Circle className="w-5 h-5 text-muted-foreground" />
+                          )}
+                          {template.displayName}
+                        </span>
+                        <Badge variant={isRecorded ? "default" : "secondary"}>
+                          {template.category}
+                        </Badge>
+                      </CardTitle>
+                      <CardDescription>{template.description}</CardDescription>
+                    </CardHeader>
+
+                    <CardContent className="space-y-4">
+                      {/* Sample Text */}
+                      <div className="bg-muted p-4 rounded-lg">
+                        <p className="text-sm font-medium mb-2">Sample Text:</p>
+                        <p className="text-sm italic leading-relaxed">
+                          "{template.sampleText}"
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Target duration: {template.targetDuration} seconds
+                        </p>
+                      </div>
+
+                      {/* Recording Controls */}
+                      <div className="space-y-3">
+                        {isRecorded && recordedSample ? (
+                          <div className="space-y-2">
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => playAudioSample(recordedSample.audioUrl, template.modulationKey)}
+                                className="flex items-center gap-2 flex-1"
+                              >
+                                <Play className="w-4 h-4" />
+                                {playingAudio === template.modulationKey ? "Stop" : "Play Sample"}
+                              </Button>
+                              
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => deleteVoiceSample.mutate(template.modulationKey)}
+                                disabled={deleteVoiceSample.isPending}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                            
+                            <p className="text-xs text-muted-foreground">
+                              Recorded: {new Date(recordedSample.recordedAt).toLocaleDateString()}
+                              {recordedSample.duration > 0 && ` • ${recordedSample.duration}ms`}
+                            </p>
+                          </div>
+                        ) : (
+                          <PressHoldRecorder
+                            buttonText={{
+                              hold: `Record ${template.displayName}`,
+                              recording: "Recording...",
+                              instructions: `Say: "${template.sampleText}"`
+                            }}
+                            onRecordingComplete={(audioBlob) => {
+                              saveVoiceSample.mutate({
+                                emotion: template.modulationKey,
+                                audioBlob
+                              });
+                            }}
+                            className="w-full"
+                            disabled={saveVoiceSample.isPending}
+                            maxRecordingTime={10}
+                          />
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
                 );
               })}
             </div>
