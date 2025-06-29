@@ -4225,6 +4225,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isPreferred: false,
         usageCount: 0
       });
+
+      // AUTOMATIC ELEVENLABS TRAINING TRIGGER
+      // Check if we should trigger voice training after this new sample
+      try {
+        const { voiceTrainingService } = await import('./voice-training-service');
+        const shouldTrigger = await voiceTrainingService.shouldTriggerTraining(userId);
+        
+        if (shouldTrigger) {
+          console.log(`🎯 Triggering automatic ElevenLabs voice training for user ${userId} - reached 5 sample threshold`);
+          
+          // Trigger training asynchronously (don't block the response)
+          voiceTrainingService.trainUserVoice(userId)
+            .then(result => {
+              if (result.success) {
+                console.log(`✅ ElevenLabs training completed for user ${userId}, voice ID: ${result.voiceId}`);
+              } else {
+                console.error(`❌ ElevenLabs training failed for user ${userId}: ${result.error}`);
+              }
+            })
+            .catch(error => {
+              console.error(`❌ ElevenLabs training error for user ${userId}:`, error);
+            });
+        }
+      } catch (error) {
+        console.error('Error checking/triggering voice training:', error);
+        // Don't fail the request if training check fails
+      }
       
       res.json(modulation);
     } catch (error: any) {
