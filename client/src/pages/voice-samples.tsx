@@ -225,48 +225,36 @@ export default function VoiceSamples() {
           Record your voice expressing different emotions to create personalized AI narration for your stories.
         </p>
 
-        {/* Progress Overview */}
+        {/* Compact Progress Overview */}
         {progress && (
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Volume2 className="w-5 h-5" />
-                Your Voice Collection Progress
-              </CardTitle>
-              <CardDescription>
-                {(progress as any).recordedTemplates || 0} of {(progress as any).totalTemplates || 0} voice samples recorded
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <div className="flex justify-between text-sm mb-2">
-                    <span>Progress</span>
-                    <span>{(progress as any).completionPercentage || 0}%</span>
-                  </div>
-                  <Progress value={(progress as any).completionPercentage || 0} className="h-2" />
-                </div>
-                
-                <div>
-                  <p className="text-sm font-medium mb-2">
-                    Start recording voice samples for different emotions, sounds, and modulations to personalize your stories.
-                  </p>
-                </div>
+          <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Volume2 className="w-4 h-4 text-blue-600" />
+                <span className="text-sm font-medium">Voice Collection</span>
               </div>
-            </CardContent>
-          </Card>
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                {(progress as any).recordedTemplates || 0}/{(progress as any).totalTemplates || 0} samples
+              </span>
+            </div>
+            <Progress value={(progress as any).completionPercentage || 0} className="h-2" />
+          </div>
         )}
       </div>
 
-      {/* Category Tabs */}
-      <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-4 sm:mb-6 h-auto">
-          {categories.map((category) => (
-            <TabsTrigger key={category} value={category} className="text-xs sm:text-sm px-2 py-2 sm:px-4 sm:py-3">
-              {categoryMapping[category as keyof typeof categoryMapping]}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+        {/* Category Tabs with Visual Separation */}
+        <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
+          <TabsList className="grid w-full grid-cols-3 mb-6 h-auto p-1 bg-gray-100 dark:bg-gray-800 rounded-lg">
+            {categories.map((category) => (
+              <TabsTrigger 
+                key={category} 
+                value={category} 
+                className="text-xs sm:text-sm px-3 py-3 font-medium rounded-md transition-all data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-blue-400"
+              >
+                {categoryMapping[category as keyof typeof categoryMapping]}
+              </TabsTrigger>
+            ))}
+          </TabsList>
 
         {categories.map((category) => (
           <TabsContent key={category} value={category}>
