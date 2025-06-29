@@ -6,12 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Mic, Play, Trash2, CheckCircle, Circle, Volume2 } from "lucide-react";
-import { PressHoldRecorder } from "@/components/ui/press-hold-recorder";
 import { cn } from "@/lib/utils";
-import { useToast } from "@/hooks/use-toast";
 import { AppHeader } from "@/components/app-header";
 import { AppTopNavigation } from "@/components/app-top-navigation";
-import { SwipeVoiceCollection } from "@/components/voice-recording/SwipeVoiceCollection";
+import { VoiceRecordingCard } from "@/components/voice-recording/VoiceRecordingCard";
 import type { VoiceTemplate, RecordedSample } from "@/components/voice-recording/VoiceRecordingCard";
 
 interface EmotionTemplate {
@@ -43,7 +41,6 @@ export default function VoiceSamples() {
   const [selectedCategory, setSelectedCategory] = useState<string>("emotion");
   const [playingAudio, setPlayingAudio] = useState<string | null>(null);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   // Get voice modulation templates (new system with three categories)
@@ -207,6 +204,22 @@ export default function VoiceSamples() {
     return undefined;
   };
 
+  // Handler for recording new voice samples
+  const handleRecord = async (template: VoiceTemplate, audioBlob: Blob): Promise<void> => {
+    await saveVoiceSample.mutateAsync({
+      emotion: template.modulationKey,
+      audioBlob
+    });
+  };
+
+  // Get user voice samples data - fix progress data structure
+  const userVoiceSamples: RecordedSample[] = (progress as any)?.recordedSamples?.map((sample: any) => ({
+    modulationKey: sample.emotion,
+    audioUrl: sample.audioUrl,
+    recordedAt: new Date(sample.recordedAt),
+    duration: sample.duration || 0
+  })) || [];
+
   if (templatesLoading || progressLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -279,86 +292,29 @@ export default function VoiceSamples() {
 
         {categories.map((category) => (
           <TabsContent key={category} value={category}>
-            <SwipeVoiceCollection
-              templates={templates}
-              recordedSamples={userVoiceSamples}
-              selectedCategory={category}
-              categories={categories}
-              categoryMapping={categoryMapping}
-              onCategoryChange={setSelectedCategory}
-              onRecord={handleRecord}
-              onPlayRecorded={playAudioSample}
-            />
-                        </span>
-                        <Badge variant={isRecorded ? "default" : "secondary"}>
-                          {template.category}
-                        </Badge>
-                      </CardTitle>
-                      <CardDescription>{template.description}</CardDescription>
-                    </CardHeader>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              {filteredTemplates.map((template: any) => {
+                const recordedSample = userVoiceSamples.find(
+                  (sample) => sample.modulationKey === template.modulationKey
+                );
 
-                    <CardContent className="space-y-4">
-                      {/* Sample Text */}
-                      <div className="bg-muted p-4 rounded-lg">
-                        <p className="text-sm font-medium mb-2">Sample Text:</p>
-                        <p className="text-sm italic leading-relaxed">
-                          "{template.sampleText}"
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-2">
-                          Target duration: {template.targetDuration} seconds
-                        </p>
-                      </div>
-
-                      {/* Recording Controls */}
-                      <div className="space-y-3">
-                        {isRecorded && recordedSample ? (
-                          <div className="space-y-2">
-                            <div className="flex gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => playAudioSample(recordedSample.audioUrl, template.emotion)}
-                                className="flex items-center gap-2 flex-1"
-                              >
-                                <Play className="w-4 h-4" />
-                                {playingAudio === template.emotion ? "Stop" : "Play Sample"}
-                              </Button>
-                              
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                onClick={() => deleteVoiceSample.mutate(template.emotion)}
-                                disabled={deleteVoiceSample.isPending}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                            
-                            <p className="text-xs text-muted-foreground">
-                              Recorded: {new Date(recordedSample.recordedAt).toLocaleDateString()}
-                              {recordedSample.duration > 0 && ` • ${recordedSample.duration}ms`}
-                            </p>
-                          </div>
-                        ) : (
-                          <PressHoldRecorder
-                            buttonText={{
-                              hold: `Record ${template.displayName}`,
-                              recording: "Recording...",
-                              instructions: `Say: "${template.sampleText}"`
-                            }}
-                            onRecordingComplete={(audioBlob) => {
-                              saveVoiceSample.mutate({
-                                emotion: template.modulationKey,
-                                audioBlob
-                              });
-                            }}
-                            className="w-full"
-                            disabled={saveVoiceSample.isPending}
-                          />
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
+                return (
+                  <VoiceRecordingCard
+                    key={template.modulationKey}
+                    template={template as VoiceTemplate}
+                    recordedSample={recordedSample}
+                    onRecord={async (template: VoiceTemplate, audioBlob: Blob) => {
+                      await saveVoiceSample.mutateAsync({
+                        emotion: template.modulationKey,
+                        audioBlob
+                      });
+                    }}
+                    onPlayRecorded={playAudioSample}
+                    onDelete={async (modulationKey: string) => {
+                      await deleteVoiceSample.mutateAsync(modulationKey);
+                    }}
+                    isPlayingAudio={playingAudio === template.modulationKey}
+                  />
                 );
               })}
             </div>
