@@ -317,9 +317,12 @@ export default function VoiceSamples() {
 
         {categories.map((category) => (
           <TabsContent key={category} value={category}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {/* Sort templates: unlocked first, then recorded (unlocked), then locked */}
               {filteredTemplates
+                .filter((template: any, index: number, self: any[]) => 
+                  self.findIndex((t: any) => t.modulationKey === template.modulationKey) === index
+                )
                 .map((template: any) => {
                   const recordedSample = getRecordedSample(template.modulationKey);
                   const isRecorded = !!recordedSample;
@@ -348,10 +351,15 @@ export default function VoiceSamples() {
                   };
 
                   return (
-                    <div key={template.modulationKey} className="p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-                      <div className="mb-3 flex items-center justify-between">
-                        <h3 className="font-medium text-sm">{template.displayName}</h3>
-                        {getStatusIcon()}
+                    <div key={template.modulationKey} className="p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+                      <div className="mb-2 flex items-start justify-between">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-medium text-sm">{template.displayName}</h3>
+                          {getStatusIcon()}
+                        </div>
+                        <Badge variant="outline" className="text-xs ml-auto">
+                          {template.category || 'basic'}
+                        </Badge>
                       </div>
                       
                       <EnhancedVoiceRecorder
