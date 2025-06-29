@@ -4230,6 +4230,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const { VoiceCloningSessionManager } = await import('./voice-cloning-session-manager');
         
+        // Initialize session if not already done
+        if (!req.session.voiceCloning) {
+          console.log(`🔧 Initializing voice cloning session for user ${userId}`);
+          await VoiceCloningSessionManager.initializeSessionData(req);
+        }
+        
         // Determine category from modulation key
         const category = VoiceCloningSessionManager.getCategoryFromModulationKey(modulationKey);
         console.log(`🔄 Recording voice sample for category: ${category}, modulation: ${modulationKey}`);
