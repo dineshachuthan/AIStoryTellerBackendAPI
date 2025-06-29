@@ -21,6 +21,7 @@ interface EnhancedVoiceRecorderProps {
     recordedAt: Date;
   };
   sampleText?: string;
+  emotionDescription?: string;
 }
 
 export function EnhancedVoiceRecorder({
@@ -34,7 +35,8 @@ export function EnhancedVoiceRecorder({
     instructions: "Press and hold to record"
   },
   existingRecording,
-  sampleText
+  sampleText,
+  emotionDescription
 }: EnhancedVoiceRecorderProps) {
   const [recordingState, setRecordingState] = useState<'idle' | 'countdown' | 'recording' | 'recorded'>('idle');
   const [countdownTime, setCountdownTime] = useState(3);
@@ -317,7 +319,9 @@ export function EnhancedVoiceRecorder({
             {/* Sample Text Display */}
             <div className="flex-1">
               <div className="text-white text-sm leading-relaxed mb-2">
-                <span className="text-blue-300 text-xs uppercase tracking-wide">📖 Read this text:</span>
+                <span className="text-blue-300 text-xs uppercase tracking-wide">
+                  📖 Read this text{emotionDescription ? ` in ${emotionDescription.toLowerCase()}` : ''}:
+                </span>
                 <br />
                 <span className="italic text-blue-200">"{sampleText || 'Sample text not provided'}"</span>
               </div>
@@ -347,8 +351,8 @@ export function EnhancedVoiceRecorder({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-                  onClick={tempRecording ? playTempRecording : playExistingRecording}
-                  disabled={(!tempRecording && !existingRecording) || (tempRecording && isPlayingTemp) || (existingRecording && isPlayingExisting)}
+                  onClick={playTempRecording}
+                  disabled={!tempRecording || isPlayingTemp}
                   variant="outline"
                   size="sm"
                   className="bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700 disabled:opacity-50"
@@ -357,7 +361,7 @@ export function EnhancedVoiceRecorder({
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>{tempRecording ? "Play new recording" : existingRecording ? "Play saved recording" : "No recording to play"}</p>
+                <p>Play new recording</p>
               </TooltipContent>
             </Tooltip>
             
@@ -381,8 +385,8 @@ export function EnhancedVoiceRecorder({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-                  onClick={tempRecording ? playTempRecording : playExistingRecording}
-                  disabled={(!tempRecording && !existingRecording) || (tempRecording && isPlayingTemp) || (existingRecording && isPlayingExisting)}
+                  onClick={playExistingRecording}
+                  disabled={!existingRecording || isPlayingExisting}
                   variant="outline"
                   size="sm"
                   className="bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700 disabled:opacity-50"
@@ -391,7 +395,7 @@ export function EnhancedVoiceRecorder({
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Replay audio</p>
+                <p>Play saved recording</p>
               </TooltipContent>
             </Tooltip>
             

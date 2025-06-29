@@ -309,6 +309,7 @@ export default function VoiceSamples() {
                           instructions: isRecorded ? "Hold to re-record" : "Hold button to record"
                         }}
                         sampleText={template.sampleText}
+                        emotionDescription={template.description}
                         onRecordingComplete={(audioBlob) => {
                           saveVoiceModulation.mutate({
                             emotion: template.modulationKey,
