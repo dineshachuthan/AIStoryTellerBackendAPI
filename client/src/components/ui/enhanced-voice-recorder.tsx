@@ -349,8 +349,12 @@ export function EnhancedVoiceRecorder({
               </div>
               
               {/* Instructions under mic - Fixed text to prevent flickering */}
-              <div className="text-xs text-gray-400 text-center">
-                {existingRecording || tempRecording ? "Hold to re-record" : buttonText.instructions}
+              <div className="text-xs text-gray-400 text-center leading-tight">
+                {existingRecording || tempRecording ? (
+                  <>
+                    Hold to<br />re-record
+                  </>
+                ) : buttonText.instructions}
               </div>
             </div>
 
