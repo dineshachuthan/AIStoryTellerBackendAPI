@@ -59,6 +59,7 @@ export function EnhancedVoiceRecorder({
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const equalizerIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const holdDelayRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
 
   const formatTime = (seconds: number) => {
@@ -71,6 +72,7 @@ export function EnhancedVoiceRecorder({
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
       if (countdownRef.current) clearInterval(countdownRef.current);
+      if (holdDelayRef.current) clearTimeout(holdDelayRef.current);
       if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
         mediaRecorderRef.current.stop();
       }
@@ -241,11 +243,21 @@ export function EnhancedVoiceRecorder({
       setTempRecording(null);
     }
     
-    startCountdown();
+    // Add 300ms hold delay before starting countdown
+    holdDelayRef.current = setTimeout(() => {
+      startCountdown();
+    }, 300);
   };
 
   const handleMouseUp = (e: React.MouseEvent) => {
     e.preventDefault();
+    
+    // Clear hold delay if user releases before 300ms
+    if (holdDelayRef.current) {
+      clearTimeout(holdDelayRef.current);
+      holdDelayRef.current = null;
+    }
+    
     if (recordingState === 'recording') {
       stopRecording();
     } else if (recordingState === 'countdown') {
@@ -266,11 +278,21 @@ export function EnhancedVoiceRecorder({
       setTempRecording(null);
     }
     
-    startCountdown();
+    // Add 300ms hold delay before starting countdown
+    holdDelayRef.current = setTimeout(() => {
+      startCountdown();
+    }, 300);
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
     e.preventDefault();
+    
+    // Clear hold delay if user releases before 300ms
+    if (holdDelayRef.current) {
+      clearTimeout(holdDelayRef.current);
+      holdDelayRef.current = null;
+    }
+    
     if (recordingState === 'recording') {
       stopRecording();
     } else if (recordingState === 'countdown') {
