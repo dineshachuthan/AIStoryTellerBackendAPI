@@ -279,19 +279,16 @@ export default function VoiceSamples() {
 
         {categories.map((category) => (
           <TabsContent key={category} value={category}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-              {filteredTemplates.map((template: any) => {
-                const isRecorded = isModulationRecorded(template.modulationKey);
-                const recordedSample = getRecordedSample(template.modulationKey);
-
-                return (
-                  <Card 
-                    key={template.modulationKey} 
-                    className={cn(
-                      "transition-all duration-200 hover:shadow-md",
-                      isRecorded && "ring-2 ring-green-500 ring-opacity-50"
-                    )}
-                  >
+            <SwipeVoiceCollection
+              templates={templates}
+              recordedSamples={userVoiceSamples}
+              selectedCategory={category}
+              categories={categories}
+              categoryMapping={categoryMapping}
+              onCategoryChange={setSelectedCategory}
+              onRecord={handleRecord}
+              onPlayRecorded={playAudioSample}
+            />
                     <CardHeader className="pb-4">
                       <CardTitle className="flex items-center justify-between">
                         <span className="flex items-center gap-2">
