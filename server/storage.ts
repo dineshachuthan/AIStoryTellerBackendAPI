@@ -44,6 +44,7 @@ export interface IStorage {
   
   // ElevenLabs Voice Profiles
   getUserVoiceProfiles(userId: string): Promise<any[]>;
+  getUserVoiceProfile(userId: string): Promise<any | undefined>;
   createUserVoiceProfile(profile: any): Promise<any>;
   updateUserVoiceProfile(id: number, profile: any): Promise<any>;
   deleteUserVoiceProfile(id: number): Promise<void>;

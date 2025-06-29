@@ -4349,6 +4349,158 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup video webhook handlers for callback-based notifications
   setupVideoWebhooks(app);
 
+  // Phase 2: Voice Training Pipeline API Endpoints
+  
+  // Voice Training Status & Monitoring
+  app.get('/api/voice-training/status', requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any)?.id;
+      if (!userId) {
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
+
+      const { voiceTrainingService } = await import('./voice-training-service');
+      const status = await voiceTrainingService.getTrainingStatus(userId);
+      res.json(status);
+    } catch (error: any) {
+      console.error('Error fetching voice training status:', error);
+      res.status(500).json({ message: 'Failed to fetch training status' });
+    }
+  });
+
+  // Voice Training Trigger (Internal - called after voice sample save)
+  app.post('/api/voice-training/trigger', requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any)?.id;
+      if (!userId) {
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
+
+      const { voiceTrainingService } = await import('./voice-training-service');
+      
+      // Check if training should be triggered
+      const shouldTrigger = await voiceTrainingService.shouldTriggerTraining(userId);
+      
+      if (!shouldTrigger) {
+        return res.json({ 
+          triggered: false, 
+          message: 'Training threshold not reached'
+        });
+      }
+
+      // Trigger automatic training
+      const result = await voiceTrainingService.triggerAutomaticTraining(userId);
+      
+      res.json({ 
+        triggered: true, 
+        result 
+      });
+    } catch (error: any) {
+      console.error('Error triggering voice training:', error);
+      res.status(500).json({ message: 'Failed to trigger training' });
+    }
+  });
+
+  // Enhanced Voice Samples with Lock Status
+  app.get('/api/voice-samples/enhanced', requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any)?.id;
+      if (!userId) {
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
+
+      const samples = await storage.getAllUserVoiceSamples(userId);
+      
+      // Separate unlocked and locked samples
+      const unlocked = samples.filter(s => !s.isLocked && s.isCompleted);
+      const locked = samples.filter(s => s.isLocked && s.isCompleted);
+
+      res.json({ 
+        unlocked, 
+        locked,
+        unlockedCount: unlocked.length,
+        totalCount: samples.filter(s => s.isCompleted).length
+      });
+    } catch (error: any) {
+      console.error('Error fetching enhanced voice samples:', error);
+      res.status(500).json({ message: 'Failed to fetch voice samples' });
+    }
+  });
+
+  // Enhanced Voice Sample Save with Training Trigger
+  app.post('/api/voice-samples/enhanced', requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any)?.id;
+      if (!userId) {
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
+
+      // Validate and save voice sample
+      const validatedSample = insertUserVoiceSampleSchema.parse({
+        ...req.body,
+        userId,
+        isCompleted: true,
+        isLocked: false
+      });
+
+      const sample = await storage.createUserVoiceSample(validatedSample);
+
+      // Automatically check training trigger
+      const { voiceTrainingService } = await import('./voice-training-service');
+      const shouldTrigger = await voiceTrainingService.shouldTriggerTraining(userId);
+      
+      let trainingResult = null;
+      if (shouldTrigger) {
+        console.log(`[VoiceTraining] Auto-triggering training for user ${userId}`);
+        trainingResult = await voiceTrainingService.triggerAutomaticTraining(userId);
+      }
+
+      res.json({ 
+        sample,
+        trainingTriggered: shouldTrigger,
+        trainingResult
+      });
+    } catch (error: any) {
+      console.error('Error saving voice sample:', error);
+      res.status(500).json({ message: 'Failed to save voice sample' });
+    }
+  });
+
+  // Block Voice Sample Updates for Locked Samples
+  app.put('/api/voice-samples/:id/enhanced', requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any)?.id;
+      const sampleId = parseInt(req.params.id);
+      
+      if (!userId || isNaN(sampleId)) {
+        return res.status(400).json({ message: 'Invalid parameters' });
+      }
+
+      // Get sample to check if locked
+      const samples = await storage.getAllUserVoiceSamples(userId);
+      const sample = samples.find(s => s.id === sampleId);
+      
+      if (!sample) {
+        return res.status(404).json({ message: 'Voice sample not found' });
+      }
+
+      if (sample.isLocked) {
+        return res.status(400).json({ 
+          message: 'Cannot modify locked voice sample. This sample is used in your voice clone.',
+          isLocked: true
+        });
+      }
+
+      // Allow update for unlocked samples
+      await storage.updateUserVoiceSample(sampleId, req.body);
+      
+      res.json({ message: 'Voice sample updated successfully' });
+    } catch (error: any) {
+      console.error('Error updating voice sample:', error);
+      res.status(500).json({ message: 'Failed to update voice sample' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

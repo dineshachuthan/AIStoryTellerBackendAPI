@@ -169,6 +169,16 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Priority**: Medium (requested but deferred for future implementation)
 
 ## Changelog
+- June 29, 2025: Successfully implemented Phase 2: Voice Training Pipeline with automatic ElevenLabs integration
+  - Added database schema support for locked voice samples (isLocked, lockedAt fields)
+  - Implemented automatic 5-sample threshold triggering for ElevenLabs voice cloning
+  - Created complete Voice Training Service with incremental re-training capability
+  - Added comprehensive REST API endpoints for voice training status, triggers, and enhanced sample management
+  - Samples automatically lock after voice cloning to prevent modification conflicts
+  - UI design ready: unlocked samples shown first, followed by locked ones
+  - Voice training completely abstracted from user - happens automatically at threshold
+  - Incremental enhancement: when user adds more samples, system re-trains with ALL samples (locked + unlocked)
+  - Enhanced voice samples API prevents modification of locked samples with clear error messages
 - June 29, 2025: CRITICAL ISSUE - Hold to record functionality repeatedly broken despite multiple fix attempts
   - Issue: Recording starts with single click instead of requiring proper hold action
   - Attempted fixes: 300ms delay, hold delay mechanism, cleanup handlers, state management

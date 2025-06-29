@@ -56,9 +56,9 @@ export class VoiceTrainingService {
     try {
       const samples = await storage.getAllUserVoiceSamples(userId);
       return samples.map(sample => ({
-        emotion: sample.emotion,
+        emotion: sample.label, // Use label as emotion
         audioUrl: sample.audioUrl,
-        isLocked: sample.isLocked
+        isLocked: sample.isLocked || false // Handle null values
       }));
     } catch (error) {
       console.error('Error getting user samples:', error);
