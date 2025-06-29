@@ -298,9 +298,9 @@ export function EnhancedVoiceRecorder({
                         onTouchStart={handleTouchStart}
                         onTouchEnd={handleTouchEnd}
                         disabled={disabled}
-                        className="w-16 h-16 rounded-full bg-red-500 hover:bg-red-600 disabled:bg-gray-600 flex items-center justify-center text-white transition-all duration-200 select-none touch-manipulation shadow-lg hover:shadow-red-500/25"
+                        className="w-12 h-12 rounded-full bg-red-500 hover:bg-red-600 disabled:bg-gray-600 flex items-center justify-center text-white transition-all duration-200 select-none touch-manipulation shadow-lg hover:shadow-red-500/25"
                       >
-                        <Mic className="w-6 h-6" />
+                        <Mic className="w-5 h-5" />
                       </button>
                     </TooltipTrigger>
                     <TooltipContent>
