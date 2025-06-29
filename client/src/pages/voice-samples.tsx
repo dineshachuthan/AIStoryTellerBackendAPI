@@ -353,6 +353,9 @@ export default function VoiceSamples() {
                             <div className="max-w-xs">
                               <p className="font-semibold">Cloned and locked</p>
                               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                {template.description}
+                              </p>
+                              <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
                                 This voice sample has been used to create a cloned voice and is now locked to prevent changes.
                               </p>
                             </div>
@@ -366,7 +369,15 @@ export default function VoiceSamples() {
                             <CheckCircle className="w-5 h-5 text-green-500 cursor-help" />
                           </TooltipTrigger>
                           <TooltipContent>
-                            <p>Recorded and unlocked</p>
+                            <div className="max-w-xs">
+                              <p className="font-semibold">Recorded and unlocked</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                {template.description}
+                              </p>
+                              <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
+                                Voice sample has been recorded and can be re-recorded or used for voice cloning.
+                              </p>
+                            </div>
                           </TooltipContent>
                         </Tooltip>
                       );
@@ -377,7 +388,12 @@ export default function VoiceSamples() {
                             <Circle className="w-5 h-5 text-gray-400 cursor-help" />
                           </TooltipTrigger>
                           <TooltipContent>
-                            <p>Empty and unlocked</p>
+                            <div className="max-w-xs">
+                              <p className="font-semibold">Empty and unlocked</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                No voice sample recorded yet. Hold the record button to capture your voice for this emotion.
+                              </p>
+                            </div>
                           </TooltipContent>
                         </Tooltip>
                       );
