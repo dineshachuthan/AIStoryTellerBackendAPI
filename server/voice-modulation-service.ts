@@ -448,6 +448,20 @@ export class VoiceModulationService {
   }
 
   /**
+   * Delete a voice modulation for user
+   */
+  async deleteVoiceModulation(userId: string, modulationKey: string): Promise<void> {
+    await db
+      .delete(userVoiceModulations)
+      .where(
+        and(
+          eq(userVoiceModulations.userId, userId),
+          eq(userVoiceModulations.modulationKey, modulationKey)
+        )
+      );
+  }
+
+  /**
    * Mark a voice modulation as preferred
    */
   async markAsPreferred(userId: string, modulationId: number): Promise<void> {

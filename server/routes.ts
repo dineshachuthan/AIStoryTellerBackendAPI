@@ -16,7 +16,7 @@ import { db } from "./db";
 import { eq, desc, and } from "drizzle-orm";
 import { videoGenerations } from "@shared/schema";
 import { audioService } from "./audio-service";
-import { getVoiceSampleProgress } from "./voice-samples";
+
 import { storyNarrator } from "./story-narrator";
 import { grandmaVoiceNarrator } from "./voice-narrator";
 import { getEnvironment, getBaseUrl, getOAuthConfig } from "./oauth-config";
@@ -3822,102 +3822,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get voice sample templates
-  app.get("/api/voice-samples/templates", async (req, res) => {
-    try {
-      const serviceModule = await import('./voice-samples-service');
-      const templates = serviceModule.voiceSamplesService.getEmotionTemplates();
-      res.json(templates);
-    } catch (error: any) {
-      console.error("Failed to get voice sample templates:", error);
-      res.status(500).json({ 
-        message: "Failed to retrieve templates",
-        error: error?.message || 'Unknown error'
-      });
-    }
-  });
 
-  // Get user voice sample progress
-  app.get("/api/voice-samples/progress", requireAuth, async (req, res) => {
-    try {
-      const userId = (req.user as any)?.id;
-      
-      if (!userId) {
-        return res.status(401).json({ message: "User authentication required" });
-      }
 
-      const { voiceSamplesService } = await import('./voice-samples-service');
-      const progress = await voiceSamplesService.getUserVoiceProgress(userId);
-      
-      res.json(progress);
-    } catch (error: any) {
-      console.error("Failed to get voice progress:", error);
-      res.status(500).json({ 
-        message: "Failed to retrieve progress",
-        error: error?.message || 'Unknown error'
-      });
-    }
-  });
 
-  // Save voice sample
-  app.post("/api/voice-samples", requireAuth, upload.single('audio'), async (req, res) => {
-    try {
-      const userId = (req.user as any)?.id;
-      const { emotion, duration } = req.body;
-      const audioFile = req.file;
-
-      if (!userId || !emotion || !audioFile) {
-        return res.status(400).json({ message: "Missing required fields" });
-      }
-
-      const { voiceSamplesService } = await import('./voice-samples-service');
-      const audioUrl = await voiceSamplesService.saveVoiceSample(
-        userId,
-        emotion,
-        audioFile.buffer,
-        parseInt(duration) || 10
-      );
-
-      res.json({
-        message: "Voice sample saved successfully",
-        emotion,
-        audioUrl
-      });
-    } catch (error: any) {
-      console.error("Failed to save voice sample:", error);
-      res.status(500).json({ 
-        message: "Failed to save voice sample",
-        error: error?.message || 'Unknown error'
-      });
-    }
-  });
-
-  // Delete voice sample
-  app.delete("/api/voice-samples/:emotion", requireAuth, async (req, res) => {
-    try {
-      const userId = (req.user as any)?.id;
-      const { emotion } = req.params;
-
-      if (!userId || !emotion) {
-        return res.status(400).json({ message: "Missing required fields" });
-      }
-
-      const { voiceSamplesService } = await import('./voice-samples-service');
-      const success = await voiceSamplesService.deleteVoiceSample(userId, emotion);
-
-      if (success) {
-        res.json({ message: "Voice sample deleted successfully" });
-      } else {
-        res.status(404).json({ message: "Voice sample not found" });
-      }
-    } catch (error: any) {
-      console.error("Failed to delete voice sample:", error);
-      res.status(500).json({ 
-        message: "Failed to delete voice sample",
-        error: error?.message || 'Unknown error'
-      });
-    }
-  });
 
   // Get user voice samples for character override
   app.get("/api/videos/user-voices", requireAuth, async (req, res) => {
@@ -4289,6 +4196,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error('Error recording voice modulation:', error);
       res.status(500).json({ message: 'Failed to record voice modulation' });
+    }
+  });
+
+  // Delete voice modulation
+  app.delete('/api/voice-modulations/delete', requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any)?.id;
+      const { modulationKey } = req.body;
+      
+      if (!userId) {
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
+
+      if (!modulationKey) {
+        return res.status(400).json({ message: 'Modulation key is required' });
+      }
+
+      const { voiceModulationService } = await import('./voice-modulation-service');
+      await voiceModulationService.deleteVoiceModulation(userId, modulationKey);
+      
+      res.json({ message: 'Voice modulation deleted successfully' });
+    } catch (error: any) {
+      console.error('Error deleting voice modulation:', error);
+      res.status(500).json({ message: 'Failed to delete voice modulation' });
     }
   });
 

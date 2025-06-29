@@ -351,13 +351,13 @@ export default function VoiceSamples() {
                                 instructions: "Hold button to record"
                               }}
                               onRecordingComplete={(audioBlob) => {
-                                saveVoiceSample.mutate({
+                                saveVoiceModulation.mutate({
                                   emotion: template.modulationKey,
                                   audioBlob
                                 });
                               }}
                               className="w-full"
-                              disabled={saveVoiceSample.isPending}
+                              disabled={saveVoiceModulation.isPending}
                               maxRecordingTime={template.targetDuration}
                             />
                           </div>
