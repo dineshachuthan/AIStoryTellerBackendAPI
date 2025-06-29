@@ -271,7 +271,7 @@ export default function VoiceSamples() {
         </div>
       </div>
 
-      <div className="pt-20 container mx-auto px-4 py-2 max-w-6xl">
+      <div className="pt-20 container mx-auto px-3 py-1 max-w-6xl">
       {/* Compact Header */}
       <div className="mb-3">
         <h1 className="text-xl font-bold mb-1">Voice Samples Collection</h1>
@@ -357,7 +357,7 @@ export default function VoiceSamples() {
                           <h3 className="font-medium text-sm">{template.displayName}</h3>
                           {getStatusIcon()}
                         </div>
-                        <Badge variant="outline" className="text-xs ml-auto">
+                        <Badge variant="outline" className="text-xs">
                           {template.category || 'basic'}
                         </Badge>
                       </div>
@@ -365,10 +365,10 @@ export default function VoiceSamples() {
                       <EnhancedVoiceRecorder
                         buttonText={{
                           hold: isLocked 
-                            ? `🔒 ${template.displayName} (Locked)` 
+                            ? "🔒 Locked" 
                             : isRecorded 
-                              ? `Re-record ${template.displayName}` 
-                              : `Record ${template.displayName}`,
+                              ? "Re-record" 
+                              : "Record",
                           recording: "Recording...",
                           instructions: isLocked 
                             ? "Sample locked for voice cloning" 
@@ -378,8 +378,8 @@ export default function VoiceSamples() {
                         }}
                         sampleText={template.sampleText}
                         emotionDescription={template.description}
-                        emotionName={template.displayName}
-                        category={template.category}
+                        emotionName=""
+                        category=""
                         isRecorded={isRecorded}
                         isLocked={isLocked}
                         onRecordingComplete={(audioBlob) => {
