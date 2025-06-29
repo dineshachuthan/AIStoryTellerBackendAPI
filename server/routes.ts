@@ -16,7 +16,7 @@ import { db } from "./db";
 import { eq, desc, and } from "drizzle-orm";
 import { videoGenerations } from "@shared/schema";
 import { audioService } from "./audio-service";
-import { getAllVoiceSamples, getVoiceSampleProgress } from "./voice-samples";
+import { getVoiceSampleProgress } from "./voice-samples";
 import { storyNarrator } from "./story-narrator";
 import { grandmaVoiceNarrator } from "./voice-narrator";
 import { getEnvironment, getBaseUrl, getOAuthConfig } from "./oauth-config";
@@ -404,10 +404,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // Voice Samples routes
-  app.get("/api/voice-samples/templates", (req, res) => {
-    res.json(getAllVoiceSamples());
-  });
+  // Voice Samples routes - route moved to line ~3829 with proper transformation
 
   app.get("/api/users/:userId/voice-samples", requireAuth, async (req, res) => {
     try {
@@ -3828,8 +3825,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get voice sample templates
   app.get("/api/voice-samples/templates", async (req, res) => {
     try {
+      console.log("Getting voice samples templates...");
       const { getAllVoiceSamples } = await import('./voice-samples');
       const allSamples = getAllVoiceSamples();
+      console.log("Raw samples:", allSamples.slice(0, 2));
       
       const templates = allSamples.map(sample => ({
         emotion: sample.label,
@@ -3840,6 +3839,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         category: sample.sampleType
       }));
       
+      console.log("Transformed templates:", templates.slice(0, 2));
       res.json(templates);
     } catch (error: any) {
       console.error("Failed to get voice sample templates:", error);
