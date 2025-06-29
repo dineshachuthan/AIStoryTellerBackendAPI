@@ -70,6 +70,8 @@ export const userVoiceSamples = pgTable("user_voice_samples", {
   audioUrl: text("audio_url").notNull(),
   duration: integer("duration"), // in milliseconds
   isCompleted: boolean("is_completed").default(false),
+  isLocked: boolean("is_locked").default(false), // locked after voice cloning
+  lockedAt: timestamp("locked_at"), // when sample was locked
   recordedAt: timestamp("recorded_at").defaultNow(),
 });
 
