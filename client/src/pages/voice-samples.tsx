@@ -172,8 +172,8 @@ export default function VoiceSamples() {
   }, [audioElement]);
 
   // Filter templates by modulation type (emotion, sound, modulation)
-  const filteredTemplates = Array.isArray(templates) ? templates.filter((template: any) => 
-    template.modulationType === selectedCategory
+  const filteredTemplates = Array.isArray(templates) && templates.length > 0 ? templates.filter((template: any) => 
+    template?.modulationType === selectedCategory
   ) : [];
 
   // Get unique modulation types and map to friendly names
@@ -183,7 +183,8 @@ export default function VoiceSamples() {
     'modulation': 'Modulations'
   };
   
-  const rawCategories = Array.isArray(templates) ? Array.from(new Set(templates.map((t: any) => t.modulationType))) : ['emotion'];
+  const rawCategories = Array.isArray(templates) && templates.length > 0 ? 
+    Array.from(new Set(templates.map((t: any) => t?.modulationType).filter(Boolean))) : ['emotion'];
   const categories = rawCategories.filter(cat => categoryMapping[cat as keyof typeof categoryMapping]);
   
   // Debug logging
@@ -400,7 +401,7 @@ export default function VoiceSamples() {
             </div>
             
             <div className="flex items-center gap-3">
-              {progress && progress.completionPercentage === 100 ? (
+              {progress && (progress as any).completionPercentage === 100 ? (
                 <Button size="lg" className="bg-green-600 hover:bg-green-700">
                   <CheckCircle className="w-4 h-4 mr-2" />
                   Save All Voices
@@ -409,7 +410,7 @@ export default function VoiceSamples() {
                 <div className="text-right">
                   <p className="text-sm font-medium">Keep recording</p>
                   <p className="text-xs text-muted-foreground">
-                    {progress?.missingEmotions.length || 0} emotions remaining
+                    {12 - ((progress as any)?.recordedTemplates || 0)} voice samples remaining
                   </p>
                 </div>
               )}
