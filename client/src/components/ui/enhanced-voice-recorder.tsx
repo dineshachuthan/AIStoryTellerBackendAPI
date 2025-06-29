@@ -510,35 +510,7 @@ export function EnhancedVoiceRecorder({
             </Tooltip>
           </div>
 
-        {/* Status Indicator Lights with Tooltips */}
-        <div className="flex justify-center space-x-2 mt-3">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className={`w-2 h-2 rounded-full cursor-help ${recordingState === 'recording' ? 'bg-red-500 animate-pulse' : 'bg-gray-600'}`}></div>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Recording status</p>
-            </TooltipContent>
-          </Tooltip>
-          
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className={`w-2 h-2 rounded-full cursor-help ${(tempRecording || existingRecording) ? 'bg-green-500' : 'bg-gray-600'}`}></div>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Recording saved</p>
-            </TooltipContent>
-          </Tooltip>
-          
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className={`w-2 h-2 rounded-full cursor-help ${(isPlayingTemp || isPlayingExisting) ? 'bg-blue-500 animate-pulse' : 'bg-gray-600'}`}></div>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Playing audio</p>
-            </TooltipContent>
-          </Tooltip>
-        </div>
+
         </div>
       </div>
     </TooltipProvider>
