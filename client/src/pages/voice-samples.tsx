@@ -378,51 +378,7 @@ export default function VoiceSamples() {
         ))}
       </Tabs>
 
-      {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border p-4 shadow-lg">
-        <div className="container mx-auto max-w-6xl">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              {progress && (
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                    <span className="text-sm font-medium text-primary">
-                      {(progress as any).recordedTemplates || 0}
-                    </span>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">
-                      {(progress as any).recordedTemplates || 0} of {(progress as any).totalTemplates || 0} voice samples
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {Math.round((progress as any).completionPercentage || 0)}% complete
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-            
-            <div className="flex items-center gap-3">
-              {progress && (progress as any).completionPercentage === 100 ? (
-                <Button size="lg" className="bg-green-600 hover:bg-green-700">
-                  <CheckCircle className="w-4 h-4 mr-2" />
-                  Save All Voices
-                </Button>
-              ) : (
-                <div className="text-right">
-                  <p className="text-sm font-medium">Keep recording</p>
-                  <p className="text-xs text-muted-foreground">
-                    {12 - ((progress as any)?.recordedTemplates || 0)} samples remaining
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Add bottom padding to prevent content from being hidden behind fixed navigation */}
-      <div className="h-20"></div>
       </div>
     </>
   );

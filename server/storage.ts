@@ -781,8 +781,25 @@ export class DatabaseStorage implements IStorage {
 
   async getVoiceModulationTemplates(): Promise<any[]> {
     // Get templates from voice-config.ts since they're already configured there
-    const { getVoiceTemplates } = await import('../shared/voice-config');
-    return getVoiceTemplates();
+    const { getAllEmotionConfigs } = await import('../shared/voice-config');
+    const emotionConfigs = getAllEmotionConfigs();
+    
+    // Convert to the expected format with modulationType and modulationKey
+    return emotionConfigs.map((config, index) => ({
+      id: index + 1,
+      modulationType: 'emotion',
+      modulationKey: config.emotion,
+      displayName: config.displayName,
+      description: config.description,
+      sampleText: config.sampleText,
+      targetDuration: config.targetDuration,
+      category: config.category,
+      voiceSettings: config.voiceSettings,
+      isActive: true,
+      sortOrder: index,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    }));
   }
 }
 
