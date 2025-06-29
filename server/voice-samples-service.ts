@@ -66,9 +66,9 @@ export class VoiceSamplesService {
       const totalEmotions = templates.length;
 
       // Get user's recorded voice samples
-      const userSamples = await storage.getUserVoiceEmotions(userId);
+      const userSamples = await storage.getUserVoiceSamples(userId);
       const recordedEmotions = userSamples.length;
-      const recordedEmotionsList = userSamples.map(sample => sample.emotion);
+      const recordedEmotionsList = userSamples.map(sample => sample.label);
 
       // Calculate missing emotions
       const missingEmotions = templates
@@ -205,7 +205,7 @@ export class VoiceSamplesService {
       }
 
       // Delete database record
-      await storage.deleteUserVoiceEmotion(sample.id);
+      await storage.deleteUserVoiceEmotion(userId, emotion);
       
       console.log(`Voice sample deleted for user ${userId}, emotion: ${emotion}`);
       return true;
