@@ -207,16 +207,16 @@ export function EnhancedVoiceRecorder({
 
   return (
     <div 
-      className={`flex flex-col items-center space-y-4 ${className}`}
+      className={`flex flex-col items-center ${className}`}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
       onTouchEnd={handleMouseUp}
     >
-      {/* Fixed Recording Button Container - prevents layout shift */}
-      <div className="flex flex-col items-center space-y-2 min-h-[120px] justify-center">
-        {/* Recording Button */}
-        {recordingState === 'idle' && (
-          <>
+      {/* Fixed Button Container - prevents layout shift */}
+      <div className="flex flex-col items-center min-h-[140px] justify-start space-y-3 w-full">
+        {/* Recording Button Area - Fixed Size */}
+        <div className="flex flex-col items-center space-y-2">
+          {recordingState === 'idle' && (
             <button
               onMouseDown={handleMouseDown}
               onMouseUp={handleMouseUp}
@@ -229,23 +229,15 @@ export function EnhancedVoiceRecorder({
             >
               <Mic className="w-8 h-8" />
             </button>
-            <p className="text-sm text-gray-600 text-center">{buttonText.instructions}</p>
-          </>
-        )}
+          )}
 
-        {/* Countdown Display */}
-        {recordingState === 'countdown' && (
-          <>
+          {recordingState === 'countdown' && (
             <div className="w-20 h-20 rounded-full bg-orange-500 flex items-center justify-center text-white text-2xl font-bold select-none">
               {countdownTime}
             </div>
-            <p className="text-sm text-gray-600 text-center">Get ready...</p>
-          </>
-        )}
+          )}
 
-        {/* Recording Display */}
-        {recordingState === 'recording' && (
-          <>
+          {recordingState === 'recording' && (
             <div 
               onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseUp}
@@ -254,14 +246,26 @@ export function EnhancedVoiceRecorder({
             >
               <Mic className="w-8 h-8" />
             </div>
-            <p className="text-sm text-gray-600 text-center">Recording... Release to stop or auto-stops at {maxRecordingTime}s</p>
-          </>
-        )}
+          )}
+        </div>
+
+        {/* Fixed Message Area - Always Same Height */}
+        <div className="h-10 flex items-center justify-center">
+          {recordingState === 'idle' && (
+            <p className="text-sm text-gray-600 text-center">{buttonText.instructions}</p>
+          )}
+          {recordingState === 'countdown' && (
+            <p className="text-sm text-gray-600 text-center">Get ready...</p>
+          )}
+          {recordingState === 'recording' && (
+            <p className="text-sm text-gray-600 text-center">Release to stop or auto-stops at {maxRecordingTime}s</p>
+          )}
+        </div>
       </div>
 
-      {/* Recording Progress - shown below the fixed button area */}
+      {/* Recording Progress - Below Fixed Area */}
       {recordingState === 'recording' && (
-        <div className="w-64">
+        <div className="w-64 mt-4">
           <Progress value={progressPercentage} className="h-2" />
           <div className="flex justify-between text-sm text-gray-600 mt-1">
             <span>{formatTime(recordingTime)}</span>
@@ -272,7 +276,7 @@ export function EnhancedVoiceRecorder({
 
       {/* Verification Workflow */}
       {recordingState === 'recorded' && tempRecording && (
-        <div className="flex flex-col items-center space-y-4">
+        <div className="flex flex-col items-center space-y-4 mt-4">
           <div className="text-center">
             <p className="text-sm text-gray-600 mb-2">Recording complete!</p>
             <p className="text-xs text-gray-500">Duration: {formatTime(recordingTime)}</p>
