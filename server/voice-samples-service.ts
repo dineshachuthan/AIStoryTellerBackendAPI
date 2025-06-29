@@ -77,11 +77,11 @@ export class VoiceSamplesService {
 
       // Map samples to response format
       const recordedSamples: UserVoiceSampleData[] = userSamples.map(sample => ({
-        emotion: sample.emotion,
+        emotion: sample.label,
         audioUrl: sample.audioUrl,
         duration: sample.duration || 0,
-        recordedAt: sample.createdAt || new Date(),
-        storyId: sample.storyIdRecorded
+        recordedAt: sample.recordedAt || new Date(),
+        storyId: undefined // user_voice_samples doesn't have storyId
       }));
 
       return {
