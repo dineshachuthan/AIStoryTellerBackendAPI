@@ -79,6 +79,57 @@ export class VoiceCloningSessionManager {
 
     // Store in session
     req.session.voiceCloning = sessionData;
+    
+    // Auto-trigger cloning for any categories that have reached threshold
+    const categoriesToTrigger: VoiceCategoryType[] = [];
+    if (recordedEmotions >= this.CLONING_THRESHOLD && !isCloning) {
+      categoriesToTrigger.push('emotions');
+    }
+    if (recordedSounds >= this.CLONING_THRESHOLD && !isCloning) {
+      categoriesToTrigger.push('sounds');
+    }
+    if (recordedModulations >= this.CLONING_THRESHOLD && !isCloning) {
+      categoriesToTrigger.push('modulations');
+    }
+    
+    // Trigger cloning for eligible categories in background
+    if (categoriesToTrigger.length > 0) {
+      console.log(`🚀 Auto-triggering ElevenLabs cloning for categories: ${categoriesToTrigger.join(', ')} (user has enough samples)`);
+      
+      // Set cloning in progress for all eligible categories
+      categoriesToTrigger.forEach(category => {
+        sessionData.cloning_in_progress[category] = true;
+        sessionData.cloning_status[category] = 'cloning';
+      });
+      req.session.voiceCloning = sessionData;
+      
+      // Start background cloning process
+      setTimeout(async () => {
+        try {
+          const { voiceTrainingService } = await import('./voice-training-service');
+          const result = await voiceTrainingService.triggerAutomaticTraining(userId);
+          
+          if (result.success) {
+            console.log(`✅ Auto-triggered ElevenLabs cloning completed for user ${userId}`);
+            // Complete all triggered categories
+            categoriesToTrigger.forEach(category => {
+              this.completeCategoryCloning(req, category, true);
+            });
+          } else {
+            console.error(`❌ Auto-triggered ElevenLabs cloning failed for user ${userId}: ${result.error}`);
+            categoriesToTrigger.forEach(category => {
+              this.completeCategoryCloning(req, category, false);
+            });
+          }
+        } catch (error) {
+          console.error(`❌ Auto-triggered ElevenLabs cloning error for user ${userId}:`, error);
+          categoriesToTrigger.forEach(category => {
+            this.completeCategoryCloning(req, category, false);
+          });
+        }
+      }, 100);
+    }
+    
     return sessionData;
   }
 
