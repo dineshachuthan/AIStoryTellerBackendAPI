@@ -306,7 +306,7 @@ export function EnhancedVoiceRecorder({
     <TooltipProvider>
       <div className={`w-full max-w-sm mx-auto ${className}`}>
         {/* Radio/TV Style Voice Recorder Panel - Dynamic background for recorded samples */}
-        <div className={`rounded-2xl p-4 shadow-2xl border ${
+        <div className={`rounded-2xl p-4 shadow-2xl border h-[320px] ${
           isRecorded || existingRecording 
             ? 'bg-gradient-to-br from-blue-900/70 to-purple-900/70 border-blue-500/50' 
             : 'bg-gradient-to-br from-gray-900 to-gray-800 border-gray-700'
