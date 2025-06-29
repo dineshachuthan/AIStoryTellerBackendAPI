@@ -205,6 +205,9 @@ export function EnhancedVoiceRecorder({
     setRecordingTime(0);
     setCountdownTime(3);
     setRecordingState('idle');
+    
+    // Start recording immediately
+    startRecording();
   };
 
   const saveRecording = () => {
