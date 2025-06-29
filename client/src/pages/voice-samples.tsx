@@ -266,9 +266,8 @@ export default function VoiceSamples() {
           <TabsContent key={category} value={category}>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {filteredTemplates.map((template: any) => {
-                const recordedSample = userVoiceSamples.find(
-                  (sample) => sample.modulationKey === template.modulationKey
-                );
+                const recordedSample = getRecordedSample(template.modulationKey);
+                const isRecorded = !!recordedSample;
 
                 return (
                   <Card 
