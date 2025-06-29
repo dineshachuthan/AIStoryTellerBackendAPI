@@ -1,11 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { PressHoldRecorder } from './press-hold-recorder';
-import { Button } from './button';
-import { Card, CardContent, CardHeader, CardTitle } from './card';
-import { Badge } from './badge';
-import { Play, Pause, Save, Trash2, Volume2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { apiRequest } from '@/lib/queryClient';
+import React, { useState, useRef } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Play, Pause, Save, Volume2, RotateCcw, Check, Shield } from 'lucide-react';
+import { PressHoldRecorder } from '@/components/ui/press-hold-recorder';
 
 export interface EmotionVoiceRecording {
   id?: number;
@@ -28,7 +26,7 @@ interface EmotionVoiceRecorderProps {
 
 export function EmotionVoiceRecorder({
   emotion,
-  intensity = 5,
+  intensity = 7,
   onSave,
   onDelete,
   existingRecording,
@@ -36,194 +34,18 @@ export function EmotionVoiceRecorder({
 }: EmotionVoiceRecorderProps) {
   const [recording, setRecording] = useState<EmotionVoiceRecording | null>(existingRecording || null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const { toast } = useToast();
-
-  useEffect(() => {
-    return () => {
-      if (audio) {
-        audio.pause();
-        audio.src = '';
-      }
-    };
-  }, [audio]);
-
-  const handleRecordingComplete = (audioBlob: Blob, audioUrl: string) => {
-    const newRecording: EmotionVoiceRecording = {
-      emotion,
-      intensity,
-      audioBlob,
-      audioUrl,
-      isNew: true
-    };
-    setRecording(newRecording);
-    
-    toast({
-      title: "Recording Complete",
-      description: `${emotion} voice sample recorded successfully. Click Save to store it.`
-    });
-  };
-
-  const handlePlayback = async () => {
-    if (!recording) return;
-
-    if (isPlaying && audio) {
-      audio.pause();
-      setIsPlaying(false);
-      return;
-    }
-
-    try {
-      let audioUrl = recording.audioUrl;
-      
-      // If it's a new recording with blob, use the blob URL
-      if (recording.isNew && recording.audioBlob) {
-        audioUrl = URL.createObjectURL(recording.audioBlob);
-      } else if (recording.id) {
-        // Fetch the audio URL for saved recordings
-        const response = await apiRequest(`/api/user/voice-emotions/${recording.id}/audio`);
-        audioUrl = response.audioUrl;
-      }
-
-      if (!audioUrl) {
-        toast({
-          title: "Playback Error",
-          description: "Audio not available for playback",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      const newAudio = new Audio(audioUrl);
-      
-      newAudio.onloadeddata = () => {
-        newAudio.play();
-        setIsPlaying(true);
-        setAudio(newAudio);
-      };
-
-      newAudio.onended = () => {
-        setIsPlaying(false);
-        setAudio(null);
-      };
-
-      newAudio.onerror = () => {
-        setIsPlaying(false);
-        setAudio(null);
-        toast({
-          title: "Playback Error",
-          description: "Failed to play audio",
-          variant: "destructive"
-        });
-      };
-
-    } catch (error) {
-      console.error('Playback error:', error);
-      toast({
-        title: "Playback Error",
-        description: "Failed to load audio for playback",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleSave = async () => {
-    if (!recording || !recording.audioBlob) {
-      toast({
-        title: "Save Error",
-        description: "No recording to save",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsSaving(true);
-    
-    try {
-      const formData = new FormData();
-      formData.append('audio', recording.audioBlob, `${emotion}.mp4`);
-      formData.append('emotion', emotion);
-      formData.append('intensity', intensity.toString());
-
-      const response = await fetch('/api/user/voice-emotions', {
-        method: 'POST',
-        body: formData
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to save recording');
-      }
-
-      const result = await response.json();
-      
-      const savedRecording: EmotionVoiceRecording = {
-        ...recording,
-        id: result.voiceEmotion.id,
-        isNew: false
-      };
-      
-      setRecording(savedRecording);
-      
-      toast({
-        title: "Success",
-        description: result.message || `${emotion} voice sample saved successfully`
-      });
-
-      if (onSave) {
-        onSave(savedRecording);
-      }
-
-    } catch (error) {
-      console.error('Save error:', error);
-      toast({
-        title: "Save Error",
-        description: "Failed to save voice recording",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!recording || !recording.id) return;
-
-    try {
-      await apiRequest(`/api/user/voice-emotions/${recording.id}`, {
-        method: 'DELETE'
-      });
-
-      setRecording(null);
-      
-      toast({
-        title: "Deleted",
-        description: `${emotion} voice sample deleted successfully`
-      });
-
-      if (onDelete) {
-        onDelete(recording.id);
-      }
-
-    } catch (error) {
-      console.error('Delete error:', error);
-      toast({
-        title: "Delete Error",
-        description: "Failed to delete voice recording",
-        variant: "destructive"
-      });
-    }
-  };
+  const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
 
   const getEmotionColor = (emotion: string) => {
     const colorMap: Record<string, string> = {
-      happy: "bg-yellow-500/20 text-yellow-600 border-yellow-500/30",
-      sad: "bg-blue-500/20 text-blue-600 border-blue-500/30",
-      angry: "bg-red-500/20 text-red-600 border-red-500/30",
-      excited: "bg-orange-500/20 text-orange-600 border-orange-500/30",
+      happiness: "bg-yellow-500/20 text-yellow-600 border-yellow-500/30",
+      sadness: "bg-blue-500/20 text-blue-600 border-blue-500/30",
+      anger: "bg-red-500/20 text-red-600 border-red-500/30",
+      excitement: "bg-orange-500/20 text-orange-600 border-orange-500/30",
       calm: "bg-green-500/20 text-green-600 border-green-500/30",
       nervous: "bg-purple-500/20 text-purple-600 border-purple-500/30",
-      confident: "bg-indigo-500/20 text-indigo-600 border-indigo-500/30",
+      confident: "bg-teal-500/20 text-teal-600 border-teal-500/30",
       surprised: "bg-pink-500/20 text-pink-600 border-pink-500/30"
     };
     return colorMap[emotion.toLowerCase()] || "bg-gray-500/20 text-gray-600 border-gray-500/30";
@@ -243,27 +65,109 @@ export function EmotionVoiceRecorder({
     return emotionTexts[emotion.toLowerCase()] || "Please read this text with the appropriate emotional tone to capture your voice for this emotion.";
   };
 
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const handleRecordingComplete = (audioBlob: Blob, audioUrl: string) => {
+    const newRecording: EmotionVoiceRecording = {
+      emotion,
+      intensity,
+      audioBlob,
+      audioUrl,
+      isNew: true,
+      createdAt: new Date()
+    };
+    setRecording(newRecording);
+  };
+
+  const togglePlayback = () => {
+    if (!recording?.audioUrl) return;
+
+    if (isPlaying) {
+      // Stop current playback
+      if (audioPlayerRef.current) {
+        audioPlayerRef.current.pause();
+        audioPlayerRef.current = null;
+      }
+      setIsPlaying(false);
+    } else {
+      // Start new playback
+      const audio = new Audio(recording.audioUrl);
+      audioPlayerRef.current = audio;
+      setIsPlaying(true);
+
+      audio.play().catch(error => {
+        console.error('Error playing audio:', error);
+        setIsPlaying(false);
+      });
+
+      audio.onended = () => {
+        setIsPlaying(false);
+        audioPlayerRef.current = null;
+      };
+
+      audio.onerror = () => {
+        setIsPlaying(false);
+        audioPlayerRef.current = null;
+      };
+    }
+  };
+
+  const resetRecording = () => {
+    if (recording?.audioUrl) {
+      URL.revokeObjectURL(recording.audioUrl);
+    }
+    if (audioPlayerRef.current) {
+      audioPlayerRef.current.pause();
+      audioPlayerRef.current = null;
+    }
+    setRecording(null);
+    setIsPlaying(false);
+  };
+
+  const handleSave = async () => {
+    if (!recording || !recording.isNew) return;
+
+    setIsSaving(true);
+    try {
+      const savedRecording: EmotionVoiceRecording = {
+        ...recording,
+        id: Date.now(), // Temporary ID
+        isNew: false
+      };
+      
+      setRecording(savedRecording);
+      onSave?.(savedRecording);
+    } catch (error) {
+      console.error('Error saving recording:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
-    <Card className={`${className} bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700`}>
+    <Card className={`${className} border border-gray-200 dark:border-gray-700`}>
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Badge variant="outline" className={getEmotionColor(emotion)}>
-              {emotion}
-            </Badge>
-            <span className="text-sm text-gray-500 dark:text-gray-400">
-              Intensity: {intensity}/10
-            </span>
-          </div>
-          {recording && recording.id && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleDelete}
-              className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+          <div className="flex items-center space-x-3">
+            <Badge 
+              variant="outline" 
+              className={`px-3 py-1 text-xs font-medium border ${getEmotionColor(emotion)}`}
             >
-              <Trash2 className="w-4 h-4" />
-            </Button>
+              {emotion.charAt(0).toUpperCase() + emotion.slice(1)}
+            </Badge>
+            <span className="text-sm text-gray-500">Intensity: {intensity}</span>
+          </div>
+          {recording && !recording.isNew && (
+            <div className="flex items-center space-x-1 text-xs text-green-600 dark:text-green-400">
+              <Check className="w-3 h-3" />
+              <span>Saved</span>
+            </div>
           )}
         </CardTitle>
       </CardHeader>
@@ -282,57 +186,109 @@ export function EmotionVoiceRecorder({
           </div>
         </div>
 
-        {/* Recording Interface */}
-        <div className="flex flex-col space-y-3">
+        {/* Recording Section */}
+        {!recording && (
           <PressHoldRecorder
-            buttonText={recording?.isNew ? "Hold to Re-record" : "Hold to Record"}
             onRecordingComplete={handleRecordingComplete}
-            className="w-full py-3"
-            variant={recording?.isNew ? "secondary" : "default"}
+            maxRecordingTime={20}
+            buttonText={{
+              hold: "Hold to Record",
+              recording: "Recording... (release when done)",
+              instructions: "Press and hold while reading the text above"
+            }}
           />
-          
-          {recording && (
-            <div className="text-xs text-center text-gray-500 dark:text-gray-400">
-              {recording.isNew ? "New recording ready" : "Recorded voice sample"}
-            </div>
-          )}
-        </div>
+        )}
 
-        {/* Playback and Actions */}
         {recording && (
-          <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handlePlayback}
-              className="flex items-center space-x-2"
-            >
-              {isPlaying ? (
-                <Pause className="w-4 h-4" />
-              ) : (
-                <Play className="w-4 h-4" />
-              )}
-              <span>{isPlaying ? "Stop" : "Play"}</span>
-            </Button>
+          <div className="space-y-4">
+            {/* Audio File Info */}
+            <div className="bg-gray-800/10 dark:bg-gray-800/50 rounded-lg p-4">
+              <h4 className="text-sm font-medium mb-2 text-center">
+                {recording.isNew ? "Recording Complete" : "Recorded Voice Sample"}
+              </h4>
+              <div className="flex justify-center items-center space-x-4 text-sm text-gray-600 dark:text-gray-300">
+                <div className="flex items-center space-x-2">
+                  <div className={`w-2 h-2 rounded-full ${recording.isNew ? 'bg-orange-500' : 'bg-green-500'}`}></div>
+                  <span>Size: {recording.audioBlob ? formatFileSize(recording.audioBlob.size) : 'N/A'}</span>
+                </div>
+              </div>
+            </div>
 
-            {recording.isNew && (
-              <Button
-                onClick={handleSave}
-                disabled={isSaving}
-                size="sm"
-                className="flex items-center space-x-2"
+            {/* Audio Preview Section */}
+            <div className="bg-gray-800/10 dark:bg-gray-800/30 rounded-lg p-4">
+              <h4 className="text-sm font-medium mb-3 text-center">Audio Preview</h4>
+              <div className="flex justify-center space-x-4 mb-3">
+                <Button 
+                  onClick={togglePlayback}
+                  variant="outline"
+                  className="border-blue-500 text-blue-500 hover:bg-blue-500/20"
+                  size="sm"
+                >
+                  {isPlaying ? <Pause className="w-4 h-4 mr-2" /> : <Play className="w-4 h-4 mr-2" />}
+                  {isPlaying ? 'Pause Preview' : 'Play Preview'}
+                </Button>
+              </div>
+              
+              {/* Audio quality indicator */}
+              <div className="text-center">
+                {recording.audioBlob && recording.audioBlob.size < 10000 && (
+                  <div className="text-yellow-600 dark:text-yellow-400 text-xs bg-yellow-400/10 rounded px-2 py-1 inline-block mb-2">
+                    ⚠️ Recording seems very short - ensure it contains clear speech
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex space-x-3">
+              <Button 
+                onClick={resetRecording}
+                variant="outline"
+                className="border-gray-500 text-gray-500 hover:bg-gray-500/20 flex-1"
               >
-                <Save className="w-4 h-4" />
-                <span>{isSaving ? "Saving..." : "Save"}</span>
+                <RotateCcw className="w-4 h-4 mr-2" />
+                Record Again
               </Button>
-            )}
+              
+              {recording.isNew && (
+                <Button 
+                  onClick={handleSave}
+                  disabled={isSaving}
+                  className="bg-green-600 hover:bg-green-700 flex-1"
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  {isSaving ? "Saving..." : "Save"}
+                </Button>
+              )}
 
-            {!recording.isNew && recording.id && (
-              <div className="flex items-center space-x-1 text-xs text-green-600 dark:text-green-400">
-                <Volume2 className="w-3 h-3" />
-                <span>Saved</span>
+              {!recording.isNew && (
+                <div className="flex items-center justify-center space-x-2 text-sm text-green-600 dark:text-green-400 flex-1 border border-green-500/30 rounded bg-green-500/10 py-2">
+                  <Volume2 className="w-4 h-4" />
+                  <span>Voice Sample Saved</span>
+                </div>
+              )}
+            </div>
+
+            {/* Instructions */}
+            {recording.isNew && (
+              <div className="text-xs text-gray-500 text-center bg-blue-500/10 rounded p-3 border border-blue-500/20">
+                <strong>Before saving:</strong> Please play the preview to ensure your recording contains clear speech. 
+                If it sounds unclear or silent, record again for better results.
               </div>
             )}
+          </div>
+        )}
+
+        {/* Privacy Notice for new recordings */}
+        {recording?.isNew && (
+          <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 text-xs">
+            <div className="flex items-start space-x-2">
+              <Shield className="w-3 h-3 text-blue-400 mt-0.5 flex-shrink-0" />
+              <div className="text-blue-600 dark:text-blue-200">
+                <strong>Voice Privacy:</strong> Your emotion voice samples are stored securely for your personal voice cloning. 
+                They are never shared and are used only to generate your personalized AI voice.
+              </div>
+            </div>
           </div>
         )}
       </CardContent>
