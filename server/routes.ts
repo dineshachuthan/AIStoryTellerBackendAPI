@@ -4178,18 +4178,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Record new voice modulation
-  app.post('/api/voice-modulations/record', requireAuth, async (req, res) => {
+  app.post('/api/voice-modulations/record', requireAuth, upload.single('audio'), async (req, res) => {
     try {
       const userId = (req.user as any)?.id;
+      const { modulationKey, duration, modulationType } = req.body;
+      const audioFile = req.file;
       
       if (!userId) {
         return res.status(401).json({ message: 'User not authenticated' });
       }
 
+      if (!modulationKey || !audioFile) {
+        return res.status(400).json({ message: 'Missing required fields' });
+      }
+
+      // Get the template to find template_id
       const { voiceModulationService } = await import('./voice-modulation-service');
+      const templates = await voiceModulationService.getTemplates();
+      const template = templates.find(t => t.modulationKey === modulationKey);
+      
+      if (!template) {
+        return res.status(404).json({ message: 'Template not found' });
+      }
+
+      // Save audio file and get URL
+      const audioUrl = `/uploads/voice-modulations/${userId}/${modulationKey}_${Date.now()}.webm`;
+      const audioPath = path.join(process.cwd(), 'uploads', 'voice-modulations', userId);
+      await fs.mkdir(audioPath, { recursive: true });
+      await fs.writeFile(path.join(process.cwd(), audioUrl), audioFile.buffer);
+
       const modulation = await voiceModulationService.recordVoiceModulation({
-        ...req.body,
-        userId
+        userId,
+        templateId: template.id,
+        modulationKey,
+        modulationType: template.modulationType,
+        audioUrl,
+        duration: parseInt(duration) || template.targetDuration || 10,
+        qualityScore: 85, // Default quality score
+        isPreferred: false,
+        usageCount: 0
       });
       
       res.json(modulation);
