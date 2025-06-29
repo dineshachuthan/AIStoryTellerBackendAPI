@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, jsonb, varchar, index, doublePrecision, decimal } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, jsonb, varchar, index, doublePrecision, numeric } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -73,18 +73,7 @@ export const userVoiceSamples = pgTable("user_voice_samples", {
   recordedAt: timestamp("recorded_at").defaultNow(),
 });
 
-// Story Narrations Table - Saved narrations for cost-effective playback
-export const storyNarrations = pgTable("story_narrations", {
-  id: serial("id").primaryKey(),
-  storyId: integer("story_id").notNull().references(() => stories.id),
-  userId: varchar("user_id", { length: 255 }).notNull().references(() => users.id),
-  narratorVoice: varchar("narrator_voice", { length: 255 }).notNull(),
-  narratorVoiceType: varchar("narrator_voice_type", { length: 20 }).notNull(), // 'ai' | 'user'
-  segments: jsonb("segments").notNull(), // Array of narration segments with audioId references
-  totalDuration: integer("total_duration").notNull(), // Total duration in milliseconds
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
+// Legacy Story Narrations - will be replaced by enhanced storyNarrations table below
 
 // Audio Files Table - Store audio binary data directly in database
 export const audioFiles = pgTable("audio_files", {
@@ -262,7 +251,7 @@ export const userEmotionVoices = pgTable("user_emotion_voices", {
   qualityScore: doublePrecision("quality_score"), // ElevenLabs quality rating
   voiceSettings: jsonb("voice_settings"), // stability, similarity_boost, etc.
   trainingMetadata: jsonb("training_metadata"), // ElevenLabs response data
-  trainingCost: decimal("training_cost"), // track API cost spent
+  trainingCost: numeric("training_cost"), // track API cost spent
   lastUsedAt: timestamp("last_used_at"),
   usageCount: integer("usage_count").default(0),
   neverDelete: boolean("never_delete").default(false),
@@ -321,7 +310,7 @@ export const generatedAudioCache = pgTable("generated_audio_cache", {
   audioUrl: text("audio_url").notNull(),
   fileSize: integer("file_size"), // in bytes
   duration: doublePrecision("duration"), // in seconds
-  apiCost: decimal("api_cost"), // track cost per generation
+  apiCost: numeric("api_cost"), // track cost per generation
   generatedAt: timestamp("generated_at").defaultNow(),
   lastAccessedAt: timestamp("last_accessed_at").defaultNow(),
   accessCount: integer("access_count").default(1), // reuse tracking
@@ -346,7 +335,7 @@ export const storyAnalysisCache = pgTable("story_analysis_cache", {
   analysisData: jsonb("analysis_data").notNull(), // full OpenAI analysis result
   charactersExtracted: jsonb("characters_extracted"), // extracted characters
   emotionsDetected: jsonb("emotions_detected"), // detected emotions
-  apiCost: decimal("api_cost"), // track analysis cost
+  apiCost: numeric("api_cost"), // track analysis cost
   generatedAt: timestamp("generated_at").defaultNow(),
   reuseCount: integer("reuse_count").default(1),
 });
@@ -362,8 +351,8 @@ export const storyNarrations = pgTable("story_narrations", {
   generationStatus: varchar("generation_status").notNull().default("generating"), // generating, completed, failed
   totalDuration: integer("total_duration"), // seconds
   audioQuality: varchar("audio_quality").default("high"), // high, medium, low
-  estimatedCost: decimal("estimated_cost"), // predicted API cost
-  actualCost: decimal("actual_cost"), // final API cost
+  estimatedCost: numeric("estimated_cost"), // predicted API cost
+  actualCost: numeric("actual_cost"), // final API cost
   cacheHitRate: doublePrecision("cache_hit_rate"), // percentage of segments reused from cache
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
