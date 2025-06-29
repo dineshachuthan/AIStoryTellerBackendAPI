@@ -20,6 +20,7 @@ interface EnhancedVoiceRecorderProps {
     url: string;
     recordedAt: Date;
   };
+  sampleText?: string;
 }
 
 export function EnhancedVoiceRecorder({
@@ -32,7 +33,8 @@ export function EnhancedVoiceRecorder({
     recording: "Recording...",
     instructions: "Press and hold to record"
   },
-  existingRecording
+  existingRecording,
+  sampleText
 }: EnhancedVoiceRecorderProps) {
   const [recordingState, setRecordingState] = useState<'idle' | 'countdown' | 'recording' | 'recorded'>('idle');
   const [countdownTime, setCountdownTime] = useState(3);
@@ -258,70 +260,89 @@ export function EnhancedVoiceRecorder({
         </div>
 
         {/* Main Recording Display */}
-        <div className="bg-black rounded-lg p-3 mb-3 border border-gray-600">
-          <div className="flex items-center justify-center space-x-4">
+        <div className="bg-black rounded-lg p-4 mb-3 border border-gray-600">
+          <div className="flex items-start space-x-4">
             
             {/* Recording Button */}
-            <div className="relative">
-              {recordingState === 'idle' && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onMouseDown={handleMouseDown}
-                      onMouseUp={handleMouseUp}
-                      onMouseLeave={handleMouseUp}
-                      onTouchStart={handleTouchStart}
-                      onTouchEnd={handleTouchEnd}
-                      disabled={disabled}
-                      className="w-16 h-16 rounded-full bg-red-500 hover:bg-red-600 disabled:bg-gray-600 flex items-center justify-center text-white transition-all duration-200 select-none touch-manipulation shadow-lg hover:shadow-red-500/25"
-                    >
-                      <Mic className="w-6 h-6" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Hold to record voice sample</p>
-                  </TooltipContent>
-                </Tooltip>
-              )}
+            <div className="flex flex-col items-center">
+              <div className="relative mb-2">
+                {recordingState === 'idle' && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onMouseDown={handleMouseDown}
+                        onMouseUp={handleMouseUp}
+                        onMouseLeave={handleMouseUp}
+                        onTouchStart={handleTouchStart}
+                        onTouchEnd={handleTouchEnd}
+                        disabled={disabled}
+                        className="w-16 h-16 rounded-full bg-red-500 hover:bg-red-600 disabled:bg-gray-600 flex items-center justify-center text-white transition-all duration-200 select-none touch-manipulation shadow-lg hover:shadow-red-500/25"
+                      >
+                        <Mic className="w-6 h-6" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Hold to record voice sample</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
 
-              {recordingState === 'countdown' && (
-                <div className="w-16 h-16 rounded-full bg-orange-500 flex items-center justify-center text-white text-xl font-bold select-none shadow-lg animate-pulse">
-                  {countdownTime}
-                </div>
-              )}
+                {recordingState === 'countdown' && (
+                  <div className="w-16 h-16 rounded-full bg-orange-500 flex items-center justify-center text-white text-xl font-bold select-none shadow-lg animate-pulse">
+                    {countdownTime}
+                  </div>
+                )}
 
-              {recordingState === 'recording' && (
-                <button
-                  onMouseUp={handleMouseUp}
-                  onMouseLeave={handleMouseUp}
-                  onTouchEnd={handleTouchEnd}
-                  className="w-16 h-16 rounded-full bg-red-600 flex items-center justify-center text-white animate-pulse cursor-pointer select-none touch-manipulation shadow-lg shadow-red-500/50"
-                >
-                  <Mic className="w-6 h-6" />
-                </button>
-              )}
+                {recordingState === 'recording' && (
+                  <button
+                    onMouseUp={handleMouseUp}
+                    onMouseLeave={handleMouseUp}
+                    onTouchEnd={handleTouchEnd}
+                    className="w-16 h-16 rounded-full bg-red-600 flex items-center justify-center text-white animate-pulse cursor-pointer select-none touch-manipulation shadow-lg shadow-red-500/50"
+                  >
+                    <Mic className="w-6 h-6" />
+                  </button>
+                )}
+              </div>
+              
+              {/* Instructions under mic */}
+              <div className="text-xs text-gray-400 text-center">
+                {recordingState === 'idle' && buttonText.instructions}
+                {recordingState === 'countdown' && "Get Ready..."}
+                {recordingState === 'recording' && "Release to stop"}
+                {recordingState === 'recorded' && "Recording complete"}
+              </div>
             </div>
 
-            {/* Status Display */}
-            <div className="flex-1 text-center">
-              <div className="text-green-400 text-xs font-mono uppercase tracking-wider mb-1">
+            {/* Sample Text Display */}
+            <div className="flex-1">
+              <div className="text-green-400 text-xs font-mono uppercase tracking-wider mb-2">
                 {recordingState === 'idle' && "READY"}
                 {recordingState === 'countdown' && "STARTING"}
                 {recordingState === 'recording' && "RECORDING"}
                 {recordingState === 'recorded' && "COMPLETE"}
               </div>
               
-              <div className="text-white text-sm">
-                {recordingState === 'idle' && "Hold to Record"}
-                {recordingState === 'countdown' && "Get Ready..."}
-                {recordingState === 'recording' && `${formatTime(recordingTime)} / ${formatTime(maxRecordingTime)}`}
-                {recordingState === 'recorded' && `Recorded ${formatTime(recordingTime)}`}
+              <div className="text-white text-sm leading-relaxed mb-2">
+                <span className="text-blue-300 text-xs uppercase tracking-wide">📖 Read this text:</span>
+                <br />
+                <span className="italic text-blue-200">"{sampleText || 'Sample text not provided'}"</span>
               </div>
 
               {/* Progress Bar */}
               {recordingState === 'recording' && (
-                <div className="mt-2">
-                  <Progress value={progressPercentage} className="h-1 bg-gray-700" />
+                <div className="mb-2">
+                  <div className="flex justify-between text-xs text-gray-400 mb-1">
+                    <span>{formatTime(recordingTime)}</span>
+                    <span>{formatTime(maxRecordingTime)}</span>
+                  </div>
+                  <Progress value={progressPercentage} className="h-2 bg-gray-700" />
+                </div>
+              )}
+              
+              {recordingState === 'recorded' && (
+                <div className="text-green-400 text-sm">
+                  ✓ Recorded {formatTime(recordingTime)} seconds
                 </div>
               )}
             </div>
@@ -333,8 +354,8 @@ export function EnhancedVoiceRecorder({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-                  onClick={playTempRecording}
-                  disabled={!tempRecording || isPlayingTemp}
+                  onClick={tempRecording ? playTempRecording : playExistingRecording}
+                  disabled={(!tempRecording && !existingRecording) || (tempRecording && isPlayingTemp) || (existingRecording && isPlayingExisting)}
                   variant="outline"
                   size="sm"
                   className="bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700 disabled:opacity-50"
@@ -343,7 +364,7 @@ export function EnhancedVoiceRecorder({
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Play recorded audio</p>
+                <p>{tempRecording ? "Play new recording" : existingRecording ? "Play saved recording" : "No recording to play"}</p>
               </TooltipContent>
             </Tooltip>
             
@@ -351,7 +372,7 @@ export function EnhancedVoiceRecorder({
               <TooltipTrigger asChild>
                 <Button
                   onClick={reRecord}
-                  disabled={recordingState === 'recording' || recordingState === 'countdown' || isPlayingTemp}
+                  disabled={recordingState === 'recording' || recordingState === 'countdown' || isPlayingTemp || isPlayingExisting}
                   variant="outline"
                   size="sm"
                   className="bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700 disabled:opacity-50"
@@ -360,15 +381,15 @@ export function EnhancedVoiceRecorder({
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Record again</p>
+                <p>{existingRecording ? "Re-record" : "Record again"}</p>
               </TooltipContent>
             </Tooltip>
             
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-                  onClick={playTempRecording}
-                  disabled={!tempRecording || isPlayingTemp}
+                  onClick={tempRecording ? playTempRecording : playExistingRecording}
+                  disabled={(!tempRecording && !existingRecording) || (tempRecording && isPlayingTemp) || (existingRecording && isPlayingExisting)}
                   variant="outline"
                   size="sm"
                   className="bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700 disabled:opacity-50"
@@ -394,7 +415,7 @@ export function EnhancedVoiceRecorder({
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Save voice sample</p>
+                <p>{existingRecording ? "Save new recording" : "Save recording"}</p>
               </TooltipContent>
             </Tooltip>
           </div>
@@ -402,8 +423,8 @@ export function EnhancedVoiceRecorder({
         {/* Status Indicator Lights */}
         <div className="flex justify-center space-x-2 mt-3">
           <div className={`w-2 h-2 rounded-full ${recordingState === 'recording' ? 'bg-red-500 animate-pulse' : 'bg-gray-600'}`}></div>
-          <div className={`w-2 h-2 rounded-full ${tempRecording ? 'bg-green-500' : 'bg-gray-600'}`}></div>
-          <div className={`w-2 h-2 rounded-full ${isPlayingTemp ? 'bg-blue-500 animate-pulse' : 'bg-gray-600'}`}></div>
+          <div className={`w-2 h-2 rounded-full ${(tempRecording || existingRecording) ? 'bg-green-500' : 'bg-gray-600'}`}></div>
+          <div className={`w-2 h-2 rounded-full ${(isPlayingTemp || isPlayingExisting) ? 'bg-blue-500 animate-pulse' : 'bg-gray-600'}`}></div>
         </div>
         </div>
       </div>

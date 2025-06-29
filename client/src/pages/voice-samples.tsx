@@ -301,25 +301,6 @@ export default function VoiceSamples() {
                     </CardHeader>
 
                     <CardContent className="space-y-3">
-                      {/* Sample Text to Read - Always Show */}
-                      <div className="bg-muted/50 p-3 rounded-lg border border-dashed border-muted-foreground/30">
-                        <p className="text-xs text-muted-foreground mb-2 font-medium">
-                          📖 Read this with {template.displayName.toLowerCase()} emotion:
-                        </p>
-                        <p className="text-sm font-medium text-foreground italic leading-relaxed">
-                          "{template.sampleText}"
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-2">
-                          Target: {template.targetDuration} seconds
-                          {isRecorded && recordedSample && (
-                            <span className="ml-2 text-green-600">
-                              ✓ Recorded: {new Date(recordedSample.recordedAt).toLocaleDateString()}
-                              {recordedSample.duration > 0 && ` • ${recordedSample.duration}ms`}
-                            </span>
-                          )}
-                        </p>
-                      </div>
-                      
                       {/* Enhanced Voice Recorder - Always Show with Radio Style */}
                       <EnhancedVoiceRecorder
                         buttonText={{
@@ -327,6 +308,7 @@ export default function VoiceSamples() {
                           recording: "Recording...",
                           instructions: isRecorded ? "Hold to re-record" : "Hold button to record"
                         }}
+                        sampleText={template.sampleText}
                         onRecordingComplete={(audioBlob) => {
                           saveVoiceModulation.mutate({
                             emotion: template.modulationKey,
