@@ -176,12 +176,7 @@ export function EnhancedVoiceRecorder({
   };
 
   const playExistingRecording = () => {
-    if (!existingRecording) {
-      console.log('No existing recording found:', existingRecording);
-      return;
-    }
-    
-    console.log('Playing existing recording:', existingRecording.url);
+    if (!existingRecording) return;
     
     if (audioRef.current) {
       audioRef.current.pause();
@@ -191,19 +186,8 @@ export function EnhancedVoiceRecorder({
 
     audioRef.current = new Audio(existingRecording.url);
     audioRef.current.onended = () => setIsPlayingExisting(false);
-    audioRef.current.onerror = (e) => {
-      console.error('Audio playback error:', e);
-      setIsPlayingExisting(false);
-      toast({
-        title: "Playback Error",
-        description: "Could not play the saved recording.",
-        variant: "destructive"
-      });
-    };
-    audioRef.current.play().catch((e) => {
-      console.error('Audio play error:', e);
-      setIsPlayingExisting(false);
-    });
+    audioRef.current.onerror = () => setIsPlayingExisting(false);
+    audioRef.current.play().catch(() => setIsPlayingExisting(false));
     setIsPlayingExisting(true);
   };
 
