@@ -263,6 +263,11 @@ export function EnhancedVoiceRecorder({
 
         {/* Main Recording Display */}
         <div className="bg-black rounded-lg p-4 mb-3 border border-gray-600">
+          {/* Title Above Everything */}
+          <div className="text-blue-300 text-sm font-semibold mb-3 text-center uppercase tracking-wide">
+            📖 Read this text{emotionDescription ? ` in ${emotionDescription.toLowerCase()}` : ''}
+          </div>
+          
           <div className="flex items-center space-x-4">
             
             {/* Recording Button */}
@@ -319,10 +324,6 @@ export function EnhancedVoiceRecorder({
             {/* Sample Text Display */}
             <div className="flex-1">
               <div className="text-white text-sm leading-relaxed mb-2">
-                <span className="text-blue-300 text-xs uppercase tracking-wide">
-                  📖 Read this text{emotionDescription ? ` in ${emotionDescription.toLowerCase()}` : ''}:
-                </span>
-                <br />
                 <span className="italic text-blue-200">"{sampleText || 'Sample text not provided'}"</span>
               </div>
 
