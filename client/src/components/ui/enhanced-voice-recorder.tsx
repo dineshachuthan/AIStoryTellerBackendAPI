@@ -176,7 +176,12 @@ export function EnhancedVoiceRecorder({
   };
 
   const playExistingRecording = () => {
-    if (!existingRecording) return;
+    if (!existingRecording) {
+      console.log('No existing recording found:', existingRecording);
+      return;
+    }
+    
+    console.log('Playing existing recording:', existingRecording.url);
     
     if (audioRef.current) {
       audioRef.current.pause();
@@ -186,7 +191,19 @@ export function EnhancedVoiceRecorder({
 
     audioRef.current = new Audio(existingRecording.url);
     audioRef.current.onended = () => setIsPlayingExisting(false);
-    audioRef.current.play();
+    audioRef.current.onerror = (e) => {
+      console.error('Audio playback error:', e);
+      setIsPlayingExisting(false);
+      toast({
+        title: "Playback Error",
+        description: "Could not play the saved recording.",
+        variant: "destructive"
+      });
+    };
+    audioRef.current.play().catch((e) => {
+      console.error('Audio play error:', e);
+      setIsPlayingExisting(false);
+    });
     setIsPlayingExisting(true);
   };
 
@@ -355,22 +372,24 @@ export function EnhancedVoiceRecorder({
                 <span className="italic text-blue-200">"{sampleText || 'Sample text not provided'}"</span>
               </div>
 
-              {/* Progress Bar */}
-              {recordingState === 'recording' && (
-                <div className="mb-2">
-                  <div className="flex justify-between text-xs text-gray-400 mb-1">
-                    <span>{formatTime(recordingTime)}</span>
-                    <span>{formatTime(maxRecordingTime)}</span>
+              {/* Fixed height container for progress/status to prevent size changes */}
+              <div className="h-8 mb-2">
+                {recordingState === 'recording' && (
+                  <div>
+                    <div className="flex justify-between text-xs text-gray-400 mb-1">
+                      <span>{formatTime(recordingTime)}</span>
+                      <span>{formatTime(maxRecordingTime)}</span>
+                    </div>
+                    <Progress value={progressPercentage} className="h-2 bg-gray-700" />
                   </div>
-                  <Progress value={progressPercentage} className="h-2 bg-gray-700" />
-                </div>
-              )}
-              
-              {recordingState === 'recorded' && (
-                <div className="text-green-400 text-sm">
-                  ✓ Recorded {formatTime(recordingTime)} seconds
-                </div>
-              )}
+                )}
+                
+                {recordingState === 'recorded' && (
+                  <div className="text-green-400 text-sm pt-2">
+                    ✓ Recorded {formatTime(recordingTime)} seconds
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

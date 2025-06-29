@@ -319,10 +319,14 @@ export default function VoiceSamples() {
                         className="w-full"
                         disabled={saveVoiceModulation.isPending}
                         maxRecordingTime={template.targetDuration}
-                        existingRecording={isRecorded && recordedSample ? {
-                          url: recordedSample.audioUrl,
-                          recordedAt: new Date(recordedSample.recordedAt)
-                        } : undefined}
+                        existingRecording={(() => {
+                          const existing = isRecorded && recordedSample ? {
+                            url: recordedSample.audioUrl,
+                            recordedAt: new Date(recordedSample.recordedAt)
+                          } : undefined;
+                          console.log(`${template.displayName} existing recording:`, existing);
+                          return existing;
+                        })()}
                       />
                     </CardContent>
                   </Card>
