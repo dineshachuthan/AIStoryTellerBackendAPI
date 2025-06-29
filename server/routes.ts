@@ -3825,10 +3825,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get voice sample templates
   app.get("/api/voice-samples/templates", async (req, res) => {
     try {
-      console.log("Getting voice samples templates...");
       const { getAllVoiceSamples } = await import('./voice-samples');
       const allSamples = getAllVoiceSamples();
-      console.log("Raw samples:", allSamples.slice(0, 2));
       
       const templates = allSamples.map(sample => ({
         emotion: sample.label,
@@ -3839,7 +3837,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         category: sample.sampleType
       }));
       
-      console.log("Transformed templates:", templates.slice(0, 2));
       res.json(templates);
     } catch (error: any) {
       console.error("Failed to get voice sample templates:", error);
