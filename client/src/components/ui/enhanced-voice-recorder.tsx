@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { Mic, Play, RotateCcw, Save, Radio, Volume2 } from "lucide-react";
 import { AUDIO_PROCESSING_CONFIG } from "@shared/audio-config";
@@ -223,9 +224,10 @@ export function EnhancedVoiceRecorder({
   };
 
   return (
-    <div className={`w-full max-w-sm mx-auto ${className}`}>
-      {/* Radio/TV Style Voice Recorder Panel */}
-      <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-4 shadow-2xl border border-gray-700">
+    <TooltipProvider>
+      <div className={`w-full max-w-sm mx-auto ${className}`}>
+        {/* Radio/TV Style Voice Recorder Panel */}
+        <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-4 shadow-2xl border border-gray-700">
         
         {/* Header with Radio Icon */}
         <div className="flex items-center justify-center mb-3">
@@ -241,17 +243,24 @@ export function EnhancedVoiceRecorder({
             {/* Recording Button */}
             <div className="relative">
               {recordingState === 'idle' && (
-                <button
-                  onMouseDown={handleMouseDown}
-                  onMouseUp={handleMouseUp}
-                  onMouseLeave={handleMouseUp}
-                  onTouchStart={handleTouchStart}
-                  onTouchEnd={handleTouchEnd}
-                  disabled={disabled}
-                  className="w-16 h-16 rounded-full bg-red-500 hover:bg-red-600 disabled:bg-gray-600 flex items-center justify-center text-white transition-all duration-200 select-none touch-manipulation shadow-lg hover:shadow-red-500/25"
-                >
-                  <Mic className="w-6 h-6" />
-                </button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onMouseDown={handleMouseDown}
+                      onMouseUp={handleMouseUp}
+                      onMouseLeave={handleMouseUp}
+                      onTouchStart={handleTouchStart}
+                      onTouchEnd={handleTouchEnd}
+                      disabled={disabled}
+                      className="w-16 h-16 rounded-full bg-red-500 hover:bg-red-600 disabled:bg-gray-600 flex items-center justify-center text-white transition-all duration-200 select-none touch-manipulation shadow-lg hover:shadow-red-500/25"
+                    >
+                      <Mic className="w-6 h-6" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Hold to record voice sample</p>
+                  </TooltipContent>
+                </Tooltip>
               )}
 
               {recordingState === 'countdown' && (
@@ -298,48 +307,76 @@ export function EnhancedVoiceRecorder({
           </div>
         </div>
 
-        {/* Control Buttons */}
+        {/* Control Buttons with Tooltips */}
         <div className="grid grid-cols-4 gap-2">
-          <Button
-            onClick={playTempRecording}
-            disabled={!tempRecording || isPlayingTemp}
-            variant="outline"
-            size="sm"
-            className="bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700 disabled:opacity-50"
-          >
-            <Play className="w-4 h-4" />
-          </Button>
-          
-          <Button
-            onClick={reRecord}
-            disabled={recordingState === 'recording' || recordingState === 'countdown' || isPlayingTemp}
-            variant="outline"
-            size="sm"
-            className="bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700 disabled:opacity-50"
-          >
-            <RotateCcw className="w-4 h-4" />
-          </Button>
-          
-          <Button
-            onClick={playTempRecording}
-            disabled={!tempRecording || isPlayingTemp}
-            variant="outline"
-            size="sm"
-            className="bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700 disabled:opacity-50"
-          >
-            <Volume2 className="w-4 h-4" />
-          </Button>
-          
-          <Button
-            onClick={saveRecording}
-            disabled={!tempRecording || isPlayingTemp}
-            variant="default"
-            size="sm"
-            className="bg-green-600 hover:bg-green-700 disabled:opacity-50"
-          >
-            <Save className="w-4 h-4" />
-          </Button>
-        </div>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={playTempRecording}
+                  disabled={!tempRecording || isPlayingTemp}
+                  variant="outline"
+                  size="sm"
+                  className="bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700 disabled:opacity-50"
+                >
+                  <Play className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Play recorded audio</p>
+              </TooltipContent>
+            </Tooltip>
+            
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={reRecord}
+                  disabled={recordingState === 'recording' || recordingState === 'countdown' || isPlayingTemp}
+                  variant="outline"
+                  size="sm"
+                  className="bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700 disabled:opacity-50"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Record again</p>
+              </TooltipContent>
+            </Tooltip>
+            
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={playTempRecording}
+                  disabled={!tempRecording || isPlayingTemp}
+                  variant="outline"
+                  size="sm"
+                  className="bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700 disabled:opacity-50"
+                >
+                  <Volume2 className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Replay audio</p>
+              </TooltipContent>
+            </Tooltip>
+            
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={saveRecording}
+                  disabled={!tempRecording || isPlayingTemp}
+                  variant="default"
+                  size="sm"
+                  className="bg-green-600 hover:bg-green-700 disabled:opacity-50"
+                >
+                  <Save className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Save voice sample</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
 
         {/* Status Indicator Lights */}
         <div className="flex justify-center space-x-2 mt-3">
@@ -347,7 +384,8 @@ export function EnhancedVoiceRecorder({
           <div className={`w-2 h-2 rounded-full ${tempRecording ? 'bg-green-500' : 'bg-gray-600'}`}></div>
           <div className={`w-2 h-2 rounded-full ${isPlayingTemp ? 'bg-blue-500 animate-pulse' : 'bg-gray-600'}`}></div>
         </div>
+        </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 }

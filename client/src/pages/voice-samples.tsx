@@ -295,7 +295,7 @@ export default function VoiceSamples() {
                     </CardHeader>
 
                     <CardContent className="space-y-3">
-                        {isRecorded && recordedSample ? (
+                      {isRecorded && recordedSample ? (
                           <div className="space-y-2">
                             <div className="flex gap-2">
                               <Button
@@ -341,7 +341,6 @@ export default function VoiceSamples() {
                             maxRecordingTime={10}
                           />
                         )}
-                      </div>
                     </CardContent>
                   </Card>
                 );
