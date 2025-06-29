@@ -310,6 +310,19 @@ export function VoiceRecordingCard({
           </div>
         )}
 
+        {/* Error Messages */}
+        {micError && (
+          <div className="flex items-center justify-center gap-2 text-red-600 bg-red-50 dark:bg-red-950 py-2 rounded-md">
+            <span className="text-sm font-medium">{micError}</span>
+          </div>
+        )}
+
+        {saveError && (
+          <div className="flex items-center justify-center gap-2 text-red-600 bg-red-50 dark:bg-red-950 py-2 rounded-md">
+            <span className="text-sm font-medium">{saveError}</span>
+          </div>
+        )}
+
         {/* Controls based on state */}
         {recordingState === 'idle' && (
           <div className="space-y-2">
