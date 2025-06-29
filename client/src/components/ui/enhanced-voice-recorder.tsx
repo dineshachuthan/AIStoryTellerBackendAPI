@@ -205,7 +205,12 @@ export function EnhancedVoiceRecorder({
   };
 
   return (
-    <div className={`flex flex-col items-center space-y-4 ${className}`}>
+    <div 
+      className={`flex flex-col items-center space-y-4 ${className}`}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
+      onTouchEnd={handleMouseUp}
+    >
       {/* Recording Button */}
       {recordingState === 'idle' && (
         <div className="flex flex-col items-center space-y-2">
@@ -237,7 +242,12 @@ export function EnhancedVoiceRecorder({
       {/* Recording Display */}
       {recordingState === 'recording' && (
         <div className="flex flex-col items-center space-y-4">
-          <div className="w-20 h-20 rounded-full bg-red-600 flex items-center justify-center text-white animate-pulse">
+          <div 
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+            onTouchEnd={handleMouseUp}
+            className="w-20 h-20 rounded-full bg-red-600 flex items-center justify-center text-white animate-pulse cursor-pointer"
+          >
             <Mic className="w-8 h-8" />
           </div>
           <div className="w-64">
@@ -247,7 +257,7 @@ export function EnhancedVoiceRecorder({
               <span>{formatTime(maxRecordingTime)}</span>
             </div>
           </div>
-          <p className="text-sm text-gray-600">Recording... (auto-stops at {maxRecordingTime}s)</p>
+          <p className="text-sm text-gray-600">Recording... Release to stop or auto-stops at {maxRecordingTime}s</p>
         </div>
       )}
 
