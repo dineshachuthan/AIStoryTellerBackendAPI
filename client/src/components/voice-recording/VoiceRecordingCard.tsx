@@ -5,7 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Mic, Play, Pause, CheckCircle, RotateCcw, Volume2, Save, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useToast } from '@/hooks/use-toast';
+// Toast removed - using in-card status messages
 
 export interface VoiceTemplate {
   id: number;
@@ -52,14 +52,13 @@ export function VoiceRecordingCard({
   onPlayRecorded,
   className
 }: VoiceRecordingCardProps) {
-  const [recordingState, setRecordingState] = useState<RecordingState>(
-    isRecorded ? 'saved' : 'idle'
-  );
+  // Always start with idle state to allow re-recording
+  const [recordingState, setRecordingState] = useState<RecordingState>('idle');
   const [tempRecording, setTempRecording] = useState<TempRecording | null>(null);
   const [isPlayingTemp, setIsPlayingTemp] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
-  const { toast } = useToast();
+  // Toast removed - using in-card status messages
   
   // Recording refs - following the proven PressHoldRecorder pattern
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -294,9 +293,16 @@ export function VoiceRecordingCard({
           <p className="text-sm text-muted-foreground italic">
             "{template.sampleText}"
           </p>
-          <p className="text-xs text-muted-foreground mt-1">
-            Target: {template.targetDuration}s
-          </p>
+          <div className="flex justify-between items-center mt-1">
+            <p className="text-xs text-muted-foreground">
+              Target: {template.targetDuration}s
+            </p>
+            {isRecorded && (
+              <p className="text-xs text-green-600 font-medium">
+                ✓ Voice sample exists
+              </p>
+            )}
+          </div>
         </div>
 
         {/* Recording Progress */}
