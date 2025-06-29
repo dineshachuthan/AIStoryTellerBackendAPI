@@ -325,14 +325,32 @@ export function EnhancedVoiceRecorder({
                     <Mic className="w-6 h-6" />
                   </button>
                 )}
+
+                {recordingState === 'recorded' && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onMouseDown={handleMouseDown}
+                        onMouseUp={handleMouseUp}
+                        onMouseLeave={handleMouseUp}
+                        onTouchStart={handleTouchStart}
+                        onTouchEnd={handleTouchEnd}
+                        disabled={disabled}
+                        className="w-16 h-16 rounded-full bg-red-500 hover:bg-red-600 disabled:bg-gray-600 flex items-center justify-center text-white transition-all duration-200 select-none touch-manipulation shadow-lg hover:shadow-red-500/25"
+                      >
+                        <Mic className="w-6 h-6" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Hold to re-record voice sample</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
               </div>
               
-              {/* Instructions under mic */}
+              {/* Instructions under mic - Fixed text to prevent flickering */}
               <div className="text-xs text-gray-400 text-center">
-                {recordingState === 'idle' && buttonText.instructions}
-                {recordingState === 'countdown' && "Get Ready..."}
-                {recordingState === 'recording' && "Release to stop"}
-                {recordingState === 'recorded' && "Recording complete"}
+                {existingRecording || tempRecording ? "Hold to re-record" : buttonText.instructions}
               </div>
             </div>
 
@@ -354,37 +372,15 @@ export function EnhancedVoiceRecorder({
                   </div>
                 )}
                 
-                {recordingState === 'recorded' && (
-                  <div className="text-green-400 text-sm pt-2">
-                    ✓ Recorded {formatTime(recordingTime)} seconds
-                  </div>
-                )}
+
               </div>
             </div>
           </div>
         </div>
 
         {/* Control Buttons with Tooltips */}
-        <div className="grid grid-cols-4 gap-2">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  onClick={playTempRecording}
-                  disabled={!tempRecording || isPlayingTemp}
-                  variant="outline"
-                  size="sm"
-                  className="bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700 disabled:opacity-50"
-                >
-                  <Play className="w-4 h-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Play new recording</p>
-              </TooltipContent>
-            </Tooltip>
-            
-
-            {/* Play button - handles both new and saved recordings */}
+        <div className="grid grid-cols-2 gap-2">
+            {/* Single Play button - prioritizes new recording over existing */}
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
