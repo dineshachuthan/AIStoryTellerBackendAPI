@@ -303,8 +303,12 @@ export function getEmotionsByCategory(category: 'basic' | 'advanced' | 'speciali
 }
 
 export function getPriorityEmotions(): string[] {
+  // Emotions already covered by existing voice samples
+  const existingEmotions = ['happy', 'sad', 'angry', 'excited', 'scared', 'surprised'];
+  
   return EMOTION_VOICE_CONFIGS
     .filter(config => config.category === 'basic')
-    .slice(0, 5) // Limit to first 5 basic emotions
+    .filter(config => !existingEmotions.includes(config.emotion)) // Exclude duplicates
+    .slice(0, 5) // Limit to first 5 additional emotions
     .map(config => config.emotion);
 }
