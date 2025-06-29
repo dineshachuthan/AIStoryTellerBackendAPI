@@ -26,6 +26,7 @@ interface EnhancedVoiceRecorderProps {
   emotionName?: string;
   category?: string;
   isRecorded?: boolean;
+  isLocked?: boolean;
 }
 
 export function EnhancedVoiceRecorder({
@@ -43,7 +44,8 @@ export function EnhancedVoiceRecorder({
   emotionDescription,
   emotionName,
   category,
-  isRecorded = false
+  isRecorded = false,
+  isLocked = false
 }: EnhancedVoiceRecorderProps) {
   const [recordingState, setRecordingState] = useState<'idle' | 'countdown' | 'recording' | 'recorded'>('idle');
   const [countdownTime, setCountdownTime] = useState(3);

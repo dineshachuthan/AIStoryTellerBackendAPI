@@ -318,40 +318,104 @@ export default function VoiceSamples() {
         {categories.map((category) => (
           <TabsContent key={category} value={category}>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-              {filteredTemplates.map((template: any) => {
-                const recordedSample = getRecordedSample(template.modulationKey);
-                const isRecorded = !!recordedSample;
+              {/* Sort templates: unlocked first, then recorded (unlocked), then locked */}
+              {filteredTemplates
+                .map((template: any) => {
+                  const recordedSample = getRecordedSample(template.modulationKey);
+                  const isRecorded = !!recordedSample;
+                  const isLocked = recordedSample?.isLocked || false;
+                  
+                  return {
+                    ...template,
+                    recordedSample,
+                    isRecorded,
+                    isLocked,
+                    sortOrder: isLocked ? 3 : (isRecorded ? 2 : 1) // unlocked empty=1, recorded=2, locked=3
+                  };
+                })
+                .sort((a, b) => a.sortOrder - b.sortOrder)
+                .map((template: any) => {
+                  const { recordedSample, isRecorded, isLocked } = template;
+                  
+                  // Determine background color based on voice state
+                  const getCardBackgroundClass = () => {
+                    if (isLocked) {
+                      return "bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800";
+                    } else if (isRecorded) {
+                      return "bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800";
+                    } else {
+                      return "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700";
+                    }
+                  };
 
-                return (
-                  <div key={template.modulationKey}>
-                    <EnhancedVoiceRecorder
-                      buttonText={{
-                        hold: isRecorded ? `Re-record ${template.displayName}` : `Record ${template.displayName}`,
-                        recording: "Recording...",
-                        instructions: isRecorded ? "Hold to re-record" : "Hold button to record"
-                      }}
-                      sampleText={template.sampleText}
-                      emotionDescription={template.description}
-                      emotionName={template.displayName}
-                      category={template.category}
-                      isRecorded={isRecorded}
-                      onRecordingComplete={(audioBlob) => {
-                        saveVoiceModulation.mutate({
-                          emotion: template.modulationKey,
-                          audioBlob
-                        });
-                      }}
-                      className="w-full"
-                      disabled={saveVoiceModulation.isPending}
-                      maxRecordingTime={template.targetDuration}
-                      existingRecording={isRecorded && recordedSample ? {
-                        url: recordedSample.audioUrl,
-                        recordedAt: new Date(recordedSample.recordedAt)
-                      } : undefined}
-                    />
-                  </div>
-                );
-              })}
+                  const getStatusIndicator = () => {
+                    if (isLocked) {
+                      return (
+                        <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+                          🔒 Locked for Cloning
+                        </Badge>
+                      );
+                    } else if (isRecorded) {
+                      return (
+                        <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+                          ✓ Recorded
+                        </Badge>
+                      );
+                    } else {
+                      return (
+                        <Badge variant="outline" className="border-gray-300 text-gray-600 dark:border-gray-600 dark:text-gray-400">
+                          ○ Empty
+                        </Badge>
+                      );
+                    }
+                  };
+
+                  return (
+                    <div key={template.modulationKey} className={`p-4 rounded-lg border ${getCardBackgroundClass()}`}>
+                      <div className="mb-3 flex items-center justify-between">
+                        <h3 className="font-medium text-sm">{template.displayName}</h3>
+                        {getStatusIndicator()}
+                      </div>
+                      
+                      <EnhancedVoiceRecorder
+                        buttonText={{
+                          hold: isLocked 
+                            ? `🔒 ${template.displayName} (Locked)` 
+                            : isRecorded 
+                              ? `Re-record ${template.displayName}` 
+                              : `Record ${template.displayName}`,
+                          recording: "Recording...",
+                          instructions: isLocked 
+                            ? "Sample locked for voice cloning" 
+                            : isRecorded 
+                              ? "Hold to re-record" 
+                              : "Hold button to record"
+                        }}
+                        sampleText={template.sampleText}
+                        emotionDescription={template.description}
+                        emotionName={template.displayName}
+                        category={template.category}
+                        isRecorded={isRecorded}
+                        isLocked={isLocked}
+                        onRecordingComplete={(audioBlob) => {
+                          if (!isLocked) {
+                            saveVoiceModulation.mutate({
+                              emotion: template.modulationKey,
+                              audioBlob
+                            });
+                          }
+                        }}
+                        className="w-full"
+                        disabled={saveVoiceModulation.isPending || isLocked}
+                        maxRecordingTime={template.targetDuration}
+                        existingRecording={isRecorded && recordedSample ? {
+                          url: recordedSample.audioUrl,
+                          recordedAt: new Date(recordedSample.recordedAt)
+                        } : undefined}
+                      />
+                    </div>
+                  );
+                })}
             </div>
           </TabsContent>
         ))}
