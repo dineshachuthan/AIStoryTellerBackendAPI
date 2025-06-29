@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, jsonb, varchar, index, doublePrecision } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, jsonb, varchar, index, doublePrecision, decimal } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -250,6 +250,26 @@ export const characterVoiceAssignments = pgTable("character_voice_assignments", 
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Individual emotion voice clones (one per emotion per user)
+export const userEmotionVoices = pgTable("user_emotion_voices", {
+  id: serial("id").primaryKey(),
+  userVoiceProfileId: integer("user_voice_profile_id").references(() => userVoiceProfiles.id).notNull(),
+  emotion: varchar("emotion").notNull(), // happy, sad, angry, etc.
+  elevenLabsVoiceId: varchar("eleven_labs_voice_id"), // unique voice ID from ElevenLabs
+  voiceName: varchar("voice_name").notNull(), // "John_Happy", "John_Sad"
+  status: varchar("status").notNull().default("collecting"), // collecting, training, completed, failed
+  sampleCount: integer("sample_count").default(0), // how many samples used for this emotion
+  qualityScore: doublePrecision("quality_score"), // ElevenLabs quality rating
+  voiceSettings: jsonb("voice_settings"), // stability, similarity_boost, etc.
+  trainingMetadata: jsonb("training_metadata"), // ElevenLabs response data
+  trainingCost: decimal("training_cost"), // track API cost spent
+  lastUsedAt: timestamp("last_used_at"),
+  usageCount: integer("usage_count").default(0),
+  neverDelete: boolean("never_delete").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Voice modulation templates - configurable database-driven voice samples
 export const voiceModulationTemplates = pgTable("voice_modulation_templates", {
   id: serial("id").primaryKey(),
@@ -283,6 +303,70 @@ export const userVoiceModulations = pgTable("user_voice_modulations", {
   usageCount: integer("usage_count").default(0), // How many times used in story generation
   lastUsedAt: timestamp("last_used_at"),
   recordedAt: timestamp("recorded_at").defaultNow(),
+  // New fields for voice cloning integration
+  userEmotionVoiceId: integer("user_emotion_voice_id").references(() => userEmotionVoices.id),
+  isUsedForTraining: boolean("is_used_for_training").default(false),
+  qualityRating: integer("quality_rating"), // 1-5 quality score
+  trainingBatchId: varchar("training_batch_id"), // group samples sent together
+});
+
+// Generated audio cache for reuse across stories
+export const generatedAudioCache = pgTable("generated_audio_cache", {
+  id: serial("id").primaryKey(),
+  contentHash: varchar("content_hash").notNull().unique(), // MD5 of (text + emotion + voiceId)
+  text: text("text").notNull(),
+  emotion: varchar("emotion").notNull(),
+  voiceId: varchar("voice_id").notNull(), // ElevenLabs or OpenAI voice used
+  provider: varchar("provider").notNull(), // "elevenlabs", "openai"
+  audioUrl: text("audio_url").notNull(),
+  fileSize: integer("file_size"), // in bytes
+  duration: doublePrecision("duration"), // in seconds
+  apiCost: decimal("api_cost"), // track cost per generation
+  generatedAt: timestamp("generated_at").defaultNow(),
+  lastAccessedAt: timestamp("last_accessed_at").defaultNow(),
+  accessCount: integer("access_count").default(1), // reuse tracking
+  expiresAt: timestamp("expires_at"), // cleanup after 90 days unused
+});
+
+// Link cache to stories (many-to-many reuse)
+export const storyAudioSegments = pgTable("story_audio_segments", {
+  id: serial("id").primaryKey(),
+  storyId: integer("story_id").references(() => stories.id).notNull(),
+  segmentOrder: integer("segment_order").notNull(),
+  generatedAudioCacheId: integer("generated_audio_cache_id").references(() => generatedAudioCache.id).notNull(),
+  characterName: varchar("character_name"),
+  isReused: boolean("is_reused").default(false), // was this reused from cache?
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Story analysis cache to avoid re-processing
+export const storyAnalysisCache = pgTable("story_analysis_cache", {
+  id: serial("id").primaryKey(),
+  storyContentHash: varchar("story_content_hash").notNull().unique(), // MD5 of story content
+  analysisData: jsonb("analysis_data").notNull(), // full OpenAI analysis result
+  charactersExtracted: jsonb("characters_extracted"), // extracted characters
+  emotionsDetected: jsonb("emotions_detected"), // detected emotions
+  apiCost: decimal("api_cost"), // track analysis cost
+  generatedAt: timestamp("generated_at").defaultNow(),
+  reuseCount: integer("reuse_count").default(1),
+});
+
+// Story narration tracking
+export const storyNarrations = pgTable("story_narrations", {
+  id: serial("id").primaryKey(),
+  storyId: integer("story_id").references(() => stories.id).notNull(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  narrationSegments: jsonb("narration_segments"), // array of {text, emotion, audioUrl, voiceUsed}
+  useUserVoice: boolean("use_user_voice").default(true), // prefer user voice over AI
+  emotionVoicesUsed: jsonb("emotion_voices_used"), // which emotion voices were used
+  generationStatus: varchar("generation_status").notNull().default("generating"), // generating, completed, failed
+  totalDuration: integer("total_duration"), // seconds
+  audioQuality: varchar("audio_quality").default("high"), // high, medium, low
+  estimatedCost: decimal("estimated_cost"), // predicted API cost
+  actualCost: decimal("actual_cost"), // final API cost
+  cacheHitRate: doublePrecision("cache_hit_rate"), // percentage of segments reused from cache
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 // Story modulation requirements - what modulations a story needs
@@ -315,21 +399,23 @@ export const emotionTemplates = pgTable("emotion_templates", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// User voice cloning profiles (ElevenLabs integration)
+// User voice cloning profiles (enhanced for ElevenLabs integration)
 export const userVoiceProfiles = pgTable("user_voice_profiles", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").references(() => users.id).notNull(),
   provider: varchar("provider").notNull().default("elevenlabs"), // elevenlabs, openai
-  voiceId: varchar("voice_id"), // Provider-specific voice ID (null until cloned)
   voiceName: varchar("voice_name").notNull(),
   status: varchar("status").notNull().default("collecting"), // collecting, training, completed, failed
-  emotionCount: integer("emotion_count").default(0),
-  emotionsCovered: jsonb("emotions_covered").$type<string[]>().default([]),
+  totalEmotionsRequired: integer("total_emotions_required").default(8),
+  emotionsCompleted: integer("emotions_completed").default(0),
   totalSamples: integer("total_samples").default(0),
-  qualityScore: doublePrecision("quality_score"), // Average quality of all samples
+  overallQualityScore: doublePrecision("overall_quality_score"), // Average quality across all emotions
   metadata: jsonb("metadata"), // Provider-specific metadata
   isActive: boolean("is_active").default(true),
-  lastTrainingAt: timestamp("last_training_at"),
+  trainingStartedAt: timestamp("training_started_at"),
+  trainingCompletedAt: timestamp("training_completed_at"),
+  lastTrainingError: text("last_training_error"),
+  isReadyForNarration: boolean("is_ready_for_narration").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
