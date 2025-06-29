@@ -4232,9 +4232,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Determine category from modulation key
         const category = VoiceCloningSessionManager.getCategoryFromModulationKey(modulationKey);
+        console.log(`🔄 Recording voice sample for category: ${category}, modulation: ${modulationKey}`);
         
         // Increment session counter for this category
         VoiceCloningSessionManager.incrementCategoryCounter(req, category);
+        
+        // Debug session state
+        const sessionData = VoiceCloningSessionManager.getSessionData(req);
+        console.log(`📊 Session counters after increment: emotions=${sessionData.emotions_not_cloned}, sounds=${sessionData.sounds_not_cloned}, modulations=${sessionData.modulations_not_cloned}`);
         
         // Check if threshold reached for this category
         if (VoiceCloningSessionManager.shouldTriggerCloning(req, category)) {
@@ -4266,6 +4271,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
               VoiceCloningSessionManager.completeCategoryCloning(req, category, false);
             }
           }, 100); // Small delay to ensure response is sent before background processing
+        } else {
+          const currentCount = category === 'emotions' ? sessionData.emotions_not_cloned :
+                              category === 'sounds' ? sessionData.sounds_not_cloned :
+                              sessionData.modulations_not_cloned;
+          console.log(`⏳ Category '${category}' has ${currentCount}/5 samples (threshold not reached)`);
         }
       } catch (error) {
         console.error('Error in session-based voice cloning trigger:', error);
