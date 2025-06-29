@@ -191,21 +191,7 @@ export function EnhancedVoiceRecorder({
     setIsPlayingExisting(true);
   };
 
-  const reRecord = () => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-      setIsPlayingTemp(false);
-    }
-    
-    if (tempRecording) {
-      URL.revokeObjectURL(tempRecording.url);
-    }
-    setTempRecording(null);
-    setRecordingTime(0);
-    setCountdownTime(3);
-    setRecordingState('idle');
-  };
+
 
   const saveRecording = () => {
     if (tempRecording) {
@@ -397,23 +383,7 @@ export function EnhancedVoiceRecorder({
               </TooltipContent>
             </Tooltip>
             
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  onClick={reRecord}
-                  disabled={recordingState === 'recording' || recordingState === 'countdown' || isPlayingTemp || isPlayingExisting}
-                  variant="outline"
-                  size="sm"
-                  className="bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700 disabled:opacity-50"
-                >
-                  <RotateCcw className="w-4 h-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{existingRecording ? "Re-record" : "Record again"}</p>
-              </TooltipContent>
-            </Tooltip>
-            
+
             {/* Play button - handles both new and saved recordings */}
             <Tooltip>
               <TooltipTrigger asChild>
