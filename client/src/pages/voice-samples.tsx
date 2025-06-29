@@ -167,8 +167,8 @@ export default function VoiceSamples() {
 
   // Check if modulation is recorded
   const isModulationRecorded = (modulationKey: string): boolean => {
-    // For now, return false as we'll implement user recordings later
-    return false;
+    const recordedSamples = (progress as any)?.recordedSamples || [];
+    return recordedSamples.some((sample: any) => sample.emotion === modulationKey);
   };
 
   // Get recorded sample for modulation

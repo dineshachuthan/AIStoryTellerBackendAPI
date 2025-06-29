@@ -370,6 +370,9 @@ Preferred communication style: Simple, everyday language.
 - No hardcoded return values or placeholder implementations
 - Always implement proper data flow from backend to frontend
 - Use configuration files and database-driven logic only
+- Code breakage and exceptions are acceptable - no fallback logic allowed
+- No convenience hardcoding under any circumstances
+- Every function must connect to real data sources or fail authentically
 
 **Responsive Design Requirements:**
 - All components must be responsive and mobile-compatible by default

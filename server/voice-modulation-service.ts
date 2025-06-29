@@ -417,8 +417,9 @@ export class VoiceModulationService {
 
     return {
       totalTemplates,
-      recordedCount,
-      progress,
+      recordedTemplates,
+      completionPercentage,
+      recordedSamples,
       byType
     };
   }
