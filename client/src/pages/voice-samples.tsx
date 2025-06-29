@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Mic, Play, Trash2, CheckCircle, Circle, Volume2, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { EnhancedVoiceRecorder } from "@/components/ui/enhanced-voice-recorder";
+import { VoiceTrainingStatus } from "@/components/voice-training-status";
 
 interface EmotionTemplate {
   emotion: string;
@@ -293,6 +294,11 @@ export default function VoiceSamples() {
             <Progress value={(progress as any).completionPercentage || 0} className="h-2" />
           </div>
         )}
+
+        {/* ElevenLabs Voice Training Status */}
+        <div className="mb-4">
+          <VoiceTrainingStatus userId={user?.id || ''} />
+        </div>
       </div>
 
         {/* Category Tabs with Visual Separation */}
