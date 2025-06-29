@@ -276,8 +276,8 @@ export function EnhancedVoiceRecorder({
           </div>
         </div>
 
-        {/* Main Recording Display */}
-        <div className="bg-black rounded-lg p-4 mb-3 border border-gray-600">
+        {/* Main Recording Display - Fixed height container */}
+        <div className="bg-black rounded-lg p-4 mb-3 border border-gray-600 min-h-[180px]">
           {/* Title */}
           <div className="text-blue-300 text-sm font-semibold mb-3 text-left uppercase tracking-wide">
             📖 Read this text{emotionDescription ? ` in ${emotionDescription.toLowerCase()}` : ''}
@@ -356,24 +356,20 @@ export function EnhancedVoiceRecorder({
 
             {/* Sample Text Display */}
             <div className="flex-1">
-              <div className="text-white text-sm leading-relaxed mb-2">
+              <div className="text-white text-sm leading-relaxed">
                 <span className="italic text-blue-200">"{sampleText || 'Sample text not provided'}"</span>
               </div>
 
-              {/* Fixed height container for progress/status to prevent size changes */}
-              <div className="h-8 mb-2">
-                {recordingState === 'recording' && (
-                  <div>
-                    <div className="flex justify-between text-xs text-gray-400 mb-1">
-                      <span>{formatTime(recordingTime)}</span>
-                      <span>{formatTime(maxRecordingTime)}</span>
-                    </div>
-                    <Progress value={progressPercentage} className="h-2 bg-gray-700" />
+              {/* Progress indicator only during recording */}
+              {recordingState === 'recording' && (
+                <div className="mt-2">
+                  <div className="flex justify-between text-xs text-gray-400 mb-1">
+                    <span>{formatTime(recordingTime)}</span>
+                    <span>{formatTime(maxRecordingTime)}</span>
                   </div>
-                )}
-                
-
-              </div>
+                  <Progress value={progressPercentage} className="h-2 bg-gray-700" />
+                </div>
+              )}
             </div>
           </div>
         </div>
