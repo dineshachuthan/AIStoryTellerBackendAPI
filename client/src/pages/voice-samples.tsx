@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "wouter";
+import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Mic, Play, Trash2, CheckCircle, Circle, Volume2 } from "lucide-react";
+import { Mic, Play, Trash2, CheckCircle, Circle, Volume2, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { AppHeader } from "@/components/app-header";
-import { AppTopNavigation } from "@/components/app-top-navigation";
 import { EnhancedVoiceRecorder } from "@/components/ui/enhanced-voice-recorder";
 
 interface EmotionTemplate {
@@ -37,6 +37,8 @@ interface VoiceProgress {
 }
 
 export default function VoiceSamples() {
+  const [, setLocation] = useLocation();
+  const { user, logout } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState<string>("emotion");
   const [playingAudio, setPlayingAudio] = useState<string | null>(null);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
@@ -212,12 +214,61 @@ export default function VoiceSamples() {
   }
 
   return (
-    <>
-      {/* Header */}
-      <AppHeader />
-      <AppTopNavigation />
-      
-      <div className="container mx-auto px-4 py-2 max-w-6xl">
+    <div className="relative w-full min-h-screen bg-dark-bg text-dark-text">
+      {/* Consistent Header matching Home page */}
+      <div className="fixed top-0 left-0 right-0 bg-dark-bg/80 backdrop-blur-lg border-b border-gray-800 p-4 z-50">
+        <div className="flex items-center justify-between">
+          <Button
+            variant="ghost"
+            onClick={() => setLocation("/")}
+            className="text-2xl font-bold text-white hover:bg-transparent p-0"
+          >
+            DeeVee
+          </Button>
+          
+          <div className="flex items-center space-x-3">
+            <Button
+              onClick={() => setLocation("/voice-samples")}
+              variant="outline"
+              size="sm"
+              className="border-tiktok-cyan text-tiktok-cyan hover:bg-tiktok-cyan/20"
+            >
+              <Volume2 className="w-4 h-4 mr-2" />
+              Voice Samples
+            </Button>
+
+            <Button
+              onClick={async () => {
+                try {
+                  await logout();
+                  setLocation('/');
+                } catch (error) {
+                  console.error('Logout failed:', error);
+                }
+              }}
+              variant="outline"
+              size="sm"
+              className="border-red-500 text-red-500 hover:bg-red-500/20"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Logout
+            </Button>
+
+            <Button
+              onClick={() => setLocation("/profile")}
+              variant="ghost"
+              size="sm"
+              className="relative h-8 w-8 rounded-full p-0"
+            >
+              <div className="h-8 w-8 rounded-full bg-tiktok-red text-white text-xs flex items-center justify-center">
+                {user?.displayName ? user.displayName.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
+              </div>
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <div className="pt-20 container mx-auto px-4 py-2 max-w-6xl">
       {/* Compact Header */}
       <div className="mb-3">
         <h1 className="text-xl font-bold mb-1">Voice Samples Collection</h1>
@@ -298,6 +349,6 @@ export default function VoiceSamples() {
         ))}
         </Tabs>
       </div>
-    </>
+    </div>
   );
 }
