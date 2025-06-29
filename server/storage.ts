@@ -27,6 +27,15 @@ export interface IStorage {
   deleteUserVoiceSample(id: number): Promise<void>;
   getUserVoiceProgress(userId: string): Promise<{ completed: number; total: number; percentage: number }>;
   
+  // User Voice Emotions (for voice samples service)
+  getUserVoiceEmotions(userId: string, storyId?: number): Promise<any[]>;
+  createUserVoiceEmotion(emotion: any): Promise<any>;
+  deleteUserVoiceEmotion(userId: string, emotion: string): Promise<void>;
+  
+  // Emotion Templates
+  getEmotionTemplate(emotion: string): Promise<any | null>;
+  createEmotionTemplate(template: any): Promise<any>;
+  
   // Stories
   getPublicStories(filters?: {
     genre?: string;
