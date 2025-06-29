@@ -324,22 +324,37 @@ export default function VoiceSamples() {
                             </p>
                           </div>
                         ) : (
-                          <EnhancedVoiceRecorder
-                            buttonText={{
-                              hold: `Record ${template.displayName}`,
-                              recording: "Recording...",
-                              instructions: `Say: "${template.sampleText}"`
-                            }}
-                            onRecordingComplete={(audioBlob) => {
-                              saveVoiceSample.mutate({
-                                emotion: template.modulationKey,
-                                audioBlob
-                              });
-                            }}
-                            className="w-full"
-                            disabled={saveVoiceSample.isPending}
-                            maxRecordingTime={10}
-                          />
+                          <div className="space-y-3">
+                            {/* Sample Text to Read */}
+                            <div className="bg-muted/50 p-3 rounded-lg border border-dashed border-muted-foreground/30">
+                              <p className="text-xs text-muted-foreground mb-2 font-medium">
+                                📖 Read this with {template.displayName.toLowerCase()} emotion:
+                              </p>
+                              <p className="text-sm font-medium text-foreground italic leading-relaxed">
+                                "{template.sampleText}"
+                              </p>
+                              <p className="text-xs text-muted-foreground mt-2">
+                                Target: {template.targetDuration} seconds
+                              </p>
+                            </div>
+                            
+                            <EnhancedVoiceRecorder
+                              buttonText={{
+                                hold: `Record ${template.displayName}`,
+                                recording: "Recording...",
+                                instructions: "Hold button to record"
+                              }}
+                              onRecordingComplete={(audioBlob) => {
+                                saveVoiceSample.mutate({
+                                  emotion: template.modulationKey,
+                                  audioBlob
+                                });
+                              }}
+                              className="w-full"
+                              disabled={saveVoiceSample.isPending}
+                              maxRecordingTime={template.targetDuration}
+                            />
+                          </div>
                         )}
                     </CardContent>
                   </Card>
