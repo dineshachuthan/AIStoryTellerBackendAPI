@@ -11,7 +11,6 @@ import Chat from "@/pages/chat";
 import CreateCharacter from "@/pages/create-character";
 import UploadStory from "@/pages/upload-story";
 import StoryAnalysis from "@/pages/story-analysis";
-import VoiceSetup from "@/pages/voice-setup";
 import VoiceSamples from "@/pages/voice-samples";
 import { VoiceRecordPage } from "@/pages/voice-record";
 import { UploadAudioPage } from "@/pages/upload-audio";
@@ -60,7 +59,7 @@ function Router() {
             <Route path="/upload-audio" component={UploadAudioPage} />
             <Route path="/story-analysis" component={StoryAnalysis} />
             <Route path="/analysis/:storyId" component={StoryAnalysis} />
-            <Route path="/voice-setup" component={VoiceSetup} />
+            <Route path="/voice-setup" component={VoiceSamples} />
             <Route path="/voice-samples" component={VoiceSamples} />
             <Route path="/story/:storyId" component={StoryPlayer} />
             <Route path="/story/:storyId/play" component={StoryPlayer} />

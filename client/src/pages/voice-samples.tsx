@@ -177,7 +177,7 @@ export default function VoiceSamples() {
   ) : [];
 
   // Get unique categories
-  const categories = Array.isArray(templates) ? [...new Set(templates.map((t: EmotionTemplate) => t.category))] : ['basic'];
+  const categories = Array.isArray(templates) ? Array.from(new Set(templates.map((t: EmotionTemplate) => t.category))) : ['basic'];
 
   // Check if emotion is recorded
   const isEmotionRecorded = (emotion: string): boolean => {

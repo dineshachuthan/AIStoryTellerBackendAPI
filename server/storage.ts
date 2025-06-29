@@ -744,6 +744,41 @@ export class DatabaseStorage implements IStorage {
   async deleteAudioFile(id: number): Promise<void> {
     await db.delete(audioFiles).where(eq(audioFiles.id, id));
   }
+
+  // User Voice Emotions (for voice samples service)
+  async getUserVoiceEmotions(userId: string, storyId?: number): Promise<any[]> {
+    let query = db.select().from(userVoiceSamples).where(eq(userVoiceSamples.userId, userId));
+    
+    if (storyId) {
+      query = query.where(eq(userVoiceSamples.storyId, storyId));
+    }
+    
+    return await query;
+  }
+
+  async createUserVoiceEmotion(emotion: any): Promise<any> {
+    const [result] = await db.insert(userVoiceSamples).values(emotion).returning();
+    return result;
+  }
+
+  async deleteUserVoiceEmotion(userId: string, emotion: string): Promise<void> {
+    await db.delete(userVoiceSamples)
+      .where(and(
+        eq(userVoiceSamples.userId, userId),
+        eq(userVoiceSamples.label, emotion)
+      ));
+  }
+
+  // Emotion Templates (simple implementation)
+  async getEmotionTemplate(emotion: string): Promise<any | null> {
+    // For now, return null since templates are handled by voice-config
+    return null;
+  }
+
+  async createEmotionTemplate(template: any): Promise<any> {
+    // For now, just return the template since templates are handled by voice-config
+    return template;
+  }
 }
 
 export const storage = new DatabaseStorage();
