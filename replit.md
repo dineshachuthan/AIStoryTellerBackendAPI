@@ -127,6 +127,13 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Priority**: Medium (requested but deferred for future implementation)
 
 ## Changelog
+- June 29, 2025: Fixed critical voice samples data structure inconsistency causing interface failures
+  - Resolved duplicate API endpoint conflict serving wrong data format to frontend
+  - Unified emotion templates to use sophisticated voice-config.ts instead of basic hardcoded templates
+  - Fixed progress calculation mismatch (was showing 10 emotions in progress but only 8 in interface)
+  - Voice samples now consistently use 10 advanced emotions with ElevenLabs-optimized sample texts
+  - Templates API and progress calculation now use same data source (shared/voice-config.ts)
+  - Voice samples interface fully functional with proper emotion/displayName/sampleText/category structure
 - June 28, 2025: Completed modular authentication provider architecture refactoring
   - Created abstract BaseOAuthProvider class that is completely agnostic to specific authentication providers
   - Implemented interface-driven authentication provider registry supporting Google and extensible to any OAuth provider

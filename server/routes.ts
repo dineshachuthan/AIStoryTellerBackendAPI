@@ -3827,7 +3827,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const serviceModule = await import('./voice-samples-service');
       const templates = serviceModule.voiceSamplesService.getEmotionTemplates();
-      console.log("Templates from service:", templates.slice(0, 2));
       res.json(templates);
     } catch (error: any) {
       console.error("Failed to get voice sample templates:", error);
