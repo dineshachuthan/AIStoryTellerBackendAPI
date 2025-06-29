@@ -250,19 +250,52 @@ export const characterVoiceAssignments = pgTable("character_voice_assignments", 
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// User voice emotion repository - persistent across all stories
-export const userVoiceEmotions = pgTable("user_voice_emotions", {
+// Voice modulation templates - configurable database-driven voice samples
+export const voiceModulationTemplates = pgTable("voice_modulation_templates", {
+  id: serial("id").primaryKey(),
+  modulationType: varchar("modulation_type").notNull(), // 'emotion', 'sound', 'description'
+  modulationKey: varchar("modulation_key").notNull(), // 'happy', 'cat_sound', 'fast_description'
+  displayName: varchar("display_name").notNull(),
+  description: text("description").notNull(),
+  sampleText: text("sample_text").notNull(),
+  targetDuration: integer("target_duration").default(10), // seconds
+  category: varchar("category").default('basic'), // 'basic', 'advanced', 'specialized'
+  voiceSettings: jsonb("voice_settings"), // ElevenLabs settings for this modulation
+  isActive: boolean("is_active").default(true),
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// User voice samples - story-level collection that accumulates across stories
+export const userVoiceModulations = pgTable("user_voice_modulations", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").references(() => users.id).notNull(),
-  emotion: varchar("emotion").notNull(), // joy, grief, shock, anger, fear, love, etc.
-  intensity: integer("intensity").notNull(), // 1-10 scale
+  storyId: integer("story_id").references(() => stories.id), // Story where first recorded
+  templateId: integer("template_id").references(() => voiceModulationTemplates.id).notNull(),
+  modulationType: varchar("modulation_type").notNull(), // 'emotion', 'sound', 'description'
+  modulationKey: varchar("modulation_key").notNull(), // 'happy', 'cat_sound', 'fast_description'
   audioUrl: text("audio_url").notNull(),
   fileName: varchar("file_name").notNull(),
   duration: integer("duration"), // in milliseconds
-  isBaseVoice: boolean("is_base_voice").default(false), // Primary voice for interpolation
-  storyIdRecorded: integer("story_id_recorded").references(() => stories.id), // Story where it was first recorded
-  usageCount: integer("usage_count").default(0), // How many times this voice has been used
+  qualityScore: doublePrecision("quality_score"), // AI assessment of recording quality (0-1)
+  isPreferred: boolean("is_preferred").default(false), // User's preferred version if multiple exist
+  usageCount: integer("usage_count").default(0), // How many times used in story generation
   lastUsedAt: timestamp("last_used_at"),
+  recordedAt: timestamp("recorded_at").defaultNow(),
+});
+
+// Story modulation requirements - what modulations a story needs
+export const storyModulationRequirements = pgTable("story_modulation_requirements", {
+  id: serial("id").primaryKey(),
+  storyId: integer("story_id").references(() => stories.id).notNull(),
+  modulationType: varchar("modulation_type").notNull(), // 'emotion', 'sound', 'description'
+  modulationKey: varchar("modulation_key").notNull(), // 'happy', 'cat_sound', 'fast_description'
+  templateId: integer("template_id").references(() => voiceModulationTemplates.id),
+  isRequired: boolean("is_required").default(true),
+  contextUsage: text("context_usage"), // Where in story this modulation is used
+  detectedBy: varchar("detected_by").default('ai'), // 'ai', 'user', 'manual'
+  confidence: doublePrecision("confidence").default(1.0), // AI confidence in requirement (0-1)
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -850,10 +883,7 @@ export const insertStoryAnalysisSchema = createInsertSchema(storyAnalyses).omit(
 export type StoryAnalysis = typeof storyAnalyses.$inferSelect;
 export type InsertStoryAnalysis = z.infer<typeof insertStoryAnalysisSchema>;
 
-// Voice-related type definitions
-export type UserVoiceEmotion = typeof userVoiceEmotions.$inferSelect;
-export type InsertUserVoiceEmotion = z.infer<typeof insertUserVoiceEmotionSchema>;
-
+// Legacy voice-related type definitions (keeping for backward compatibility)
 export type EmotionTemplate = typeof emotionTemplates.$inferSelect;
 export type InsertEmotionTemplate = z.infer<typeof insertEmotionTemplateSchema>;
 
@@ -863,12 +893,7 @@ export type InsertUserVoiceProfile = z.infer<typeof insertUserVoiceProfileSchema
 export type VoiceGenerationCache = typeof voiceGenerationCache.$inferSelect;
 export type InsertVoiceGenerationCache = z.infer<typeof insertVoiceGenerationCacheSchema>;
 
-// Voice schema definitions
-export const insertUserVoiceEmotionSchema = createInsertSchema(userVoiceEmotions).omit({
-  id: true,
-  createdAt: true,
-});
-
+// Legacy voice schema definitions
 export const insertEmotionTemplateSchema = createInsertSchema(emotionTemplates).omit({
   id: true,
   createdAt: true,
@@ -1118,3 +1143,35 @@ export type InsertVideoGenerationJob = z.infer<typeof insertVideoGenerationJobSc
 
 export type VersionLineage = typeof versionLineage.$inferSelect;
 export type InsertVersionLineage = z.infer<typeof insertVersionLineageSchema>;
+
+// =============================================================================
+// VOICE MODULATION SYSTEM SCHEMAS
+// =============================================================================
+
+// Voice Modulation Template schemas
+export const insertVoiceModulationTemplateSchema = createInsertSchema(voiceModulationTemplates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type VoiceModulationTemplate = typeof voiceModulationTemplates.$inferSelect;
+export type InsertVoiceModulationTemplate = z.infer<typeof insertVoiceModulationTemplateSchema>;
+
+// User Voice Modulation schemas
+export const insertUserVoiceModulationSchema = createInsertSchema(userVoiceModulations).omit({
+  id: true,
+  recordedAt: true,
+});
+
+export type UserVoiceModulation = typeof userVoiceModulations.$inferSelect;
+export type InsertUserVoiceModulation = z.infer<typeof insertUserVoiceModulationSchema>;
+
+// Story Modulation Requirement schemas
+export const insertStoryModulationRequirementSchema = createInsertSchema(storyModulationRequirements).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type StoryModulationRequirement = typeof storyModulationRequirements.$inferSelect;
+export type InsertStoryModulationRequirement = z.infer<typeof insertStoryModulationRequirementSchema>;
