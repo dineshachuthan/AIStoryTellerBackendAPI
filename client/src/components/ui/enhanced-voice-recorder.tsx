@@ -279,7 +279,7 @@ export function EnhancedVoiceRecorder({
         {/* Main Recording Display - Fixed height container */}
         <div className="bg-black rounded-lg p-4 mb-3 border border-gray-600 min-h-[180px]">
           {/* Title */}
-          <div className="text-blue-300 text-sm font-semibold mb-3 text-left uppercase tracking-wide">
+          <div className="text-blue-300 text-xs font-medium mb-3 text-left uppercase tracking-wide">
             📖 Read this text{emotionDescription ? ` in ${emotionDescription.toLowerCase()}` : ''}
           </div>
           
