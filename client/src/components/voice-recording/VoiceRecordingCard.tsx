@@ -125,8 +125,8 @@ export function VoiceRecordingCard({
           const audioBlob = new Blob(audioChunksRef.current, { type: mediaRecorder.mimeType });
           const url = URL.createObjectURL(audioBlob);
           
-          // Only proceed if recording is at least 1 second
-          if (recordingTime >= 1) {
+          // Only proceed if recording is at least 1 second AND actually started recording
+          if (recordingTime >= 1 && audioBlob.size > 0 && isRecording) {
             // Store temporary recording for user verification
             setTempRecording({
               blob: audioBlob,
@@ -136,7 +136,7 @@ export function VoiceRecordingCard({
             
             setRecordingState('recorded'); // Go to verification state
           } else {
-            // Recording too short - go back to idle
+            // Recording too short or invalid - go back to idle
             setRecordingState('idle');
             URL.revokeObjectURL(url);
           }
@@ -169,14 +169,23 @@ export function VoiceRecordingCard({
   };
 
   const stopRecording = () => {
+    // Clear the hold timer to prevent recording from starting
     if (holdTimerRef.current) {
       clearTimeout(holdTimerRef.current);
+      holdTimerRef.current = null;
     }
     
+    // Clean up timer
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    
+    // Stop active recording
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
-      if (timerRef.current) clearInterval(timerRef.current);
+      // Don't reset state here - let onstop handle it
     }
   };
 
