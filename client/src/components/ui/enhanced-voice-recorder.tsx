@@ -305,8 +305,12 @@ export function EnhancedVoiceRecorder({
   return (
     <TooltipProvider>
       <div className={`w-full max-w-sm mx-auto ${className}`}>
-        {/* Radio/TV Style Voice Recorder Panel */}
-        <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-4 shadow-2xl border border-gray-700">
+        {/* Radio/TV Style Voice Recorder Panel - Dynamic background for recorded samples */}
+        <div className={`rounded-2xl p-4 shadow-2xl border ${
+          isRecorded || existingRecording 
+            ? 'bg-gradient-to-br from-green-900/50 to-green-800/50 border-green-700/50' 
+            : 'bg-gradient-to-br from-gray-900 to-gray-800 border-gray-700'
+        }`}>
         
         {/* Header with Emotion Info */}
         <div className="flex items-center justify-between mb-3">
