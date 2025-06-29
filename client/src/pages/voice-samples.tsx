@@ -289,15 +289,6 @@ export default function VoiceSamples() {
               onRecord={handleRecord}
               onPlayRecorded={playAudioSample}
             />
-                    <CardHeader className="pb-4">
-                      <CardTitle className="flex items-center justify-between">
-                        <span className="flex items-center gap-2">
-                          {isRecorded ? (
-                            <CheckCircle className="w-5 h-5 text-green-600" />
-                          ) : (
-                            <Circle className="w-5 h-5 text-muted-foreground" />
-                          )}
-                          {template.displayName}
                         </span>
                         <Badge variant={isRecorded ? "default" : "secondary"}>
                           {template.category}
