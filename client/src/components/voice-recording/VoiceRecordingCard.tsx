@@ -236,61 +236,78 @@ export function VoiceRecordingCard({
         {/* Controls */}
         <div className="flex flex-col gap-3">
           {!isRecorded ? (
-            <Button
-              size="lg"
-              variant={isRecording ? "destructive" : "default"}
-              className="w-full"
-              onMouseDown={handleMouseDown}
-              onMouseUp={handleMouseUp}
-              onMouseLeave={handleMouseLeave}
-              onTouchStart={handleMouseDown}
-              onTouchEnd={handleMouseUp}
-              disabled={isProcessing}
-            >
-              <Mic className="w-4 h-4 mr-2" />
-              {isProcessing ? 'Saving...' : isRecording ? 'Release to Stop' : 'Hold to Record'}
-            </Button>
-          ) : (
-            <div className="flex gap-2">
+            /* No Voice Recorded State */
+            <div className="space-y-2">
               <Button
                 size="lg"
-                variant="outline"
-                className="flex-1"
-                onClick={isPlaying ? stopPlayback : playRecordedSample}
-              >
-                {isPlaying ? (
-                  <>
-                    <Pause className="w-4 h-4 mr-2" />
-                    Stop
-                  </>
-                ) : (
-                  <>
-                    <Play className="w-4 h-4 mr-2" />
-                    Play
-                  </>
+                variant={isRecording ? "destructive" : "default"}
+                className={cn(
+                  "w-full h-14 text-base font-medium transition-all duration-200",
+                  isRecording && "bg-red-600 hover:bg-red-700 animate-pulse"
                 )}
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                onClick={() => {
-                  // Re-record functionality
-                  setIsRecording(false);
-                  setRecordingTime(0);
-                  if (audioRef.current) {
-                    audioRef.current.pause();
-                    setIsPlaying(false);
-                  }
-                }}
                 onMouseDown={handleMouseDown}
                 onMouseUp={handleMouseUp}
                 onMouseLeave={handleMouseLeave}
                 onTouchStart={handleMouseDown}
                 onTouchEnd={handleMouseUp}
+                disabled={isProcessing}
               >
-                <RotateCcw className="w-4 h-4 mr-2" />
-                Re-record
+                <Mic className={cn("w-5 h-5 mr-3", isRecording && "animate-pulse")} />
+                {isProcessing ? 'Saving Your Voice...' : 
+                 isRecording ? 'Release to Stop Recording' : 
+                 'Hold to Record Your Voice'}
               </Button>
+              {!isRecording && !isProcessing && (
+                <p className="text-xs text-center text-muted-foreground">
+                  Press and hold for at least 1 second to record
+                </p>
+              )}
+            </div>
+          ) : (
+            /* Voice Recorded State */
+            <div className="space-y-3">
+              {/* Success Indicator */}
+              <div className="flex items-center justify-center gap-2 text-green-600 bg-green-50 dark:bg-green-950 py-2 rounded-md">
+                <CheckCircle className="w-4 h-4" />
+                <span className="text-sm font-medium">Voice Recorded Successfully</span>
+              </div>
+              
+              {/* Playback and Re-record Controls */}
+              <div className="flex gap-2">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="flex-1 h-12"
+                  onClick={isPlaying ? stopPlayback : playRecordedSample}
+                  disabled={isProcessing}
+                >
+                  {isPlaying ? (
+                    <>
+                      <Pause className="w-4 h-4 mr-2" />
+                      Stop Playback
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-4 h-4 mr-2" />
+                      Play Your Voice
+                    </>
+                  )}
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="h-12 px-4"
+                  onMouseDown={handleMouseDown}
+                  onMouseUp={handleMouseUp}
+                  onMouseLeave={handleMouseLeave}
+                  onTouchStart={handleMouseDown}
+                  onTouchEnd={handleMouseUp}
+                  disabled={isProcessing}
+                  title="Hold to re-record"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
           )}
         </div>

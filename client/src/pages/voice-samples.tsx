@@ -11,6 +11,8 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { AppHeader } from "@/components/app-header";
 import { AppTopNavigation } from "@/components/app-top-navigation";
+import { SwipeVoiceCollection } from "@/components/voice-recording/SwipeVoiceCollection";
+import type { VoiceTemplate, RecordedSample } from "@/components/voice-recording/VoiceRecordingCard";
 
 interface EmotionTemplate {
   emotion: string;
