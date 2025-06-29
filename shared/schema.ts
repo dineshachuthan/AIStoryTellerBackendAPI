@@ -266,6 +266,62 @@ export const userVoiceEmotions = pgTable("user_voice_emotions", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Emotion templates with sample texts for voice recording
+export const emotionTemplates = pgTable("emotion_templates", {
+  id: serial("id").primaryKey(),
+  emotion: varchar("emotion").notNull().unique(),
+  displayName: varchar("display_name").notNull(),
+  description: text("description").notNull(),
+  sampleText: text("sample_text").notNull(),
+  category: varchar("category").notNull().default("basic"), // basic, advanced, specialized
+  targetDuration: integer("target_duration").default(10), // seconds
+  difficulty: varchar("difficulty").default("easy"), // easy, medium, hard
+  isActive: boolean("is_active").default(true),
+  usageCount: integer("usage_count").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// User voice cloning profiles (ElevenLabs integration)
+export const userVoiceProfiles = pgTable("user_voice_profiles", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  provider: varchar("provider").notNull().default("elevenlabs"), // elevenlabs, openai
+  voiceId: varchar("voice_id"), // Provider-specific voice ID (null until cloned)
+  voiceName: varchar("voice_name").notNull(),
+  status: varchar("status").notNull().default("collecting"), // collecting, training, completed, failed
+  emotionCount: integer("emotion_count").default(0),
+  emotionsCovered: jsonb("emotions_covered").$type<string[]>().default([]),
+  totalSamples: integer("total_samples").default(0),
+  qualityScore: real("quality_score"), // Average quality of all samples
+  metadata: jsonb("metadata"), // Provider-specific metadata
+  isActive: boolean("is_active").default(true),
+  lastTrainingAt: timestamp("last_training_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Voice generation cache for performance
+export const voiceGenerationCache = pgTable("voice_generation_cache", {
+  id: serial("id").primaryKey(),
+  cacheKey: varchar("cache_key").notNull().unique(),
+  userId: varchar("user_id").references(() => users.id),
+  voiceId: varchar("voice_id"),
+  emotion: varchar("emotion"),
+  textHash: varchar("text_hash").notNull(),
+  audioData: bytea("audio_data"),
+  audioUrl: varchar("audio_url"),
+  provider: varchar("provider").notNull(),
+  duration: real("duration"),
+  format: varchar("format").notNull().default("mp3"),
+  size: integer("size").notNull(),
+  generationSettings: jsonb("generation_settings"),
+  hitCount: integer("hit_count").default(1),
+  lastAccessed: timestamp("last_accessed").defaultNow(),
+  expiresAt: timestamp("expires_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // User customizations for public stories - allows users to personalize without modifying original
 export const storyCustomizations = pgTable("story_customizations", {
   id: serial("id").primaryKey(),
@@ -793,6 +849,42 @@ export const insertStoryAnalysisSchema = createInsertSchema(storyAnalyses).omit(
 
 export type StoryAnalysis = typeof storyAnalyses.$inferSelect;
 export type InsertStoryAnalysis = z.infer<typeof insertStoryAnalysisSchema>;
+
+// Voice-related type definitions
+export type UserVoiceEmotion = typeof userVoiceEmotions.$inferSelect;
+export type InsertUserVoiceEmotion = z.infer<typeof insertUserVoiceEmotionSchema>;
+
+export type EmotionTemplate = typeof emotionTemplates.$inferSelect;
+export type InsertEmotionTemplate = z.infer<typeof insertEmotionTemplateSchema>;
+
+export type UserVoiceProfile = typeof userVoiceProfiles.$inferSelect;
+export type InsertUserVoiceProfile = z.infer<typeof insertUserVoiceProfileSchema>;
+
+export type VoiceGenerationCache = typeof voiceGenerationCache.$inferSelect;
+export type InsertVoiceGenerationCache = z.infer<typeof insertVoiceGenerationCacheSchema>;
+
+// Voice schema definitions
+export const insertUserVoiceEmotionSchema = createInsertSchema(userVoiceEmotions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertEmotionTemplateSchema = createInsertSchema(emotionTemplates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertUserVoiceProfileSchema = createInsertSchema(userVoiceProfiles).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertVoiceGenerationCacheSchema = createInsertSchema(voiceGenerationCache).omit({
+  id: true,
+  createdAt: true,
+});
 
 // Story Narrations schemas
 export const insertStoryNarrationSchema = createInsertSchema(storyNarrations).omit({
