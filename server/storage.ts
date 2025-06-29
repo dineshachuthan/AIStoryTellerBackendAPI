@@ -1,6 +1,8 @@
-import { users, localUsers, userProviders, userVoiceSamples, stories, storyCharacters, storyEmotions, characters, conversations, messages, storyCollaborations, storyGroups, storyGroupMembers, characterVoiceAssignments, storyPlaybacks, storyAnalyses, storyNarrations, audioFiles, videoGenerations, type User, type InsertUser, type UpsertUser, type UserProvider, type InsertUserProvider, type LocalUser, type InsertLocalUser, type UserVoiceSample, type InsertUserVoiceSample, type Story, type InsertStory, type StoryCharacter, type InsertStoryCharacter, type StoryEmotion, type InsertStoryEmotion, type Character, type InsertCharacter, type Conversation, type InsertConversation, type Message, type InsertMessage, type StoryCollaboration, type InsertStoryCollaboration, type StoryGroup, type InsertStoryGroup, type StoryGroupMember, type InsertStoryGroupMember, type CharacterVoiceAssignment, type InsertCharacterVoiceAssignment, type StoryPlayback, type InsertStoryPlayback, type StoryAnalysis, type InsertStoryAnalysis, type StoryNarration, type InsertStoryNarration, type AudioFile, type InsertAudioFile } from "@shared/schema";
+import { users, localUsers, userProviders, userVoiceSamples, stories, storyCharacters, storyEmotions, characters, conversations, messages, storyCollaborations, storyGroups, storyGroupMembers, characterVoiceAssignments, storyPlaybacks, storyAnalyses, storyNarrations, audioFiles, videoGenerations, emotionTextPrompts, userVoiceEmotions, type User, type InsertUser, type UpsertUser, type UserProvider, type InsertUserProvider, type LocalUser, type InsertLocalUser, type UserVoiceSample, type InsertUserVoiceSample, type Story, type InsertStory, type StoryCharacter, type InsertStoryCharacter, type StoryEmotion, type InsertStoryEmotion, type Character, type InsertCharacter, type Conversation, type InsertConversation, type Message, type InsertMessage, type StoryCollaboration, type InsertStoryCollaboration, type StoryGroup, type InsertStoryGroup, type StoryGroupMember, type InsertStoryGroupMember, type CharacterVoiceAssignment, type InsertCharacterVoiceAssignment, type StoryPlayback, type InsertStoryPlayback, type StoryAnalysis, type InsertStoryAnalysis, type StoryNarration, type InsertStoryNarration, type AudioFile, type InsertAudioFile } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, like } from "drizzle-orm";
+import path from "path";
+import fs from "fs/promises";
 
 export interface IStorage {
   // Users
@@ -149,6 +151,18 @@ export interface IStorage {
   saveAudioFile(audioData: InsertAudioFile): Promise<AudioFile>;
   getAudioFile(id: number): Promise<AudioFile | undefined>;
   deleteAudioFile(id: number): Promise<void>;
+
+  // User Voice Emotions
+  getUserVoiceEmotions(userId: string): Promise<any[]>;
+  saveUserVoiceEmotion(userId: string, emotion: string, audioBlob: any, duration: number): Promise<any>;
+  getUserVoiceEmotion(userId: string, emotion: string): Promise<any>;
+
+  // Emotion Text Prompts
+  getEmotionTextPrompts(): Promise<any[]>;
+  initializeDefaultEmotionPrompts(): Promise<void>;
+  getEmotionTextPrompt(emotion: string): Promise<any | null>;
+  createEmotionTextPrompt(promptData: any): Promise<any>;
+  updateEmotionTextPrompt(emotion: string, updates: any): Promise<any | null>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -817,12 +831,12 @@ export class DatabaseStorage implements IStorage {
   // Emotion text prompts methods
   async getEmotionTextPrompts(): Promise<any[]> {
     try {
-      const result = await db.select().from(schema.emotionTextPrompts).where(eq(schema.emotionTextPrompts.isActive, true));
+      const result = await db.select().from(emotionTextPrompts).where(eq(emotionTextPrompts.isActive, true));
       
       // If no prompts exist, initialize with default data
       if (result.length === 0) {
         await this.initializeDefaultEmotionPrompts();
-        return await db.select().from(schema.emotionTextPrompts).where(eq(schema.emotionTextPrompts.isActive, true));
+        return await db.select().from(emotionTextPrompts).where(eq(emotionTextPrompts.isActive, true));
       }
       
       return result;
@@ -837,48 +851,121 @@ export class DatabaseStorage implements IStorage {
       {
         emotion: 'happy',
         promptText: 'Say "I am so happy today!" with genuine joy and excitement',
-        displayName: 'Happy',
         description: 'Express joy and excitement in your voice',
-        category: 'basic'
+        category: 'primary'
       },
       {
         emotion: 'sad',
         promptText: 'Say "I feel really sad about this" with a melancholic tone',
-        displayName: 'Sad',
         description: 'Express sadness and melancholy in your voice',
-        category: 'basic'
+        category: 'primary'
       },
       {
         emotion: 'angry',
         promptText: 'Say "This makes me so angry!" with frustration and intensity',
-        displayName: 'Angry',
         description: 'Express anger and frustration in your voice',
-        category: 'basic'
+        category: 'primary'
       },
       {
         emotion: 'calm',
         promptText: 'Say "I feel very calm and peaceful" with a serene, relaxed tone',
-        displayName: 'Calm',
         description: 'Express calmness and tranquility in your voice',
-        category: 'basic'
+        category: 'primary'
       },
       {
         emotion: 'fearful',
         promptText: 'Say "I am really scared and nervous" with fear and trembling in your voice',
-        displayName: 'Fearful',
         description: 'Express fear and nervousness in your voice',
-        category: 'basic'
+        category: 'primary'
       }
     ];
 
     try {
       for (const prompt of defaultPrompts) {
-        await db.insert(schema.emotionTextPrompts)
+        await db.insert(emotionTextPrompts)
           .values(prompt)
           .onConflictDoNothing();
       }
     } catch (error) {
       console.error('Error initializing emotion prompts:', error);
+    }
+  }
+
+  async getEmotionTextPrompt(emotion: string): Promise<any | null> {
+    try {
+      const result = await db.select().from(emotionTextPrompts).where(eq(emotionTextPrompts.emotion, emotion));
+      return result[0] || null;
+    } catch (error) {
+      console.error('Error getting emotion text prompt:', error);
+      return null;
+    }
+  }
+
+  async createEmotionTextPrompt(promptData: any): Promise<any> {
+    try {
+      const result = await db.insert(emotionTextPrompts).values(promptData).returning();
+      return result[0];
+    } catch (error) {
+      console.error('Error creating emotion text prompt:', error);
+      throw error;
+    }
+  }
+
+  async updateEmotionTextPrompt(emotion: string, updates: any): Promise<any | null> {
+    try {
+      const result = await db.update(emotionTextPrompts)
+        .set(updates)
+        .where(eq(emotionTextPrompts.emotion, emotion))
+        .returning();
+      return result[0] || null;
+    } catch (error) {
+      console.error('Error updating emotion text prompt:', error);
+      return null;
+    }
+  }
+
+  async getUserVoiceEmotions(userId: string): Promise<any[]> {
+    try {
+      const result = await db.select().from(userVoiceEmotions).where(eq(userVoiceEmotions.userId, userId));
+      return result;
+    } catch (error) {
+      console.error('Error getting user voice emotions:', error);
+      return [];
+    }
+  }
+
+  async saveUserVoiceEmotion(userId: string, emotion: string, audioBlob: any, duration: number): Promise<any> {
+    try {
+      const audioBuffer = Buffer.from(await audioBlob.arrayBuffer());
+      const filename = `voice_${userId}_${emotion}_${Date.now()}.webm`;
+      const filePath = path.join(process.cwd(), 'uploads', filename);
+      
+      // Save to filesystem
+      await fs.writeFile(filePath, audioBuffer);
+      
+      // Save to database
+      const result = await db.insert(userVoiceEmotions).values({
+        userId,
+        emotion,
+        audioUrl: `/uploads/${filename}`,
+        duration: duration || 0
+      }).returning();
+      
+      return result[0];
+    } catch (error) {
+      console.error('Error saving user voice emotion:', error);
+      throw error;
+    }
+  }
+
+  async getUserVoiceEmotion(userId: string, emotion: string): Promise<any> {
+    try {
+      const result = await db.select().from(userVoiceEmotions)
+        .where(and(eq(userVoiceEmotions.userId, userId), eq(userVoiceEmotions.emotion, emotion)));
+      return result[0] || null;
+    } catch (error) {
+      console.error('Error getting user voice emotion:', error);
+      return null;
     }
   }
 
