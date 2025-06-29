@@ -15,6 +15,7 @@ interface PressHoldRecorderProps {
     recording: string;
     instructions: string;
   };
+  showVerificationWorkflow?: boolean; // Enable replay, re-record, save workflow
 }
 
 export function PressHoldRecorder({
@@ -26,11 +27,16 @@ export function PressHoldRecorder({
     hold: "Hold",
     recording: "Release",
     instructions: "Press and hold to record"
-  }
+  },
+  showVerificationWorkflow = false
 }: PressHoldRecorderProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [isHolding, setIsHolding] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
+  const [countdownTime, setCountdownTime] = useState(3);
+  const [recordingState, setRecordingState] = useState<'idle' | 'countdown' | 'recording' | 'recorded'>('idle');
+  const [tempRecording, setTempRecording] = useState<{blob: Blob, url: string} | null>(null);
+  const [isPlayingTemp, setIsPlayingTemp] = useState(false);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
