@@ -13,7 +13,7 @@ import { AppTopNavigation } from "@/components/app-top-navigation";
 import { StoryAnalysisPanel } from "@/components/story/StoryAnalysisPanel";
 import { RolePlayAnalysisPanel } from "@/components/story/RolePlayAnalysisPanel";
 import StoryNarratorControls from "@/components/ui/story-narrator-controls";
-import { EnhancedNarrationPlayer } from "@/components/enhanced-narration-player";
+// import { EnhancedNarrationPlayer } from "@/components/enhanced-narration-player";
 
 interface StoryAnalysis {
   title: string; // AI-generated title for the story
@@ -703,7 +703,7 @@ export default function StoryAnalysis() {
           ) : null}
 
           {/* Enhanced Narration Player - ElevenLabs Voice Clone Integration */}
-          {storyId && user?.id && (
+          {/* {storyId && user?.id && (
             <div className="mb-8">
               <EnhancedNarrationPlayer 
                 storyId={parseInt(storyId)}
@@ -711,7 +711,7 @@ export default function StoryAnalysis() {
                 variant="compact"
               />
             </div>
-          )}
+          )} */}
 
           {/* Main Analysis Tabs */}
           <Tabs defaultValue="narrative" className="w-full">
