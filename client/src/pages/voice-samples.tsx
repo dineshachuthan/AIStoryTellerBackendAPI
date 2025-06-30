@@ -370,8 +370,8 @@ export default function VoiceSamples() {
             {cloningProgress && (
               <VoiceCloningButton 
                 category={category}
-                progress={cloningProgress[category as keyof CloningProgress]}
-                onTrigger={() => triggerVoiceCloning.mutate(category as 'emotions' | 'sounds' | 'modulations')}
+                progress={cloningProgress[category === 'emotion' ? 'emotions' : category === 'sound' ? 'sounds' : 'modulations' as keyof CloningProgress]}
+                onTrigger={() => triggerVoiceCloning.mutate((category === 'emotion' ? 'emotions' : category === 'sound' ? 'sounds' : 'modulations') as 'emotions' | 'sounds' | 'modulations')}
                 isLoading={triggerVoiceCloning.isPending}
               />
             )}
