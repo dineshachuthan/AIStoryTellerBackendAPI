@@ -379,19 +379,34 @@ export default function VoiceSamples() {
           </TabsList>
 
         {categories.map((category) => (
-          <TabsContent key={category} value={category}>
-            {/* Voice Cloning Progress Button */}
-            {cloningProgress && (
-              <VoiceCloningButton 
-                category={category}
-                progress={cloningProgress[category === 'emotion' ? 'emotions' : category === 'sound' ? 'sounds' : 'modulations' as keyof CloningProgress]}
-                onTrigger={() => triggerVoiceCloning.mutate((category === 'emotion' ? 'emotions' : category === 'sound' ? 'sounds' : 'modulations') as 'emotions' | 'sounds' | 'modulations')}
-                isLoading={triggerVoiceCloning.isPending}
-                isMutationPending={triggerVoiceCloning.isPending}
-              />
-            )}
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <TabsContent key={category} value={category} className="mt-6">
+            {/* Tab Content Container with Visual Separation */}
+            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6">
+              {/* Tab Header */}
+              <div className="mb-6">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                  {categoryMapping[category as keyof typeof categoryMapping]} Collection
+                </h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Record your voice samples for {category === 'emotion' ? 'emotional expressions' : category === 'sound' ? 'sound effects and vocalizations' : 'narrative modulation styles'}
+                </p>
+              </div>
+
+              {/* Voice Cloning Progress Button */}
+              {cloningProgress && (
+                <div className="mb-6">
+                  <VoiceCloningButton 
+                    category={category}
+                    progress={cloningProgress[category === 'emotion' ? 'emotions' : category === 'sound' ? 'sounds' : 'modulations' as keyof CloningProgress]}
+                    onTrigger={() => triggerVoiceCloning.mutate((category === 'emotion' ? 'emotions' : category === 'sound' ? 'sounds' : 'modulations') as 'emotions' | 'sounds' | 'modulations')}
+                    isLoading={triggerVoiceCloning.isPending}
+                    isMutationPending={triggerVoiceCloning.isPending}
+                  />
+                </div>
+              )}
+              
+              {/* Cards Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {/* Sort templates: unlocked first, then recorded (unlocked), then locked */}
               {filteredTemplates
                 .filter((template: any, index: number, self: any[]) => 
@@ -535,6 +550,7 @@ export default function VoiceSamples() {
                     </div>
                   );
                 })}
+              </div>
             </div>
           </TabsContent>
         ))}
