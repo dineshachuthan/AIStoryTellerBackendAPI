@@ -1,6 +1,4 @@
 import { storage } from './storage';
-import { VoiceProviderFactory } from './voice-providers/voice-provider-factory';
-import type { BaseVoiceProvider } from './voice-providers/base-voice-provider';
 
 export interface VoiceTrainingOptions {
   userId: string;
@@ -22,12 +20,9 @@ export interface VoiceTrainingResult {
 export class VoiceTrainingService {
   private readonly TRAINING_THRESHOLD = 5;
 
-  private getVoiceProvider(): BaseVoiceProvider {
-    const provider = VoiceProviderFactory.getPrimaryProvider();
-    if (!provider) {
-      throw new Error('No voice provider available for training');
-    }
-    return provider;
+  private async getVoiceProviderFactory() {
+    const { VoiceProviderFactory } = await import('./voice-providers/voice-provider-factory');
+    return VoiceProviderFactory;
   }
 
   /**
@@ -129,7 +124,7 @@ export class VoiceTrainingService {
       }
 
       // Train voice with active provider (ElevenLabs or future providers like Kling)
-      const { VoiceProviderFactory } = require('./voice-providers/voice-provider-factory');
+      const { VoiceProviderFactory } = await import('./voice-providers/voice-provider-factory');
       const trainingResult = await VoiceProviderFactory.trainVoice({
         userId,
         voiceProfileId: voiceProfile.id,
