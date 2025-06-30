@@ -269,26 +269,31 @@ export class VoiceCloningSessionManager {
    * Complete cloning process for category (can be called without session)
    */
   static completeCategoryCloning(userId: string, category: VoiceCategoryType, success: boolean): void {
-    // Store completion in memory for cross-session tracking
-    const completionKey = `${userId}-${category}`;
-    cloningCompletionStore.set(completionKey, {
-      userId,
-      category,
-      success,
-      completedAt: new Date()
-    });
-    
-    console.log(`📝 Cloning completion stored: ${userId} ${category} ${success ? 'SUCCESS' : 'FAILED'}`);
-    
-    // Clean up old completions (older than 10 minutes)
-    setTimeout(() => {
-      for (const [key, completion] of cloningCompletionStore.entries()) {
-        const ageMinutes = (Date.now() - completion.completedAt.getTime()) / (1000 * 60);
-        if (ageMinutes > 10) {
-          cloningCompletionStore.delete(key);
+    // ONLY store completion records on SUCCESS - failures should not be stored
+    if (success) {
+      const completionKey = `${userId}-${category}`;
+      cloningCompletionStore.set(completionKey, {
+        userId,
+        category,
+        success: true, // Only successful completions stored
+        completedAt: new Date()
+      });
+      
+      console.log(`✅ Cloning SUCCESS stored: ${userId} ${category}`);
+      
+      // Clean up old completions (older than 10 minutes)
+      setTimeout(() => {
+        for (const [key, completion] of cloningCompletionStore.entries()) {
+          const ageMinutes = (Date.now() - completion.completedAt.getTime()) / (1000 * 60);
+          if (ageMinutes > 10) {
+            cloningCompletionStore.delete(key);
+          }
         }
-      }
-    }, 0);
+      }, 0);
+    } else {
+      // On failure, just log - do NOT store anything
+      console.log(`❌ Cloning FAILED: ${userId} ${category} - no storage on failure`);
+    }
   }
 
   /**
@@ -304,25 +309,24 @@ export class VoiceCloningSessionManager {
       const completionKey = `${userId}-${category}`;
       const completion = cloningCompletionStore.get(completionKey);
       
+      // Only successful completions are stored, so completion.success is always true
       if (completion) {
-        console.log(`🔄 Applying pending completion: ${category} ${completion.success ? 'SUCCESS' : 'FAILED'}`);
+        console.log(`✅ Applying successful completion: ${category}`);
         
         sessionData.cloning_in_progress[category] = false;
-        sessionData.cloning_status[category] = completion.success ? 'completed' : 'failed';
+        sessionData.cloning_status[category] = 'completed';
         
-        // Reset counter if successful
-        if (completion.success) {
-          switch (category) {
-            case 'emotions':
-              sessionData.emotions_not_cloned = 0;
-              break;
-            case 'sounds':
-              sessionData.sounds_not_cloned = 0;
-              break;
-            case 'modulations':
-              sessionData.modulations_not_cloned = 0;
-              break;
-          }
+        // Reset counter on successful completion
+        switch (category) {
+          case 'emotions':
+            sessionData.emotions_not_cloned = 0;
+            break;
+          case 'sounds':
+            sessionData.sounds_not_cloned = 0;
+            break;
+          case 'modulations':
+            sessionData.modulations_not_cloned = 0;
+            break;
         }
         
         // Remove from pending completions
