@@ -117,6 +117,19 @@ export class ElevenLabsModule extends BaseVoiceProvider {
       
     } catch (error) {
       this.log('error', `Voice training failed for user ${request.userId}`, error);
+      
+      // Trigger external integration state reset for voice profile
+      try {
+        const { ExternalIntegrationStateReset } = await import('../external-integration-state-reset.ts');
+        await ExternalIntegrationStateReset.resetVoiceProfile(
+          request.userId, 
+          `ElevenLabs API error: ${error instanceof Error ? error.message : String(error)}`
+        );
+        this.log('info', `Voice profile state reset triggered for user ${request.userId} after ElevenLabs failure`);
+      } catch (resetError) {
+        this.log('error', `Failed to reset voice profile state for user ${request.userId}`, resetError);
+      }
+      
       return this.createErrorResult(error instanceof Error ? error : String(error));
     }
   }
