@@ -25,138 +25,15 @@ import { getAllEmotionConfigs } from "@shared/voice-config";
 export class VoiceModulationService {
 
   /**
-   * Initialize voice modulation templates from voice-config.ts
-   * Populates database with configurable templates
+   * Voice modulation is now completely data-driven
+   * No hardcoded template initialization - users create their own through recording
    */
   async initializeTemplates(): Promise<void> {
-    try {
-      // Check if templates already exist
-      const existingTemplates = await db.select().from(voiceModulationTemplates).limit(1);
-      if (existingTemplates.length > 0) {
-        console.log("Voice modulation templates already initialized");
-        return;
-      }
+    // No hardcoded template initialization - system is data-driven
+    console.log("Voice modulation system is data-driven - no hardcoded templates initialized");
+    return;
 
-      // Create emotion templates from voice-config.ts
-      const voiceEmotions = getAllEmotionConfigs();
-      const emotionTemplates: InsertVoiceModulationTemplate[] = voiceEmotions.map((emotion, index) => ({
-        modulationType: 'emotion',
-        modulationKey: emotion.emotion,
-        displayName: emotion.displayName,
-        description: emotion.description,
-        sampleText: emotion.sampleText,
-        targetDuration: 8, // 8 seconds for emotions
-        category: emotion.category,
-        voiceSettings: {
-          speed_modifier: 1.0,
-          pitch_modifier: 0.0,
-          emphasis: emotion.emotion === 'happy' ? 'high' : emotion.emotion === 'sad' ? 'low' : 'medium'
-        },
-        sortOrder: index,
-        isActive: true
-      }));
 
-      // Create sound effect templates
-      const soundTemplates: InsertVoiceModulationTemplate[] = [
-        {
-          modulationType: 'sound',
-          modulationKey: 'animal_sound',
-          displayName: 'Animal Sound',
-          description: 'Make animal sounds (cat, dog, bird, etc.)',
-          sampleText: 'Make a cat meowing sound: "Meow meow meow"',
-          targetDuration: 5,
-          category: 'basic',
-          voiceSettings: { speed_modifier: 1.2 },
-          sortOrder: 100,
-          isActive: true
-        },
-        {
-          modulationType: 'sound',
-          modulationKey: 'nature_sound',
-          displayName: 'Nature Sound',
-          description: 'Mimic nature sounds (wind, rain, ocean)',
-          sampleText: 'Make a wind sound: "Whoooosh... whoooosh..."',
-          targetDuration: 6,
-          category: 'basic',
-          voiceSettings: { speed_modifier: 0.8 },
-          sortOrder: 101,
-          isActive: true
-        },
-        {
-          modulationType: 'sound',
-          modulationKey: 'mechanical_sound',
-          displayName: 'Mechanical Sound',
-          description: 'Make mechanical sounds (engine, beeping, buzzing)',
-          sampleText: 'Make an engine sound: "Vroom vroom, beep beep"',
-          targetDuration: 5,
-          category: 'advanced',
-          voiceSettings: { speed_modifier: 1.3 },
-          sortOrder: 102,
-          isActive: true
-        }
-      ];
-
-      // Create modulation templates
-      const modulationTemplates: InsertVoiceModulationTemplate[] = [
-        {
-          modulationType: 'modulation',
-          modulationKey: 'fast_narrator',
-          displayName: 'Fast Narrator',
-          description: 'Quick, energetic narration style',
-          sampleText: 'This is a fast-paced, exciting story that moves quickly from scene to scene!',
-          targetDuration: 8,
-          category: 'basic',
-          voiceSettings: { speed_modifier: 1.4 },
-          sortOrder: 200,
-          isActive: true
-        },
-        {
-          modulationType: 'modulation',
-          modulationKey: 'slow_narrator',
-          displayName: 'Slow Narrator',
-          description: 'Calm, deliberate narration style',
-          sampleText: 'This is a peaceful, contemplative story that unfolds slowly and thoughtfully.',
-          targetDuration: 12,
-          category: 'basic',
-          voiceSettings: { speed_modifier: 0.7 },
-          sortOrder: 201,
-          isActive: true
-        },
-        {
-          modulationType: 'modulation',
-          modulationKey: 'dramatic_narrator',
-          displayName: 'Dramatic Narrator',
-          description: 'Theatrical, intense narration style',
-          sampleText: 'In the depths of darkness, a hero emerges! The battle for destiny begins NOW!',
-          targetDuration: 10,
-          category: 'advanced',
-          voiceSettings: { speed_modifier: 1.1, emphasis: 'high' },
-          sortOrder: 202,
-          isActive: true
-        },
-        {
-          modulationType: 'modulation',
-          modulationKey: 'whispering_narrator',
-          displayName: 'Whispering Narrator',
-          description: 'Soft, mysterious narration style',
-          sampleText: 'Secrets hide in the shadows, whispered tales of mystery and wonder.',
-          targetDuration: 10,
-          category: 'specialized',
-          voiceSettings: { speed_modifier: 0.8, volume: 'low' },
-          sortOrder: 203,
-          isActive: true
-        }
-      ];
-
-      // Insert all templates
-      const allTemplates = [...emotionTemplates, ...soundTemplates, ...modulationTemplates];
-      await db.insert(voiceModulationTemplates).values(allTemplates);
-
-      console.log(`Initialized ${allTemplates.length} voice modulation templates`);
-    } catch (error) {
-      console.error("Error initializing voice modulation templates:", error);
-      throw error;
-    }
   }
 
   /**

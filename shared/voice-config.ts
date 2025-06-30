@@ -149,171 +149,9 @@ export const VOICE_CLONING_CONFIG: VoiceCloningConfig = {
   }
 };
 
-// Emotion Voice Sample Configurations
-export const EMOTION_VOICE_CONFIGS: EmotionVoiceConfig[] = [
-  // Basic Emotions
-  {
-    emotion: 'happy',
-    displayName: 'Happy',
-    description: 'Joyful and upbeat tone',
-    sampleText: 'What a wonderful day this is! I feel so alive and excited about all the amazing possibilities ahead.',
-    targetDuration: 10,
-    voiceSettings: {
-      stability: 0.7,
-      similarityBoost: 0.8,
-      style: 0.4,
-      useSpeakerBoost: true,
-      optimizeStreamingLatency: false
-    },
-    category: 'basic',
-    aliases: ['joyful', 'cheerful', 'elated', 'euphoric']
-  },
-  {
-    emotion: 'sad',
-    displayName: 'Sad',
-    description: 'Melancholy and sorrowful tone',
-    sampleText: 'Sometimes life feels heavy, and the weight of sadness settles in my chest like a gentle rain.',
-    targetDuration: 10,
-    voiceSettings: {
-      stability: 0.3,
-      similarityBoost: 0.9,
-      style: 0.0,
-      useSpeakerBoost: true,
-      optimizeStreamingLatency: false
-    },
-    category: 'basic',
-    aliases: ['melancholy', 'sorrowful', 'dejected', 'mournful']
-  },
-  {
-    emotion: 'angry',
-    displayName: 'Angry',
-    description: 'Frustrated and intense tone',
-    sampleText: 'This is absolutely unacceptable! The frustration builds inside me like a fire that cannot be contained.',
-    targetDuration: 10,
-    voiceSettings: {
-      stability: 0.4,
-      similarityBoost: 0.7,
-      style: 0.8,
-      useSpeakerBoost: true,
-      optimizeStreamingLatency: false
-    },
-    category: 'basic',
-    aliases: ['furious', 'irritated', 'enraged', 'frustrated']
-  },
-  {
-    emotion: 'calm',
-    displayName: 'Calm',
-    description: 'Peaceful and serene tone',
-    sampleText: 'In this moment of tranquility, I find peace within myself and embrace the gentle stillness around me.',
-    targetDuration: 10,
-    voiceSettings: {
-      stability: 0.8,
-      similarityBoost: 0.9,
-      style: 0.1,
-      useSpeakerBoost: true,
-      optimizeStreamingLatency: false
-    },
-    category: 'basic',
-    aliases: ['peaceful', 'serene', 'tranquil', 'composed']
-  },
-  {
-    emotion: 'excited',
-    displayName: 'Excited',
-    description: 'Energetic and enthusiastic tone',
-    sampleText: 'Oh my goodness, this is incredible! The energy is rushing through me and I can barely contain my enthusiasm!',
-    targetDuration: 10,
-    voiceSettings: {
-      stability: 0.5,
-      similarityBoost: 0.8,
-      style: 0.6,
-      useSpeakerBoost: true,
-      optimizeStreamingLatency: false
-    },
-    category: 'basic',
-    aliases: ['enthusiastic', 'thrilled', 'energetic', 'animated']
-  },
-  {
-    emotion: 'fearful',
-    displayName: 'Fearful',
-    description: 'Anxious and worried tone',
-    sampleText: 'Something feels wrong here. My heart is racing and every shadow seems to hide unknown dangers.',
-    targetDuration: 10,
-    voiceSettings: {
-      stability: 0.2,
-      similarityBoost: 0.9,
-      style: 0.2,
-      useSpeakerBoost: true,
-      optimizeStreamingLatency: false
-    },
-    category: 'basic',
-    aliases: ['anxious', 'worried', 'scared', 'nervous']
-  },
-  {
-    emotion: 'surprised',
-    displayName: 'Surprised',
-    description: 'Astonished and amazed tone',
-    sampleText: 'Wait, what? I never expected this to happen! This is completely beyond anything I could have imagined.',
-    targetDuration: 10,
-    voiceSettings: {
-      stability: 0.4,
-      similarityBoost: 0.8,
-      style: 0.5,
-      useSpeakerBoost: true,
-      optimizeStreamingLatency: false
-    },
-    category: 'basic',
-    aliases: ['astonished', 'amazed', 'shocked', 'stunned']
-  },
-  // Advanced Emotions
-  {
-    emotion: 'nostalgic',
-    displayName: 'Nostalgic',
-    description: 'Wistful and reminiscent tone',
-    sampleText: 'Those were simpler times, weren\'t they? I can almost feel the warmth of those golden memories washing over me.',
-    targetDuration: 10,
-    voiceSettings: {
-      stability: 0.6,
-      similarityBoost: 0.9,
-      style: 0.2,
-      useSpeakerBoost: true,
-      optimizeStreamingLatency: false
-    },
-    category: 'advanced',
-    aliases: ['wistful', 'reminiscent', 'sentimental', 'longing']
-  },
-  {
-    emotion: 'confident',
-    displayName: 'Confident',
-    description: 'Assured and self-possessed tone',
-    sampleText: 'I know exactly what needs to be done, and I have the strength and wisdom to see it through to the end.',
-    targetDuration: 10,
-    voiceSettings: {
-      stability: 0.8,
-      similarityBoost: 0.8,
-      style: 0.3,
-      useSpeakerBoost: true,
-      optimizeStreamingLatency: false
-    },
-    category: 'advanced',
-    aliases: ['assured', 'determined', 'resolute', 'self-assured']
-  },
-  {
-    emotion: 'mysterious',
-    displayName: 'Mysterious',
-    description: 'Enigmatic and intriguing tone',
-    sampleText: 'Not everything is as it appears to be. There are secrets hidden in the shadows, waiting to be discovered.',
-    targetDuration: 10,
-    voiceSettings: {
-      stability: 0.5,
-      similarityBoost: 0.9,
-      style: 0.4,
-      useSpeakerBoost: true,
-      optimizeStreamingLatency: false
-    },
-    category: 'advanced',
-    aliases: ['enigmatic', 'secretive', 'cryptic', 'intriguing']
-  }
-];
+// Voice configuration is now completely data-driven
+// No hardcoded emotion templates - users create their own through recording
+export const EMOTION_VOICE_CONFIGS: EmotionVoiceConfig[] = [];
 
 // Utility functions for configuration access
 export function getEnabledVoiceProviders(): VoiceProviderConfig[] {
@@ -327,16 +165,18 @@ export function getPrimaryVoiceProvider(): VoiceProviderConfig | null {
   return enabled.length > 0 ? enabled[0] : null;
 }
 
+// Data-driven functions - emotions come from user recordings, not hardcoded configs
 export function getEmotionConfig(emotion: string): EmotionVoiceConfig | null {
-  return EMOTION_VOICE_CONFIGS.find(config => 
-    config.emotion === emotion || config.aliases.includes(emotion.toLowerCase())
-  ) || null;
+  // No hardcoded configurations - emotions are user-defined through recording
+  return null;
 }
 
 export function getAllEmotionConfigs(): EmotionVoiceConfig[] {
-  return [...EMOTION_VOICE_CONFIGS];
+  // No hardcoded configurations - system is completely data-driven
+  return [];
 }
 
 export function getEmotionsByCategory(category: 'basic' | 'advanced' | 'specialized'): EmotionVoiceConfig[] {
-  return EMOTION_VOICE_CONFIGS.filter(config => config.category === category);
+  // No hardcoded categories - users create their own emotion categories through recording
+  return [];
 }
