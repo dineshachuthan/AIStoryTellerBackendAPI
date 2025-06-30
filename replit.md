@@ -175,6 +175,8 @@ This is a full-stack collaborative storytelling platform that enables users to c
   - **Recreated ExternalIntegrationStateReset service** with proper error handling and missing method implementations
   - **Implemented database-first development approach** using SQL queries to verify existing schema before making changes
   - **Resolved voice cloning column name errors** that were preventing ElevenLabs integration from functioning properly
+  - **Fixed nullable field optimization** - modified schema to accept NULL defaults for attributes not passed by frontend
+  - **Removed non-existent voice_name column** from user_emotion_voices table schema to match actual database structure
   - All future database modifications now require mandatory schema verification following "inspect first, understand second, then modify" principle
 - June 30, 2025: CRITICAL FIX - Complete ElevenLabs Integration State Reset System Implementation
   - **Fixed missing resetVoiceProfile and resetAllStatesForUser methods** in ExternalIntegrationStateReset service that were causing runtime errors
