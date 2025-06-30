@@ -292,14 +292,9 @@ export default function UploadStory() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-white">Language</label>
-                  <Select defaultValue="en-US">
-                    <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                      <SelectValue placeholder="Select language" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="en-US">English</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div className="bg-white/10 border border-white/20 rounded-md px-3 py-2 text-white text-sm">
+                    English
+                  </div>
                 </div>
               </div>
 
