@@ -613,6 +613,20 @@ Preferred communication style: Simple, everyday language.
 - **Cleanup API Endpoints**: Manual cache cleanup endpoints for admin management
 - **Cost Optimization**: Cache prevents duplicate external API calls to expensive services (ElevenLabs, OpenAI, video providers)
 
+**CRITICAL FORMAT DETECTION RULE: SIGNATURE-BASED AUDIO/VIDEO FORMAT HANDLING**
+- **NO HARDCODED FILE EXTENSIONS**: All format detection must use buffer signature analysis from shared/audio-config.ts and shared/video-format-config.ts
+- **MP3-Only Optimization**: System enforces MP3 format for ElevenLabs with automatic conversion skipping when files are already MP3
+- **Dynamic Format Detection**: Use detectAudioFormat() and detectVideoFormat() functions instead of assuming extensions
+- **Configuration-Driven Processing**: All format signatures, thresholds, and supported formats centralized in config files
+- **Preferred Format Hierarchies**: WAV, MP4, OGG preferred for recording before WebM fallback
+- **MediaRecorder Capability Checking**: Recording format selection based on MediaRecorder.isTypeSupported() browser capabilities
+- **Buffer Content Analysis**: Format detection analyzes actual file buffer content (RIFF, ID3, ftyp, EBML signatures) not filename extensions
+- **FFmpeg EBML Error Prevention**: Proper format detection prevents treating MP3 files as WebM which causes FFmpeg parsing failures
+- **Web-Safe Format Validation**: Only MP4/WebM for video, MP3/WAV/OGG for audio with compatibility matrix checking
+- **Format Conversion Optimization**: Skip unnecessary conversions when source format matches target requirements
+- **Audio Processing Pipeline**: WAV → MP3 conversion pipeline with format preservation when possible
+- **Video Quality Management**: MP4 high quality for web, WebM for compatibility, with automatic resolution selection
+
 **Responsive Design Requirements:**
 - All components must be responsive and mobile-compatible by default
 - No need to ask specifically for mobile compatibility - it's always required
