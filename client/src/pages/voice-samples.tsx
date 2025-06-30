@@ -70,6 +70,14 @@ export default function VoiceSamples() {
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
   const queryClient = useQueryClient();
 
+  // Helper function to check if any voice cloning is in progress
+  const isAnyVoiceCloningInProgress = () => {
+    if (!cloningProgress) return false;
+    return cloningProgress.emotions.isTraining || 
+           cloningProgress.sounds.isTraining || 
+           cloningProgress.modulations.isTraining;
+  };
+
   // Get voice modulation templates (new system with three categories)
   const { data: templates = [], isLoading: templatesLoading } = useQuery({
     queryKey: ["/api/voice-modulations/templates"],
@@ -468,7 +476,12 @@ export default function VoiceSamples() {
                   };
 
                   return (
-                    <div key={template.modulationKey} className="p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+                    <div key={template.modulationKey} className={cn(
+                      "p-3 rounded-lg border transition-all duration-200",
+                      isAnyVoiceCloningInProgress()
+                        ? "border-orange-300 bg-orange-50 dark:bg-orange-950 dark:border-orange-700 opacity-75 cursor-not-allowed"
+                        : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+                    )}>
                       <div className="mb-2 flex items-start justify-between">
                         <div className="flex items-center gap-2">
                           <h3 className="font-medium text-sm">{template.displayName}</h3>
@@ -481,17 +494,21 @@ export default function VoiceSamples() {
                       
                       <EnhancedVoiceRecorder
                         buttonText={{
-                          hold: isLocked 
-                            ? "🔒 Locked" 
-                            : isRecorded 
-                              ? "Re-record" 
-                              : "Record",
+                          hold: isAnyVoiceCloningInProgress()
+                            ? "🚫 Cloning in Progress"
+                            : isLocked 
+                              ? "🔒 Locked" 
+                              : isRecorded 
+                                ? "Re-record" 
+                                : "Record",
                           recording: "Recording...",
-                          instructions: isLocked 
-                            ? "Sample locked for voice cloning" 
-                            : isRecorded 
-                              ? "Hold to re-record" 
-                              : "Hold button to record"
+                          instructions: isAnyVoiceCloningInProgress()
+                            ? "Voice cloning in progress - please wait"
+                            : isLocked 
+                              ? "Sample locked for voice cloning" 
+                              : isRecorded 
+                                ? "Hold to re-record" 
+                                : "Hold button to record"
                         }}
                         sampleText={template.sampleText}
                         emotionDescription={template.description}
@@ -508,7 +525,7 @@ export default function VoiceSamples() {
                           }
                         }}
                         className="w-full"
-                        disabled={saveVoiceModulation.isPending || isLocked}
+                        disabled={saveVoiceModulation.isPending || isLocked || isAnyVoiceCloningInProgress()}
                         maxRecordingTime={template.targetDuration}
                         existingRecording={isRecorded && recordedSample ? {
                           url: recordedSample.audioUrl,
