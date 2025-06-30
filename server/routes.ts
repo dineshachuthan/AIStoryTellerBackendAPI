@@ -4430,6 +4430,135 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Manual Voice Cloning Trigger Endpoints
+  
+  // Get cloning progress for all categories
+  app.get('/api/voice-cloning/progress', requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any)?.id;
+      if (!userId) {
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
+
+      const { voiceModulationService } = await import('./voice-modulation-service');
+      const { voiceTrainingService } = await import('./voice-training-service');
+      
+      // Get sample counts by category
+      const emotionTemplates = await voiceModulationService.getTemplates('emotion');
+      const soundTemplates = await voiceModulationService.getTemplates('sound');
+      const modulationTemplates = await voiceModulationService.getTemplates('modulation');
+      
+      const userModulations = await voiceModulationService.getUserVoiceModulations(userId);
+      
+      const emotionCount = userModulations.filter(m => m.modulationType === 'emotion').length;
+      const soundCount = userModulations.filter(m => m.modulationType === 'sound').length;
+      const modulationCount = userModulations.filter(m => m.modulationType === 'modulation').length;
+      
+      // Check training status for each category
+      const trainingStatus = await voiceTrainingService.getTrainingStatus(userId);
+      
+      const progress = {
+        emotions: {
+          count: emotionCount,
+          threshold: 5,
+          canTrigger: emotionCount >= 5,
+          isTraining: trainingStatus.status === 'training',
+          status: trainingStatus.status
+        },
+        sounds: {
+          count: soundCount,
+          threshold: 5,
+          canTrigger: soundCount >= 5,
+          isTraining: false, // Sounds not implemented yet
+          status: 'none'
+        },
+        modulations: {
+          count: modulationCount,
+          threshold: 5,
+          canTrigger: modulationCount >= 5,
+          isTraining: false, // Modulations not implemented yet
+          status: 'none'
+        }
+      };
+      
+      res.json(progress);
+    } catch (error: any) {
+      console.error('Error fetching cloning progress:', error);
+      res.status(500).json({ message: 'Failed to fetch progress' });
+    }
+  });
+  
+  // Manual trigger for voice cloning by category
+  app.post('/api/voice-cloning/trigger/:category', requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any)?.id;
+      const category = req.params.category as 'emotions' | 'sounds' | 'modulations';
+      
+      if (!userId) {
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
+      
+      if (!['emotions', 'sounds', 'modulations'].includes(category)) {
+        return res.status(400).json({ message: 'Invalid category' });
+      }
+      
+      const { voiceModulationService } = await import('./voice-modulation-service');
+      const { voiceTrainingService } = await import('./voice-training-service');
+      
+      // Check if user has enough samples for this category
+      const userModulations = await voiceModulationService.getUserVoiceModulations(userId);
+      let categoryCount = 0;
+      
+      switch (category) {
+        case 'emotions':
+          categoryCount = userModulations.filter(m => m.modulationType === 'emotion').length;
+          break;
+        case 'sounds':
+          categoryCount = userModulations.filter(m => m.modulationType === 'sound').length;
+          break;
+        case 'modulations':
+          categoryCount = userModulations.filter(m => m.modulationType === 'modulation').length;
+          break;
+      }
+      
+      if (categoryCount < 5) {
+        return res.status(400).json({ 
+          message: `Need at least 5 ${category} samples to trigger cloning. Currently have ${categoryCount}.`
+        });
+      }
+      
+      // Only implement emotions cloning for now
+      if (category !== 'emotions') {
+        return res.status(501).json({ 
+          message: `${category} cloning not implemented yet. Only emotions are supported.`
+        });
+      }
+      
+      console.log(`🚀 Manual ${category} cloning triggered by user ${userId} (${categoryCount} samples)`);
+      
+      // Trigger training in background
+      setTimeout(async () => {
+        try {
+          const result = await voiceTrainingService.triggerAutomaticTraining(userId);
+          console.log(`✅ Manual ${category} cloning completed:`, result.success ? 'SUCCESS' : 'FAILED');
+        } catch (error) {
+          console.error(`❌ Manual ${category} cloning failed:`, error);
+        }
+      }, 100);
+      
+      res.json({ 
+        success: true, 
+        message: `${category} voice cloning started. This will take a few minutes.`,
+        category,
+        samplesUsed: categoryCount
+      });
+      
+    } catch (error: any) {
+      console.error(`Error triggering ${req.params.category} cloning:`, error);
+      res.status(500).json({ message: 'Failed to trigger voice cloning' });
+    }
+  });
+
   // Setup video webhook handlers for callback-based notifications
   setupVideoWebhooks(app);
 

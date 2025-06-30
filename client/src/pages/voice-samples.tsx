@@ -38,6 +38,30 @@ interface VoiceProgress {
   recordedSamples: UserVoiceSample[];
 }
 
+interface CloningProgress {
+  emotions: {
+    count: number;
+    threshold: number;
+    canTrigger: boolean;
+    isTraining: boolean;
+    status: string;
+  };
+  sounds: {
+    count: number;
+    threshold: number;
+    canTrigger: boolean;
+    isTraining: boolean;
+    status: string;
+  };
+  modulations: {
+    count: number;
+    threshold: number;
+    canTrigger: boolean;
+    isTraining: boolean;
+    status: string;
+  };
+}
+
 export default function VoiceSamples() {
   const [, setLocation] = useLocation();
   const { user, logout } = useAuth();
@@ -54,6 +78,29 @@ export default function VoiceSamples() {
   // Get user's voice modulation progress
   const { data: progress, isLoading: progressLoading } = useQuery({
     queryKey: ["/api/voice-modulations/progress"],
+  });
+
+  // Get voice cloning progress for all categories
+  const { data: cloningProgress, isLoading: cloningProgressLoading } = useQuery<CloningProgress>({
+    queryKey: ["/api/voice-cloning/progress"],
+    refetchInterval: 10000, // Refresh every 10 seconds to update training status
+  });
+
+  // Manual voice cloning trigger mutation
+  const triggerVoiceCloning = useMutation({
+    mutationFn: async (category: 'emotions' | 'sounds' | 'modulations') => {
+      const response = await fetch(`/api/voice-cloning/trigger/${category}`, {
+        method: 'POST',
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to trigger voice cloning');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/voice-cloning/progress'] });
+    },
   });
 
   // Save voice modulation mutation
@@ -319,6 +366,16 @@ export default function VoiceSamples() {
 
         {categories.map((category) => (
           <TabsContent key={category} value={category}>
+            {/* Voice Cloning Progress Button */}
+            {cloningProgress && (
+              <VoiceCloningButton 
+                category={category}
+                progress={cloningProgress[category as keyof CloningProgress]}
+                onTrigger={() => triggerVoiceCloning.mutate(category as 'emotions' | 'sounds' | 'modulations')}
+                isLoading={triggerVoiceCloning.isPending}
+              />
+            )}
+            
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {/* Sort templates: unlocked first, then recorded (unlocked), then locked */}
               {filteredTemplates
