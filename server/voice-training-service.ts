@@ -135,8 +135,8 @@ export class VoiceTrainingService {
         console.log(`[HybridCloning] Collected ${hybridSamples.length} emotion samples for hybrid voice cloning`);
         
         // Use voice provider to create ONE voice clone from diverse emotion samples
-        const { VoiceProviderFactory } = await import('./voice-provider-factory');
-        const voiceProvider = await VoiceProviderFactory.getProvider();
+        const { ProviderManager } = await import('./voice-providers/provider-manager');
+        const voiceProvider = ProviderManager.getModule();
         
         if (!voiceProvider) {
           clearTimeout(timeout);
