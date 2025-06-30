@@ -22,22 +22,57 @@ stories:
 
 ## Correct Reference Data Architecture
 
-### reference_stories table (CORRECT)
+### REFERENCE DATA TABLES (Shared across ALL users)
+
 ```sql
 reference_stories:
   - originalAuthorId: varchar (attribution only) ✅ CORRECT
   - visibility: draft/public/archived (reference data lifecycle) ✅ CORRECT
   - NO narratorVoice fields (belongs to user instances) ✅ CORRECT
+
+reference_story_analyses: 
+  - referenceStoryId: integer (links to reference story) ✅ CORRECT
+  - analysisData: jsonb (characters, emotions, themes) ✅ CORRECT
+  - analysisType: varchar (narrative) ✅ CORRECT
+
+reference_roleplay_analyses:
+  - referenceStoryId: integer (links to reference story) ✅ CORRECT
+  - analysisData: jsonb (scenes, dialogues, character roles) ✅ CORRECT
+  - characterRoles: jsonb (available roles) ✅ CORRECT
+  - sceneBreakdown: jsonb (scene structure) ✅ CORRECT
+
+voice_modulation_templates:
+  - modulationType: varchar (emotion/sound/modulation) ✅ CORRECT
+  - sourceStoryId: integer (extracted from which story) ✅ CORRECT
+  - extractedFromAnalysisId: integer (from which analysis) ✅ CORRECT
 ```
 
-### user_story_narrations table (NEW - CORRECT)
+### USER INSTANCE TABLES (User-specific, NOT tied to story tables)
+
 ```sql
 user_story_narrations:
   - userId: varchar (which user created this narration) ✅ CORRECT
   - referenceStoryId: integer (which reference story) ✅ CORRECT
   - narratorVoice: varchar (user's chosen narrator) ✅ CORRECT
-  - narratorVoiceType: varchar (user's choice) ✅ CORRECT
   - segments: jsonb (user's personalized segments) ✅ CORRECT
+
+user_roleplay_segments:
+  - userId: varchar (which user) ✅ CORRECT
+  - referenceStoryId: integer (optional - can be based on reference) ✅ CORRECT
+  - referenceRoleplayId: integer (optional - can be based on reference) ✅ CORRECT
+  - characterRole: varchar (user's chosen character) ✅ CORRECT
+  - dialogueText: text (user's personalized dialogue) ✅ CORRECT
+  - audioFileUrl: text (user's recorded audio) ✅ CORRECT
+
+user_voice_samples:
+  - userId: varchar (which user) ✅ CORRECT
+  - emotionTemplateId: integer (links to voice template) ✅ CORRECT
+  - audioUrl: text (user's recorded sample) ✅ CORRECT
+
+user_emotion_voices:
+  - userId: varchar (which user) ✅ CORRECT
+  - emotionTemplateId: integer (links to voice template) ✅ CORRECT
+  - elevenlabsVoiceId: text (user's trained voice clone) ✅ CORRECT
 ```
 
 ## Data Relationships

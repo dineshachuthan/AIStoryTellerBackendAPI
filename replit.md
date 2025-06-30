@@ -177,6 +177,8 @@ This is a full-stack collaborative storytelling platform that enables users to c
   - **USER INSTANCES**: User narrations, voice samples, emotion voices are user-specific
   - **MIGRATION NEEDED**: Current system needs gradual migration to reference data model
   - **ARCHITECTURAL FILES**: Created ARCHITECTURE_REDESIGN.md and shared/reference-schema.ts
+  - **COMPLETE SCHEMA REDESIGN**: Reference stories, analyses, roleplay analyses + user narrations, roleplay segments completely separate
+  - **KEY PRINCIPLE**: ANY user can clone/copy/refer to ANY reference story - user-specific content NOT tied to story tables
   - User identified that current database model treats stories as user-owned instead of reference data that users create narrations from
 - June 30, 2025: ✅ **COMPLETE DATA-DRIVEN VOICE SAMPLES IMPLEMENTATION** - Reference Data System Fully Operational
   - **VOICE SAMPLES NOW PULL FROM STORY ANALYSIS**: Implemented getVoiceSamplesByType() to query storyAnalyses table across ALL users
