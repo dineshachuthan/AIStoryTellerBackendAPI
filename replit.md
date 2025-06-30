@@ -169,6 +169,18 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Priority**: Medium (requested but deferred for future implementation)
 
 ## Changelog
+- June 30, 2025: CRITICAL IMPLEMENTATION - Centralized External Integration State Reset System for All Providers
+  - **Created ExternalIntegrationStateReset service** handling state cleanup for all external APIs (ElevenLabs, Kling, RunwayML)
+  - **Updated all provider modules** to use centralized state reset on timeouts, errors, and failures
+  - **Enhanced ElevenLabsModule** with automatic state reset integration on voice training failures
+  - **Enhanced KlingVideoProvider** with state reset on video generation errors using metadata.userId and metadata.storyId
+  - **Enhanced RunwayMLVideoProvider** with centralized state reset integration for video generation failures
+  - **Updated VoiceCloningTimeoutService** to use centralized reset instead of custom implementation
+  - **Added missing storage methods** updateVideo() and getStuckVideoGenerations() for comprehensive video state management
+  - **Implemented proper error handling** with 3-retry attempts and bounded execution time for ALL external integrations
+  - **External providers now automatically reset** database states (voice profiles, video generations) when external APIs timeout or fail
+  - **System prevents infinite "in progress" states** by resetting stuck operations to "failed" with proper error messages
+  - All external integrations (ElevenLabs voice cloning, Kling video generation, RunwayML video generation) now follow same state reset pattern
 - June 30, 2025: MAJOR MILESTONE - Completed Plug-and-Play Voice Provider Architecture Following Video Provider Pattern
   - **Successfully implemented complete voice provider architecture** mirroring the proven video provider pattern (Kling/RunwayML)
   - **Created VoiceProviderRegistry** with async module loading and configuration-driven provider initialization

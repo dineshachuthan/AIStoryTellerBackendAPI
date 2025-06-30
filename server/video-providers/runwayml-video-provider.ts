@@ -88,6 +88,20 @@ export class RunwayMLVideoProvider implements IVideoProvider {
         }
       };
     } catch (error: any) {
+      // Reset state using centralized service
+      try {
+        const { externalIntegrationStateReset } = await import('../external-integration-state-reset');
+        await externalIntegrationStateReset.resetIntegrationState({
+          userId: request.metadata?.userId || 'unknown',
+          provider: 'runwayml',
+          operationType: 'video_generation',
+          operationId: request.metadata?.storyId,
+          error: error.message || 'RunwayML video generation failed'
+        });
+      } catch (resetError) {
+        console.error('Failed to reset RunwayML state:', resetError);
+      }
+      
       throw this.handleRunwayError(error);
     }
   }
