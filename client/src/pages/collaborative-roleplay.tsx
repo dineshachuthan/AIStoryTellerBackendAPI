@@ -123,6 +123,7 @@ export default function CollaborativeRoleplay() {
       });
       setShowCreateInstance(false);
       setInstanceTitle("");
+      setSelectedLanguage("en-US");
       queryClient.invalidateQueries({ queryKey: ['/api/roleplay-instances/my-instances'] });
     },
     onError: () => {
@@ -268,6 +269,25 @@ export default function CollaborativeRoleplay() {
                               onChange={(e) => setInstanceTitle(e.target.value)}
                               placeholder={`My version of ${template.title}`}
                             />
+                          </div>
+                          <div>
+                            <Label htmlFor="language">Language</Label>
+                            <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select language" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="en-US">English</SelectItem>
+                                <SelectItem value="es-ES">Spanish</SelectItem>
+                                <SelectItem value="fr-FR">French</SelectItem>
+                                <SelectItem value="de-DE">German</SelectItem>
+                                <SelectItem value="it-IT">Italian</SelectItem>
+                                <SelectItem value="pt-BR">Portuguese</SelectItem>
+                                <SelectItem value="ja-JP">Japanese</SelectItem>
+                                <SelectItem value="ko-KR">Korean</SelectItem>
+                                <SelectItem value="zh-CN">Chinese (Simplified)</SelectItem>
+                              </SelectContent>
+                            </Select>
                           </div>
                           <Button 
                             onClick={handleCreateInstance}

@@ -3109,12 +3109,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const templateId = parseInt(req.params.templateId);
       const userId = (req.user as any)?.id;
-      const { instanceTitle, isPublic = false } = req.body;
+      const { instanceTitle, isPublic = false, language = "en-US" } = req.body;
       
       const result = await collaborativeRoleplayService.createInstanceFromTemplate(
         templateId,
         instanceTitle,
-        userId
+        userId,
+        language
       );
       
       res.json(result);
