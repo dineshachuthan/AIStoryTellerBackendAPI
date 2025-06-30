@@ -394,6 +394,8 @@ export const emotionTemplates = pgTable("emotion_templates", {
 export const userVoiceProfiles = pgTable("user_voice_profiles", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").references(() => users.id).notNull(),
+  profileName: varchar("profile_name").notNull(), // Required field that was missing
+  baseVoice: text("base_voice").notNull(), // Required base voice for training
   provider: varchar("provider").notNull().default("elevenlabs"), // elevenlabs, openai
   voiceName: varchar("voice_name").notNull(),
   status: varchar("status").notNull().default("collecting"), // collecting, training, completed, failed

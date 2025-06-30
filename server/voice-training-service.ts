@@ -101,6 +101,8 @@ export class VoiceTrainingService {
         voiceProfile = await storage.createUserVoiceProfile({
           userId,
           voiceName: `User_${userId}_Voice`,
+          profileName: `Voice_Profile_${userId}`, // Required field that was missing
+          baseVoice: 'alloy', // Required field
           status: 'training',
           elevenLabsVoiceId: null,
           totalSamples: 0,
