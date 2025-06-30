@@ -1,0 +1,126 @@
+#!/usr/bin/env node
+
+/**
+ * Hybrid Voice Cloning Test - MVP1 Implementation
+ * Tests the complete hybrid workflow with your existing voice samples
+ */
+
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const TEST_USER_ID = 'google_117487073695002443567'; // Your actual user ID
+
+async function testHybridCloning() {
+  console.log('🎯 Testing MVP1 Hybrid Voice Cloning...');
+  console.log(`👤 User ID: ${TEST_USER_ID}`);
+  
+  try {
+    // 1. Check existing voice samples
+    console.log('\n📋 Step 1: Checking existing voice samples...');
+    const { storage } = await import('./server/storage.ts');
+    const voiceModService = await import('./server/voice-modulation-service.ts');
+    
+    const voiceSamples = await voiceModService.getUserVoiceModulations(TEST_USER_ID);
+    console.log(`✅ Found ${voiceSamples.length} voice samples`);
+    
+    // Count unique emotions
+    const uniqueEmotions = new Set(voiceSamples.map(sample => sample.modulationKey));
+    console.log(`✅ Unique emotions: ${uniqueEmotions.size} (${Array.from(uniqueEmotions).join(', ')})`);
+    
+    if (uniqueEmotions.size < 6) {
+      console.log('❌ Not enough unique emotions for hybrid cloning (need 6, have ' + uniqueEmotions.size + ')');
+      return;
+    }
+    
+    // 2. Test hybrid threshold detection
+    console.log('\n📋 Step 2: Testing hybrid threshold detection...');
+    const { voiceTrainingService } = await import('./server/voice-training-service.ts');
+    
+    const hasEnoughEmotions = await voiceTrainingService.hasEnoughUniqueEmotions(TEST_USER_ID);
+    console.log(`✅ Hybrid threshold check: ${hasEnoughEmotions}`);
+    
+    if (!hasEnoughEmotions) {
+      console.log('❌ Hybrid threshold not met according to service');
+      return;
+    }
+    
+    // 3. Test session manager
+    console.log('\n📋 Step 3: Testing session manager...');
+    const { voiceCloningSessionManager } = await import('./server/voice-cloning-session-manager.ts');
+    
+    const mockSession = { userId: TEST_USER_ID };
+    voiceCloningSessionManager.initializeSession(mockSession);
+    console.log(`✅ Session initialized: ${JSON.stringify(mockSession.voiceCloning?.emotions || {})}`);
+    
+    // Simulate reaching threshold
+    for (let i = 0; i < 6; i++) {
+      voiceCloningSessionManager.incrementCounter(mockSession, 'emotions');
+    }
+    
+    const thresholdMet = voiceCloningSessionManager.checkThreshold(mockSession, 'emotions');
+    console.log(`✅ Session threshold met: ${thresholdMet}`);
+    
+    // 4. Test database state reset
+    console.log('\n📋 Step 4: Resetting voice profile state...');
+    
+    // Reset voice profile to ensure clean test
+    await storage.updateUserVoiceProfile(TEST_USER_ID, {
+      trainingStatus: 'idle',
+      elevenlabsVoiceId: null,
+      elevenLabsVoiceId: null,
+      trainingStartedAt: null,
+      trainingCompletedAt: null,
+      lastTrainingError: null
+    });
+    console.log('✅ Voice profile state reset');
+    
+    // 5. Test actual hybrid cloning trigger
+    console.log('\n📋 Step 5: Triggering hybrid voice cloning...');
+    
+    try {
+      const hybridResult = await voiceTrainingService.triggerHybridEmotionCloning(TEST_USER_ID);
+      console.log('✅ Hybrid cloning completed:');
+      console.log('  Success:', hybridResult.success);
+      console.log('  Voice ID:', hybridResult.voiceId);
+      console.log('  Message:', hybridResult.message);
+      
+      if (hybridResult.success) {
+        console.log('\n🎉 HYBRID VOICE CLONING SUCCESSFUL!');
+        console.log('  Emotions processed:', hybridResult.emotionsProcessed);
+        console.log('  ElevenLabs Voice ID:', hybridResult.voiceId);
+        
+        // 6. Verify database updates
+        console.log('\n📋 Step 6: Verifying database updates...');
+        const profile = await storage.getUserVoiceProfile(TEST_USER_ID);
+        console.log('  Profile status:', profile?.trainingStatus);
+        console.log('  ElevenLabs ID:', profile?.elevenlabsVoiceId || profile?.elevenLabsVoiceId);
+        
+      } else {
+        console.log('\n❌ HYBRID CLONING FAILED:');
+        console.log('  Error:', hybridResult.error);
+      }
+      
+    } catch (error) {
+      console.log('\n💥 HYBRID CLONING ERROR:');
+      console.log('  Message:', error.message);
+      console.log('  Stack:', error.stack);
+    }
+    
+  } catch (error) {
+    console.log('\n💥 TEST SETUP ERROR:');
+    console.log('  Message:', error.message);
+    console.log('  Stack:', error.stack);
+  }
+}
+
+// Run the test
+testHybridCloning().then(() => {
+  console.log('\n🏁 Hybrid cloning test completed');
+}).catch(error => {
+  console.error('\n💥 Test failed:', error);
+  process.exit(1);
+});

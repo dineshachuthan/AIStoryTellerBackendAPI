@@ -3,12 +3,15 @@
  * Handles voice cloning and speech generation using ElevenLabs API
  */
 
-import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
+// @ts-ignore
+import pkg from 'elevenlabs';
+// @ts-ignore
+const { ElevenLabsClient } = pkg;
 import { BaseVoiceProvider } from './base-voice-provider';
 import { VoiceProviderConfig, VoiceTrainingRequest, VoiceTrainingResult } from './provider-manager';
 
 export class ElevenLabsModule extends BaseVoiceProvider {
-  private client: ElevenLabsClient;
+  private client: any;
 
   constructor(config: VoiceProviderConfig) {
     super(config, 'ElevenLabs');
