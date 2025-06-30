@@ -559,6 +559,24 @@ Preferred communication style: Simple, everyday language.
 - Configuration determines single active provider - no backup providers allowed
 - System failures are acceptable - fallback providers are forbidden
 
+**CRITICAL ARCHITECTURE RULE: MANDATORY PLUG-AND-PLAY PATTERNS**
+- ALL external integrations MUST follow identical plug-and-play architecture patterns
+- Voice providers must use same abstract interfaces and patterns as video providers
+- New providers added by implementing abstract base classes only - no custom integration logic
+- Provider registries handle configuration-driven initialization and health checking
+- Routes remain provider-agnostic - work with any enabled provider without code changes
+- Configuration files control all provider behavior - no provider-specific hardcoded logic
+- External integrations (ElevenLabs, Kling, RunwayML, OpenAI) follow identical patterns
+
+**CRITICAL INTEGRATION RULE: STANDARDIZED EXTERNAL API EXCEPTION HANDLING**
+- ALL external API failures MUST use ExternalIntegrationStateReset.logFailureWithoutStorage()
+- NO completion records stored on external API failures - only error logging allowed
+- External API timeouts automatically reset database states to 'failed' status
+- Provider modules MUST extend BaseProvider abstract classes with standardized retry/timeout logic
+- Exactly 3 retry attempts with exponential backoff (1s, 2s, 4s) before throwing exception
+- All external integration failures logged with detailed context but no database persistence
+- External services include: OpenAI, ElevenLabs, RunwayML, Kling, Twilio, SendGrid
+
 **CRITICAL DATABASE RULE: ALWAYS VERIFY EXISTING SCHEMA BEFORE CHANGES**
 - MANDATORY: Check existing database columns and structure before altering schema
 - Use SQL queries to inspect current table structure: `SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'table_name'`
