@@ -10,10 +10,10 @@ export class VoiceProviderFactory {
   /**
    * Get voice module for specified provider
    */
-  static getModule(provider: string): VoiceModule {
+  static async getModule(provider: string): Promise<VoiceModule> {
     switch (provider.toLowerCase()) {
       case 'elevenlabs':
-        const { getActiveVoiceProvider, getVoiceProviderConfig } = require('../voice-config');
+        const { getActiveVoiceProvider, getVoiceProviderConfig } = await import('../voice-config');
         const config = getVoiceProviderConfig('elevenlabs');
         return new ElevenLabsModule(config);
       
@@ -70,9 +70,9 @@ export class VoiceProviderFactory {
   /**
    * Get active provider from configuration
    */
-  static getActiveProvider(): string {
+  static async getActiveProvider(): Promise<string> {
     try {
-      const { getActiveVoiceProvider } = require('../voice-config');
+      const { getActiveVoiceProvider } = await import('../voice-config');
       return getActiveVoiceProvider();
     } catch (error) {
       console.error('[VoiceFactory] Failed to get active provider:', error);
@@ -83,8 +83,8 @@ export class VoiceProviderFactory {
   /**
    * Get primary/active provider (first enabled provider)
    */
-  static getPrimaryProvider(): VoiceModule {
-    const activeProvider = this.getActiveProvider();
+  static async getPrimaryProvider(): Promise<VoiceModule> {
+    const activeProvider = await this.getActiveProvider();
     return this.getModule(activeProvider);
   }
 
