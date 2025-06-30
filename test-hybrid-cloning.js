@@ -22,8 +22,9 @@ async function testHybridCloning() {
     // 1. Check existing voice samples
     console.log('\n📋 Step 1: Checking existing voice samples...');
     const { storage } = await import('./server/storage.ts');
-    const voiceModService = await import('./server/voice-modulation-service.ts');
+    const { VoiceModulationService } = await import('./server/voice-modulation-service.ts');
     
+    const voiceModService = new VoiceModulationService();
     const voiceSamples = await voiceModService.getUserVoiceModulations(TEST_USER_ID);
     console.log(`✅ Found ${voiceSamples.length} voice samples`);
     
@@ -38,19 +39,21 @@ async function testHybridCloning() {
     
     // 2. Test hybrid threshold detection
     console.log('\n📋 Step 2: Testing hybrid threshold detection...');
-    const { voiceTrainingService } = await import('./server/voice-training-service.ts');
+    const { VoiceTrainingService } = await import('./server/voice-training-service.ts');
     
-    const hasEnoughEmotions = await voiceTrainingService.hasEnoughUniqueEmotions(TEST_USER_ID);
-    console.log(`✅ Hybrid threshold check: ${hasEnoughEmotions}`);
+    const voiceTrainingService = new VoiceTrainingService();
+    const shouldTrigger = await voiceTrainingService.shouldTriggerTraining(TEST_USER_ID);
+    console.log(`✅ Should trigger training: ${shouldTrigger}`);
     
-    if (!hasEnoughEmotions) {
-      console.log('❌ Hybrid threshold not met according to service');
+    if (!shouldTrigger) {
+      console.log('❌ Training threshold not met according to service');
       return;
     }
     
     // 3. Test session manager
     console.log('\n📋 Step 3: Testing session manager...');
-    const { voiceCloningSessionManager } = await import('./server/voice-cloning-session-manager.ts');
+    const sessionModule = await import('./server/voice-cloning-session-manager.ts');
+    const voiceCloningSessionManager = sessionModule.voiceCloningSessionManager;
     
     const mockSession = { userId: TEST_USER_ID };
     voiceCloningSessionManager.initializeSession(mockSession);
