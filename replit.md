@@ -471,7 +471,6 @@ This is a full-stack collaborative storytelling platform that enables users to c
   - Generic video service abstracts all provider differences from routes
   - Routes remain constant regardless of enabled providers (Kling, RunwayML, future providers)
   - Configuration flags enable/disable providers without code changes
-  - Automatic fallback between providers on failure
   - Standardized error handling and status management across all providers
 - June 25, 2025: Completed Kling AI integration with enhanced character and scene support
   - Disabled all other video providers (RunwayML, Pika, Luma) as requested
@@ -551,6 +550,14 @@ Preferred communication style: Simple, everyday language.
 - Code breakage and exceptions are acceptable - no fallback logic allowed
 - No convenience hardcoding under any circumstances
 - Every function must connect to real data sources or fail authentically
+
+**CRITICAL PROVIDER RULE: NO FALLBACK PROVIDERS ANYWHERE**
+- ZERO TOLERANCE for fallback provider logic in voice or video systems
+- Only the configured primary provider should be used - no secondary options
+- If primary provider fails, system must throw error - no automatic switching
+- Remove all getFallbackProvider(), fallback logic, and provider switching code
+- Configuration determines single active provider - no backup providers allowed
+- System failures are acceptable - fallback providers are forbidden
 
 **CRITICAL DATABASE RULE: ALWAYS VERIFY EXISTING SCHEMA BEFORE CHANGES**
 - MANDATORY: Check existing database columns and structure before altering schema
