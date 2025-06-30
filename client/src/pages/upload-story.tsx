@@ -259,74 +259,42 @@ export default function UploadStory() {
       <div className="container mx-auto px-4 pt-20 pb-28">
         <div className="max-w-4xl mx-auto">
           <Card className="bg-white/10 backdrop-blur-lg border-white/20 text-white">
-            <CardHeader>
-              <div className="flex items-center gap-4">
-                <Button
-                  onClick={() => setLocation('/')}
-                  variant="ghost"
-                  size="sm"
-                  className="text-white hover:bg-white/10"
-                >
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Home
-                </Button>
-                <div>
-                  <CardTitle className="text-2xl">Create Your Story</CardTitle>
-                  <CardDescription className="text-white/70">
-                    Write your story and let AI analyze characters and emotions
-                  </CardDescription>
-                </div>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-3">
+                <Input 
+                  value={storyTitle}
+                  onChange={(e) => setStoryTitle(e.target.value)}
+                  placeholder="Story title (optional)..."
+                  className="w-64 h-9 bg-white/10 border-white/20 text-white placeholder-white/40"
+                />
+                <span className="text-xs text-white/50">Language: English</span>
               </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Title and Language Row */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="md:col-span-2 space-y-2">
-                  <label className="text-sm font-medium text-white">Story Title (Optional)</label>
-                  <Input
-                    value={storyTitle}
-                    onChange={(e) => setStoryTitle(e.target.value)}
-                    placeholder="Enter your story title..."
-                    className="bg-white/10 border-white/20 text-white placeholder-white/50"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-white">Language</label>
-                  <div className="bg-white/10 border border-white/20 rounded-md px-3 py-2 text-white text-sm">
-                    English
-                  </div>
-                </div>
-              </div>
-
-              {/* Story Content */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-white">Your Story</label>
-                
-                {/* Loading state for audio transcription */}
-                {isLoadingContent ? (
-                  <div className="min-h-[300px] bg-white/10 border-white/20 rounded-md flex items-center justify-center border-2 border-dashed">
-                    <div className="text-center space-y-4">
-                      <Loader2 className="w-8 h-8 animate-spin text-white mx-auto" />
-                      <div className="space-y-2">
-                        <p className="text-white font-medium">Processing your audio...</p>
-                        <p className="text-white/60 text-sm">Converting speech to text using AI transcription</p>
-                      </div>
+              
+              {/* Loading state for audio transcription */}
+              {isLoadingContent ? (
+                <div className="min-h-[400px] bg-white/10 border-white/20 rounded-md flex items-center justify-center border-2 border-dashed">
+                  <div className="text-center space-y-4">
+                    <Loader2 className="w-8 h-8 animate-spin text-white mx-auto" />
+                    <div className="space-y-2">
+                      <p className="text-white font-medium">Processing your audio...</p>
+                      <p className="text-white/60 text-sm">Converting speech to text using AI transcription</p>
                     </div>
                   </div>
-                ) : (
+                </div>
+              ) : (
+                <>
                   <Textarea
                     value={storyContent}
                     onChange={(e) => setStoryContent(e.target.value)}
                     placeholder="Write your story here... (500-1000 words recommended)"
-                    className="min-h-[300px] bg-white/10 border-white/20 text-white placeholder-white/50 resize-none"
+                    className="min-h-[400px] bg-white/10 border-white/20 text-white placeholder-white/50 resize-none text-base"
                   />
-                )}
-                
-                <div className="flex justify-between text-sm text-white/60">
-                  <span>Word count: {storyContent.trim() ? storyContent.trim().split(/\s+/).length : 0}</span>
-                  <span>Recommended: 500-1000 words</span>
-                </div>
-              </div>
+                  <div className="flex justify-between text-sm text-white/60 mt-2">
+                    <span>Word count: {storyContent.trim() ? storyContent.trim().split(/\s+/).length : 0}</span>
+                    <span>Recommended: 500-1000 words</span>
+                  </div>
+                </>
+              )}
               
               {/* Compact Story Status */}
               {story && (
