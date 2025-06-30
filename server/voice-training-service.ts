@@ -1,5 +1,6 @@
 import { storage } from './storage';
-import { ElevenLabsProvider } from './voice-providers/elevenlabs-provider';
+import { VoiceProviderFactory } from './voice-providers/voice-provider-factory';
+import type { BaseVoiceProvider } from './voice-providers/base-voice-provider';
 
 export interface VoiceTrainingOptions {
   userId: string;
@@ -19,17 +20,14 @@ export interface VoiceTrainingResult {
 }
 
 export class VoiceTrainingService {
-  private elevenLabsProvider: ElevenLabsProvider;
   private readonly TRAINING_THRESHOLD = 5;
 
-  constructor() {
-    this.elevenLabsProvider = new ElevenLabsProvider({
-      apiConfig: {
-        baseUrl: 'https://api.elevenlabs.io/v1',
-        apiKey: process.env.ELEVENLABS_API_KEY || '',
-        model: 'eleven_monolingual_v1'
-      }
-    });
+  private getVoiceProvider(): BaseVoiceProvider {
+    const provider = VoiceProviderFactory.getPrimaryProvider();
+    if (!provider) {
+      throw new Error('No voice provider available for training');
+    }
+    return provider;
   }
 
   /**

@@ -1,0 +1,106 @@
+/**
+ * Voice Provider Factory - Follows Video Provider Pattern
+ * Factory to get the appropriate voice module based on provider
+ */
+
+import { VoiceModule, VoiceTrainingRequest, VoiceTrainingResult } from './provider-manager';
+import { ElevenLabsModule } from './elevenlabs-module';
+
+export class VoiceProviderFactory {
+  /**
+   * Get voice module for specified provider
+   */
+  static getModule(provider: string): VoiceModule {
+    switch (provider.toLowerCase()) {
+      case 'elevenlabs':
+        const { getActiveVoiceProvider, getVoiceProviderConfig } = require('../voice-config');
+        const config = getVoiceProviderConfig('elevenlabs');
+        return new ElevenLabsModule(config);
+      
+      case 'kling-voice':
+        // Future implementation - will follow same pattern
+        throw new Error('Kling voice provider not yet implemented');
+      
+      default:
+        throw new Error(`Unsupported voice provider: ${provider}`);
+    }
+  }
+
+  /**
+   * Train voice using active or specified provider
+   */
+  static async trainVoice(
+    request: VoiceTrainingRequest,
+    provider?: string
+  ): Promise<VoiceTrainingResult> {
+    const activeProvider = provider || this.getActiveProvider();
+    const module = this.getModule(activeProvider);
+    
+    return module.trainVoice(request);
+  }
+
+  /**
+   * Generate speech using active provider
+   */
+  static async generateSpeech(
+    text: string, 
+    voiceId: string, 
+    emotion?: string,
+    provider?: string
+  ): Promise<ArrayBuffer> {
+    const activeProvider = provider || this.getActiveProvider();
+    const module = this.getModule(activeProvider);
+    
+    return module.generateSpeech(text, voiceId, emotion);
+  }
+
+  /**
+   * Get voice status using active provider
+   */
+  static async getVoiceStatus(
+    voiceId: string,
+    provider?: string
+  ): Promise<{ status: string; ready: boolean }> {
+    const activeProvider = provider || this.getActiveProvider();
+    const module = this.getModule(activeProvider);
+    
+    return module.getVoiceStatus(voiceId);
+  }
+
+  /**
+   * Get active provider from configuration
+   */
+  static getActiveProvider(): string {
+    try {
+      const { getActiveVoiceProvider } = require('../voice-config');
+      return getActiveVoiceProvider();
+    } catch (error) {
+      console.error('[VoiceFactory] Failed to get active provider:', error);
+      return 'elevenlabs'; // Default fallback
+    }
+  }
+
+  /**
+   * Get available providers
+   */
+  static getAvailableProviders(): string[] {
+    const { getVoiceConfig } = require('../voice-config');
+    const config = getVoiceConfig();
+    
+    return Object.entries(config.providers)
+      .filter(([_, providerInfo]) => providerInfo.enabled)
+      .map(([name, _]) => name);
+  }
+
+  /**
+   * Check if provider is available
+   */
+  static isProviderAvailable(provider: string): boolean {
+    try {
+      this.getModule(provider);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+}
