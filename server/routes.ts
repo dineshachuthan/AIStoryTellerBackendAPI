@@ -18,6 +18,7 @@ import { eq, desc, and } from "drizzle-orm";
 import { videoGenerations } from "@shared/schema";
 import { audioService } from "./audio-service";
 import { VOICE_CLONING_CONFIG } from "@shared/voice-config";
+import { userContentStorage } from "./user-content-storage";
 
 import { storyNarrator } from "./story-narrator";
 import { grandmaVoiceNarrator } from "./voice-narrator";
@@ -5004,8 +5005,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Serve static files from uploads directory
+  // Serve static files from uploads directory (legacy)
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+  
+  // New hierarchical user content serving
+  app.get('/api/user-content/:userId/:contentType/:category/:filename', requireAuth, async (req, res) => {
+    try {
+      const { userId, contentType, category, filename } = req.params;
+      const currentUserId = (req.user as any)?.id;
+      
+      // Security: Users can only access their own content
+      if (currentUserId !== userId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+      
+      if (!['audio', 'video'].includes(contentType)) {
+        return res.status(400).json({ message: 'Invalid content type' });
+      }
+      
+      const filePath = await userContentStorage.getContent(userId, contentType as 'audio' | 'video', category, filename);
+      
+      // Set appropriate MIME type
+      let mimeType = 'application/octet-stream';
+      if (contentType === 'audio') {
+        mimeType = 'audio/mpeg';
+      } else if (contentType === 'video') {
+        mimeType = 'video/mp4';
+      }
+      
+      res.setHeader('Content-Type', mimeType);
+      res.setHeader('Cache-Control', 'private, max-age=3600'); // 1 hour cache
+      res.sendFile(path.resolve(filePath));
+      
+    } catch (error) {
+      console.error('Error serving user content:', error);
+      res.status(404).json({ message: 'Content not found' });
+    }
+  });
   
   // Serve static files from persistent cache directories
   app.use('/persistent-cache', express.static(path.join(process.cwd(), 'persistent-cache')));
