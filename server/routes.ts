@@ -4536,12 +4536,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`🚀 Manual ${category} cloning triggered by user ${userId} (${categoryCount} samples)`);
       
-      // Trigger training in background
+      // Trigger training in background with timeout (2 minutes max)
+      const trainingTimeout = setTimeout(() => {
+        console.error(`❌ Manual ${category} cloning timed out after 2 minutes for user ${userId}`);
+      }, 120000); // 2 minutes timeout
+
       setTimeout(async () => {
         try {
           const result = await voiceTrainingService.triggerAutomaticTraining(userId);
+          clearTimeout(trainingTimeout);
           console.log(`✅ Manual ${category} cloning completed:`, result.success ? 'SUCCESS' : 'FAILED');
         } catch (error) {
+          clearTimeout(trainingTimeout);
           console.error(`❌ Manual ${category} cloning failed:`, error);
         }
       }, 100);
