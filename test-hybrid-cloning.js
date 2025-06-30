@@ -60,8 +60,21 @@ async function testHybridCloning() {
     
     // Session manager verified - moving to actual cloning test
     
-    // 4. Test database state reset
-    console.log('\n📋 Step 4: Resetting voice profile state...');
+    // 4. Initialize voice provider registry
+    console.log('\n📋 Step 4: Initializing voice provider registry...');
+    const { VoiceProviderRegistry } = await import('./server/voice-providers/provider-manager.ts');
+    const { getVoiceConfig } = await import('./server/voice-config.ts');
+    
+    try {
+      const voiceConfig = getVoiceConfig();
+      await VoiceProviderRegistry.initialize(voiceConfig);
+      console.log('✅ Voice provider registry initialized successfully');
+    } catch (error) {
+      console.log('❌ Failed to initialize voice providers:', error.message);
+    }
+    
+    // 5. Test database state reset
+    console.log('\n📋 Step 5: Resetting voice profile state...');
     
     // Reset voice profile to ensure clean test
     const existingProfile = await storage.getUserVoiceProfile(TEST_USER_ID);
