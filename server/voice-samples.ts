@@ -1,5 +1,6 @@
 import { db } from "./db";
-import { storyAnalyses } from "@shared/schema";
+import { storyAnalyses, voiceModulationTemplates } from "@shared/schema";
+import { eq } from "drizzle-orm";
 
 /**
  * Voice Samples Service - Data-driven voice sample management
@@ -8,11 +9,41 @@ import { storyAnalyses } from "@shared/schema";
 
 export async function getVoiceSamplesByType(type: 'emotions' | 'sounds' | 'descriptions'): Promise<any[]> {
   try {
-    // Query all story analyses to extract emotions/sounds/modulations
-    const analyses = await db.select().from(storyAnalyses);
+    // Priority 1: Get reference data from voice_modulation_templates table
+    const refDataResults: any[] = [];
+    let modulationType: string;
     
-    const uniqueItems = new Set<string>();
-    const results: any[] = [];
+    if (type === 'emotions') {
+      modulationType = 'emotion';
+    } else if (type === 'sounds') {
+      modulationType = 'sound';
+    } else {
+      modulationType = 'modulation';
+    }
+    
+    const templates = await db
+      .select()
+      .from(voiceModulationTemplates)
+      .where(eq(voiceModulationTemplates.modulationType, modulationType));
+    
+    for (const template of templates) {
+      refDataResults.push({
+        emotion: template.modulationKey,
+        displayName: template.displayName,
+        sampleText: template.sampleText,
+        category: template.category || type,
+        intensity: template.voiceSettings?.emotion_intensity || 5,
+        storySource: 'reference_data', // Mark as reference data
+        targetDuration: template.targetDuration || 8,
+        isReferenceData: true
+      });
+    }
+    
+    console.log(`Found ${refDataResults.length} reference data templates for ${type}`);
+    
+    // Priority 2: Supplement with story analysis data (for backwards compatibility)
+    const analyses = await db.select().from(storyAnalyses);
+    const uniqueItems = new Set<string>(refDataResults.map(r => r.emotion));
     
     for (const analysis of analyses) {
       const analysisData = analysis.analysisData as any;
@@ -22,13 +53,14 @@ export async function getVoiceSamplesByType(type: 'emotions' | 'sounds' | 'descr
           const emotionKey = emotion.emotion?.toLowerCase();
           if (emotionKey && !uniqueItems.has(emotionKey)) {
             uniqueItems.add(emotionKey);
-            results.push({
+            refDataResults.push({
               emotion: emotionKey,
               displayName: emotion.emotion,
               sampleText: emotion.context || `Express ${emotion.emotion} emotion`,
               category: 'emotions',
               intensity: emotion.intensity || 5,
-              storySource: analysis.storyId
+              storySource: analysis.storyId,
+              isReferenceData: false
             });
           }
         }
@@ -43,12 +75,13 @@ export async function getVoiceSamplesByType(type: 'emotions' | 'sounds' | 'descr
                 const soundKey = `${character.name}_${trait}`.toLowerCase().replace(/\s+/g, '_');
                 if (!uniqueItems.has(soundKey)) {
                   uniqueItems.add(soundKey);
-                  results.push({
+                  refDataResults.push({
                     emotion: soundKey,
                     displayName: `${character.name} - ${trait}`,
                     sampleText: `Make the sound of ${character.name}: ${trait}`,
                     category: 'sounds',
-                    storySource: analysis.storyId
+                    storySource: analysis.storyId,
+                    isReferenceData: false
                   });
                 }
               }
@@ -61,19 +94,20 @@ export async function getVoiceSamplesByType(type: 'emotions' | 'sounds' | 'descr
         const moodKey = analysisData.moodCategory.toLowerCase().replace(/\s+/g, '_');
         if (!uniqueItems.has(moodKey)) {
           uniqueItems.add(moodKey);
-          results.push({
+          refDataResults.push({
             emotion: moodKey,
             displayName: analysisData.moodCategory,
             sampleText: `Narrate in ${analysisData.moodCategory} style`,
             category: 'descriptions',
-            storySource: analysis.storyId
+            storySource: analysis.storyId,
+            isReferenceData: false
           });
         }
       }
     }
     
-    console.log(`Found ${results.length} unique ${type} from story analyses`);
-    return results;
+    console.log(`Found ${refDataResults.length} total ${type} samples (${templates.length} reference data + ${refDataResults.length - templates.length} story analysis)`);
+    return refDataResults;
   } catch (error) {
     console.error(`Error getting voice samples for type ${type}:`, error);
     return [];

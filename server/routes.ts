@@ -614,6 +614,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         generatedBy: userId
       });
       
+      // Extract and store reference data from analysis
+      console.log("🔄 Extracting reference data from narrative analysis...");
+      try {
+        const { referenceDataService } = await import('./reference-data-service');
+        await referenceDataService.processAnalysisForReferenceData(analysis, storyId);
+        console.log("✅ Reference data extraction completed successfully");
+      } catch (refDataError) {
+        console.error("❌ Failed to extract reference data:", refDataError);
+        // Don't fail the request if reference data extraction fails
+      }
+      
       // Update story title with AI-generated title if the story currently has default title
       if (story.title === "New Story" || story.title === "Untitled Story" || !story.title.trim()) {
         await storage.updateStory(storyId, {
