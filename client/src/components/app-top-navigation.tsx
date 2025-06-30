@@ -14,8 +14,7 @@ export function AppTopNavigation() {
   const { data: voiceCloningStatus } = useQuery({
     queryKey: ["/api/voice-cloning/session-status"],
     enabled: !!user,
-    staleTime: 0, // Override default infinite staleTime to allow fresh fetches
-    refetchOnMount: "always", // Always refetch when component mounts
+    staleTime: 5 * 60 * 1000, // 5 minutes cache duration
     // No automatic polling - status updates only when user clicks or navigates
   });
 

@@ -31,6 +31,7 @@ export function useAuth() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/voice-cloning/session-status"] });
     },
   });
 
