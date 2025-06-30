@@ -46,7 +46,6 @@ export interface CollaborativeInstance {
   templateId: number;
   instanceTitle: string;
   createdBy: string;
-  language: string;
   status: "draft" | "inviting" | "recording" | "processing" | "completed";
   participants: Array<{
     characterName: string;
