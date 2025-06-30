@@ -165,6 +165,21 @@ export class KlingVideoProvider implements IVideoProvider {
       
     } catch (error: any) {
       console.error('=== KLING VIDEO GENERATION ERROR ===', error);
+      
+      // Reset state using centralized service
+      try {
+        const { externalIntegrationStateReset } = await import('../external-integration-state-reset');
+        await externalIntegrationStateReset.resetIntegrationState({
+          userId: request.userId || 'unknown',
+          provider: 'kling',
+          operationType: 'video_generation',
+          operationId: request.storyId,
+          error: error.message || 'Kling video generation failed'
+        });
+      } catch (resetError) {
+        console.error('Failed to reset Kling state:', resetError);
+      }
+      
       throw this.handleKlingError(error);
     }
   }

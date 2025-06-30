@@ -96,6 +96,16 @@ export class ElevenLabsModule implements VoiceModule {
       };
     } catch (error) {
       console.error('[ElevenLabs] Voice training failed:', error);
+      
+      // Reset state using centralized service
+      const { externalIntegrationStateReset } = await import('../external-integration-state-reset');
+      await externalIntegrationStateReset.resetIntegrationState({
+        userId: request.userId,
+        provider: 'elevenlabs',
+        operationType: 'voice_training',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+      
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',

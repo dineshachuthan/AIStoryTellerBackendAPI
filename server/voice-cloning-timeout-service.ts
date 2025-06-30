@@ -208,6 +208,34 @@ export class VoiceCloningTimeoutService {
   }
 
   /**
+   * Reset voice training state when external integration fails
+   */
+  private static async resetVoiceTrainingState(userId: string, error: string): Promise<void> {
+    try {
+      console.log(`🔄 Resetting voice training state for user ${userId} due to: ${error}`);
+      
+      // Import storage dynamically
+      const { storage } = await import('./storage');
+      
+      // Reset voice profile status to 'failed' with error message
+      const voiceProfile = await storage.getUserVoiceProfile(userId);
+      if (voiceProfile && voiceProfile.status === 'training') {
+        await storage.updateUserVoiceProfile(voiceProfile.id, {
+          status: 'failed',
+          trainingCompletedAt: new Date(),
+          errorMessage: `External integration error: ${error}`
+        });
+        console.log(`✅ Reset voice profile ${voiceProfile.id} to 'failed' status`);
+      }
+      
+      console.log(`✅ Voice training state reset completed for user ${userId}`);
+      
+    } catch (resetError) {
+      console.error(`❌ Failed to reset voice training state for user ${userId}:`, resetError);
+    }
+  }
+
+  /**
    * Utility delay function
    */
   private static delay(ms: number): Promise<void> {

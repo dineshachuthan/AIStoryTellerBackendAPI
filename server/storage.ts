@@ -189,6 +189,8 @@ export interface IStorage {
   getVideoByStoryId(storyId: number): Promise<any>;
   deleteVideoGeneration(storyId: number): Promise<void>;
   updateVideoGeneration(storyId: number, updates: any): Promise<void>;
+  updateVideo(id: number, updates: any): Promise<any>;
+  getStuckVideoGenerations(threshold: Date): Promise<any[]>;
 
   // Story Narrations
   getSavedNarration(storyId: number, userId: string): Promise<StoryNarration | undefined>;
@@ -768,6 +770,31 @@ export class DatabaseStorage implements IStorage {
         updatedAt: new Date()
       })
       .where(eq(videoGenerations.storyId, storyId));
+  }
+
+  async updateVideo(id: number, updates: any): Promise<any> {
+    const { videoGenerations } = await import("@shared/schema");
+    
+    const [updatedVideo] = await db.update(videoGenerations)
+      .set({
+        ...updates,
+        updatedAt: new Date()
+      })
+      .where(eq(videoGenerations.id, id))
+      .returning();
+    
+    return updatedVideo;
+  }
+
+  async getStuckVideoGenerations(threshold: Date): Promise<any[]> {
+    const { videoGenerations } = await import("@shared/schema");
+    
+    return await db.select()
+      .from(videoGenerations)
+      .where(and(
+        eq(videoGenerations.status, 'processing'),
+        lt(videoGenerations.updatedAt, threshold)
+      ));
   }
 
   async createVideoGeneration(videoData: any): Promise<any> {
