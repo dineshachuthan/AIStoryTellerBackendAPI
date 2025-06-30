@@ -162,18 +162,23 @@ export class VoiceCloningTimeoutService {
   }
 
   /**
-   * Complete operation and clean up
+   * Complete operation and clean up with proper state reset
    */
-  private static completeOperation(
+  private static async completeOperation(
     operationKey: string, 
     success: boolean, 
     error?: string
-  ): void {
+  ): Promise<void> {
     const operation = this.activeOperations.get(operationKey);
     
     if (operation) {
       const duration = Date.now() - operation.startTime.getTime();
       console.log(`🏁 Voice cloning completed: ${operation.userId} ${operation.category} ${success ? 'SUCCESS' : 'FAILED'} (${duration}ms)`);
+      
+      // CRITICAL: Reset database state on failure/timeout
+      if (!success) {
+        await this.resetVoiceTrainingState(operation.userId, error || 'Unknown error');
+      }
       
       // Clear timeout and remove from active operations
       clearTimeout(operation.timeoutId);
