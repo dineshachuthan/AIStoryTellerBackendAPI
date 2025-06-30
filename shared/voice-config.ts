@@ -52,6 +52,11 @@ export interface VoiceCloningConfig {
     timeoutMinutes: number;
     backgroundProcessing: boolean;
   };
+  timeouts: {
+    mainThreadSeconds: number; // 60 seconds for main thread operations
+    workerThreadSeconds: number; // 300 seconds for worker thread operations
+    retryDelayMs: number[]; // Exponential backoff delays [1000, 2000, 4000]
+  };
 }
 
 export interface EmotionVoiceConfig {
@@ -133,9 +138,14 @@ export const VOICE_CLONING_CONFIG: VoiceCloningConfig = {
     modulations: { enabled: true, threshold: 6 }
   },
   training: {
-    maxRetries: 3,
-    timeoutMinutes: 2,
+    maxRetries: 3, // Exactly 3 retry attempts before throwing exception
+    timeoutMinutes: 5, // 300 seconds for worker thread operations  
     backgroundProcessing: true
+  },
+  timeouts: {
+    mainThreadSeconds: 60, // 60 seconds for main thread operations
+    workerThreadSeconds: 300, // 300 seconds for worker thread operations
+    retryDelayMs: [1000, 2000, 4000] // Exponential backoff delays
   }
 };
 

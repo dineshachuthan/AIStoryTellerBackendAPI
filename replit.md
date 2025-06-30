@@ -470,14 +470,16 @@ Preferred communication style: Simple, everyday language.
 - No convenience hardcoding under any circumstances
 - Every function must connect to real data sources or fail authentically
 
-**CRITICAL INTEGRATION RULE: ALWAYS IMPLEMENT TIMEOUTS AND RETRIES**
-- All external API integrations MUST have timeout mechanisms (typically 2 minutes maximum)
-- Never create infinite polling loops - always include timeout handling
-- Implement proper retry logic with exponential backoff for transient failures
+**CRITICAL INTEGRATION RULE: MANDATORY TIMEOUT AND RETRY SPECIFICATIONS**
+- ALL external API integrations MUST implement exactly 3 retry attempts before throwing exception
+- Main thread operations MUST have 60-second timeout per attempt
+- Worker thread/background operations MUST have 300-second timeout per attempt
+- Implement exponential backoff between retries (1s, 2s, 4s delays)
+- Never create infinite polling loops - always include bounded execution time
 - Clear timeout handlers properly to prevent memory leaks
-- Follow the established pattern from video generation services (Kling, RunwayML)
-- External services include: OpenAI, ElevenLabs, video providers, email/SMS services
-- Background processing operations must have bounded execution time
+- External services include: OpenAI, ElevenLabs, video providers, email/SMS services, Twilio, SendGrid
+- Background processing operations must have total bounded execution time with automatic cleanup
+- All timeout and retry values must be configurable through config files, never hardcoded
 
 **Responsive Design Requirements:**
 - All components must be responsive and mobile-compatible by default

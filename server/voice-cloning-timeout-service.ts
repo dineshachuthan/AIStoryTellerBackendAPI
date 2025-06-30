@@ -78,25 +78,28 @@ export class VoiceCloningTimeoutService {
 
   /**
    * Execute voice cloning with exponential backoff retry
+   * EXACTLY 3 retry attempts with configured timeouts and delays
    */
   private static async executeWithRetries(
     operationKey: string, 
     operation: VoiceCloningOperation
   ): Promise<{ success: boolean; error?: string }> {
     
-    const { userId, category, maxRetries } = operation;
+    const { userId, category } = operation;
+    const { timeouts } = VOICE_CLONING_CONFIG;
 
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    // EXACTLY 3 retry attempts before throwing exception
+    for (let attempt = 0; attempt < 3; attempt++) {
       try {
-        console.log(`🔄 Voice cloning attempt ${attempt + 1}/${maxRetries + 1} for ${userId} ${category}`);
+        console.log(`🔄 Voice cloning attempt ${attempt + 1}/3 for ${userId} ${category}`);
 
         // Import voice training service dynamically
         const { voiceTrainingService } = await import('./voice-training-service');
         
-        // Execute voice training with internal timeout
+        // Execute voice training with 60-second timeout per attempt (main thread operation)
         const result = await this.executeWithTimeout(
           () => voiceTrainingService.triggerAutomaticTraining(userId),
-          60000 // 1 minute per attempt
+          timeouts.mainThreadSeconds * 1000 // 60 seconds per attempt
         );
 
         if (result.success) {
@@ -104,9 +107,9 @@ export class VoiceCloningTimeoutService {
           return { success: true };
         }
 
-        // If not last attempt, wait before retry (exponential backoff)
-        if (attempt < maxRetries) {
-          const delayMs = Math.min(1000 * Math.pow(2, attempt), 10000); // Max 10 seconds
+        // If not last attempt, wait before retry using configured exponential backoff
+        if (attempt < 2) { // 0, 1 (not 2 which is the last attempt)
+          const delayMs = timeouts.retryDelayMs[attempt]; // [1000, 2000, 4000]
           console.log(`⏳ Retrying in ${delayMs}ms for ${userId} ${category}`);
           await this.delay(delayMs);
         }
@@ -115,16 +118,23 @@ export class VoiceCloningTimeoutService {
         console.log(`❌ Voice cloning attempt ${attempt + 1} failed for ${userId} ${category}:`, error);
         
         // If last attempt, return error
-        if (attempt === maxRetries) {
+        if (attempt === 2) { // Last attempt (0, 1, 2)
           return { 
             success: false, 
             error: error instanceof Error ? error.message : 'Unknown error' 
           };
         }
+        
+        // Wait before retry if not last attempt
+        if (attempt < 2) {
+          const delayMs = timeouts.retryDelayMs[attempt];
+          console.log(`⏳ Retrying in ${delayMs}ms after error for ${userId} ${category}`);
+          await this.delay(delayMs);
+        }
       }
     }
 
-    return { success: false, error: `Failed after ${maxRetries + 1} attempts` };
+    return { success: false, error: 'Failed after exactly 3 attempts' };
   }
 
   /**
