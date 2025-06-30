@@ -1215,42 +1215,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let finalFilePath: string;
       let processedBuffer: Buffer;
       
-      if (audioFile.mimetype.includes('webm')) {
-        // Convert webm to high-quality MP3 in memory first
-        const tempWebmFile = path.join(emotionDir, `temp-${timestamp}.webm`);
-        const mp3FileName = `${userId}-${emotion}-${intensity || 5}-${timestamp}.mp3`;
-        const mp3FilePath = path.join(emotionDir, mp3FileName);
+      // ENFORCE MP3-ONLY: Convert all input formats to MP3, no fallbacks
+      const mp3FileName = `${userId}-${emotion}-${intensity || 5}-${timestamp}.mp3`;
+      const mp3FilePath = path.join(emotionDir, mp3FileName);
+      
+      // Always convert to MP3 using FFmpeg - no fallbacks allowed
+      const tempInputFile = path.join(emotionDir, `temp-input-${timestamp}.${audioFile.mimetype.includes('webm') ? 'webm' : 'mp4'}`);
+      
+      try {
+        // Save temporary input file for conversion
+        await fs.writeFile(tempInputFile, audioFile.buffer);
         
-        try {
-          // Save temporary webm file for conversion
-          await fs.writeFile(tempWebmFile, audioFile.buffer);
-          
-          // Convert to MP3 using FFmpeg with aggressive volume amplification
-          const ffmpegCommand = `ffmpeg -i "${tempWebmFile}" -acodec libmp3lame -b:a 192k -ar 44100 -af "volume=20.0" -y "${mp3FilePath}"`;
-          await execAsync(ffmpegCommand);
-          
-          // Read converted file into buffer
-          processedBuffer = await fs.readFile(mp3FilePath);
-          
-          // Clean up temporary files
-          await fs.unlink(tempWebmFile);
-          await fs.unlink(mp3FilePath);
-          
-          finalFileName = mp3FileName;
-          finalFilePath = mp3FilePath;
-          console.log(`Successfully converted webm to MP3 with 20x volume boost: ${mp3FileName}`);
-        } catch (ffmpegError) {
-          console.error('FFmpeg conversion error:', ffmpegError);
-          // Fallback: use original webm
-          finalFileName = `${userId}-${emotion}-${intensity || 5}-${timestamp}.webm`;
-          finalFilePath = path.join(emotionDir, finalFileName);
-          processedBuffer = audioFile.buffer;
-        }
-      } else {
-        // Already MP3 or other format
-        finalFileName = `${userId}-${emotion}-${intensity || 5}-${timestamp}.mp3`;
-        finalFilePath = path.join(emotionDir, finalFileName);
-        processedBuffer = audioFile.buffer;
+        // Convert to MP3 using FFmpeg with volume amplification
+        const ffmpegCommand = `ffmpeg -i "${tempInputFile}" -acodec libmp3lame -b:a 192k -ar 44100 -af "volume=20.0" -y "${mp3FilePath}"`;
+        await execAsync(ffmpegCommand);
+        
+        // Read converted MP3 file into buffer
+        processedBuffer = await fs.readFile(mp3FilePath);
+        
+        // Clean up temporary files
+        await fs.unlink(tempInputFile);
+        await fs.unlink(mp3FilePath);
+        
+        finalFileName = mp3FileName;
+        finalFilePath = mp3FilePath;
+        console.log(`Successfully converted audio to MP3: ${mp3FileName}`);
+      } catch (ffmpegError) {
+        console.error('FFmpeg conversion error:', ffmpegError);
+        // NO FALLBACKS - fail completely if conversion fails
+        throw new Error('Audio conversion to MP3 failed. Only MP3 format is supported.');
       }
       
       // DATABASE FIRST: Store in database before writing file
@@ -1417,73 +1410,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let fileName: string;
       let filePath: string;
       
-      // Convert WebM to WAV for maximum browser compatibility
-      if (audioFile.mimetype === 'audio/webm') {
-        // Save temporary WebM file
-        const tempWebmFile = `temp_${userId}-${emotion}-${intensity}.webm`;
-        const tempWebmPath = path.join(cacheDir, tempWebmFile);
+      // ENFORCE MP3-ONLY: Convert all formats to MP3, no fallbacks
+      const tempInputFile = `temp_${userId}-${emotion}-${intensity}.${audioFile.mimetype.includes('webm') ? 'webm' : 'mp4'}`;
+      const tempInputPath = path.join(cacheDir, tempInputFile);
+      
+      console.log(`Converting audio to MP3: ${audioFile.buffer.length} bytes`);
+      await fs.writeFile(tempInputPath, audioFile.buffer);
+      
+      // Always convert to MP3 format
+      fileName = `${userId}-${emotion}-${intensity}.mp3`;
+      filePath = path.join(cacheDir, fileName);
+      
+      try {
+        // Convert to MP3 using FFmpeg with volume amplification
+        await execAsync(`ffmpeg -i "${tempInputPath}" -acodec libmp3lame -b:a 192k -ar 44100 -af "volume=40dB" -y "${filePath}"`);
         
-        console.log(`Converting WebM to WAV: ${audioFile.buffer.length} bytes`);
-        await fs.writeFile(tempWebmPath, audioFile.buffer);
+        const stats = await fs.stat(filePath);
+        console.log(`MP3 file created: ${stats.size} bytes`);
         
-        // Convert to WAV for maximum compatibility
-        fileName = `${userId}-${emotion}-${intensity}.wav`;
-        filePath = path.join(cacheDir, fileName);
+        // Clean up temporary file
+        await fs.unlink(tempInputPath);
         
-        try {
-          // Convert WebM/Opus to uncompressed WAV with strong volume amplification
-          await execAsync(`ffmpeg -i "${tempWebmPath}" -af "volume=40dB" -acodec pcm_s16le -ar 44100 -ac 1 -y "${filePath}"`);
-          
-          const stats = await fs.stat(filePath);
-          console.log(`WAV file created: ${stats.size} bytes`);
-          
-          // Clean up temporary file
-          await fs.unlink(tempWebmPath);
-          
-          // Update metadata to use WAV format
-          const metadata = {
-            userId,
-            storyId,
-            emotion,
-            intensity: parseInt(intensity),
-            text,
-            fileName,
-            filePath,
-            fileSize: stats.size,
-            timestamp: Date.now(),
-            mimeType: 'audio/wav',
-            originalMimeType: audioFile.mimetype,
-          };
-          
-          // Save metadata
-          const metadataPath = path.join(cacheDir, `${fileName}.json`);
-          await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2));
-          
-        } catch (conversionError) {
-          console.error("WAV conversion failed:", conversionError);
-          // Fallback: save original WebM
-          fileName = `${userId}-${emotion}-${intensity}.webm`;
-          filePath = path.join(cacheDir, fileName);
-          await fs.copyFile(tempWebmPath, filePath);
-          await fs.unlink(tempWebmPath);
-          
-          const metadata = {
-            userId,
-            storyId,
-            emotion,
-            intensity: parseInt(intensity),
-            text,
-            fileName,
-            filePath,
-            fileSize: audioFile.size,
-            timestamp: Date.now(),
-            mimeType: 'audio/webm',
-            originalMimeType: audioFile.mimetype,
-          };
-          
-          const metadataPath = path.join(cacheDir, `${fileName}.json`);
-          await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2));
-        }
+        // Update metadata to use MP3 format
+        const metadata = {
+          userId,
+          storyId,
+          emotion,
+          intensity: parseInt(intensity),
+          text,
+          fileName,
+          filePath,
+          fileSize: stats.size,
+          timestamp: Date.now(),
+          mimeType: 'audio/mpeg',
+          originalMimeType: audioFile.mimetype,
+        };
+        
+        // Save metadata
+        const metadataPath = path.join(cacheDir, `${fileName}.json`);
+        await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2));
+        
+      } catch (conversionError) {
+        console.error("MP3 conversion failed:", conversionError);
+        // NO FALLBACKS - fail completely if conversion fails
+        await fs.unlink(tempInputPath).catch(() => {});
+        throw new Error('Audio conversion to MP3 failed. Only MP3 format is supported.');
+      }
       } else {
         // Handle other audio formats with constant filename
         fileName = `${userId}-${emotion}-${intensity}.mp3`;

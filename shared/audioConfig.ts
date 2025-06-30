@@ -64,12 +64,8 @@ export interface EnvironmentAudioConfig {
 // Default configurations that can be overridden
 export const DEFAULT_PLATFORM_CONFIG: PlatformAudioConfig = {
   formats: [
-    { mimeType: 'audio/webm;codecs=opus', extension: 'webm', priority: 1, bitRate: 128000, codec: 'opus' },
-    { mimeType: 'audio/webm', extension: 'webm', priority: 2, bitRate: 128000 },
-    { mimeType: 'audio/mp4', extension: 'mp4', priority: 3, bitRate: 128000 },
-    { mimeType: 'audio/wav', extension: 'wav', priority: 4, sampleRate: 44100 },
-    { mimeType: 'audio/ogg;codecs=opus', extension: 'ogg', priority: 5, bitRate: 128000, codec: 'opus' },
-    { mimeType: 'audio/mpeg', extension: 'mp3', priority: 6, bitRate: 128000 }
+    { mimeType: 'audio/mp4', extension: 'mp4', priority: 1, bitRate: 128000 },
+    { mimeType: 'audio/mpeg', extension: 'mp3', priority: 2, bitRate: 128000 }
   ],
   constraints: {
     echoCancellation: true,
@@ -89,35 +85,29 @@ export const DEFAULT_PLATFORM_CONFIG: PlatformAudioConfig = {
   },
   compatibility: {
     ios: [
-      { mimeType: 'audio/mp4', extension: 'mp4', priority: 1, bitRate: 128000 },
-      { mimeType: 'audio/wav', extension: 'wav', priority: 2 }
+      { mimeType: 'audio/mp4', extension: 'mp4', priority: 1, bitRate: 128000 }
     ],
     android: [
-      { mimeType: 'audio/webm;codecs=opus', extension: 'webm', priority: 1, bitRate: 128000 },
-      { mimeType: 'audio/mp4', extension: 'mp4', priority: 2, bitRate: 128000 }
+      { mimeType: 'audio/mp4', extension: 'mp4', priority: 1, bitRate: 128000 }
     ],
     safari: [
-      { mimeType: 'audio/mp4', extension: 'mp4', priority: 1, bitRate: 128000 },
-      { mimeType: 'audio/wav', extension: 'wav', priority: 2 }
+      { mimeType: 'audio/mp4', extension: 'mp4', priority: 1, bitRate: 128000 }
     ],
     chrome: [
-      { mimeType: 'audio/webm;codecs=opus', extension: 'webm', priority: 1, bitRate: 128000 },
-      { mimeType: 'audio/mp4', extension: 'mp4', priority: 2, bitRate: 128000 }
+      { mimeType: 'audio/mp4', extension: 'mp4', priority: 1, bitRate: 128000 }
     ],
     firefox: [
-      { mimeType: 'audio/ogg;codecs=opus', extension: 'ogg', priority: 1, bitRate: 128000 },
-      { mimeType: 'audio/webm', extension: 'webm', priority: 2, bitRate: 128000 }
+      { mimeType: 'audio/mp4', extension: 'mp4', priority: 1, bitRate: 128000 }
     ],
     edge: [
-      { mimeType: 'audio/webm;codecs=opus', extension: 'webm', priority: 1, bitRate: 128000 },
-      { mimeType: 'audio/mp4', extension: 'mp4', priority: 2, bitRate: 128000 }
+      { mimeType: 'audio/mp4', extension: 'mp4', priority: 1, bitRate: 128000 }
     ]
   }
 };
 
 export const DEFAULT_SERVER_CONFIG: ServerAudioConfig = {
   uploadPath: 'persistent-cache/user-voice-samples',
-  allowedFormats: ['webm', 'mp4', 'wav', 'ogg', 'mp3'],
+  allowedFormats: ['mp3'],
   maxFileSize: 10 * 1024 * 1024, // 10MB
   conversion: {
     targetFormat: 'mp3',
