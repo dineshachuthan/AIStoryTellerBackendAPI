@@ -4347,11 +4347,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: 'User not authenticated' });
       }
 
-      const { voiceModulationService } = await import('./voice-modulation-service');
-      const progress = await voiceModulationService.getUserModulationProgress(userId);
+      const { getVoiceSampleProgress } = await import('./voice-samples');
+      
+      // Get user's completed voice samples to calculate progress
+      const userVoiceSamples = await storage.getAllUserVoiceSamples(userId);
+      const completedSamples = userVoiceSamples
+        .filter(sample => sample.isCompleted)
+        .map(sample => sample.sampleType || '');
+      
+      const progress = await getVoiceSampleProgress(completedSamples);
       res.json(progress);
     } catch (error: any) {
-      console.error('Error fetching modulation progress:', error);
+      console.error('Error fetching voice modulation progress:', error);
       res.status(500).json({ message: 'Failed to fetch progress' });
     }
   });
