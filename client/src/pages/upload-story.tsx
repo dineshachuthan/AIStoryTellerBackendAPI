@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 import { ArrowLeft, RefreshCw, Loader2, FileText, Upload, Plus } from "lucide-react";
 import { AppTopNavigation } from "@/components/app-top-navigation";
@@ -31,6 +33,7 @@ export default function UploadStory() {
   // Story management states
   const [storyContent, setStoryContent] = useState("");
   const [storyTitle, setStoryTitle] = useState("");
+  const [selectedLanguage, setSelectedLanguage] = useState("en-US");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isLoadingContent, setIsLoadingContent] = useState(false);
   
@@ -287,6 +290,27 @@ export default function UploadStory() {
                   placeholder="Enter your story title..."
                   className="bg-white/10 border-white/20 text-white placeholder-white/50"
                 />
+              </div>
+
+              {/* Language Selection */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-white">Language</Label>
+                <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+                  <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                    <SelectValue placeholder="Select language" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="en-US">English</SelectItem>
+                    <SelectItem value="es-ES">Spanish</SelectItem>
+                    <SelectItem value="fr-FR">French</SelectItem>
+                    <SelectItem value="de-DE">German</SelectItem>
+                    <SelectItem value="it-IT">Italian</SelectItem>
+                    <SelectItem value="pt-BR">Portuguese</SelectItem>
+                    <SelectItem value="ja-JP">Japanese</SelectItem>
+                    <SelectItem value="ko-KR">Korean</SelectItem>
+                    <SelectItem value="zh-CN">Chinese (Simplified)</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Story Content */}
