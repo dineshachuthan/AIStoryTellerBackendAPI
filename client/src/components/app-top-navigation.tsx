@@ -11,21 +11,12 @@ export function AppTopNavigation() {
   const { user, logout } = useAuth();
 
   // Get session-based voice cloning status (no automatic polling)
-  const { data: voiceCloningStatus, isLoading, error } = useQuery({
+  const { data: voiceCloningStatus } = useQuery({
     queryKey: ["/api/voice-cloning/session-status"],
     enabled: !!user,
-    refetchOnMount: true, // Trigger session initialization when component mounts
-    staleTime: 0, // Always fetch fresh data
-    retry: false, // Don't retry on failure
+    staleTime: 0, // Override default infinite staleTime to allow fresh fetches
+    refetchOnMount: "always", // Always refetch when component mounts
     // No automatic polling - status updates only when user clicks or navigates
-  });
-
-  // Debug logging to see what's happening with the query
-  console.log("Navigation component query state:", {
-    user: !!user,
-    isLoading,
-    error,
-    data: voiceCloningStatus
   });
 
   const getUserInitials = () => {
