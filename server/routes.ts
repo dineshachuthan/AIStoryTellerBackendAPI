@@ -4130,6 +4130,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get reference data statistics
+  app.get('/api/voice-modulations/reference-data-stats', requireAuth, async (req, res) => {
+    try {
+      const { referenceDataService } = await import('./reference-data-service');
+      const stats = await referenceDataService.getReferenceDataStats();
+      res.json(stats);
+    } catch (error: any) {
+      console.error('Error fetching reference data stats:', error);
+      res.status(500).json({ message: 'Failed to fetch reference data stats' });
+    }
+  });
+
   // Get user voice modulations (all recordings across stories)
   app.get('/api/voice-modulations/user', requireAuth, async (req, res) => {
     try {

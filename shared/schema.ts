@@ -346,16 +346,12 @@ export const storyAnalysisCache = pgTable("story_analysis_cache", {
 export const storyNarrations = pgTable("story_narrations", {
   id: serial("id").primaryKey(),
   storyId: integer("story_id").references(() => stories.id).notNull(),
-  userId: varchar("user_id").references(() => users.id).notNull(),
-  narrationSegments: jsonb("narration_segments"), // array of {text, emotion, audioUrl, voiceUsed}
-  useUserVoice: boolean("use_user_voice").default(true), // prefer user voice over AI
-  emotionVoicesUsed: jsonb("emotion_voices_used"), // which emotion voices were used
-  generationStatus: varchar("generation_status").notNull().default("generating"), // generating, completed, failed
-  totalDuration: integer("total_duration"), // seconds
-  audioQuality: varchar("audio_quality").default("high"), // high, medium, low
-  estimatedCost: numeric("estimated_cost"), // predicted API cost
-  actualCost: numeric("actual_cost"), // final API cost
-  cacheHitRate: doublePrecision("cache_hit_rate"), // percentage of segments reused from cache
+  userId: text("user_id").notNull(),
+  narratorVoice: varchar("narrator_voice").notNull(),
+  narratorVoiceType: varchar("narrator_voice_type").notNull(),
+  segments: jsonb("segments").notNull(), // array of {text, emotion, audioUrl, voiceUsed}
+  totalDuration: integer("total_duration").notNull(), // milliseconds
+  audioFileUrl: text("audio_file_url"), // final combined audio file
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
