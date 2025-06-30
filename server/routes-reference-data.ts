@@ -133,12 +133,19 @@ router.get('/reference-stories/:id', async (req, res) => {
   try {
     const referenceStoryId = parseInt(req.params.id);
     
-    const referenceData = await referenceDataService.getReferenceStoryWithAnalysis(referenceStoryId);
+    // Get reference story and analysis separately using storage methods
+    const referenceStory = await storage.getReferenceStory(referenceStoryId);
+    if (!referenceStory) {
+      return res.status(404).json({ error: 'Reference story not found' });
+    }
+    
+    const analysis = await storage.getReferenceStoryAnalysis(referenceStoryId);
+    const roleplayAnalysis = await storage.getReferenceRoleplayAnalysis(referenceStoryId);
     
     res.json({
-      referenceStory: referenceData.story,
-      analysis: referenceData.analysis,
-      roleplayAnalysis: referenceData.roleplayAnalysis,
+      referenceStory,
+      analysis,
+      roleplayAnalysis,
       architecture: "complete_reference_data"
     });
 
