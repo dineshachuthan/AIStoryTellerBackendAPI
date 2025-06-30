@@ -3,6 +3,7 @@
  * Handles voice cloning and speech generation using ElevenLabs API
  */
 
+import { ElevenLabsApi, ElevenLabsVoice } from '@elevenlabs/elevenlabs-js';
 import { VoiceModule, VoiceProviderConfig, VoiceTrainingRequest, VoiceTrainingResult } from './provider-manager';
 
 export class ElevenLabsModule implements VoiceModule {

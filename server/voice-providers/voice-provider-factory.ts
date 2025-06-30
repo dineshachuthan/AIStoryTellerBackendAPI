@@ -33,10 +33,10 @@ export class VoiceProviderFactory {
     request: VoiceTrainingRequest,
     provider?: string
   ): Promise<VoiceTrainingResult> {
-    const activeProvider = provider || this.getActiveProvider();
-    const module = this.getModule(activeProvider);
+    const activeProvider = provider || await this.getActiveProvider();
+    const module = await this.getModule(activeProvider);
     
-    return module.trainVoice(request);
+    return await module.trainVoice(request);
   }
 
   /**
