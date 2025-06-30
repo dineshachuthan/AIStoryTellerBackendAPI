@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppHeader } from "@/components/app-header";
 import { AppTopNavigation } from "@/components/app-top-navigation";
-import { VoiceSessionInitializer } from "@/components/voice-session-initializer";
+// import { VoiceSessionInitializer } from "@/components/voice-session-initializer"; // Temporarily disabled
 import { useAuth } from "@/hooks/useAuth";
 import { sessionActivityTracker } from "@/lib/session-activity";
 import { useEffect } from "react";
@@ -66,7 +66,7 @@ function AppContent() {
           <Route path="/oauth-test" component={OAuthTest} />
           {isAuthenticated ? (
             <>
-              <VoiceSessionInitializer />
+
               {/* Top Navigation for all authenticated pages except Home */}
               <Route path="/" component={Home} />
               <Route path="/stories" component={StoryLibrary} />
