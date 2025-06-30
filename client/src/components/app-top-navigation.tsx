@@ -14,6 +14,7 @@ export function AppTopNavigation() {
   const { data: voiceCloningStatus } = useQuery({
     queryKey: ["/api/voice-cloning/session-status"],
     enabled: !!user,
+    refetchOnMount: true, // Trigger session initialization when component mounts
     // No automatic polling - status updates only when user clicks or navigates
   });
 
