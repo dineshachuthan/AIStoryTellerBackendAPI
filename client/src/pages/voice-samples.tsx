@@ -550,7 +550,7 @@ function VoiceCloningButton({ category, progress, onTrigger, isLoading }: VoiceC
       return 'Cloning in Progress...';
     }
     if (progress.canTrigger) {
-      return `Lock your voice and clone (${progressText})`;
+      return 'Clone now';
     }
     return `${progressText} needed to kick start cloning`;
   };
@@ -576,7 +576,7 @@ function VoiceCloningButton({ category, progress, onTrigger, isLoading }: VoiceC
             {progress.isTraining 
               ? 'ElevenLabs is training your voice. This may take a few minutes.'
               : progress.canTrigger 
-                ? 'Ready to start voice cloning!'
+                ? `Clone your ${category} voice from samples. Once cloned, these sample voices will be locked and no modification allowed.`
                 : `Record ${progress.threshold - progress.count} more samples to enable cloning.`
             }
           </p>
