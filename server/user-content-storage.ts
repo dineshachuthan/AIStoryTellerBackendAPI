@@ -29,6 +29,8 @@ export interface StoredContent {
     fileSize: number;
     createdAt: Date;
     mimeType: string;
+    sampleNumber?: number;
+    identifier?: string;
   };
 }
 
@@ -89,15 +91,51 @@ export class UserContentStorage {
   }
 
   /**
-   * Generate filename with timestamp
+   * Generate filename with sample numbering for versioning support
    */
-  private generateFilename(category: string, identifier: string, extension: string): string {
-    const timestamp = Date.now();
-    return `${identifier}-${timestamp}.${extension}`;
+  private async generateSampleFilename(
+    userId: string, 
+    contentType: 'audio' | 'video',
+    category: string, 
+    identifier: string, 
+    extension: string
+  ): Promise<{ filename: string; sampleNumber: number }> {
+    const categoryDir = this.getCategoryDir(userId, contentType, category);
+    const identifierDir = path.join(categoryDir, identifier);
+    
+    // Ensure identifier subdirectory exists
+    await fs.promises.mkdir(identifierDir, { recursive: true });
+    
+    try {
+      // Find existing samples for this identifier
+      const files = await fs.promises.readdir(identifierDir);
+      const sampleFiles = files.filter(f => f.startsWith('sample-') && f.endsWith(`.${extension}`));
+      
+      // Get next sample number
+      const sampleNumbers = sampleFiles.map(f => {
+        const match = f.match(/sample-(\d+)\./);
+        return match ? parseInt(match[1]) : 0;
+      });
+      
+      const nextSampleNumber = sampleNumbers.length > 0 ? Math.max(...sampleNumbers) + 1 : 1;
+      const filename = `sample-${nextSampleNumber}.${extension}`;
+      
+      return { filename, sampleNumber: nextSampleNumber };
+    } catch {
+      // Directory doesn't exist or is empty
+      return { filename: `sample-1.${extension}`, sampleNumber: 1 };
+    }
   }
 
   /**
-   * Store audio content (emotion, sound, or modulation)
+   * Get identifier subdirectory path
+   */
+  private getIdentifierDir(userId: string, contentType: 'audio' | 'video', category: string, identifier: string): string {
+    return path.join(this.getCategoryDir(userId, contentType, category), identifier);
+  }
+
+  /**
+   * Store audio content (emotion, sound, or modulation) with sample versioning
    */
   async storeAudioContent(
     userId: string,
@@ -108,16 +146,15 @@ export class UserContentStorage {
   ): Promise<StoredContent> {
     await this.ensureUserDirectories(userId);
 
-    // ENFORCE MP3-ONLY: Convert all audio to MP3
-    const filename = this.generateFilename(category, identifier, 'mp3');
-    const categoryDir = this.getCategoryDir(userId, 'audio', category);
-    const finalPath = path.join(categoryDir, filename);
+    // Generate sample filename with versioning
+    const { filename, sampleNumber } = await this.generateSampleFilename(userId, 'audio', category, identifier, 'mp3');
+    const identifierDir = this.getIdentifierDir(userId, 'audio', category, identifier);
+    const finalPath = path.join(identifierDir, filename);
 
-    // Convert to MP3 if needed
+    // ENFORCE MP3-ONLY: Convert all audio to MP3
     if (originalMimeType !== 'audio/mpeg') {
-      const tempInputFile = path.join(categoryDir, `temp_${filename}`);
       const tempExtension = this.getExtensionFromMimeType(originalMimeType);
-      const tempInputPath = path.join(categoryDir, `temp_${identifier}.${tempExtension}`);
+      const tempInputPath = path.join(identifierDir, `temp_input.${tempExtension}`);
       
       // Write original file
       await fs.promises.writeFile(tempInputPath, audioBuffer);
@@ -137,7 +174,7 @@ export class UserContentStorage {
 
     return {
       filePath: finalPath,
-      url: `/api/user-content/${userId}/audio/${category}/${filename}`,
+      url: `/api/user-content/${userId}/audio/${category}/${identifier}/${filename}`,
       metadata: {
         userId,
         contentType: 'audio',
@@ -145,7 +182,9 @@ export class UserContentStorage {
         filename,
         fileSize: stats.size,
         createdAt: new Date(),
-        mimeType: 'audio/mpeg'
+        mimeType: 'audio/mpeg',
+        sampleNumber,
+        identifier
       }
     };
   }
@@ -204,7 +243,7 @@ export class UserContentStorage {
   }
 
   /**
-   * Get content by URL path
+   * Get content by URL path (legacy method)
    */
   async getContent(userId: string, contentType: 'audio' | 'video', category: string, filename: string): Promise<string> {
     const filePath = path.join(this.getCategoryDir(userId, contentType, category), filename);
@@ -215,6 +254,27 @@ export class UserContentStorage {
       return filePath;
     } catch {
       throw new Error(`Content not found: ${userId}/${contentType}/${category}/${filename}`);
+    }
+  }
+
+  /**
+   * Get content by identifier and filename (new hierarchical method)
+   */
+  async getContentByIdentifier(
+    userId: string, 
+    contentType: 'audio' | 'video', 
+    category: string, 
+    identifier: string, 
+    filename: string
+  ): Promise<string> {
+    const filePath = path.join(this.getIdentifierDir(userId, contentType, category, identifier), filename);
+    
+    // Verify file exists
+    try {
+      await fs.promises.access(filePath);
+      return filePath;
+    } catch {
+      throw new Error(`Content not found: ${userId}/${contentType}/${category}/${identifier}/${filename}`);
     }
   }
 

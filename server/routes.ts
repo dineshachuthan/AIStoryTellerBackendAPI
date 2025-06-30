@@ -5008,10 +5008,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Serve static files from uploads directory (legacy)
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
   
-  // New hierarchical user content serving
-  app.get('/api/user-content/:userId/:contentType/:category/:filename', requireAuth, async (req, res) => {
+  // New hierarchical user content serving with identifier subdirectories
+  app.get('/api/user-content/:userId/:contentType/:category/:identifier/:filename', requireAuth, async (req, res) => {
     try {
-      const { userId, contentType, category, filename } = req.params;
+      const { userId, contentType, category, identifier, filename } = req.params;
       const currentUserId = (req.user as any)?.id;
       
       // Security: Users can only access their own content
@@ -5023,7 +5023,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Invalid content type' });
       }
       
-      const filePath = await userContentStorage.getContent(userId, contentType as 'audio' | 'video', category, filename);
+      const filePath = await userContentStorage.getContentByIdentifier(
+        userId, 
+        contentType as 'audio' | 'video', 
+        category, 
+        identifier, 
+        filename
+      );
       
       // Set appropriate MIME type
       let mimeType = 'application/octet-stream';
