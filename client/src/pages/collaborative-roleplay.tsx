@@ -269,6 +269,17 @@ export default function CollaborativeRoleplay() {
                               placeholder={`My version of ${template.title}`}
                             />
                           </div>
+                          <div>
+                            <Label htmlFor="language">Language</Label>
+                            <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select language" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="en-US">English</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
                           <Button 
                             onClick={handleCreateInstance}
                             disabled={createInstance.isPending || !instanceTitle.trim()}
