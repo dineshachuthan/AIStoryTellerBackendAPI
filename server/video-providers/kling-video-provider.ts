@@ -10,6 +10,7 @@ import {
   VideoProviderException
 } from './video-provider-interface';
 import { JWTAuthUtil } from './jwt-auth-util';
+import { detectFormatWithFallback, getPreferredWebFormat, VIDEO_FORMAT_VALIDATION } from '@shared/video-format-config';
 
 /**
  * Kling AI video provider implementation
@@ -347,6 +348,45 @@ export class KlingVideoProvider implements IVideoProvider {
         }
       };
     }
+  }
+
+  private detectVideoFormat(buffer: Buffer): string {
+    const detectedFormat = detectFormatWithFallback(buffer);
+    if (detectedFormat) {
+      console.log(`Kling: Detected video format: ${detectedFormat.name} (.${detectedFormat.extension})`);
+      return detectedFormat.extension;
+    }
+    
+    // Fallback to preferred web format
+    const preferredFormat = getPreferredWebFormat();
+    console.log(`Kling: Unknown format detected, using preferred: ${preferredFormat.extension}`);
+    return preferredFormat.extension;
+  }
+
+  private validateVideoFormat(buffer: Buffer, fileName?: string): { isValid: boolean; format: string; error?: string } {
+    const detectedFormat = detectFormatWithFallback(buffer, fileName);
+    
+    if (!detectedFormat) {
+      return { isValid: false, format: 'unknown', error: 'Unknown video format' };
+    }
+    
+    if (!detectedFormat.isSupported) {
+      return { 
+        isValid: false, 
+        format: detectedFormat.extension, 
+        error: `Format ${detectedFormat.extension} is not supported for web playback` 
+      };
+    }
+    
+    if (buffer.length > VIDEO_FORMAT_VALIDATION.MAX_FILE_SIZE) {
+      return { 
+        isValid: false, 
+        format: detectedFormat.extension, 
+        error: `File size exceeds maximum limit of ${VIDEO_FORMAT_VALIDATION.MAX_FILE_SIZE / 1024 / 1024}MB` 
+      };
+    }
+    
+    return { isValid: true, format: detectedFormat.extension };
   }
 
   private validateRequest(request: StandardVideoRequest): void {
