@@ -169,6 +169,16 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Priority**: Medium (requested but deferred for future implementation)
 
 ## Changelog
+- June 30, 2025: COMPLETE HIERARCHICAL STORAGE IMPLEMENTATION - Story Narration Now Uses User-Based File Structure
+  - **UPDATED STORY NARRATOR ARCHITECTURE** to use hierarchical storage: user-data/{userId}/audio/stories/{storyId}/segment-{n}.mp3
+  - **ELIMINATED OLD CACHE-BASED STORAGE** that stored narrator files in persistent-cache/narrations with timestamp naming
+  - **DATABASE FULLY CLEANED** - deleted all transactional data (stories, narrations, voice samples, audio cache, video generations)
+  - **PRESERVED REFERENCE DATA** - kept users, character archetypes, voice modulation templates, and configuration data
+  - **UNIFIED AUDIO ARCHITECTURE** - all audio content (voice samples, story narrations, generated audio) follows same hierarchical pattern
+  - **ENHANCED REPLIT.MD RULES** - added story narration storage and unified audio architecture documentation
+  - **SAMPLE VERSIONING READY** - structure supports multiple voice samples per emotion for future MVP iterations
+  - **CROSS-USER SECURITY** - complete user isolation prevents access to other users' voice content or story narrations
+  - Story narration system now fully integrated with hierarchical user-based storage following all project rules
 - June 30, 2025: CRITICAL FIX - Eliminated All Voice Provider Hardcoding and Implemented Priority-Based Selection
   - **REMOVED hardcoded ElevenLabs selection** from voice-config.ts activeProvider field that violated "NEVER HARDCODE ANYTHING" rule
   - **ELIMINATED hardcoded fallback** in voice-provider-factory.ts that defaulted to ElevenLabs regardless of configuration
@@ -631,13 +641,15 @@ Preferred communication style: Simple, everyday language.
 - **MANDATORY HIERARCHICAL STRUCTURE**: All user content must follow user-data/{userId}/{contentType}/{category}/{identifier}/sample-{n}.{ext} structure
 - **USER-ID ISOLATION**: Every file must be stored under user-specific directory to prevent cross-user access and data conflicts
 - **SAMPLE VERSIONING SUPPORT**: Use sample-1.mp3, sample-2.mp3, etc. for multiple recordings per emotion/intensity combination
-- **IDENTIFIER SUBDIRECTORIES**: Group related samples under identifier folders (e.g., joy-8, anger-6) for organized collection
+- **IDENTIFIER SUBDIRECTORIES**: Group related samples under identifier folders (e.g., joy-8, anger-6, story-123) for organized collection
 - **DATABASE PATH CONSISTENCY**: Database columns store relative paths that dynamically build to full hierarchical URLs
 - **DYNAMIC PATH BUILDING**: Frontend fetches use logged-in user ID to construct proper /api/user-content/{userId}/audio/emotions/{emotion}-{intensity}/sample-{n}.mp3 URLs
 - **NO TIMESTAMP FOLDERS**: Avoid date/time folders - use sample numbering for chronological ordering and easy cleanup
 - **FUTURE MVP READINESS**: Structure supports collecting multiple voice samples per emotion for improved voice cloning quality
 - **CROSS-USER SECURITY**: Hierarchical structure prevents users from accessing other users' voice recordings or content
 - **CLEANUP FRIENDLY**: Easy to remove old samples by targeting specific sample numbers while preserving recent recordings
+- **STORY NARRATION STORAGE**: Story narrator files stored in user-data/{userId}/audio/stories/{storyId}/segment-{n}.mp3 following hierarchical structure
+- **UNIFIED AUDIO ARCHITECTURE**: All audio content (voice samples, story narrations, generated audio) follows same hierarchical user-based storage pattern
 
 **CRITICAL FORMAT DETECTION RULE: SIGNATURE-BASED AUDIO/VIDEO FORMAT HANDLING**
 - **NO HARDCODED FILE EXTENSIONS**: All format detection must use buffer signature analysis from shared/audio-config.ts and shared/video-format-config.ts

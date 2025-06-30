@@ -365,7 +365,7 @@ export class EnhancedStoryNarrator {
       // Ensure output directory exists
       await fs.mkdir(this.outputDir, { recursive: true });
       
-      // Create output filename
+      // Create output filename using hierarchical storage
       const timestamp = Date.now();
       const outputFile = path.join(this.outputDir, `story-${storyId}-${timestamp}.mp3`);
       

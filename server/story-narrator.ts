@@ -235,7 +235,7 @@ export class StoryNarrator {
     });
     
     // Store audio locally with narration-specific naming
-    const localAudioUrl = await this.storeNarrationAudio(buffer, storyId, segmentIndex, voice);
+    const localAudioUrl = await this.storeNarrationAudio(buffer, storyId, segmentIndex, voice, userId);
     
     return {
       audioUrl: localAudioUrl,
@@ -244,48 +244,32 @@ export class StoryNarrator {
   }
 
   /**
-   * Store narration audio buffer to local filesystem
+   * Store narration audio buffer using hierarchical user storage
    * Returns local URL for serving
    */
   private async storeNarrationAudio(
     buffer: Buffer, 
     storyId: number, 
     segmentIndex: number, 
-    voice: string
+    voice: string,
+    userId: string
   ): Promise<string> {
-    const fs = require('fs').promises;
-    const path = require('path');
+    const { userContentStorage } = require('./user-content-storage');
     
-    // Create narration-specific directory
-    const narrationDir = path.join(process.cwd(), 'persistent-cache', 'narrations');
-    await fs.mkdir(narrationDir, { recursive: true });
+    // Use hierarchical storage: user-data/{userId}/audio/stories/{storyId}/segment-{n}.mp3
+    const identifier = `story-${storyId}`;
+    const storedContent = await userContentStorage.storeAudioContent(
+      userId,
+      'stories',
+      identifier,
+      buffer,
+      'audio/mpeg'
+    );
     
-    // Generate filename with story ID, segment, and timestamp for uniqueness
-    const timestamp = Date.now();
-    const fileName = `story-${storyId}-segment-${segmentIndex}-${voice}-${timestamp}.mp3`;
-    const filePath = path.join(narrationDir, fileName);
+    console.log(`Stored narration audio hierarchically: ${storedContent.url} (${buffer.length} bytes)`);
     
-    // Write audio buffer to file
-    await fs.writeFile(filePath, buffer);
-    
-    // Store metadata for debugging and management
-    const metadata = {
-      storyId,
-      segmentIndex,
-      voice,
-      fileName,
-      fileSize: buffer.length,
-      createdAt: new Date().toISOString(),
-      textLength: 0 // Could store text length for duration estimates
-    };
-    
-    const metadataPath = path.join(narrationDir, `${fileName}.json`);
-    await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2));
-    
-    console.log(`Stored narration audio locally: ${fileName} (${buffer.length} bytes)`);
-    
-    // Return local serving URL
-    return `/api/narration-audio/${fileName}`;
+    // Return hierarchical serving URL
+    return storedContent.url;
   }
 
   /**
