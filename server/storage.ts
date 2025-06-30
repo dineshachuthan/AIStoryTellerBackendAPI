@@ -898,16 +898,25 @@ export class DatabaseStorage implements IStorage {
   async createUserVoiceProfile(profile: any): Promise<any> {
     const userVoiceProfiles = await import("@shared/schema").then(m => m.userVoiceProfiles);
     
-    // Ensure all required fields are present
-    const profileData = {
+    // Validate required fields before attempting insert
+    if (!profile.userId) {
+      throw new Error('userId is required for voice profile creation');
+    }
+    if (!profile.profileName) {
+      throw new Error('profileName is required for voice profile creation');
+    }
+    if (!profile.baseVoice) {
+      throw new Error('baseVoice is required for voice profile creation');
+    }
+    if (!profile.voiceName) {
+      throw new Error('voiceName is required for voice profile creation');
+    }
+    
+    const [created] = await db.insert(userVoiceProfiles).values({
       ...profile,
       createdAt: new Date(),
-      updatedAt: new Date(),
-      // Ensure profileName is always set if not provided
-      profileName: profile.profileName || `Voice_Profile_${profile.userId}_${Date.now()}`
-    };
-    
-    const [created] = await db.insert(userVoiceProfiles).values(profileData).returning();
+      updatedAt: new Date()
+    }).returning();
     return created;
   }
 

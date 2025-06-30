@@ -6,6 +6,24 @@
 import { BaseVoiceProvider, VoiceSample, VoiceCloneRequest, VoiceGenerationRequest, AudioResult, VoiceCloneResult, VoiceProviderCapabilities, VoiceProviderStatus } from './base-voice-provider';
 import { getEmotionConfig } from '@shared/voice-config';
 
+// Voice Training Types
+export interface VoiceTrainingOptions {
+  userId: string;
+  voiceProfileId: number;
+  samples: Array<{
+    emotion: string;
+    audioUrl: string;
+    isLocked: boolean;
+  }>;
+}
+
+export interface VoiceTrainingResult {
+  success: boolean;
+  voiceId?: string;
+  error?: string;
+  samplesProcessed: number;
+}
+
 export class ElevenLabsProvider extends BaseVoiceProvider {
   private baseUrl: string;
   private apiKey: string;
@@ -354,9 +372,10 @@ export class ElevenLabsProvider extends BaseVoiceProvider {
     try {
       // Create voice clone request from training options
       const cloneRequest: VoiceCloneRequest = {
+        userId: options.userId,
         name: `User_${options.userId}_Voice_${Date.now()}`,
         description: `Voice clone for user ${options.userId} with ${options.samples.length} emotion samples`,
-        samples: options.samples.map(sample => ({
+        samples: options.samples.map((sample: any) => ({
           emotion: sample.emotion,
           audioUrl: sample.audioUrl,
           audioBuffer: Buffer.from(''), // Will be fetched from URL
