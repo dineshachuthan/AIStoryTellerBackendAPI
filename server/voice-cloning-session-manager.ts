@@ -163,21 +163,38 @@ export class VoiceCloningSessionManager {
    * Increment category counter after successful voice sample save
    */
   static incrementCategoryCounter(req: any, category: VoiceCategoryType): void {
+    console.log(`[SessionManager] ===================================== SESSION COUNTER INCREMENT OPERATION =====================================`);
+    console.log(`[SessionManager] Beginning session counter increment operation for voice cloning category: "${category}" at ${new Date().toISOString()}`);
+    console.log(`[SessionManager] User session ID: ${req.session.id || 'no session ID'}, User authentication: ${req.session.userId ? 'authenticated' : 'not authenticated'}`);
+    console.log(`[SessionManager] Operation purpose: Track sample count to determine when to trigger automatic ElevenLabs voice cloning at ${this.CLONING_THRESHOLD}-sample threshold`);
+    
     const sessionData = this.getSessionData(req);
+    const preIncrementState = JSON.parse(JSON.stringify(sessionData));
+    
+    console.log(`[SessionManager] Pre-increment session state: ${JSON.stringify(preIncrementState, null, 2)}`);
+    console.log(`[SessionManager] Current counter values before increment: emotions=${sessionData.emotions_not_cloned}, sounds=${sessionData.sounds_not_cloned}, modulations=${sessionData.modulations_not_cloned}`);
+    console.log(`[SessionManager] Cloning status before increment: emotions=${sessionData.cloning_status.emotions}, sounds=${sessionData.cloning_status.sounds}, modulations=${sessionData.cloning_status.modulations}`);
     
     switch (category) {
       case 'emotions':
         sessionData.emotions_not_cloned++;
+        console.log(`[SessionManager] Incremented emotions counter: ${sessionData.emotions_not_cloned - 1} → ${sessionData.emotions_not_cloned} (threshold: ${this.CLONING_THRESHOLD})`);
         break;
       case 'sounds':
         sessionData.sounds_not_cloned++;
+        console.log(`[SessionManager] Incremented sounds counter: ${sessionData.sounds_not_cloned - 1} → ${sessionData.sounds_not_cloned} (threshold: ${this.CLONING_THRESHOLD})`);
         break;
       case 'modulations':
         sessionData.modulations_not_cloned++;
+        console.log(`[SessionManager] Incremented modulations counter: ${sessionData.modulations_not_cloned - 1} → ${sessionData.modulations_not_cloned} (threshold: ${this.CLONING_THRESHOLD})`);
         break;
     }
 
     req.session.voiceCloning = sessionData;
+    
+    console.log(`[SessionManager] Post-increment session state: ${JSON.stringify(sessionData, null, 2)}`);
+    console.log(`[SessionManager] Session data successfully updated in Express session memory. Counter increment operation completed successfully.`);
+    console.log(`[SessionManager] Next operation: Threshold check will determine if automatic voice cloning should be triggered for category "${category}"`);
   }
 
   /**

@@ -29,11 +29,34 @@ export class VoiceTrainingService {
    * Check if voice training should be triggered based on unlocked samples count
    */
   async shouldTriggerTraining(userId: string): Promise<boolean> {
+    console.log(`[VoiceTrainingService] ================================ TRAINING TRIGGER ASSESSMENT INITIATED ================================`);
+    console.log(`[VoiceTrainingService] Beginning comprehensive assessment to determine if voice training should be triggered for user: ${userId}`);
+    console.log(`[VoiceTrainingService] Training threshold configuration: ${this.TRAINING_THRESHOLD} unlocked samples required before triggering ElevenLabs voice cloning`);
+    console.log(`[VoiceTrainingService] Assessment purpose: Prevent premature voice training and ensure sufficient sample variety for high-quality voice synthesis`);
+    console.log(`[VoiceTrainingService] Querying database for current unlocked sample count for user ${userId}...`);
+    
     try {
       const unlockedCount = await storage.getUserUnlockedSamplesCount(userId);
+      
+      console.log(`[VoiceTrainingService] Database query completed successfully. Results: User ${userId} currently has ${unlockedCount} unlocked voice samples`);
+      console.log(`[VoiceTrainingService] Threshold comparison: ${unlockedCount} current samples vs ${this.TRAINING_THRESHOLD} required samples = ${unlockedCount >= this.TRAINING_THRESHOLD ? 'TRIGGER TRAINING' : 'WAIT FOR MORE SAMPLES'}`);
+      
+      if (unlockedCount >= this.TRAINING_THRESHOLD) {
+        console.log(`[VoiceTrainingService] ===== TRAINING TRIGGER CONDITION MET ===== User ${userId} has sufficient samples (${unlockedCount}) to proceed with ElevenLabs voice cloning`);
+        console.log(`[VoiceTrainingService] Next operation: Voice training will be initiated to create personalized voice model using all available samples`);
+      } else {
+        console.log(`[VoiceTrainingService] ===== TRAINING TRIGGER CONDITION NOT MET ===== User ${userId} needs ${this.TRAINING_THRESHOLD - unlockedCount} more samples before voice training can begin`);
+        console.log(`[VoiceTrainingService] User must continue recording voice samples to reach minimum threshold for quality voice synthesis`);
+      }
+      
       return unlockedCount >= this.TRAINING_THRESHOLD;
     } catch (error) {
-      console.error('Error checking training trigger:', error);
+      console.error(`[VoiceTrainingService] ========================== CRITICAL DATABASE ERROR ==========================`);
+      console.error(`[VoiceTrainingService] Failed to retrieve unlocked sample count for user ${userId} from database`);
+      console.error(`[VoiceTrainingService] Error details: ${error instanceof Error ? error.message : String(error)}`);
+      console.error(`[VoiceTrainingService] Error stack trace: ${error instanceof Error ? error.stack : 'No stack trace available'}`);
+      console.error(`[VoiceTrainingService] Database error prevents training trigger assessment. Defaulting to FALSE to prevent accidental voice training.`);
+      console.error(`[VoiceTrainingService] Manual intervention required to resolve database connectivity or query execution issues.`);
       return false;
     }
   }
