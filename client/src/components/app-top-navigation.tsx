@@ -10,11 +10,11 @@ export function AppTopNavigation() {
   const [, setLocation] = useLocation();
   const { user, logout } = useAuth();
 
-  // Get session-based voice cloning status
+  // Get session-based voice cloning status (no automatic polling)
   const { data: voiceCloningStatus } = useQuery({
     queryKey: ["/api/voice-cloning/session-status"],
     enabled: !!user,
-    refetchInterval: 3000, // Check every 3 seconds for cloning progress
+    // No automatic polling - status updates only when user clicks or navigates
   });
 
   const getUserInitials = () => {

@@ -176,10 +176,10 @@ This is a full-stack collaborative storytelling platform that enables users to c
   - **5-sample threshold** automatically triggers ElevenLabs integration for specific category without blocking user interface
   - **Background processing architecture** uses setTimeout for complete non-blocking voice cloning - users can freely navigate during training
   - **Dynamic navigation button** shows "Cloning in Progress" with orange spinner when any category is training, "Voice Samples" when idle
-  - **Session status API** provides real-time cloning status with 3-second polling for navigation button updates
+  - **Session status API** provides cloning status on user actions only (no automatic polling as per user requirements)
   - **Category completion handling** resets session counters and restores navigation button after successful ElevenLabs training
   - **User can freely navigate** during voice cloning process - no interface restrictions or disabled functionality
-  - Voice cloning now follows exact user-specified workflow: session memory → threshold detection → background training → UI state management
+  - Voice cloning follows exact user-specified workflow: session memory → threshold detection → background training → UI state management
 - June 29, 2025: MAJOR MILESTONE - Completed Phases 3-7 of ElevenLabs Voice Cloning Integration
   - **Phase 3: Audio Generation Cache System** - Implemented content hashing, cache-first audio generation, automatic cleanup with configurable size limits and TTL management
   - **Phase 4: Voice Selection Intelligence** - Created intelligent voice mapping with user voice prioritization, emotion similarity matching, and fallback logic that never uses hardcoded defaults
