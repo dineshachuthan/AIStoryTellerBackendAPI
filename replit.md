@@ -598,6 +598,21 @@ Preferred communication style: Simple, everyday language.
 - Background processing operations must have total bounded execution time with automatic cleanup
 - All timeout and retry values must be configurable through config files, never hardcoded
 
+**CRITICAL CACHING RULE: COMPREHENSIVE CACHE MANAGEMENT SYSTEM**
+- **Environment-Specific Cache Directories**: Separate cache directories per environment (dev/staging/production)
+- **Configurable Size Limits**: 500MB dev, 5GB production for audio cache with automatic cleanup
+- **TTL Management**: 30-day default TTL with configurable expiration per cache type
+- **Cache-First Architecture**: Always check cache before external API calls to minimize costs
+- **Database-First Caching**: Write database records BEFORE file save to ensure data integrity
+- **Content Hash Keys**: Use SHA256 content hashing for cache keys to prevent duplicate generation
+- **Automatic Cleanup Jobs**: Scheduled cleanup of expired cache files with size threshold management
+- **Cache Invalidation System**: WebSocket-based real-time cache invalidation across clients
+- **Usage Statistics Tracking**: Track cache hit rates, file sizes, and usage patterns
+- **Multiple Cache Types**: audio-cache, image-cache, analysis-cache, story-cache with specialized handling
+- **Metadata Storage**: Store cache metadata (generation time, usage count, file size) alongside cached data
+- **Cleanup API Endpoints**: Manual cache cleanup endpoints for admin management
+- **Cost Optimization**: Cache prevents duplicate external API calls to expensive services (ElevenLabs, OpenAI, video providers)
+
 **Responsive Design Requirements:**
 - All components must be responsive and mobile-compatible by default
 - No need to ask specifically for mobile compatibility - it's always required
