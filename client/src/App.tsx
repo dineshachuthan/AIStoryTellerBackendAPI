@@ -81,6 +81,19 @@ function Router() {
 }
 
 function App() {
+  const { isAuthenticated } = useAuth();
+
+  // Initialize session activity tracking for authenticated users
+  useEffect(() => {
+    if (isAuthenticated) {
+      sessionActivityTracker.init();
+    }
+    
+    return () => {
+      sessionActivityTracker.destroy();
+    };
+  }, [isAuthenticated]);
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
