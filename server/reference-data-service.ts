@@ -47,7 +47,7 @@ export class ReferenceDataService {
 
     try {
       // Get all existing stories from the stories table
-      const existingStories = await this.storage.getStoriesByUserId('migration_all');
+      const existingStories = await this.storage.getAllStories();
       
       console.log(`[ReferenceDataService] Starting migration of ${existingStories.length} stories`);
 
@@ -111,7 +111,7 @@ export class ReferenceDataService {
         extractedCharacters: story.extractedCharacters || [],
         extractedEmotions: story.extractedEmotions || [],
         coverImageUrl: story.coverImageUrl,
-        originalAuthorId: story.userId, // Track who originally created it
+        originalAuthorId: 'migration-user', // Default for migration
         visibility: 'public', // Make available to all users
         uploadType: story.uploadType,
         originalAudioUrl: story.originalAudioUrl,
