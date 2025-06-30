@@ -11,6 +11,7 @@ import {
 } from './video-provider-interface';
 import { JWTAuthUtil } from './jwt-auth-util';
 import { detectFormatWithFallback, getPreferredWebFormat, VIDEO_FORMAT_VALIDATION } from '@shared/video-format-config';
+import { ExternalIntegrationStateReset } from '../external-integration-state-reset';
 
 /**
  * Kling AI video provider implementation
@@ -549,10 +550,20 @@ export class KlingVideoProvider implements IVideoProvider {
     }
   }
 
-  private handleKlingError(error: any): VideoProviderException {
+  private handleKlingError(error: any, userId?: string): VideoProviderException {
+    const errorMessage = error.message || 'Unknown Kling error';
+    
+    // STANDARD PATTERN: Log failure without storing completion records
+    ExternalIntegrationStateReset.logFailureWithoutStorage(
+      'Kling', 
+      'video_generation', 
+      userId || 'unknown', 
+      errorMessage
+    );
+    
     console.error('Kling provider error:', error);
     
-    if (error.message?.includes('Auth failed') || error.message?.includes('authentication')) {
+    if (errorMessage.includes('Auth failed') || errorMessage.includes('authentication')) {
       return new VideoProviderException(
         VideoProviderError.AUTHENTICATION_FAILED,
         'Kling authentication failed. Please verify API credentials.',
@@ -561,7 +572,7 @@ export class KlingVideoProvider implements IVideoProvider {
       );
     }
     
-    if (error.message?.includes('quota') || error.message?.includes('limit')) {
+    if (errorMessage.includes('quota') || errorMessage.includes('limit')) {
       return new VideoProviderException(
         VideoProviderError.QUOTA_EXCEEDED,
         'Kling quota exceeded. Please check account limits.',
@@ -570,7 +581,7 @@ export class KlingVideoProvider implements IVideoProvider {
       );
     }
     
-    if (error.message?.includes('content') || error.message?.includes('policy')) {
+    if (errorMessage.includes('content') || errorMessage.includes('policy')) {
       return new VideoProviderException(
         VideoProviderError.CONTENT_POLICY_VIOLATION,
         'Content violates Kling policies. Please review story content.',
@@ -581,7 +592,7 @@ export class KlingVideoProvider implements IVideoProvider {
     
     return new VideoProviderException(
       VideoProviderError.UNKNOWN_ERROR,
-      `Kling error: ${error.message}`,
+      `Kling error: ${errorMessage}`,
       this.name,
       error
     );

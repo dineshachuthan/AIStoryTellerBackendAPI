@@ -1,6 +1,7 @@
 /**
  * External Integration State Reset Service
  * Handles state cleanup when external APIs (ElevenLabs, Kling, RunwayML) timeout or fail
+ * CRITICAL RULE: NO STORAGE ON FAILURE - only reset state, never store completion records
  * Following timeout and retry specifications from voice-config.ts
  */
 
@@ -20,13 +21,15 @@ export interface StateResetOptions {
 export class ExternalIntegrationStateReset {
   
   /**
-   * Reset state for any external integration failure/timeout
+   * CRITICAL RULE: NO STORAGE ON FAILURE
+   * This method ONLY resets states - never stores completion records for failures
    */
   static async resetIntegrationState(options: StateResetOptions): Promise<void> {
     const { userId, provider, operationType, error } = options;
     
-    console.log(`🔄 Resetting ${provider} ${operationType} state for user ${userId}`);
+    console.log(`❌ FAILURE RESET: ${provider} ${operationType} for user ${userId}`);
     console.log(`   Error: ${error}`);
+    console.log(`   NO DATA STORED ON FAILURE - only state reset`);
     
     try {
       switch (operationType) {
@@ -40,9 +43,26 @@ export class ExternalIntegrationStateReset {
           await this.resetAudioGenerationState(userId, provider, error);
           break;
       }
+      
+      console.log(`✅ State reset completed for ${provider} ${operationType}`);
     } catch (resetError) {
       console.error(`❌ Failed to reset ${provider} state:`, resetError);
     }
+  }
+
+  /**
+   * STANDARD PATTERN: Log failure without storing any completion records
+   * This should be called by ALL external integration providers on failure
+   */
+  static logFailureWithoutStorage(
+    provider: string, 
+    operationType: string, 
+    userId: string, 
+    error: string
+  ): void {
+    console.log(`❌ ${provider.toUpperCase()} ${operationType.toUpperCase()} FAILED: ${userId}`);
+    console.log(`   Error: ${error}`);
+    console.log(`   NO STORAGE ON FAILURE - following standard pattern`);
   }
 
   /**

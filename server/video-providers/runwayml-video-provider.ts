@@ -9,6 +9,7 @@ import {
   VideoProviderException
 } from './video-provider-interface';
 import { detectFormatWithFallback, getPreferredWebFormat, VIDEO_FORMAT_VALIDATION } from '@shared/video-format-config';
+import { ExternalIntegrationStateReset } from '../external-integration-state-reset';
 
 /**
  * RunwayML video provider implementation
@@ -296,10 +297,20 @@ export class RunwayMLVideoProvider implements IVideoProvider {
     }
   }
 
-  private handleRunwayError(error: any): VideoProviderException {
+  private handleRunwayError(error: any, userId?: string): VideoProviderException {
+    const errorMessage = error.message || 'Unknown RunwayML error';
+    
+    // STANDARD PATTERN: Log failure without storing completion records
+    ExternalIntegrationStateReset.logFailureWithoutStorage(
+      'RunwayML', 
+      'video_generation', 
+      userId || 'unknown', 
+      errorMessage
+    );
+    
     console.error('RunwayML provider error:', error);
     
-    if (error.message?.includes('Unauthorized') || error.message?.includes('authentication')) {
+    if (errorMessage.includes('Unauthorized') || errorMessage.includes('authentication')) {
       return new VideoProviderException(
         VideoProviderError.AUTHENTICATION_FAILED,
         'RunwayML authentication failed. Please verify API key.',
@@ -308,7 +319,7 @@ export class RunwayMLVideoProvider implements IVideoProvider {
       );
     }
     
-    if (error.message?.includes('quota') || error.message?.includes('rate limit')) {
+    if (errorMessage.includes('quota') || errorMessage.includes('rate limit')) {
       return new VideoProviderException(
         VideoProviderError.QUOTA_EXCEEDED,
         'RunwayML quota exceeded. Please check account limits.',
@@ -319,7 +330,7 @@ export class RunwayMLVideoProvider implements IVideoProvider {
     
     return new VideoProviderException(
       VideoProviderError.UNKNOWN_ERROR,
-      `RunwayML error: ${error.message}`,
+      `RunwayML error: ${errorMessage}`,
       this.name,
       error
     );

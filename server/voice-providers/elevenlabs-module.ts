@@ -9,6 +9,7 @@ import pkg from 'elevenlabs';
 const { ElevenLabsClient } = pkg;
 import { BaseVoiceProvider } from './base-voice-provider';
 import { VoiceProviderConfig, VoiceTrainingRequest, VoiceTrainingResult } from './provider-manager';
+import { ExternalIntegrationStateReset } from '../external-integration-state-reset';
 
 export class ElevenLabsModule extends BaseVoiceProvider {
   private client: any;
