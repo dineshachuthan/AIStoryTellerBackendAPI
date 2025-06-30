@@ -1234,6 +1234,7 @@ export class DatabaseStorage implements IStorage {
   
   async getReferenceStory(id: number): Promise<any | undefined> {
     const { referenceStories } = await import('@shared/schema');
+    const { eq } = await import('drizzle-orm');
     const [story] = await db.select().from(referenceStories).where(eq(referenceStories.id, id));
     return story || undefined;
   }
@@ -1273,6 +1274,7 @@ export class DatabaseStorage implements IStorage {
   // Reference Story Analysis (shared AI analysis)
   async getReferenceStoryAnalysis(referenceStoryId: number): Promise<any | undefined> {
     const { referenceStoryAnalyses } = await import('@shared/schema');
+    const { eq } = await import('drizzle-orm');
     const [analysis] = await db
       .select()
       .from(referenceStoryAnalyses)
@@ -1299,6 +1301,7 @@ export class DatabaseStorage implements IStorage {
   // Reference Roleplay Analysis (shared roleplay structure)
   async getReferenceRoleplayAnalysis(referenceStoryId: number): Promise<any | undefined> {
     const { referenceRoleplayAnalyses } = await import('@shared/schema');
+    const { eq } = await import('drizzle-orm');
     const [analysis] = await db
       .select()
       .from(referenceRoleplayAnalyses)
