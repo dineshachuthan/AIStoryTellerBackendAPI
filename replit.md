@@ -169,6 +169,15 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Priority**: Medium (requested but deferred for future implementation)
 
 ## Changelog
+- June 30, 2025: 🔄 **CRITICAL ARCHITECTURE DISCOVERY** - Database Model Fundamentally Flawed
+  - **IDENTIFIED CORE ISSUE**: Stories treated as user-owned when they should be reference data
+  - **CORRECT ARCHITECTURE**: Stories = reference data, Narrations = user instances of reference stories
+  - **CREATED REFERENCE SCHEMA**: Designed proper separation between reference data and user instances
+  - **REFERENCE DATA**: Stories, story analyses, voice templates shared across all users
+  - **USER INSTANCES**: User narrations, voice samples, emotion voices are user-specific
+  - **MIGRATION NEEDED**: Current system needs gradual migration to reference data model
+  - **ARCHITECTURAL FILES**: Created ARCHITECTURE_REDESIGN.md and shared/reference-schema.ts
+  - User identified that current database model treats stories as user-owned instead of reference data that users create narrations from
 - June 30, 2025: ✅ **COMPLETE DATA-DRIVEN VOICE SAMPLES IMPLEMENTATION** - Reference Data System Fully Operational
   - **VOICE SAMPLES NOW PULL FROM STORY ANALYSIS**: Implemented getVoiceSamplesByType() to query storyAnalyses table across ALL users
   - **REFERENCE DATA ARCHITECTURE**: Emotions/sounds/modulations from story analysis become permanent shared reference data that cannot be deleted
