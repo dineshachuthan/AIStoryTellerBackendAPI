@@ -57,6 +57,11 @@ export class VoiceCloningSessionManager {
     ).length;
 
     console.log(`[VoiceCloningSession] Session initialization counts for user ${userId}:`);
+    // Check if any category is currently being cloned
+    const { voiceTrainingService } = await import('./voice-training-service');
+    const trainingStatus = await voiceTrainingService.getTrainingStatus(userId);
+    const isCloning = trainingStatus.status === 'training';
+
     console.log(`  EMOTIONS: ${recordedEmotions} samples (threshold: ${this.CLONING_THRESHOLD})`);
     console.log(`  SOUNDS: ${recordedSounds} samples (threshold: ${this.CLONING_THRESHOLD})`);
     console.log(`  MODULATIONS: ${recordedModulations} samples (threshold: ${this.CLONING_THRESHOLD})`);
@@ -72,11 +77,6 @@ export class VoiceCloningSessionManager {
     if (recordedModulations >= this.CLONING_THRESHOLD) {
       console.log(`🎯 MODULATIONS THRESHOLD MET: ${recordedModulations} >= ${this.CLONING_THRESHOLD} - Will trigger ElevenLabs cloning`);
     }
-
-    // Check if any category is currently being cloned
-    const { voiceTrainingService } = await import('./voice-training-service');
-    const trainingStatus = await voiceTrainingService.getTrainingStatus(userId);
-    const isCloning = trainingStatus.status === 'training';
 
     const sessionData: VoiceCloningSessionData = {
       emotions_not_cloned: recordedEmotions,

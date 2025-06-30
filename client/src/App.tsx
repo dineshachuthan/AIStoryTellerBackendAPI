@@ -28,8 +28,21 @@ import Register from "@/pages/register";
 import NotFound from "@/pages/not-found";
 import OAuthTest from "@/pages/oauth-test";
 
-function Router() {
+
+
+function AppContent() {
   const { isAuthenticated, isLoading } = useAuth();
+
+  // Initialize session activity tracking for authenticated users
+  useEffect(() => {
+    if (isAuthenticated) {
+      sessionActivityTracker.init();
+    }
+    
+    return () => {
+      sessionActivityTracker.destroy();
+    };
+  }, [isAuthenticated]);
 
   if (isLoading) {
     return (
@@ -43,62 +56,41 @@ function Router() {
   }
 
   return (
-    <>
-      <Switch>
-        <Route path="/login" component={Login} />
-        <Route path="/register" component={Register} />
-        <Route path="/oauth-test" component={OAuthTest} />
-        {isAuthenticated ? (
-          <>
-            {/* Top Navigation for all authenticated pages except Home */}
-            <Route path="/" component={Home} />
-            <Route path="/stories" component={StoryLibrary} />
-            <Route path="/chat/:conversationId" component={Chat} />
-            <Route path="/create" component={CreateCharacter} />
-            <Route path="/upload-story" component={UploadStory} />
-            <Route path="/:storyId/upload-story" component={UploadStory} />
-            <Route path="/voice-record" component={VoiceRecordPage} />
-            <Route path="/upload-audio" component={UploadAudioPage} />
-            <Route path="/story-analysis" component={StoryAnalysis} />
-            <Route path="/analysis/:storyId" component={StoryAnalysis} />
-            <Route path="/voice-setup" component={VoiceSamples} />
-            <Route path="/voice-samples" component={VoiceSamples} />
-            <Route path="/story/:storyId" component={StoryPlayer} />
-            <Route path="/story/:storyId/play" component={StoryPlayer} />
-            <Route path="/story/:storyId/collaborate" component={StoryCollaboration} />
-            <Route path="/collaborative-roleplay" component={CollaborativeRoleplay} />
-            <Route path="/invite/:token" component={Invitation} />
-            <Route path="/roleplay/:token" component={RoleplayRecording} />
-            <Route path="/voice-test" component={VoiceModulationTest} />
-            <Route component={NotFound} />
-          </>
-        ) : (
-          <Route path="*" component={Login} />
-        )}
-      </Switch>
-    </>
-  );
-}
-
-function AppContent() {
-  const { isAuthenticated } = useAuth();
-
-  // Initialize session activity tracking for authenticated users
-  useEffect(() => {
-    if (isAuthenticated) {
-      sessionActivityTracker.init();
-    }
-    
-    return () => {
-      sessionActivityTracker.destroy();
-    };
-  }, [isAuthenticated]);
-
-  return (
     <TooltipProvider>
       <div className="tiktok-theme min-h-screen">
         <Toaster />
-        <Router />
+        <Switch>
+          <Route path="/login" component={Login} />
+          <Route path="/register" component={Register} />
+          <Route path="/oauth-test" component={OAuthTest} />
+          {isAuthenticated ? (
+            <>
+              {/* Top Navigation for all authenticated pages except Home */}
+              <Route path="/" component={Home} />
+              <Route path="/stories" component={StoryLibrary} />
+              <Route path="/chat/:conversationId" component={Chat} />
+              <Route path="/create" component={CreateCharacter} />
+              <Route path="/upload-story" component={UploadStory} />
+              <Route path="/:storyId/upload-story" component={UploadStory} />
+              <Route path="/voice-record" component={VoiceRecordPage} />
+              <Route path="/upload-audio" component={UploadAudioPage} />
+              <Route path="/story-analysis" component={StoryAnalysis} />
+              <Route path="/analysis/:storyId" component={StoryAnalysis} />
+              <Route path="/voice-setup" component={VoiceSamples} />
+              <Route path="/voice-samples" component={VoiceSamples} />
+              <Route path="/story/:storyId" component={StoryPlayer} />
+              <Route path="/story/:storyId/play" component={StoryPlayer} />
+              <Route path="/story/:storyId/collaborate" component={StoryCollaboration} />
+              <Route path="/collaborative-roleplay" component={CollaborativeRoleplay} />
+              <Route path="/invite/:token" component={Invitation} />
+              <Route path="/roleplay/:token" component={RoleplayRecording} />
+              <Route path="/voice-test" component={VoiceModulationTest} />
+              <Route component={NotFound} />
+            </>
+          ) : (
+            <Route path="*" component={Login} />
+          )}
+        </Switch>
       </div>
     </TooltipProvider>
   );
