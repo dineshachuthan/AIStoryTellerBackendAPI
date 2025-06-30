@@ -897,7 +897,17 @@ export class DatabaseStorage implements IStorage {
 
   async createUserVoiceProfile(profile: any): Promise<any> {
     const userVoiceProfiles = await import("@shared/schema").then(m => m.userVoiceProfiles);
-    const [created] = await db.insert(userVoiceProfiles).values(profile).returning();
+    
+    // Ensure all required fields are present
+    const profileData = {
+      ...profile,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      // Ensure profileName is always set if not provided
+      profileName: profile.profileName || `Voice_Profile_${profile.userId}_${Date.now()}`
+    };
+    
+    const [created] = await db.insert(userVoiceProfiles).values(profileData).returning();
     return created;
   }
 
@@ -1059,23 +1069,7 @@ export class DatabaseStorage implements IStorage {
     return profile || undefined;
   }
 
-  async createUserVoiceProfile(userId: string, profileData: any): Promise<any> {
-    const userVoiceProfiles = await import("@shared/schema").then(m => m.userVoiceProfiles);
-    const [created] = await db.insert(userVoiceProfiles).values({
-      userId,
-      ...profileData,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    }).returning();
-    return created;
-  }
 
-  async updateUserVoiceProfile(userId: string, updates: any): Promise<void> {
-    const userVoiceProfiles = await import("@shared/schema").then(m => m.userVoiceProfiles);
-    await db.update(userVoiceProfiles)
-      .set({ ...updates, updatedAt: new Date() })
-      .where(eq(userVoiceProfiles.userId, userId));
-  }
 
   // Audio Cache System methods
   async getAudioCacheEntry(contentHash: string): Promise<any | undefined> {
