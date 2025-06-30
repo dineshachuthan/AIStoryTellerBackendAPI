@@ -254,4 +254,24 @@ export class VoiceCloningTimeoutService {
     
     return false;
   }
+
+  /**
+   * Clear all stuck operations for a user (emergency reset)
+   */
+  static forceStopAllUserOperations(userId: string): number {
+    const categories: ('emotions' | 'sounds' | 'modulations')[] = ['emotions', 'sounds', 'modulations'];
+    let stopped = 0;
+    
+    for (const category of categories) {
+      if (this.forceStopOperation(userId, category)) {
+        stopped++;
+      }
+    }
+    
+    if (stopped > 0) {
+      console.log(`🧹 EMERGENCY RESET: Stopped ${stopped} stuck voice cloning operations for user ${userId}`);
+    }
+    
+    return stopped;
+  }
 }

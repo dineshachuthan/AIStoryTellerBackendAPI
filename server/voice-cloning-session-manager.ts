@@ -69,25 +69,26 @@ export class VoiceCloningSessionManager {
     ).length;
 
     console.log(`[VoiceCloningSession] Session initialization counts for user ${userId}:`);
-    // Check if any category is currently being cloned
-    const { voiceTrainingService } = await import('./voice-training-service');
-    const trainingStatus = await voiceTrainingService.getTrainingStatus(userId);
-    const isCloning = trainingStatus.status === 'training';
+    
+    // Check category-specific cloning status using timeout service
+    const { VoiceCloningTimeoutService } = await import('./voice-cloning-timeout-service');
+    const emotionsCloning = VoiceCloningTimeoutService.isOperationRunning(userId, 'emotions');
+    const soundsCloning = VoiceCloningTimeoutService.isOperationRunning(userId, 'sounds');
+    const modulationsCloning = VoiceCloningTimeoutService.isOperationRunning(userId, 'modulations');
 
-    console.log(`  EMOTIONS: ${recordedEmotions} samples (threshold: ${this.CLONING_THRESHOLD})`);
-    console.log(`  SOUNDS: ${recordedSounds} samples (threshold: ${this.CLONING_THRESHOLD})`);
-    console.log(`  MODULATIONS: ${recordedModulations} samples (threshold: ${this.CLONING_THRESHOLD})`);
-    console.log(`  Current cloning status: ${isCloning ? 'IN PROGRESS' : 'IDLE'}`);
+    console.log(`  EMOTIONS: ${recordedEmotions} samples (threshold: ${this.CLONING_THRESHOLD}) - Cloning: ${emotionsCloning ? 'IN PROGRESS' : 'IDLE'}`);
+    console.log(`  SOUNDS: ${recordedSounds} samples (threshold: ${this.CLONING_THRESHOLD}) - Cloning: ${soundsCloning ? 'IN PROGRESS' : 'IDLE'}`);
+    console.log(`  MODULATIONS: ${recordedModulations} samples (threshold: ${this.CLONING_THRESHOLD}) - Cloning: ${modulationsCloning ? 'IN PROGRESS' : 'IDLE'}`);
 
     // Check if any category meets threshold for auto-trigger
     if (recordedEmotions >= this.CLONING_THRESHOLD) {
-      console.log(`🎯 EMOTIONS THRESHOLD MET: ${recordedEmotions} >= ${this.CLONING_THRESHOLD} - Will trigger ElevenLabs cloning`);
+      console.log(`🎯 EMOTIONS THRESHOLD MET: ${recordedEmotions} >= ${this.CLONING_THRESHOLD} - Ready for manual cloning`);
     }
     if (recordedSounds >= this.CLONING_THRESHOLD) {
-      console.log(`🎯 SOUNDS THRESHOLD MET: ${recordedSounds} >= ${this.CLONING_THRESHOLD} - Will trigger ElevenLabs cloning`);
+      console.log(`🎯 SOUNDS THRESHOLD MET: ${recordedSounds} >= ${this.CLONING_THRESHOLD} - Ready for manual cloning`);
     }
     if (recordedModulations >= this.CLONING_THRESHOLD) {
-      console.log(`🎯 MODULATIONS THRESHOLD MET: ${recordedModulations} >= ${this.CLONING_THRESHOLD} - Will trigger ElevenLabs cloning`);
+      console.log(`🎯 MODULATIONS THRESHOLD MET: ${recordedModulations} >= ${this.CLONING_THRESHOLD} - Ready for manual cloning`);
     }
 
     const sessionData: VoiceCloningSessionData = {
@@ -95,14 +96,14 @@ export class VoiceCloningSessionManager {
       sounds_not_cloned: recordedSounds,
       modulations_not_cloned: recordedModulations,
       cloning_in_progress: {
-        emotions: isCloning,
-        sounds: isCloning,
-        modulations: isCloning
+        emotions: emotionsCloning,
+        sounds: soundsCloning,
+        modulations: modulationsCloning
       },
       cloning_status: {
-        emotions: isCloning ? 'cloning' : (recordedEmotions === 0 ? 'idle' : 'idle'),
-        sounds: isCloning ? 'cloning' : (recordedSounds === 0 ? 'idle' : 'idle'),
-        modulations: isCloning ? 'cloning' : (recordedModulations === 0 ? 'idle' : 'idle')
+        emotions: emotionsCloning ? 'cloning' : (recordedEmotions === 0 ? 'idle' : 'idle'),
+        sounds: soundsCloning ? 'cloning' : (recordedSounds === 0 ? 'idle' : 'idle'),
+        modulations: modulationsCloning ? 'cloning' : (recordedModulations === 0 ? 'idle' : 'idle')
       }
     };
 
@@ -112,13 +113,13 @@ export class VoiceCloningSessionManager {
     // DISABLED: No automatic triggering - user requested manual control only
     // Check eligible categories for logging but don't auto-trigger
     const eligibleCategories: VoiceCategoryType[] = [];
-    if (recordedEmotions >= this.CLONING_THRESHOLD && !isCloning) {
+    if (recordedEmotions >= this.CLONING_THRESHOLD && !emotionsCloning) {
       eligibleCategories.push('emotions');
     }
-    if (recordedSounds >= this.CLONING_THRESHOLD && !isCloning) {
+    if (recordedSounds >= this.CLONING_THRESHOLD && !soundsCloning) {
       eligibleCategories.push('sounds');
     }
-    if (recordedModulations >= this.CLONING_THRESHOLD && !isCloning) {
+    if (recordedModulations >= this.CLONING_THRESHOLD && !modulationsCloning) {
       eligibleCategories.push('modulations');
     }
     
