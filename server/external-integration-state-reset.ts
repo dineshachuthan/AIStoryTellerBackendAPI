@@ -145,7 +145,7 @@ export class ExternalIntegrationStateReset {
       const { storage } = await import('./storage');
       
       // Reset any stuck video generations to failed status
-      const stuckVideos = await storage.getStuckVideoGenerations(Date.now() - 300000); // 5 min timeout
+      const stuckVideos = await storage.getStuckVideoGenerations(new Date(Date.now() - 300000)); // 5 min timeout
       
       for (const video of stuckVideos) {
         if (video.userId === userId) {
@@ -274,7 +274,7 @@ export class ExternalIntegrationStateReset {
       const stuckTrainingThreshold = Date.now() - timeouts.voiceTrainingTimeout;
       
       // Clean up stuck video generations
-      const stuckVideos = await storage.getStuckVideoGenerations(stuckTrainingThreshold);
+      const stuckVideos = await storage.getStuckVideoGenerations(new Date(stuckTrainingThreshold));
       
       for (const video of stuckVideos) {
         await this.resetIntegrationState({

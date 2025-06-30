@@ -246,16 +246,16 @@ export const userEmotionVoices = pgTable("user_emotion_voices", {
   id: serial("id").primaryKey(),
   userVoiceProfileId: integer("user_voice_profile_id").references(() => userVoiceProfiles.id).notNull(),
   emotion: varchar("emotion").notNull(), // happy, sad, angry, etc.
-  elevenLabsVoiceId: varchar("elevenlabs_voice_id"), // unique voice ID from ElevenLabs
+  elevenLabsVoiceId: varchar("elevenlabs_voice_id"), // unique voice ID from ElevenLabs - nullable until trained
   voiceName: varchar("voice_name").notNull(), // "John_Happy", "John_Sad"
-  trainingStatus: varchar("training_status").notNull().default("collecting"), // collecting, training, completed, failed
-  sampleCount: integer("sample_count").default(0), // how many samples used for this emotion
-  qualityScore: doublePrecision("quality_score"), // ElevenLabs quality rating
-  voiceSettings: jsonb("voice_settings"), // stability, similarity_boost, etc.
-  trainingMetadata: jsonb("training_metadata"), // ElevenLabs response data
-  trainingCost: numeric("training_cost"), // track API cost spent
-  lastUsedAt: timestamp("last_used_at"),
-  usageCount: integer("usage_count").default(0),
+  trainingStatus: varchar("training_status").notNull().default("pending"), // collecting, training, completed, failed
+  sampleCount: integer("sample_count").default(0), // how many samples used for this emotion - nullable with default
+  qualityScore: doublePrecision("quality_score"), // ElevenLabs quality rating - nullable until training complete
+  voiceSettings: jsonb("voice_settings"), // stability, similarity_boost, etc. - nullable
+  trainingMetadata: jsonb("training_metadata"), // ElevenLabs response data - nullable
+  trainingCost: numeric("training_cost"), // track API cost spent - nullable
+  lastUsedAt: timestamp("last_used_at"), // nullable
+  usageCount: integer("usage_count").default(0), // nullable with default
   neverDelete: boolean("never_delete").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -394,25 +394,28 @@ export const emotionTemplates = pgTable("emotion_templates", {
 export const userVoiceProfiles = pgTable("user_voice_profiles", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").references(() => users.id).notNull(),
-  profileName: varchar("profile_name").notNull(), // Required field that was missing
-  baseVoice: text("base_voice").notNull(), // Required base voice for training
-  provider: varchar("provider").notNull().default("elevenlabs"), // elevenlabs, openai
-  voiceName: varchar("voice_name").notNull(),
-  status: varchar("status").notNull().default("collecting"), // collecting, training, completed, failed
-  elevenLabsVoiceId: text("elevenlabs_voice_id"), // ElevenLabs voice ID, using text for unlimited length
-  totalEmotionsRequired: integer("total_emotions_required").default(8),
-  emotionsCompleted: integer("emotions_completed").default(0),
-  totalSamples: integer("total_samples").default(0),
-  overallQualityScore: doublePrecision("overall_quality_score"), // Average quality across all emotions
-  metadata: jsonb("metadata"), // Provider-specific metadata
+  profileName: varchar("profile_name", { length: 255 }).notNull(), // Required field that was missing
+  elevenLabsVoiceId: text("elevenlabs_voice_id"), // ElevenLabs voice ID, nullable
+  baseVoice: text("base_voice").notNull().default("alloy"), // Required base voice for training
+  trainingStatus: varchar("training_status", { length: 50 }).notNull().default("pending"), // Fixed column name and default
+  totalSamples: integer("total_samples").default(0), // Nullable with default
+  trainingCost: numeric("training_cost"), // Nullable - set by system after training
+  qualityScore: doublePrecision("quality_score"), // Nullable - set by system after training
   isActive: boolean("is_active").default(true),
-  trainingStartedAt: timestamp("training_started_at"),
-  trainingCompletedAt: timestamp("training_completed_at"),
-  lastTrainingAt: timestamp("last_training_at"), // Track when training was last attempted
-  lastTrainingError: text("last_training_error"),
-  isReadyForNarration: boolean("is_ready_for_narration").default(false),
+  metadata: jsonb("metadata"), // Provider-specific metadata
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  provider: varchar("provider").default("elevenlabs"),
+  voiceName: text("voice_name").default("Custom Voice"),
+  status: varchar("status").default("none"), // Keep for backward compatibility
+  totalEmotionsRequired: integer("total_emotions_required").default(5),
+  emotionsCompleted: integer("emotions_completed").default(0),
+  overallQualityScore: doublePrecision("overall_quality_score").default(0.0),
+  trainingStartedAt: timestamp("training_started_at"),
+  trainingCompletedAt: timestamp("training_completed_at"),
+  lastTrainingError: text("last_training_error"),
+  isReadyForNarration: boolean("is_ready_for_narration").default(false),
+  lastTrainingAt: timestamp("last_training_at"),
 });
 
 // Voice generation cache for performance
