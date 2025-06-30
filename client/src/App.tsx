@@ -66,6 +66,7 @@ function AppContent() {
           <Route path="/oauth-test" component={OAuthTest} />
           {isAuthenticated ? (
             <>
+              <VoiceSessionInitializer />
               {/* Top Navigation for all authenticated pages except Home */}
               <Route path="/" component={Home} />
               <Route path="/stories" component={StoryLibrary} />
