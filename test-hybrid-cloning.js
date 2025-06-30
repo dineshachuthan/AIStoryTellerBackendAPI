@@ -92,8 +92,8 @@ async function testHybridCloning() {
       console.log('⚠️  No existing voice profile found - will be created during cloning');
     }
     
-    // 5. Test actual hybrid cloning trigger
-    console.log('\n📋 Step 5: Triggering hybrid voice cloning...');
+    // 6. Test actual hybrid cloning trigger
+    console.log('\n📋 Step 6: Triggering hybrid voice cloning...');
     
     try {
       const hybridResult = await voiceTrainingService.triggerHybridEmotionCloning(TEST_USER_ID);

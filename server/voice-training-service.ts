@@ -149,7 +149,24 @@ export class VoiceTrainingService {
 
         // Create ONE voice clone from all emotion samples
         console.log(`[HybridCloning] Creating ONE voice clone from ${hybridSamples.length} different emotion samples using ${voiceProvider.constructor.name}`);
-        const cloneResult = await voiceProvider.trainVoice(userId, hybridSamples);
+        
+        // Get or create user voice profile
+        let userProfile = await storage.getUserVoiceProfile(userId);
+        if (!userProfile) {
+          userProfile = await storage.createUserVoiceProfile({
+            userId: userId,
+            trainingStatus: 'training',
+            trainingStartedAt: new Date()
+          });
+        }
+        
+        const voiceTrainingRequest = {
+          userId: userId,
+          voiceProfileId: userProfile.id,
+          samples: hybridSamples
+        };
+        
+        const cloneResult = await voiceProvider.trainVoice(voiceTrainingRequest);
         
         if (!cloneResult.success || !cloneResult.voiceId) {
           clearTimeout(timeout);
@@ -198,7 +215,7 @@ export class VoiceTrainingService {
         await storage.createUserEmotionVoice({
           userVoiceProfileId: await this.ensureUserVoiceProfile(userId),
           emotion: emotion,
-          elevenlabsVoiceId: voiceId, // Same voice clone for all emotions
+          elevenLabsVoiceId: voiceId, // Same voice clone for all emotions
           trainingStatus: 'completed',
           sampleCount: 1, // Each emotion contributes 1 sample to the hybrid clone
           qualityScore: 0.8, // Default quality for hybrid clones

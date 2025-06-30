@@ -68,7 +68,13 @@ export class ElevenLabsModule extends BaseVoiceProvider {
         try {
           this.log('info', `Processing sample ${index + 1}/${request.samples.length}: ${sample.emotion}`);
           
-          const audioResponse = await fetch(sample.audioUrl);
+          // Convert relative path to absolute URL for fetch
+          const audioUrl = sample.audioUrl.startsWith('http') 
+            ? sample.audioUrl 
+            : `http://localhost:5000${sample.audioUrl}`;
+          
+          this.log('info', `Fetching audio from: ${audioUrl}`);
+          const audioResponse = await fetch(audioUrl);
           if (!audioResponse.ok) {
             throw new Error(`Failed to fetch audio for ${sample.emotion}: HTTP ${audioResponse.status}`);
           }
