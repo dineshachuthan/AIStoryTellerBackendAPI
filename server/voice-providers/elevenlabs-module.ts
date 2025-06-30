@@ -10,6 +10,7 @@ const { ElevenLabsClient } = pkg;
 import { BaseVoiceProvider } from './base-voice-provider';
 import { VoiceProviderConfig, VoiceTrainingRequest, VoiceTrainingResult } from './provider-manager';
 import { ExternalIntegrationStateReset } from '../external-integration-state-reset';
+import { AUDIO_FORMAT_CONFIG } from '@shared/audio-config';
 
 export class ElevenLabsModule extends BaseVoiceProvider {
   private client: any;
@@ -197,7 +198,6 @@ export class ElevenLabsModule extends BaseVoiceProvider {
 
   private detectAudioFormat(buffer: Buffer): string | null {
     // Use existing audio format detection from shared config
-    const { AUDIO_FORMAT_CONFIG } = require('@shared/audio-config');
     
     const header = buffer.subarray(0, 12);
     
