@@ -17,6 +17,7 @@ import { db } from "./db";
 import { eq, desc, and } from "drizzle-orm";
 import { videoGenerations } from "@shared/schema";
 import { audioService } from "./audio-service";
+import { VOICE_CLONING_CONFIG } from "@shared/voice-config";
 
 import { storyNarrator } from "./story-narrator";
 import { grandmaVoiceNarrator } from "./voice-narrator";
@@ -4271,38 +4272,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Check if threshold reached for this category
         if (VoiceCloningSessionManager.shouldTriggerCloning(req, category)) {
-          console.log(`🎯 Category '${category}' reached 5 samples threshold - triggering ElevenLabs cloning`);
+          console.log(`🎯 Category '${category}' reached ${VOICE_CLONING_CONFIG.sampleThreshold} samples threshold - triggering ElevenLabs cloning`);
           
           // Set cloning in progress (disables voice samples button)
           VoiceCloningSessionManager.setCloningInProgress(req, category);
           
-          // Trigger ElevenLabs training asynchronously (fully background processing)
-          const { voiceTrainingService } = await import('./voice-training-service');
+          // Use timeout service for guaranteed bounded execution time
+          const { VoiceCloningTimeoutService } = await import('./voice-cloning-timeout-service');
           
-          // Start background thread for training with proper timeout - user can continue using app
+          // Start background cloning with proper timeout/retry - NO INFINITE LOOPS
           setTimeout(async () => {
-            const timeoutMs = VOICE_CLONING_CONFIG.training.timeoutMinutes * 60 * 1000;
-            
-            // Create timeout promise
-            const timeoutPromise = new Promise((_, reject) => {
-              setTimeout(() => reject(new Error('Voice cloning timeout after 2 minutes')), timeoutMs);
-            });
-            
             try {
-              const result = await Promise.race([
-                voiceTrainingService.triggerAutomaticTraining(userId),
-                timeoutPromise
-              ]);
-              
-              if (result.success) {
-                console.log(`✅ ElevenLabs cloning completed for user ${userId}, category '${category}', voice ID: ${result.voiceId}`);
-                VoiceCloningSessionManager.completeCategoryCloning(userId, category, true);
-              } else {
-                console.error(`❌ ElevenLabs cloning failed for user ${userId}, category '${category}': ${result.error}`);
-                VoiceCloningSessionManager.completeCategoryCloning(userId, category, false);
-              }
+              await VoiceCloningTimeoutService.startVoiceCloning(userId, category);
             } catch (error) {
-              console.error(`❌ ElevenLabs cloning error for user ${userId}, category '${category}':`, error);
+              console.error(`❌ Voice cloning service error for ${userId} ${category}:`, error);
               VoiceCloningSessionManager.completeCategoryCloning(userId, category, false);
             }
           }, 100); // Small delay to ensure response is sent before background processing
