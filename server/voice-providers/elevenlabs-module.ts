@@ -8,6 +8,7 @@ import { VoiceModule, VoiceProviderConfig, VoiceTrainingRequest, VoiceTrainingRe
 
 export class ElevenLabsModule implements VoiceModule {
   private config: VoiceProviderConfig;
+  private client: ElevenLabsClient;
 
   constructor(config: VoiceProviderConfig) {
     this.config = config;
@@ -15,6 +16,11 @@ export class ElevenLabsModule implements VoiceModule {
     if (!config.apiKey) {
       throw new Error('ElevenLabs API key is required');
     }
+
+    // Initialize ElevenLabs client with API key
+    this.client = new ElevenLabsClient({
+      apiKey: config.apiKey
+    });
   }
 
   async trainVoice(request: VoiceTrainingRequest): Promise<VoiceTrainingResult> {
@@ -24,33 +30,16 @@ export class ElevenLabsModule implements VoiceModule {
     console.log(`[ElevenLabs] Voice profile target ID: ${request.voiceProfileId} - this will be updated with the resulting ElevenLabs voice identifier upon successful completion`);
     console.log(`[ElevenLabs] Sample emotion types detected: ${request.samples.map(s => s.emotion).join(', ')} - these will provide emotional range for the synthesized voice`);
     console.log(`[ElevenLabs] Audio URLs being processed: ${request.samples.map((s, i) => `${i+1}. ${s.emotion}: ${s.audioUrl.substring(0, 100)}...`).join(' | ')}`);
-    console.log(`[ElevenLabs] ElevenLabs API configuration details: Base URL: ${this.config.baseUrl}, Timeout: ${this.config.timeout}ms, API Key present: ${!!this.config.apiKey}`);
+    console.log(`[ElevenLabs] ElevenLabs SDK client initialized with API key, proceeding with official voice cloning workflow`);
     
     try {
-      // Prepare FormData for ElevenLabs API
       const voiceName = `User_${request.userId}_Voice_${Date.now()}`;
       console.log(`[ElevenLabs] Generating unique voice identifier for ElevenLabs: "${voiceName}" - this ensures no naming conflicts in the ElevenLabs voice library`);
       
-      const formData = new FormData();
-      formData.append('name', voiceName);
-      formData.append('description', `Voice clone for user ${request.userId} with ${request.samples.length} emotion samples created on ${new Date().toISOString()}`);
-      
-      console.log(`[ElevenLabs] FormData preparation initiated - name and description fields populated for ElevenLabs voice creation API endpoint`);
-
-      // Add emotion labels
-      const emotionLabels: Record<string, string> = {};
-      for (const sample of request.samples) {
-        emotionLabels[sample.emotion] = `High-quality voice sample expressing ${sample.emotion} emotion for character voice synthesis and narrative generation`;
-      }
-      formData.append('labels', JSON.stringify(emotionLabels));
-      
-      console.log(`[ElevenLabs] Emotion label mapping created with detailed descriptions: ${JSON.stringify(emotionLabels, null, 2)} - this metadata helps ElevenLabs AI understand emotional context for better voice synthesis`);
-      console.log(`[ElevenLabs] FormData labels field populated with comprehensive emotion mapping. Proceeding to audio file download and attachment phase...`);
-
-      // Download and add audio files
+      // Download and prepare audio files for the SDK
+      const audioFiles: File[] = [];
       console.log(`[ElevenLabs] ================================ AUDIO FILE PROCESSING PHASE INITIATED ================================`);
       console.log(`[ElevenLabs] Beginning systematic download and processing of ${request.samples.length} audio files from user's voice sample collection`);
-      console.log(`[ElevenLabs] Each audio file will be fetched via HTTP, validated for integrity, converted to Buffer format, and attached to FormData for ElevenLabs API transmission`);
       
       for (let index = 0; index < request.samples.length; index++) {
         const sample = request.samples[index];
@@ -59,7 +48,6 @@ export class ElevenLabsModule implements VoiceModule {
           console.log(`[ElevenLabs] ------------------------ PROCESSING AUDIO SAMPLE ${index + 1}/${request.samples.length} ------------------------`);
           console.log(`[ElevenLabs] Current sample details: Emotion="${sample.emotion}", AudioURL="${sample.audioUrl}", IsLocked=${sample.isLocked}, ProcessingIndex=${index}`);
           console.log(`[ElevenLabs] Initiating HTTP fetch request to retrieve audio data from URL: ${sample.audioUrl} using fetch() with automatic retry logic`);
-          console.log(`[ElevenLabs] Expected audio format: MP3/WAV/WebM, Expected size range: 50KB-5MB, Processing timeout: 30 seconds maximum per file`);
           
           const audioResponse = await fetch(sample.audioUrl);
           console.log(`[ElevenLabs] HTTP fetch completed for ${sample.emotion} sample: Status=${audioResponse.status}, StatusText="${audioResponse.statusText}", ContentType="${audioResponse.headers.get('content-type')}", ContentLength="${audioResponse.headers.get('content-length')} bytes"`);
@@ -84,13 +72,13 @@ export class ElevenLabsModule implements VoiceModule {
             console.warn(`[ElevenLabs] WARNING - Unusually small audio file detected for ${sample.emotion}: ${audioBuffer.length} bytes. This may indicate corrupted or incomplete audio data. Minimum recommended size is 10KB for quality voice synthesis.`);
           }
           
-          console.log(`[ElevenLabs] Audio validation passed for ${sample.emotion}. Creating Blob object for multipart form submission to ElevenLabs API...`);
-          const blob = new Blob([audioBuffer], { type: 'audio/mpeg' });
+          console.log(`[ElevenLabs] Audio validation passed for ${sample.emotion}. Creating File object for ElevenLabs SDK voice cloning API...`);
           const fileName = `${sample.emotion}_sample_${index + 1}_user_${request.userId}.mp3`;
-          formData.append('files', blob, fileName);
+          const audioFile = new File([audioBuffer], fileName, { type: 'audio/mpeg' });
+          audioFiles.push(audioFile);
           
-          console.log(`[ElevenLabs] Successfully processed and attached ${sample.emotion} sample to FormData: FileName="${fileName}", FileSize=${audioBuffer.length} bytes, BlobType="audio/mpeg", FormDataFieldName="files"`);
-          console.log(`[ElevenLabs] Audio sample ${index + 1}/${request.samples.length} (${sample.emotion}) processing completed successfully. Ready for ElevenLabs API transmission.`);
+          console.log(`[ElevenLabs] Successfully processed and prepared ${sample.emotion} sample: FileName="${fileName}", FileSize=${audioBuffer.length} bytes, FileType="audio/mpeg"`);
+          console.log(`[ElevenLabs] Audio sample ${index + 1}/${request.samples.length} (${sample.emotion}) processing completed successfully. Ready for ElevenLabs SDK submission.`);
         } catch (error) {
           console.error(`[ElevenLabs] ========================== CRITICAL AUDIO PROCESSING ERROR ==========================`);
           console.error(`[ElevenLabs] Failed to process audio sample ${index + 1}/${request.samples.length} for emotion "${sample.emotion}"`);
@@ -103,183 +91,120 @@ export class ElevenLabsModule implements VoiceModule {
       }
       
       console.log(`[ElevenLabs] ================================ AUDIO PROCESSING PHASE COMPLETED SUCCESSFULLY ================================`);
-      console.log(`[ElevenLabs] All ${request.samples.length} audio samples have been successfully downloaded, validated, and attached to FormData for ElevenLabs API submission`);
+      console.log(`[ElevenLabs] All ${request.samples.length} audio samples have been successfully downloaded, validated, and prepared for ElevenLabs SDK voice cloning API`);
 
-      // Make API call to ElevenLabs
-      console.log(`[ElevenLabs] ================================ ELEVENLABS API TRANSMISSION PHASE INITIATED ================================`);
-      console.log(`[ElevenLabs] Preparing to transmit comprehensive voice cloning request to ElevenLabs servers using official API endpoint`);
-      console.log(`[ElevenLabs] Target API endpoint: ${this.config.baseUrl}/voices/add - this is the official ElevenLabs voice cloning creation endpoint`);
-      console.log(`[ElevenLabs] Request method: POST with multipart/form-data body containing ${request.samples.length} audio files and comprehensive metadata`);
-      console.log(`[ElevenLabs] Authentication: Using xi-api-key header with length ${this.config.apiKey.length} characters (API key validated during initialization)`);
-      console.log(`[ElevenLabs] FormData contents: voice name, description, emotion labels, and ${request.samples.length} audio files totaling approximately ${formData.get('files') ? 'multiple MB' : 'unknown size'} of audio data`);
-      console.log(`[ElevenLabs] Request timeout configuration: ${this.config.timeout}ms maximum wait time before automatic retry or failure`);
-      console.log(`[ElevenLabs] Initiating HTTP POST request to ElevenLabs API servers now...`);
+      // Use ElevenLabs SDK to create voice clone
+      console.log(`[ElevenLabs] ================================ ELEVENLABS SDK API CALL INITIATED ================================`);
+      console.log(`[ElevenLabs] Calling ElevenLabs SDK voices.clone() method with ${audioFiles.length} audio files and voice name "${voiceName}"`);
+      console.log(`[ElevenLabs] This will create a new cloned voice in your ElevenLabs account and should appear in your analytics dashboard`);
       
-      const requestStartTime = Date.now();
-      const response = await fetch(`${this.config.baseUrl}/voices/add`, {
-        method: 'POST',
-        headers: {
-          'xi-api-key': this.config.apiKey,
-        },
-        body: formData,
+      const voiceCloneResult = await this.client.voices.add({
+        name: voiceName,
+        description: `Voice clone for user ${request.userId} with ${request.samples.length} emotion samples created on ${new Date().toISOString()}`,
+        files: audioFiles
       });
-      const requestDuration = Date.now() - requestStartTime;
+      
+      console.log(`[ElevenLabs] ================================ ELEVENLABS API CALL COMPLETED SUCCESSFULLY ================================`);
+      console.log(`[ElevenLabs] Voice cloning operation completed successfully! New ElevenLabs voice created with ID: ${voiceCloneResult.voice_id}`);
+      console.log(`[ElevenLabs] Voice details: Name="${voiceCloneResult.name}", Category="${voiceCloneResult.category}", Preview URL available: ${!!voiceCloneResult.preview_url}`);
+      console.log(`[ElevenLabs] This voice clone should now appear in your ElevenLabs dashboard and usage analytics`);
+      console.log(`[ElevenLabs] Voice training completed successfully. Returning success result with ElevenLabs voice ID for database storage.`);
 
-      console.log(`[ElevenLabs] ========================== ELEVENLABS API RESPONSE RECEIVED ==========================`);
-      console.log(`[ElevenLabs] HTTP request completed in ${requestDuration}ms - response received from ElevenLabs servers`);
-      console.log(`[ElevenLabs] Response status: HTTP ${response.status} ${response.statusText} - ${response.ok ? 'SUCCESS' : 'ERROR'} response from ElevenLabs API`);
-      console.log(`[ElevenLabs] Response headers: Content-Type="${response.headers.get('content-type')}", Content-Length="${response.headers.get('content-length')}", Server="${response.headers.get('server')}"`);
-      console.log(`[ElevenLabs] Response URL: ${response.url} - final URL after any redirects from ElevenLabs infrastructure`);
-      console.log(`[ElevenLabs] API call timing: Request initiated at ${new Date(requestStartTime).toISOString()}, completed at ${new Date().toISOString()}, duration: ${requestDuration}ms`);
-      
-      if (!response.ok) {
-        console.error(`[ElevenLabs] ========================== CRITICAL API ERROR DETECTED ==========================`);
-        console.error(`[ElevenLabs] ElevenLabs API returned error status: HTTP ${response.status} ${response.statusText}`);
-        console.error(`[ElevenLabs] This indicates a problem with the API request, authentication, or ElevenLabs service availability`);
-        console.error(`[ElevenLabs] Request details: Method=POST, Endpoint=${this.config.baseUrl}/voices/add, Auth=xi-api-key (${this.config.apiKey.length} chars)`);
-        console.error(`[ElevenLabs] Attempting to retrieve detailed error message from ElevenLabs API response body...`);
-        
-        const error = await response.text();
-        console.error(`[ElevenLabs] ElevenLabs API error response body (full text): ${error}`);
-        console.error(`[ElevenLabs] Error response length: ${error.length} characters`);
-        console.error(`[ElevenLabs] Common causes: Invalid API key, insufficient credits, malformed request, audio file format issues, or ElevenLabs service downtime`);
-        console.error(`[ElevenLabs] Voice training process cannot continue. Manual intervention required to resolve API error.`);
-        throw new Error(`ElevenLabs API error: HTTP ${response.status} ${response.statusText} - ${error}`);
-      }
-
-      console.log(`[ElevenLabs] ============================= API SUCCESS - PARSING RESPONSE =============================`);
-      console.log(`[ElevenLabs] ElevenLabs API request successful! Processing response data from voice cloning operation...`);
-      console.log(`[ElevenLabs] Response indicates successful voice creation. Parsing JSON response to extract voice ID and metadata...`);
-      
-      const result = await response.json();
-      console.log(`[ElevenLabs] ============================= VOICE CLONING OPERATION COMPLETED SUCCESSFULLY =============================`);
-      console.log(`[ElevenLabs] ElevenLabs API response parsed successfully. Voice cloning operation completed with full details:`);
-      console.log(`[ElevenLabs] Response data structure: ${JSON.stringify(result, null, 2)}`);
-      console.log(`[ElevenLabs] Voice ID generated: ${result.voice_id || result.id || 'ID not found in response'}`);
-      console.log(`[ElevenLabs] Voice name assigned: ${result.name || 'Name not found in response'}`);
-      console.log(`[ElevenLabs] Voice status: ${result.status || 'Status not found in response'}`);
-      console.log(`[ElevenLabs] Total processing time: ${Date.now() - requestStartTime + requestDuration}ms from initiation to completion`);
-      console.log(`[ElevenLabs] Voice cloning successful for user ${request.userId} with voice profile ${request.voiceProfileId}`);
-      
       return {
         success: true,
-        voiceId: result.voice_id,
+        voiceId: voiceCloneResult.voice_id,
         samplesProcessed: request.samples.length,
         metadata: {
-          provider: 'elevenlabs',
-          emotionCount: request.samples.length,
-          emotions: request.samples.map(s => s.emotion),
-          created: new Date().toISOString(),
-          elevenLabsData: result
+          elevenlabsVoiceId: voiceCloneResult.voice_id,
+          voiceName: voiceCloneResult.name,
+          category: voiceCloneResult.category,
+          previewUrl: voiceCloneResult.preview_url,
+          createdAt: new Date().toISOString(),
+          emotionsProcessed: request.samples.map(s => s.emotion)
         }
       };
-    } catch (error) {
-      console.error('[ElevenLabs] Voice training failed:', error);
       
-      // Reset state using centralized service
-      const { externalIntegrationStateReset } = await import('../external-integration-state-reset');
-      await externalIntegrationStateReset.resetIntegrationState({
-        userId: request.userId,
-        provider: 'elevenlabs',
-        operationType: 'voice_training',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
+    } catch (error) {
+      console.error(`[ElevenLabs] ========================== CRITICAL VOICE TRAINING ERROR ==========================`);
+      console.error(`[ElevenLabs] Voice training failed for user ${request.userId} with comprehensive error details below:`);
+      console.error(`[ElevenLabs] Error type: ${error instanceof Error ? error.constructor.name : typeof error}`);
+      console.error(`[ElevenLabs] Error message: ${error instanceof Error ? error.message : String(error)}`);
+      console.error(`[ElevenLabs] Error stack trace: ${error instanceof Error ? error.stack : 'No stack trace available'}`);
+      console.error(`[ElevenLabs] Voice profile ID affected: ${request.voiceProfileId}`);
+      console.error(`[ElevenLabs] Number of samples that were being processed: ${request.samples.length}`);
+      console.error(`[ElevenLabs] This error indicates either network connectivity issues, ElevenLabs API problems, or invalid audio data. Voice training has been aborted.`);
       
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : String(error),
         samplesProcessed: 0
       };
     }
   }
 
   async generateSpeech(text: string, voiceId: string, emotion?: string): Promise<ArrayBuffer> {
-    console.log(`[ElevenLabs] Generating speech for voice ${voiceId}${emotion ? ` with emotion ${emotion}` : ''}`);
+    console.log(`[ElevenLabs] Generating speech using ElevenLabs SDK for voice ID: ${voiceId}, text length: ${text.length} characters, emotion: ${emotion || 'neutral'}`);
     
     try {
-      // Get emotion-specific voice settings
-      const voiceSettings = this.getEmotionSettings(emotion);
-      
-      const response = await fetch(`${this.config.baseUrl}/text-to-speech/${voiceId}`, {
-        method: 'POST',
-        headers: {
-          'xi-api-key': this.config.apiKey,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          text,
-          model_id: this.config.modelName,
-          voice_settings: voiceSettings
-        }),
+      const audioStream = await this.client.textToSpeech.stream(voiceId, {
+        text: text,
+        model_id: 'eleven_multilingual_v2'
       });
-
-      if (!response.ok) {
-        const error = await response.text();
-        throw new Error(`ElevenLabs TTS error: ${response.status} - ${error}`);
+      
+      // Convert stream to ArrayBuffer
+      const chunks: Uint8Array[] = [];
+      for await (const chunk of audioStream) {
+        chunks.push(chunk);
       }
-
-      return await response.arrayBuffer();
+      
+      const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
+      const result = new Uint8Array(totalLength);
+      let offset = 0;
+      
+      for (const chunk of chunks) {
+        result.set(chunk, offset);
+        offset += chunk.length;
+      }
+      
+      console.log(`[ElevenLabs] Speech generation completed successfully using ElevenLabs SDK. Generated ${result.length} bytes of audio data`);
+      return result.buffer;
+      
     } catch (error) {
-      console.error('[ElevenLabs] Speech generation failed:', error);
+      console.error(`[ElevenLabs] Speech generation failed:`, error);
       throw error;
     }
   }
 
   async getVoiceStatus(voiceId: string): Promise<{ status: string; ready: boolean }> {
+    console.log(`[ElevenLabs] Checking voice status for ElevenLabs voice ID: ${voiceId}`);
+    
     try {
-      const response = await fetch(`${this.config.baseUrl}/voices/${voiceId}`, {
-        headers: {
-          'xi-api-key': this.config.apiKey,
-        },
-      });
-
-      if (!response.ok) {
-        return { status: 'error', ready: false };
-      }
-
-      const voiceData = await response.json();
+      const voice = await this.client.voices.get(voiceId);
+      console.log(`[ElevenLabs] Voice status retrieved: ${voice.name}, Category: ${voice.category}`);
       
-      // ElevenLabs voices are typically ready immediately after creation
       return {
-        status: voiceData.fine_tuning?.is_allowed_to_fine_tune ? 'ready' : 'processing',
+        status: 'ready',
         ready: true
       };
     } catch (error) {
-      console.error('[ElevenLabs] Voice status check failed:', error);
-      return { status: 'error', ready: false };
+      console.error(`[ElevenLabs] Failed to get voice status:`, error);
+      return {
+        status: 'error',
+        ready: false
+      };
     }
   }
 
   private getEmotionSettings(emotion?: string): any {
-    // Default voice settings
-    const baseSettings = {
-      stability: 0.75,
-      similarity_boost: 0.75,
-      style: 0.0,
-      use_speaker_boost: true
+    // ElevenLabs emotion settings based on emotion type
+    const emotionMap: Record<string, any> = {
+      happy: { stability: 0.5, similarity_boost: 0.8 },
+      sad: { stability: 0.7, similarity_boost: 0.6 },
+      angry: { stability: 0.3, similarity_boost: 0.9 },
+      calm: { stability: 0.8, similarity_boost: 0.7 },
+      excited: { stability: 0.4, similarity_boost: 0.8 }
     };
-
-    // Emotion-specific adjustments
-    if (!emotion) return baseSettings;
-
-    switch (emotion.toLowerCase()) {
-      case 'excitement':
-      case 'joy':
-        return { ...baseSettings, stability: 0.6, style: 0.2 };
-      case 'anger':
-      case 'frustration':
-        return { ...baseSettings, stability: 0.8, style: 0.3 };
-      case 'sadness':
-      case 'melancholy':
-        return { ...baseSettings, stability: 0.9, style: 0.1 };
-      case 'fear':
-      case 'anxiety':
-        return { ...baseSettings, stability: 0.5, style: 0.4 };
-      case 'calm':
-      case 'peaceful':
-        return { ...baseSettings, stability: 0.95, style: 0.0 };
-      default:
-        return baseSettings;
-    }
+    
+    return emotionMap[emotion || 'neutral'] || { stability: 0.6, similarity_boost: 0.75 };
   }
 }
