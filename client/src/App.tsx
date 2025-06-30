@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppHeader } from "@/components/app-header";
 import { AppTopNavigation } from "@/components/app-top-navigation";
+import { VoiceSessionInitializer } from "@/components/voice-session-initializer";
 import { useAuth } from "@/hooks/useAuth";
 import { sessionActivityTracker } from "@/lib/session-activity";
 import { useEffect } from "react";
