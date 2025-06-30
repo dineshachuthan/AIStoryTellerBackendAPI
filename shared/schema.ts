@@ -397,6 +397,7 @@ export const userVoiceProfiles = pgTable("user_voice_profiles", {
   provider: varchar("provider").notNull().default("elevenlabs"), // elevenlabs, openai
   voiceName: varchar("voice_name").notNull(),
   status: varchar("status").notNull().default("collecting"), // collecting, training, completed, failed
+  elevenLabsVoiceId: text("eleven_labs_voice_id"), // ElevenLabs voice ID, using text for unlimited length
   totalEmotionsRequired: integer("total_emotions_required").default(8),
   emotionsCompleted: integer("emotions_completed").default(0),
   totalSamples: integer("total_samples").default(0),
@@ -405,6 +406,7 @@ export const userVoiceProfiles = pgTable("user_voice_profiles", {
   isActive: boolean("is_active").default(true),
   trainingStartedAt: timestamp("training_started_at"),
   trainingCompletedAt: timestamp("training_completed_at"),
+  lastTrainingAt: timestamp("last_training_at"), // Track when training was last attempted
   lastTrainingError: text("last_training_error"),
   isReadyForNarration: boolean("is_ready_for_narration").default(false),
   createdAt: timestamp("created_at").defaultNow(),
