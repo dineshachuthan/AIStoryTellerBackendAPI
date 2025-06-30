@@ -54,7 +54,7 @@ export default function UploadStoryClean() {
       });
       
       // Then trigger story analysis and redirect to analysis page
-      setLocation(`/story/${response.id}`);
+      setLocation(`/analysis/${response.id}`);
     } catch (error) {
       console.error('Error creating story:', error);
     } finally {
