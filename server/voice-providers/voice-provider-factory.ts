@@ -13,7 +13,7 @@ export class VoiceProviderFactory {
   static async getModule(provider: string): Promise<VoiceModule> {
     switch (provider.toLowerCase()) {
       case 'elevenlabs':
-        const { getActiveVoiceProvider, getVoiceProviderConfig } = await import('../voice-config');
+        const { getVoiceProviderConfig } = await import('../voice-config');
         const config = getVoiceProviderConfig('elevenlabs');
         return new ElevenLabsModule(config);
       
@@ -23,6 +23,19 @@ export class VoiceProviderFactory {
       
       default:
         throw new Error(`Unsupported voice provider: ${provider}`);
+    }
+  }
+
+  /**
+   * Get active provider from configuration
+   */
+  static async getActiveProvider(): Promise<string> {
+    try {
+      const { getActiveVoiceProvider } = await import('../voice-config');
+      return getActiveVoiceProvider();
+    } catch (error) {
+      console.error('[VoiceFactory] Failed to get active provider:', error);
+      return 'elevenlabs'; // Default fallback
     }
   }
 
@@ -48,10 +61,10 @@ export class VoiceProviderFactory {
     emotion?: string,
     provider?: string
   ): Promise<ArrayBuffer> {
-    const activeProvider = provider || this.getActiveProvider();
-    const module = this.getModule(activeProvider);
+    const activeProvider = provider || await this.getActiveProvider();
+    const module = await this.getModule(activeProvider);
     
-    return module.generateSpeech(text, voiceId, emotion);
+    return await module.generateSpeech(text, voiceId, emotion);
   }
 
   /**
@@ -61,31 +74,10 @@ export class VoiceProviderFactory {
     voiceId: string,
     provider?: string
   ): Promise<{ status: string; ready: boolean }> {
-    const activeProvider = provider || this.getActiveProvider();
-    const module = this.getModule(activeProvider);
+    const activeProvider = provider || await this.getActiveProvider();
+    const module = await this.getModule(activeProvider);
     
-    return module.getVoiceStatus(voiceId);
-  }
-
-  /**
-   * Get active provider from configuration
-   */
-  static async getActiveProvider(): Promise<string> {
-    try {
-      const { getActiveVoiceProvider } = await import('../voice-config');
-      return getActiveVoiceProvider();
-    } catch (error) {
-      console.error('[VoiceFactory] Failed to get active provider:', error);
-      return 'elevenlabs'; // Default fallback
-    }
-  }
-
-  /**
-   * Get primary/active provider (first enabled provider)
-   */
-  static async getPrimaryProvider(): Promise<VoiceModule> {
-    const activeProvider = await this.getActiveProvider();
-    return this.getModule(activeProvider);
+    return await module.getVoiceStatus(voiceId);
   }
 
   /**
@@ -103,39 +95,12 @@ export class VoiceProviderFactory {
   /**
    * Check if provider is available
    */
-  static isProviderAvailable(provider: string): boolean {
+  static async isProviderAvailable(provider: string): Promise<boolean> {
     try {
-      this.getModule(provider);
+      await this.getModule(provider);
       return true;
     } catch {
       return false;
     }
-  }
-
-  /**
-   * Train voice using active provider
-   */
-  static async trainVoice(request: VoiceTrainingRequest): Promise<VoiceTrainingResult> {
-    const activeProvider = await this.getActiveProvider();
-    const module = await this.getModule(activeProvider);
-    return await module.trainVoice(request);
-  }
-
-  /**
-   * Generate speech using active provider
-   */
-  static async generateSpeech(text: string, voiceId: string, emotion?: string): Promise<ArrayBuffer> {
-    const activeProvider = await this.getActiveProvider();
-    const module = await this.getModule(activeProvider);
-    return await module.generateSpeech(text, voiceId, emotion);
-  }
-
-  /**
-   * Get voice status using active provider
-   */
-  static async getVoiceStatus(voiceId: string): Promise<{ status: string; ready: boolean }> {
-    const activeProvider = await this.getActiveProvider();
-    const module = await this.getModule(activeProvider);
-    return await module.getVoiceStatus(voiceId);
   }
 }

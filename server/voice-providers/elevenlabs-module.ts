@@ -3,7 +3,7 @@
  * Handles voice cloning and speech generation using ElevenLabs API
  */
 
-import { ElevenLabsApi, ElevenLabsVoice } from '@elevenlabs/elevenlabs-js';
+import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
 import { VoiceModule, VoiceProviderConfig, VoiceTrainingRequest, VoiceTrainingResult } from './provider-manager';
 
 export class ElevenLabsModule implements VoiceModule {
@@ -24,7 +24,7 @@ export class ElevenLabsModule implements VoiceModule {
     console.log(`[ElevenLabs] Voice profile target ID: ${request.voiceProfileId} - this will be updated with the resulting ElevenLabs voice identifier upon successful completion`);
     console.log(`[ElevenLabs] Sample emotion types detected: ${request.samples.map(s => s.emotion).join(', ')} - these will provide emotional range for the synthesized voice`);
     console.log(`[ElevenLabs] Audio URLs being processed: ${request.samples.map((s, i) => `${i+1}. ${s.emotion}: ${s.audioUrl.substring(0, 100)}...`).join(' | ')}`);
-    console.log(`[ElevenLabs] ElevenLabs API configuration details: Base URL: ${this.config.baseUrl}, Timeout: ${this.config.timeout}ms, Max retries: ${this.config.retries}`);
+    console.log(`[ElevenLabs] ElevenLabs API configuration details: Base URL: ${this.config.baseUrl}, Timeout: ${this.config.timeout}ms, API Key present: ${!!this.config.apiKey}`);
     
     try {
       // Prepare FormData for ElevenLabs API
