@@ -171,7 +171,7 @@ This is a full-stack collaborative storytelling platform that enables users to c
 ## Changelog
 - June 30, 2025: DATABASE SCHEMA ARCHITECTURE IMPROVEMENT - Added Database Verification Principle to replit.md 
   - **Added CRITICAL DATABASE RULE** requiring schema inspection before alterations to prevent column naming inconsistencies
-  - **Fixed TypeScript schema column mismatch** - corrected `eleven_labs_voice_id` to `elevenlabs_voice_id` in shared/schema.ts to match actual database structure
+  - **Fixed TypeScript schema column mismatch** - corrected `elevenlabs_voice_id` column naming consistency across all files to match actual database structure
   - **Recreated ExternalIntegrationStateReset service** with proper error handling and missing method implementations
   - **Implemented database-first development approach** using SQL queries to verify existing schema before making changes
   - **Resolved voice cloning column name errors** that were preventing ElevenLabs integration from functioning properly

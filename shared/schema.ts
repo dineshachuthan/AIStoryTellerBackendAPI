@@ -248,7 +248,7 @@ export const userEmotionVoices = pgTable("user_emotion_voices", {
   emotion: varchar("emotion").notNull(), // happy, sad, angry, etc.
   elevenLabsVoiceId: varchar("elevenlabs_voice_id"), // unique voice ID from ElevenLabs
   voiceName: varchar("voice_name").notNull(), // "John_Happy", "John_Sad"
-  status: varchar("status").notNull().default("collecting"), // collecting, training, completed, failed
+  trainingStatus: varchar("training_status").notNull().default("collecting"), // collecting, training, completed, failed
   sampleCount: integer("sample_count").default(0), // how many samples used for this emotion
   qualityScore: doublePrecision("quality_score"), // ElevenLabs quality rating
   voiceSettings: jsonb("voice_settings"), // stability, similarity_boost, etc.

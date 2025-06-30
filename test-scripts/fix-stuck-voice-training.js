@@ -57,7 +57,7 @@ async function fixStuckVoiceTraining() {
       created_at, 
       training_started_at, 
       training_completed_at,
-      eleven_labs_voice_id,
+      elevenlabs_voice_id,
       total_samples
     FROM user_voice_profiles 
     WHERE status = 'training'
@@ -73,7 +73,7 @@ async function fixStuckVoiceTraining() {
       log(`     Created: ${profile.created_at}`, 'white');
       log(`     Training Started: ${profile.training_started_at || 'null'}`, 'white');
       log(`     Training Completed: ${profile.training_completed_at || 'null'}`, 'white');
-      log(`     ElevenLabs Voice ID: ${profile.eleven_labs_voice_id || 'null'}`, 'white');
+      log(`     ElevenLabs Voice ID: ${profile.elevenlabs_voice_id || 'null'}`, 'white');
       log(`     Total Samples: ${profile.total_samples || 'null'}`, 'white');
       log('', 'white');
     });
