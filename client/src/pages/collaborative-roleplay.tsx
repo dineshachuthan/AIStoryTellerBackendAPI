@@ -168,19 +168,6 @@ export default function CollaborativeRoleplay() {
           <p className="text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
             Convert your stories into collaborative templates and invite friends to play different characters with their own voices and pictures.
           </p>
-          <div className="flex justify-center">
-            <div className="w-48">
-              <Label htmlFor="language" className="text-sm font-medium">Language</Label>
-              <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select language" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="en-US">English</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
         </div>
 
         {/* Convert Stories Section */}
