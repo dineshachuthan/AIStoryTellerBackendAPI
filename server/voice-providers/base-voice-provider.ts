@@ -1,180 +1,221 @@
 /**
- * Base Voice Provider Interface
- * Abstract interface for all voice generation providers
+ * Abstract Base Voice Provider - Common Interface for All Voice Providers
+ * Follows the same pattern as video providers for consistency
  */
 
-export interface VoiceSample {
-  id?: number;
-  userId: string;
-  emotion: string;
-  audioData: Buffer;
-  filename: string;
-  duration: number;
-  quality?: number;
-  createdAt?: Date;
-}
+import { VoiceProviderConfig, VoiceTrainingRequest, VoiceTrainingResult, VoiceModule } from './provider-manager';
 
-export interface VoiceCloneRequest {
-  userId: string;
-  name: string;
-  description?: string;
-  samples: VoiceSample[];
-  labels?: Record<string, string>;
-}
+export abstract class BaseVoiceProvider implements VoiceModule {
+  protected config: VoiceProviderConfig;
+  protected providerName: string;
 
-export interface VoiceGenerationRequest {
-  text: string;
-  voiceId: string;
-  emotion?: string;
-  settings?: Record<string, any>;
-  userId?: string;
-}
-
-export interface AudioResult {
-  audioBuffer: Buffer;
-  audioUrl?: string;
-  duration?: number;
-  format: string;
-  size: number;
-}
-
-export interface VoiceCloneResult {
-  voiceId: string;
-  status: 'processing' | 'completed' | 'failed';
-  metadata?: any;
-  estimatedReadyTime?: Date;
-}
-
-export interface VoiceProviderCapabilities {
-  voiceCloning: boolean;
-  emotionModulation: boolean;
-  realTimeGeneration: boolean;
-  batchProcessing: boolean;
-  maxSamples: number;
-  maxSampleSize: number;
-  supportedFormats: string[];
-}
-
-export interface VoiceProviderStatus {
-  isAvailable: boolean;
-  isHealthy: boolean;
-  lastCheck: Date;
-  error?: string;
-  rateLimit?: {
-    remaining: number;
-    resetTime: Date;
-  };
-}
-
-/**
- * Abstract base class for voice providers
- */
-export abstract class BaseVoiceProvider {
-  protected config: any;
-  protected capabilities: VoiceProviderCapabilities;
-
-  constructor(config: any) {
+  constructor(config: VoiceProviderConfig, providerName: string) {
     this.config = config;
-    this.capabilities = this.getCapabilities();
+    this.providerName = providerName;
+    this.validateConfig(config);
   }
 
   /**
-   * Get provider capabilities
+   * Validate provider configuration - must be implemented by each provider
    */
-  abstract getCapabilities(): VoiceProviderCapabilities;
+  protected abstract validateConfig(config: VoiceProviderConfig): void;
 
   /**
-   * Check if provider is available and healthy
+   * Train voice using provider-specific API - must be implemented by each provider
    */
-  abstract checkHealth(): Promise<VoiceProviderStatus>;
+  abstract trainVoice(request: VoiceTrainingRequest): Promise<VoiceTrainingResult>;
 
   /**
-   * Clone voice from samples
+   * Generate speech using trained voice - must be implemented by each provider
    */
-  abstract cloneVoice(request: VoiceCloneRequest): Promise<VoiceCloneResult>;
+  abstract generateSpeech(text: string, voiceId: string, emotion?: string): Promise<ArrayBuffer>;
 
   /**
-   * Generate speech from text
+   * Check status of voice training/availability - must be implemented by each provider
    */
-  abstract generateSpeech(request: VoiceGenerationRequest): Promise<AudioResult>;
+  abstract getVoiceStatus(voiceId: string): Promise<{ status: string; ready: boolean }>;
 
   /**
-   * Get available voices for user
+   * Common logging method with provider context
    */
-  abstract getUserVoices(userId: string): Promise<any[]>;
-
-  /**
-   * Delete a cloned voice
-   */
-  abstract deleteVoice(voiceId: string): Promise<void>;
-
-  /**
-   * Get voice generation status
-   */
-  abstract getVoiceStatus(voiceId: string): Promise<any>;
-
-  /**
-   * Validate voice samples
-   */
-  validateSamples(samples: VoiceSample[]): { valid: boolean; errors: string[] } {
-    const errors: string[] = [];
+  protected log(level: 'info' | 'warn' | 'error', message: string, data?: any): void {
+    const timestamp = new Date().toISOString();
+    const logPrefix = `[${this.providerName}] ${timestamp}`;
     
-    if (samples.length === 0) {
-      errors.push('No samples provided');
-      return { valid: false, errors };
+    switch (level) {
+      case 'info':
+        console.log(`${logPrefix} ${message}`, data || '');
+        break;
+      case 'warn':
+        console.warn(`${logPrefix} WARNING: ${message}`, data || '');
+        break;
+      case 'error':
+        console.error(`${logPrefix} ERROR: ${message}`, data || '');
+        break;
     }
-
-    if (samples.length > this.capabilities.maxSamples) {
-      errors.push(`Too many samples. Maximum: ${this.capabilities.maxSamples}`);
-    }
-
-    for (const sample of samples) {
-      if (!sample.audioData || sample.audioData.length === 0) {
-        errors.push(`Sample ${sample.filename} has no audio data`);
-      }
-
-      if (sample.audioData.length > this.capabilities.maxSampleSize) {
-        errors.push(`Sample ${sample.filename} too large. Maximum: ${this.capabilities.maxSampleSize} bytes`);
-      }
-
-      if (sample.duration < 3) {
-        errors.push(`Sample ${sample.filename} too short. Minimum: 3 seconds`);
-      }
-
-      if (sample.duration > 60) {
-        errors.push(`Sample ${sample.filename} too long. Maximum: 60 seconds`);
-      }
-    }
-
-    return { valid: errors.length === 0, errors };
   }
 
   /**
-   * Format audio data for provider
+   * Common timeout wrapper for provider operations
    */
-  protected formatAudioData(audioData: Buffer, targetFormat: string): Buffer {
-    // Base implementation - providers can override for specific formatting
-    return audioData;
+  protected async withTimeout<T>(
+    operation: Promise<T>, 
+    timeoutMs: number = this.config.timeout,
+    operationName: string = 'operation'
+  ): Promise<T> {
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => {
+        reject(new Error(`${this.providerName} ${operationName} timed out after ${timeoutMs}ms`));
+      }, timeoutMs);
+    });
+
+    try {
+      return await Promise.race([operation, timeoutPromise]);
+    } catch (error) {
+      this.log('error', `${operationName} failed`, error);
+      throw error;
+    }
   }
 
   /**
-   * Generate cache key for voice generation
+   * Common retry logic for provider operations
    */
-  protected generateCacheKey(request: VoiceGenerationRequest): string {
-    const hash = require('crypto').createHash('md5');
-    hash.update(request.text);
-    hash.update(request.voiceId);
-    hash.update(request.emotion || '');
-    hash.update(JSON.stringify(request.settings || {}));
-    return hash.digest('hex');
+  protected async withRetry<T>(
+    operation: () => Promise<T>,
+    maxRetries: number = this.config.retryCount,
+    operationName: string = 'operation'
+  ): Promise<T> {
+    let lastError: Error;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        this.log('info', `${operationName} attempt ${attempt}/${maxRetries}`);
+        return await operation();
+      } catch (error) {
+        lastError = error as Error;
+        this.log('warn', `${operationName} attempt ${attempt} failed: ${lastError.message}`);
+        
+        if (attempt < maxRetries) {
+          // Exponential backoff: 1s, 2s, 4s delays
+          const delayMs = Math.pow(2, attempt - 1) * 1000;
+          this.log('info', `Retrying in ${delayMs}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delayMs));
+        }
+      }
+    }
+    
+    this.log('error', `${operationName} failed after ${maxRetries} attempts`);
+    throw lastError!;
   }
 
   /**
-   * Estimate audio duration from text
+   * Common audio file validation
    */
-  protected estimateAudioDuration(text: string, wordsPerMinute: number = 150): number {
-    const wordCount = text.split(/\s+/).length;
-    const durationInMinutes = wordCount / wordsPerMinute;
-    return Math.round(durationInMinutes * 60 * 1000); // Convert to milliseconds
+  protected validateAudioFile(audioBuffer: Buffer, fileName: string): void {
+    if (audioBuffer.length === 0) {
+      throw new Error(`Empty audio file: ${fileName}`);
+    }
+    
+    if (audioBuffer.length < 1000) {
+      this.log('warn', `Very small audio file detected: ${fileName} (${audioBuffer.length} bytes)`);
+    }
+    
+    // Check duration limits if specified
+    if (this.config.maxSampleDurationMs > 0) {
+      // Note: Actual duration check would require audio analysis library
+      // For now, we estimate based on file size (rough approximation)
+      const estimatedDurationMs = (audioBuffer.length / 1000) * 10; // Very rough estimate
+      if (estimatedDurationMs > this.config.maxSampleDurationMs) {
+        throw new Error(`Audio file too long: ${fileName} (estimated ${estimatedDurationMs}ms, max ${this.config.maxSampleDurationMs}ms)`);
+      }
+    }
+  }
+
+  /**
+   * Common voice training result validation
+   */
+  protected createSuccessResult(
+    voiceId: string, 
+    samplesProcessed: number, 
+    metadata?: any
+  ): VoiceTrainingResult {
+    return {
+      success: true,
+      voiceId,
+      samplesProcessed,
+      metadata: {
+        provider: this.providerName,
+        timestamp: new Date().toISOString(),
+        ...metadata
+      }
+    };
+  }
+
+  /**
+   * Common voice training error result
+   */
+  protected createErrorResult(
+    error: string | Error, 
+    samplesProcessed: number = 0
+  ): VoiceTrainingResult {
+    const errorMessage = error instanceof Error ? error.message : error;
+    
+    return {
+      success: false,
+      error: errorMessage,
+      samplesProcessed,
+      metadata: {
+        provider: this.providerName,
+        timestamp: new Date().toISOString(),
+        errorType: error instanceof Error ? error.constructor.name : 'Unknown'
+      }
+    };
+  }
+
+  /**
+   * Common configuration getter
+   */
+  public getConfig(): VoiceProviderConfig {
+    return { ...this.config }; // Return copy to prevent modification
+  }
+
+  /**
+   * Common provider name getter
+   */
+  public getProviderName(): string {
+    return this.providerName;
+  }
+
+  /**
+   * Health check for provider availability
+   */
+  public async healthCheck(): Promise<{ healthy: boolean; message: string }> {
+    try {
+      // Basic configuration check
+      this.validateConfig(this.config);
+      
+      // Provider-specific health check can be overridden
+      await this.performHealthCheck();
+      
+      return {
+        healthy: true,
+        message: `${this.providerName} provider is healthy`
+      };
+    } catch (error) {
+      return {
+        healthy: false,
+        message: `${this.providerName} provider health check failed: ${error instanceof Error ? error.message : String(error)}`
+      };
+    }
+  }
+
+  /**
+   * Provider-specific health check - can be overridden
+   */
+  protected async performHealthCheck(): Promise<void> {
+    // Default implementation - providers can override for API-specific checks
+    if (!this.config.apiKey) {
+      throw new Error('API key not configured');
+    }
   }
 }
