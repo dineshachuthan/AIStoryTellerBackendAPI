@@ -68,18 +68,32 @@ export class VoiceTrainingService {
 
   /**
    * Trigger voice training automatically when threshold is reached
+   * Includes 2-minute timeout to prevent infinite processing
    */
   async triggerAutomaticTraining(userId: string): Promise<VoiceTrainingResult> {
-    try {
-      console.log(`[VoiceTraining] Checking automatic training trigger for user ${userId}`);
-      
-      if (!(await this.shouldTriggerTraining(userId))) {
-        return {
+    return new Promise(async (resolve) => {
+      // Set 2-minute timeout
+      const timeout = setTimeout(() => {
+        console.error(`[VoiceTraining] Training timed out after 2 minutes for user ${userId}`);
+        resolve({
           success: false,
-          error: 'Training threshold not met',
+          error: 'Voice training timed out after 2 minutes',
           samplesProcessed: 0
-        };
-      }
+        });
+      }, 120000); // 2 minutes
+
+      try {
+        console.log(`[VoiceTraining] Checking automatic training trigger for user ${userId}`);
+        
+        if (!(await this.shouldTriggerTraining(userId))) {
+          clearTimeout(timeout);
+          resolve({
+            success: false,
+            error: 'Training threshold not met',
+            samplesProcessed: 0
+          });
+          return;
+        }
 
       // Get or create voice profile
       let voiceProfile = await storage.getUserVoiceProfile(userId);
@@ -128,11 +142,13 @@ export class VoiceTrainingService {
           trainingCompletedAt: new Date()
         });
 
-        return {
+        clearTimeout(timeout);
+        resolve({
           success: false,
           error: trainingResult.error,
           samplesProcessed: allSamples.length
-        };
+        });
+        return;
       }
 
       // Update profile with successful training
@@ -146,23 +162,26 @@ export class VoiceTrainingService {
       // Lock all samples used in training
       await this.lockAllSamples(userId);
 
-      console.log(`[VoiceTraining] Successfully trained voice for user ${userId} with ${allSamples.length} samples`);
+        console.log(`[VoiceTraining] Successfully trained voice for user ${userId} with ${allSamples.length} samples`);
 
-      return {
-        success: true,
-        voiceId: trainingResult.voiceId,
-        samplesProcessed: allSamples.length
-      };
+        clearTimeout(timeout);
+        resolve({
+          success: true,
+          voiceId: trainingResult.voiceId,
+          samplesProcessed: allSamples.length
+        });
 
-    } catch (error) {
-      console.error('[VoiceTraining] Error in automatic training:', error);
-      console.error('[VoiceTraining] Full error details:', JSON.stringify(error, null, 2));
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-        samplesProcessed: 0
-      };
-    }
+      } catch (error) {
+        clearTimeout(timeout);
+        console.error('[VoiceTraining] Error in automatic training:', error);
+        console.error('[VoiceTraining] Full error details:', JSON.stringify(error, null, 2));
+        resolve({
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error',
+          samplesProcessed: 0
+        });
+      }
+    });
   }
 
   /**

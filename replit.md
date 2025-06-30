@@ -459,6 +459,15 @@ Preferred communication style: Simple, everyday language.
 - No convenience hardcoding under any circumstances
 - Every function must connect to real data sources or fail authentically
 
+**CRITICAL INTEGRATION RULE: ALWAYS IMPLEMENT TIMEOUTS AND RETRIES**
+- All external API integrations MUST have timeout mechanisms (typically 2 minutes maximum)
+- Never create infinite polling loops - always include timeout handling
+- Implement proper retry logic with exponential backoff for transient failures
+- Clear timeout handlers properly to prevent memory leaks
+- Follow the established pattern from video generation services (Kling, RunwayML)
+- External services include: OpenAI, ElevenLabs, video providers, email/SMS services
+- Background processing operations must have bounded execution time
+
 **Responsive Design Requirements:**
 - All components must be responsive and mobile-compatible by default
 - No need to ask specifically for mobile compatibility - it's always required
