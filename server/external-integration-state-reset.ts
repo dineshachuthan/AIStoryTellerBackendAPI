@@ -81,23 +81,7 @@ export class ExternalIntegrationStateReset {
             .where(eq(userVoiceProfiles.id, profile.id));
           
           console.log(`   ✅ Reset voice profile ${profile.id} from 'training' to 'failed'`);
-          
-          // Step 2: Reset individual emotion voices for this profile
-          const emotionVoices = await db.select().from(userEmotionVoices)
-            .where(eq(userEmotionVoices.userVoiceProfileId, profile.id));
-          
-          for (const emotionVoice of emotionVoices) {
-            if (emotionVoice.status === 'training') {
-              await db.update(userEmotionVoices)
-                .set({
-                  status: 'failed',
-                  updatedAt: new Date()
-                })
-                .where(eq(userEmotionVoices.id, emotionVoice.id));
-              
-              console.log(`   ✅ Reset emotion voice ${emotionVoice.emotion} from 'training' to 'failed'`);
-            }
-          }
+        }
         }
       }
       
