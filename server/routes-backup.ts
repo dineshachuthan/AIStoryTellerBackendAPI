@@ -1281,7 +1281,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Set appropriate content type and headers for audio playback
-      const contentType = 'audio/mpeg'; // Always MP3
+      const contentType = fileName.endsWith('.webm') ? 'audio/webm' : 'audio/mpeg';
       res.setHeader('Content-Type', contentType);
       res.setHeader('Accept-Ranges', 'bytes');
       res.setHeader('Access-Control-Allow-Origin', '*');
@@ -1524,8 +1524,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Set appropriate MIME type and disable caching
       let contentType = 'audio/mpeg';
-      // All files are MP3 format only
-      contentType = 'audio/mpeg';
+      if (fileName.endsWith('.webm')) {
+        contentType = 'audio/webm';
+      } else if (fileName.endsWith('.wav')) {
+        contentType = 'audio/wav';
+      }
       
       res.setHeader('Content-Type', contentType);
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
