@@ -40,6 +40,20 @@ export interface VoiceGenerationSettings {
   optimizeStreamingLatency: boolean;
 }
 
+export interface VoiceCloningConfig {
+  sampleThreshold: number; // Number of samples required to trigger voice cloning
+  categories: {
+    emotions: { enabled: boolean; threshold: number };
+    sounds: { enabled: boolean; threshold: number };
+    modulations: { enabled: boolean; threshold: number };
+  };
+  training: {
+    maxRetries: number;
+    timeoutMinutes: number;
+    backgroundProcessing: boolean;
+  };
+}
+
 export interface EmotionVoiceConfig {
   emotion: string;
   displayName: string;
@@ -107,6 +121,21 @@ export const VOICE_PROVIDERS: Record<string, VoiceProviderConfig> = {
       bitRate: 64,
       format: 'mp3'
     }
+  }
+};
+
+// Voice Cloning Configuration
+export const VOICE_CLONING_CONFIG: VoiceCloningConfig = {
+  sampleThreshold: 6, // Global default threshold
+  categories: {
+    emotions: { enabled: true, threshold: 6 },
+    sounds: { enabled: true, threshold: 6 },
+    modulations: { enabled: true, threshold: 6 }
+  },
+  training: {
+    maxRetries: 3,
+    timeoutMinutes: 2,
+    backgroundProcessing: true
   }
 };
 

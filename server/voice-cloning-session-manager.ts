@@ -3,6 +3,8 @@
  * Handles session-based counting and UI state management for ElevenLabs integration
  */
 
+import { VOICE_CLONING_CONFIG } from '@shared/voice-config';
+
 export interface VoiceCloningSessionData {
   emotions_not_cloned: number;
   sounds_not_cloned: number;
@@ -22,7 +24,7 @@ export interface VoiceCloningSessionData {
 export type VoiceCategoryType = 'emotions' | 'sounds' | 'modulations';
 
 export class VoiceCloningSessionManager {
-  private static readonly CLONING_THRESHOLD = 5;
+  private static readonly CLONING_THRESHOLD = 6;
 
   /**
    * Initialize session voice cloning data on login
