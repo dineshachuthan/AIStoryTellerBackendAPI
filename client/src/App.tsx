@@ -12,7 +12,7 @@ import { useEffect } from "react";
 import Home from "@/pages/home";
 import Chat from "@/pages/chat";
 import CreateCharacter from "@/pages/create-character";
-import UploadStory from "@/pages/upload-story-clean";
+import UploadStory from "@/pages/upload-story";
 import StoryAnalysis from "@/pages/story-analysis";
 import VoiceSamples from "@/pages/voice-samples";
 import { VoiceRecordPage } from "@/pages/voice-record";

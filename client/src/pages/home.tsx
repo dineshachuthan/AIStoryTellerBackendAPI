@@ -3,7 +3,6 @@ import { CharacterFeed } from "@/components/character-feed";
 import { StorySearchPanel } from "@/components/story-search-panel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLocation } from "wouter";
 import { Upload, Mic, Users, FileText, AudioLines, PenTool, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -179,22 +178,9 @@ export default function Home() {
           <div className={`absolute ${styles.cardTopOffset} left-0 right-0 z-40 ${styles.containerPadding}`}>
             <Card className="bg-dark-card/90 backdrop-blur-lg border-gray-800">
               <CardHeader className={`pb-2 ${styles.containerPadding}`}>
-                <CardTitle className={`text-white flex items-center justify-between ${windowDimensions.width < 640 ? 'text-sm' : windowDimensions.width < 1024 ? 'text-base' : 'text-lg'}`}>
-                  <div className="flex items-center">
-                    <Users className={`${windowDimensions.width < 640 ? 'w-3 h-3' : windowDimensions.width < 1024 ? 'w-4 h-4' : 'w-5 h-5'} mr-2 text-tiktok-pink`} />
-                    Collaborative Storytelling
-                  </div>
-                  <div className="flex flex-col items-end">
-                    <label className="text-xs text-gray-400 mb-1">Language</label>
-                    <Select defaultValue="en-US">
-                      <SelectTrigger className="w-32 h-8 bg-dark-card border-gray-700 text-white text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="en-US">English</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <CardTitle className={`text-white flex items-center ${windowDimensions.width < 640 ? 'text-sm' : windowDimensions.width < 1024 ? 'text-base' : 'text-lg'}`}>
+                  <Users className={`${windowDimensions.width < 640 ? 'w-3 h-3' : windowDimensions.width < 1024 ? 'w-4 h-4' : 'w-5 h-5'} mr-2 text-tiktok-pink`} />
+                  Collaborative Storytelling
                 </CardTitle>
                 <CardDescription className={`text-gray-text ${windowDimensions.width < 640 ? 'text-xs' : 'text-sm'}`}>
                   Create stories with friends where each person voices a unique character
