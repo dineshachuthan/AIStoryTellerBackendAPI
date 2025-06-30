@@ -193,7 +193,8 @@ export default function UploadStory() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: storyTitle.trim() || story?.title || "Untitled Story",
-          content: storyContent
+          content: storyContent,
+          language: selectedLanguage
         }),
       });
 
