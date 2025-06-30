@@ -520,3 +520,94 @@ export default function VoiceSamples() {
     </TooltipProvider>
   );
 }
+
+// VoiceCloningButton Component
+interface VoiceCloningButtonProps {
+  category: string;
+  progress: {
+    count: number;
+    threshold: number;
+    canTrigger: boolean;
+    isTraining: boolean;
+    status: string;
+  };
+  onTrigger: () => void;
+  isLoading: boolean;
+}
+
+function VoiceCloningButton({ category, progress, onTrigger, isLoading }: VoiceCloningButtonProps) {
+  const categoryNames = {
+    'emotion': 'Emotions',
+    'sound': 'Sounds',
+    'modulation': 'Modulations'
+  };
+
+  const categoryName = categoryNames[category as keyof typeof categoryNames] || category;
+  const progressText = `${progress.count}/${progress.threshold}`;
+  
+  const getButtonText = () => {
+    if (progress.isTraining) {
+      return 'Cloning in Progress...';
+    }
+    if (progress.canTrigger) {
+      return `Lock your voice and clone (${progressText})`;
+    }
+    return `${progressText} needed to kick start cloning`;
+  };
+
+  const getButtonStyle = () => {
+    if (progress.isTraining) {
+      return "bg-orange-500 hover:bg-orange-600 text-white cursor-not-allowed";
+    }
+    if (progress.canTrigger) {
+      return "bg-green-500 hover:bg-green-600 text-white";
+    }
+    return "bg-gray-400 text-gray-700 cursor-not-allowed";
+  };
+
+  return (
+    <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            {categoryName} Voice Cloning
+          </h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            {progress.isTraining 
+              ? 'ElevenLabs is training your voice. This may take a few minutes.'
+              : progress.canTrigger 
+                ? 'Ready to start voice cloning!'
+                : `Record ${progress.threshold - progress.count} more samples to enable cloning.`
+            }
+          </p>
+        </div>
+        
+        <Button
+          onClick={onTrigger}
+          disabled={!progress.canTrigger || progress.isTraining || isLoading}
+          className={cn(
+            "ml-4 min-w-[200px]",
+            getButtonStyle()
+          )}
+        >
+          {progress.isTraining && (
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+          )}
+          {getButtonText()}
+        </Button>
+      </div>
+      
+      {/* Progress Bar */}
+      <div className="mt-3">
+        <div className="flex justify-between items-center mb-1">
+          <span className="text-xs text-gray-500">Progress</span>
+          <span className="text-xs text-gray-500">{progressText}</span>
+        </div>
+        <Progress 
+          value={(progress.count / progress.threshold) * 100} 
+          className="h-2"
+        />
+      </div>
+    </div>
+  );
+}
