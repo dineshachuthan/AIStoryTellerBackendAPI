@@ -4912,6 +4912,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // EMERGENCY RESET ALL VOICE CLONING STATES
+  app.post('/api/voice/emergency-reset', requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any)?.id;
+      if (!userId) {
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
+
+      console.log(`🚨 EMERGENCY RESET: Clearing all voice cloning states for user ${userId}`);
+
+      // Clear timeout service operations
+      const { VoiceCloningTimeoutService } = await import('./voice-cloning-timeout-service');
+      const stoppedOperations = VoiceCloningTimeoutService.forceStopAllUserOperations(userId);
+
+      // Clear external integration states
+      const { externalIntegrationStateReset } = await import('./external-integration-state-reset');
+      await externalIntegrationStateReset.resetAllStatesForUser(userId);
+
+      // Clear session data
+      if (req.session.voiceCloning) {
+        req.session.voiceCloning = {
+          emotions_not_cloned: 0,
+          sounds_not_cloned: 0,
+          modulations_not_cloned: 0,
+          cloning_in_progress: {
+            emotions: false,
+            sounds: false,
+            modulations: false
+          },
+          cloning_status: {
+            emotions: 'idle',
+            sounds: 'idle',
+            modulations: 'idle'
+          }
+        };
+      }
+
+      console.log(`✅ EMERGENCY RESET COMPLETE: Stopped ${stoppedOperations} operations, cleared session data`);
+
+      res.json({
+        success: true,
+        message: 'Emergency reset completed',
+        operationsStopped: stoppedOperations,
+        sessionCleared: true
+      });
+    } catch (error: any) {
+      console.error('Emergency reset failed:', error);
+      res.status(500).json({ message: 'Emergency reset failed', error: error.message });
+    }
+  });
+
   // MANUAL VOICE CLONING TRIGGER (for testing plug-and-play provider system)
   app.post('/api/voice/test-cloning', requireAuth, async (req, res) => {
     try {
