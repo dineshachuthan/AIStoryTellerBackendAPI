@@ -86,7 +86,7 @@ export default function VoiceSamples() {
     // Removed automatic polling - user can manually refresh if needed
   });
 
-  // Manual voice cloning trigger mutation
+  // Manual voice cloning trigger mutation  
   const triggerVoiceCloning = useMutation({
     mutationFn: async (category: 'emotions' | 'sounds' | 'modulations') => {
       const response = await fetch(`/api/voice-cloning/trigger/${category}`, {
@@ -99,8 +99,14 @@ export default function VoiceSamples() {
       return response.json();
     },
     onSuccess: () => {
+      // Refresh progress to get updated cloning status
       queryClient.invalidateQueries({ queryKey: ['/api/voice-cloning/progress'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/voice-modulations/progress'] });
     },
+    onError: (error) => {
+      console.error('Voice cloning trigger error:', error);
+      // Error state will be handled by the component using triggerVoiceCloning.error
+    }
   });
 
   // Save voice modulation mutation
@@ -535,9 +541,11 @@ interface VoiceCloningButtonProps {
   onTrigger: () => void;
   isLoading: boolean;
   isMutationPending?: boolean;
+  error?: Error | null;
+  onErrorDismiss?: () => void;
 }
 
-function VoiceCloningButton({ category, progress, onTrigger, isLoading, isMutationPending = false }: VoiceCloningButtonProps) {
+function VoiceCloningButton({ category, progress, onTrigger, isLoading, isMutationPending = false, error, onErrorDismiss }: VoiceCloningButtonProps) {
   const categoryNames = {
     'emotion': 'Emotions',
     'sound': 'Sounds',
@@ -548,18 +556,30 @@ function VoiceCloningButton({ category, progress, onTrigger, isLoading, isMutati
   const progressText = `${progress.count}/${progress.threshold}`;
   
   const getButtonText = () => {
+    if (isMutationPending) {
+      return 'Starting Cloning...';
+    }
     if (progress.isTraining) {
       return 'Cloning in Progress...';
     }
-    if (progress.canTrigger) {
+    if (progress.canTrigger && !error) {
       return 'Clone now';
+    }
+    if (error) {
+      return 'Try Again';
     }
     return `${progressText} needed to kick start cloning`;
   };
 
   const getButtonStyle = () => {
+    if (isMutationPending) {
+      return "bg-blue-500 hover:bg-blue-600 text-white cursor-not-allowed";
+    }
     if (progress.isTraining) {
       return "bg-orange-500 hover:bg-orange-600 text-white cursor-not-allowed";
+    }
+    if (error) {
+      return "bg-red-500 hover:bg-red-600 text-white";
     }
     if (progress.canTrigger) {
       return "bg-green-500 hover:bg-green-600 text-white";
@@ -585,14 +605,14 @@ function VoiceCloningButton({ category, progress, onTrigger, isLoading, isMutati
         </div>
         
         <Button
-          onClick={onTrigger}
-          disabled={!progress.canTrigger || progress.isTraining || isLoading || isMutationPending}
+          onClick={error ? onErrorDismiss : onTrigger}
+          disabled={(!progress.canTrigger && !error) || progress.isTraining || isLoading || isMutationPending}
           className={cn(
             "ml-4 min-w-[200px]",
             getButtonStyle()
           )}
         >
-          {progress.isTraining && (
+          {(progress.isTraining || isMutationPending) && (
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
           )}
           {getButtonText()}
