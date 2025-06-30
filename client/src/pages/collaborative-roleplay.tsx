@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Users, Play, Crown, Copy, Settings } from "lucide-react";
@@ -55,6 +56,7 @@ export default function CollaborativeRoleplay() {
   const [instanceTitle, setInstanceTitle] = useState("");
   const [showCreateInstance, setShowCreateInstance] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(null);
+  const [selectedLanguage, setSelectedLanguage] = useState("en-US");
 
   // Fetch user's stories
   const { data: stories = [] } = useQuery({
@@ -105,11 +107,11 @@ export default function CollaborativeRoleplay() {
 
   // Create instance mutation
   const createInstance = useMutation({
-    mutationFn: async ({ templateId, title }: { templateId: number; title: string }) => {
+    mutationFn: async ({ templateId, title, language }: { templateId: number; title: string; language: string }) => {
       const response = await fetch(`/api/roleplay-templates/${templateId}/create-instance`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ instanceTitle: title, isPublic: false }),
+        body: JSON.stringify({ instanceTitle: title, isPublic: false, language }),
       });
       if (!response.ok) throw new Error('Failed to create instance');
       return response.json();
@@ -138,7 +140,11 @@ export default function CollaborativeRoleplay() {
 
   const handleCreateInstance = () => {
     if (!selectedTemplateId || !instanceTitle.trim()) return;
-    createInstance.mutate({ templateId: selectedTemplateId, title: instanceTitle.trim() });
+    createInstance.mutate({ 
+      templateId: selectedTemplateId, 
+      title: instanceTitle.trim(), 
+      language: selectedLanguage 
+    });
   };
 
   const copyInvitationLink = (token: string) => {
