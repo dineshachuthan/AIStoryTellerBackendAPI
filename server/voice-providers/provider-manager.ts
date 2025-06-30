@@ -54,14 +54,14 @@ export class VoiceProviderRegistry {
   private static modules: Record<string, VoiceModule> = {};
   private static configuration: VoiceProviderConfiguration | null = null;
 
-  static initialize(config: VoiceProviderConfiguration) {
+  static async initialize(config: VoiceProviderConfiguration) {
     this.configuration = config;
     
     // Initialize enabled providers only
-    Object.entries(config.providers).forEach(([name, info]) => {
+    for (const [name, info] of Object.entries(config.providers)) {
       if (info.enabled) {
         try {
-          const module = this.createModule(name, info.config);
+          const module = await this.createModule(name, info.config);
           this.modules[name] = module;
           console.log(`[VoiceRegistry] Initialized ${name} provider`);
         } catch (error) {
@@ -70,22 +70,22 @@ export class VoiceProviderRegistry {
       } else {
         console.log(`[VoiceRegistry] ${name} provider disabled in configuration`);
       }
-    });
+    }
 
     // Log active providers
     const activeProviders = Object.keys(this.modules);
     console.log(`[VoiceRegistry] Active providers: ${activeProviders.join(', ')}`);
   }
 
-  private static createModule(name: string, config: VoiceProviderConfig): VoiceModule {
+  private static async createModule(name: string, config: VoiceProviderConfig): Promise<VoiceModule> {
     switch (name) {
       case 'elevenlabs':
-        const { ElevenLabsModule } = require('./elevenlabs-module');
+        const { ElevenLabsModule } = await import('./elevenlabs-module');
         return new ElevenLabsModule(config);
       
       case 'kling-voice':
-        const { KlingVoiceModule } = require('./kling-voice-module');
-        return new KlingVoiceModule(config);
+        // Future implementation
+        throw new Error('Kling voice provider not yet implemented');
       
       default:
         throw new Error(`Unknown voice provider: ${name}`);

@@ -57,7 +57,7 @@ app.use((req, res, next) => {
   // Initialize voice provider registry with configuration
   try {
     const voiceConfig = getVoiceConfig();
-    VoiceProviderRegistry.initialize(voiceConfig);
+    await VoiceProviderRegistry.initialize(voiceConfig);
     console.log('Voice provider registry initialized successfully');
   } catch (error) {
     console.error('Failed to initialize voice providers:', error);

@@ -4922,6 +4922,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // MANUAL VOICE CLONING TRIGGER (for testing plug-and-play provider system)
+  app.post('/api/voice/test-cloning', requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any)?.id;
+      if (!userId) {
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
+
+      console.log(`[VoiceCloning] Manual test trigger for user ${userId}`);
+
+      // Test voice provider factory pattern
+      const { VoiceProviderFactory } = await import('./voice-providers/voice-provider-factory');
+      
+      // Create a test voice training request
+      const testRequest = {
+        userId,
+        voiceProfileId: 1,
+        samples: [
+          {
+            emotion: 'happiness',
+            audioUrl: 'https://test.com/sample1.mp3',
+            isLocked: false
+          },
+          {
+            emotion: 'sadness', 
+            audioUrl: 'https://test.com/sample2.mp3',
+            isLocked: false
+          }
+        ]
+      };
+
+      console.log(`[VoiceCloning] Testing active provider: ${VoiceProviderFactory.getActiveProvider()}`);
+      console.log(`[VoiceCloning] Available providers: ${VoiceProviderFactory.getAvailableProviders().join(', ')}`);
+
+      // Test provider availability
+      const activeProvider = VoiceProviderFactory.getActiveProvider();
+      const isAvailable = VoiceProviderFactory.isProviderAvailable(activeProvider);
+
+      if (!isAvailable) {
+        return res.status(503).json({ 
+          message: 'Voice provider not available',
+          activeProvider,
+          availableProviders: VoiceProviderFactory.getAvailableProviders()
+        });
+      }
+
+      // Attempt voice training with timeout (2 minutes max)
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Voice training timeout after 2 minutes')), 120000);
+      });
+
+      const trainingPromise = VoiceProviderFactory.trainVoice(testRequest);
+
+      const result = await Promise.race([trainingPromise, timeoutPromise]);
+
+      res.json({
+        success: true,
+        result,
+        activeProvider,
+        availableProviders: VoiceProviderFactory.getAvailableProviders(),
+        testSamplesCount: testRequest.samples.length
+      });
+
+    } catch (error: any) {
+      console.error('[VoiceCloning] Manual test failed:', error);
+      res.status(500).json({ 
+        message: 'Voice cloning test failed',
+        error: error.message,
+        details: error.stack
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
