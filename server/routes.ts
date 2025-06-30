@@ -5004,6 +5004,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Serve static files from uploads directory
+  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+  
+  // Serve static files from persistent cache directories
+  app.use('/persistent-cache', express.static(path.join(process.cwd(), 'persistent-cache')));
+
   const httpServer = createServer(app);
   return httpServer;
 }
