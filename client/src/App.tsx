@@ -80,7 +80,7 @@ function Router() {
   );
 }
 
-function App() {
+function AppContent() {
   const { isAuthenticated } = useAuth();
 
   // Initialize session activity tracking for authenticated users
@@ -95,13 +95,19 @@ function App() {
   }, [isAuthenticated]);
 
   return (
+    <TooltipProvider>
+      <div className="tiktok-theme min-h-screen">
+        <Toaster />
+        <Router />
+      </div>
+    </TooltipProvider>
+  );
+}
+
+function App() {
+  return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <div className="tiktok-theme min-h-screen">
-          <Toaster />
-          <Router />
-        </div>
-      </TooltipProvider>
+      <AppContent />
     </QueryClientProvider>
   );
 }
