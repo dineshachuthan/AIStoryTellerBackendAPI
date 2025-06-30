@@ -156,6 +156,7 @@ export class VoiceTrainingService {
 
     } catch (error) {
       console.error('[VoiceTraining] Error in automatic training:', error);
+      console.error('[VoiceTraining] Full error details:', JSON.stringify(error, null, 2));
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',

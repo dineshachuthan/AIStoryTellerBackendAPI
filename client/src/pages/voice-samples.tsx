@@ -83,7 +83,7 @@ export default function VoiceSamples() {
   // Get voice cloning progress for all categories
   const { data: cloningProgress, isLoading: cloningProgressLoading } = useQuery<CloningProgress>({
     queryKey: ["/api/voice-cloning/progress"],
-    refetchInterval: 10000, // Refresh every 10 seconds to update training status
+    // Removed automatic polling - user can manually refresh if needed
   });
 
   // Manual voice cloning trigger mutation
