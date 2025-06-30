@@ -84,8 +84,8 @@ export class VoiceProviderRegistry {
         return new ElevenLabsModule(config);
       
       case 'kling-voice':
-        // Future implementation
-        throw new Error('Kling voice provider not yet implemented');
+        const { KlingVoiceModule } = await import('./kling-voice-module');
+        return new KlingVoiceModule(config);
       
       default:
         throw new Error(`Unknown voice provider: ${name}`);
