@@ -991,6 +991,120 @@ export const insertVoiceGenerationCacheSchema = createInsertSchema(voiceGenerati
   createdAt: true,
 });
 
+// REFERENCE DATA ARCHITECTURE - NEW TABLES
+
+// Reference Stories - Published story content becomes shared reference data
+export const referenceStories = pgTable("reference_stories", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  summary: text("summary"),
+  category: text("category").notNull(),
+  genre: text("genre"),
+  subGenre: text("sub_genre"),
+  tags: text("tags").array().default([]),
+  emotionalTags: text("emotional_tags").array().default([]),
+  moodCategory: text("mood_category"),
+  ageRating: text("age_rating").default("general"),
+  readingTime: integer("reading_time"), // minutes
+  extractedCharacters: jsonb("extracted_characters").default([]),
+  extractedEmotions: jsonb("extracted_emotions").default([]),
+  coverImageUrl: text("cover_image_url"),
+  originalAuthorId: varchar("original_author_id").notNull(), // Who first created it
+  visibility: text("visibility").default("draft"), // draft, public, archived
+  uploadType: text("upload_type").notNull(), // text, voice, file
+  originalAudioUrl: text("original_audio_url"),
+  copyrightInfo: text("copyright_info"),
+  licenseType: text("license_type").default("all_rights_reserved"),
+  isAdultContent: boolean("is_adult_content").default(false),
+  viewCount: integer("view_count").default(0),
+  likes: integer("likes").default(0),
+  language: varchar("language", { length: 10 }).default("en-US"),
+  publishedAt: timestamp("published_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Reference Story Analysis - AI narrative analysis becomes shared reference data
+export const referenceStoryAnalyses = pgTable("reference_story_analyses", {
+  id: serial("id").primaryKey(),
+  referenceStoryId: integer("reference_story_id").references(() => referenceStories.id).notNull(),
+  analysisType: varchar("analysis_type").notNull().default("narrative"),
+  analysisData: jsonb("analysis_data").notNull(), // Characters, emotions, themes
+  generatedBy: varchar("generated_by").notNull(), // AI model version
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Reference Roleplay Analysis - AI roleplay analysis becomes shared reference data
+export const referenceRoleplayAnalyses = pgTable("reference_roleplay_analyses", {
+  id: serial("id").primaryKey(),
+  referenceStoryId: integer("reference_story_id").references(() => referenceStories.id).notNull(),
+  analysisData: jsonb("analysis_data").notNull(), // Scenes, dialogues, character roles
+  totalScenes: integer("total_scenes").notNull(),
+  estimatedDuration: integer("estimated_duration"), // seconds
+  characterRoles: jsonb("character_roles").notNull(),
+  sceneBreakdown: jsonb("scene_breakdown").notNull(),
+  generatedBy: varchar("generated_by").notNull(), // AI model version
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// User Story Narrations - User's personalized narration of reference stories
+export const userStoryNarrations = pgTable("user_story_narrations", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  referenceStoryId: integer("reference_story_id").references(() => referenceStories.id).notNull(),
+  narratorVoice: varchar("narrator_voice").notNull(), // User's chosen narrator
+  narratorVoiceType: varchar("narrator_voice_type").notNull(), // ai, user
+  segments: jsonb("segments").notNull(), // User's narration segments
+  totalDuration: integer("total_duration").notNull(), // milliseconds
+  audioFileUrl: text("audio_file_url"), // Final combined audio
+  voiceModifications: jsonb("voice_modifications"), // User's voice customizations
+  isPublic: boolean("is_public").default(false), // Can other users see this narration
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// User Roleplay Segments - User's personal roleplay segments (NOT tied to story tables)
+export const userRoleplaySegments = pgTable("user_roleplay_segments", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  referenceStoryId: integer("reference_story_id").references(() => referenceStories.id), // Optional - can be based on reference story
+  referenceRoleplayId: integer("reference_roleplay_id").references(() => referenceRoleplayAnalyses.id), // Optional - can be based on reference roleplay
+  title: varchar("title").notNull(),
+  characterRole: varchar("character_role").notNull(), // User's chosen character
+  sceneNumber: integer("scene_number").notNull(),
+  dialogueText: text("dialogue_text").notNull(),
+  emotionContext: varchar("emotion_context"), // Context for this dialogue
+  voiceSettings: jsonb("voice_settings"), // User's voice preferences for this segment
+  audioFileUrl: text("audio_file_url"), // User's recorded audio for this segment
+  isComplete: boolean("is_complete").default(false),
+  isPublic: boolean("is_public").default(false), // Can be shared with collaborators
+  collaborationId: varchar("collaboration_id"), // Link to collaborative roleplay session
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Reference Data Types
+export type ReferenceStory = typeof referenceStories.$inferSelect;
+export type InsertReferenceStory = typeof referenceStories.$inferInsert;
+export type ReferenceStoryAnalysis = typeof referenceStoryAnalyses.$inferSelect;
+export type InsertReferenceStoryAnalysis = typeof referenceStoryAnalyses.$inferInsert;
+export type ReferenceRoleplayAnalysis = typeof referenceRoleplayAnalyses.$inferSelect;
+export type InsertReferenceRoleplayAnalysis = typeof referenceRoleplayAnalyses.$inferInsert;
+export type UserStoryNarration = typeof userStoryNarrations.$inferSelect;
+export type InsertUserStoryNarration = typeof userStoryNarrations.$inferInsert;
+export type UserRoleplaySegment = typeof userRoleplaySegments.$inferSelect;
+export type InsertUserRoleplaySegment = typeof userRoleplaySegments.$inferInsert;
+
+// Reference Data Validation Schemas
+export const insertReferenceStorySchema = createInsertSchema(referenceStories);
+export const insertReferenceStoryAnalysisSchema = createInsertSchema(referenceStoryAnalyses);
+export const insertReferenceRoleplayAnalysisSchema = createInsertSchema(referenceRoleplayAnalyses);
+export const insertUserStoryNarrationSchema = createInsertSchema(userStoryNarrations);
+export const insertUserRoleplaySegmentSchema = createInsertSchema(userRoleplaySegments);
+
 // Story Narrations schemas
 export const insertStoryNarrationSchema = createInsertSchema(storyNarrations).omit({
   id: true,
