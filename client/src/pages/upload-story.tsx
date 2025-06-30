@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 import { ArrowLeft, RefreshCw, Loader2, FileText, Upload, Plus } from "lucide-react";
 import { AppTopNavigation } from "@/components/app-top-navigation";
@@ -278,15 +279,28 @@ export default function UploadStory() {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Title Input */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-white">Story Title (Optional)</label>
-                <Input
-                  value={storyTitle}
-                  onChange={(e) => setStoryTitle(e.target.value)}
-                  placeholder="Enter your story title..."
-                  className="bg-white/10 border-white/20 text-white placeholder-white/50"
-                />
+              {/* Title and Language Row */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="md:col-span-2 space-y-2">
+                  <label className="text-sm font-medium text-white">Story Title (Optional)</label>
+                  <Input
+                    value={storyTitle}
+                    onChange={(e) => setStoryTitle(e.target.value)}
+                    placeholder="Enter your story title..."
+                    className="bg-white/10 border-white/20 text-white placeholder-white/50"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-white">Language</label>
+                  <Select defaultValue="en-US">
+                    <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                      <SelectValue placeholder="Select language" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="en-US">English</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               {/* Story Content */}
