@@ -627,6 +627,18 @@ Preferred communication style: Simple, everyday language.
 - **Cleanup API Endpoints**: Manual cache cleanup endpoints for admin management
 - **Cost Optimization**: Cache prevents duplicate external API calls to expensive services (ElevenLabs, OpenAI, video providers)
 
+**CRITICAL HIERARCHICAL STORAGE RULE: USER-BASED CONTENT ORGANIZATION**
+- **MANDATORY HIERARCHICAL STRUCTURE**: All user content must follow user-data/{userId}/{contentType}/{category}/{identifier}/sample-{n}.{ext} structure
+- **USER-ID ISOLATION**: Every file must be stored under user-specific directory to prevent cross-user access and data conflicts
+- **SAMPLE VERSIONING SUPPORT**: Use sample-1.mp3, sample-2.mp3, etc. for multiple recordings per emotion/intensity combination
+- **IDENTIFIER SUBDIRECTORIES**: Group related samples under identifier folders (e.g., joy-8, anger-6) for organized collection
+- **DATABASE PATH CONSISTENCY**: Database columns store relative paths that dynamically build to full hierarchical URLs
+- **DYNAMIC PATH BUILDING**: Frontend fetches use logged-in user ID to construct proper /api/user-content/{userId}/audio/emotions/{emotion}-{intensity}/sample-{n}.mp3 URLs
+- **NO TIMESTAMP FOLDERS**: Avoid date/time folders - use sample numbering for chronological ordering and easy cleanup
+- **FUTURE MVP READINESS**: Structure supports collecting multiple voice samples per emotion for improved voice cloning quality
+- **CROSS-USER SECURITY**: Hierarchical structure prevents users from accessing other users' voice recordings or content
+- **CLEANUP FRIENDLY**: Easy to remove old samples by targeting specific sample numbers while preserving recent recordings
+
 **CRITICAL FORMAT DETECTION RULE: SIGNATURE-BASED AUDIO/VIDEO FORMAT HANDLING**
 - **NO HARDCODED FILE EXTENSIONS**: All format detection must use buffer signature analysis from shared/audio-config.ts and shared/video-format-config.ts
 - **MP3-Only Optimization**: System enforces MP3 format for ElevenLabs with automatic conversion skipping when files are already MP3
