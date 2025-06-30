@@ -52,12 +52,15 @@ async function testHybridCloning() {
     
     // 3. Test session manager
     console.log('\n📋 Step 3: Testing session manager...');
-    const sessionModule = await import('./server/voice-cloning-session-manager.ts');
-    const voiceCloningSessionManager = sessionModule.voiceCloningSessionManager;
+    const { VoiceCloningSessionManager } = await import('./server/voice-cloning-session-manager.ts');
     
-    const mockSession = { userId: TEST_USER_ID };
-    voiceCloningSessionManager.initializeSession(mockSession);
-    console.log(`✅ Session initialized: ${JSON.stringify(mockSession.voiceCloning?.emotions || {})}`);
+    const mockSession = { user: { id: TEST_USER_ID } };
+    const sessionData = await VoiceCloningSessionManager.initializeSessionData(mockSession);
+    console.log(`✅ Session initialized: ${JSON.stringify(sessionData)}`);
+    
+    // Check hybrid emotion cloning trigger
+    const shouldTriggerHybrid = await VoiceCloningSessionManager.shouldTriggerHybridEmotionCloning(TEST_USER_ID);
+    console.log(`✅ Should trigger hybrid emotion cloning: ${shouldTriggerHybrid}`);
     
     // Simulate reaching threshold
     for (let i = 0; i < 6; i++) {
