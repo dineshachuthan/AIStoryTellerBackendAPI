@@ -1,4 +1,30 @@
-import { VoiceProviderConfiguration } from './voice-providers/provider-manager';
+/**
+ * Voice Provider Configuration - Follows Video Provider Pattern
+ * All configuration constants and provider setup
+ */
+
+export interface VoiceProviderConfig {
+  apiKey: string;
+  secretKey?: string;
+  baseUrl: string;
+  modelName: string;
+  maxSamplesPerClone: number;
+  maxSampleDurationMs: number;
+  maxClonesPerUser: number;
+  timeout: number;
+  retryCount: number;
+}
+
+export interface VoiceProviderInfo {
+  enabled: boolean;
+  config: VoiceProviderConfig;
+  priority: number;
+}
+
+export interface VoiceProviderConfiguration {
+  activeProvider: string;
+  providers: Record<string, VoiceProviderInfo>;
+}
 
 export const defaultVoiceConfig: VoiceProviderConfiguration = {
   activeProvider: 'elevenlabs', // Default to ElevenLabs for voice cloning

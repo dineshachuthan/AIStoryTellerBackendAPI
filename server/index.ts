@@ -5,6 +5,8 @@ import { archetypeService } from "./character-archetype-service";
 import { collaborativeRoutes } from "./routes-collaborative";
 import videoRoutes from "./routes-video";
 import { registerVideoProviderRoutes } from "./routes-video-providers";
+import { VoiceProviderRegistry } from "./voice-providers/provider-manager";
+import { getVoiceConfig } from "./voice-config";
 
 const app = express();
 app.use(express.json());
@@ -51,6 +53,15 @@ app.use((req, res, next) => {
   
   // Add video provider management routes
   registerVideoProviderRoutes(app);
+  
+  // Initialize voice provider registry with configuration
+  try {
+    const voiceConfig = getVoiceConfig();
+    VoiceProviderRegistry.initialize(voiceConfig);
+    console.log('Voice provider registry initialized successfully');
+  } catch (error) {
+    console.error('Failed to initialize voice providers:', error);
+  }
   
   // Initialize character archetypes after server starts (optional, with delay)
   setTimeout(() => {

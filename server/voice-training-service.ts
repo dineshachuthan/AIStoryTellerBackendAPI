@@ -128,8 +128,9 @@ export class VoiceTrainingService {
         };
       }
 
-      // Train voice with ElevenLabs
-      const trainingResult = await this.elevenLabsProvider.trainVoice({
+      // Train voice with active provider (ElevenLabs or future providers like Kling)
+      const { VoiceProviderFactory } = require('./voice-providers/voice-provider-factory');
+      const trainingResult = await VoiceProviderFactory.trainVoice({
         userId,
         voiceProfileId: voiceProfile.id,
         samples: allSamples
