@@ -91,8 +91,8 @@ export class VoiceProviderFactory {
   /**
    * Get available providers
    */
-  static getAvailableProviders(): string[] {
-    const { getVoiceConfig } = require('../voice-config');
+  static async getAvailableProviders(): Promise<string[]> {
+    const { getVoiceConfig } = await import('../voice-config');
     const config = getVoiceConfig();
     
     return Object.entries(config.providers)
@@ -116,8 +116,8 @@ export class VoiceProviderFactory {
    * Train voice using active provider
    */
   static async trainVoice(request: VoiceTrainingRequest): Promise<VoiceTrainingResult> {
-    const activeProvider = this.getActiveProvider();
-    const module = this.getModule(activeProvider);
+    const activeProvider = await this.getActiveProvider();
+    const module = await this.getModule(activeProvider);
     return await module.trainVoice(request);
   }
 
@@ -125,8 +125,8 @@ export class VoiceProviderFactory {
    * Generate speech using active provider
    */
   static async generateSpeech(text: string, voiceId: string, emotion?: string): Promise<ArrayBuffer> {
-    const activeProvider = this.getActiveProvider();
-    const module = this.getModule(activeProvider);
+    const activeProvider = await this.getActiveProvider();
+    const module = await this.getModule(activeProvider);
     return await module.generateSpeech(text, voiceId, emotion);
   }
 
@@ -134,8 +134,8 @@ export class VoiceProviderFactory {
    * Get voice status using active provider
    */
   static async getVoiceStatus(voiceId: string): Promise<{ status: string; ready: boolean }> {
-    const activeProvider = this.getActiveProvider();
-    const module = this.getModule(activeProvider);
+    const activeProvider = await this.getActiveProvider();
+    const module = await this.getModule(activeProvider);
     return await module.getVoiceStatus(voiceId);
   }
 }

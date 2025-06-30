@@ -4994,18 +4994,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ]
       };
 
-      console.log(`[VoiceCloning] Testing active provider: ${VoiceProviderFactory.getActiveProvider()}`);
-      console.log(`[VoiceCloning] Available providers: ${VoiceProviderFactory.getAvailableProviders().join(', ')}`);
+      const activeProvider = await VoiceProviderFactory.getActiveProvider();
+      const availableProviders = await VoiceProviderFactory.getAvailableProviders();
+      
+      console.log(`[VoiceCloning] Testing active provider: ${activeProvider}`);
+      console.log(`[VoiceCloning] Available providers: ${availableProviders.join(', ')}`);
 
       // Test provider availability
-      const activeProvider = VoiceProviderFactory.getActiveProvider();
       const isAvailable = VoiceProviderFactory.isProviderAvailable(activeProvider);
 
       if (!isAvailable) {
         return res.status(503).json({ 
           message: 'Voice provider not available',
           activeProvider,
-          availableProviders: VoiceProviderFactory.getAvailableProviders()
+          availableProviders
         });
       }
 
