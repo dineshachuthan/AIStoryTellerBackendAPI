@@ -5,6 +5,14 @@
 
 import { VOICE_CLONING_CONFIG } from '@shared/voice-config';
 
+// In-memory store for tracking cloning completion across sessions
+const cloningCompletionStore = new Map<string, {
+  userId: string;
+  category: VoiceCategoryType;
+  success: boolean;
+  completedAt: Date;
+}>();
+
 export interface VoiceCloningSessionData {
   emotions_not_cloned: number;
   sounds_not_cloned: number;
@@ -202,27 +210,69 @@ export class VoiceCloningSessionManager {
   }
 
   /**
-   * Complete cloning process for category
+   * Complete cloning process for category (can be called without session)
    */
-  static completeCategoryCloning(req: any, category: VoiceCategoryType, success: boolean): void {
+  static completeCategoryCloning(userId: string, category: VoiceCategoryType, success: boolean): void {
+    // Store completion in memory for cross-session tracking
+    const completionKey = `${userId}-${category}`;
+    cloningCompletionStore.set(completionKey, {
+      userId,
+      category,
+      success,
+      completedAt: new Date()
+    });
+    
+    console.log(`📝 Cloning completion stored: ${userId} ${category} ${success ? 'SUCCESS' : 'FAILED'}`);
+    
+    // Clean up old completions (older than 10 minutes)
+    setTimeout(() => {
+      for (const [key, completion] of cloningCompletionStore.entries()) {
+        const ageMinutes = (Date.now() - completion.completedAt.getTime()) / (1000 * 60);
+        if (ageMinutes > 10) {
+          cloningCompletionStore.delete(key);
+        }
+      }
+    }, 0);
+  }
+
+  /**
+   * Apply any pending completions to current session
+   */
+  static applyPendingCompletions(req: any): void {
+    const userId = req.user?.id;
+    if (!userId) return;
+
     const sessionData = this.getSessionData(req);
     
-    // Reset counter for this category
-    switch (category) {
-      case 'emotions':
-        sessionData.emotions_not_cloned = 0;
-        break;
-      case 'sounds':
-        sessionData.sounds_not_cloned = 0;
-        break;
-      case 'modulations':
-        sessionData.modulations_not_cloned = 0;
-        break;
+    for (const category of ['emotions', 'sounds', 'modulations'] as VoiceCategoryType[]) {
+      const completionKey = `${userId}-${category}`;
+      const completion = cloningCompletionStore.get(completionKey);
+      
+      if (completion) {
+        console.log(`🔄 Applying pending completion: ${category} ${completion.success ? 'SUCCESS' : 'FAILED'}`);
+        
+        sessionData.cloning_in_progress[category] = false;
+        sessionData.cloning_status[category] = completion.success ? 'completed' : 'failed';
+        
+        // Reset counter if successful
+        if (completion.success) {
+          switch (category) {
+            case 'emotions':
+              sessionData.emotions_not_cloned = 0;
+              break;
+            case 'sounds':
+              sessionData.sounds_not_cloned = 0;
+              break;
+            case 'modulations':
+              sessionData.modulations_not_cloned = 0;
+              break;
+          }
+        }
+        
+        // Remove from pending completions
+        cloningCompletionStore.delete(completionKey);
+      }
     }
-    
-    // Update status
-    sessionData.cloning_in_progress[category] = false;
-    sessionData.cloning_status[category] = success ? 'completed' : 'failed';
     
     req.session.voiceCloning = sessionData;
   }

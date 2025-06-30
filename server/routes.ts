@@ -4279,24 +4279,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Trigger ElevenLabs training asynchronously (fully background processing)
           const { voiceTrainingService } = await import('./voice-training-service');
           
-          // Start background thread for training - user can continue using app
+          // Start background thread for training with proper timeout - user can continue using app
           setTimeout(async () => {
+            const timeoutMs = VOICE_CLONING_CONFIG.training.timeoutMinutes * 60 * 1000;
+            
+            // Create timeout promise
+            const timeoutPromise = new Promise((_, reject) => {
+              setTimeout(() => reject(new Error('Voice cloning timeout after 2 minutes')), timeoutMs);
+            });
+            
             try {
-              const result = await voiceTrainingService.triggerAutomaticTraining(userId);
+              const result = await Promise.race([
+                voiceTrainingService.triggerAutomaticTraining(userId),
+                timeoutPromise
+              ]);
               
               if (result.success) {
                 console.log(`✅ ElevenLabs cloning completed for user ${userId}, category '${category}', voice ID: ${result.voiceId}`);
-                
-                // Complete cloning process (resets counter, enables button)
-                // Note: This will be picked up by the next session status check
-                VoiceCloningSessionManager.completeCategoryCloning(req, category, true);
+                VoiceCloningSessionManager.completeCategoryCloning(userId, category, true);
               } else {
                 console.error(`❌ ElevenLabs cloning failed for user ${userId}, category '${category}': ${result.error}`);
-                VoiceCloningSessionManager.completeCategoryCloning(req, category, false);
+                VoiceCloningSessionManager.completeCategoryCloning(userId, category, false);
               }
             } catch (error) {
               console.error(`❌ ElevenLabs cloning error for user ${userId}, category '${category}':`, error);
-              VoiceCloningSessionManager.completeCategoryCloning(req, category, false);
+              VoiceCloningSessionManager.completeCategoryCloning(userId, category, false);
             }
           }, 100); // Small delay to ensure response is sent before background processing
         } else {
