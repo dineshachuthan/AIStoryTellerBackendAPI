@@ -115,11 +115,38 @@ export class ElevenLabsProvider extends BaseVoiceProvider {
       }
       formData.append('labels', JSON.stringify(emotionLabels));
 
-      // Add audio files with emotion context
-      request.samples.forEach((sample, index) => {
-        const blob = new Blob([sample.audioData], { type: 'audio/mpeg' });
-        formData.append('files', blob, `${sample.emotion}_${index}.mp3`);
-      });
+      // Download and add audio files with emotion context
+      for (let index = 0; index < request.samples.length; index++) {
+        const sample = request.samples[index];
+        
+        try {
+          // Fetch audio data from URL if audioData is empty
+          let audioBuffer = sample.audioData;
+          if (audioBuffer.length === 0) {
+            // Try to construct audio URL from sample info
+            const audioUrl = `http://localhost:5000/api/audio/${sample.userId}/${sample.emotion}`;
+            console.log(`[ElevenLabs] Fetching audio for ${sample.emotion} from ${audioUrl}`);
+            
+            const audioResponse = await fetch(audioUrl);
+            if (!audioResponse.ok) {
+              throw new Error(`Failed to fetch audio for ${sample.emotion}: ${audioResponse.status}`);
+            }
+            const arrayBuffer = await audioResponse.arrayBuffer();
+            audioBuffer = Buffer.from(arrayBuffer);
+          }
+          
+          if (audioBuffer.length === 0) {
+            throw new Error(`No audio data available for ${sample.emotion}`);
+          }
+          
+          const blob = new Blob([audioBuffer], { type: 'audio/mpeg' });
+          formData.append('files', blob, `${sample.emotion}_${index}.mp3`);
+          console.log(`[ElevenLabs] Added ${sample.emotion} sample (${audioBuffer.length} bytes)`);
+        } catch (error) {
+          console.error(`[ElevenLabs] Failed to process sample ${sample.emotion}:`, error);
+          throw error;
+        }
+      }
 
       const response = await fetch(`${this.baseUrl}/voices/add`, {
         method: 'POST',
@@ -376,11 +403,12 @@ export class ElevenLabsProvider extends BaseVoiceProvider {
         name: `User_${options.userId}_Voice_${Date.now()}`,
         description: `Voice clone for user ${options.userId} with ${options.samples.length} emotion samples`,
         samples: options.samples.map((sample: any) => ({
+          userId: options.userId,
           emotion: sample.emotion,
-          audioUrl: sample.audioUrl,
-          audioBuffer: Buffer.from(''), // Will be fetched from URL
+          audioData: Buffer.from(''), // Will be fetched from URL
+          filename: `${sample.emotion}_sample.mp3`,
           duration: 0,
-          quality: 'good' as const
+          quality: 1
         }))
       };
 
