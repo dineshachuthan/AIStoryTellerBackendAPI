@@ -194,6 +194,41 @@ export class ElevenLabsModule extends BaseVoiceProvider {
     }
   }
 
+  private detectAudioFormat(buffer: Buffer): string | null {
+    // Use existing audio format detection from shared config
+    const { AUDIO_FORMAT_CONFIG } = require('@shared/audio-config');
+    
+    const header = buffer.subarray(0, 12);
+    
+    for (const format of AUDIO_FORMAT_CONFIG) {
+      let matches = true;
+      
+      for (const signature of format.signatures) {
+        let signatureBuffer: Buffer;
+        if (typeof signature.pattern === 'string') {
+          signatureBuffer = Buffer.from(signature.pattern);
+        } else {
+          signatureBuffer = Buffer.from(signature.pattern);
+        }
+        
+        const headerSection = header.subarray(signature.offset, signature.offset + signatureBuffer.length);
+        
+        if (!headerSection.equals(signatureBuffer)) {
+          matches = false;
+          break;
+        }
+      }
+      
+      if (matches) {
+        this.log('info', `Detected audio format: ${format.name} (.${format.extension})`);
+        return format.extension;
+      }
+    }
+    
+    this.log('warn', `Unknown audio format detected, header: ${header.toString('hex')}`);
+    return null;
+  }
+
   private async convertToMp3(audioBuffer: Buffer, fileName: string): Promise<Buffer> {
     const { spawn } = await import('child_process');
     const fs = await import('fs/promises');
@@ -205,7 +240,17 @@ export class ElevenLabsModule extends BaseVoiceProvider {
     try {
       // Create temporary files
       const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'elevenlabs-'));
-      const inputPath = path.join(tempDir, `input_${Date.now()}.webm`);
+      
+      // Detect actual file format from buffer or use fileName extension
+      const detectedExtension = this.detectAudioFormat(audioBuffer) || path.extname(fileName).slice(1) || 'mp3';
+      
+      // If already MP3, return as-is (MP3-only enforcement means no conversion needed)
+      if (detectedExtension === 'mp3') {
+        this.log('info', `File is already MP3 format, skipping conversion: ${fileName}`);
+        return audioBuffer;
+      }
+      
+      const inputPath = path.join(tempDir, `input_${Date.now()}.${detectedExtension}`);
       const outputPath = path.join(tempDir, `output_${Date.now()}.mp3`);
       
       // Write input file

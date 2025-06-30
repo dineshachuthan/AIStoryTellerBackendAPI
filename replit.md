@@ -169,6 +169,13 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Priority**: Medium (requested but deferred for future implementation)
 
 ## Changelog
+- June 30, 2025: CRITICAL HARDCODING VIOLATION FIX - Eliminated File Extension Hardcoding in ElevenLabs Module
+  - **Fixed hardcoded .webm extension** in ElevenLabs voice training that violated "NEVER HARDCODE ANYTHING" rule
+  - **Implemented dynamic file format detection** using existing audio-config.ts format detection system
+  - **Added MP3-only optimization** - skips conversion when files are already MP3 format as enforced by system
+  - **Resolved FFmpeg EBML parsing errors** caused by treating MP3 files as WebM due to hardcoded extension
+  - **ElevenLabs module now data-driven** - detects actual file format from buffer content or fileName instead of assumptions
+  - Voice cloning failures should now resolve as system properly handles MP3 files without format conflicts
 - June 30, 2025: DATABASE SCHEMA ARCHITECTURE IMPROVEMENT - Added Database Verification Principle to replit.md 
   - **Added CRITICAL DATABASE RULE** requiring schema inspection before alterations to prevent column naming inconsistencies
   - **Fixed TypeScript schema column mismatch** - corrected `elevenlabs_voice_id` column naming consistency across all files to match actual database structure
