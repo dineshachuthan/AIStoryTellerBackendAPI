@@ -169,6 +169,15 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Priority**: Medium (requested but deferred for future implementation)
 
 ## Changelog
+- June 30, 2025: CRITICAL FIX - Eliminated All Voice Provider Hardcoding and Implemented Priority-Based Selection
+  - **REMOVED hardcoded ElevenLabs selection** from voice-config.ts activeProvider field that violated "NEVER HARDCODE ANYTHING" rule
+  - **ELIMINATED hardcoded fallback** in voice-provider-factory.ts that defaulted to ElevenLabs regardless of configuration
+  - **IMPLEMENTED proper priority-based system** like video providers - ElevenLabs priority 1, Kling Voice priority 2
+  - **STANDARDIZED failure handling pattern** across all external integrations (RunwayML, Kling, ElevenLabs) with ExternalIntegrationStateReset
+  - **UNIFIED error logging** - all providers now use logFailureWithoutStorage() without storing completion records on failure
+  - **CONFIGURATION-DRIVEN selection** - active provider determined by API key availability and priority, not hardcoded values
+  - **SYSTEM NOW FOLLOWS RULES** - voice provider selection fully data-driven with zero tolerance for hardcoded defaults
+  - Voice providers work exactly like video providers: configuration controls everything, no hardcoded assumptions anywhere
 - June 30, 2025: CRITICAL HARDCODING VIOLATION FIX - Eliminated File Extension Hardcoding in ElevenLabs Module
   - **Fixed hardcoded .webm extension** in ElevenLabs voice training that violated "NEVER HARDCODE ANYTHING" rule
   - **Implemented dynamic file format detection** using existing audio-config.ts format detection system

@@ -35,7 +35,7 @@ export class VoiceProviderFactory {
       return getActiveVoiceProvider();
     } catch (error) {
       console.error('[VoiceFactory] Failed to get active provider:', error);
-      return 'elevenlabs'; // Default fallback
+      throw new Error('No voice providers available - check configuration and API keys');
     }
   }
 

@@ -27,7 +27,7 @@ export interface VoiceProviderConfiguration {
 }
 
 export const defaultVoiceConfig: VoiceProviderConfiguration = {
-  activeProvider: 'elevenlabs', // Default to ElevenLabs for voice cloning
+  activeProvider: '', // Will be determined by priority and availability
   providers: {
     'elevenlabs': {
       enabled: !!(process.env.ELEVENLABS_API_KEY),
