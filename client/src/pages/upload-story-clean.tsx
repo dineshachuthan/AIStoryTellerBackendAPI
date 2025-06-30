@@ -39,16 +39,21 @@ export default function UploadStoryClean() {
     
     setIsSubmitting(true);
     try {
+      // First create the story
       const response = await apiRequest('/api/stories', {
         method: 'POST',
-        body: {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           title: storyTitle || 'Untitled Story',
           content: storyContent,
           uploadType: 'text',
           category: 'General'
-        }
+        })
       });
       
+      // Then trigger story analysis and redirect to analysis page
       setLocation(`/story/${response.id}`);
     } catch (error) {
       console.error('Error creating story:', error);
@@ -111,10 +116,10 @@ export default function UploadStoryClean() {
                       {isSubmitting ? (
                         <>
                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Creating Story...
+                          Analyzing Story...
                         </>
                       ) : (
-                        'Create Story'
+                        'Analyze Story'
                       )}
                     </Button>
                   </div>
