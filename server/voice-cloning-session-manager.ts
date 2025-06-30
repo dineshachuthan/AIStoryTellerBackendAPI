@@ -24,7 +24,9 @@ export interface VoiceCloningSessionData {
 export type VoiceCategoryType = 'emotions' | 'sounds' | 'modulations';
 
 export class VoiceCloningSessionManager {
-  private static readonly CLONING_THRESHOLD = 6;
+  private static get CLONING_THRESHOLD() {
+    return VOICE_CLONING_CONFIG.sampleThreshold;
+  }
 
   /**
    * Initialize session voice cloning data on login
