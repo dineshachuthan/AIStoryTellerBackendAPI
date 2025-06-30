@@ -587,6 +587,20 @@ Preferred communication style: Simple, everyday language.
 - Database schema changes must be based on actual current state, not assumptions
 - **CRITICAL WORKFLOW RULE: ALWAYS STOP THE APP BEFORE MAKING SCHEMA CHANGES** - prevents database conflicts and connection issues during migrations
 
+**CRITICAL DATABASE-TO-REST MAPPING RULE: SCHEMA COLUMN CONSISTENCY**
+- **MANDATORY SCHEMA VALIDATION**: Always cross-reference DATABASE_SCHEMA_ANALYSIS.md before modifying TypeScript schemas
+- **COLUMN NAME MATCHING**: Database snake_case columns must exactly match TypeScript camelCase property names (user_voice_profile_id → userVoiceProfileId)
+- **MISSING COLUMNS DETECTION**: Use comprehensive table analysis to identify missing columns in TypeScript schemas before deployment
+- **DEFAULT VALUE CONSISTENCY**: Database default values must match TypeScript schema defaults (training_status: 'pending' vs 'collecting')
+- **NULLABLE FIELD ALIGNMENT**: Database nullable fields must correspond to TypeScript optional properties with proper null handling
+- **CRITICAL COLUMNS VERIFICATION**: Always verify critical columns exist in both database and schema (training_status, elevenlabs_voice_id, quality_score)
+- **TYPE MAPPING ACCURACY**: Ensure PostgreSQL types correctly map to TypeScript types (jsonb → Json, varchar(50) → string, numeric → number)
+- **FOREIGN KEY CONSISTENCY**: Reference columns must match between database foreign keys and TypeScript relations
+- **INDEX OPTIMIZATION**: Database indexes must align with TypeScript query patterns and performance requirements
+- **MIGRATION SAFETY**: Schema changes require verification that existing data remains accessible through new TypeScript definitions
+- **ERROR PREVENTION**: Column mismatches cause runtime errors - prevent with mandatory pre-deployment schema comparison
+- **REST API ALIGNMENT**: API endpoints must handle both database column names and TypeScript property names for backward compatibility
+
 **CRITICAL INTEGRATION RULE: MANDATORY TIMEOUT AND RETRY SPECIFICATIONS**
 - ALL external API integrations MUST implement exactly 3 retry attempts before throwing exception
 - Main thread operations MUST have 60-second timeout per attempt
