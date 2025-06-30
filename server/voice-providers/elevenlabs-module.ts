@@ -82,11 +82,14 @@ export class ElevenLabsModule extends BaseVoiceProvider {
           const arrayBuffer = await audioResponse.arrayBuffer();
           const audioBuffer = Buffer.from(arrayBuffer);
           
-          // Use base class validation
+          // Convert WebM to MP3 for ElevenLabs compatibility
           const fileName = `${sample.emotion}_sample_${index + 1}.mp3`;
-          this.validateAudioFile(audioBuffer, fileName);
+          const convertedAudioBuffer = await this.convertToMp3(audioBuffer, fileName);
           
-          const audioFile = new File([audioBuffer], fileName, { type: 'audio/mpeg' });
+          // Use base class validation on converted audio
+          this.validateAudioFile(convertedAudioBuffer, fileName);
+          
+          const audioFile = new File([convertedAudioBuffer], fileName, { type: 'audio/mpeg' });
           audioFiles.push(audioFile);
           
           this.log('info', `Successfully processed ${sample.emotion} sample (${audioBuffer.length} bytes)`);
@@ -188,6 +191,75 @@ export class ElevenLabsModule extends BaseVoiceProvider {
         status: 'error',
         ready: false
       };
+    }
+  }
+
+  private async convertToMp3(audioBuffer: Buffer, fileName: string): Promise<Buffer> {
+    const { spawn } = await import('child_process');
+    const fs = await import('fs/promises');
+    const path = await import('path');
+    const os = await import('os');
+    
+    this.log('info', `Converting audio to MP3 format for ${fileName}`);
+    
+    try {
+      // Create temporary files
+      const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'elevenlabs-'));
+      const inputPath = path.join(tempDir, `input_${Date.now()}.webm`);
+      const outputPath = path.join(tempDir, `output_${Date.now()}.mp3`);
+      
+      // Write input file
+      await fs.writeFile(inputPath, audioBuffer);
+      
+      // Convert using FFmpeg with specific settings for ElevenLabs compatibility
+      const ffmpegArgs = [
+        '-i', inputPath,
+        '-codec:a', 'libmp3lame',  // Use LAME MP3 encoder
+        '-b:a', '128k',            // 128 kbps bitrate
+        '-ar', '22050',            // 22.05 kHz sample rate (ElevenLabs compatible)
+        '-ac', '1',                // Mono audio
+        '-f', 'mp3',               // Force MP3 format
+        '-y',                      // Overwrite output file
+        outputPath
+      ];
+      
+      return new Promise((resolve, reject) => {
+        const ffmpeg = spawn('ffmpeg', ffmpegArgs);
+        let errorOutput = '';
+        
+        ffmpeg.stderr.on('data', (data) => {
+          errorOutput += data.toString();
+        });
+        
+        ffmpeg.on('close', async (code) => {
+          try {
+            if (code !== 0) {
+              throw new Error(`FFmpeg conversion failed with code ${code}: ${errorOutput}`);
+            }
+            
+            // Read converted file
+            const convertedBuffer = await fs.readFile(outputPath);
+            
+            // Cleanup temp files
+            await fs.unlink(inputPath).catch(() => {});
+            await fs.unlink(outputPath).catch(() => {});
+            await fs.rmdir(tempDir).catch(() => {});
+            
+            this.log('info', `Successfully converted ${fileName} to MP3 (${convertedBuffer.length} bytes)`);
+            resolve(convertedBuffer);
+          } catch (error) {
+            reject(error);
+          }
+        });
+        
+        ffmpeg.on('error', (error) => {
+          reject(new Error(`FFmpeg process error: ${error.message}`));
+        });
+      });
+      
+    } catch (error) {
+      this.log('error', `Audio conversion failed for ${fileName}`, error);
+      throw error;
     }
   }
 
