@@ -524,6 +524,15 @@ Preferred communication style: Simple, everyday language.
 - No convenience hardcoding under any circumstances
 - Every function must connect to real data sources or fail authentically
 
+**CRITICAL DATABASE RULE: ALWAYS VERIFY EXISTING SCHEMA BEFORE CHANGES**
+- MANDATORY: Check existing database columns and structure before altering schema
+- Use SQL queries to inspect current table structure: `SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'table_name'`
+- Never assume column names or data types - verify what actually exists in the database
+- Identify and resolve duplicate columns or naming inconsistencies before proceeding
+- Understand the purpose of existing columns before adding new ones
+- Follow principle: "Inspect first, understand second, then modify" for all database operations
+- Database schema changes must be based on actual current state, not assumptions
+
 **CRITICAL INTEGRATION RULE: MANDATORY TIMEOUT AND RETRY SPECIFICATIONS**
 - ALL external API integrations MUST implement exactly 3 retry attempts before throwing exception
 - Main thread operations MUST have 60-second timeout per attempt
