@@ -162,9 +162,22 @@ export default function CollaborativeRoleplay() {
         
         {/* Header */}
         <div className="text-center space-y-4">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white">
-            Collaborative Roleplay
-          </h1>
+          <div className="flex items-center justify-center gap-6">
+            <h1 className="text-4xl font-bold text-gray-900 dark:text-white">
+              Collaborative Roleplay
+            </h1>
+            <div className="flex flex-col items-start">
+              <Label htmlFor="language" className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Language</Label>
+              <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Select language" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="en-US">English</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
           <p className="text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
             Convert your stories into collaborative templates and invite friends to play different characters with their own voices and pictures.
           </p>
