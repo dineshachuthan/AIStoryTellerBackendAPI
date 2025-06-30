@@ -177,6 +177,9 @@ This is a full-stack collaborative storytelling platform that enables users to c
   - **Resolved voice cloning column name errors** that were preventing ElevenLabs integration from functioning properly
   - **Fixed nullable field optimization** - modified schema to accept NULL defaults for attributes not passed by frontend
   - **Removed non-existent voice_name column** from user_emotion_voices table schema to match actual database structure
+  - **Resolved voice training service errors** - removed invalid voiceName property references that were causing database conflicts
+  - **Enhanced storage validation** - made voiceName optional with database defaults to prevent validation errors
+  - **Application successfully restarted** - ElevenLabs integration now working without voice_name column errors
   - All future database modifications now require mandatory schema verification following "inspect first, understand second, then modify" principle
 - June 30, 2025: CRITICAL FIX - Complete ElevenLabs Integration State Reset System Implementation
   - **Fixed missing resetVoiceProfile and resetAllStatesForUser methods** in ExternalIntegrationStateReset service that were causing runtime errors
@@ -541,6 +544,7 @@ Preferred communication style: Simple, everyday language.
 - Understand the purpose of existing columns before adding new ones
 - Follow principle: "Inspect first, understand second, then modify" for all database operations
 - Database schema changes must be based on actual current state, not assumptions
+- **CRITICAL WORKFLOW RULE: ALWAYS STOP THE APP BEFORE MAKING SCHEMA CHANGES** - prevents database conflicts and connection issues during migrations
 
 **CRITICAL INTEGRATION RULE: MANDATORY TIMEOUT AND RETRY SPECIFICATIONS**
 - ALL external API integrations MUST implement exactly 3 retry attempts before throwing exception

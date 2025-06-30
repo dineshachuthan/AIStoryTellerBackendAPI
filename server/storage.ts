@@ -935,9 +935,7 @@ export class DatabaseStorage implements IStorage {
     if (!profile.baseVoice) {
       throw new Error('baseVoice is required for voice profile creation');
     }
-    if (!profile.voiceName) {
-      throw new Error('voiceName is required for voice profile creation');
-    }
+    // voiceName is optional - has default value in database
     
     const [created] = await db.insert(userVoiceProfiles).values({
       ...profile,

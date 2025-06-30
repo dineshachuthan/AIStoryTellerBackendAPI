@@ -268,7 +268,8 @@ export class VoiceTrainingService {
     if (!voiceProfile) {
       voiceProfile = await storage.createUserVoiceProfile({
         userId: userId,
-        voiceName: `${userId}_hybrid_voice`,
+        profileName: `${userId}_hybrid_voice`, // Use profileName instead of voiceName
+        baseVoice: 'alloy', // Required field
         voiceSettings: { hybrid: true },
         isActive: true,
         createdAt: new Date(),
@@ -313,9 +314,8 @@ export class VoiceTrainingService {
       if (!voiceProfile) {
         voiceProfile = await storage.createUserVoiceProfile({
           userId,
-          voiceName: `User_${userId}_Voice`,
-          profileName: `Voice_Profile_${userId}`, // Required field that was missing
-          baseVoice: 'alloy', // Required field
+          profileName: `Voice_Profile_${userId}`, // Required field
+          baseVoice: 'alloy', // Required field  
           status: 'training',
           elevenLabsVoiceId: null,
           totalSamples: 0,
