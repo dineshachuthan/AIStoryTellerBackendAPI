@@ -67,7 +67,7 @@ export const queryClient = new QueryClient({
       queryFn: getQueryFn({ on401: "throw" }),
       refetchInterval: false,
       refetchOnWindowFocus: false,
-      staleTime: Infinity,
+      staleTime: 30 * 60 * 1000, // 30 minutes cache duration
       retry: false,
     },
     mutations: {
@@ -75,3 +75,53 @@ export const queryClient = new QueryClient({
     },
   },
 });
+
+// Cache invalidation utility for database updates
+export const invalidateRelatedQueries = (table: string, recordId?: string | number) => {
+  const queryKeysToInvalidate: string[][] = [];
+  
+  switch (table) {
+    case 'user_voice_emotions':
+      queryKeysToInvalidate.push(
+        ["/api/voice-samples"],
+        ["/api/voice-cloning/session-status"],
+        ["/api/voice-samples/progress"],
+        ["/api/voice-training/status"]
+      );
+      break;
+    case 'voice_profiles':
+      queryKeysToInvalidate.push(
+        ["/api/voice-cloning/session-status"],
+        ["/api/voice-training/status"]
+      );
+      break;
+    case 'emotion_voices':
+      queryKeysToInvalidate.push(
+        ["/api/voice-cloning/session-status"],
+        ["/api/voice-training/status"]
+      );
+      break;
+    case 'stories':
+      queryKeysToInvalidate.push(
+        ["/api/stories"],
+        ["/api/stories", recordId],
+        ["/api/stories/user"]
+      );
+      break;
+    case 'story_analysis':
+      if (recordId) {
+        queryKeysToInvalidate.push(["/api/stories", recordId, "analysis"]);
+      }
+      break;
+    case 'generated_audio_cache':
+      queryKeysToInvalidate.push(["/api/audio-cache/stats"]);
+      break;
+    default:
+      console.warn(`Unknown table for cache invalidation: ${table}`);
+  }
+  
+  // Invalidate all related queries
+  queryKeysToInvalidate.forEach(queryKey => {
+    queryClient.invalidateQueries({ queryKey });
+  });
+};

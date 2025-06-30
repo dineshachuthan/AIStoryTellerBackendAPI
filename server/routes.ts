@@ -280,6 +280,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Session extension endpoint - extends session by 30 minutes on user activity
+  app.post('/api/auth/extend-session', requireAuth, (req, res) => {
+    try {
+      // Express session automatically handles sliding expiration
+      // Just touching the session will extend it by the configured maxAge
+      req.session.touch();
+      
+      // Set new expiration time (30 minutes from now)
+      const expirationTime = Date.now() + (30 * 60 * 1000);
+      req.session.cookie.expires = new Date(expirationTime);
+      
+      res.json({ 
+        success: true, 
+        expiresAt: expirationTime,
+        message: 'Session extended by 30 minutes'
+      });
+    } catch (error) {
+      console.error('Session extension error:', error);
+      res.status(500).json({ message: 'Failed to extend session' });
+    }
+  });
+
   app.get("/api/auth/user", (req, res) => {
     if (req.isAuthenticated()) {
       res.json(req.user);
