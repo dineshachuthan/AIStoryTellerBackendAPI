@@ -4098,15 +4098,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get voice modulation templates
+  // Get voice modulation templates from story analysis data
   app.get('/api/voice-modulations/templates', requireAuth, async (req, res) => {
     try {
       const type = req.query.type as string;
-      const { voiceModulationService } = await import('./voice-modulation-service');
-      const templates = await voiceModulationService.getTemplates(type);
+      const { getVoiceSamplesByType, getAllVoiceSamples } = await import('./voice-samples');
+      
+      let templates;
+      if (type) {
+        templates = await getVoiceSamplesByType(type as 'emotions' | 'sounds' | 'descriptions');
+      } else {
+        templates = await getAllVoiceSamples();
+      }
+      
       res.json(templates);
     } catch (error: any) {
-      console.error('Error fetching voice modulation templates:', error);
+      console.error('Error fetching voice modulation templates from story analysis:', error);
       res.status(500).json({ message: 'Failed to fetch templates' });
     }
   });

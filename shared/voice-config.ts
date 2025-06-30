@@ -173,6 +173,7 @@ export function getEmotionConfig(emotion: string): EmotionVoiceConfig | null {
 
 export function getAllEmotionConfigs(): EmotionVoiceConfig[] {
   // No hardcoded configurations - system is completely data-driven
+  // Voice samples now come from story analysis results via async function
   return [];
 }
 
