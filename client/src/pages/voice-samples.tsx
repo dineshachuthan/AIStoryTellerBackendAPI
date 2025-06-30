@@ -373,6 +373,7 @@ export default function VoiceSamples() {
                 progress={cloningProgress[category === 'emotion' ? 'emotions' : category === 'sound' ? 'sounds' : 'modulations' as keyof CloningProgress]}
                 onTrigger={() => triggerVoiceCloning.mutate((category === 'emotion' ? 'emotions' : category === 'sound' ? 'sounds' : 'modulations') as 'emotions' | 'sounds' | 'modulations')}
                 isLoading={triggerVoiceCloning.isPending}
+                isMutationPending={triggerVoiceCloning.isPending}
               />
             )}
             
@@ -533,9 +534,10 @@ interface VoiceCloningButtonProps {
   };
   onTrigger: () => void;
   isLoading: boolean;
+  isMutationPending?: boolean;
 }
 
-function VoiceCloningButton({ category, progress, onTrigger, isLoading }: VoiceCloningButtonProps) {
+function VoiceCloningButton({ category, progress, onTrigger, isLoading, isMutationPending = false }: VoiceCloningButtonProps) {
   const categoryNames = {
     'emotion': 'Emotions',
     'sound': 'Sounds',
@@ -584,7 +586,7 @@ function VoiceCloningButton({ category, progress, onTrigger, isLoading }: VoiceC
         
         <Button
           onClick={onTrigger}
-          disabled={!progress.canTrigger || progress.isTraining || isLoading}
+          disabled={!progress.canTrigger || progress.isTraining || isLoading || isMutationPending}
           className={cn(
             "ml-4 min-w-[200px]",
             getButtonStyle()
