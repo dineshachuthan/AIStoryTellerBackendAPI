@@ -219,6 +219,44 @@ export interface IStorage {
   // Story Narrations Enhanced
   getStoryNarration(storyId: number): Promise<any | undefined>;
   createStoryNarrationRecord(narrationData: any): Promise<any>;
+
+  // REFERENCE DATA ARCHITECTURE METHODS
+  
+  // Reference Stories (shared across all users)
+  getAllReferenceStories(): Promise<any[]>;
+  getReferenceStory(id: number): Promise<any | undefined>;
+  createReferenceStory(data: any): Promise<any>;
+  updateReferenceStory(id: number, data: any): Promise<any>;
+  deleteReferenceStory(id: number): Promise<void>;
+  browseReferenceStories(filters?: any): Promise<any[]>;
+  
+  // Reference Story Analysis (shared AI analysis)
+  getReferenceStoryAnalysis(referenceStoryId: number): Promise<any | undefined>;
+  createReferenceStoryAnalysis(data: any): Promise<any>;
+  updateReferenceStoryAnalysis(id: number, data: any): Promise<any>;
+  
+  // Reference Roleplay Analysis (shared roleplay structure)
+  getReferenceRoleplayAnalysis(referenceStoryId: number): Promise<any | undefined>;
+  createReferenceRoleplayAnalysis(data: any): Promise<any>;
+  updateReferenceRoleplayAnalysis(id: number, data: any): Promise<any>;
+  
+  // User Story Narrations (user's personalized narrations)
+  getUserStoryNarrations(userId: string): Promise<any[]>;
+  getUserStoryNarration(userId: string, referenceStoryId: number): Promise<any | undefined>;
+  createUserStoryNarration(data: any): Promise<any>;
+  updateUserStoryNarration(id: number, data: any): Promise<any>;
+  deleteUserStoryNarration(id: number): Promise<void>;
+  
+  // User Roleplay Segments (user's personal roleplay segments)
+  getUserRoleplaySegments(userId: string): Promise<any[]>;
+  getUserRoleplaySegment(userId: string, id: number): Promise<any | undefined>;
+  createUserRoleplaySegment(data: any): Promise<any>;
+  updateUserRoleplaySegment(id: number, data: any): Promise<any>;
+  deleteUserRoleplaySegment(id: number): Promise<void>;
+  
+  // Reference Data Migration
+  migrateStoryToReference(storyId: number): Promise<any>;
+  migrateAllStoriesToReference(): Promise<any>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1184,6 +1222,204 @@ export class DatabaseStorage implements IStorage {
       .then(rows => rows.map(row => row.emotion));
     
     return uniqueEmotions;
+  }
+
+  // REFERENCE DATA ARCHITECTURE IMPLEMENTATIONS
+  
+  // Reference Stories (shared across all users)
+  async getAllReferenceStories(): Promise<any[]> {
+    const { referenceStories } = await import('@shared/schema');
+    return await db.select().from(referenceStories).orderBy(referenceStories.publishedAt);
+  }
+  
+  async getReferenceStory(id: number): Promise<any | undefined> {
+    const { referenceStories } = await import('@shared/schema');
+    const [story] = await db.select().from(referenceStories).where(eq(referenceStories.id, id));
+    return story || undefined;
+  }
+  
+  async createReferenceStory(data: any): Promise<any> {
+    const { referenceStories } = await import('@shared/schema');
+    const [story] = await db.insert(referenceStories).values(data).returning();
+    return story;
+  }
+  
+  async updateReferenceStory(id: number, data: any): Promise<any> {
+    const { referenceStories } = await import('@shared/schema');
+    const [story] = await db
+      .update(referenceStories)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(referenceStories.id, id))
+      .returning();
+    return story;
+  }
+  
+  async deleteReferenceStory(id: number): Promise<void> {
+    const { referenceStories } = await import('@shared/schema');
+    await db.delete(referenceStories).where(eq(referenceStories.id, id));
+  }
+  
+  async browseReferenceStories(filters?: any): Promise<any[]> {
+    const { referenceStories } = await import('@shared/schema');
+    let query = db.select().from(referenceStories);
+    
+    if (filters?.category) {
+      query = query.where(eq(referenceStories.category, filters.category));
+    }
+    
+    return await query.orderBy(referenceStories.publishedAt);
+  }
+  
+  // Reference Story Analysis (shared AI analysis)
+  async getReferenceStoryAnalysis(referenceStoryId: number): Promise<any | undefined> {
+    const { referenceStoryAnalyses } = await import('@shared/schema');
+    const [analysis] = await db
+      .select()
+      .from(referenceStoryAnalyses)
+      .where(eq(referenceStoryAnalyses.referenceStoryId, referenceStoryId));
+    return analysis || undefined;
+  }
+  
+  async createReferenceStoryAnalysis(data: any): Promise<any> {
+    const { referenceStoryAnalyses } = await import('@shared/schema');
+    const [analysis] = await db.insert(referenceStoryAnalyses).values(data).returning();
+    return analysis;
+  }
+  
+  async updateReferenceStoryAnalysis(id: number, data: any): Promise<any> {
+    const { referenceStoryAnalyses } = await import('@shared/schema');
+    const [analysis] = await db
+      .update(referenceStoryAnalyses)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(referenceStoryAnalyses.id, id))
+      .returning();
+    return analysis;
+  }
+  
+  // Reference Roleplay Analysis (shared roleplay structure)
+  async getReferenceRoleplayAnalysis(referenceStoryId: number): Promise<any | undefined> {
+    const { referenceRoleplayAnalyses } = await import('@shared/schema');
+    const [analysis] = await db
+      .select()
+      .from(referenceRoleplayAnalyses)
+      .where(eq(referenceRoleplayAnalyses.referenceStoryId, referenceStoryId));
+    return analysis || undefined;
+  }
+  
+  async createReferenceRoleplayAnalysis(data: any): Promise<any> {
+    const { referenceRoleplayAnalyses } = await import('@shared/schema');
+    const [analysis] = await db.insert(referenceRoleplayAnalyses).values(data).returning();
+    return analysis;
+  }
+  
+  async updateReferenceRoleplayAnalysis(id: number, data: any): Promise<any> {
+    const { referenceRoleplayAnalyses } = await import('@shared/schema');
+    const [analysis] = await db
+      .update(referenceRoleplayAnalyses)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(referenceRoleplayAnalyses.id, id))
+      .returning();
+    return analysis;
+  }
+  
+  // User Story Narrations (user's personalized narrations)
+  async getUserStoryNarrations(userId: string): Promise<any[]> {
+    const { userStoryNarrations } = await import('@shared/schema');
+    return await db
+      .select()
+      .from(userStoryNarrations)
+      .where(eq(userStoryNarrations.userId, userId))
+      .orderBy(userStoryNarrations.createdAt);
+  }
+  
+  async getUserStoryNarration(userId: string, referenceStoryId: number): Promise<any | undefined> {
+    const { userStoryNarrations } = await import('@shared/schema');
+    const [narration] = await db
+      .select()
+      .from(userStoryNarrations)
+      .where(and(
+        eq(userStoryNarrations.userId, userId),
+        eq(userStoryNarrations.referenceStoryId, referenceStoryId)
+      ));
+    return narration || undefined;
+  }
+  
+  async createUserStoryNarration(data: any): Promise<any> {
+    const { userStoryNarrations } = await import('@shared/schema');
+    const [narration] = await db.insert(userStoryNarrations).values(data).returning();
+    return narration;
+  }
+  
+  async updateUserStoryNarration(id: number, data: any): Promise<any> {
+    const { userStoryNarrations } = await import('@shared/schema');
+    const [narration] = await db
+      .update(userStoryNarrations)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(userStoryNarrations.id, id))
+      .returning();
+    return narration;
+  }
+  
+  async deleteUserStoryNarration(id: number): Promise<void> {
+    const { userStoryNarrations } = await import('@shared/schema');
+    await db.delete(userStoryNarrations).where(eq(userStoryNarrations.id, id));
+  }
+  
+  // User Roleplay Segments (user's personal roleplay segments)
+  async getUserRoleplaySegments(userId: string): Promise<any[]> {
+    const { userRoleplaySegments } = await import('@shared/schema');
+    return await db
+      .select()
+      .from(userRoleplaySegments)
+      .where(eq(userRoleplaySegments.userId, userId))
+      .orderBy(userRoleplaySegments.createdAt);
+  }
+  
+  async getUserRoleplaySegment(userId: string, id: number): Promise<any | undefined> {
+    const { userRoleplaySegments } = await import('@shared/schema');
+    const [segment] = await db
+      .select()
+      .from(userRoleplaySegments)
+      .where(and(
+        eq(userRoleplaySegments.userId, userId),
+        eq(userRoleplaySegments.id, id)
+      ));
+    return segment || undefined;
+  }
+  
+  async createUserRoleplaySegment(data: any): Promise<any> {
+    const { userRoleplaySegments } = await import('@shared/schema');
+    const [segment] = await db.insert(userRoleplaySegments).values(data).returning();
+    return segment;
+  }
+  
+  async updateUserRoleplaySegment(id: number, data: any): Promise<any> {
+    const { userRoleplaySegments } = await import('@shared/schema');
+    const [segment] = await db
+      .update(userRoleplaySegments)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(userRoleplaySegments.id, id))
+      .returning();
+    return segment;
+  }
+  
+  async deleteUserRoleplaySegment(id: number): Promise<void> {
+    const { userRoleplaySegments } = await import('@shared/schema');
+    await db.delete(userRoleplaySegments).where(eq(userRoleplaySegments.id, id));
+  }
+  
+  // Reference Data Migration (placeholder implementations)
+  async migrateStoryToReference(storyId: number): Promise<any> {
+    throw new Error('Use ReferenceDataService.migrateStoryToReference() instead');
+  }
+  
+  async migrateAllStoriesToReference(): Promise<any> {
+    throw new Error('Use ReferenceDataService.migrateStoriesToReferenceData() instead');
+  }
+
+  // Add missing database access method for reference data service
+  getDb() {
+    return db;
   }
 }
 

@@ -1,261 +1,364 @@
-import { db } from "./db";
-import { voiceModulationTemplates } from "@shared/schema";
-import { eq, and } from "drizzle-orm";
-import type { StoryAnalysis } from "./ai-analysis";
-
 /**
- * Reference Data Service - Stores extracted emotions, sounds, and modulations
- * as permanent reference data for the voice samples system
+ * Reference Data Service
+ * Manages the conversion of user-owned stories into shared reference data
+ * and creates user-specific narration instances pointing to reference data
  */
 
-export class ReferenceDataService {
-  /**
-   * Store emotions from story analysis as permanent reference data
-   */
-  async storeEmotionsFromAnalysis(analysis: StoryAnalysis, storyId: number): Promise<void> {
-    if (!analysis.emotions || analysis.emotions.length === 0) {
-      console.log("No emotions found in analysis to store as reference data");
-      return;
-    }
+import { DatabaseStorage } from './storage.js';
+import type { 
+  Story, 
+  StoryAnalysis,
+  ReferenceStory, 
+  InsertReferenceStory,
+  ReferenceStoryAnalysis,
+  InsertReferenceStoryAnalysis,
+  ReferenceRoleplayAnalysis,
+  InsertReferenceRoleplayAnalysis,
+  UserStoryNarration,
+  InsertUserStoryNarration
+} from '../shared/schema.js';
 
-    for (const emotion of analysis.emotions) {
-      if (!emotion.emotion) continue;
-      
-      const emotionKey = emotion.emotion.toLowerCase().replace(/\s+/g, '_');
-      
-      try {
-        // Check if this emotion already exists as reference data
-        const existing = await db
-          .select()
-          .from(voiceModulationTemplates)
-          .where(
-            and(
-              eq(voiceModulationTemplates.modulationType, 'emotion'),
-              eq(voiceModulationTemplates.modulationKey, emotionKey)
-            )
-          )
-          .limit(1);
-
-        if (existing.length === 0) {
-          // Store new emotion as reference data
-          await db.insert(voiceModulationTemplates).values({
-            modulationType: 'emotion',
-            modulationKey: emotionKey,
-            displayName: emotion.emotion,
-            description: `Express ${emotion.emotion} emotion`,
-            sampleText: emotion.context || emotion.quote || `Express ${emotion.emotion} with feeling`,
-            targetDuration: Math.max(5, Math.min(15, (emotion.intensity || 5) * 2)), // 5-15 seconds based on intensity
-            category: 'emotions',
-            voiceSettings: {
-              speed_modifier: emotion.intensity >= 7 ? 1.1 : emotion.intensity <= 3 ? 0.9 : 1.0,
-              emotion_intensity: emotion.intensity || 5
-            },
-            isActive: true,
-            sortOrder: emotion.intensity || 5
-          });
-          
-          console.log(`✅ Stored new emotion reference data: ${emotion.emotion} (intensity: ${emotion.intensity})`);
-        } else {
-          console.log(`📝 Emotion already exists as reference data: ${emotion.emotion}`);
-        }
-      } catch (error) {
-        console.error(`❌ Failed to store emotion reference data for ${emotion.emotion}:`, error);
-      }
-    }
-  }
-
-  /**
-   * Store character sounds from story analysis as permanent reference data
-   */
-  async storeSoundsFromAnalysis(analysis: StoryAnalysis, storyId: number): Promise<void> {
-    if (!analysis.characters || analysis.characters.length === 0) {
-      console.log("No characters found in analysis to extract sounds");
-      return;
-    }
-
-    for (const character of analysis.characters) {
-      if (!character.traits || character.traits.length === 0) continue;
-      
-      for (const trait of character.traits) {
-        const traitLower = trait.toLowerCase();
-        
-        // Extract sound-related traits
-        if (traitLower.includes('sound') || traitLower.includes('voice') || 
-            traitLower.includes('growl') || traitLower.includes('whisper') ||
-            traitLower.includes('shout') || traitLower.includes('sing') ||
-            traitLower.includes('mumble') || traitLower.includes('roar')) {
-          
-          const soundKey = `${character.name.toLowerCase().replace(/\s+/g, '_')}_${trait.toLowerCase().replace(/\s+/g, '_')}`;
-          
-          try {
-            // Check if this sound already exists as reference data
-            const existing = await db
-              .select()
-              .from(voiceModulationTemplates)
-              .where(
-                and(
-                  eq(voiceModulationTemplates.modulationType, 'sound'),
-                  eq(voiceModulationTemplates.modulationKey, soundKey)
-                )
-              )
-              .limit(1);
-
-            if (existing.length === 0) {
-              // Store new sound as reference data
-              await db.insert(voiceModulationTemplates).values({
-                modulationType: 'sound',
-                modulationKey: soundKey,
-                displayName: `${character.name} - ${trait}`,
-                description: `Make the sound characteristic of ${character.name}`,
-                sampleText: `Imitate ${character.name}: ${trait}`,
-                targetDuration: 6,
-                category: 'character_sounds',
-                voiceSettings: {
-                  character_type: character.role,
-                  sound_trait: trait
-                },
-                isActive: true,
-                sortOrder: 100
-              });
-              
-              console.log(`✅ Stored new sound reference data: ${character.name} - ${trait}`);
-            } else {
-              console.log(`📝 Sound already exists as reference data: ${character.name} - ${trait}`);
-            }
-          } catch (error) {
-            console.error(`❌ Failed to store sound reference data for ${character.name} - ${trait}:`, error);
-          }
-        }
-      }
-    }
-  }
-
-  /**
-   * Store mood/style modulations from story analysis as permanent reference data
-   */
-  async storeModulationsFromAnalysis(analysis: StoryAnalysis, storyId: number): Promise<void> {
-    const modulations: Array<{key: string, display: string, description: string, sample: string}> = [];
-    
-    // Extract mood category
-    if (analysis.moodCategory) {
-      modulations.push({
-        key: analysis.moodCategory.toLowerCase().replace(/\s+/g, '_'),
-        display: `${analysis.moodCategory} Mood`,
-        description: `Narrate in ${analysis.moodCategory} style`,
-        sample: `Read this story with a ${analysis.moodCategory.toLowerCase()} mood`
-      });
-    }
-    
-    // Extract genre-based modulations
-    if (analysis.genre) {
-      modulations.push({
-        key: `${analysis.genre.toLowerCase().replace(/\s+/g, '_')}_genre`,
-        display: `${analysis.genre} Style`,
-        description: `Narrate in ${analysis.genre} genre style`,
-        sample: `Tell this ${analysis.genre.toLowerCase()} story with appropriate dramatic flair`
-      });
-    }
-    
-    // Extract theme-based modulations
-    if (analysis.themes && analysis.themes.length > 0) {
-      for (const theme of analysis.themes.slice(0, 2)) { // Limit to first 2 themes
-        modulations.push({
-          key: `${theme.toLowerCase().replace(/\s+/g, '_')}_theme`,
-          display: `${theme} Theme`,
-          description: `Emphasize ${theme} thematic elements`,
-          sample: `Narrate with emphasis on the theme of ${theme.toLowerCase()}`
-        });
-      }
-    }
-
-    for (const modulation of modulations) {
-      try {
-        // Check if this modulation already exists as reference data
-        const existing = await db
-          .select()
-          .from(voiceModulationTemplates)
-          .where(
-            and(
-              eq(voiceModulationTemplates.modulationType, 'modulation'),
-              eq(voiceModulationTemplates.modulationKey, modulation.key)
-            )
-          )
-          .limit(1);
-
-        if (existing.length === 0) {
-          // Store new modulation as reference data
-          await db.insert(voiceModulationTemplates).values({
-            modulationType: 'modulation',
-            modulationKey: modulation.key,
-            displayName: modulation.display,
-            description: modulation.description,
-            sampleText: modulation.sample,
-            targetDuration: 8,
-            category: 'narrative_styles',
-            voiceSettings: {
-              narrative_style: modulation.key
-            },
-            isActive: true,
-            sortOrder: 200
-          });
-          
-          console.log(`✅ Stored new modulation reference data: ${modulation.display}`);
-        } else {
-          console.log(`📝 Modulation already exists as reference data: ${modulation.display}`);
-        }
-      } catch (error) {
-        console.error(`❌ Failed to store modulation reference data for ${modulation.display}:`, error);
-      }
-    }
-  }
-
-  /**
-   * Process complete story analysis and store all reference data
-   */
-  async processAnalysisForReferenceData(analysis: StoryAnalysis, storyId: number): Promise<void> {
-    console.log(`🔄 Processing story ${storyId} analysis for reference data extraction...`);
-    
-    try {
-      // Store all types of reference data in parallel
-      await Promise.all([
-        this.storeEmotionsFromAnalysis(analysis, storyId),
-        this.storeSoundsFromAnalysis(analysis, storyId),
-        this.storeModulationsFromAnalysis(analysis, storyId)
-      ]);
-      
-      console.log(`✅ Completed reference data processing for story ${storyId}`);
-    } catch (error) {
-      console.error(`❌ Failed to process reference data for story ${storyId}:`, error);
-    }
-  }
-
-  /**
-   * Get statistics about reference data in the system
-   */
-  async getReferenceDataStats(): Promise<{
-    emotions: number;
-    sounds: number;
-    modulations: number;
-    total: number;
-  }> {
-    try {
-      const [emotions, sounds, modulations] = await Promise.all([
-        db.select().from(voiceModulationTemplates).where(eq(voiceModulationTemplates.modulationType, 'emotion')),
-        db.select().from(voiceModulationTemplates).where(eq(voiceModulationTemplates.modulationType, 'sound')),
-        db.select().from(voiceModulationTemplates).where(eq(voiceModulationTemplates.modulationType, 'modulation'))
-      ]);
-
-      return {
-        emotions: emotions.length,
-        sounds: sounds.length,
-        modulations: modulations.length,
-        total: emotions.length + sounds.length + modulations.length
-      };
-    } catch (error) {
-      console.error("Failed to get reference data stats:", error);
-      return { emotions: 0, sounds: 0, modulations: 0, total: 0 };
-    }
-  }
+interface StoryMigrationResult {
+  referenceStoryId: number;
+  originalStoryId: number;
+  userNarrationId?: number;
+  migrated: boolean;
+  error?: string;
 }
 
-export const referenceDataService = new ReferenceDataService();
+interface MigrationSummary {
+  totalStories: number;
+  successfulMigrations: number;
+  failedMigrations: number;
+  storiesConverted: StoryMigrationResult[];
+  errors: string[];
+}
+
+export class ReferenceDataService {
+  constructor(private storage: DatabaseStorage) {}
+
+  /**
+   * Migrate existing user stories to reference data architecture
+   * Each user story becomes a reference story + user narration instance
+   */
+  async migrateStoriesToReferenceData(): Promise<MigrationSummary> {
+    const results: StoryMigrationResult[] = [];
+    const errors: string[] = [];
+
+    try {
+      // Get all existing stories from the stories table
+      const existingStories = await this.storage.getStoriesByUserId('migration_all');
+      
+      console.log(`[ReferenceDataService] Starting migration of ${existingStories.length} stories`);
+
+      for (const story of existingStories) {
+        try {
+          const migrationResult = await this.migrateStoryToReference(story);
+          results.push(migrationResult);
+          
+          if (migrationResult.migrated) {
+            console.log(`[ReferenceDataService] Successfully migrated story ${story.id}: "${story.title}"`);
+          }
+        } catch (error) {
+          const errorMsg = `Failed to migrate story ${story.id}: ${error}`;
+          errors.push(errorMsg);
+          console.error(`[ReferenceDataService] ${errorMsg}`);
+          
+          results.push({
+            referenceStoryId: -1,
+            originalStoryId: story.id,
+            migrated: false,
+            error: errorMsg
+          });
+        }
+      }
+
+      const successCount = results.filter(r => r.migrated).length;
+      const failureCount = results.filter(r => !r.migrated).length;
+
+      return {
+        totalStories: existingStories.length,
+        successfulMigrations: successCount,
+        failedMigrations: failureCount,
+        storiesConverted: results,
+        errors
+      };
+
+    } catch (error) {
+      console.error('[ReferenceDataService] Migration failed completely:', error);
+      throw new Error(`Migration failed: ${error}`);
+    }
+  }
+
+  /**
+   * Convert a single story to reference data architecture
+   */
+  private async migrateStoryToReference(story: Story): Promise<StoryMigrationResult> {
+    try {
+      // 1. Create reference story (shared content)
+      const referenceStoryData: InsertReferenceStory = {
+        title: story.title,
+        content: story.content,
+        summary: story.summary,
+        category: story.category,
+        genre: story.genre,
+        subGenre: story.subGenre,
+        tags: story.tags || [],
+        emotionalTags: story.emotionalTags || [],
+        moodCategory: story.moodCategory,
+        ageRating: story.ageRating || 'general',
+        readingTime: story.readingTime,
+        extractedCharacters: story.extractedCharacters || [],
+        extractedEmotions: story.extractedEmotions || [],
+        coverImageUrl: story.coverImageUrl,
+        originalAuthorId: story.userId, // Track who originally created it
+        visibility: 'public', // Make available to all users
+        uploadType: story.uploadType,
+        originalAudioUrl: story.originalAudioUrl,
+        copyrightInfo: 'User generated content',
+        licenseType: 'shared_reference',
+        isAdultContent: story.isAdultContent || false,
+        viewCount: story.viewCount || 0,
+        likes: story.likes || 0,
+        language: story.language || 'en-US',
+        publishedAt: new Date(),
+      };
+
+      const referenceStory = await this.createReferenceStory(referenceStoryData);
+
+      // 2. Migrate story analysis to reference analysis
+      const storyAnalysis = await this.storage.getStoryAnalysis(story.id);
+      if (storyAnalysis) {
+        await this.migrateStoryAnalysisToReference(referenceStory.id, storyAnalysis);
+      }
+
+      // 3. Create user narration instance (user-specific)
+      let userNarrationId: number | undefined;
+      if (story.userId) {
+        const userNarrationData: InsertUserStoryNarration = {
+          userId: story.userId,
+          referenceStoryId: referenceStory.id,
+          narratorVoice: 'default', // Will be updated when user records voice
+          narratorVoiceType: 'ai',
+          segments: [], // Will be populated when user generates narration
+          totalDuration: 0,
+          audioFileUrl: null,
+          voiceModifications: null,
+          isPublic: false,
+        };
+
+        const userNarration = await this.createUserNarration(userNarrationData);
+        userNarrationId = userNarration.id;
+      }
+
+      return {
+        referenceStoryId: referenceStory.id,
+        originalStoryId: story.id,
+        userNarrationId,
+        migrated: true
+      };
+
+    } catch (error) {
+      throw new Error(`Story migration failed: ${error}`);
+    }
+  }
+
+  /**
+   * Migrate story analysis to reference story analysis
+   */
+  private async migrateStoryAnalysisToReference(
+    referenceStoryId: number, 
+    analysis: StoryAnalysis
+  ): Promise<ReferenceStoryAnalysis> {
+    const referenceAnalysisData: InsertReferenceStoryAnalysis = {
+      referenceStoryId,
+      analysisType: analysis.analysisType,
+      analysisData: analysis.analysisData,
+      generatedBy: analysis.generatedBy,
+    };
+
+    return await this.createReferenceStoryAnalysis(referenceAnalysisData);
+  }
+
+  /**
+   * Create a new reference story (shared across all users)
+   */
+  async createReferenceStory(data: InsertReferenceStory): Promise<ReferenceStory> {
+    const db = this.storage.getDb();
+    const { referenceStories } = await import('../shared/schema.js');
+    
+    const [referenceStory] = await db.insert(referenceStories)
+      .values(data)
+      .returning();
+    
+    return referenceStory;
+  }
+
+  /**
+   * Create reference story analysis (shared AI analysis)
+   */
+  async createReferenceStoryAnalysis(data: InsertReferenceStoryAnalysis): Promise<ReferenceStoryAnalysis> {
+    const db = this.storage.getDb();
+    const { referenceStoryAnalyses } = await import('../shared/schema.js');
+    
+    const [analysis] = await db.insert(referenceStoryAnalyses)
+      .values(data)
+      .returning();
+    
+    return analysis;
+  }
+
+  /**
+   * Create reference roleplay analysis (shared roleplay structure)
+   */
+  async createReferenceRoleplayAnalysis(data: InsertReferenceRoleplayAnalysis): Promise<ReferenceRoleplayAnalysis> {
+    const db = this.storage.getDb();
+    const { referenceRoleplayAnalyses } = await import('../shared/schema.js');
+    
+    const [analysis] = await db.insert(referenceRoleplayAnalyses)
+      .values(data)
+      .returning();
+    
+    return analysis;
+  }
+
+  /**
+   * Create user narration instance (user's personalized version)
+   */
+  async createUserNarration(data: InsertUserStoryNarration): Promise<UserStoryNarration> {
+    const db = this.storage.getDb();
+    const { userStoryNarrations } = await import('../shared/schema.js');
+    
+    const [narration] = await db.insert(userStoryNarrations)
+      .values(data)
+      .returning();
+    
+    return narration;
+  }
+
+  /**
+   * Get all reference stories (public story catalog)
+   */
+  async getAllReferenceStories(): Promise<ReferenceStory[]> {
+    const db = this.storage.getDb();
+    const { referenceStories } = await import('../shared/schema.js');
+    
+    return await db.select()
+      .from(referenceStories)
+      .where({ visibility: 'public' })
+      .orderBy('publishedAt');
+  }
+
+  /**
+   * Get reference story with analysis
+   */
+  async getReferenceStoryWithAnalysis(referenceStoryId: number): Promise<{
+    story: ReferenceStory;
+    analysis: ReferenceStoryAnalysis | null;
+    roleplayAnalysis: ReferenceRoleplayAnalysis | null;
+  }> {
+    const db = this.storage.getDb();
+    const { referenceStories, referenceStoryAnalyses, referenceRoleplayAnalyses } = await import('../shared/schema.js');
+    
+    const story = await db.select()
+      .from(referenceStories)
+      .where({ id: referenceStoryId })
+      .limit(1);
+
+    if (!story.length) {
+      throw new Error(`Reference story ${referenceStoryId} not found`);
+    }
+
+    const analysis = await db.select()
+      .from(referenceStoryAnalyses)
+      .where({ referenceStoryId })
+      .limit(1);
+
+    const roleplayAnalysis = await db.select()
+      .from(referenceRoleplayAnalyses)
+      .where({ referenceStoryId })
+      .limit(1);
+
+    return {
+      story: story[0],
+      analysis: analysis.length ? analysis[0] : null,
+      roleplayAnalysis: roleplayAnalysis.length ? roleplayAnalysis[0] : null
+    };
+  }
+
+  /**
+   * Get user's narrations (their personalized versions of reference stories)
+   */
+  async getUserNarrations(userId: string): Promise<UserStoryNarration[]> {
+    const db = this.storage.getDb();
+    const { userStoryNarrations } = await import('../shared/schema.js');
+    
+    return await db.select()
+      .from(userStoryNarrations)
+      .where({ userId })
+      .orderBy('createdAt');
+  }
+
+  /**
+   * Create user narration from reference story
+   */
+  async createUserNarrationFromReference(
+    userId: string, 
+    referenceStoryId: number,
+    narratorVoice: string = 'default',
+    narratorVoiceType: 'ai' | 'user' = 'ai'
+  ): Promise<UserStoryNarration> {
+    // Verify reference story exists
+    const referenceData = await this.getReferenceStoryWithAnalysis(referenceStoryId);
+    
+    const narrationData: InsertUserStoryNarration = {
+      userId,
+      referenceStoryId,
+      narratorVoice,
+      narratorVoiceType,
+      segments: [],
+      totalDuration: 0,
+      audioFileUrl: null,
+      voiceModifications: null,
+      isPublic: false,
+    };
+
+    return await this.createUserNarration(narrationData);
+  }
+
+  /**
+   * Get all available reference stories for browsing
+   */
+  async browseReferenceStories(filters?: {
+    category?: string;
+    genre?: string;
+    tags?: string[];
+    limit?: number;
+    offset?: number;
+  }): Promise<ReferenceStory[]> {
+    const db = this.storage.getDb();
+    const { referenceStories } = await import('../shared/schema.js');
+    
+    let query = db.select()
+      .from(referenceStories)
+      .where({ visibility: 'public' });
+
+    if (filters?.category) {
+      query = query.where({ category: filters.category });
+    }
+
+    if (filters?.genre) {
+      query = query.where({ genre: filters.genre });
+    }
+
+    if (filters?.limit) {
+      query = query.limit(filters.limit);
+    }
+
+    if (filters?.offset) {
+      query = query.offset(filters.offset);
+    }
+
+    return await query.orderBy('publishedAt');
+  }
+}
