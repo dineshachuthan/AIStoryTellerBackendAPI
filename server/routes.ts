@@ -4270,8 +4270,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const sessionData = VoiceCloningSessionManager.getSessionData(req);
         console.log(`📊 Session counters after increment: emotions=${sessionData.emotions_not_cloned}, sounds=${sessionData.sounds_not_cloned}, modulations=${sessionData.modulations_not_cloned}`);
         
-        // Check if threshold reached for this category
-        if (VoiceCloningSessionManager.shouldTriggerCloning(req, category)) {
+        // Check if threshold reached for this category (async for hybrid approach)
+        if (await VoiceCloningSessionManager.shouldTriggerCloning(req, category)) {
           console.log(`🎯 Category '${category}' reached ${VOICE_CLONING_CONFIG.sampleThreshold} samples threshold - triggering ElevenLabs cloning`);
           
           // Set cloning in progress (disables voice samples button)

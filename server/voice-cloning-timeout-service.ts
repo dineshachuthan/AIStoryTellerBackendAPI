@@ -97,8 +97,11 @@ export class VoiceCloningTimeoutService {
         const { voiceTrainingService } = await import('./voice-training-service');
         
         // Execute voice training with 60-second timeout per attempt (main thread operation)
+        // Use hybrid approach for emotions, original approach for sounds/modulations
         const result = await this.executeWithTimeout(
-          () => voiceTrainingService.triggerAutomaticTraining(userId),
+          () => category === 'emotions' 
+            ? voiceTrainingService.triggerHybridEmotionCloning(userId)
+            : voiceTrainingService.triggerAutomaticTraining(userId),
           timeouts.mainThreadSeconds * 1000 // 60 seconds per attempt
         );
 

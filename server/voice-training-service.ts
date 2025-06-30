@@ -83,7 +83,187 @@ export class VoiceTrainingService {
   }
 
   /**
-   * Trigger voice training automatically when threshold is reached
+   * MVP1 Hybrid Voice Cloning: Trigger training when 6 different emotions are recorded
+   * Creates ONE voice clone and stores it as separate entities for each emotion
+   */
+  async triggerHybridEmotionCloning(userId: string): Promise<VoiceTrainingResult> {
+    return new Promise(async (resolve) => {
+      // Set 2-minute timeout for voice cloning
+      const timeout = setTimeout(() => {
+        console.error(`[HybridCloning] Voice cloning timed out after 2 minutes for user ${userId}`);
+        resolve({
+          success: false,
+          error: 'Hybrid voice cloning timed out after 2 minutes',
+          samplesProcessed: 0
+        });
+      }, 120000); // 2 minutes
+
+      try {
+        console.log(`[HybridCloning] ============================= STARTING HYBRID VOICE CLONING =============================`);
+        console.log(`[HybridCloning] Beginning MVP1 hybrid voice cloning process for user ${userId} at ${new Date().toISOString()}`);
+        console.log(`[HybridCloning] Hybrid approach: Collect 6 different emotion samples → Create ONE voice clone → Store as separate entities per emotion`);
+        
+        // Get unique emotions recorded by user
+        const { storage } = await import('./storage');
+        const uniqueEmotions = await storage.getUserUniqueEmotions(userId);
+        
+        console.log(`[HybridCloning] User has recorded ${uniqueEmotions.length} unique emotions: [${uniqueEmotions.join(', ')}]`);
+        
+        if (uniqueEmotions.length < 6) {
+          clearTimeout(timeout);
+          console.log(`[HybridCloning] ❌ Insufficient unique emotions for hybrid cloning: ${uniqueEmotions.length}/6 required`);
+          return resolve({
+            success: false,
+            error: `Need 6 different emotions for hybrid cloning. Currently have: ${uniqueEmotions.length}`,
+            samplesProcessed: 0
+          });
+        }
+
+        // Get voice samples for each unique emotion (one sample per emotion)
+        const hybridSamples = [];
+        for (const emotion of uniqueEmotions.slice(0, 6)) { // Take first 6 emotions only
+          const voiceModulations = await this.getUserVoiceModulationsForEmotion(userId, emotion);
+          if (voiceModulations.length > 0) {
+            hybridSamples.push({
+              emotion: emotion,
+              audioUrl: voiceModulations[0].audioUrl, // Take first recording for this emotion
+              fileName: voiceModulations[0].fileName
+            });
+          }
+        }
+
+        console.log(`[HybridCloning] Collected ${hybridSamples.length} emotion samples for hybrid voice cloning`);
+        
+        // Use voice provider to create ONE voice clone from diverse emotion samples
+        const { VoiceProviderFactory } = await import('./voice-provider-factory');
+        const voiceProvider = await VoiceProviderFactory.getProvider();
+        
+        if (!voiceProvider) {
+          clearTimeout(timeout);
+          return resolve({
+            success: false,
+            error: 'No voice provider available for hybrid cloning',
+            samplesProcessed: 0
+          });
+        }
+
+        // Create ONE voice clone from all emotion samples
+        console.log(`[HybridCloning] Creating ONE voice clone from ${hybridSamples.length} different emotion samples using ${voiceProvider.constructor.name}`);
+        const cloneResult = await voiceProvider.trainVoice(userId, hybridSamples);
+        
+        if (!cloneResult.success || !cloneResult.voiceId) {
+          clearTimeout(timeout);
+          return resolve({
+            success: false,
+            error: cloneResult.error || 'Failed to create hybrid voice clone',
+            samplesProcessed: hybridSamples.length
+          });
+        }
+
+        console.log(`[HybridCloning] ✅ SUCCESS: Created voice clone ${cloneResult.voiceId} from ${hybridSamples.length} emotion samples`);
+        
+        // Store the SAME voice clone as separate entities for each emotion
+        await this.storeHybridVoiceCloneForAllEmotions(userId, cloneResult.voiceId, uniqueEmotions.slice(0, 6));
+        
+        clearTimeout(timeout);
+        console.log(`[HybridCloning] Hybrid voice cloning completed successfully for user ${userId}`);
+        
+        resolve({
+          success: true,
+          voiceId: cloneResult.voiceId,
+          samplesProcessed: hybridSamples.length
+        });
+        
+      } catch (error) {
+        clearTimeout(timeout);
+        console.error(`[HybridCloning] Error in hybrid voice cloning:`, error);
+        resolve({
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown hybrid cloning error',
+          samplesProcessed: 0
+        });
+      }
+    });
+  }
+
+  /**
+   * Store the same voice clone as separate entities for each emotion (MVP1 approach)
+   */
+  private async storeHybridVoiceCloneForAllEmotions(userId: string, voiceId: string, emotions: string[]): Promise<void> {
+    console.log(`[HybridCloning] Storing voice clone ${voiceId} as separate entities for ${emotions.length} emotions`);
+    
+    for (const emotion of emotions) {
+      try {
+        // Create user_emotion_voices entry for this emotion using the SAME voice clone
+        await storage.createUserEmotionVoice({
+          userVoiceProfileId: await this.ensureUserVoiceProfile(userId),
+          emotion: emotion,
+          elevenlabsVoiceId: voiceId, // Same voice clone for all emotions
+          trainingStatus: 'completed',
+          sampleCount: 1, // Each emotion contributes 1 sample to the hybrid clone
+          qualityScore: 0.8, // Default quality for hybrid clones
+          voiceSettings: {
+            hybrid: true,
+            sourceEmotions: emotions
+          },
+          trainingMetadata: {
+            approach: 'hybrid_mvp1',
+            createdAt: new Date().toISOString(),
+            sourceEmotions: emotions
+          },
+          trainingCost: 0, // Cost will be distributed across emotions
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
+        
+        console.log(`[HybridCloning] ✅ Stored voice clone ${voiceId} for emotion: ${emotion}`);
+      } catch (error) {
+        console.error(`[HybridCloning] Error storing voice clone for emotion ${emotion}:`, error);
+      }
+    }
+    
+    console.log(`[HybridCloning] Successfully stored hybrid voice clone for all ${emotions.length} emotions`);
+  }
+
+  /**
+   * Get voice modulations for specific emotion
+   */
+  private async getUserVoiceModulationsForEmotion(userId: string, emotion: string): Promise<any[]> {
+    const { userVoiceModulations } = await import('@shared/schema');
+    const { eq, and } = await import('drizzle-orm');
+    const { db } = await import('./db');
+    
+    return await db
+      .select()
+      .from(userVoiceModulations)
+      .where(and(
+        eq(userVoiceModulations.userId, userId),
+        eq(userVoiceModulations.modulationKey, emotion)
+      ));
+  }
+
+  /**
+   * Ensure user has a voice profile
+   */
+  private async ensureUserVoiceProfile(userId: string): Promise<number> {
+    let voiceProfile = await storage.getUserVoiceProfile(userId);
+    
+    if (!voiceProfile) {
+      voiceProfile = await storage.createUserVoiceProfile({
+        userId: userId,
+        voiceName: `${userId}_hybrid_voice`,
+        voiceSettings: { hybrid: true },
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+    }
+    
+    return voiceProfile.id;
+  }
+
+  /**
+   * Original trigger method - kept for compatibility
    * Includes 2-minute timeout to prevent infinite processing
    */
   async triggerAutomaticTraining(userId: string): Promise<VoiceTrainingResult> {
