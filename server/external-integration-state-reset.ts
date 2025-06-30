@@ -57,29 +57,86 @@ export class ExternalIntegrationStateReset {
     provider: 'elevenlabs', 
     error: string
   ): Promise<void> {
-    const { storage } = await import('./storage');
+    const { db } = await import('./db');
+    const { userVoiceProfiles, userEmotionVoices } = await import('@shared/schema');
+    const { eq } = await import('drizzle-orm');
     
-    // Reset voice profile status from 'training' to 'failed'
-    const voiceProfile = await storage.getUserVoiceProfile(userId);
-    if (voiceProfile && voiceProfile.status === 'training') {
-      await storage.updateUserVoiceProfile(voiceProfile.id, {
-        status: 'failed',
-        trainingCompletedAt: new Date(),
-        errorMessage: `${provider.toUpperCase()} integration error: ${error}`
-      });
-      console.log(`   ✅ Reset voice profile ${voiceProfile.id} from 'training' to 'failed'`);
-    }
+    console.log(`🔄 Resetting ${provider} voice training state for user ${userId}`);
+    console.log(`   Error details: ${error}`);
     
-    // Reset session state if available
     try {
-      const { VoiceCloningSessionManager } = await import('./voice-cloning-session-manager');
-      // Reset all categories since we don't know which specific one failed
-      VoiceCloningSessionManager.completeCategoryCloning(userId, 'emotions', false);
-      VoiceCloningSessionManager.completeCategoryCloning(userId, 'sounds', false);
-      VoiceCloningSessionManager.completeCategoryCloning(userId, 'modulations', false);
-      console.log(`   ✅ Reset voice cloning session state for user ${userId}`);
-    } catch (sessionError) {
-      console.error(`   ⚠️ Could not reset session state:`, sessionError);
+      // Step 1: Reset main voice profile from 'training' to 'failed'
+      const voiceProfiles = await db.select().from(userVoiceProfiles)
+        .where(eq(userVoiceProfiles.userId, userId));
+      
+      for (const profile of voiceProfiles) {
+        if (profile.status === 'training') {
+          await db.update(userVoiceProfiles)
+            .set({
+              status: 'failed',
+              trainingCompletedAt: new Date(),
+              lastTrainingError: `${provider.toUpperCase()} integration error: ${error}`,
+              isReadyForNarration: false
+            })
+            .where(eq(userVoiceProfiles.id, profile.id));
+          
+          console.log(`   ✅ Reset voice profile ${profile.id} from 'training' to 'failed'`);
+          
+          // Step 2: Reset individual emotion voices for this profile
+          const emotionVoices = await db.select().from(userEmotionVoices)
+            .where(eq(userEmotionVoices.userVoiceProfileId, profile.id));
+          
+          for (const emotionVoice of emotionVoices) {
+            if (emotionVoice.status === 'training') {
+              await db.update(userEmotionVoices)
+                .set({
+                  status: 'failed',
+                  updatedAt: new Date()
+                })
+                .where(eq(userEmotionVoices.id, emotionVoice.id));
+              
+              console.log(`   ✅ Reset emotion voice ${emotionVoice.emotion} from 'training' to 'failed'`);
+            }
+          }
+        }
+      }
+      
+      // Step 3: Reset session state if available
+      try {
+        const { VoiceCloningSessionManager } = await import('./voice-cloning-session-manager');
+        // Reset all categories since we don't know which specific one failed
+        VoiceCloningSessionManager.completeCategoryCloning(userId, 'emotions', false);
+        VoiceCloningSessionManager.completeCategoryCloning(userId, 'sounds', false);
+        VoiceCloningSessionManager.completeCategoryCloning(userId, 'modulations', false);
+        console.log(`   ✅ Reset voice cloning session state for user ${userId}`);
+      } catch (sessionError) {
+        console.error(`   ⚠️ Could not reset session state:`, sessionError);
+      }
+      
+      // Step 4: Unlock voice samples to allow re-training
+      try {
+        const { storage } = await import('./storage');
+        const voiceSamples = await storage.getUserVoiceSamples(userId);
+        
+        for (const sample of voiceSamples) {
+          if (sample.isLocked) {
+            await storage.updateUserVoiceSample(sample.id, {
+              isLocked: false,
+              lockedAt: null
+            });
+          }
+        }
+        
+        console.log(`   ✅ Unlocked ${voiceSamples.length} voice samples for re-training`);
+      } catch (unlockError) {
+        console.error(`   ⚠️ Could not unlock voice samples:`, unlockError);
+      }
+      
+      console.log(`✅ Complete voice training state reset for user ${userId}`);
+      
+    } catch (dbError) {
+      console.error(`❌ Database error during voice training reset for user ${userId}:`, dbError);
+      throw dbError;
     }
   }
   
@@ -140,6 +197,25 @@ export class ExternalIntegrationStateReset {
     } catch (cacheError) {
       console.error(`   ⚠️ Could not clear audio cache:`, cacheError);
     }
+  }
+  
+  /**
+   * Direct method for resetting voice profile state (called by ElevenLabs module)
+   */
+  static async resetVoiceProfile(userId: string, error: string): Promise<void> {
+    await this.resetIntegrationState({
+      userId,
+      provider: 'elevenlabs',
+      operationType: 'voice_training',
+      error
+    });
+  }
+  
+  /**
+   * Alias for resetAllIntegrationsForUser (used in routes.ts)
+   */
+  static async resetAllStatesForUser(userId: string, reason: string): Promise<void> {
+    await this.resetAllIntegrationsForUser(userId, reason);
   }
   
   /**

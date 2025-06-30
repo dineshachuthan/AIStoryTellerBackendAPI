@@ -4172,12 +4172,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Template not found' });
       }
 
-      // Save audio file using the existing cache system
-      const fileName = `${modulationKey}_${Date.now()}.webm`;
+      // ENFORCE MP3-ONLY: Convert all audio to MP3 format
+      const timestamp = Date.now();
+      const tempFileName = `temp_${modulationKey}_${timestamp}.${audioFile.mimetype.includes('webm') ? 'webm' : 'mp4'}`;
+      const fileName = `${modulationKey}_${timestamp}.mp3`;
       const cacheDir = path.join(process.cwd(), 'persistent-cache', 'user-voice-modulations', userId);
       await fs.mkdir(cacheDir, { recursive: true });
+      
+      const tempFilePath = path.join(cacheDir, tempFileName);
       const filePath = path.join(cacheDir, fileName);
-      await fs.writeFile(filePath, audioFile.buffer);
+      
+      // Save temporary file and convert to MP3
+      await fs.writeFile(tempFilePath, audioFile.buffer);
+      
+      try {
+        // Convert to MP3 using FFmpeg
+        const ffmpegCommand = `ffmpeg -i "${tempFilePath}" -acodec libmp3lame -b:a 192k -ar 44100 -y "${filePath}"`;
+        await execAsync(ffmpegCommand);
+        
+        // Clean up temporary file
+        await fs.unlink(tempFilePath);
+        
+        console.log(`Successfully converted voice modulation to MP3: ${fileName}`);
+      } catch (conversionError) {
+        console.error('MP3 conversion failed:', conversionError);
+        // Clean up temporary file
+        await fs.unlink(tempFilePath).catch(() => {});
+        throw new Error('Audio conversion to MP3 failed. Only MP3 format is supported.');
+      }
       const audioUrl = `/cache/user-voice-modulations/${userId}/${fileName}`;
 
       const modulation = await voiceModulationService.recordVoiceModulation({
