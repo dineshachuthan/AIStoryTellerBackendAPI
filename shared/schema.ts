@@ -246,7 +246,7 @@ export const userEmotionVoices = pgTable("user_emotion_voices", {
   id: serial("id").primaryKey(),
   userVoiceProfileId: integer("user_voice_profile_id").references(() => userVoiceProfiles.id).notNull(),
   emotion: varchar("emotion").notNull(), // happy, sad, angry, etc.
-  elevenLabsVoiceId: varchar("eleven_labs_voice_id"), // unique voice ID from ElevenLabs
+  elevenLabsVoiceId: varchar("elevenlabs_voice_id"), // unique voice ID from ElevenLabs
   voiceName: varchar("voice_name").notNull(), // "John_Happy", "John_Sad"
   status: varchar("status").notNull().default("collecting"), // collecting, training, completed, failed
   sampleCount: integer("sample_count").default(0), // how many samples used for this emotion
@@ -399,7 +399,7 @@ export const userVoiceProfiles = pgTable("user_voice_profiles", {
   provider: varchar("provider").notNull().default("elevenlabs"), // elevenlabs, openai
   voiceName: varchar("voice_name").notNull(),
   status: varchar("status").notNull().default("collecting"), // collecting, training, completed, failed
-  elevenLabsVoiceId: text("eleven_labs_voice_id"), // ElevenLabs voice ID, using text for unlimited length
+  elevenLabsVoiceId: text("elevenlabs_voice_id"), // ElevenLabs voice ID, using text for unlimited length
   totalEmotionsRequired: integer("total_emotions_required").default(8),
   emotionsCompleted: integer("emotions_completed").default(0),
   totalSamples: integer("total_samples").default(0),

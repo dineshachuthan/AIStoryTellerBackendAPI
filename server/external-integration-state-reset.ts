@@ -4,7 +4,9 @@
  * Following timeout and retry specifications from voice-config.ts
  */
 
-import { VOICE_CLONING_CONFIG } from '@shared/voice-config';
+import { db } from './db';
+import { userVoiceProfiles, userEmotionVoices } from '@shared/schema';
+import { eq } from 'drizzle-orm';
 
 export interface StateResetOptions {
   userId: string;
@@ -21,51 +23,40 @@ export class ExternalIntegrationStateReset {
    * Reset state for any external integration failure/timeout
    */
   static async resetIntegrationState(options: StateResetOptions): Promise<void> {
-    const { userId, provider, operationType, operationId, error, timeoutDuration } = options;
+    const { userId, provider, operationType, error } = options;
     
     console.log(`🔄 Resetting ${provider} ${operationType} state for user ${userId}`);
     console.log(`   Error: ${error}`);
-    console.log(`   Timeout: ${timeoutDuration ? `${timeoutDuration}ms` : 'N/A'}`);
     
     try {
       switch (operationType) {
         case 'voice_training':
-          await this.resetVoiceTrainingState(userId, provider as 'elevenlabs', error);
+          await this.resetVoiceTrainingState(userId, provider, error);
           break;
         case 'video_generation':
-          await this.resetVideoGenerationState(userId, provider as 'kling' | 'runwayml', operationId as number, error);
+          await this.resetVideoGenerationState(userId, provider, error);
           break;
         case 'audio_generation':
           await this.resetAudioGenerationState(userId, provider, error);
           break;
-        default:
-          console.error(`❌ Unknown operation type: ${operationType}`);
       }
-      
-      console.log(`✅ ${provider} ${operationType} state reset completed for user ${userId}`);
-      
     } catch (resetError) {
-      console.error(`❌ Failed to reset ${provider} ${operationType} state for user ${userId}:`, resetError);
+      console.error(`❌ Failed to reset ${provider} state:`, resetError);
     }
   }
-  
+
   /**
    * Reset ElevenLabs voice training state
    */
   private static async resetVoiceTrainingState(
     userId: string, 
-    provider: 'elevenlabs', 
+    provider: string, 
     error: string
   ): Promise<void> {
-    const { db } = await import('./db');
-    const { userVoiceProfiles, userEmotionVoices } = await import('@shared/schema');
-    const { eq } = await import('drizzle-orm');
-    
-    console.log(`🔄 Resetting ${provider} voice training state for user ${userId}`);
-    console.log(`   Error details: ${error}`);
+    console.log(`🔄 Resetting voice training state for user ${userId}`);
     
     try {
-      // Step 1: Reset main voice profile from 'training' to 'failed'
+      // Step 1: Reset voice profile status
       const voiceProfiles = await db.select().from(userVoiceProfiles)
         .where(eq(userVoiceProfiles.userId, userId));
       
@@ -82,6 +73,22 @@ export class ExternalIntegrationStateReset {
           
           console.log(`   ✅ Reset voice profile ${profile.id} from 'training' to 'failed'`);
         }
+      }
+      
+      // Step 2: Reset emotion voices
+      const emotionVoices = await db.select().from(userEmotionVoices)
+        .where(eq(userEmotionVoices.userVoiceProfileId, voiceProfiles[0]?.id || 0));
+      
+      for (const emotionVoice of emotionVoices) {
+        if (emotionVoice.trainingStatus === 'training') {
+          await db.update(userEmotionVoices)
+            .set({
+              trainingStatus: 'failed',
+              updatedAt: new Date()
+            })
+            .where(eq(userEmotionVoices.id, emotionVoice.id));
+          
+          console.log(`   ✅ Reset emotion voice ${emotionVoice.emotion} from 'training' to 'failed'`);
         }
       }
       
@@ -119,157 +126,170 @@ export class ExternalIntegrationStateReset {
       console.log(`✅ Complete voice training state reset for user ${userId}`);
       
     } catch (dbError) {
-      console.error(`❌ Database error during voice training reset for user ${userId}:`, dbError);
+      console.error(`❌ Database error during voice training reset:`, dbError);
       throw dbError;
     }
   }
-  
+
   /**
    * Reset Kling/RunwayML video generation state
    */
   private static async resetVideoGenerationState(
-    userId: string, 
-    provider: 'kling' | 'runwayml', 
-    storyId: number, 
+    userId: string,
+    provider: string,
     error: string
   ): Promise<void> {
-    const { storage } = await import('./storage');
+    console.log(`🔄 Resetting video generation state for user ${userId}`);
     
-    if (!storyId) {
-      console.log(`   ⚠️ No story ID provided for video reset`);
-      return;
-    }
-    
-    // Reset video generation status from 'processing' to 'failed'
     try {
-      const video = await storage.getVideoByStoryId(storyId);
-      if (video && video.status === 'processing') {
-        await storage.updateVideo(video.id, {
-          status: 'failed',
-          completedAt: new Date(),
-          errorMessage: `${provider.toUpperCase()} integration error: ${error}`,
-          userApproved: false
-        });
-        console.log(`   ✅ Reset video ${video.id} from 'processing' to 'failed'`);
+      const { storage } = await import('./storage');
+      
+      // Reset any stuck video generations to failed status
+      const stuckVideos = await storage.getStuckVideoGenerations(Date.now() - 300000); // 5 min timeout
+      
+      for (const video of stuckVideos) {
+        if (video.userId === userId) {
+          await storage.updateVideo(video.id, {
+            status: 'failed',
+            error: `${provider.toUpperCase()} integration error: ${error}`,
+            updatedAt: new Date()
+          });
+          
+          console.log(`   ✅ Reset video generation ${video.id} to 'failed'`);
+        }
       }
-    } catch (videoError) {
-      console.error(`   ⚠️ Could not reset video state:`, videoError);
-    }
-    
-    // Clear any video generation cache
-    try {
-      const { videoGenerationService } = await import('./video-generation-service');
-      // Clear processing cache if available
-      console.log(`   ✅ Cleared video generation cache for story ${storyId}`);
-    } catch (cacheError) {
-      console.error(`   ⚠️ Could not clear video cache:`, cacheError);
+      
+    } catch (dbError) {
+      console.error(`❌ Database error during video generation reset:`, dbError);
     }
   }
-  
+
   /**
    * Reset audio generation state (less critical, usually just cache)
    */
   private static async resetAudioGenerationState(
-    userId: string, 
-    provider: string, 
+    userId: string,
+    provider: string,
     error: string
   ): Promise<void> {
+    console.log(`🔄 Clearing audio cache for user ${userId} due to ${provider} error`);
+    
     try {
       const { audioCacheService } = await import('./audio-cache-service');
-      // Clear any failed audio generation cache entries
-      console.log(`   ✅ Cleared audio generation cache for user ${userId}`);
+      await audioCacheService.clearCache();
+      console.log(`   ✅ Audio cache cleared`);
     } catch (cacheError) {
       console.error(`   ⚠️ Could not clear audio cache:`, cacheError);
     }
   }
-  
+
   /**
    * Direct method for resetting voice profile state (called by ElevenLabs module)
    */
-  static async resetVoiceProfile(userId: string, error: string): Promise<void> {
+  static async resetVoiceProfile(userId: string, reason: string): Promise<void> {
     await this.resetIntegrationState({
       userId,
       provider: 'elevenlabs',
       operationType: 'voice_training',
-      error
+      error: reason
     });
   }
-  
+
   /**
    * Alias for resetAllIntegrationsForUser (used in routes.ts)
    */
   static async resetAllStatesForUser(userId: string, reason: string): Promise<void> {
     await this.resetAllIntegrationsForUser(userId, reason);
   }
-  
+
   /**
    * Reset state for all providers for a specific user (nuclear option)
    */
   static async resetAllIntegrationsForUser(userId: string, reason: string): Promise<void> {
-    console.log(`🧹 Performing complete integration reset for user ${userId}`);
+    console.log(`🔥 Nuclear reset: Resetting ALL integration states for user ${userId}`);
     console.log(`   Reason: ${reason}`);
     
-    // Reset ElevenLabs voice training
-    await this.resetIntegrationState({
-      userId,
-      provider: 'elevenlabs',
-      operationType: 'voice_training',
-      error: `Complete reset: ${reason}`
-    });
-    
-    // Reset all video generations for this user
     try {
-      const { storage } = await import('./storage');
-      const userStories = await storage.getUserStories(userId);
+      // Reset voice training
+      await this.resetIntegrationState({
+        userId,
+        provider: 'elevenlabs',
+        operationType: 'voice_training',
+        error: reason
+      });
       
-      for (const story of userStories) {
-        const video = await storage.getVideoByStoryId(story.id);
-        if (video && video.status === 'processing') {
+      // Reset video generation
+      await this.resetIntegrationState({
+        userId,
+        provider: 'kling',
+        operationType: 'video_generation',
+        error: reason
+      });
+      
+      // Reset audio generation
+      await this.resetIntegrationState({
+        userId,
+        provider: 'elevenlabs',
+        operationType: 'audio_generation',
+        error: reason
+      });
+      
+      // Clean up any story-related states
+      try {
+        const { storage } = await import('./storage');
+        const userStories = await storage.getUserStories(userId);
+        
+        for (const story of userStories) {
           await this.resetIntegrationState({
             userId,
-            provider: video.provider as 'kling' | 'runwayml',
+            provider: 'kling',
             operationType: 'video_generation',
             operationId: story.id,
-            error: `Complete reset: ${reason}`
+            error: reason
           });
         }
+      } catch (storiesError) {
+        console.error(`   ⚠️ Could not reset story states:`, storiesError);
       }
-    } catch (storiesError) {
-      console.error(`   ⚠️ Could not reset video states:`, storiesError);
+      
+      console.log(`✅ Complete nuclear reset for user ${userId}`);
+    } catch (error) {
+      console.error(`❌ Nuclear reset failed for user ${userId}:`, error);
     }
-    
-    console.log(`✅ Complete integration reset completed for user ${userId}`);
   }
-  
+
   /**
    * Periodic cleanup of stuck states (should be called by a cron job)
    */
   static async cleanupStuckStates(): Promise<void> {
-    console.log(`🧹 Running periodic cleanup of stuck integration states`);
+    console.log(`🧹 Cleaning up stuck external integration states`);
     
     try {
       const { storage } = await import('./storage');
-      const { timeouts } = VOICE_CLONING_CONFIG;
+      const timeouts = {
+        voiceTrainingTimeout: 300000, // 5 minutes
+        videoGenerationTimeout: 600000, // 10 minutes
+      };
       
-      // Find voice profiles stuck in 'training' for more than worker thread timeout
-      const stuckTrainingThreshold = new Date(Date.now() - (timeouts.workerThreadSeconds * 1000));
+      const stuckTrainingThreshold = Date.now() - timeouts.voiceTrainingTimeout;
       
-      // Find stuck video generations
+      // Clean up stuck video generations
       const stuckVideos = await storage.getStuckVideoGenerations(stuckTrainingThreshold);
+      
       for (const video of stuckVideos) {
         await this.resetIntegrationState({
-          userId: video.requestedBy,
-          provider: video.provider as 'kling' | 'runwayml',
+          userId: video.userId,
+          provider: 'kling',
           operationType: 'video_generation',
-          operationId: video.storyId,
-          error: `Cleanup: stuck for more than ${timeouts.workerThreadSeconds} seconds`
+          operationId: video.id,
+          error: 'Cleanup: Operation exceeded timeout',
+          timeoutDuration: timeouts.videoGenerationTimeout
         });
       }
       
-      console.log(`✅ Periodic cleanup completed`);
-      
+      console.log(`✅ Cleanup completed: ${stuckVideos.length} stuck operations reset`);
     } catch (cleanupError) {
-      console.error(`❌ Periodic cleanup failed:`, cleanupError);
+      console.error(`❌ Cleanup failed:`, cleanupError);
     }
   }
 }

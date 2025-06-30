@@ -169,6 +169,13 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Priority**: Medium (requested but deferred for future implementation)
 
 ## Changelog
+- June 30, 2025: DATABASE SCHEMA ARCHITECTURE IMPROVEMENT - Added Database Verification Principle to replit.md 
+  - **Added CRITICAL DATABASE RULE** requiring schema inspection before alterations to prevent column naming inconsistencies
+  - **Fixed TypeScript schema column mismatch** - corrected `eleven_labs_voice_id` to `elevenlabs_voice_id` in shared/schema.ts to match actual database structure
+  - **Recreated ExternalIntegrationStateReset service** with proper error handling and missing method implementations
+  - **Implemented database-first development approach** using SQL queries to verify existing schema before making changes
+  - **Resolved voice cloning column name errors** that were preventing ElevenLabs integration from functioning properly
+  - All future database modifications now require mandatory schema verification following "inspect first, understand second, then modify" principle
 - June 30, 2025: CRITICAL FIX - Complete ElevenLabs Integration State Reset System Implementation
   - **Fixed missing resetVoiceProfile and resetAllStatesForUser methods** in ExternalIntegrationStateReset service that were causing runtime errors
   - **Enhanced voice training state reset** to handle both userVoiceProfiles and userEmotionVoices tables with proper status updates
