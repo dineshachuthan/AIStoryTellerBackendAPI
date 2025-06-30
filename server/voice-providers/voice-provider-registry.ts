@@ -102,24 +102,7 @@ export class VoiceProviderRegistry {
     return null;
   }
 
-  /**
-   * Get fallback provider (typically OpenAI)
-   */
-  async getFallbackProvider(): Promise<BaseVoiceProvider | null> {
-    await this.ensureHealthCheck();
-    
-    // Look for OpenAI provider as fallback
-    const openaiProvider = this.providers.get('openai');
-    if (openaiProvider) {
-      const health = this.healthStatus.get('openai');
-      if (health && health.isAvailable && health.isHealthy) {
-        return openaiProvider;
-      }
-    }
-    
-    // If OpenAI not available, return any healthy provider
-    return this.getBestProviderForGeneration(false);
-  }
+
 
   /**
    * Clone voice using the best available provider
@@ -144,38 +127,15 @@ export class VoiceProviderRegistry {
   }
 
   /**
-   * Generate speech with smart provider selection
+   * Generate speech with configured provider only
    */
   async generateSpeech(request: VoiceGenerationRequest): Promise<AudioResult> {
-    // If voiceId is provided and looks like a custom voice, try voice cloning providers first
-    if (request.voiceId && !this.isStandardVoice(request.voiceId)) {
-      const cloningProvider = await this.getBestProviderForGeneration(true);
-      if (cloningProvider) {
-        try {
-          return await cloningProvider.generateSpeech(request);
-        } catch (error) {
-          console.warn('Custom voice generation failed, falling back:', error);
-        }
-      }
-    }
-    
-    // Try any available provider
     const provider = await this.getBestProviderForGeneration(false);
     if (!provider) {
       throw new Error('No voice generation provider available');
     }
     
-    // If using a fallback provider that doesn't support custom voices, use a standard voice
-    if (!provider.getCapabilities().voiceCloning && request.voiceId && !this.isStandardVoice(request.voiceId)) {
-      request = { ...request, voiceId: 'alloy' }; // Default OpenAI voice
-    }
-    
-    try {
-      return await provider.generateSpeech(request);
-    } catch (error) {
-      console.error('Speech generation failed:', error);
-      throw error;
-    }
+    return await provider.generateSpeech(request);
   }
 
   /**
