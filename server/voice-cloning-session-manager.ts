@@ -50,11 +50,28 @@ export class VoiceCloningSessionManager {
       m.modulationType === 'emotion'
     ).length;
     const recordedSounds = userModulations.filter(m => 
-      m.modulationType === 'sound'
+      m.modulationType === 'sound'  
     ).length;
     const recordedModulations = userModulations.filter(m => 
       m.modulationType === 'modulation'
     ).length;
+
+    console.log(`[VoiceCloningSession] Session initialization counts for user ${userId}:`);
+    console.log(`  EMOTIONS: ${recordedEmotions} samples (threshold: ${this.CLONING_THRESHOLD})`);
+    console.log(`  SOUNDS: ${recordedSounds} samples (threshold: ${this.CLONING_THRESHOLD})`);
+    console.log(`  MODULATIONS: ${recordedModulations} samples (threshold: ${this.CLONING_THRESHOLD})`);
+    console.log(`  Current cloning status: ${isCloning ? 'IN PROGRESS' : 'IDLE'}`);
+
+    // Check if any category meets threshold for auto-trigger
+    if (recordedEmotions >= this.CLONING_THRESHOLD) {
+      console.log(`🎯 EMOTIONS THRESHOLD MET: ${recordedEmotions} >= ${this.CLONING_THRESHOLD} - Will trigger ElevenLabs cloning`);
+    }
+    if (recordedSounds >= this.CLONING_THRESHOLD) {
+      console.log(`🎯 SOUNDS THRESHOLD MET: ${recordedSounds} >= ${this.CLONING_THRESHOLD} - Will trigger ElevenLabs cloning`);
+    }
+    if (recordedModulations >= this.CLONING_THRESHOLD) {
+      console.log(`🎯 MODULATIONS THRESHOLD MET: ${recordedModulations} >= ${this.CLONING_THRESHOLD} - Will trigger ElevenLabs cloning`);
+    }
 
     // Check if any category is currently being cloned
     const { voiceTrainingService } = await import('./voice-training-service');
