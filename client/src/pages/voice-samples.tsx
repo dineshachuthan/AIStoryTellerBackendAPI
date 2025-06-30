@@ -329,7 +329,7 @@ export default function VoiceSamples() {
         </p>
 
         {/* Compact Progress Overview */}
-        {progress && (
+        {progress && progress !== null && (
           <div className="mb-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
