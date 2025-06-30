@@ -199,19 +199,57 @@ export class VoiceCloningSessionManager {
 
   /**
    * Check if category has reached cloning threshold
+   * For MVP1 hybrid approach: Check unique emotions count (6 different emotions = 1 voice clone)
    */
-  static shouldTriggerCloning(req: any, category: VoiceCategoryType): boolean {
-    const sessionData = this.getSessionData(req);
-    
-    switch (category) {
-      case 'emotions':
-        return sessionData.emotions_not_cloned >= this.CLONING_THRESHOLD;
-      case 'sounds':
-        return sessionData.sounds_not_cloned >= this.CLONING_THRESHOLD;
-      case 'modulations':
-        return sessionData.modulations_not_cloned >= this.CLONING_THRESHOLD;
-      default:
-        return false;
+  static async shouldTriggerCloning(req: any, category: VoiceCategoryType): Promise<boolean> {
+    const userId = req.user?.id;
+    if (!userId) return false;
+
+    if (category === 'emotions') {
+      // MVP1 Hybrid approach: Check unique emotion count instead of total samples
+      return await this.shouldTriggerHybridEmotionCloning(userId);
+    } else {
+      // For sounds and modulations, use original threshold logic
+      const sessionData = this.getSessionData(req);
+      switch (category) {
+        case 'sounds':
+          return sessionData.sounds_not_cloned >= this.CLONING_THRESHOLD;
+        case 'modulations':
+          return sessionData.modulations_not_cloned >= this.CLONING_THRESHOLD;
+        default:
+          return false;
+      }
+    }
+  }
+
+  /**
+   * MVP1 Hybrid approach: Check if user has 6 different emotion samples
+   * This triggers ONE voice clone that gets stored as separate entities for each emotion
+   */
+  static async shouldTriggerHybridEmotionCloning(userId: string): Promise<boolean> {
+    try {
+      const { storage } = await import('./storage');
+      
+      // Get unique emotions recorded by user
+      const uniqueEmotions = await storage.getUserUniqueEmotions(userId);
+      
+      console.log(`[HybridCloning] User ${userId} has recorded ${uniqueEmotions.length} unique emotions: [${uniqueEmotions.join(', ')}]`);
+      console.log(`[HybridCloning] Hybrid threshold: 6 different emotions to trigger ONE voice clone for all emotions`);
+      
+      // Check if user has 6 different emotion samples (hybrid approach)
+      const hasEnoughUniqueEmotions = uniqueEmotions.length >= 6;
+      
+      if (hasEnoughUniqueEmotions) {
+        console.log(`[HybridCloning] ✅ HYBRID THRESHOLD REACHED: ${uniqueEmotions.length}/6 unique emotions - triggering ElevenLabs voice cloning`);
+        console.log(`[HybridCloning] This will create ONE voice clone and store it as separate entities for each emotion`);
+      } else {
+        console.log(`[HybridCloning] ⏳ Hybrid threshold not reached: ${uniqueEmotions.length}/6 unique emotions`);
+      }
+      
+      return hasEnoughUniqueEmotions;
+    } catch (error) {
+      console.error('[HybridCloning] Error checking hybrid emotion threshold:', error);
+      return false;
     }
   }
 
