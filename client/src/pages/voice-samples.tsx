@@ -160,15 +160,19 @@ export default function VoiceSamples() {
       
       setRecordedSamples(prev => {
         console.log('Previous recordedSamples:', prev);
-        const existing = prev.find(s => s.emotion === variables.emotion);
+        
+        // Filter out any invalid entries with wrong emotion names
+        const validPrev = prev.filter(s => s.emotion !== 'emotion' && s.emotion !== 'sound' && s.emotion !== 'modulation');
+        
+        const existing = validPrev.find(s => s.emotion === variables.emotion);
         if (existing) {
           // Update existing sample
-          const updated = prev.map(s => s.emotion === variables.emotion ? newSample : s);
+          const updated = validPrev.map(s => s.emotion === variables.emotion ? newSample : s);
           console.log('Updated recordedSamples:', updated);
           return updated;
         } else {
           // Add new sample
-          const added = [...prev, newSample];
+          const added = [...validPrev, newSample];
           console.log('Added to recordedSamples:', added);
           return added;
         }
