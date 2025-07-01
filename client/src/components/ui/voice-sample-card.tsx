@@ -142,92 +142,91 @@ export function VoiceSampleCard({
         </Badge>
       </div>
 
-        {/* Recording status and controls */}
-        {isRecorded && recordedSample && (
-          <div className="p-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md">
-            <div className="flex items-center gap-2">
+      {/* Recording status and controls */}
+      {isRecorded && recordedSample && (
+        <div className="p-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handlePlayToggle}
+              disabled={disabled}
+              className="h-6 w-6 p-0 shrink-0"
+            >
+              {isPlaying ? (
+                <Pause className="w-3 h-3" />
+              ) : (
+                <Play className="w-3 h-3" />
+              )}
+            </Button>
+            
+            <div className="text-xs text-muted-foreground flex-1 min-w-0">
+              <div className="flex items-center gap-1">
+                <Clock className="w-3 h-3 shrink-0" />
+                <span>{recordedSample.duration ? `${recordedSample.duration}s` : 'Unknown'}</span>
+              </div>
+              <div className="text-[10px] opacity-75 truncate">
+                {recordedSample.recordedAt.toLocaleDateString()}
+              </div>
+            </div>
+
+            {onDeleteSample && !isLocked && (
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={handlePlayToggle}
+                onClick={onDeleteSample}
                 disabled={disabled}
-                className="h-6 w-6 p-0 shrink-0"
+                className="h-6 w-12 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950 shrink-0"
               >
-                {isPlaying ? (
-                  <Pause className="w-3 h-3" />
-                ) : (
-                  <Play className="w-3 h-3" />
-                )}
+                <span className="text-[10px]">Delete</span>
               </Button>
-              
-              <div className="text-xs text-muted-foreground flex-1 min-w-0">
-                <div className="flex items-center gap-1">
-                  <Clock className="w-3 h-3 shrink-0" />
-                  <span>{recordedSample.duration ? `${recordedSample.duration}s` : 'Unknown'}</span>
-                </div>
-                <div className="text-[10px] opacity-75 truncate">
-                  {recordedSample.recordedAt.toLocaleDateString()}
-                </div>
-              </div>
+            )}
+          </div>
+        </div>
+      )}
 
-              {onDeleteSample && !isLocked && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={onDeleteSample}
-                  disabled={disabled}
-                  className="h-6 w-12 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950 shrink-0"
-                >
-                  <span className="text-[10px]">Delete</span>
-                </Button>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Recording component */}
-        <div className="space-y-2">
-          <div className="w-full">
-            <EnhancedVoiceRecorder
-              buttonText={{
-                hold: disabled
-                  ? "🚫 Disabled"
-                  : isLocked 
-                    ? "🔒 Locked" 
-                    : isRecorded 
-                      ? "Re-record" 
-                      : "Record",
-                recording: "Recording...",
-                instructions: disabled
-                  ? "Recording disabled"
-                  : isLocked 
-                    ? "Sample locked for voice cloning" 
-                    : isRecorded 
-                      ? "Hold to re-record your voice" 
-                      : "Hold button to record"
-              }}
-              sampleText={sampleText}
-              emotionDescription={description}
-              emotionName={displayName}
-              category={category}
-              isRecorded={isRecorded}
-              isLocked={isLocked}
-              onRecordingComplete={onRecordingComplete}
-              className="w-full"
-              disabled={disabled || isLocked}
-              maxRecordingTime={targetDuration}
-              existingRecording={isRecorded && recordedSample ? {
-                url: recordedSample.audioUrl,
-                recordedAt: recordedSample.recordedAt
-              } : undefined}
-            />
-          </div>
-          
-          {/* Recording hint */}
-          <div className="flex items-center gap-1 text-[10px] text-muted-foreground justify-center">
-            <Mic className="w-3 h-3" />
-            <span>Target: {targetDuration}s duration</span>
-          </div>
+      {/* Recording component */}
+      <div className="space-y-2">
+        <div className="w-full">
+          <EnhancedVoiceRecorder
+            buttonText={{
+              hold: disabled
+                ? "🚫 Disabled"
+                : isLocked 
+                  ? "🔒 Locked" 
+                  : isRecorded 
+                    ? "Re-record" 
+                    : "Record",
+              recording: "Recording...",
+              instructions: disabled
+                ? "Recording disabled"
+                : isLocked 
+                  ? "Sample locked for voice cloning" 
+                  : isRecorded 
+                    ? "Hold to re-record your voice" 
+                    : "Hold button to record"
+            }}
+            sampleText={sampleText}
+            emotionDescription={description}
+            emotionName={displayName}
+            category={category}
+            isRecorded={isRecorded}
+            isLocked={isLocked}
+            onRecordingComplete={onRecordingComplete}
+            className="w-full"
+            disabled={disabled || isLocked}
+            maxRecordingTime={targetDuration}
+            existingRecording={isRecorded && recordedSample ? {
+              url: recordedSample.audioUrl,
+              recordedAt: recordedSample.recordedAt
+            } : undefined}
+          />
+        </div>
+        
+        {/* Recording hint */}
+        <div className="flex items-center gap-1 text-[10px] text-muted-foreground justify-center">
+          <Mic className="w-3 h-3" />
+          <span>Target: {targetDuration}s duration</span>
         </div>
       </div>
     </div>
