@@ -82,6 +82,11 @@ export interface StoryAnalysis {
 }
 
 export async function analyzeStoryContent(content: string, userId?: string): Promise<StoryAnalysis> {
+  // Check for empty content - never analyze empty stories
+  if (!content || content.trim().length === 0) {
+    throw new Error("Cannot analyze empty story content. Please add text to your story first.");
+  }
+
   // Try cache first, fallback to source with cache update
   try {
     const cachedAnalysis = getCachedAnalysis(content);

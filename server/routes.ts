@@ -604,7 +604,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`Generating narrative analysis for story ${storyId}`);
       
-      const analysis = await analyzeStoryContent(story.content);
+      const analysis = await analyzeStoryContent(story.content, userId);
       
       // Store analysis in database
       await storage.createStoryAnalysis({
@@ -647,7 +647,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(analysis);
     } catch (error) {
       console.error("Error generating narrative analysis:", error);
-      res.status(500).json({ message: "Failed to generate narrative analysis" });
+      
+      // Handle empty content error specifically
+      if ((error as Error).message.includes("Cannot analyze empty story content")) {
+        return res.status(400).json({ 
+          message: "Cannot analyze empty story content. Please add text to your story first.",
+          error: "EMPTY_CONTENT"
+        });
+      }
+      
+      res.status(500).json({ 
+        message: "Failed to generate narrative analysis",
+        error: (error as Error).message 
+      });
     }
   });
 
