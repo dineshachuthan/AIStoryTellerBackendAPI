@@ -396,7 +396,7 @@ export function EnhancedVoiceRecorder({
         <div className="bg-black rounded-lg p-4 border border-gray-600 flex-1 flex flex-col">
           {/* Title */}
           <div className="text-blue-300 text-xs font-medium mb-2 text-left uppercase tracking-wide">
-            📖 Read this text{emotionDescription ? ` in ${emotionDescription.toLowerCase()}` : ''}
+            📖 Read this text with {emotionName ? emotionName.toLowerCase() : 'the required'} emotion
           </div>
           
           {/* Static Progress Bar - Always visible */}
