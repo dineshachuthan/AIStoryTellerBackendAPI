@@ -564,6 +564,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Content has changed, regenerate analysis
         const analysis = await analyzeStoryContentWithHashCache(storyId, story.content, userId);
         
+        // When content changes, also invalidate roleplay analysis for consistency
+        console.log(`Content changed - also invalidating roleplay analysis for story ${storyId}`);
+        try {
+          await storage.deleteStoryAnalysis(storyId, 'roleplay');
+          console.log("✅ Roleplay analysis invalidated - will regenerate on next request");
+        } catch (deleteError) {
+          console.log("⚠️ Failed to invalidate roleplay analysis:", deleteError);
+        }
+        
         // Extract and store reference data from analysis
         console.log("🔄 Extracting reference data from narrative analysis...");
         try {
@@ -762,19 +771,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Check if analysis already exists and if content has changed
+      // Check if analysis already exists
       const existingAnalysis = await storage.getStoryAnalysis(storyId, 'roleplay');
       if (existingAnalysis) {
-        // Check if content has changed using same hash logic as narrative analysis
-        const { ContentHashService } = await import("./content-hash-service");
-        const hasContentChanged = ContentHashService.hasContentChanged(story.content, existingAnalysis.contentHash);
-        
-        if (!hasContentChanged) {
-          console.log(`Retrieved existing roleplay analysis for story ${storyId} (content unchanged)`);
-          return res.json(existingAnalysis.analysisData);
-        }
-        
-        console.log(`Content changed for story ${storyId}, regenerating roleplay analysis`);
+        console.log(`Found existing roleplay analysis for story ${storyId}`);
+        return res.json(existingAnalysis.analysisData);
       }
 
       console.log(`Generating roleplay analysis for story ${storyId}`);
