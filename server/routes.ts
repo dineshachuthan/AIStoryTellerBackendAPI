@@ -757,8 +757,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Generate roleplay analysis for a story
-  app.post("/api/stories/:storyId/roleplay", requireAuth, async (req, res) => {
+  // Get roleplay analysis for a story (simplified - generation now handled by unified cache logic)
+  app.get("/api/stories/:storyId/roleplay", requireAuth, async (req, res) => {
     try {
       const storyId = parseInt(req.params.storyId);
       const userId = (req.user as any)?.id;
@@ -772,60 +772,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Story not found" });
       }
 
-      // Only story authors can generate roleplay analysis
+      // Only story authors can access roleplay analysis
       const isAuthor = story.authorId === userId;
       
       if (!isAuthor) {
         return res.status(403).json({ 
-          message: "Only the story author can generate roleplay analysis" 
+          message: "Only the story author can access roleplay analysis" 
         });
       }
 
-      // Check if analysis already exists
+      // Check if analysis exists
       const existingAnalysis = await storage.getStoryAnalysis(storyId, 'roleplay');
       if (existingAnalysis) {
-        console.log(`Found existing roleplay analysis for story ${storyId}`);
+        console.log(`Retrieved existing roleplay analysis for story ${storyId}`);
         return res.json(existingAnalysis.analysisData);
       }
 
-      console.log(`Generating roleplay analysis for story ${storyId}`);
-      
-      // Get roleplay duration configuration
-      const { getVideoProviderConfig } = await import("./video-config");
-      const videoConfig = getVideoProviderConfig();
-      const targetDurationSeconds = videoConfig.roleplay?.targetDurationSeconds || 60;
-      
-      console.log(`Using target roleplay duration: ${targetDurationSeconds} seconds`);
-      const rolePlayAnalysis = await generateRolePlayAnalysis(story.content, [], targetDurationSeconds);
-      
-      // Generate content hash for cache invalidation
-      const { ContentHashService } = await import("./content-hash-service");
-      const contentHash = ContentHashService.generateContentHash(story.content);
-      
-      // Store analysis in database with content hash
-      if (existingAnalysis) {
-        // Update existing analysis
-        await storage.updateStoryAnalysis(storyId, 'roleplay', {
-          analysisData: rolePlayAnalysis,
-          contentHash,
-          generatedBy: userId
-        });
-      } else {
-        // Create new analysis
-        await storage.createStoryAnalysis({
-          storyId,
-          analysisType: 'roleplay',
-          analysisData: rolePlayAnalysis,
-          contentHash,
-          generatedBy: userId
-        });
-      }
-      
-      console.log("Roleplay analysis generated successfully");
-      res.json(rolePlayAnalysis);
+      // No analysis found - client should trigger narrative analysis first to generate both
+      console.log(`No roleplay analysis found for story ${storyId}`);
+      res.status(404).json({ message: "Roleplay analysis not found" });
     } catch (error) {
-      console.error("Error generating roleplay analysis:", error);
-      res.status(500).json({ message: "Failed to generate roleplay analysis" });
+      console.error("Error retrieving roleplay analysis:", error);
+      res.status(500).json({ message: "Failed to retrieve roleplay analysis", error: error.message });
     }
   });
 
