@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { storyAnalyses, voiceModulationTemplates } from "@shared/schema";
+import { storyAnalyses, voiceModulationTemplates, referenceStoryAnalyses } from "@shared/schema";
 import { eq } from "drizzle-orm";
 
 /**
@@ -42,7 +42,6 @@ export async function getVoiceSamplesByType(type: 'emotions' | 'sounds' | 'descr
     console.log(`Found ${refDataResults.length} reference data templates for ${type}`);
     
     // Priority 2: Get emotions from reference story analyses (shared narrative data)
-    const { referenceStoryAnalyses } = await import('../shared/schema.js');
     const referenceAnalyses = await db.select().from(referenceStoryAnalyses);
     const uniqueItems = new Set<string>(refDataResults.map(r => r.emotion));
     
