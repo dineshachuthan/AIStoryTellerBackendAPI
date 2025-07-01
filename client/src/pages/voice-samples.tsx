@@ -65,7 +65,7 @@ interface CloningProgress {
 export default function VoiceSamples() {
   const [, setLocation] = useLocation();
   const { user, logout } = useAuth();
-  const [selectedCategory, setSelectedCategory] = useState<string>("emotion");
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [playingAudio, setPlayingAudio] = useState<string | null>(null);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
   const queryClient = useQueryClient();
@@ -220,7 +220,7 @@ export default function VoiceSamples() {
     template?.modulationType === selectedCategory
   ) : [];
 
-  // Get unique modulation types and map to friendly names
+  // Get unique modulation types and map to friendly names - NO HARDCODED FALLBACKS
   const categoryMapping = {
     'emotion': 'Emotions',
     'sound': 'Sounds', 
@@ -228,9 +228,16 @@ export default function VoiceSamples() {
   };
   
   const rawCategories = Array.isArray(templates) && templates.length > 0 ? 
-    Array.from(new Set(templates.map((t: any) => t?.modulationType).filter(Boolean))) : ['emotion'];
+    Array.from(new Set(templates.map((t: any) => t?.modulationType).filter(Boolean))) : [];
   const categories = rawCategories.filter(cat => categoryMapping[cat as keyof typeof categoryMapping]);
   
+  // Auto-select first available category when templates load
+  useEffect(() => {
+    if (categories.length > 0 && !selectedCategory) {
+      setSelectedCategory(categories[0]);
+    }
+  }, [categories, selectedCategory]);
+
   // Debug logging
   console.log('Templates:', templates);
   console.log('Categories:', categories);
@@ -365,18 +372,39 @@ export default function VoiceSamples() {
       </div>
 
         {/* Category Tabs with Visual Separation */}
-        <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-4 h-auto p-1 bg-gray-100 dark:bg-gray-800 rounded-lg">
-            {categories.map((category) => (
-              <TabsTrigger 
-                key={category} 
-                value={category} 
-                className="text-xs sm:text-sm px-3 py-2 font-medium rounded-md transition-all data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-blue-400"
+        {/* Empty State - Show when no templates/categories exist */}
+        {categories.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="max-w-md mx-auto">
+              <Mic className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                No Voice Categories Available
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-6">
+                Voice samples will become available after you create and analyze stories. 
+                Stories with emotions, characters, and dialogue will generate voice recording categories.
+              </p>
+              <Button
+                onClick={() => setLocation("/")}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
               >
-                {categoryMapping[category as keyof typeof categoryMapping]}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+                Create Your First Story
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
+            <TabsList className="grid w-full grid-cols-3 mb-4 h-auto p-1 bg-gray-100 dark:bg-gray-800 rounded-lg">
+              {categories.map((category) => (
+                <TabsTrigger 
+                  key={category} 
+                  value={category} 
+                  className="text-xs sm:text-sm px-3 py-2 font-medium rounded-md transition-all data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-blue-400"
+                >
+                  {categoryMapping[category as keyof typeof categoryMapping]}
+                </TabsTrigger>
+              ))}
+            </TabsList>
 
         {categories.map((category) => (
           <TabsContent key={category} value={category} className="mt-6">
@@ -554,9 +582,10 @@ export default function VoiceSamples() {
             </div>
           </TabsContent>
         ))}
-        </Tabs>
+          </Tabs>
+        )}
+        </div>
       </div>
-    </div>
     </TooltipProvider>
   );
 }
