@@ -41,12 +41,13 @@ export async function getVoiceSamplesByType(type: 'emotions' | 'sounds' | 'descr
     
     console.log(`Found ${refDataResults.length} reference data templates for ${type}`);
     
-    // Priority 2: Supplement with story analysis data (for backwards compatibility)
-    const stories = await db.select().from(storiesTable);
+    // Priority 2: Get emotions from reference story analyses (shared narrative data)
+    const { referenceStoryAnalyses } = await import('../shared/schema.js');
+    const referenceAnalyses = await db.select().from(referenceStoryAnalyses);
     const uniqueItems = new Set<string>(refDataResults.map(r => r.emotion));
     
-    for (const story of stories) {
-      const analysisData = story.analysis as any;
+    for (const analysis of referenceAnalyses) {
+      const analysisData = analysis.analysisData as any;
       
       if (type === 'emotions' && analysisData?.emotions) {
         for (const emotion of analysisData.emotions) {
@@ -59,7 +60,7 @@ export async function getVoiceSamplesByType(type: 'emotions' | 'sounds' | 'descr
               sampleText: emotion.context || `Express ${emotion.emotion} emotion`,
               category: 'emotions',
               intensity: emotion.intensity || 5,
-              storySource: story.id,
+              storySource: analysis.referenceStoryId,
               isReferenceData: false
             });
           }
@@ -80,7 +81,7 @@ export async function getVoiceSamplesByType(type: 'emotions' | 'sounds' | 'descr
                     displayName: `${character.name} - ${trait}`,
                     sampleText: `Make the sound of ${character.name}: ${trait}`,
                     category: 'sounds',
-                    storySource: analysis.storyId,
+                    storySource: analysis.referenceStoryId,
                     isReferenceData: false
                   });
                 }
@@ -99,7 +100,7 @@ export async function getVoiceSamplesByType(type: 'emotions' | 'sounds' | 'descr
             displayName: analysisData.moodCategory,
             sampleText: `Narrate in ${analysisData.moodCategory} style`,
             category: 'descriptions',
-            storySource: analysis.storyId,
+            storySource: analysis.referenceStoryId,
             isReferenceData: false
           });
         }
