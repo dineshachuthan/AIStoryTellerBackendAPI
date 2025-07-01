@@ -482,14 +482,6 @@ export async function analyzeStoryContentWithHashCache(storyId: number, content:
           "quote": "Relevant quote from the story if available"
         }
       ],
-      "soundEffects": [
-        {
-          "sound": "Environmental or audio effects mentioned in the story (dog barking, train whistling, rain falling, door slamming, footsteps, car engine, bird chirping, wind howling, ocean waves, thunder, music playing, phone ringing, etc.)",
-          "intensity": 6,
-          "context": "Where this sound appears in the story",
-          "quote": "Quote from story mentioning this sound"
-        }
-      ],
       "summary": "2-3 sentence summary of the story",
       "category": "Category like Romance, Adventure, Mystery, Fantasy, Sci-Fi, Drama, Comedy, Horror, Thriller",
       "genre": "Primary genre (Drama, Fantasy, Mystery, Romance, etc.)",
