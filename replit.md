@@ -661,6 +661,15 @@ Preferred communication style: Simple, everyday language.
 - Always request permission before any structural changes to API or database
 - Focus on using existing infrastructure and endpoints when possible
 
+**CRITICAL FILE CREATION RULE: MANDATORY APPROVAL FOR ALL NEW FILES**
+- DO NOT create any new code files without explicit user approval
+- MUST explain the purpose, logic, and functionality that will be implemented in the new file
+- MUST justify why existing files cannot accommodate the required functionality
+- MUST get user confirmation before proceeding with file creation
+- This rule applies to ALL file types: components, services, utilities, configurations, etc.
+- Respect existing functionality - users may have spent significant time building features into existing files
+- Always verify that all existing functionality is preserved when refactoring or creating new files
+
 **CRITICAL PROVIDER RULE: NO FALLBACK PROVIDERS ANYWHERE**
 - ZERO TOLERANCE for fallback provider logic in voice or video systems
 - Only the configured primary provider should be used - no secondary options
