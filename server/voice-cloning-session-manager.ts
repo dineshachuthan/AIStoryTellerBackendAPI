@@ -45,28 +45,38 @@ export class VoiceCloningSessionManager {
       throw new Error('User not authenticated');
     }
 
-    // Get current database state
+    // Get current database state using ESM architecture
     const { storage } = await import('./storage');
-    const { voiceModulationService } = await import('./voice-modulation-service');
     
-    // Count unlocked samples by category
-    const emotionTemplates = await voiceModulationService.getTemplates('emotion');
-    const soundTemplates = await voiceModulationService.getTemplates('sound');
-    const modulationTemplates = await voiceModulationService.getTemplates('modulation');
+    // Count user ESM recordings by category
+    const userEsmData = await storage.getUserEsmByUser(userId);
     
-    const userModulations = await voiceModulationService.getUserVoiceModulations(userId);
+    // Count recorded samples by ESM category
+    let recordedEmotions = 0;
+    let recordedSounds = 0;
+    let recordedModulations = 0;
     
-    // Count recorded but not cloned samples by category
-    // Note: isLocked field may not exist in current schema, treating all as unlocked for now
-    const recordedEmotions = userModulations.filter(m => 
-      m.modulationType === 'emotion'
-    ).length;
-    const recordedSounds = userModulations.filter(m => 
-      m.modulationType === 'sound'  
-    ).length;
-    const recordedModulations = userModulations.filter(m => 
-      m.modulationType === 'modulation'
-    ).length;
+    // Use SQL query to efficiently count recordings by category
+    const { db } = await import('./db');
+    const { sql } = await import('drizzle-orm');
+    
+    const countResult = await db.execute(sql`
+      SELECT er.category, COUNT(DISTINCT uer.user_esm_recording_id) as recording_count
+      FROM user_esm ue
+      JOIN esm_ref er ON ue.esm_ref_id = er.esm_ref_id
+      JOIN user_esm_recordings uer ON ue.user_esm_id = uer.user_esm_id
+      WHERE ue.user_id = ${userId}
+      GROUP BY er.category
+    `);
+    
+    for (const row of countResult.rows) {
+      const category = row.category as number;
+      const count = parseInt(row.recording_count as string) || 0;
+      
+      if (category === 1) recordedEmotions = count; // Emotions
+      else if (category === 2) recordedSounds = count; // Sounds  
+      else if (category === 3) recordedModulations = count; // Modulations
+    }
 
     console.log(`[VoiceCloningSession] Session initialization counts for user ${userId}:`);
     
@@ -223,27 +233,36 @@ export class VoiceCloningSessionManager {
   }
 
   /**
-   * MVP1 Hybrid approach: Check if user has 6 different emotion samples
+   * MVP1 Hybrid approach: Check if user has minimum different emotion samples
    * This triggers ONE voice clone that gets stored as separate entities for each emotion
    */
   static async shouldTriggerHybridEmotionCloning(userId: string): Promise<boolean> {
     try {
-      const { storage } = await import('./storage');
+      const { db } = await import('./db');
+      const { sql } = await import('drizzle-orm');
       
-      // Get unique emotions recorded by user
-      const uniqueEmotions = await storage.getUserUniqueEmotions(userId);
+      // Get count of unique emotions recorded by user using ESM architecture
+      const result = await db.execute(sql`
+        SELECT COUNT(DISTINCT er.name) as unique_emotion_count
+        FROM user_esm ue
+        JOIN esm_ref er ON ue.esm_ref_id = er.esm_ref_id
+        JOIN user_esm_recordings uer ON ue.user_esm_id = uer.user_esm_id
+        WHERE ue.user_id = ${userId} AND er.category = 1
+      `);
       
-      console.log(`[HybridCloning] User ${userId} has recorded ${uniqueEmotions.length} unique emotions: [${uniqueEmotions.join(', ')}]`);
-      console.log(`[HybridCloning] Hybrid threshold: 6 different emotions to trigger ONE voice clone for all emotions`);
+      const uniqueEmotionCount = parseInt(result.rows[0]?.unique_emotion_count as string) || 0;
       
-      // Check if user has 6 different emotion samples (hybrid approach)
-      const hasEnoughUniqueEmotions = uniqueEmotions.length >= 6;
+      console.log(`[HybridCloning] User ${userId} has recorded ${uniqueEmotionCount} unique emotions`);
+      console.log(`[HybridCloning] Hybrid threshold: ${this.CLONING_THRESHOLD} different emotions to trigger ONE voice clone for all emotions`);
+      
+      // Check if user has enough different emotion samples (MVP1 single sample approach)
+      const hasEnoughUniqueEmotions = uniqueEmotionCount >= this.CLONING_THRESHOLD;
       
       if (hasEnoughUniqueEmotions) {
-        console.log(`[HybridCloning] ✅ HYBRID THRESHOLD REACHED: ${uniqueEmotions.length}/6 unique emotions - triggering ElevenLabs voice cloning`);
+        console.log(`[HybridCloning] ✅ HYBRID THRESHOLD REACHED: ${uniqueEmotionCount}/${this.CLONING_THRESHOLD} unique emotions - triggering ElevenLabs voice cloning`);
         console.log(`[HybridCloning] This will create ONE voice clone and store it as separate entities for each emotion`);
       } else {
-        console.log(`[HybridCloning] ⏳ Hybrid threshold not reached: ${uniqueEmotions.length}/6 unique emotions`);
+        console.log(`[HybridCloning] ⏳ Hybrid threshold not reached: ${uniqueEmotionCount}/${this.CLONING_THRESHOLD} unique emotions`);
       }
       
       return hasEnoughUniqueEmotions;
@@ -355,19 +374,39 @@ export class VoiceCloningSessionManager {
   }
 
   /**
-   * Determine category from modulation key
+   * Determine category from ESM reference name
+   */
+  static async getCategoryFromEsmName(esmName: string): Promise<VoiceCategoryType> {
+    try {
+      const { db } = await import('./db');
+      const { sql } = await import('drizzle-orm');
+      
+      // Query ESM reference to find category
+      const result = await db.execute(sql`
+        SELECT category FROM esm_ref WHERE name = ${esmName.toLowerCase()} LIMIT 1
+      `);
+      
+      if (result.rows.length > 0) {
+        const category = result.rows[0].category as number;
+        if (category === 1) return 'emotions';
+        else if (category === 2) return 'sounds';
+        else if (category === 3) return 'modulations';
+      }
+      
+      // Default fallback based on emotion naming patterns
+      return 'emotions';
+    } catch (error) {
+      console.error('Error determining ESM category:', error);
+      return 'emotions'; // Default fallback
+    }
+  }
+
+  /**
+   * Legacy method for backwards compatibility
    */
   static getCategoryFromModulationKey(modulationKey: string): VoiceCategoryType {
-    // Get from voice-config to determine category
-    const emotionKeys = ['happy', 'sad', 'angry', 'excited', 'calm', 'fearful', 'surprised', 'disgusted', 'confident', 'loving'];
-    const soundKeys = ['whisper', 'shout', 'laugh', 'cry', 'sigh'];
-    
-    if (emotionKeys.includes(modulationKey)) {
-      return 'emotions';
-    } else if (soundKeys.includes(modulationKey)) {
-      return 'sounds';
-    } else {
-      return 'modulations';
-    }
+    // For legacy compatibility, assume emotions by default
+    // The new system should use getCategoryFromEsmName instead
+    return 'emotions';
   }
 }

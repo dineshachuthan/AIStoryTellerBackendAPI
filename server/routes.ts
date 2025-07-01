@@ -1531,6 +1531,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
           isCompleted: true,
         });
         
+        // SESSION-BASED VOICE CLONING TRIGGER FOR ESM ARCHITECTURE
+        try {
+          const { VoiceCloningSessionManager } = await import('./voice-cloning-session-manager');
+          
+          // Initialize session if not already done
+          if (!req.session.voiceCloning) {
+            console.log(`🔧 Initializing voice cloning session for user ${userId}`);
+            await VoiceCloningSessionManager.initializeSessionData(req);
+          }
+          
+          // Determine category from ESM name (emotions category)
+          const category = await VoiceCloningSessionManager.getCategoryFromEsmName(emotionName);
+          console.log(`🔄 Recording ESM voice sample for category: ${category}, emotion: ${emotionName}`);
+          
+          // Increment session counter for this category
+          VoiceCloningSessionManager.incrementCategoryCounter(req, category);
+          
+          // Debug session state
+          const sessionData = VoiceCloningSessionManager.getSessionData(req);
+          console.log(`📊 Session counters after increment: emotions=${sessionData.emotions_not_cloned}, sounds=${sessionData.sounds_not_cloned}, modulations=${sessionData.modulations_not_cloned}`);
+          
+          // Check if threshold reached for this category (MVP1 hybrid approach)
+          if (await VoiceCloningSessionManager.shouldTriggerCloning(req, category)) {
+            console.log(`🎯 Category '${category}' reached threshold - triggering ElevenLabs voice cloning`);
+            
+            // Set cloning in progress (disables voice samples button)
+            VoiceCloningSessionManager.setCloningInProgress(req, category);
+            
+            // Use timeout service for guaranteed bounded execution time
+            const { VoiceCloningTimeoutService } = await import('./voice-cloning-timeout-service');
+            
+            // Start background cloning with proper timeout/retry - NO INFINITE LOOPS
+            setTimeout(async () => {
+              try {
+                await VoiceCloningTimeoutService.startVoiceCloning(userId, category);
+              } catch (error) {
+                console.error(`❌ Voice cloning service error for ${userId} ${category}:`, error);
+                VoiceCloningSessionManager.completeCategoryCloning(userId, category, false);
+              }
+            }, 100); // Small delay to ensure response is sent before background processing
+          } else {
+            const currentCount = category === 'emotions' ? sessionData.emotions_not_cloned :
+                                category === 'sounds' ? sessionData.sounds_not_cloned :
+                                sessionData.modulations_not_cloned;
+            console.log(`⏳ Category '${category}' has ${currentCount}/${VoiceCloningSessionManager.CLONING_THRESHOLD} samples (threshold not reached)`);
+          }
+        } catch (sessionError) {
+          console.error('Error in ESM voice cloning session trigger:', sessionError);
+          // Don't fail the request if session management fails
+        }
+        
       } catch (dbError) {
         console.error("Failed to create ESM database records:", dbError);
         // Continue even if DB creation fails - file is saved
