@@ -558,7 +558,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (existingAnalysis) {
         // Check if content has changed since last analysis using content hash
-        const currentContentHash = ContentHashService.generateContentHash(story.content);
+        const currentContentHash = require('crypto').createHash('sha256').update(story.content.trim()).digest('hex');
         const storedContentHash = existingAnalysis.contentHash;
         
         if (storedContentHash && currentContentHash === storedContentHash) {
