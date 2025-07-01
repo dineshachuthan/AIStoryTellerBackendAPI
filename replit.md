@@ -172,7 +172,7 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - July 01, 2025: ✅ **ENHANCED VOICE RECORDER LOCK/UNLOCK STATUS COMPLETE** - Added Status Icons with Business Logic from Original Card
   - **STATUS ICON IMPLEMENTATION**: Added three-state status system (Empty/Recorded/Locked) with proper tooltips and business logic
   - **REMOVED RADIO ICON DUPLICATION**: Eliminated extra Radio icon to show only the status icon before emotion name as requested
-  - **THREE STATUS STATES**: Gray circle (Empty), green checkmark (Recorded), blue lock (Locked) with descriptive tooltips
+  - **THREE STATUS STATES**: Gray unlock icon (Empty), green checkmark (Recorded), blue lock icon (Locked) with descriptive tooltips
   - **PRESERVED BUSINESS LOGIC**: All functionality from original voice-sample-card maintained including disabled states for locked samples
   - **CLEAN HEADER LAYOUT**: Single status icon before emotion name provides clear visual indication of sample state
 - July 01, 2025: ✅ **ENHANCED VOICE RECORDER SPACING OPTIMIZATION** - Removed Fixed Height and Empty Space Issues
