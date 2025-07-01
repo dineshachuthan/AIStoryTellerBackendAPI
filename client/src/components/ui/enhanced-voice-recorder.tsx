@@ -327,7 +327,7 @@ export function EnhancedVoiceRecorder({
     <TooltipProvider>
       <div className={`w-full max-w-sm mx-auto ${className}`}>
         {/* Radio/TV Style Voice Recorder Panel - Dynamic background for recorded samples */}
-        <div className={`rounded-2xl p-4 shadow-2xl border h-[320px] ${
+        <div className={`rounded-2xl p-4 shadow-2xl border h-[320px] flex flex-col ${
           isRecorded || existingRecording 
             ? 'bg-gradient-to-br from-blue-900/70 to-purple-900/70 border-blue-500/50' 
             : 'bg-gradient-to-br from-gray-900 to-gray-800 border-gray-700'
@@ -392,8 +392,8 @@ export function EnhancedVoiceRecorder({
           </div>
         </div>
 
-        {/* Main Recording Display - Fixed height container */}
-        <div className="bg-black rounded-lg p-4 mb-3 border border-gray-600 min-h-[180px]">
+        {/* Main Recording Display - Flexible container */}
+        <div className="bg-black rounded-lg p-4 border border-gray-600 flex-1 flex flex-col">
           {/* Title */}
           <div className="text-blue-300 text-xs font-medium mb-2 text-left uppercase tracking-wide">
             📖 Read this text{emotionDescription ? ` in ${emotionDescription.toLowerCase()}` : ''}
@@ -495,84 +495,87 @@ export function EnhancedVoiceRecorder({
               <div className="text-white text-sm leading-relaxed">
                 <span className="italic text-blue-200">"{sampleText || 'Sample text not provided'}"</span>
               </div>
-
-
             </div>
           </div>
         </div>
 
-        {/* Recorded Sample Info and Controls */}
-        {recordedSample && (
-          <div className="p-2 bg-gray-900 border border-gray-600 rounded-md mb-3">
-            <div className="flex items-center gap-2 text-xs">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onPlaySample?.(recordedSample.audioUrl)}
-                className="h-6 w-6 p-0 shrink-0 text-green-400 hover:text-green-300"
-              >
-                <Play className="w-3 h-3" />
-              </Button>
-              
-              <div className="text-gray-300 flex-1 min-w-0">
-                <div className="flex items-center gap-1">
-                  <span>{recordedSample.duration ? `${recordedSample.duration}s` : 'Unknown'}</span>
-                  <span className="text-gray-500">•</span>
-                  <span className="truncate">{recordedSample.recordedAt.toLocaleDateString()}</span>
+        {/* Fixed bottom section for recorded sample info and controls */}
+        <div className="mt-auto">
+          {/* Recorded Sample Info and Controls - Fixed height section */}
+          <div className="h-10 mb-3">
+            {recordedSample && (
+              <div className="p-2 bg-gray-900 border border-gray-600 rounded-md h-full">
+                <div className="flex items-center gap-2 text-xs h-full">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onPlaySample?.(recordedSample.audioUrl)}
+                    className="h-6 w-6 p-0 shrink-0 text-green-400 hover:text-green-300"
+                  >
+                    <Play className="w-3 h-3" />
+                  </Button>
+                  
+                  <div className="text-gray-300 flex-1 min-w-0">
+                    <div className="flex items-center gap-1">
+                      <span>{recordedSample.duration ? `${recordedSample.duration}s` : 'Unknown'}</span>
+                      <span className="text-gray-500">•</span>
+                      <span className="truncate">{recordedSample.recordedAt.toLocaleDateString()}</span>
+                    </div>
+                  </div>
+
+                  {onDeleteSample && !isLocked && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={onDeleteSample}
+                      className="h-6 text-red-400 hover:text-red-300 text-[10px] px-2"
+                    >
+                      Delete
+                    </Button>
+                  )}
                 </div>
               </div>
+            )}
+          </div>
 
-              {onDeleteSample && !isLocked && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={onDeleteSample}
-                  className="h-6 text-red-400 hover:text-red-300 text-[10px] px-2"
-                >
-                  Delete
-                </Button>
-              )}
+          {/* Control Buttons with Tooltips - Fixed position at bottom */}
+          <div className="flex gap-2 justify-center">
+              {/* Single Play button - prioritizes new recording over existing */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={tempRecording ? playTempRecording : playExistingRecording}
+                    disabled={!tempRecording && !existingRecording || isPlayingTemp || isPlayingExisting}
+                    variant="outline"
+                    size="sm"
+                    className="bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700 disabled:opacity-50 flex-1 max-w-[100px]"
+                  >
+                    <Play className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{tempRecording ? "Play new recording" : existingRecording ? "Play saved recording" : "No recording to play"}</p>
+                </TooltipContent>
+              </Tooltip>
+              
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={saveRecording}
+                    disabled={!tempRecording || isPlayingTemp}
+                    variant="default"
+                    size="sm"
+                    className="bg-green-600 hover:bg-green-700 disabled:opacity-50 flex-1 max-w-[100px]"
+                  >
+                    <Save className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{existingRecording ? "Save new recording" : "Save recording"}</p>
+                </TooltipContent>
+              </Tooltip>
             </div>
-          </div>
-        )}
-
-        {/* Control Buttons with Tooltips */}
-        <div className="flex gap-2 justify-center">
-            {/* Single Play button - prioritizes new recording over existing */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  onClick={tempRecording ? playTempRecording : playExistingRecording}
-                  disabled={!tempRecording && !existingRecording || isPlayingTemp || isPlayingExisting}
-                  variant="outline"
-                  size="sm"
-                  className="bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700 disabled:opacity-50 flex-1 max-w-[100px]"
-                >
-                  <Play className="w-4 h-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{tempRecording ? "Play new recording" : existingRecording ? "Play saved recording" : "No recording to play"}</p>
-              </TooltipContent>
-            </Tooltip>
-            
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  onClick={saveRecording}
-                  disabled={!tempRecording || isPlayingTemp}
-                  variant="default"
-                  size="sm"
-                  className="bg-green-600 hover:bg-green-700 disabled:opacity-50 flex-1 max-w-[100px]"
-                >
-                  <Save className="w-4 h-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{existingRecording ? "Save new recording" : "Save recording"}</p>
-              </TooltipContent>
-            </Tooltip>
-          </div>
+        </div>
 
 
         </div>
