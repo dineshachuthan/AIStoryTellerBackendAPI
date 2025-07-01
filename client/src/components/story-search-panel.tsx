@@ -174,7 +174,7 @@ export function StorySearchPanel({
                                   <>
                                     <Button
                                       size="sm"
-                                      onClick={() => setLocation(`/analysis/${story.id}`)}
+                                      onClick={() => setLocation(`/${story.id}/upload-story`)}
                                       className="flex-1 bg-purple-600 hover:bg-purple-700 text-white text-xs h-6"
                                     >
                                       <Eye className="w-3 h-3 mr-1" />

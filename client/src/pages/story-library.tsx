@@ -322,7 +322,7 @@ export default function StoryLibrary() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => setLocation(`/analysis/${story.id}`)}
+                                onClick={() => setLocation(`/${story.id}/upload-story`)}
                                 className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-800 text-xs"
                               >
                                 <Eye className="w-3 h-3 mr-1" />
@@ -555,11 +555,11 @@ export default function StoryLibrary() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => setLocation(`/analysis/${story.id}`)}
+                                onClick={() => setLocation(`/${story.id}/upload-story`)}
                                 className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-800"
                               >
                                 <Eye className="w-4 h-4 mr-1" />
-                                Analyze
+                                Edit
                               </Button>
                             </div>
                             
