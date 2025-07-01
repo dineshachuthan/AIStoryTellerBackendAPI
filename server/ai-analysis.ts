@@ -129,8 +129,14 @@ export async function analyzeStoryContent(content: string, userId?: string): Pro
       ],
       "summary": "2-3 sentence summary of the story",
       "category": "Category like Romance, Adventure, Mystery, Fantasy, Sci-Fi, Drama, Comedy, Horror, Thriller",
+      "genre": "Primary genre (Drama, Fantasy, Mystery, Romance, etc.)",
+      "subGenre": "Sub-genre if applicable",
       "themes": ["theme1", "theme2", "theme3"],
       "suggestedTags": ["tag1", "tag2", "tag3"],
+      "emotionalTags": ["emotional_tag1", "emotional_tag2"],
+      "moodCategory": "Overall mood/atmosphere (dark, light, mysterious, hopeful, melancholic, suspenseful, etc.)",
+      "ageRating": "general|teen|mature",
+      "readingTime": 5,
       "isAdultContent": false
     }
 
