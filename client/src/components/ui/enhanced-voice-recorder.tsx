@@ -369,19 +369,18 @@ export function EnhancedVoiceRecorder({
           <div className="flex items-center">
             <Radio className="w-5 h-5 text-red-400 mr-2" />
             <div className="flex items-center gap-2">
-              {hasRecording ? (
-                <CheckCircle className="w-4 h-4 text-green-400" />
-              ) : (
-                <Circle className="w-4 h-4 text-gray-400" />
-              )}
+              <Tooltip>
+                <TooltipTrigger>
+                  {statusConfig.icon}
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p><strong>{statusConfig.label}</strong></p>
+                  <p className="text-sm text-gray-400">{statusConfig.description}</p>
+                </TooltipContent>
+              </Tooltip>
               <span className="text-sm font-medium text-gray-300">
                 {emotionName && emotionName.length > 20 ? emotionName.substring(0, 20) + '...' : emotionName || 'Voice Recorder'}
               </span>
-              {isLocked && (
-                <Badge variant="outline" className="text-xs text-orange-400 border-orange-400">
-                  🔒 Locked
-                </Badge>
-              )}
             </div>
           </div>
           <div className="flex items-center gap-2">
