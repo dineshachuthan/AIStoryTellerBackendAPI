@@ -285,7 +285,7 @@ export function EnhancedVoiceRecorder({
 
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (disabled) return;
+    if (disabled || isLocked) return;
     if (recordingState !== 'idle' && recordingState !== 'recorded') return;
     
     // Reset temp recording if re-recording
@@ -320,7 +320,7 @@ export function EnhancedVoiceRecorder({
 
   const handleTouchStart = (e: React.TouchEvent) => {
     e.preventDefault();
-    if (disabled) return;
+    if (disabled || isLocked) return;
     if (recordingState !== 'idle' && recordingState !== 'recorded') return;
     
     // Reset temp recording if re-recording
@@ -564,7 +564,7 @@ export function EnhancedVoiceRecorder({
                 <TooltipTrigger asChild>
                   <Button
                     onClick={tempRecording ? playTempRecording : playExistingRecording}
-                    disabled={!tempRecording && !recordedSample || isPlayingTemp || isPlayingExisting}
+                    disabled={!tempRecording && !recordedSample || isPlayingTemp || isPlayingExisting || isLocked}
                     variant="outline"
                     size="sm"
                     className="bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700 disabled:opacity-50 flex-1 max-w-[100px]"
@@ -581,7 +581,7 @@ export function EnhancedVoiceRecorder({
                 <TooltipTrigger asChild>
                   <Button
                     onClick={saveRecording}
-                    disabled={!tempRecording || isPlayingTemp}
+                    disabled={!tempRecording || isPlayingTemp || isLocked}
                     variant="default"
                     size="sm"
                     className="bg-green-600 hover:bg-green-700 disabled:opacity-50 flex-1 max-w-[100px]"
