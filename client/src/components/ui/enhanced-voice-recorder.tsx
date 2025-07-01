@@ -537,7 +537,7 @@ export function EnhancedVoiceRecorder({
         )}
 
         {/* Control Buttons with Tooltips */}
-        <div className="grid grid-cols-2 gap-2">
+        <div className="flex gap-2 justify-center">
             {/* Single Play button - prioritizes new recording over existing */}
             <Tooltip>
               <TooltipTrigger asChild>
@@ -546,7 +546,7 @@ export function EnhancedVoiceRecorder({
                   disabled={!tempRecording && !existingRecording || isPlayingTemp || isPlayingExisting}
                   variant="outline"
                   size="sm"
-                  className="bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700 disabled:opacity-50"
+                  className="bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700 disabled:opacity-50 flex-1 max-w-[100px]"
                 >
                   <Play className="w-4 h-4" />
                 </Button>
@@ -563,7 +563,7 @@ export function EnhancedVoiceRecorder({
                   disabled={!tempRecording || isPlayingTemp}
                   variant="default"
                   size="sm"
-                  className="bg-green-600 hover:bg-green-700 disabled:opacity-50"
+                  className="bg-green-600 hover:bg-green-700 disabled:opacity-50 flex-1 max-w-[100px]"
                 >
                   <Save className="w-4 h-4" />
                 </Button>
