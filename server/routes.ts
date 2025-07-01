@@ -4339,14 +4339,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Missing required fields' });
       }
 
-      // Get the template to find template_id
-      const { voiceModulationService } = await import('./voice-modulation-service');
-      const templates = await voiceModulationService.getTemplates();
-      const template = templates.find(t => t.modulationKey === modulationKey);
-      
-      if (!template) {
-        return res.status(404).json({ message: 'Template not found' });
-      }
+      // Create a simple template object for the recording
+      const template = {
+        id: 1, // Default template ID
+        modulationKey,
+        modulationType: modulationType || 'emotion',
+        targetDuration: parseInt(duration) || 10
+      };
 
       // ENFORCE MP3-ONLY: Convert all audio to MP3 format
       const timestamp = Date.now();
@@ -4378,17 +4377,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       const audioUrl = `/cache/user-voice-modulations/${userId}/${fileName}`;
 
-      const modulation = await voiceModulationService.recordVoiceModulation({
+      // Save voice sample directly to storage
+      const modulation = await storage.createUserVoiceSample({
         userId,
-        templateId: template.id,
-        modulationKey,
-        modulationType: template.modulationType,
+        sampleType: modulationKey,
         audioUrl,
         fileName,
         duration: parseInt(duration) || template.targetDuration || 10,
-        qualityScore: 85, // Default quality score
-        isPreferred: false,
-        usageCount: 0
+        isCompleted: true,
+        recordedAt: new Date(),
+        isLocked: false
       });
 
       // SESSION-BASED ELEVENLABS TRAINING TRIGGER
