@@ -3,57 +3,52 @@
 
 -- 1. ESM_Ref Table - Master reference data for emotions, sounds, modulations
 CREATE TABLE esm_ref (
-    id SERIAL PRIMARY KEY,
+    esm_ref_id SERIAL PRIMARY KEY,
     category INTEGER NOT NULL, -- 1=emotions, 2=sounds, 3=modulations
     name VARCHAR(100) NOT NULL, -- emotion/sound/modulation name
     display_name VARCHAR(150) NOT NULL, -- user-friendly display name
     sample_text TEXT NOT NULL, -- text for voice recording sample
     intensity INTEGER DEFAULT 5, -- 1-10 scale for emotions
     description TEXT, -- additional context or description
-    source_story_id INTEGER, -- which reference story first discovered this
-    discovered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    usage_count INTEGER DEFAULT 0, -- how many users have recorded this
+    created_by VARCHAR(255) NOT NULL, -- user_id or 'system' for auto-discovered
+    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
     -- Ensure uniqueness per category
-    UNIQUE(category, name),
-    
-    -- Foreign key to reference_stories
-    FOREIGN KEY (source_story_id) REFERENCES reference_stories(id)
+    UNIQUE(category, name)
 );
 
 -- Indexes for performance
 CREATE INDEX idx_esm_ref_category ON esm_ref(category);
-CREATE INDEX idx_esm_ref_usage ON esm_ref(usage_count DESC);
-CREATE INDEX idx_esm_ref_discovered ON esm_ref(discovered_at DESC);
+CREATE INDEX idx_esm_ref_created_date ON esm_ref(created_date DESC);
 
 -- 2. User_ESM Table - User-specific ESM recordings and voice cloning status
 CREATE TABLE user_esm (
-    id SERIAL PRIMARY KEY,
+    user_esm_id SERIAL PRIMARY KEY,
     user_id VARCHAR(255) NOT NULL,
     esm_ref_id INTEGER NOT NULL,
-    recording_count INTEGER DEFAULT 0, -- how many times user recorded this ESM
     total_duration INTEGER DEFAULT 0, -- total seconds recorded
     is_locked BOOLEAN DEFAULT FALSE, -- locked during/after voice cloning
     locked_at TIMESTAMP NULL,
     
-    -- Voice cloning status and results
+    -- Voice cloning status and results (supports ElevenLabs, Kling, future providers)
     voice_cloning_status VARCHAR(50) DEFAULT 'not_started', -- not_started, training, completed, failed
+    voice_cloning_provider VARCHAR(50) NULL, -- elevenlabs, kling, future providers
     voice_cloning_triggered_at TIMESTAMP NULL,
     voice_cloning_completed_at TIMESTAMP NULL,
     elevenlabs_voice_id VARCHAR(255) NULL,
-    quality_score NUMERIC(3,2) NULL, -- 0.00 to 1.00 quality score from ElevenLabs
+    kling_voice_id VARCHAR(255) NULL, -- for future Kling support
+    quality_score NUMERIC(3,2) NULL, -- 0.00 to 1.00 quality score from provider
     
-    -- Metadata
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    -- Standard metadata
+    created_by VARCHAR(255) NOT NULL, -- user_id or 'system'
+    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
     -- Constraints
     UNIQUE(user_id, esm_ref_id), -- one record per user per ESM
-    FOREIGN KEY (esm_ref_id) REFERENCES esm_ref(id) ON DELETE CASCADE,
+    FOREIGN KEY (esm_ref_id) REFERENCES esm_ref(esm_ref_id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     
     -- Check constraints
-    CHECK (recording_count >= 0),
     CHECK (total_duration >= 0),
     CHECK (quality_score IS NULL OR (quality_score >= 0 AND quality_score <= 1))
 );
