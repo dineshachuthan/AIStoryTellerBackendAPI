@@ -169,6 +169,16 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Priority**: Medium (requested but deferred for future implementation)
 
 ## Changelog
+- July 01, 2025: ✅ **CRITICAL ESM CATEGORIZATION FIX** - Sound Effects Now Properly Extracted from Stories
+  - **FIXED OpenAI ANALYSIS PROMPT**: Added comprehensive soundEffects extraction to AI analysis prompt with environmental and audio effects
+  - **CORRECTED ESM CATEGORY 2**: Replaced incorrect voice characteristics with proper environmental sounds (dog barking, rain, footsteps, etc.)
+  - **ENHANCED TYPE DEFINITIONS**: Added ExtractedSoundEffect interface and updated StoryAnalysis interface with soundEffects field  
+  - **UPDATED ESM POPULATION**: Modified populateEsmReferenceData to process actual sound effects instead of character voice traits
+  - **COMPREHENSIVE SOUND EXTRACTION**: OpenAI now specifically looks for dog barking, train whistling, rain falling, music playing, etc.
+  - **PROPER CATEGORIZATION**: ESM Category 2 (sounds) now contains environmental audio effects as intended by original design
+  - **INTENSITY AND CONTEXT**: Sound effects include proper intensity ratings and contextual quotes from stories
+  - **DATABASE INTEGRATION**: Sound effects automatically populate ESM reference data for scalable voice sample system
+  - ESM system now correctly separates emotions (category 1), environmental sounds (category 2), and mood modulations (category 3)
 - July 01, 2025: ✅ **COMPLETE ESM DATA COLLECTION FIX** - All Three Categories Now Working
   - **FIXED MISSING MODULATIONS**: Added moodCategory, genre, subGenre, emotionalTags, ageRating, readingTime to AI analysis prompt
   - **ESM CATEGORIES NOW COMPLETE**: Emotions (category 1), Sounds/Voice Traits (category 2), Modulations/Moods (category 3) all collecting data

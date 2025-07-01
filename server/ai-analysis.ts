@@ -65,10 +65,18 @@ export interface ExtractedEmotion {
   quote?: string;
 }
 
+export interface ExtractedSoundEffect {
+  sound: string; // Environmental or audio effects mentioned in the story
+  intensity: number; // 1-10
+  context: string;
+  quote?: string;
+}
+
 export interface StoryAnalysis {
   title: string; // AI-generated title for the story
   characters: ExtractedCharacter[];
   emotions: ExtractedEmotion[];
+  soundEffects?: ExtractedSoundEffect[]; // Environmental and audio effects from the story
   summary: string;
   category: string;
   genre: string;
@@ -656,40 +664,37 @@ async function populateEsmReferenceData(analysis: StoryAnalysis, userId: string)
       }
     }
 
-    // Process character voice traits as sounds (category 2)
-    if (analysis.characters && analysis.characters.length > 0) {
-      console.log(`🎭 Processing character voice traits from ${analysis.characters.length} characters`);
+    // Process sound effects as sounds (category 2)
+    if (analysis.soundEffects && analysis.soundEffects.length > 0) {
+      console.log(`🔊 Processing ${analysis.soundEffects.length} sound effects from story analysis`);
       
-      for (const character of analysis.characters) {
-        // Extract voice-related traits from character description and personality
-        const voiceTraits = extractVoiceTraits(character);
+      for (const soundEffect of analysis.soundEffects) {
+        const soundName = soundEffect.sound.toLowerCase().trim();
         
-        for (const trait of voiceTraits) {
-          const traitName = trait.toLowerCase().trim();
+        // Check if sound effect already exists in ESM reference
+        const existingSound = await storage.getEsmRef(2, soundName);
+        
+        if (!existingSound) {
+          console.log(`➕ Adding new sound effect to ESM reference: ${soundName}`);
           
-          // Check if sound trait already exists
-          const existingSound = await storage.getEsmRef(2, traitName);
+          await storage.createEsmRef({
+            category: 2, // Sounds/Environmental Effects
+            name: soundName,
+            display_name: soundEffect.sound,
+            sample_text: soundEffect.quote || `Audio effect: ${soundEffect.sound}`,
+            intensity: soundEffect.intensity,
+            description: soundEffect.context,
+            ai_variations: {
+              contexts: [soundEffect.context],
+              quotes: soundEffect.quote ? [soundEffect.quote] : [],
+              intensityRange: [soundEffect.intensity, soundEffect.intensity]
+            },
+            created_by: userId
+          });
           
-          if (!existingSound) {
-            console.log(`➕ Adding new voice trait to ESM reference: ${traitName}`);
-            
-            await storage.createEsmRef({
-              category: 2, // Sounds/Voice Traits
-              name: traitName,
-              display_name: trait,
-              sample_text: `Speak with a ${trait} voice quality`,
-              intensity: 5, // Default intensity
-              description: `Voice characteristic from character: ${character.name}`,
-              ai_variations: {
-                characterSource: character.name,
-                role: character.role,
-                personality: character.personality
-              },
-              created_by: userId
-            });
-            
-            console.log(`✅ Successfully added voice trait: ${traitName}`);
-          }
+          console.log(`✅ Successfully added sound effect: ${soundName}`);
+        } else {
+          console.log(`🔄 Sound effect already exists in reference data: ${soundName}`);
         }
       }
     }
