@@ -209,6 +209,7 @@ export default function UploadStory() {
       toast({
         title: "Content Saved",
         description: "Your story content has been saved.",
+        duration: 2000, // Auto-dismiss after 2 seconds
       });
     } catch (error) {
       console.error("Content update error:", error);
