@@ -105,47 +105,42 @@ export function VoiceSampleCard({
 
   return (
     <div className={cn(
-      "p-3 bg-gray-50 dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700",
+      "p-3 bg-gray-50 dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700 space-y-3",
       disabled && "opacity-60 cursor-not-allowed",
       className
     )}>
-      {/* Header with title, status, and category */}
-      <div className="flex items-start justify-between gap-2 mb-3">
-        <div className="flex items-center gap-2 min-w-0 flex-1">
-          <h3 className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">
-            {displayName}
-          </h3>
-          {intensity && (
-            <Badge variant="outline" className="text-xs shrink-0">
-              {intensity}/10
-            </Badge>
-          )}
-        </div>
+      {/* Header with status and title */}
+      <div className="flex items-center gap-2">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="cursor-help shrink-0">
+              {statusConfig.icon}
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <div className="max-w-xs">
+              <p className="font-semibold">{statusConfig.label}</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                {statusConfig.description}
+              </p>
+            </div>
+          </TooltipContent>
+        </Tooltip>
         
-        <div className="flex items-center gap-2 shrink-0">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="cursor-help">
-                {statusConfig.icon}
-              </div>
-            </TooltipTrigger>
-            <TooltipContent>
-              <div className="max-w-xs">
-                <p className="font-semibold">{statusConfig.label}</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {statusConfig.description}
-                </p>
-              </div>
-            </TooltipContent>
-          </Tooltip>
-          
-          <Badge className={cn("text-xs", getCategoryColor(category))}>
-            {category}
+        <h3 className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">
+          {displayName}
+        </h3>
+        
+        {intensity && (
+          <Badge variant="outline" className="text-xs shrink-0">
+            {intensity}/10
           </Badge>
-        </div>
+        )}
+        
+        <Badge className={cn("text-xs ml-auto", getCategoryColor(category))}>
+          {category}
+        </Badge>
       </div>
-
-      <div className="space-y-3">
 
         {/* Recording status and controls */}
         {isRecorded && recordedSample && (
