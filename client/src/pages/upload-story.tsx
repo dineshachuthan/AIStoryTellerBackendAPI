@@ -40,6 +40,7 @@ export default function UploadStory() {
   // Fetch existing story if storyId is present
   const { data: existingStory, isLoading: storyLoading } = useQuery({
     queryKey: ['/api/stories', storyId],
+    queryFn: () => fetch(`/api/stories/${storyId}`).then(res => res.json()),
     enabled: !!storyId,
   });
 
@@ -100,11 +101,19 @@ export default function UploadStory() {
     if (hasLoadedOnce) return; // Prevent multiple executions
     
     console.log('OnLoad triggered - analyzing page context...');
+    console.log('URL storyId:', urlStoryId);
+    console.log('Session storyId:', sessionStoryId);
+    console.log('Final storyId:', storyId);
+    console.log('Story loading:', storyLoading);
+    console.log('Story data:', story);
     
     const handlePageLoad = async () => {
       // Flow 1: Existing story (from database/search)
       if (storyId && story && !storyLoading) {
         console.log('Flow: Loading existing story from database');
+        console.log('Story data:', story);
+        console.log('Story title:', story.title);
+        console.log('Story content length:', story.content?.length);
         setStoryTitle(story.title || "");
         setStoryContent(story.content || "");
         setHasLoadedOnce(true);
