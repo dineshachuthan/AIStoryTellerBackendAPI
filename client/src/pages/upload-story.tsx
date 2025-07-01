@@ -96,27 +96,22 @@ export default function UploadStory() {
   // Track if OnLoad has already been executed to prevent infinite loops
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
+  // Separate effect for existing story data population
+  useEffect(() => {
+    if (storyId && story && !storyLoading && !hasLoadedOnce) {
+      setStoryTitle(story.title || "");
+      setStoryContent(story.content || "");
+      setHasLoadedOnce(true);
+    }
+  }, [storyId, story, storyLoading, hasLoadedOnce]);
+
   // Modular OnLoad function to handle different page entry flows
   useEffect(() => {
     if (hasLoadedOnce) return; // Prevent multiple executions
     
-    console.log('OnLoad triggered - analyzing page context...');
-    console.log('URL storyId:', urlStoryId);
-    console.log('Session storyId:', sessionStoryId);
-    console.log('Final storyId:', storyId);
-    console.log('Story loading:', storyLoading);
-    console.log('Story data:', story);
-    
     const handlePageLoad = async () => {
-      // Flow 1: Existing story (from database/search)
-      if (storyId && story && !storyLoading) {
-        console.log('Flow: Loading existing story from database');
-        console.log('Story data:', story);
-        console.log('Story title:', story.title);
-        console.log('Story content length:', story.content?.length);
-        setStoryTitle(story.title || "");
-        setStoryContent(story.content || "");
-        setHasLoadedOnce(true);
+      // Flow 1: Existing story (handled by separate useEffect above)
+      if (storyId && !storyLoading) {
         return;
       }
       
@@ -380,7 +375,7 @@ export default function UploadStory() {
                     ) : (
                       <>
                         <RefreshCw className="w-4 h-4 mr-2" />
-                        Analyze Story
+                        Update Story
                       </>
                     )}
                   </Button>
