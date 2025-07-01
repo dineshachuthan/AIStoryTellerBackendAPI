@@ -88,10 +88,11 @@ export default function VoiceSamples() {
     queryKey: ["/api/voice-modulations/progress"],
   });
 
-  // Get voice cloning progress for all categories
+  // Get voice cloning progress - ONLY when user has recorded samples
+  const hasRecordedSamples = progress && (progress as any)?.recordedSamples?.length > 0;
   const { data: cloningProgress, isLoading: cloningProgressLoading } = useQuery<CloningProgress>({
     queryKey: ["/api/voice-cloning/progress"],
-    // Removed automatic polling - user can manually refresh if needed
+    enabled: hasRecordedSamples, // Only fetch when user has actually recorded voice samples
   });
 
   // Manual voice cloning trigger mutation  

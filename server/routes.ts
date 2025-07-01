@@ -4549,20 +4549,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { getVoiceSamplesByType } = await import('./voice-samples');
       const { voiceTrainingService } = await import('./voice-training-service');
       
-      // Get sample counts by category using voice samples service
-      const emotionTemplates = await getVoiceSamplesByType('emotions');
-      const soundTemplates = await getVoiceSamplesByType('sounds'); 
-      const modulationTemplates = await getVoiceSamplesByType('descriptions');
+      // Get user's voice recordings by category - handle gracefully if none exist
+      let userEmotionVoices = [];
+      let trainingStatus = { status: 'none' };
       
-      // Get user's voice recordings by category
-      const userEmotionVoices = await storage.getUserEmotionVoices(userId);
+      try {
+        userEmotionVoices = await storage.getUserEmotionVoices(userId) || [];
+        trainingStatus = await voiceTrainingService.getTrainingStatus(userId);
+      } catch (error) {
+        console.log(`📭 No voice samples found for user ${userId} - returning empty progress`);
+        // If user has no voice samples yet, return empty progress (this is normal for new users)
+      }
       
       const emotionCount = userEmotionVoices.length;
       const soundCount = 0; // Sound samples not implemented yet
       const modulationCount = 0; // Modulation samples not implemented yet
-      
-      // Check training status for each category
-      const trainingStatus = await voiceTrainingService.getTrainingStatus(userId);
       
       const progress = {
         emotions: {
