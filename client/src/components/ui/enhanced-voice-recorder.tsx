@@ -346,7 +346,7 @@ export function EnhancedVoiceRecorder({
                 <Circle className="w-4 h-4 text-gray-400" />
               )}
               <span className="text-sm font-medium text-gray-300">
-                {emotionName || 'Voice Recorder'}
+                {emotionName && emotionName.length > 20 ? emotionName.substring(0, 20) + '...' : emotionName || 'Voice Recorder'}
               </span>
               {isLocked && (
                 <Badge variant="outline" className="text-xs text-orange-400 border-orange-400">
@@ -498,7 +498,7 @@ export function EnhancedVoiceRecorder({
             <div className="mb-2">
               <div className="text-white text-sm leading-relaxed">
                 <span className="italic text-blue-200">
-                  "{(sampleText && sampleText.length > 150 ? sampleText.substring(0, 150) + '...' : sampleText) || 'Sample text not provided'}"
+                  "{(sampleText && sampleText.length > 100 ? sampleText.substring(0, 100) + '...' : sampleText) || 'Sample text not provided'}"
                 </span>
               </div>
             </div>
