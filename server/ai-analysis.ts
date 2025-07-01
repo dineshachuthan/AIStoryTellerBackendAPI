@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 import { getCachedAnalysis, cacheAnalysis } from './content-cache';
 import { AUDIO_FORMAT_CONFIG, AUDIO_PROCESSING_CONFIG } from '@shared/audio-config';
+import { storage } from "./storage";
 
 // Audio format detection using configuration
 function detectAudioFormat(buffer: Buffer): string {
@@ -80,12 +81,16 @@ export interface StoryAnalysis {
   isAdultContent: boolean;
 }
 
-export async function analyzeStoryContent(content: string): Promise<StoryAnalysis> {
+export async function analyzeStoryContent(content: string, userId?: string): Promise<StoryAnalysis> {
   // Try cache first, fallback to source with cache update
   try {
     const cachedAnalysis = getCachedAnalysis(content);
     if (cachedAnalysis) {
       console.log("Using cached story analysis");
+      // Still populate ESM reference data even for cached analysis
+      if (userId) {
+        await populateEsmReferenceData(cachedAnalysis, userId);
+      }
       return cachedAnalysis;
     }
   } catch (cacheError) {
@@ -177,6 +182,11 @@ export async function analyzeStoryContent(content: string): Promise<StoryAnalysi
         assignedVoice
       };
     });
+
+    // Populate ESM reference data from new analysis
+    if (userId) {
+      await populateEsmReferenceData(analysis, userId);
+    }
 
     // Update cache with new analysis
     try {
@@ -414,4 +424,160 @@ function assignVoiceToCharacter(character: ExtractedCharacter): string {
   
   console.log(`Assigning voice "${assignedVoice}" to character "${character.name}"`);
   return assignedVoice;
+}
+
+// Function to populate ESM reference data from story analysis
+async function populateEsmReferenceData(analysis: StoryAnalysis, userId: string): Promise<void> {
+  console.log("🎭 Starting ESM reference data population for story analysis...");
+  
+  try {
+    // Process emotions (category 1)
+    if (analysis.emotions && analysis.emotions.length > 0) {
+      console.log(`📊 Processing ${analysis.emotions.length} emotions from story analysis`);
+      
+      for (const emotion of analysis.emotions) {
+        const emotionName = emotion.emotion.toLowerCase().trim();
+        
+        // Check if emotion already exists in ESM reference
+        const existingEmotion = await storage.getEsmRef(1, emotionName);
+        
+        if (!existingEmotion) {
+          console.log(`➕ Adding new emotion to ESM reference: ${emotionName}`);
+          
+          // Create new ESM reference entry for emotion
+          await storage.createEsmRef({
+            category: 1, // Emotions
+            name: emotionName,
+            display_name: emotion.emotion,
+            sample_text: emotion.quote || `Express the emotion of ${emotion.emotion}`,
+            intensity: emotion.intensity,
+            description: emotion.context,
+            ai_variations: {
+              contexts: [emotion.context],
+              quotes: emotion.quote ? [emotion.quote] : [],
+              intensityRange: [emotion.intensity, emotion.intensity]
+            },
+            created_by: userId
+          });
+          
+          console.log(`✅ Successfully added emotion: ${emotionName}`);
+        } else {
+          console.log(`🔄 Emotion already exists in reference data: ${emotionName}`);
+        }
+      }
+    }
+
+    // Process character voice traits as sounds (category 2)
+    if (analysis.characters && analysis.characters.length > 0) {
+      console.log(`🎭 Processing character voice traits from ${analysis.characters.length} characters`);
+      
+      for (const character of analysis.characters) {
+        // Extract voice-related traits from character description and personality
+        const voiceTraits = extractVoiceTraits(character);
+        
+        for (const trait of voiceTraits) {
+          const traitName = trait.toLowerCase().trim();
+          
+          // Check if sound trait already exists
+          const existingSound = await storage.getEsmRef(2, traitName);
+          
+          if (!existingSound) {
+            console.log(`➕ Adding new voice trait to ESM reference: ${traitName}`);
+            
+            await storage.createEsmRef({
+              category: 2, // Sounds/Voice Traits
+              name: traitName,
+              display_name: trait,
+              sample_text: `Speak with a ${trait} voice quality`,
+              intensity: 5, // Default intensity
+              description: `Voice characteristic from character: ${character.name}`,
+              ai_variations: {
+                characterSource: character.name,
+                role: character.role,
+                personality: character.personality
+              },
+              created_by: userId
+            });
+            
+            console.log(`✅ Successfully added voice trait: ${traitName}`);
+          }
+        }
+      }
+    }
+
+    // Process mood category as modulation (category 3)
+    if (analysis.moodCategory) {
+      const moodName = analysis.moodCategory.toLowerCase().trim();
+      
+      // Check if mood already exists
+      const existingMood = await storage.getEsmRef(3, moodName);
+      
+      if (!existingMood) {
+        console.log(`➕ Adding new mood to ESM reference: ${moodName}`);
+        
+        await storage.createEsmRef({
+          category: 3, // Modulations/Moods
+          name: moodName,
+          display_name: analysis.moodCategory,
+          sample_text: `Speak with a ${analysis.moodCategory} mood`,
+          intensity: 5,
+          description: `Overall mood from story analysis`,
+          ai_variations: {
+            genre: analysis.genre,
+            category: analysis.category,
+            themes: analysis.themes
+          },
+          created_by: userId
+        });
+        
+        console.log(`✅ Successfully added mood: ${moodName}`);
+      }
+    }
+
+    console.log("🎉 ESM reference data population completed successfully");
+    
+  } catch (error) {
+    console.error("❌ Error populating ESM reference data:", error);
+    // Don't throw error to prevent blocking story analysis
+  }
+}
+
+// Helper function to extract voice traits from character data
+function extractVoiceTraits(character: ExtractedCharacter): string[] {
+  const traits: string[] = [];
+  
+  // Common voice descriptors to look for
+  const voiceKeywords = [
+    'deep', 'high', 'low', 'soft', 'harsh', 'gentle', 'rough', 'smooth',
+    'melodic', 'gravelly', 'whispered', 'booming', 'squeaky', 'husky',
+    'crisp', 'muffled', 'clear', 'raspy', 'throaty', 'nasal', 'breathy'
+  ];
+  
+  const textToAnalyze = [
+    character.description,
+    character.personality,
+    character.appearance || '',
+    character.traits.join(' ')
+  ].join(' ').toLowerCase();
+  
+  // Find voice-related keywords
+  for (const keyword of voiceKeywords) {
+    if (textToAnalyze.includes(keyword)) {
+      traits.push(keyword);
+    }
+  }
+  
+  // Add role-based voice characteristics
+  const roleVoiceMap: Record<string, string[]> = {
+    'protagonist': ['confident', 'clear'],
+    'antagonist': ['menacing', 'cold'],
+    'supporting': ['friendly', 'warm'],
+    'narrator': ['authoritative', 'steady'],
+    'other': ['distinctive', 'memorable']
+  };
+  
+  const roleTraits = roleVoiceMap[character.role] || [];
+  traits.push(...roleTraits);
+  
+  return [...new Set(traits)]; // Remove duplicates
 }

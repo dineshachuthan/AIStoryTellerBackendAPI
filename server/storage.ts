@@ -42,6 +42,43 @@ export interface IStorage {
   // Voice Modulation Templates
   getVoiceModulationTemplates(): Promise<any[]>;
   
+  // ESM Reference Data
+  getEsmRef(category: number, name: string): Promise<any | null>;
+  createEsmRef(esmRef: {
+    category: number;
+    name: string;
+    display_name: string;
+    sample_text: string;
+    intensity?: number;
+    description?: string;
+    ai_variations?: any;
+    created_by: string;
+  }): Promise<any>;
+  getAllEsmRefs(): Promise<any[]>;
+  getEsmRefsByCategory(category: number): Promise<any[]>;
+  
+  // User ESM Data
+  getUserEsm(userId: string, esmRefId: number): Promise<any | null>;
+  createUserEsm(userEsm: {
+    user_id: string;
+    esm_ref_id: number;
+    created_by: string;
+  }): Promise<any>;
+  updateUserEsm(userEsmId: number, updates: any): Promise<void>;
+  getUserEsmByUser(userId: string): Promise<any[]>;
+  
+  // User ESM Recordings
+  createUserEsmRecording(recording: {
+    user_esm_id: number;
+    audio_url: string;
+    duration: number;
+    file_size: number;
+    audio_quality_score?: number;
+    transcribed_text?: string;
+    created_by: string;
+  }): Promise<any>;
+  getUserEsmRecordings(userEsmId: number): Promise<any[]>;
+  
   // ElevenLabs Voice Profiles
   getUserVoiceProfiles(userId: string): Promise<any[]>;
   getUserVoiceProfile(userId: string): Promise<any | undefined>;
@@ -951,6 +988,110 @@ export class DatabaseStorage implements IStorage {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     }));
+  }
+
+  // ESM Reference Data Implementation
+  async getEsmRef(category: number, name: string): Promise<any | null> {
+    const result = await db.execute(
+      sql`SELECT * FROM esm_ref WHERE category = ${category} AND name = ${name} LIMIT 1`
+    );
+    return result.rows[0] || null;
+  }
+
+  async createEsmRef(esmRef: {
+    category: number;
+    name: string;
+    display_name: string;
+    sample_text: string;
+    intensity?: number;
+    description?: string;
+    ai_variations?: any;
+    created_by: string;
+  }): Promise<any> {
+    const result = await db.execute(
+      sql`INSERT INTO esm_ref (category, name, display_name, sample_text, intensity, description, ai_variations, created_by)
+          VALUES (${esmRef.category}, ${esmRef.name}, ${esmRef.display_name}, ${esmRef.sample_text}, 
+                  ${esmRef.intensity || 5}, ${esmRef.description || null}, ${JSON.stringify(esmRef.ai_variations) || null}, ${esmRef.created_by})
+          RETURNING *`
+    );
+    return result.rows[0];
+  }
+
+  async getAllEsmRefs(): Promise<any[]> {
+    const result = await db.execute(sql`SELECT * FROM esm_ref ORDER BY category, name`);
+    return result.rows;
+  }
+
+  async getEsmRefsByCategory(category: number): Promise<any[]> {
+    const result = await db.execute(
+      sql`SELECT * FROM esm_ref WHERE category = ${category} ORDER BY name`
+    );
+    return result.rows;
+  }
+
+  // User ESM Data Implementation
+  async getUserEsm(userId: string, esmRefId: number): Promise<any | null> {
+    const result = await db.execute(
+      sql`SELECT * FROM user_esm WHERE user_id = ${userId} AND esm_ref_id = ${esmRefId} LIMIT 1`
+    );
+    return result.rows[0] || null;
+  }
+
+  async createUserEsm(userEsm: {
+    user_id: string;
+    esm_ref_id: number;
+    created_by: string;
+  }): Promise<any> {
+    const result = await db.execute(
+      sql`INSERT INTO user_esm (user_id, esm_ref_id, created_by)
+          VALUES (${userEsm.user_id}, ${userEsm.esm_ref_id}, ${userEsm.created_by})
+          RETURNING *`
+    );
+    return result.rows[0];
+  }
+
+  async updateUserEsm(userEsmId: number, updates: any): Promise<void> {
+    const setParts = Object.keys(updates).map(key => `${key} = ${updates[key]}`).join(', ');
+    await db.execute(
+      sql`UPDATE user_esm SET ${sql.raw(setParts)} WHERE user_esm_id = ${userEsmId}`
+    );
+  }
+
+  async getUserEsmByUser(userId: string): Promise<any[]> {
+    const result = await db.execute(
+      sql`SELECT ue.*, er.name, er.display_name, er.category, er.sample_text
+          FROM user_esm ue
+          JOIN esm_ref er ON ue.esm_ref_id = er.esm_ref_id
+          WHERE ue.user_id = ${userId}
+          ORDER BY er.category, er.name`
+    );
+    return result.rows;
+  }
+
+  // User ESM Recordings Implementation
+  async createUserEsmRecording(recording: {
+    user_esm_id: number;
+    audio_url: string;
+    duration: number;
+    file_size: number;
+    audio_quality_score?: number;
+    transcribed_text?: string;
+    created_by: string;
+  }): Promise<any> {
+    const result = await db.execute(
+      sql`INSERT INTO user_esm_recordings (user_esm_id, audio_url, duration, file_size, audio_quality_score, transcribed_text, created_by)
+          VALUES (${recording.user_esm_id}, ${recording.audio_url}, ${recording.duration}, ${recording.file_size},
+                  ${recording.audio_quality_score || null}, ${recording.transcribed_text || null}, ${recording.created_by})
+          RETURNING *`
+    );
+    return result.rows[0];
+  }
+
+  async getUserEsmRecordings(userEsmId: number): Promise<any[]> {
+    const result = await db.execute(
+      sql`SELECT * FROM user_esm_recordings WHERE user_esm_id = ${userEsmId} ORDER BY created_date DESC`
+    );
+    return result.rows;
   }
 
   // ElevenLabs Voice Profiles
