@@ -390,7 +390,7 @@ export function EnhancedVoiceRecorder({
         {/* Main Recording Display - Flexible container */}
         <div className="bg-black rounded-lg p-4 border border-gray-600 flex-1 flex flex-col">
           {/* Title */}
-          <div className="text-blue-300 text-xs font-medium mb-2 text-left uppercase tracking-wide">
+          <div className="text-blue-300 text-xs font-medium mb-2 text-left tracking-wide">
             📖 Read this text with {emotionName ? emotionName.toLowerCase() : 'the required'} emotion
           </div>
           
@@ -488,7 +488,9 @@ export function EnhancedVoiceRecorder({
             {/* Sample Text Display */}
             <div className="flex-1">
               <div className="text-white text-sm leading-relaxed">
-                <span className="italic text-blue-200">"{sampleText || 'Sample text not provided'}"</span>
+                <span className="italic text-blue-200">
+                  "{(sampleText && sampleText.length > 150 ? sampleText.substring(0, 150) + '...' : sampleText) || 'Sample text not provided'}"
+                </span>
               </div>
             </div>
           </div>
