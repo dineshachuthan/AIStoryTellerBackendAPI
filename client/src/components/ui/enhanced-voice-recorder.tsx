@@ -542,7 +542,7 @@ export function EnhancedVoiceRecorder({
                 <TooltipTrigger asChild>
                   <Button
                     onClick={tempRecording ? playTempRecording : playExistingRecording}
-                    disabled={!tempRecording && !existingRecording || isPlayingTemp || isPlayingExisting}
+                    disabled={!tempRecording && !recordedSample || isPlayingTemp || isPlayingExisting}
                     variant="outline"
                     size="sm"
                     className="bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700 disabled:opacity-50 flex-1 max-w-[100px]"
@@ -568,7 +568,7 @@ export function EnhancedVoiceRecorder({
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>{existingRecording ? "Save new recording" : "Save recording"}</p>
+                  <p>{recordedSample ? "Save new recording" : "Save recording"}</p>
                 </TooltipContent>
               </Tooltip>
             </div>
