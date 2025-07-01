@@ -1,112 +1,50 @@
 import { db } from "./db";
-import { storyAnalyses, voiceModulationTemplates, referenceStoryAnalyses } from "@shared/schema";
-import { eq } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 
 /**
- * Voice Samples Service - Data-driven voice sample management
- * Pulls emotions/sounds/modulations from story analysis results across all users
+ * Voice Samples Service - ESM Reference Data Architecture
+ * Pulls emotions/sounds/modulations from new ESM reference tables
  */
 
 export async function getVoiceSamplesByType(type: 'emotions' | 'sounds' | 'descriptions'): Promise<any[]> {
   try {
-    // Priority 1: Get reference data from voice_modulation_templates table
     const refDataResults: any[] = [];
-    let modulationType: string;
+    let category: number;
     
+    // Map type to ESM category
     if (type === 'emotions') {
-      modulationType = 'emotion';
+      category = 1; // Emotions
     } else if (type === 'sounds') {
-      modulationType = 'sound';
+      category = 2; // Sounds/Voice Traits
     } else {
-      modulationType = 'modulation';
+      category = 3; // Modulations/Descriptions
     }
     
-    const templates = await db
-      .select()
-      .from(voiceModulationTemplates)
-      .where(eq(voiceModulationTemplates.modulationType, modulationType));
+    // Get reference data from ESM tables
+    const esmData = await db.execute(
+      sql`SELECT esm_ref_id, name, display_name, sample_text, intensity, description, ai_variations
+          FROM esm_ref 
+          WHERE category = ${category}
+          ORDER BY display_name`
+    );
     
-    for (const template of templates) {
+    console.log(`Found ${esmData.rows.length} ESM reference entries for category ${category} (${type})`);
+    
+    for (const item of esmData.rows) {
       refDataResults.push({
-        emotion: template.modulationKey,
-        displayName: template.displayName,
-        sampleText: template.sampleText,
-        category: template.category || type,
-        intensity: template.voiceSettings?.emotion_intensity || 5,
-        storySource: 'reference_data', // Mark as reference data
-        targetDuration: template.targetDuration || 8,
-        isReferenceData: true
+        emotion: item.name,
+        displayName: item.display_name,
+        sampleText: item.sample_text,
+        category: type,
+        intensity: item.intensity || 5,
+        description: item.description,
+        esmRefId: item.esm_ref_id,
+        isReferenceData: true,
+        aiVariations: item.ai_variations
       });
     }
     
-    console.log(`Found ${refDataResults.length} reference data templates for ${type}`);
-    
-    // Priority 2: Get emotions from reference story analyses (shared narrative data)
-    const referenceAnalyses = await db.select().from(referenceStoryAnalyses);
-    const uniqueItems = new Set<string>(refDataResults.map(r => r.emotion));
-    
-    for (const analysis of referenceAnalyses) {
-      const analysisData = analysis.analysisData as any;
-      
-      if (type === 'emotions' && analysisData?.emotions) {
-        for (const emotion of analysisData.emotions) {
-          const emotionKey = emotion.emotion?.toLowerCase();
-          if (emotionKey && !uniqueItems.has(emotionKey)) {
-            uniqueItems.add(emotionKey);
-            refDataResults.push({
-              emotion: emotionKey,
-              displayName: emotion.emotion,
-              sampleText: emotion.context || `Express ${emotion.emotion} emotion`,
-              category: 'emotions',
-              intensity: emotion.intensity || 5,
-              storySource: analysis.referenceStoryId,
-              isReferenceData: false
-            });
-          }
-        }
-      }
-      
-      if (type === 'sounds' && analysisData?.characters) {
-        for (const character of analysisData.characters) {
-          if (character.traits) {
-            for (const trait of character.traits) {
-              const traitLower = trait.toLowerCase();
-              if (traitLower.includes('sound') || traitLower.includes('voice')) {
-                const soundKey = `${character.name}_${trait}`.toLowerCase().replace(/\s+/g, '_');
-                if (!uniqueItems.has(soundKey)) {
-                  uniqueItems.add(soundKey);
-                  refDataResults.push({
-                    emotion: soundKey,
-                    displayName: `${character.name} - ${trait}`,
-                    sampleText: `Make the sound of ${character.name}: ${trait}`,
-                    category: 'sounds',
-                    storySource: analysis.referenceStoryId,
-                    isReferenceData: false
-                  });
-                }
-              }
-            }
-          }
-        }
-      }
-      
-      if (type === 'descriptions' && analysisData?.moodCategory) {
-        const moodKey = analysisData.moodCategory.toLowerCase().replace(/\s+/g, '_');
-        if (!uniqueItems.has(moodKey)) {
-          uniqueItems.add(moodKey);
-          refDataResults.push({
-            emotion: moodKey,
-            displayName: analysisData.moodCategory,
-            sampleText: `Narrate in ${analysisData.moodCategory} style`,
-            category: 'descriptions',
-            storySource: analysis.referenceStoryId,
-            isReferenceData: false
-          });
-        }
-      }
-    }
-    
-    console.log(`Found ${refDataResults.length} total ${type} samples (${templates.length} reference data + ${refDataResults.length - templates.length} story analysis)`);
+    console.log(`Returning ${refDataResults.length} ${type} samples from ESM reference data`);
     return refDataResults;
   } catch (error) {
     console.error(`Error getting voice samples for type ${type}:`, error);

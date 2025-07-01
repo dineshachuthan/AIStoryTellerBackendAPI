@@ -1471,20 +1471,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`Saved user voice sample: ${fileName} (${audioFile.size} bytes)`);
       
-      // Create database record for the voice sample
+      // Create database record using new ESM architecture
       try {
         const audioUrl = `/api/emotions/user-voice-sample/${fileName}`;
+        
+        // First, find or create ESM reference entry for this emotion
+        const emotionName = emotion.toLowerCase().trim();
+        let esmRef = await storage.getEsmRef(1, emotionName); // Category 1 = Emotions
+        
+        if (!esmRef) {
+          console.log(`Creating new ESM reference for emotion: ${emotionName}`);
+          esmRef = await storage.createEsmRef({
+            category: 1, // Emotions
+            name: emotionName,
+            display_name: emotion,
+            sample_text: text || `Express the emotion of ${emotion}`,
+            intensity: parseInt(intensity) || 5,
+            description: `User-recorded emotion from voice sample`,
+            ai_variations: {
+              userGenerated: true,
+              originalText: text
+            },
+            created_by: userId
+          });
+        }
+        
+        // Check if user already has this ESM entry
+        let userEsm = await storage.getUserEsm(userId, esmRef.esm_ref_id);
+        
+        if (!userEsm) {
+          console.log(`Creating user ESM entry for ${emotionName}`);
+          userEsm = await storage.createUserEsm({
+            user_id: userId,
+            esm_ref_id: esmRef.esm_ref_id,
+            created_by: userId
+          });
+        }
+        
+        // Create the recording entry
+        await storage.createUserEsmRecording({
+          user_esm_id: userEsm.user_esm_id,
+          audio_url: audioUrl,
+          duration: 0, // Will be determined when played
+          file_size: audioFile.size,
+          audio_quality_score: 85, // Default quality score
+          transcribed_text: text,
+          created_by: userId
+        });
+        
+        console.log(`✅ ESM architecture: Created recording for emotion ${emotionName}`);
+        
+        // Also maintain backwards compatibility with old system
         await storage.createUserVoiceSample({
           userId,
           sampleType: 'emotion',
           label: emotion,
           audioUrl,
-          duration: null, // Will be determined when played
+          duration: null,
           isCompleted: true,
         });
-        console.log(`Created database record for voice sample: ${emotion}`);
+        
       } catch (dbError) {
-        console.error("Failed to create database record:", dbError);
+        console.error("Failed to create ESM database records:", dbError);
         // Continue even if DB creation fails - file is saved
       }
       
