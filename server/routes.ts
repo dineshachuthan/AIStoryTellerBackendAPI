@@ -8,7 +8,7 @@ import { setupAuth, requireAuth, requireAdmin, hashPassword } from "./auth";
 import passport from 'passport';
 import { insertUserSchema, insertLocalUserSchema } from "@shared/schema";
 import { analyzeStoryContent, generateCharacterImage, transcribeAudio, analyzeStoryContentWithHashCache } from "./ai-analysis";
-import { ContentHashService } from "./content-hash-service";
+import { createHash } from 'crypto';
 import { generateRolePlayAnalysis, enhanceExistingRolePlay, generateSceneDialogue } from "./roleplay-analysis";
 import { rolePlayAudioService } from "./roleplay-audio-service";
 import { collaborativeRoleplayService } from "./collaborative-roleplay-service";
@@ -558,7 +558,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (existingAnalysis) {
         // Check if content has changed since last analysis using content hash
-        const currentContentHash = require('crypto').createHash('sha256').update(story.content.trim()).digest('hex');
+        const currentContentHash = createHash('sha256').update(story.content.trim()).digest('hex');
         const storedContentHash = existingAnalysis.contentHash;
         
         if (storedContentHash && currentContentHash === storedContentHash) {
@@ -568,6 +568,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log(`Content changed for story ${storyId}, regenerating narrative analysis`);
           // Content has changed, regenerate analysis
           const analysis = await analyzeStoryContentWithHashCache(storyId, story.content, userId);
+          
+          console.log(`[DEBUG] Generated analysis for story ${storyId}:`, {
+            hasEmotions: !!(analysis.emotions && analysis.emotions.length > 0),
+            emotionCount: analysis.emotions?.length || 0,
+            emotions: analysis.emotions?.map(e => `${e.emotion} (${e.intensity})`) || [],
+            hasSoundEffects: !!(analysis.soundEffects && analysis.soundEffects.length > 0),
+            soundEffectCount: analysis.soundEffects?.length || 0,
+            hasCharacters: !!(analysis.characters && analysis.characters.length > 0),
+            characterCount: analysis.characters?.length || 0
+          });
           
           // Extract and store reference data from analysis
           console.log("🔄 Extracting reference data from narrative analysis...");
