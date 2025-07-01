@@ -260,7 +260,7 @@ export default function VoiceSamples() {
   // Handler for recording new voice modulations
   const handleRecord = async (template: any, audioBlob: Blob): Promise<void> => {
     await saveVoiceModulation.mutateAsync({
-      emotion: template.modulationKey,
+      emotion: template.emotion,
       audioBlob
     });
   };
@@ -439,10 +439,10 @@ export default function VoiceSamples() {
               {/* Sort templates: unlocked first, then recorded (unlocked), then locked */}
               {filteredTemplates
                 .filter((template: any, index: number, self: any[]) => 
-                  self.findIndex((t: any) => t.modulationKey === template.modulationKey) === index
+                  self.findIndex((t: any) => t.emotion === template.emotion) === index
                 )
                 .map((template: any) => {
-                  const recordedSample = getRecordedSample(template.modulationKey);
+                  const recordedSample = getRecordedSample(template.emotion);
                   const isRecorded = !!recordedSample;
                   const isLocked = recordedSample?.isLocked || false;
                   
