@@ -554,22 +554,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Check if we have existing analysis data in the story
       if (story.extractedCharacters && story.extractedCharacters.length > 0) {
-        const existingAnalysis = {
-          characters: story.extractedCharacters,
-          emotions: story.extractedEmotions || [],
-          summary: story.summary || "",
-          category: story.category || "General",
-          genre: story.genre || "Fiction",
-          themes: story.themes || [],
-          suggestedTags: story.tags || [],
-          emotionalTags: story.emotionalTags || [],
-          readingTime: story.readingTime || 5,
-          ageRating: story.ageRating || 'general',
-          isAdultContent: story.isAdultContent || false
-        };
+        // Check if content has changed since last analysis using content hash
+        const currentContentHash = ContentHashService.generateContentHash(story.content);
+        const storedContentHash = story.contentHash;
         
-        console.log(`Retrieved existing narrative analysis for story ${storyId}`);
-        return res.json(existingAnalysis);
+        if (storedContentHash && currentContentHash === storedContentHash) {
+          const existingAnalysis = {
+            characters: story.extractedCharacters,
+            emotions: story.extractedEmotions || [],
+            soundEffects: story.extractedSoundEffects || [],
+            summary: story.summary || "",
+            category: story.category || "General",
+            genre: story.genre || "Fiction",
+            themes: story.themes || [],
+            suggestedTags: story.tags || [],
+            emotionalTags: story.emotionalTags || [],
+            readingTime: story.readingTime || 5,
+            ageRating: story.ageRating || 'general',
+            isAdultContent: story.isAdultContent || false
+          };
+          
+          console.log(`Retrieved existing narrative analysis for story ${storyId} (content unchanged)`);
+          return res.json(existingAnalysis);
+        } else {
+          console.log(`Content changed for story ${storyId}, regenerating narrative analysis`);
+          // Content has changed, regenerate analysis
+          const analysis = await analyzeStoryContentWithHashCache(storyId, story.content, userId);
+          
+          // Extract and store reference data from analysis
+          console.log("🔄 Extracting reference data from narrative analysis...");
+          try {
+            const { referenceDataService } = await import('./reference-data-service');
+            await referenceDataService.processAnalysisForReferenceData(analysis, storyId);
+            console.log("✅ Reference data extraction completed successfully");
+          } catch (refDataError) {
+            console.error("❌ Failed to extract reference data:", refDataError);
+            // Don't fail the request if reference data extraction fails
+          }
+          
+          return res.json(analysis);
+        }
       }
 
       // No existing analysis found
