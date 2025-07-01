@@ -3,8 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
-import { Mic, Play, RotateCcw, Save, Radio, Volume2, CheckCircle, Circle } from "lucide-react";
-import { Lock as LucideLock } from "lucide-react";
+import { Mic, Play, RotateCcw, Save, Radio, Volume2, CheckCircle, Circle, Lock, Unlock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { AUDIO_PROCESSING_CONFIG } from "../../../../shared/audio-config";
 
@@ -87,7 +86,7 @@ export function EnhancedVoiceRecorder({
   const getStatusConfig = () => {
     if (isLocked) {
       return {
-        icon: <LucideLock className="w-4 h-4 text-blue-500" />,
+        icon: <Lock className="w-4 h-4 text-blue-500" />,
         color: "blue",
         label: "Locked", 
         description: "Used for voice cloning - locked from editing"
@@ -101,7 +100,7 @@ export function EnhancedVoiceRecorder({
       };
     } else {
       return {
-        icon: <Circle className="w-4 h-4 text-gray-400" />,
+        icon: <Unlock className="w-4 h-4 text-gray-400" />,
         color: "gray", 
         label: "Empty",
         description: "No sample recorded yet"
