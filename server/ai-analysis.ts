@@ -2,6 +2,7 @@ import OpenAI from "openai";
 import { getCachedAnalysis, cacheAnalysis } from './content-cache';
 import { AUDIO_FORMAT_CONFIG, AUDIO_PROCESSING_CONFIG } from '@shared/audio-config';
 import { storage } from "./storage";
+import { ContentHashService } from './content-hash-service';
 
 // Audio format detection using configuration
 function detectAudioFormat(buffer: Buffer): string {

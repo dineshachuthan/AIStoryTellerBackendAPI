@@ -1,6 +1,7 @@
 import { users, localUsers, userProviders, userVoiceSamples, stories, storyCharacters, storyEmotions, characters, conversations, messages, storyCollaborations, storyGroups, storyGroupMembers, characterVoiceAssignments, storyPlaybacks, storyAnalyses, storyNarrations, audioFiles, videoGenerations, type User, type InsertUser, type UpsertUser, type UserProvider, type InsertUserProvider, type LocalUser, type InsertLocalUser, type UserVoiceSample, type InsertUserVoiceSample, type Story, type InsertStory, type StoryCharacter, type InsertStoryCharacter, type StoryEmotion, type InsertStoryEmotion, type Character, type InsertCharacter, type Conversation, type InsertConversation, type Message, type InsertMessage, type StoryCollaboration, type InsertStoryCollaboration, type StoryGroup, type InsertStoryGroup, type StoryGroupMember, type InsertStoryGroupMember, type CharacterVoiceAssignment, type InsertCharacterVoiceAssignment, type StoryPlayback, type InsertStoryPlayback, type StoryAnalysis, type InsertStoryAnalysis, type StoryNarration, type InsertStoryNarration, type AudioFile, type InsertAudioFile } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, like, lt, sql } from "drizzle-orm";
+import { ContentHashService } from './content-hash-service';
 
 export interface IStorage {
   // Users
@@ -208,6 +209,10 @@ export interface IStorage {
   getStoryAnalysis(storyId: number, analysisType: 'narrative' | 'roleplay'): Promise<StoryAnalysis | undefined>;
   createStoryAnalysis(analysis: InsertStoryAnalysis): Promise<StoryAnalysis>;
   updateStoryAnalysis(storyId: number, analysisType: 'narrative' | 'roleplay', analysisData: any, userId: string): Promise<StoryAnalysis>;
+  
+  // Content Hash-Based Cache Invalidation
+  getStoryAnalysisWithContentCheck(storyId: number, analysisType: 'narrative' | 'roleplay', currentContent: string): Promise<{ analysis: StoryAnalysis | undefined, needsRegeneration: boolean }>;
+  createStoryAnalysisWithContentHash(analysis: InsertStoryAnalysis, contentHash: string): Promise<StoryAnalysis>;
 
   // Story Customizations
   createOrUpdateStoryCustomization(customization: {
@@ -380,6 +385,39 @@ export class DatabaseStorage implements IStorage {
         generatedBy: userId
       });
     }
+  }
+
+  // Content Hash-Based Cache Invalidation Methods
+  async getStoryAnalysisWithContentCheck(storyId: number, analysisType: 'narrative' | 'roleplay', currentContent: string): Promise<{ analysis: StoryAnalysis | undefined, needsRegeneration: boolean }> {
+    const [analysis] = await db
+      .select()
+      .from(storyAnalyses)
+      .where(and(eq(storyAnalyses.storyId, storyId), eq(storyAnalyses.analysisType, analysisType)))
+      .orderBy(desc(storyAnalyses.createdAt))
+      .limit(1);
+
+    if (!analysis) {
+      return { analysis: undefined, needsRegeneration: true };
+    }
+
+    // Check if content has changed using hash comparison
+    const needsRegeneration = ContentHashService.hasContentChanged(currentContent, analysis.contentHash);
+    
+    return { 
+      analysis: analysis || undefined, 
+      needsRegeneration 
+    };
+  }
+
+  async createStoryAnalysisWithContentHash(analysisData: InsertStoryAnalysis, contentHash: string): Promise<StoryAnalysis> {
+    const [analysis] = await db
+      .insert(storyAnalyses)
+      .values({
+        ...analysisData,
+        contentHash
+      })
+      .returning();
+    return analysis;
   }
 
   // Minimal implementation of required methods for compilation
