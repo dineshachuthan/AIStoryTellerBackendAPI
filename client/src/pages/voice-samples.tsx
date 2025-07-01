@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Mic, Play, Trash2, CheckCircle, Circle, Volume2, LogOut, Lock, Unlock } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { EnhancedVoiceRecorder } from "@/components/ui/enhanced-voice-recorder";
+import { VoiceSampleCard } from "@/components/ui/voice-sample-card";
 // import { VoiceTrainingStatus } from "@/components/voice-training-status";
 
 interface EmotionTemplate {
@@ -457,126 +457,42 @@ export default function VoiceSamples() {
                 .sort((a, b) => a.sortOrder - b.sortOrder)
                 .map((template: any) => {
                   const { recordedSample, isRecorded, isLocked } = template;
-                  
-                  const getStatusIcon = () => {
-                    if (isLocked) {
-                      return (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Lock className="w-5 h-5 text-blue-500 cursor-help" />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <div className="max-w-xs">
-                              <p className="font-semibold">Cloned and locked</p>
-                              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                {template.description}
-                              </p>
-                              <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
-                                User voice is cloned so locked and hence modification to this voice is not allowed.
-                              </p>
-                            </div>
-                          </TooltipContent>
-                        </Tooltip>
-                      );
-                    } else if (isRecorded) {
-                      return (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Unlock className="w-5 h-5 text-green-500 cursor-help" />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <div className="max-w-xs">
-                              <p className="font-semibold">Recorded and unlocked</p>
-                              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                {template.description}
-                              </p>
-                              <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
-                                User sample voice is recorded but not used for cloning yet so kept unlocked.
-                              </p>
-                            </div>
-                          </TooltipContent>
-                        </Tooltip>
-                      );
-                    } else {
-                      return (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Unlock className="w-5 h-5 text-gray-400 cursor-help" />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <div className="max-w-xs">
-                              <p className="font-semibold">Empty and unlocked</p>
-                              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                {template.description}
-                              </p>
-                              <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
-                                User sample voice for this emotion not recorded.
-                              </p>
-                            </div>
-                          </TooltipContent>
-                        </Tooltip>
-                      );
-                    }
-                  };
 
                   return (
-                    <div key={template.modulationKey} className={cn(
-                      "p-3 rounded-lg border transition-all duration-200",
-                      isAnyVoiceCloningInProgress()
-                        ? "border-orange-300 bg-orange-50 dark:bg-orange-950 dark:border-orange-700 opacity-75 cursor-not-allowed"
-                        : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
-                    )}>
-                      <div className="mb-2 flex items-start justify-between">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-medium text-sm">{template.displayName}</h3>
-                          {getStatusIcon()}
-                        </div>
-                        <Badge variant="secondary" className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
-                          {template.category || 'basic'}
-                        </Badge>
-                      </div>
-                      
-                      <EnhancedVoiceRecorder
-                        buttonText={{
-                          hold: isAnyVoiceCloningInProgress()
-                            ? "🚫 Cloning in Progress"
-                            : isLocked 
-                              ? "🔒 Locked" 
-                              : isRecorded 
-                                ? "Re-record" 
-                                : "Record",
-                          recording: "Recording...",
-                          instructions: isAnyVoiceCloningInProgress()
-                            ? "Voice cloning in progress - please wait"
-                            : isLocked 
-                              ? "Sample locked for voice cloning" 
-                              : isRecorded 
-                                ? "Hold to re-record" 
-                                : "Hold button to record"
-                        }}
-                        sampleText={template.sampleText}
-                        emotionDescription={template.description}
-                        emotionName=""
-                        category=""
-                        isRecorded={isRecorded}
-                        isLocked={isLocked}
-                        onRecordingComplete={(audioBlob) => {
-                          if (!isLocked) {
-                            saveVoiceModulation.mutate({
-                              emotion: template.modulationKey,
-                              audioBlob
-                            });
-                          }
-                        }}
-                        className="w-full"
-                        disabled={saveVoiceModulation.isPending || isLocked || isAnyVoiceCloningInProgress()}
-                        maxRecordingTime={template.targetDuration}
-                        existingRecording={isRecorded && recordedSample ? {
-                          url: recordedSample.audioUrl,
-                          recordedAt: new Date(recordedSample.recordedAt)
-                        } : undefined}
-                      />
-                    </div>
+                    <VoiceSampleCard
+                      key={template.modulationKey || template.emotion}
+                      emotion={template.emotion}
+                      displayName={template.displayName}
+                      description={template.description}
+                      sampleText={template.sampleText}
+                      category={template.category}
+                      targetDuration={template.targetDuration}
+                      isRecorded={isRecorded}
+                      isLocked={isLocked}
+                      recordedSample={recordedSample ? {
+                        audioUrl: recordedSample.audioUrl,
+                        recordedAt: new Date(recordedSample.recordedAt),
+                        duration: recordedSample.duration
+                      } : undefined}
+                      disabled={saveVoiceModulation.isPending || isLocked || isAnyVoiceCloningInProgress()}
+                      isLoading={saveVoiceModulation.isPending}
+                      onRecordingComplete={(audioBlob) => {
+                        if (!isLocked && !isAnyVoiceCloningInProgress()) {
+                          saveVoiceModulation.mutate({
+                            emotion: template.emotion,
+                            audioBlob
+                          });
+                        }
+                      }}
+                      onPlaySample={(audioUrl) => {
+                        playAudioSample(audioUrl, template.emotion);
+                      }}
+                      onDeleteSample={() => {
+                        if (!isLocked && !isAnyVoiceCloningInProgress()) {
+                          deleteVoiceModulation.mutate(template.emotion);
+                        }
+                      }}
+                    />
                   );
                 })}
               </div>
