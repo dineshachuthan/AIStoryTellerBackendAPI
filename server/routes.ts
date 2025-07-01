@@ -4331,12 +4331,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { modulationKey, duration, modulationType } = req.body;
       const audioFile = req.file;
       
+      console.log('Record request body:', req.body);
+      console.log('modulationKey:', modulationKey);
+      console.log('audioFile present:', !!audioFile);
+      
       if (!userId) {
         return res.status(401).json({ message: 'User not authenticated' });
       }
 
       if (!modulationKey || !audioFile) {
-        return res.status(400).json({ message: 'Missing required fields' });
+        return res.status(400).json({ message: 'Missing required fields', modulationKey, audioFile: !!audioFile });
       }
 
       // Create a simple template object for the recording
@@ -4380,12 +4384,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Save voice sample directly to storage
       const modulation = await storage.createUserVoiceSample({
         userId,
-        sampleType: modulationKey,
+        sampleType: template.modulationType,
+        label: modulationKey,
         audioUrl,
-        fileName,
         duration: parseInt(duration) || template.targetDuration || 10,
         isCompleted: true,
-        recordedAt: new Date(),
         isLocked: false
       });
 
