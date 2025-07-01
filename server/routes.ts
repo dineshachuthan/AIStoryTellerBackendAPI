@@ -4534,13 +4534,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: 'User not authenticated' });
       }
 
-      const { referenceDataService } = await import('./reference-data-service');
+      const { getVoiceSamplesByType } = await import('./voice-samples');
       const { voiceTrainingService } = await import('./voice-training-service');
       
-      // Get sample counts by category using reference data service
-      const emotionTemplates = await referenceDataService.getVoiceSamplesByType('emotion');
-      const soundTemplates = await referenceDataService.getVoiceSamplesByType('sound'); 
-      const modulationTemplates = await referenceDataService.getVoiceSamplesByType('modulation');
+      // Get sample counts by category using voice samples service
+      const emotionTemplates = await getVoiceSamplesByType('emotions');
+      const soundTemplates = await getVoiceSamplesByType('sounds'); 
+      const modulationTemplates = await getVoiceSamplesByType('descriptions');
       
       // Get user's voice recordings by category
       const userEmotionVoices = await storage.getUserEmotionVoices(userId);
