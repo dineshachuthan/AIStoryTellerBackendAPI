@@ -104,54 +104,48 @@ export function VoiceSampleCard({
   };
 
   return (
-    <Card className={cn(
-      "transition-all duration-200 hover:shadow-md",
+    <div className={cn(
+      "p-3 bg-gray-50 dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700",
       disabled && "opacity-60 cursor-not-allowed",
-      isLocked && "border-blue-200 bg-blue-50/30 dark:border-blue-800 dark:bg-blue-950/30",
-      isRecorded && !isLocked && "border-green-200 bg-green-50/30 dark:border-green-800 dark:bg-green-950/30",
-      !isRecorded && "border-gray-200 dark:border-gray-700",
       className
     )}>
-      <CardHeader className="pb-3">
-        {/* Header with title, status, and category */}
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0 flex-1">
-            <h3 className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">
-              {displayName}
-            </h3>
-            {intensity && (
-              <Badge variant="outline" className="text-xs shrink-0">
-                {intensity}/10
-              </Badge>
-            )}
-          </div>
-          
-          <div className="flex items-center gap-2 shrink-0">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="cursor-help">
-                  {statusConfig.icon}
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <div className="max-w-xs">
-                  <p className="font-semibold">{statusConfig.label}</p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {statusConfig.description}
-                  </p>
-                </div>
-              </TooltipContent>
-            </Tooltip>
-            
-            <Badge className={cn("text-xs", getCategoryColor(category))}>
-              {category}
+      {/* Header with title, status, and category */}
+      <div className="flex items-start justify-between gap-2 mb-3">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <h3 className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">
+            {displayName}
+          </h3>
+          {intensity && (
+            <Badge variant="outline" className="text-xs shrink-0">
+              {intensity}/10
             </Badge>
-          </div>
+          )}
         </div>
+        
+        <div className="flex items-center gap-2 shrink-0">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="cursor-help">
+                {statusConfig.icon}
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <div className="max-w-xs">
+                <p className="font-semibold">{statusConfig.label}</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {statusConfig.description}
+                </p>
+              </div>
+            </TooltipContent>
+          </Tooltip>
+          
+          <Badge className={cn("text-xs", getCategoryColor(category))}>
+            {category}
+          </Badge>
+        </div>
+      </div>
 
-      </CardHeader>
-
-      <CardContent className="pt-0 space-y-3">
+      <div className="space-y-3">
 
         {/* Recording status and controls */}
         {isRecorded && recordedSample && (
@@ -240,7 +234,7 @@ export function VoiceSampleCard({
             <span>Target: {targetDuration}s duration</span>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
