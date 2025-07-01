@@ -948,6 +948,7 @@ export const storyAnalyses = pgTable("story_analyses", {
   storyId: integer("story_id").references(() => stories.id).notNull(),
   analysisType: text("analysis_type").notNull(), // 'narrative' or 'roleplay'
   analysisData: jsonb("analysis_data").notNull(), // Full analysis JSON
+  contentHash: varchar("content_hash", { length: 64 }), // SHA256 hash of story content at analysis time
   generatedBy: varchar("generated_by").references(() => users.id).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
