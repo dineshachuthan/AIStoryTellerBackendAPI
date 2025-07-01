@@ -110,14 +110,6 @@ export function EnhancedVoiceRecorder({
   };
 
   const statusConfig = getStatusConfig();
-  
-  // Debug log to check status
-  console.log('EnhancedVoiceRecorder status:', { 
-    isLocked, 
-    recordedSample: !!recordedSample, 
-    statusLabel: statusConfig.label,
-    emotionName 
-  });
 
   const progressPercentage = (recordingTime / maxRecordingTime) * 100;
 
@@ -374,22 +366,21 @@ export function EnhancedVoiceRecorder({
         
         {/* Header with Emotion Info */}
         <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center">
-            <Radio className="w-5 h-5 text-red-400 mr-2" />
-            <div className="flex items-center gap-2">
-              <Tooltip>
-                <TooltipTrigger>
+          <div className="flex items-center gap-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="cursor-help">
                   {statusConfig.icon}
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p><strong>{statusConfig.label}</strong></p>
-                  <p className="text-sm text-gray-400">{statusConfig.description}</p>
-                </TooltipContent>
-              </Tooltip>
-              <span className="text-sm font-medium text-gray-300">
-                {emotionName && emotionName.length > 20 ? emotionName.substring(0, 20) + '...' : emotionName || 'Voice Recorder'}
-              </span>
-            </div>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p><strong>{statusConfig.label}</strong></p>
+                <p className="text-sm text-gray-400">{statusConfig.description}</p>
+              </TooltipContent>
+            </Tooltip>
+            <span className="text-sm font-medium text-gray-300">
+              {emotionName && emotionName.length > 20 ? emotionName.substring(0, 20) + '...' : emotionName || 'Voice Recorder'}
+            </span>
           </div>
           <div className="flex items-center gap-2">
             {intensity && (
