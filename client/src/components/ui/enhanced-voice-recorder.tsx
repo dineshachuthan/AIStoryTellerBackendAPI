@@ -505,38 +505,32 @@ export function EnhancedVoiceRecorder({
           </div>
         </div>
 
-        {/* Fixed bottom section for recorded sample info and controls */}
-        <div className="mt-2">
-          {/* Recorded Sample Info and Controls - Fixed height section */}
-          <div className="h-10 mb-2">
-            {recordedSample && (
-              <div className="p-2 bg-gray-900 border border-gray-600 rounded-md h-full">
-                <div className="flex items-center gap-2 text-xs h-full">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onPlaySample?.(recordedSample.audioUrl)}
-                    className="h-6 w-6 p-0 shrink-0 text-green-400 hover:text-green-300"
-                  >
-                    <Play className="w-3 h-3" />
-                  </Button>
-                  
-                  <div className="text-gray-300 flex-1 min-w-0">
-                    <div className="flex items-center gap-1">
-                      <span>{recordedSample.duration ? `${recordedSample.duration}s` : 'Unknown'}</span>
-                      <span className="text-gray-500">•</span>
-                      <span className="truncate">{recordedSample.recordedAt.toLocaleDateString()}</span>
-                    </div>
-                  </div>
-
-
+        {/* Recorded Sample Info - Compact */}
+        {recordedSample && (
+          <div className="mt-2 p-2 bg-gray-900 border border-gray-600 rounded-md">
+            <div className="flex items-center gap-2 text-xs">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onPlaySample?.(recordedSample.audioUrl)}
+                className="h-6 w-6 p-0 shrink-0 text-green-400 hover:text-green-300"
+              >
+                <Play className="w-3 h-3" />
+              </Button>
+              
+              <div className="text-gray-300 flex-1 min-w-0">
+                <div className="flex items-center gap-1">
+                  <span>{recordedSample.duration ? `${recordedSample.duration}s` : 'Unknown'}</span>
+                  <span className="text-gray-500">•</span>
+                  <span className="truncate">{recordedSample.recordedAt.toLocaleDateString()}</span>
                 </div>
               </div>
-            )}
+            </div>
           </div>
+        )}
 
-          {/* Control Buttons with Tooltips - Compact at bottom */}
-          <div className="flex gap-2 justify-center">
+        {/* Control Buttons - Minimal margin */}
+        <div className="mt-1 flex gap-2 justify-center">
               {/* Single Play button - prioritizes new recording over existing */}
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -571,8 +565,7 @@ export function EnhancedVoiceRecorder({
                   <p>{recordedSample ? "Save new recording" : "Save recording"}</p>
                 </TooltipContent>
               </Tooltip>
-            </div>
-        </div>
+          </div>
         </div>
       </div>
     </TooltipProvider>
