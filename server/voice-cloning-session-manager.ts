@@ -32,7 +32,7 @@ export interface VoiceCloningSessionData {
 export type VoiceCategoryType = 'emotions' | 'sounds' | 'modulations';
 
 export class VoiceCloningSessionManager {
-  private static get CLONING_THRESHOLD() {
+  static get CLONING_THRESHOLD() {
     return VOICE_CLONING_CONFIG.sampleThreshold;
   }
 
