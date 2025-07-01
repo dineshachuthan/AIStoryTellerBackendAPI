@@ -27,6 +27,20 @@ interface EnhancedVoiceRecorderProps {
   category?: string;
   isRecorded?: boolean;
   isLocked?: boolean;
+  intensity?: number;
+  statusConfig?: {
+    icon: React.ReactNode;
+    color: string;
+    label: string;
+    description: string;
+  };
+  onPlaySample?: (audioUrl: string) => void;
+  onDeleteSample?: () => void;
+  recordedSample?: {
+    audioUrl: string;
+    recordedAt: Date;
+    duration?: number;
+  };
 }
 
 export function EnhancedVoiceRecorder({
@@ -45,7 +59,12 @@ export function EnhancedVoiceRecorder({
   emotionName,
   category,
   isRecorded = false,
-  isLocked = false
+  isLocked = false,
+  intensity,
+  statusConfig,
+  onPlaySample,
+  onDeleteSample,
+  recordedSample
 }: EnhancedVoiceRecorderProps) {
   const [recordingState, setRecordingState] = useState<'idle' | 'countdown' | 'recording' | 'recorded'>('idle');
   const [countdownTime, setCountdownTime] = useState(3);
@@ -319,17 +338,27 @@ export function EnhancedVoiceRecorder({
           <div className="flex items-center">
             <Radio className="w-5 h-5 text-red-400 mr-2" />
             <div className="flex items-center gap-2">
-              {isRecorded ? (
+              {statusConfig?.icon || (isRecorded ? (
                 <CheckCircle className="w-4 h-4 text-green-400" />
               ) : (
                 <Circle className="w-4 h-4 text-gray-400" />
-              )}
+              ))}
               <span className="text-sm font-medium text-gray-300">
                 {emotionName || 'Voice Recorder'}
               </span>
+              {isLocked && (
+                <Badge variant="outline" className="text-xs text-orange-400 border-orange-400">
+                  🔒 Locked
+                </Badge>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {intensity && (
+              <Badge variant="outline" className="text-xs text-blue-400 border-blue-400">
+                {intensity}/10
+              </Badge>
+            )}
             {category && (
               <Badge variant={isRecorded ? "default" : "secondary"} className="text-xs">
                 {category}
@@ -471,6 +500,41 @@ export function EnhancedVoiceRecorder({
             </div>
           </div>
         </div>
+
+        {/* Recorded Sample Info and Controls */}
+        {recordedSample && (
+          <div className="p-2 bg-gray-900 border border-gray-600 rounded-md mb-3">
+            <div className="flex items-center gap-2 text-xs">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onPlaySample?.(recordedSample.audioUrl)}
+                className="h-6 w-6 p-0 shrink-0 text-green-400 hover:text-green-300"
+              >
+                <Play className="w-3 h-3" />
+              </Button>
+              
+              <div className="text-gray-300 flex-1 min-w-0">
+                <div className="flex items-center gap-1">
+                  <span>{recordedSample.duration ? `${recordedSample.duration}s` : 'Unknown'}</span>
+                  <span className="text-gray-500">•</span>
+                  <span className="truncate">{recordedSample.recordedAt.toLocaleDateString()}</span>
+                </div>
+              </div>
+
+              {onDeleteSample && !isLocked && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onDeleteSample}
+                  className="h-6 text-red-400 hover:text-red-300 text-[10px] px-2"
+                >
+                  Delete
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Control Buttons with Tooltips */}
         <div className="grid grid-cols-2 gap-2">
