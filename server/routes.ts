@@ -7,7 +7,7 @@ import { generateAIResponse } from "./openai";
 import { setupAuth, requireAuth, requireAdmin, hashPassword } from "./auth";
 import passport from 'passport';
 import { insertUserSchema, insertLocalUserSchema } from "@shared/schema";
-import { analyzeStoryContent, generateCharacterImage, transcribeAudio } from "./ai-analysis";
+import { analyzeStoryContent, generateCharacterImage, transcribeAudio, analyzeStoryContentWithHashCache } from "./ai-analysis";
 import { generateRolePlayAnalysis, enhanceExistingRolePlay, generateSceneDialogue } from "./roleplay-analysis";
 import { rolePlayAudioService } from "./roleplay-audio-service";
 import { collaborativeRoleplayService } from "./collaborative-roleplay-service";
@@ -602,17 +602,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json(existingAnalysis.analysisData);
       }
 
-      console.log(`Generating narrative analysis for story ${storyId}`);
+      console.log(`Generating narrative analysis for story ${storyId} with content hash cache invalidation`);
       
-      const analysis = await analyzeStoryContent(story.content, userId);
-      
-      // Store analysis in database
-      await storage.createStoryAnalysis({
-        storyId,
-        analysisType: 'narrative',
-        analysisData: analysis,
-        generatedBy: userId
-      });
+      const analysis = await analyzeStoryContentWithHashCache(storyId, story.content, userId);
       
       // Extract and store reference data from analysis
       console.log("🔄 Extracting reference data from narrative analysis...");
@@ -1831,6 +1823,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Story analysis error:", error);
       res.status(500).json({ message: error instanceof Error ? error.message : "Failed to analyze story content" });
+    }
+  });
+
+  // Enhanced story analysis with content hash cache invalidation
+  app.post("/api/stories/:storyId/analyze-with-cache", requireAuth, async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.storyId);
+      const userId = (req.user as any)?.id;
+      const { content } = req.body;
+      
+      if (!content || typeof content !== 'string' || !content.trim()) {
+        return res.status(400).json({ message: "Content is required" });
+      }
+
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      console.log(`[Enhanced Analysis] Processing story ${storyId} with content hash cache system`);
+      const analysis = await analyzeStoryContentWithHashCache(storyId, content.trim(), userId);
+      
+      res.json({
+        analysis,
+        cacheInfo: {
+          storyId,
+          contentLength: content.length,
+          analysisTimestamp: new Date().toISOString(),
+          cacheStrategy: "content-hash-based"
+        }
+      });
+    } catch (error) {
+      console.error(`[Enhanced Analysis] Error for story ${req.params.storyId}:`, error);
+      res.status(500).json({ 
+        message: error instanceof Error ? error.message : "Failed to analyze story content",
+        errorType: "enhanced-analysis-error"
+      });
     }
   });
 

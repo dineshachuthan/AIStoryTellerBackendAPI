@@ -419,6 +419,174 @@ export async function transcribeAudio(audioBuffer: Buffer): Promise<string> {
   }
 }
 
+/**
+ * Enhanced story analysis with database-backed content hash cache invalidation
+ * Uses SHA256 content hashing to detect story content changes and avoid unnecessary API calls
+ */
+export async function analyzeStoryContentWithHashCache(storyId: number, content: string, userId: string): Promise<StoryAnalysis> {
+  // Check for empty content - never analyze empty stories
+  if (!content || content.trim().length === 0) {
+    throw new Error("Cannot analyze empty story content. Please add text to your story first.");
+  }
+
+  console.log(`[Content Hash Cache] Checking analysis cache for story ${storyId}, content length: ${content.length} characters`);
+
+  try {
+    // Check database cache with content hash validation
+    const { analysis, needsRegeneration } = await storage.getStoryAnalysisWithContentCheck(storyId, 'narrative', content);
+    
+    if (analysis && !needsRegeneration) {
+      console.log(`[Content Hash Cache] Using cached analysis for story ${storyId} - content unchanged`);
+      
+      // Still populate ESM reference data even for cached analysis
+      const parsedAnalysis = JSON.parse(analysis.analysisData as string) as StoryAnalysis;
+      await populateEsmReferenceData(parsedAnalysis, userId);
+      
+      return parsedAnalysis;
+    }
+
+    if (analysis && needsRegeneration) {
+      console.log(`[Content Hash Cache] Content changed for story ${storyId} - regenerating analysis`);
+    } else {
+      console.log(`[Content Hash Cache] No cached analysis found for story ${storyId} - generating fresh analysis`);
+    }
+
+  } catch (error) {
+    console.warn(`[Content Hash Cache] Database cache check failed for story ${storyId}:`, error);
+  }
+
+  // Generate fresh analysis using OpenAI
+  console.log(`[Content Hash Cache] Calling OpenAI API for story ${storyId} analysis`);
+  
+  try {
+    const systemPrompt = `You are an expert story analyst. Analyze the provided story text and extract detailed information about characters, emotions, themes, and content.
+
+    Respond with valid JSON in this exact format:
+    {
+      "title": "A compelling, creative title for the story (3-8 words, engaging and descriptive)",
+      "characters": [
+        {
+          "name": "Character name",
+          "description": "Brief description of the character",
+          "personality": "Personality traits and characteristics",
+          "role": "protagonist|antagonist|supporting|narrator|other",
+          "appearance": "Physical description if available",
+          "traits": ["trait1", "trait2", "trait3"]
+        }
+      ],
+      "emotions": [
+        {
+          "emotion": "Any emotion detected in the story (grief, sympathy, empathy, melancholy, despair, hope, relief, guilt, shame, regret, acceptance, compassion, love, fear, anger, sadness, joy, etc.)",
+          "intensity": 7,
+          "context": "Context where this emotion appears",
+          "quote": "Relevant quote from the story if available"
+        }
+      ],
+      "summary": "2-3 sentence summary of the story",
+      "category": "Category like Romance, Adventure, Mystery, Fantasy, Sci-Fi, Drama, Comedy, Horror, Thriller",
+      "genre": "Primary genre (Drama, Fantasy, Mystery, Romance, etc.)",
+      "subGenre": "Sub-genre if applicable",
+      "themes": ["theme1", "theme2", "theme3"],
+      "suggestedTags": ["tag1", "tag2", "tag3"],
+      "emotionalTags": ["emotional_tag1", "emotional_tag2"],
+      "moodCategory": "Overall mood/atmosphere (dark, light, mysterious, hopeful, melancholic, suspenseful, etc.)",
+      "ageRating": "general|teen|mature",
+      "readingTime": 5,
+      "isAdultContent": false
+    }
+
+    CRITICAL REQUIREMENTS:
+    1. Extract ALL emotions present in the story - never limit to predefined lists
+    2. Include character voice traits (deep, raspy, melodic, etc.) and sound descriptions (whispering, shouting, laughing)
+    3. Capture mood categories (moodCategory) and emotional atmosphere
+    4. Generate compelling, creative titles that capture the story essence
+    5. Provide intensity ratings 1-10 for all emotions based on story context
+    6. Extract exact quotes that demonstrate emotional moments
+    7. Generate comprehensive themes and tags for story categorization`;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: systemPrompt,
+        },
+        {
+          role: "user",
+          content: `Analyze this story:\n\n${content}`,
+        },
+      ],
+      max_tokens: 2000,
+      temperature: 0.3,
+      response_format: { type: "json_object" },
+    });
+
+    const analysisText = response.choices[0].message.content;
+    if (!analysisText) {
+      throw new Error("No analysis generated from OpenAI");
+    }
+
+    console.log(`[Content Hash Cache] OpenAI analysis completed for story ${storyId}, response length: ${analysisText.length} characters`);
+    const analysis: StoryAnalysis = JSON.parse(analysisText);
+    
+    // Assign voices to characters during analysis phase
+    analysis.characters = analysis.characters.map(character => {
+      const assignedVoice = assignVoiceToCharacter(character);
+      console.log(`Assigning voice "${assignedVoice}" to character "${character.name}"`);
+      return {
+        ...character,
+        assignedVoice
+      };
+    });
+
+    // Store analysis in database with content hash
+    const contentHash = ContentHashService.generateContentHash(content);
+    console.log(`[Content Hash Cache] Generated content hash for story ${storyId}: ${contentHash.substring(0, 12)}...`);
+    
+    try {
+      await storage.createStoryAnalysisWithContentHash({
+        storyId,
+        analysisType: 'narrative',
+        analysisData: JSON.stringify(analysis),
+        generatedBy: userId
+      }, contentHash);
+      
+      console.log(`[Content Hash Cache] Successfully cached analysis for story ${storyId} with content hash`);
+    } catch (dbError) {
+      console.warn(`[Content Hash Cache] Failed to cache analysis in database for story ${storyId}:`, dbError);
+    }
+
+    // Update file-based cache as fallback
+    try {
+      cacheAnalysis(content, analysis);
+      console.log(`[Content Hash Cache] Updated file-based cache for story ${storyId}`);
+    } catch (cacheUpdateError) {
+      console.warn(`[Content Hash Cache] Failed to update file cache for story ${storyId}:`, cacheUpdateError);
+    }
+
+    // Populate ESM reference data from new analysis
+    await populateEsmReferenceData(analysis, userId);
+    
+    return analysis;
+    
+  } catch (error) {
+    console.error(`[Content Hash Cache] Story analysis error for story ${storyId}:`, error);
+    
+    // Check if it's a quota/rate limit error
+    if ((error as any)?.status === 429 || (error as any)?.code === 'insufficient_quota') {
+      throw new Error("OpenAI API quota exceeded. Please check your billing details or try again later.");
+    }
+    
+    // Check if it's an authentication error
+    if ((error as any)?.status === 401) {
+      throw new Error("OpenAI API key is invalid. Please check your API key configuration.");
+    }
+    
+    // For other errors, throw a generic message
+    throw new Error("Story analysis failed. Please try again or contact support.");
+  }
+}
+
 // Simple voice assignment function that rotates through available voices
 function assignVoiceToCharacter(character: ExtractedCharacter): string {
   const availableVoices = ['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'];
