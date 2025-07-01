@@ -327,7 +327,7 @@ export function EnhancedVoiceRecorder({
     <TooltipProvider>
       <div className={`w-full max-w-sm mx-auto ${className}`}>
         {/* Radio/TV Style Voice Recorder Panel - Dynamic background for recorded samples */}
-        <div className={`rounded-2xl p-4 shadow-2xl border h-[320px] flex flex-col ${
+        <div className={`rounded-2xl p-4 shadow-2xl border h-[380px] flex flex-col overflow-hidden ${
           isRecorded || existingRecording 
             ? 'bg-gradient-to-br from-blue-900/70 to-purple-900/70 border-blue-500/50' 
             : 'bg-gradient-to-br from-gray-900 to-gray-800 border-gray-700'
@@ -409,8 +409,8 @@ export function EnhancedVoiceRecorder({
           <div className="flex items-start space-x-4">
             
             {/* Recording Button */}
-            <div className="flex flex-col items-center">
-              <div className="relative mb-2">
+            <div className="flex flex-col items-center mb-4">
+              <div className="relative mb-1">
                 {recordingState === 'idle' && (
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -472,7 +472,7 @@ export function EnhancedVoiceRecorder({
               </div>
               
               {/* Instructions under mic - Fixed height to prevent flickering */}
-              <div className="text-xs text-gray-400 text-center leading-tight h-8 flex items-center justify-center">
+              <div className="text-xs text-gray-400 text-center leading-tight h-6 flex items-center justify-center">
                 {existingRecording || tempRecording ? (
                   <div>
                     Hold to<br />re-record
@@ -533,8 +533,8 @@ export function EnhancedVoiceRecorder({
             )}
           </div>
 
-          {/* Control Buttons with Tooltips - Fixed position at bottom */}
-          <div className="flex gap-2 justify-center">
+          {/* Control Buttons with Tooltips - Compact at bottom */}
+          <div className="flex gap-2 justify-center mt-2">
               {/* Single Play button - prioritizes new recording over existing */}
               <Tooltip>
                 <TooltipTrigger asChild>
