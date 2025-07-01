@@ -571,8 +571,6 @@ export function EnhancedVoiceRecorder({
               </Tooltip>
             </div>
         </div>
-
-
         </div>
       </div>
     </TooltipProvider>
