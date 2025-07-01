@@ -762,11 +762,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Check if analysis already exists
+      // Check if analysis already exists and if content has changed
       const existingAnalysis = await storage.getStoryAnalysis(storyId, 'roleplay');
       if (existingAnalysis) {
-        console.log(`Found existing roleplay analysis for story ${storyId}`);
-        return res.json(existingAnalysis.analysisData);
+        // Check if content has changed using same hash logic as narrative analysis
+        const { ContentHashService } = await import("./content-hash-service");
+        const hasContentChanged = ContentHashService.hasContentChanged(story.content, existingAnalysis.contentHash);
+        
+        if (!hasContentChanged) {
+          console.log(`Retrieved existing roleplay analysis for story ${storyId} (content unchanged)`);
+          return res.json(existingAnalysis.analysisData);
+        }
+        
+        console.log(`Content changed for story ${storyId}, regenerating roleplay analysis`);
       }
 
       console.log(`Generating roleplay analysis for story ${storyId}`);
@@ -779,13 +787,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`Using target roleplay duration: ${targetDurationSeconds} seconds`);
       const rolePlayAnalysis = await generateRolePlayAnalysis(story.content, [], targetDurationSeconds);
       
-      // Store analysis in database
-      await storage.createStoryAnalysis({
-        storyId,
-        analysisType: 'roleplay',
-        analysisData: rolePlayAnalysis,
-        generatedBy: userId
-      });
+      // Generate content hash for cache invalidation
+      const { ContentHashService } = await import("./content-hash-service");
+      const contentHash = ContentHashService.generateContentHash(story.content);
+      
+      // Store analysis in database with content hash
+      if (existingAnalysis) {
+        // Update existing analysis
+        await storage.updateStoryAnalysis(storyId, 'roleplay', {
+          analysisData: rolePlayAnalysis,
+          contentHash,
+          generatedBy: userId
+        });
+      } else {
+        // Create new analysis
+        await storage.createStoryAnalysis({
+          storyId,
+          analysisType: 'roleplay',
+          analysisData: rolePlayAnalysis,
+          contentHash,
+          generatedBy: userId
+        });
+      }
       
       console.log("Roleplay analysis generated successfully");
       res.json(rolePlayAnalysis);
