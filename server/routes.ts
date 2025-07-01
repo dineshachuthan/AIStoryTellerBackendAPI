@@ -553,41 +553,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Check if we have existing narrative analysis
-      const existingAnalysis = await storage.getStoryAnalysis(storyId, 'narrative');
+      // Check if we have existing narrative analysis and if content changed
+      const { analysis: existingAnalysis, needsRegeneration } = await storage.getStoryAnalysisWithContentCheck(storyId, 'narrative', story.content);
       
-      if (existingAnalysis) {
-        // Check if content has changed since last analysis using content hash
-        const currentContentHash = createHash('sha256').update(story.content.trim()).digest('hex');
-        const storedContentHash = existingAnalysis.contentHash;
+      if (existingAnalysis && !needsRegeneration) {
+        console.log(`Retrieved existing narrative analysis for story ${storyId} (content unchanged)`);
+        return res.json(existingAnalysis.analysisData);
+      } else {
+        console.log(`Content changed for story ${storyId}, regenerating narrative analysis`);
+        // Content has changed, regenerate analysis
+        const analysis = await analyzeStoryContentWithHashCache(storyId, story.content, userId);
         
-        if (storedContentHash && currentContentHash === storedContentHash) {
-          console.log(`Retrieved existing narrative analysis for story ${storyId} (content unchanged)`);
-          return res.json(existingAnalysis.analysisData);
-        } else {
-          console.log(`Content changed for story ${storyId}, regenerating narrative analysis`);
-          // Content has changed, regenerate analysis
-          const analysis = await analyzeStoryContentWithHashCache(storyId, story.content, userId);
-          
-
-          
-          // Extract and store reference data from analysis
-          console.log("🔄 Extracting reference data from narrative analysis...");
-          try {
-            const { referenceDataService } = await import('./reference-data-service');
-            await referenceDataService.processAnalysisForReferenceData(analysis, storyId);
-            console.log("✅ Reference data extraction completed successfully");
-          } catch (refDataError) {
-            console.error("❌ Failed to extract reference data:", refDataError);
-            // Don't fail the request if reference data extraction fails
-          }
-          
-          return res.json(analysis);
+        // Extract and store reference data from analysis
+        console.log("🔄 Extracting reference data from narrative analysis...");
+        try {
+          const { referenceDataService } = await import('./reference-data-service');
+          await referenceDataService.processAnalysisForReferenceData(analysis, storyId);
+          console.log("✅ Reference data extraction completed successfully");
+        } catch (refDataError) {
+          console.error("❌ Failed to extract reference data:", refDataError);
+          // Don't fail the request if reference data extraction fails
         }
+        
+        return res.json(analysis);
       }
-
-      // No existing analysis found
-      return res.status(404).json({ message: "Narrative analysis not found. Generate one first." });
     } catch (error) {
       console.error("Error fetching narrative analysis:", error);
       res.status(500).json({ message: "Failed to fetch narrative analysis" });
