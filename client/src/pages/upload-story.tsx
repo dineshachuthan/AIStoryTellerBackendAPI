@@ -38,7 +38,7 @@ export default function UploadStory() {
   const [isLoadingContent, setIsLoadingContent] = useState(false);
   
   // Fetch existing story if storyId is present
-  const { data: existingStory, isLoading: storyLoading } = useQuery({
+  const { data: existingStory, isLoading: storyLoading, error: storyError } = useQuery({
     queryKey: ['/api/stories', storyId],
     queryFn: () => fetch(`/api/stories/${storyId}`).then(res => res.json()),
     enabled: !!storyId,
@@ -46,6 +46,16 @@ export default function UploadStory() {
 
   // Type guard for existingStory
   const story = existingStory as any;
+  
+  // Debug logging for story loading
+  console.log('Story query state:', { 
+    storyId, 
+    isLoading: storyLoading, 
+    hasData: !!existingStory, 
+    error: storyError,
+    storyTitle: story?.title,
+    hasContent: !!story?.content
+  });
 
   // Audio transcription mutation for intermediate pages
   const transcribeAudioMutation = useMutation({
