@@ -569,15 +569,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Content has changed, regenerate analysis
           const analysis = await analyzeStoryContentWithHashCache(storyId, story.content, userId);
           
-          console.log(`[DEBUG] Generated analysis for story ${storyId}:`, {
-            hasEmotions: !!(analysis.emotions && analysis.emotions.length > 0),
-            emotionCount: analysis.emotions?.length || 0,
-            emotions: analysis.emotions?.map(e => `${e.emotion} (${e.intensity})`) || [],
-            hasSoundEffects: !!(analysis.soundEffects && analysis.soundEffects.length > 0),
-            soundEffectCount: analysis.soundEffects?.length || 0,
-            hasCharacters: !!(analysis.characters && analysis.characters.length > 0),
-            characterCount: analysis.characters?.length || 0
-          });
+
           
           // Extract and store reference data from analysis
           console.log("🔄 Extracting reference data from narrative analysis...");

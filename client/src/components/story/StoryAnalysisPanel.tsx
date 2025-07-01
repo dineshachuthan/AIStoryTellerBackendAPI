@@ -59,14 +59,7 @@ export function StoryAnalysisPanel({
 }: StoryAnalysisPanelProps) {
   const { toast } = useToast();
   
-  console.log('StoryAnalysisPanel received:', {
-    hasAnalysis: !!analysis,
-    analysisType: typeof analysis,
-    hasEmotions: !!(analysis?.emotions),
-    emotionCount: analysis?.emotions?.length || 0,
-    emotions: analysis?.emotions?.map((e: any) => `${e.emotion} (${e.intensity})`) || [],
-    analysisKeys: analysis ? Object.keys(analysis) : []
-  });
+
 
   // Handle case where analysis is null or undefined
   if (!analysis) {
