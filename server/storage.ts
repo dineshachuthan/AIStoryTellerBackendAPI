@@ -401,11 +401,7 @@ export class DatabaseStorage implements IStorage {
     }
 
     // Check if content has changed using hash comparison
-    const currentHash = ContentHashService.generateContentHash(currentContent);
-    const storedHash = analysis.contentHash;
     const needsRegeneration = ContentHashService.hasContentChanged(currentContent, analysis.contentHash);
-    
-    console.log(`[Content Hash Debug] Story ${storyId}: currentHash=${currentHash.substring(0, 12)}..., storedHash=${storedHash?.substring(0, 12) || 'null'}..., needsRegeneration=${needsRegeneration}`);
     
     return { 
       analysis: analysis || undefined, 
