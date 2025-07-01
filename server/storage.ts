@@ -414,14 +414,37 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createStoryAnalysisWithContentHash(analysisData: InsertStoryAnalysis, contentHash: string): Promise<StoryAnalysis> {
-    const [analysis] = await db
-      .insert(storyAnalyses)
-      .values({
-        ...analysisData,
-        contentHash
-      })
-      .returning();
-    return analysis;
+    try {
+      // Try to insert new analysis
+      const [analysis] = await db
+        .insert(storyAnalyses)
+        .values({
+          ...analysisData,
+          contentHash
+        })
+        .returning();
+      return analysis;
+    } catch (error: any) {
+      // If duplicate key error, update existing analysis instead
+      if (error.code === '23505') {
+        console.log(`[Content Hash Cache] Updating existing analysis for story ${analysisData.storyId} with new content hash`);
+        const [updatedAnalysis] = await db
+          .update(storyAnalyses)
+          .set({
+            analysisData: analysisData.analysisData,
+            contentHash,
+            updatedAt: new Date(),
+            generatedBy: analysisData.generatedBy
+          })
+          .where(and(
+            eq(storyAnalyses.storyId, analysisData.storyId),
+            eq(storyAnalyses.analysisType, analysisData.analysisType)
+          ))
+          .returning();
+        return updatedAnalysis;
+      }
+      throw error;
+    }
   }
 
   // Minimal implementation of required methods for compilation
