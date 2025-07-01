@@ -497,9 +497,9 @@ export function EnhancedVoiceRecorder({
         </div>
 
         {/* Fixed bottom section for recorded sample info and controls */}
-        <div className="mt-auto">
+        <div className="mt-4">
           {/* Recorded Sample Info and Controls - Fixed height section */}
-          <div className="h-10 mb-3">
+          <div className="h-10 mb-2">
             {recordedSample && (
               <div className="p-2 bg-gray-900 border border-gray-600 rounded-md h-full">
                 <div className="flex items-center gap-2 text-xs h-full">
@@ -536,7 +536,7 @@ export function EnhancedVoiceRecorder({
           </div>
 
           {/* Control Buttons with Tooltips - Compact at bottom */}
-          <div className="flex gap-2 justify-center mt-2">
+          <div className="flex gap-2 justify-center">
               {/* Single Play button - prioritizes new recording over existing */}
               <Tooltip>
                 <TooltipTrigger asChild>
