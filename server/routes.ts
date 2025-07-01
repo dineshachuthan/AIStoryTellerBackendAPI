@@ -4524,7 +4524,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .map(sample => sample.sampleType || '');
       
       const progress = await getVoiceSampleProgress(completedSamples);
-      res.json(progress);
+      
+      // Add the actual recorded samples for visual indicators
+      const recordedSamples = userVoiceSamples
+        .filter(sample => sample.isCompleted)
+        .map(sample => ({
+          emotion: sample.sampleType,
+          audioUrl: sample.audioUrl,
+          recordedAt: sample.recordedAt,
+          duration: sample.duration,
+          isLocked: sample.isLocked || false
+        }));
+      
+      res.json({
+        ...progress,
+        recordedSamples
+      });
     } catch (error: any) {
       console.error('Error fetching voice modulation progress:', error);
       res.status(500).json({ message: 'Failed to fetch progress' });
