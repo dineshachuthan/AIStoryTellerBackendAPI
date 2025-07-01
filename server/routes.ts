@@ -8,6 +8,7 @@ import { setupAuth, requireAuth, requireAdmin, hashPassword } from "./auth";
 import passport from 'passport';
 import { insertUserSchema, insertLocalUserSchema } from "@shared/schema";
 import { analyzeStoryContent, generateCharacterImage, transcribeAudio, analyzeStoryContentWithHashCache } from "./ai-analysis";
+import { ContentHashService } from "./content-hash-service";
 import { generateRolePlayAnalysis, enhanceExistingRolePlay, generateSceneDialogue } from "./roleplay-analysis";
 import { rolePlayAudioService } from "./roleplay-audio-service";
 import { collaborativeRoleplayService } from "./collaborative-roleplay-service";
@@ -552,30 +553,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Check if we have existing analysis data in the story
-      if (story.extractedCharacters && story.extractedCharacters.length > 0) {
+      // Check if we have existing narrative analysis
+      const existingAnalysis = await storage.getStoryAnalysis(storyId, 'narrative');
+      
+      if (existingAnalysis) {
         // Check if content has changed since last analysis using content hash
         const currentContentHash = ContentHashService.generateContentHash(story.content);
-        const storedContentHash = story.contentHash;
+        const storedContentHash = existingAnalysis.contentHash;
         
         if (storedContentHash && currentContentHash === storedContentHash) {
-          const existingAnalysis = {
-            characters: story.extractedCharacters,
-            emotions: story.extractedEmotions || [],
-            soundEffects: story.extractedSoundEffects || [],
-            summary: story.summary || "",
-            category: story.category || "General",
-            genre: story.genre || "Fiction",
-            themes: story.themes || [],
-            suggestedTags: story.tags || [],
-            emotionalTags: story.emotionalTags || [],
-            readingTime: story.readingTime || 5,
-            ageRating: story.ageRating || 'general',
-            isAdultContent: story.isAdultContent || false
-          };
-          
           console.log(`Retrieved existing narrative analysis for story ${storyId} (content unchanged)`);
-          return res.json(existingAnalysis);
+          return res.json(existingAnalysis.analysisData);
         } else {
           console.log(`Content changed for story ${storyId}, regenerating narrative analysis`);
           // Content has changed, regenerate analysis
