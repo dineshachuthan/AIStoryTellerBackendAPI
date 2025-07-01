@@ -564,13 +564,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Content has changed, regenerate analysis
         const analysis = await analyzeStoryContentWithHashCache(storyId, story.content, userId);
         
-        // When content changes, also invalidate roleplay analysis for consistency
-        console.log(`Content changed - also invalidating roleplay analysis for story ${storyId}`);
+        // When content changes, also regenerate roleplay analysis for consistency
+        console.log(`Content changed - also triggering roleplay analysis regeneration for story ${storyId}`);
         try {
-          await storage.deleteStoryAnalysis(storyId, 'roleplay');
-          console.log("✅ Roleplay analysis invalidated - will regenerate on next request");
-        } catch (deleteError) {
-          console.log("⚠️ Failed to invalidate roleplay analysis:", deleteError);
+          // Force regenerate roleplay analysis by updating with new content hash
+          const { generateRolePlayAnalysis } = await import("./roleplay-analysis");
+          const { getVideoProviderConfig } = await import("./video-config");
+          const videoConfig = getVideoProviderConfig();
+          const targetDurationSeconds = videoConfig.roleplay?.targetDurationSeconds || 60;
+          
+          const rolePlayAnalysis = await generateRolePlayAnalysis(story.content, [], targetDurationSeconds);
+          const { ContentHashService } = await import("./content-hash-service");
+          const contentHash = ContentHashService.generateContentHash(story.content);
+          
+          await storage.updateStoryAnalysis(storyId, 'roleplay', rolePlayAnalysis, userId);
+          console.log("✅ Roleplay analysis regenerated successfully");
+        } catch (roleplayError) {
+          console.log("⚠️ Failed to regenerate roleplay analysis:", roleplayError);
         }
         
         // Extract and store reference data from analysis

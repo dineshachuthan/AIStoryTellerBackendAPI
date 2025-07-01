@@ -654,6 +654,13 @@ Preferred communication style: Simple, everyday language.
 - No convenience hardcoding under any circumstances
 - Every function must connect to real data sources or fail authentically
 
+**CRITICAL APPROVAL RULE: NO SCHEMA/ENDPOINT CHANGES WITHOUT PERMISSION**
+- DO NOT create or modify database schema without explicit approval
+- DO NOT add new REST endpoints without explicit approval  
+- DO NOT add new routes without explicit approval
+- Always request permission before any structural changes to API or database
+- Focus on using existing infrastructure and endpoints when possible
+
 **CRITICAL PROVIDER RULE: NO FALLBACK PROVIDERS ANYWHERE**
 - ZERO TOLERANCE for fallback provider logic in voice or video systems
 - Only the configured primary provider should be used - no secondary options

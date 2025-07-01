@@ -209,7 +209,6 @@ export interface IStorage {
   getStoryAnalysis(storyId: number, analysisType: 'narrative' | 'roleplay'): Promise<StoryAnalysis | undefined>;
   createStoryAnalysis(analysis: InsertStoryAnalysis): Promise<StoryAnalysis>;
   updateStoryAnalysis(storyId: number, analysisType: 'narrative' | 'roleplay', analysisData: any, userId: string): Promise<StoryAnalysis>;
-  deleteStoryAnalysis(storyId: number, analysisType: 'narrative' | 'roleplay'): Promise<void>;
   
   // Content Hash-Based Cache Invalidation
   getStoryAnalysisWithContentCheck(storyId: number, analysisType: 'narrative' | 'roleplay', currentContent: string): Promise<{ analysis: StoryAnalysis | undefined, needsRegeneration: boolean }>;
