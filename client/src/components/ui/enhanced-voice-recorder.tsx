@@ -110,6 +110,14 @@ export function EnhancedVoiceRecorder({
   };
 
   const statusConfig = getStatusConfig();
+  
+  // Debug log to check status
+  console.log('EnhancedVoiceRecorder status:', { 
+    isLocked, 
+    recordedSample: !!recordedSample, 
+    statusLabel: statusConfig.label,
+    emotionName 
+  });
 
   const progressPercentage = (recordingTime / maxRecordingTime) * 100;
 
