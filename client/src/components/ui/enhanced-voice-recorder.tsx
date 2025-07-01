@@ -329,7 +329,7 @@ export function EnhancedVoiceRecorder({
     <TooltipProvider>
       <div className={`w-full max-w-sm mx-auto ${className}`}>
         {/* Radio/TV Style Voice Recorder Panel - Dynamic background for recorded samples */}
-        <div className={`rounded-2xl p-4 shadow-2xl border h-[380px] flex flex-col overflow-hidden ${
+        <div className={`rounded-2xl p-4 shadow-2xl border flex flex-col ${
           hasRecording 
             ? 'bg-gradient-to-br from-blue-900/70 to-purple-900/70 border-blue-500/50' 
             : 'bg-gradient-to-br from-gray-900 to-gray-800 border-gray-700'
@@ -494,8 +494,8 @@ export function EnhancedVoiceRecorder({
               </div>
             </div>
 
-            {/* Sample Text Display */}
-            <div className="flex-1">
+            {/* Sample Text Display - Compact */}
+            <div className="mb-2">
               <div className="text-white text-sm leading-relaxed">
                 <span className="italic text-blue-200">
                   "{(sampleText && sampleText.length > 150 ? sampleText.substring(0, 150) + '...' : sampleText) || 'Sample text not provided'}"
