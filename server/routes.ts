@@ -4435,19 +4435,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: 'User not authenticated' });
       }
 
-      const { voiceModulationService } = await import('./voice-modulation-service');
+      const { referenceDataService } = await import('./reference-data-service');
       const { voiceTrainingService } = await import('./voice-training-service');
       
-      // Get sample counts by category
-      const emotionTemplates = await voiceModulationService.getTemplates('emotion');
-      const soundTemplates = await voiceModulationService.getTemplates('sound');
-      const modulationTemplates = await voiceModulationService.getTemplates('modulation');
+      // Get sample counts by category using reference data service
+      const emotionTemplates = await referenceDataService.getVoiceSamplesByType('emotion');
+      const soundTemplates = await referenceDataService.getVoiceSamplesByType('sound'); 
+      const modulationTemplates = await referenceDataService.getVoiceSamplesByType('modulation');
       
-      const userModulations = await voiceModulationService.getUserVoiceModulations(userId);
+      // Get user's voice recordings by category
+      const userEmotionVoices = await storage.getUserEmotionVoices(userId);
       
-      const emotionCount = userModulations.filter(m => m.modulationType === 'emotion').length;
-      const soundCount = userModulations.filter(m => m.modulationType === 'sound').length;
-      const modulationCount = userModulations.filter(m => m.modulationType === 'modulation').length;
+      const emotionCount = userEmotionVoices.length;
+      const soundCount = 0; // Sound samples not implemented yet
+      const modulationCount = 0; // Modulation samples not implemented yet
       
       // Check training status for each category
       const trainingStatus = await voiceTrainingService.getTrainingStatus(userId);

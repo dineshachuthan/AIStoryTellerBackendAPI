@@ -42,11 +42,11 @@ export async function getVoiceSamplesByType(type: 'emotions' | 'sounds' | 'descr
     console.log(`Found ${refDataResults.length} reference data templates for ${type}`);
     
     // Priority 2: Supplement with story analysis data (for backwards compatibility)
-    const analyses = await db.select().from(storyAnalyses);
+    const stories = await db.select().from(storiesTable);
     const uniqueItems = new Set<string>(refDataResults.map(r => r.emotion));
     
-    for (const analysis of analyses) {
-      const analysisData = analysis.analysisData as any;
+    for (const story of stories) {
+      const analysisData = story.analysis as any;
       
       if (type === 'emotions' && analysisData?.emotions) {
         for (const emotion of analysisData.emotions) {
@@ -59,7 +59,7 @@ export async function getVoiceSamplesByType(type: 'emotions' | 'sounds' | 'descr
               sampleText: emotion.context || `Express ${emotion.emotion} emotion`,
               category: 'emotions',
               intensity: emotion.intensity || 5,
-              storySource: analysis.storyId,
+              storySource: story.id,
               isReferenceData: false
             });
           }
