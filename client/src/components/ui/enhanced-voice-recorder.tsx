@@ -395,7 +395,7 @@ export function EnhancedVoiceRecorder({
           </div>
           
           {/* Static Progress Bar - Always visible */}
-          <div className="mb-3">
+          <div className="mb-2">
             <div className="flex justify-between text-xs text-gray-400 mb-1">
               <span>{recordingState === 'recording' ? formatTime(recordingTime) : '00:00'}</span>
               <span>{formatTime(maxRecordingTime)}</span>
@@ -409,7 +409,7 @@ export function EnhancedVoiceRecorder({
           <div className="flex items-start space-x-4">
             
             {/* Recording Button */}
-            <div className="flex flex-col items-center mb-4">
+            <div className="flex flex-col items-center mb-2">
               <div className="relative mb-1">
                 {recordingState === 'idle' && (
                   <Tooltip>
@@ -497,7 +497,7 @@ export function EnhancedVoiceRecorder({
         </div>
 
         {/* Fixed bottom section for recorded sample info and controls */}
-        <div className="mt-4">
+        <div className="mt-2">
           {/* Recorded Sample Info and Controls - Fixed height section */}
           <div className="h-10 mb-2">
             {recordedSample && (
