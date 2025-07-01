@@ -149,53 +149,35 @@ export function VoiceSampleCard({
           </div>
         </div>
 
-        {/* Description */}
-        <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-          {description}
-        </p>
       </CardHeader>
 
       <CardContent className="pt-0 space-y-3">
-        {/* Sample text display */}
-        <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700">
-          <div className="flex items-start gap-2 mb-2">
-            <Volume2 className="w-3 h-3 text-gray-500 mt-0.5 shrink-0" />
-            <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
-              Read this text with {displayName.toLowerCase()} emotion:
-            </span>
-          </div>
-          <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
-            "{sampleText}"
-          </p>
-        </div>
 
         {/* Recording status and controls */}
         {isRecorded && recordedSample && (
           <div className="p-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2 min-w-0 flex-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handlePlayToggle}
-                  disabled={disabled}
-                  className="h-7 w-7 p-0 shrink-0"
-                >
-                  {isPlaying ? (
-                    <Pause className="w-3 h-3" />
-                  ) : (
-                    <Play className="w-3 h-3" />
-                  )}
-                </Button>
-                
-                <div className="text-xs text-muted-foreground min-w-0">
-                  <div className="flex items-center gap-1">
-                    <Clock className="w-3 h-3 shrink-0" />
-                    <span>{recordedSample.duration ? `${recordedSample.duration}s` : 'Unknown'}</span>
-                  </div>
-                  <div className="text-[10px] opacity-75 truncate">
-                    {recordedSample.recordedAt.toLocaleDateString()}
-                  </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handlePlayToggle}
+                disabled={disabled}
+                className="h-6 w-6 p-0 shrink-0"
+              >
+                {isPlaying ? (
+                  <Pause className="w-3 h-3" />
+                ) : (
+                  <Play className="w-3 h-3" />
+                )}
+              </Button>
+              
+              <div className="text-xs text-muted-foreground flex-1 min-w-0">
+                <div className="flex items-center gap-1">
+                  <Clock className="w-3 h-3 shrink-0" />
+                  <span>{recordedSample.duration ? `${recordedSample.duration}s` : 'Unknown'}</span>
+                </div>
+                <div className="text-[10px] opacity-75 truncate">
+                  {recordedSample.recordedAt.toLocaleDateString()}
                 </div>
               </div>
 
@@ -205,7 +187,7 @@ export function VoiceSampleCard({
                   size="sm"
                   onClick={onDeleteSample}
                   disabled={disabled}
-                  className="h-7 px-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950 shrink-0"
+                  className="h-6 w-12 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950 shrink-0"
                 >
                   <span className="text-[10px]">Delete</span>
                 </Button>
