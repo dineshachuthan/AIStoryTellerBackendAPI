@@ -377,6 +377,15 @@ export default function StoryAnalysis() {
         content: story.content || "",
         title: narrativeResponse.title || story.title || "Untitled Story"
       };
+      
+      console.log('Setting analysis data:', {
+        hasAnalysis: !!narrativeResponse,
+        hasEmotions: !!(narrativeResponse?.emotions),
+        emotionCount: narrativeResponse?.emotions?.length || 0,
+        emotions: narrativeResponse?.emotions?.map((e: any) => `${e.emotion} (${e.intensity})`) || [],
+        analysisStructure: Object.keys(narrativeResponse || {})
+      });
+      
       setAnalysisData(narrativeAnalysis);
       setAnalysisProgress(prev => ({ ...prev, narrative: true }));
 
