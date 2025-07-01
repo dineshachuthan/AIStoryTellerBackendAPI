@@ -36,6 +36,7 @@ export default function UploadStory() {
   const [selectedLanguage, setSelectedLanguage] = useState("en-US");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isLoadingContent, setIsLoadingContent] = useState(false);
+  const [originalContent, setOriginalContent] = useState(""); // Track original content for change detection
   
   // Fetch existing story if storyId is present
   const { data: existingStory, isLoading: storyLoading, error: storyError } = useQuery({
@@ -103,6 +104,7 @@ export default function UploadStory() {
     if (storyId && story && !storyLoading) {
       setStoryTitle(story.title || "");
       setStoryContent(story.content || "");
+      setOriginalContent(story.content || ""); // Track original content for change detection
       setHasLoadedOnce(true);
     }
   }, [storyId, story, storyLoading]);
@@ -206,11 +208,17 @@ export default function UploadStory() {
 
       console.log('Story content updated:', updatedStory);
       
-      toast({
-        title: "Content Saved",
-        description: "Your story content has been saved.",
-        duration: 2000, // Auto-dismiss after 2 seconds
-      });
+      // Only show "Content Saved" if content actually changed
+      const hasContentChanged = storyContent.trim() !== originalContent.trim();
+      if (hasContentChanged) {
+        toast({
+          title: "Content Saved",
+          description: "Your story content has been saved.",
+          duration: 2000, // Auto-dismiss after 2 seconds
+        });
+        // Update the original content after successful save
+        setOriginalContent(storyContent);
+      }
     } catch (error) {
       console.error("Content update error:", error);
       toast({
