@@ -76,6 +76,12 @@ export function EnhancedVoiceRecorder({
     return `${seconds.toString().padStart(2, '0')}s`;
   };
 
+  // Calculate if we have a recording (either new temp recording or existing)
+  const hasRecording = !!tempRecording || !!recordedSample;
+
+  // Get the current recording URL for playback
+  const currentRecordingUrl = tempRecording?.url || recordedSample?.audioUrl;
+
   const progressPercentage = (recordingTime / maxRecordingTime) * 100;
 
   useEffect(() => {
@@ -209,7 +215,7 @@ export function EnhancedVoiceRecorder({
   };
 
   const playExistingRecording = () => {
-    if (!existingRecording) return;
+    if (!recordedSample?.audioUrl) return;
     
     if (audioRef.current) {
       audioRef.current.pause();
@@ -217,11 +223,15 @@ export function EnhancedVoiceRecorder({
       setIsPlayingExisting(false);
     }
 
-    audioRef.current = new Audio(existingRecording.url);
+    audioRef.current = new Audio(recordedSample.audioUrl);
     audioRef.current.onended = () => setIsPlayingExisting(false);
     audioRef.current.onerror = () => setIsPlayingExisting(false);
     audioRef.current.play().catch(() => setIsPlayingExisting(false));
     setIsPlayingExisting(true);
+    
+    if (onPlaySample) {
+      onPlaySample(recordedSample.audioUrl);
+    }
   };
 
 
@@ -238,6 +248,9 @@ export function EnhancedVoiceRecorder({
       setCountdownTime(3);
       
       // Then trigger the actual save
+      if (onSaveSample) {
+        onSaveSample();
+      }
       onRecordingComplete(blob, url);
     }
   };
@@ -317,7 +330,7 @@ export function EnhancedVoiceRecorder({
       <div className={`w-full max-w-sm mx-auto ${className}`}>
         {/* Radio/TV Style Voice Recorder Panel - Dynamic background for recorded samples */}
         <div className={`rounded-2xl p-4 shadow-2xl border h-[380px] flex flex-col overflow-hidden ${
-          isRecorded || existingRecording 
+          hasRecording 
             ? 'bg-gradient-to-br from-blue-900/70 to-purple-900/70 border-blue-500/50' 
             : 'bg-gradient-to-br from-gray-900 to-gray-800 border-gray-700'
         }`}>
@@ -327,11 +340,11 @@ export function EnhancedVoiceRecorder({
           <div className="flex items-center">
             <Radio className="w-5 h-5 text-red-400 mr-2" />
             <div className="flex items-center gap-2">
-              {statusConfig?.icon || (isRecorded ? (
+              {hasRecording ? (
                 <CheckCircle className="w-4 h-4 text-green-400" />
               ) : (
                 <Circle className="w-4 h-4 text-gray-400" />
-              ))}
+              )}
               <span className="text-sm font-medium text-gray-300">
                 {emotionName || 'Voice Recorder'}
               </span>
@@ -469,7 +482,7 @@ export function EnhancedVoiceRecorder({
               
               {/* Instructions under mic - Fixed height to prevent flickering */}
               <div className="text-xs text-gray-400 text-center leading-tight h-6 flex items-center justify-center">
-                {existingRecording || tempRecording ? (
+                {recordedSample || tempRecording ? (
                   <div>
                     Hold to<br />re-record
                   </div>
@@ -516,16 +529,7 @@ export function EnhancedVoiceRecorder({
                     </div>
                   </div>
 
-                  {onDeleteSample && !isLocked && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={onDeleteSample}
-                      className="h-6 text-red-400 hover:text-red-300 text-[10px] px-2"
-                    >
-                      Delete
-                    </Button>
-                  )}
+
                 </div>
               </div>
             )}
@@ -547,7 +551,7 @@ export function EnhancedVoiceRecorder({
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>{tempRecording ? "Play new recording" : existingRecording ? "Play saved recording" : "No recording to play"}</p>
+                  <p>{tempRecording ? "Play new recording" : recordedSample ? "Play saved recording" : "No recording to play"}</p>
                 </TooltipContent>
               </Tooltip>
               
