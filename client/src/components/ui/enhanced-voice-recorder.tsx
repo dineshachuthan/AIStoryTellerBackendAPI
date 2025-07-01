@@ -17,30 +17,22 @@ interface EnhancedVoiceRecorderProps {
     recording: string;
     instructions: string;
   };
-  existingRecording?: {
-    url: string;
-    recordedAt: Date;
-  };
+  // Optional context for voice samples
   sampleText?: string;
-  emotionDescription?: string;
   emotionName?: string;
-  category?: string;
-  isRecorded?: boolean;
-  isLocked?: boolean;
   intensity?: number;
-  statusConfig?: {
-    icon: React.ReactNode;
-    color: string;
-    label: string;
-    description: string;
-  };
-  onPlaySample?: (audioUrl: string) => void;
-  onDeleteSample?: () => void;
+  isLocked?: boolean;
+  // Optional existing recording display
   recordedSample?: {
     audioUrl: string;
     recordedAt: Date;
     duration?: number;
   };
+  onPlaySample?: (audioUrl: string) => void;
+  onSaveSample?: () => void;
+  // Simple mode for narrative analysis
+  simpleMode?: boolean;
+  title?: string;
 }
 
 export function EnhancedVoiceRecorder({
@@ -53,18 +45,15 @@ export function EnhancedVoiceRecorder({
     recording: "Recording...",
     instructions: "Press and hold to record"
   },
-  existingRecording,
   sampleText,
-  emotionDescription,
   emotionName,
-  category,
-  isRecorded = false,
-  isLocked = false,
   intensity,
-  statusConfig,
+  isLocked = false,
+  recordedSample,
   onPlaySample,
-  onDeleteSample,
-  recordedSample
+  onSaveSample,
+  simpleMode = false,
+  title
 }: EnhancedVoiceRecorderProps) {
   const [recordingState, setRecordingState] = useState<'idle' | 'countdown' | 'recording' | 'recorded'>('idle');
   const [countdownTime, setCountdownTime] = useState(3);
@@ -389,10 +378,17 @@ export function EnhancedVoiceRecorder({
 
         {/* Main Recording Display - Flexible container */}
         <div className="bg-black rounded-lg p-4 border border-gray-600 flex-1 flex flex-col">
-          {/* Title */}
-          <div className="text-blue-300 text-xs font-medium mb-2 text-left tracking-wide">
-            📖 Read this text with {emotionName ? emotionName.toLowerCase() : 'the required'} emotion
-          </div>
+          {/* Title and Instructions */}
+          {!simpleMode && sampleText && (
+            <div className="text-blue-300 text-xs font-medium mb-2 text-left tracking-wide">
+              📖 {emotionName ? `Read this text with ${emotionName.toLowerCase()} emotion` : 'Read this text aloud'}
+            </div>
+          )}
+          {simpleMode && title && (
+            <div className="text-blue-300 text-xs font-medium mb-2 text-left tracking-wide">
+              🎙️ {title}
+            </div>
+          )}
           
           {/* Static Progress Bar - Always visible */}
           <div className="mb-2">
