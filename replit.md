@@ -169,6 +169,14 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Priority**: Medium (requested but deferred for future implementation)
 
 ## Changelog
+- July 01, 2025: ✅ **STORY EDITING FUNCTIONALITY FIXED** - Edit Button Now Properly Loads Story Content
+  - **RESOLVED FORM POPULATION BUG**: Removed hasLoadedOnce dependency that prevented existing story content from loading in editor
+  - **ENHANCED CONTENT HASH DETECTION**: Added content hash checking to narrative analysis GET route to detect story changes
+  - **AUTOMATIC RE-ANALYSIS TRIGGER**: System now properly regenerates AI analysis when story content is modified during editing
+  - **VALIDATED ESM SOUND EFFECTS**: Confirmed sound effects extraction working correctly in updated analysis system
+  - **CLEANED UP DEBUG CODE**: Removed debugging logs after successful fix validation
+  - **EDIT WORKFLOW OPERATIONAL**: Users can now click Edit button → story loads in editor → modify content → automatic analysis updates
+  - Story editing now fully functional with proper content loading and intelligent cache invalidation on content changes
 - July 01, 2025: ✅ **CRITICAL ESM CATEGORIZATION FIX** - Sound Effects Now Properly Extracted from Stories
   - **FIXED OpenAI ANALYSIS PROMPT**: Added comprehensive soundEffects extraction to AI analysis prompt with environmental and audio effects
   - **CORRECTED ESM CATEGORY 2**: Replaced incorrect voice characteristics with proper environmental sounds (dog barking, rain, footsteps, etc.)
