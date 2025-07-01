@@ -68,6 +68,7 @@ export default function VoiceSamples() {
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [playingAudio, setPlayingAudio] = useState<string | null>(null);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
+  const [recordedSamples, setRecordedSamples] = useState<Array<{emotion: string, audioUrl: string, isLocked: boolean}>>([]);
   const queryClient = useQueryClient();
 
   // Helper function to check if any voice cloning is in progress
@@ -87,6 +88,13 @@ export default function VoiceSamples() {
   const { data: progress, isLoading: progressLoading } = useQuery({
     queryKey: ["/api/voice-modulations/progress"],
   });
+
+  // Initialize recordedSamples state from progress data on load
+  useEffect(() => {
+    if (progress && (progress as any)?.recordedSamples) {
+      setRecordedSamples((progress as any).recordedSamples);
+    }
+  }, [progress]);
 
   // Get voice cloning progress - ONLY when user has recorded samples
   const hasRecordedSamples = progress && (progress as any)?.recordedSamples?.length > 0;
@@ -139,6 +147,24 @@ export default function VoiceSamples() {
       return response.json();
     },
     onSuccess: (data, variables) => {
+      // Immediately update recordedSamples state for real-time visual updates
+      const newSample = {
+        emotion: variables.emotion,
+        audioUrl: data.audioUrl,
+        isLocked: data.isLocked || false
+      };
+      
+      setRecordedSamples(prev => {
+        const existing = prev.find(s => s.emotion === variables.emotion);
+        if (existing) {
+          // Update existing sample
+          return prev.map(s => s.emotion === variables.emotion ? newSample : s);
+        } else {
+          // Add new sample
+          return [...prev, newSample];
+        }
+      });
+      
       // Use setTimeout to delay query invalidation to prevent flickering
       setTimeout(() => {
         queryClient.invalidateQueries({ queryKey: ["/api/voice-modulations/progress"] });
@@ -251,9 +277,8 @@ export default function VoiceSamples() {
     return recordedSamples.some((sample: any) => sample.emotion === modulationKey);
   };
 
-  // Get recorded sample for modulation
+  // Get recorded sample for modulation - using real-time state for immediate updates
   const getRecordedSample = (modulationKey: string): any | undefined => {
-    const recordedSamples = (progress as any)?.recordedSamples || [];
     return recordedSamples.find((sample: any) => sample.emotion === modulationKey);
   };
 
