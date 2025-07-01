@@ -108,13 +108,13 @@ export default function UploadStory() {
 
   // Separate effect for existing story data population
   useEffect(() => {
-    if (storyId && story && !storyLoading && !hasLoadedOnce) {
+    if (storyId && story && !storyLoading) {
       console.log('Loading existing story data:', { storyId, title: story.title, contentLength: story.content?.length });
       setStoryTitle(story.title || "");
       setStoryContent(story.content || "");
       setHasLoadedOnce(true);
     }
-  }, [storyId, story, storyLoading, hasLoadedOnce]);
+  }, [storyId, story, storyLoading]);
 
   // Modular OnLoad function to handle different page entry flows
   useEffect(() => {
