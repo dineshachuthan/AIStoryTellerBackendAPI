@@ -191,6 +191,9 @@ export default function VoiceSamples() {
       return response.json();
     },
     onSuccess: (data, modulationKey) => {
+      // Immediately remove from recordedSamples state for real-time visual updates
+      setRecordedSamples(prev => prev.filter(sample => sample.emotion !== modulationKey));
+      
       // Refresh progress data to update the UI
       queryClient.invalidateQueries({ queryKey: ["/api/voice-modulations/progress"] });
       queryClient.invalidateQueries({ queryKey: ["/api/voice-modulations/templates"] });
