@@ -497,12 +497,13 @@ export async function analyzeStoryContentWithHashCache(storyId: number, content:
 
     CRITICAL REQUIREMENTS:
     1. Extract ALL emotions present in the story - never limit to predefined lists
-    2. Include character voice traits (deep, raspy, melodic, etc.) and sound descriptions (whispering, shouting, laughing)
-    3. Capture mood categories (moodCategory) and emotional atmosphere
-    4. Generate compelling, creative titles that capture the story essence
-    5. Provide intensity ratings 1-10 for all emotions based on story context
-    6. Extract exact quotes that demonstrate emotional moments
-    7. Generate comprehensive themes and tags for story categorization`;
+    2. Extract ALL environmental sounds and audio effects mentioned in the story (dog barking, rain, footsteps, music, etc.)
+    3. Include character voice traits (deep, raspy, melodic, etc.) and sound descriptions (whispering, shouting, laughing)
+    4. Capture mood categories (moodCategory) and emotional atmosphere
+    5. Generate compelling, creative titles that capture the story essence
+    6. Provide intensity ratings 1-10 for all emotions based on story context
+    7. Extract exact quotes that demonstrate emotional moments
+    8. Generate comprehensive themes and tags for story categorization`;
 
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
