@@ -359,11 +359,6 @@ export function EnhancedVoiceRecorder({
                 {intensity}/10
               </Badge>
             )}
-            {category && (
-              <Badge variant={isRecorded ? "default" : "secondary"} className="text-xs">
-                {category}
-              </Badge>
-            )}
           </div>
           
           {/* Horizontal Equalizer Visual in Header */}
