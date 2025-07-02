@@ -123,7 +123,7 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
 
     modulations.forEach((modulation) => {
       const recordedSample = recordedSamples.find((r: any) => 
-        r.emotion === modulation.toLowerCase()
+        r.emotion === `modulations-${modulation.toLowerCase()}` || r.emotion === modulation.toLowerCase()
       );
       const isRecorded = !!recordedSample;
       const isLocked = recordedSample?.isLocked || false;
