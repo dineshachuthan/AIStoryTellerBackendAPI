@@ -76,9 +76,9 @@ export default function VoiceSamples() {
   // Helper function to check if any voice cloning is in progress
   const isAnyVoiceCloningInProgress = () => {
     if (!cloningProgress) return false;
-    return cloningProgress.emotions.isTraining || 
-           cloningProgress.sounds.isTraining || 
-           cloningProgress.modulations.isTraining;
+    return (cloningProgress as any).emotions?.isTraining || 
+           (cloningProgress as any).sounds?.isTraining || 
+           (cloningProgress as any).modulations?.isTraining;
   };
 
   // Get voice modulation templates (new system with three categories)
@@ -100,10 +100,10 @@ export default function VoiceSamples() {
 
   // Get voice cloning progress - ONLY when user has recorded samples
   const hasRecordedSamples = progress && (progress as any)?.recordedSamples?.length > 0;
-  const { data: cloningProgress, isLoading: cloningProgressLoading } = useQuery<CloningProgress>({
+  const { data: cloningProgress, isLoading: cloningProgressLoading } = useQuery({
     queryKey: ["/api/voice-cloning/progress"],
-    enabled: hasRecordedSamples, // Only fetch when user has actually recorded voice samples
-  });
+    enabled: !!hasRecordedSamples, // Only fetch when user has actually recorded voice samples
+  }) as any;
 
   // Manual voice cloning trigger mutation  
   const triggerVoiceCloning = useMutation({
@@ -152,8 +152,10 @@ export default function VoiceSamples() {
     },
     onSuccess: (data, variables) => {
       // Immediately update recordedSamples state for real-time visual updates
+      // Use the actual emotion name from backend response, not the variable
+      const actualEmotion = data.emotion || data.modulationKey || variables.emotion;
       const newSample = {
-        emotion: variables.emotion,
+        emotion: actualEmotion,
         audioUrl: data.audioUrl,
         isLocked: data.isLocked || false
       };
@@ -162,10 +164,10 @@ export default function VoiceSamples() {
         // Filter out any invalid entries with wrong emotion names
         const validPrev = prev.filter(s => s.emotion !== 'emotion' && s.emotion !== 'sound' && s.emotion !== 'modulation');
         
-        const existing = validPrev.find(s => s.emotion === variables.emotion);
+        const existing = validPrev.find(s => s.emotion === actualEmotion);
         if (existing) {
           // Update existing sample
-          return validPrev.map(s => s.emotion === variables.emotion ? newSample : s);
+          return validPrev.map(s => s.emotion === actualEmotion ? newSample : s);
         } else {
           // Add new sample
           return [...validPrev, newSample];

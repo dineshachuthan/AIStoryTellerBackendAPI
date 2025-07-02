@@ -131,7 +131,7 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
       templates.push({
         emotion: modulation.toLowerCase(),
         displayName: modulation.charAt(0).toUpperCase() + modulation.slice(1),
-        sampleText: `Express the ${modulation} feeling from this story`,
+        sampleText: `Express how do you narrate a ${modulation} expression in a story`,
         category: "modulations",
         intensity: 5, // Default intensity for modulations
         description: `${modulation} modulation for this story`,

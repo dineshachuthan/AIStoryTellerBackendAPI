@@ -713,7 +713,7 @@ async function populateEsmReferenceData(analysis: StoryAnalysis, userId: string)
           category: 3, // Modulations/Moods
           name: moodName,
           display_name: analysis.moodCategory,
-          sample_text: `Speak with a ${analysis.moodCategory} mood`,
+          sample_text: `Express how do you narrate a ${analysis.moodCategory} expression in a story`,
           intensity: 5,
           description: `Overall mood from story analysis`,
           ai_variations: {
