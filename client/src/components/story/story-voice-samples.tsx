@@ -1,11 +1,15 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { VoiceSampleCard } from "@/components/ui/voice-sample-card";
-import { AlertCircle } from "lucide-react";
+import { Mic, Volume2, Users } from "lucide-react";
+import { AUDIO_PROCESSING_CONFIG } from "@shared/audio-config";
+import { VoiceMessageService } from "@shared/i18n-config";
 
 interface StoryAnalysis {
   emotions: Array<{
@@ -28,224 +32,274 @@ interface StoryAnalysis {
 
 interface StoryVoiceSamplesProps {
   storyId: number;
-  storyAnalysis: StoryAnalysis;
-  userVoiceEmotions: Record<string, boolean>;
-  onEmotionRecorded: (emotion: string, audioBlob: Blob) => void;
-  onPlayEmotionSample: (emotion: string, intensity: number) => Promise<void>;
-  onPlayUserRecording: (emotion: string) => Promise<void>;
-  isPlayingSample: string;
-  isPlayingUserRecording: string;
+  analysisData: StoryAnalysis;
 }
 
-export default function StoryVoiceSamples({ 
-  storyId, 
-  storyAnalysis, 
-  userVoiceEmotions,
-  onEmotionRecorded,
-  onPlayEmotionSample,
-  onPlayUserRecording,
-  isPlayingSample,
-  isPlayingUserRecording 
-}: StoryVoiceSamplesProps) {
-  const [selectedTab, setSelectedTab] = useState("emotions");
+interface VoiceTemplate {
+  emotion: string;
+  displayName: string;
+  sampleText: string;
+  category: string;
+  intensity: number;
+  description: string;
+  recordedSample?: any;
+  isRecorded: boolean;
+  isLocked: boolean;
+  sortOrder: number;
+}
 
-  // Debug logging
-  console.log('StoryVoiceSamples received storyAnalysis:', storyAnalysis);
-  console.log('StoryAnalysis type:', typeof storyAnalysis);
-  console.log('Has emotions:', !!storyAnalysis?.emotions);
-  console.log('Emotions array:', storyAnalysis?.emotions);
+export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceSamplesProps) {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [selectedCategory, setSelectedCategory] = useState<string>("emotions");
 
-  // Early return if no story analysis
-  if (!storyAnalysis) {
+  // Get recorded samples from global voice samples system
+  const { data: progress } = useQuery({
+    queryKey: ["/api/voice-modulations/progress"],
+    enabled: !!user?.id,
+  });
+  
+  const recordedSamples: any[] = ((progress as any)?.recordedSamples) || [];
+
+  // Helper function to find recorded sample with category-aware matching
+  const findRecordedSample = (itemName: string, category: string) => {
+    return recordedSamples.find((r: any) => 
+      r.emotion === `${category}-${itemName.toLowerCase()}` || r.emotion === itemName.toLowerCase()
+    );
+  };
+
+  // Helper function to generate category-aware emotion key for saving
+  const generateEmotionKey = (itemName: string, category: string) => {
+    return `${category}-${itemName.toLowerCase()}`;
+  };
+
+  // Generate story-specific templates from analysis
+  const generateStoryTemplates = (): VoiceTemplate[] => {
+    const templates: VoiceTemplate[] = [];
+
+    // Add emotions from story analysis
+    if (analysisData.emotions) {
+      analysisData.emotions.forEach((emotion) => {
+        const recordedSample = findRecordedSample(emotion.emotion, 'emotions');
+        const isRecorded = !!recordedSample;
+        const isLocked = recordedSample?.isLocked || false;
+
+        templates.push({
+          emotion: emotion.emotion.toLowerCase(),
+          displayName: emotion.emotion.charAt(0).toUpperCase() + emotion.emotion.slice(1),
+          sampleText: emotion.quote || emotion.context,
+          category: "emotions",
+          intensity: emotion.intensity,
+          description: emotion.context,
+          recordedSample,
+          isRecorded,
+          isLocked,
+          sortOrder: isLocked ? 3 : (isRecorded ? 2 : 1)
+        });
+      });
+    }
+
+    // Add sounds from story analysis
+    if (analysisData.soundEffects) {
+      analysisData.soundEffects.forEach((sound) => {
+        const recordedSample = findRecordedSample(sound.sound, 'sounds');
+        const isRecorded = !!recordedSample;
+        const isLocked = recordedSample?.isLocked || false;
+
+        templates.push({
+          emotion: sound.sound.toLowerCase(),
+          displayName: sound.sound.charAt(0).toUpperCase() + sound.sound.slice(1),
+          sampleText: sound.quote || sound.context,
+          category: "sounds",
+          intensity: sound.intensity,
+          description: sound.context,
+          recordedSample,
+          isRecorded,
+          isLocked,
+          sortOrder: isLocked ? 3 : (isRecorded ? 2 : 1)
+        });
+      });
+    }
+
+    // Add modulations from story analysis
+    const modulations: string[] = [];
+    if (analysisData.moodCategory) modulations.push(analysisData.moodCategory);
+    if (analysisData.genre) modulations.push(analysisData.genre);
+    if (analysisData.subGenre) modulations.push(analysisData.subGenre);
+    if (analysisData.emotionalTags) modulations.push(...analysisData.emotionalTags);
+
+    modulations.forEach((modulation) => {
+      const recordedSample = findRecordedSample(modulation, 'modulations');
+      const isRecorded = !!recordedSample;
+      const isLocked = recordedSample?.isLocked || false;
+
+      templates.push({
+        emotion: modulation.toLowerCase(),
+        displayName: modulation.charAt(0).toUpperCase() + modulation.slice(1),
+        sampleText: `Express how do you narrate a ${modulation} expression in a story`,
+        category: "modulations",
+        intensity: 5, // Default intensity for modulations
+        description: `${modulation} modulation for this story`,
+        recordedSample,
+        isRecorded,
+        isLocked,
+        sortOrder: isLocked ? 3 : (isRecorded ? 2 : 1)
+      });
+    });
+
+    return templates;
+  };
+
+  const storyTemplates = generateStoryTemplates();
+
+  // Filter templates by category
+  const filteredTemplates = storyTemplates.filter(template => 
+    template.category === selectedCategory
+  );
+
+  // Sort templates (same as voice-samples page)
+  const sortedTemplates = filteredTemplates.sort((a, b) => a.sortOrder - b.sortOrder);
+
+  // Get categories with counts
+  const categories = [
+    { 
+      id: "emotions", 
+      name: "Emotions", 
+      count: storyTemplates.filter(t => t.category === "emotions").length,
+      icon: <Mic className="w-4 h-4" />
+    },
+    { 
+      id: "sounds", 
+      name: "Sounds", 
+      count: storyTemplates.filter(t => t.category === "sounds").length,
+      icon: <Volume2 className="w-4 h-4" />
+    },
+    { 
+      id: "modulations", 
+      name: "Modulations", 
+      count: storyTemplates.filter(t => t.category === "modulations").length,
+      icon: <Users className="w-4 h-4" />
+    }
+  ];
+
+  // Voice recording mutation (using global voice samples API)
+  const recordVoiceMutation = useMutation({
+    mutationFn: async ({ emotion, audioBlob }: { emotion: string; audioBlob: Blob }) => {
+      const formData = new FormData();
+      formData.append('audio', audioBlob, 'voice-sample.mp3');
+      
+      // Create modulationKey using the same helper function as display logic
+      const modulationKey = generateEmotionKey(emotion, selectedCategory);
+      formData.append('modulationKey', modulationKey);
+      formData.append('modulationType', selectedCategory);
+
+      return apiRequest('/api/voice-modulations/record', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+      });
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/voice-modulations/progress"] });
+      const successMsg = VoiceMessageService.voiceSaved(user?.email || 'User', variables.emotion, selectedCategory);
+      toast({
+        title: "Voice sample recorded",
+        description: successMsg.message,
+      });
+    },
+    onError: (error: any, variables) => {
+      const errorMsg = VoiceMessageService.voiceSaveFailed(variables.emotion, selectedCategory);
+      toast({
+        title: "Recording failed",
+        description: error.message || errorMsg.message,
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleRecordingComplete = (emotion: string) => (audioBlob: Blob) => {
+    recordVoiceMutation.mutate({ emotion, audioBlob });
+  };
+
+  const handlePlaySample = (audioUrl: string) => {
+    const audio = new Audio(audioUrl);
+    audio.play().catch(console.error);
+  };
+
+  if (!analysisData || storyTemplates.length === 0) {
     return (
-      <div className="text-center py-8">
-        <p className="text-muted-foreground">Loading story analysis...</p>
+      <div className="text-center p-8">
+        <p className="text-gray-500">No emotions, sounds, or modulations found in this story.</p>
       </div>
     );
   }
 
-  const hasRecording = (emotionName: string) => {
-    return userVoiceEmotions[emotionName] || false;
-  };
-
   return (
     <div className="space-y-6">
+      <div className="text-center space-y-2">
+        <h2 className="text-2xl font-bold">Story Voice Samples</h2>
+        <p className="text-gray-600">
+          Record your voice for emotions, sounds, and modulations found in this story
+        </p>
+      </div>
 
-      <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
+      {/* Category Tabs */}
+      <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="emotions">Emotions ({storyAnalysis.emotions?.length || 0})</TabsTrigger>
-          <TabsTrigger value="sounds">Sounds ({storyAnalysis.soundEffects?.length || 0})</TabsTrigger>
-          <TabsTrigger value="modulations">Modulations</TabsTrigger>
+          {categories.map((category) => (
+            <TabsTrigger 
+              key={category.id} 
+              value={category.id}
+              className="flex items-center gap-2"
+            >
+              {category.icon}
+              {category.name}
+              <Badge variant="secondary" className="ml-1">
+                {category.count}
+              </Badge>
+            </TabsTrigger>
+          ))}
         </TabsList>
 
-        <TabsContent value="emotions" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {storyAnalysis.emotions?.map((emotion, index) => (
-              <Card key={index} className="relative">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    {emotion.emotion}
-                    <Badge variant="outline">{emotion.intensity}/10</Badge>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Recording Status */}
-                  <div className="flex items-center gap-2">
-                    {hasRecording(emotion.emotion) ? (
-                      <Badge variant="default" className="bg-green-100 text-green-800">
-                        ✓ Voice Sample Recorded
-                      </Badge>
-                    ) : (
-                      <Badge variant="secondary" className="bg-gray-100 text-gray-600">
-                        ⏺ No Recording Yet
-                      </Badge>
-                    )}
-                  </div>
-                  
-                  {/* Sample Text */}
-                  {(emotion.quote || emotion.context) && (
-                    <div className="bg-muted/50 p-3 rounded-md">
-                      <p className="text-sm text-muted-foreground italic">
-                        "{emotion.quote || emotion.context}"
-                      </p>
-                    </div>
-                  )}
-                  
+        {categories.map((category) => (
+          <TabsContent key={category.id} value={category.id} className="space-y-4">
+            {sortedTemplates.length === 0 ? (
+              <div className="text-center p-8">
+                <p className="text-gray-500">
+                  No {category.name.toLowerCase()} found in this story.
+                </p>
+              </div>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {sortedTemplates.map((template) => (
                   <VoiceSampleCard
-                    emotion={emotion.emotion}
-                    intensity={emotion.intensity}
-                    hasRecording={hasRecording(emotion.emotion)}
-                    onRecord={(audioBlob) => onEmotionRecorded(emotion.emotion, audioBlob)}
-                    onPlay={() => onPlayEmotionSample(emotion.emotion, emotion.intensity)}
-                    onPlayUserRecording={() => onPlayUserRecording(emotion.emotion)}
-                    isPlaying={isPlayingSample === `${emotion.emotion}-${emotion.intensity}`}
-                    isPlayingUserRecording={isPlayingUserRecording === emotion.emotion}
-                    sampleText={emotion.quote || emotion.context || `Express ${emotion.emotion} with intensity ${emotion.intensity}`}
+                    key={`${template.category}-${template.emotion}`}
+                    emotion={template.emotion}
+                    displayName={template.displayName}
+                    sampleText={template.sampleText}
+                    category={template.category}
+                    intensity={template.intensity}
+                    description={template.description}
+                    recordedSample={template.recordedSample}
+                    isRecorded={template.isRecorded}
+                    isLocked={template.isLocked}
+                    onRecordingComplete={handleRecordingComplete(template.emotion)}
+                    onPlaySample={handlePlaySample}
+                    targetDuration={10}
+                    disabled={false}
                   />
-                </CardContent>
-              </Card>
-            )) || (
-              <div className="col-span-full text-center py-8">
-                <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">No emotions detected in this story</p>
+                ))}
               </div>
             )}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="sounds" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {storyAnalysis.soundEffects?.map((sound, index) => (
-              <Card key={index} className="relative">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    {sound.sound}
-                    <Badge variant="outline">{sound.intensity}/10</Badge>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Recording Status */}
-                  <div className="flex items-center gap-2">
-                    {hasRecording(sound.sound) ? (
-                      <Badge variant="default" className="bg-green-100 text-green-800">
-                        ✓ Voice Sample Recorded
-                      </Badge>
-                    ) : (
-                      <Badge variant="secondary" className="bg-gray-100 text-gray-600">
-                        ⏺ No Recording Yet
-                      </Badge>
-                    )}
-                  </div>
-                  
-                  {/* Sample Text */}
-                  {(sound.quote || sound.context) && (
-                    <div className="bg-muted/50 p-3 rounded-md">
-                      <p className="text-sm text-muted-foreground italic">
-                        "{sound.quote || sound.context}"
-                      </p>
-                    </div>
-                  )}
-                  
-                  <VoiceSampleCard
-                    emotion={sound.sound}
-                    intensity={sound.intensity}
-                    hasRecording={hasRecording(sound.sound)}
-                    onRecord={(audioBlob) => onEmotionRecorded(sound.sound, audioBlob)}
-                    onPlay={() => onPlayEmotionSample(sound.sound, sound.intensity)}
-                    onPlayUserRecording={() => onPlayUserRecording(sound.sound)}
-                    isPlaying={isPlayingSample === `${sound.sound}-${sound.intensity}`}
-                    isPlayingUserRecording={isPlayingUserRecording === sound.sound}
-                    sampleText={sound.quote || sound.context || `Create ${sound.sound} sound effect`}
-                  />
-                </CardContent>
-              </Card>
-            )) || (
-              <div className="col-span-full text-center py-8">
-                <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">No sound effects detected in this story</p>
-              </div>
-            )}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="modulations" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {[
-              { name: storyAnalysis.moodCategory, type: 'Mood' },
-              { name: storyAnalysis.genre, type: 'Genre' },
-              { name: storyAnalysis.subGenre, type: 'Sub-Genre' },
-              ...(storyAnalysis.emotionalTags || []).map(tag => ({ name: tag, type: 'Emotional Tag' }))
-            ].filter(item => item.name).map((modulation, index) => (
-              <Card key={index} className="relative">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    {modulation.name}
-                    <Badge variant="secondary">{modulation.type}</Badge>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Recording Status */}
-                  <div className="flex items-center gap-2">
-                    {hasRecording(modulation.name!) ? (
-                      <Badge variant="default" className="bg-green-100 text-green-800">
-                        ✓ Voice Sample Recorded
-                      </Badge>
-                    ) : (
-                      <Badge variant="secondary" className="bg-gray-100 text-gray-600">
-                        ⏺ No Recording Yet
-                      </Badge>
-                    )}
-                  </div>
-                  
-                  {/* Description */}
-                  <div className="bg-muted/50 p-3 rounded-md">
-                    <p className="text-sm text-muted-foreground">
-                      Practice {modulation.name} {modulation.type.toLowerCase()} voice modulation
-                    </p>
-                  </div>
-                  
-                  <VoiceSampleCard
-                    emotion={modulation.name!}
-                    intensity={5}
-                    hasRecording={hasRecording(modulation.name!)}
-                    onRecord={(audioBlob) => onEmotionRecorded(modulation.name!, audioBlob)}
-                    onPlay={() => onPlayEmotionSample(modulation.name!, 5)}
-                    onPlayUserRecording={() => onPlayUserRecording(modulation.name!)}
-                    isPlaying={isPlayingSample === `${modulation.name}-5`}
-                    isPlayingUserRecording={isPlayingUserRecording === modulation.name}
-                    sampleText={`Express ${modulation.type}: ${modulation.name}`}
-                  />
-                </CardContent>
-              </Card>
-            )) || (
-              <div className="col-span-full text-center py-8">
-                <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">No mood or genre modulations available</p>
-              </div>
-            )}
-          </div>
-        </TabsContent>
+          </TabsContent>
+        ))}
       </Tabs>
+
+      <div className="text-center text-sm text-gray-500 mt-8">
+        <p>Voice samples are stored globally and can be used across all your stories.</p>
+        <p>Only emotions, sounds, and modulations from this specific story are shown here.</p>
+      </div>
     </div>
   );
 }

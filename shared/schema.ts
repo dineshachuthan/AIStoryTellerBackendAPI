@@ -242,15 +242,14 @@ export const characterVoiceAssignments = pgTable("character_voice_assignments", 
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// User voice clones (emotions, sounds, modulations)
-export const userVoiceClones = pgTable("user_voice_clones", {
+// Individual emotion voice clones (one per emotion per user)
+export const userEmotionVoices = pgTable("user_emotion_voices", {
   id: serial("id").primaryKey(),
   userVoiceProfileId: integer("user_voice_profile_id").references(() => userVoiceProfiles.id).notNull(),
-  voiceName: varchar("voice_name").notNull(), // frustration, footsteps, mysterious, etc.
-  voiceType: varchar("voice_type").notNull().default("emotion"), // emotion, sound, modulation
+  emotion: varchar("emotion").notNull(), // happy, sad, angry, etc.
   elevenLabsVoiceId: text("elevenlabs_voice_id"), // unique voice ID from ElevenLabs - nullable until trained
   trainingStatus: varchar("training_status").notNull().default("pending"), // collecting, training, completed, failed
-  sampleCount: integer("sample_count").default(0), // how many samples used for this voice - nullable with default
+  sampleCount: integer("sample_count").default(0), // how many samples used for this emotion - nullable with default
   qualityScore: doublePrecision("quality_score"), // ElevenLabs quality rating - nullable until training complete
   voiceSettings: jsonb("voice_settings"), // stability, similarity_boost, etc. - nullable
   trainingMetadata: jsonb("training_metadata"), // ElevenLabs response data - nullable
@@ -260,17 +259,6 @@ export const userVoiceClones = pgTable("user_voice_clones", {
   neverDelete: boolean("never_delete").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-// Story voice requirements (story-specific voice needs)
-export const storyVoiceRequirements = pgTable("story_voice_requirements", {
-  id: serial("id").primaryKey(),
-  storyId: integer("story_id").references(() => stories.id).notNull(),
-  voiceName: varchar("voice_name", { length: 100 }).notNull(),
-  voiceType: varchar("voice_type", { length: 50 }).notNull(), // emotion, sound, modulation
-  isRequired: boolean("is_required").default(true),
-  isRecorded: boolean("is_recorded").default(false),
-  createdAt: timestamp("created_at").defaultNow(),
 });
 
 // Voice modulation templates - configurable database-driven voice samples
@@ -307,7 +295,7 @@ export const userVoiceModulations = pgTable("user_voice_modulations", {
   lastUsedAt: timestamp("last_used_at"),
   recordedAt: timestamp("recorded_at").defaultNow(),
   // New fields for voice cloning integration
-  userVoiceCloneId: integer("user_voice_clone_id").references(() => userVoiceClones.id),
+  userEmotionVoiceId: integer("user_emotion_voice_id").references(() => userEmotionVoices.id),
   isUsedForTraining: boolean("is_used_for_training").default(false),
   qualityRating: integer("quality_rating"), // 1-5 quality score
   trainingBatchId: varchar("training_batch_id"), // group samples sent together
@@ -1382,26 +1370,3 @@ export const insertStoryModulationRequirementSchema = createInsertSchema(storyMo
 
 export type StoryModulationRequirement = typeof storyModulationRequirements.$inferSelect;
 export type InsertStoryModulationRequirement = z.infer<typeof insertStoryModulationRequirementSchema>;
-
-// =============================================================================
-// USER VOICE CLONES SYSTEM SCHEMAS (Updated Architecture)
-// =============================================================================
-
-// User Voice Clone schemas
-export const insertUserVoiceCloneSchema = createInsertSchema(userVoiceClones).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export type UserVoiceClone = typeof userVoiceClones.$inferSelect;
-export type InsertUserVoiceClone = z.infer<typeof insertUserVoiceCloneSchema>;
-
-// Story Voice Requirements schemas
-export const insertStoryVoiceRequirementSchema = createInsertSchema(storyVoiceRequirements).omit({
-  id: true,
-  createdAt: true,
-});
-
-export type StoryVoiceRequirement = typeof storyVoiceRequirements.$inferSelect;
-export type InsertStoryVoiceRequirement = z.infer<typeof insertStoryVoiceRequirementSchema>;

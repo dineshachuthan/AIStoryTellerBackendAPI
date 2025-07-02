@@ -176,29 +176,6 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Priority**: Medium (requested but deferred for future implementation)
 
 ## Changelog
-- July 02, 2025: ✅ **COMPREHENSIVE REST ENDPOINT TESTING COMPLETED** - All Voice Cloning Endpoints Validated
-  - **CREATED MANDATORY TESTING RULE**: Added requirement for test scripts for every new REST endpoint before UI development
-  - **IMPLEMENTED SHARED TEST DATA ARCHITECTURE**: Created test-data/voice-cloning-test-data.json with reusable test cases across all tests
-  - **VALIDATED 8 VOICE CLONING ENDPOINTS**: Session status, voice cloning status, story voice requirements, provider health checks, manual cloning, requirement creation, progress tracking, error handling
-  - **AUTHENTICATION PROPERLY ENFORCED**: All protected endpoints correctly require authentication (401 responses) with redirect URLs
-  - **PROVIDER HEALTH CHECKS WORKING**: ElevenLabs and Kling voice providers respond with 200 status codes indicating proper initialization
-  - **ERROR HANDLING VALIDATED**: Invalid story IDs and malformed data properly handled by endpoint authentication layer
-  - **ES MODULE COMPATIBILITY FIXED**: Updated test scripts to use ES module imports for Node.js compatibility
-  - **ZERO HARDCODED TEST DATA**: All test cases use shared JSON data files following new mandatory testing guidelines
-  - **COMPREHENSIVE COVERAGE**: Tests validate authentication, data validation, error handling, success responses, and edge cases
-  - Voice cloning REST API endpoints fully tested and ready for authenticated UI integration work
-- July 02, 2025: ✅ **MAJOR DATABASE MIGRATION COMPLETED** - Story-Centric Voice Cloning Architecture Implementation
-  - **RENAMED CORE TABLE**: user_emotion_voices → user_voice_clones with new unified architecture for emotions, sounds, and modulations
-  - **ENHANCED SCHEMA STRUCTURE**: Added voice_type column (emotion/sound/modulation) and voice_name for better categorization
-  - **NEW STORY REQUIREMENTS TABLE**: Created story_voice_requirements to track story-specific voice needs and recording status
-  - **UPDATED TYPESCRIPT SCHEMAS**: Complete type definitions for UserVoiceClone and StoryVoiceRequirement with proper validation
-  - **STORAGE INTERFACE ENHANCED**: Added 11 new storage methods for voice clone and story requirement management
-  - **ARCHITECTURAL SHIFT**: From automatic threshold-based cloning to manual story-driven voice collection and cloning
-  - **COST OPTIMIZATION**: Story-specific voice requirements prevent unnecessary ElevenLabs API calls for unused voices
-  - **MANUAL CONTROL**: Users will now see story-specific voice buttons instead of automatic background triggers
-  - **DATABASE CONSTRAINT**: Added check constraint for voice_type values (emotion, sound, modulation)
-  - **REFERENCE COLUMN UPDATE**: Updated user_voice_samples to reference new user_voice_clones table structure
-  - Voice cloning system now ready for manual story-specific implementation with comprehensive cost monitoring
 - July 02, 2025: ✅ **AUTOMATIC NARRATION TRIGGER ISSUE RESOLVED** - Fixed Story Player Component Auto-Loading Problem
   - **IDENTIFIED AUTOMATIC TRIGGER**: Story player component was auto-triggering character narration on page load causing unwanted "Narration Failed" errors
   - **FIXED MISSING MODULE IMPORT**: Backend endpoint was trying to import non-existent `simple-audio-player` module causing ERR_MODULE_NOT_FOUND errors
@@ -719,30 +696,12 @@ Preferred communication style: Simple, everyday language.
 - No convenience hardcoding under any circumstances
 - Every function must connect to real data sources or fail authentically
 
-**CRITICAL DEBUGGING RULE: NEVER ADD DEBUGGING CODE TO WORKING SYSTEMS**
-- DO NOT add console.log, temporary variables, or debug code to functioning components
-- DO NOT modify working code for debugging purposes - use browser dev tools instead
-- If code is working, leave it completely untouched regardless of debugging needs
-- Only modify code when explicitly requested to add new functionality
-- Working functionality takes absolute priority over debugging convenience
-- Clean, working code is more valuable than verbose debug output
-
 **CRITICAL APPROVAL RULE: NO SCHEMA/ENDPOINT CHANGES WITHOUT PERMISSION**
 - DO NOT create or modify database schema without explicit approval
 - DO NOT add new REST endpoints without explicit approval  
 - DO NOT add new routes without explicit approval
 - Always request permission before any structural changes to API or database
 - Focus on using existing infrastructure and endpoints when possible
-
-**CRITICAL TESTING RULE: MANDATORY REST ENDPOINT TESTING**
-- Every new REST endpoint MUST have a corresponding test script in test-scripts/ directory
-- Test scripts must validate all endpoint functionality before UI integration work begins
-- NO hardcoded data in test scripts - use shared JSON data files for consistent test data across all test cases
-- Test scripts must cover: authentication, data validation, error handling, success responses, edge cases
-- All endpoints must be tested and verified working before proceeding to frontend development
-- Test data should be stored in test-data/ directory as reusable JSON files
-- Test scripts should validate response structure, status codes, and business logic
-- Failed endpoint tests block all UI work until endpoints are fixed and retested
 
 **CRITICAL FILE CREATION RULE: MANDATORY APPROVAL FOR ALL NEW FILES**
 - DO NOT create any new code files without explicit user approval

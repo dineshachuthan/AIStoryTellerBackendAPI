@@ -58,17 +58,12 @@ export default function StoryAnalysis() {
   const [match, params] = useRoute("/analysis/:storyId");
   const storyId = params?.storyId;
   
-  // Story data query - restored for proper functionality
-  const { data: storyDataFromQuery, isLoading: storyLoading } = useQuery({
-    queryKey: ['/api/stories', storyId],
-    enabled: !!storyId,
-  });
-  
   console.log('Route match:', match);
   console.log('Route params:', params);
   console.log('Extracted storyId:', storyId);
   
   const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
+  // Story data will come from the query
   const [rolePlayAnalysis, setRolePlayAnalysis] = useState<any>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -343,6 +338,12 @@ export default function StoryAnalysis() {
     }
   };
 
+  // Fetch story data if storyId is provided
+  const { data: storyDataFromQuery, isLoading: storyLoading } = useQuery({
+    queryKey: [`/api/stories/${storyId}`],
+    enabled: !!storyId && !!user?.id,
+  });
+
   // Generate both narrative and roleplay analyses automatically
   const generateComprehensiveAnalysis = async (story: any) => {
     console.log('Starting comprehensive analysis for story:', storyId);
@@ -432,10 +433,6 @@ export default function StoryAnalysis() {
         }
       }
 
-      // Analysis completed successfully - stop loading
-      console.log('Comprehensive analysis completed successfully');
-      setIsLoadingAnalyses(false);
-
     } catch (error) {
       console.error('Failed to generate comprehensive analysis:', error);
       
@@ -466,11 +463,12 @@ export default function StoryAnalysis() {
   };
 
   useEffect(() => {
+    console.log('StoryAnalysis useEffect triggered:', { storyId, hasStoryData: !!storyDataFromQuery, userId: user?.id });
     
-    
-    if (storyId && user?.id && !analysisData) {
-      // Only generate analysis if we don't already have it
-      generateComprehensiveAnalysis({ id: storyId });
+    if (storyId && storyDataFromQuery && user?.id) {
+      console.log('Triggering dual analysis for existing story');
+      // Automatically generate both analyses when story data is available
+      generateComprehensiveAnalysis(storyDataFromQuery);
     } else if (!storyId) {
       console.log('No storyId - checking localStorage for upload flow');
       // Fall back to localStorage for upload flow
@@ -487,8 +485,10 @@ export default function StoryAnalysis() {
       } else {
         setLocation('/upload-story');
       }
+    } else {
+      console.log('Waiting for story data or user auth...');
     }
-  }, [storyId, user?.id, setLocation]);
+  }, [storyId, storyDataFromQuery, user?.id, setLocation]);
 
   const generateTitleFromContent = (content: string, analysis: StoryAnalysis): string => {
     // Use the first character name + category as a simple title
@@ -602,15 +602,14 @@ export default function StoryAnalysis() {
 
 
 
-  
-  if (isLoadingAnalyses) {
+  if (storyLoading || isLoadingAnalyses) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
         <div className="bg-white/10 backdrop-blur-sm rounded-lg p-8 max-w-md w-full mx-4">
           <div className="text-center text-white space-y-4">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto"></div>
             <h3 className="text-xl font-semibold">
-              {"Generating Analysis"}
+              {storyLoading ? "Loading Story" : "Generating Analysis"}
             </h3>
             {isLoadingAnalyses && (
               <div className="space-y-3">
@@ -687,15 +686,21 @@ export default function StoryAnalysis() {
             </div>
           </div>
 
-          {/* Story Narration Controls */}
-          {storyId && user?.id && (
+          {/* Story Narration Controls - Cost-Optimized (Author Only) */}
+          {storyId && storyDataFromQuery && user?.id === (storyDataFromQuery as any).authorId ? (
             <StoryNarratorControls 
               storyId={parseInt(storyId)} 
               user={user}
               canNarrate={true}
               className="mb-8"
             />
-          )}
+          ) : storyId && storyDataFromQuery && user?.id !== (storyDataFromQuery as any).authorId ? (
+            <div className="mb-8 p-4 bg-blue-900/30 rounded-xl border border-blue-500/50">
+              <div className="text-blue-300 text-sm">
+                <span className="font-medium">📖 Story Narration:</span> Only the story author can generate narrations
+              </div>
+            </div>
+          ) : null}
 
           {/* Enhanced Narration Player - ElevenLabs Voice Clone Integration */}
           {/* {storyId && user?.id && (
@@ -710,10 +715,9 @@ export default function StoryAnalysis() {
 
           {/* Main Analysis Tabs */}
           <Tabs defaultValue="narrative" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 mb-6">
+            <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="narrative">Narrative Analysis</TabsTrigger>
               <TabsTrigger value="roleplay">Role Play Analysis</TabsTrigger>
-              <TabsTrigger value="voice-cloning">Voice Cloning</TabsTrigger>
             </TabsList>
 
             <TabsContent value="narrative" className="space-y-6">
@@ -732,7 +736,7 @@ export default function StoryAnalysis() {
             <TabsContent value="roleplay" className="space-y-6">
               <RolePlayAnalysisPanel
                 storyId={parseInt(storyId!)}
-                storyContent={analysisData?.content || ""}
+                storyContent={(storyDataFromQuery as any)?.content || ""}
                 existingCharacters={analysisData.analysis.characters}
                 existingAnalysis={rolePlayAnalysis}
                 onAnalysisGenerated={(analysis) => {
@@ -742,18 +746,6 @@ export default function StoryAnalysis() {
               />
             </TabsContent>
 
-            <TabsContent value="voice-cloning" className="space-y-6">
-              <StoryVoiceSamples
-                storyId={parseInt(storyId!)}
-                storyAnalysis={analysisData?.analysis}
-                userVoiceEmotions={userVoiceEmotions}
-                onEmotionRecorded={handleEmotionRecorded}
-                onPlayEmotionSample={handlePlayEmotionSample}
-                onPlayUserRecording={handlePlayUserRecording}
-                isPlayingSample={playingSample}
-                isPlayingUserRecording={playingUserRecording}
-              />
-            </TabsContent>
 
           </Tabs>
         </div>
