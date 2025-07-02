@@ -62,6 +62,13 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
   
   const recordedSamples: any[] = ((progress as any)?.recordedSamples) || [];
 
+  // Helper function to find recorded sample with category-aware matching
+  const findRecordedSample = (itemName: string, category: string) => {
+    return recordedSamples.find((r: any) => 
+      r.emotion === `${category}-${itemName.toLowerCase()}` || r.emotion === itemName.toLowerCase()
+    );
+  };
+
   // Generate story-specific templates from analysis
   const generateStoryTemplates = (): VoiceTemplate[] => {
     const templates: VoiceTemplate[] = [];
@@ -69,9 +76,7 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
     // Add emotions from story analysis
     if (analysisData.emotions) {
       analysisData.emotions.forEach((emotion) => {
-        const recordedSample = recordedSamples.find((r: any) => 
-          r.emotion === `emotions-${emotion.emotion.toLowerCase()}` || r.emotion === emotion.emotion.toLowerCase()
-        );
+        const recordedSample = findRecordedSample(emotion.emotion, 'emotions');
         const isRecorded = !!recordedSample;
         const isLocked = recordedSample?.isLocked || false;
 
@@ -93,9 +98,7 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
     // Add sounds from story analysis
     if (analysisData.soundEffects) {
       analysisData.soundEffects.forEach((sound) => {
-        const recordedSample = recordedSamples.find((r: any) => 
-          r.emotion === `sounds-${sound.sound.toLowerCase()}` || r.emotion === sound.sound.toLowerCase()
-        );
+        const recordedSample = findRecordedSample(sound.sound, 'sounds');
         const isRecorded = !!recordedSample;
         const isLocked = recordedSample?.isLocked || false;
 
@@ -122,9 +125,7 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
     if (analysisData.emotionalTags) modulations.push(...analysisData.emotionalTags);
 
     modulations.forEach((modulation) => {
-      const recordedSample = recordedSamples.find((r: any) => 
-        r.emotion === `modulations-${modulation.toLowerCase()}` || r.emotion === modulation.toLowerCase()
-      );
+      const recordedSample = findRecordedSample(modulation, 'modulations');
       const isRecorded = !!recordedSample;
       const isLocked = recordedSample?.isLocked || false;
 
