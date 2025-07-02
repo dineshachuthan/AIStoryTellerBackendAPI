@@ -70,7 +70,7 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
     if (analysisData.emotions) {
       analysisData.emotions.forEach((emotion) => {
         const recordedSample = recordedSamples.find((r: any) => 
-          r.emotion === emotion.emotion.toLowerCase()
+          r.emotion === `emotions-${emotion.emotion.toLowerCase()}` || r.emotion === emotion.emotion.toLowerCase()
         );
         const isRecorded = !!recordedSample;
         const isLocked = recordedSample?.isLocked || false;
