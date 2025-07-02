@@ -694,7 +694,7 @@ export default function StoryAnalysis() {
               canNarrate={true}
               className="mb-8"
             />
-          ) : storyId && storyDataFromQuery && user?.id !== storyDataFromQuery.authorId ? (
+          ) : storyId && storyDataFromQuery && user?.id !== (storyDataFromQuery as any).authorId ? (
             <div className="mb-8 p-4 bg-blue-900/30 rounded-xl border border-blue-500/50">
               <div className="text-blue-300 text-sm">
                 <span className="font-medium">📖 Story Narration:</span> Only the story author can generate narrations
@@ -736,7 +736,7 @@ export default function StoryAnalysis() {
             <TabsContent value="roleplay" className="space-y-6">
               <RolePlayAnalysisPanel
                 storyId={parseInt(storyId!)}
-                storyContent={storyDataFromQuery?.content || ""}
+                storyContent={(storyDataFromQuery as any)?.content || ""}
                 existingCharacters={analysisData.analysis.characters}
                 existingAnalysis={rolePlayAnalysis}
                 onAnalysisGenerated={(analysis) => {
