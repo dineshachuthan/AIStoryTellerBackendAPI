@@ -468,6 +468,7 @@ export default function StoryAnalysis() {
 
   useEffect(() => {
     
+    
     if (storyId && storyDataFromQuery && user?.id && !analysisData) {
       // Only generate analysis if we don't already have it
       generateComprehensiveAnalysis(storyDataFromQuery);
@@ -487,10 +488,8 @@ export default function StoryAnalysis() {
       } else {
         setLocation('/upload-story');
       }
-    } else {
-      console.log('Waiting for story data or user auth...');
     }
-  }, [storyId, storyDataFromQuery, user?.id, analysisData, setLocation]);
+  }, [storyId, storyDataFromQuery, user?.id, setLocation]);
 
   const generateTitleFromContent = (content: string, analysis: StoryAnalysis): string => {
     // Use the first character name + category as a simple title
@@ -604,6 +603,7 @@ export default function StoryAnalysis() {
 
 
 
+  
   if (storyLoading || isLoadingAnalyses) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
