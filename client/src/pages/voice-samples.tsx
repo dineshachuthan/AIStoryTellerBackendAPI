@@ -12,7 +12,7 @@ import { Mic, Play, Trash2, CheckCircle, Circle, Volume2, LogOut, Lock, Unlock }
 import { cn } from "@/lib/utils";
 import { VoiceSampleCard } from "@/components/ui/voice-sample-card";
 import { AUDIO_PROCESSING_CONFIG } from "@shared/audio-config";
-import { getErrorMessage, I18N_CONFIG } from "@shared/i18n-config";
+import { VoiceMessageService } from "@shared/i18n-config";
 // import { VoiceTrainingStatus } from "@/components/voice-training-status";
 
 interface EmotionTemplate {
@@ -113,7 +113,8 @@ export default function VoiceSamples() {
       });
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || getErrorMessage(AUDIO_PROCESSING_CONFIG.errorCodes.voiceCloningTriggerFailed, I18N_CONFIG.defaultLanguage));
+        const errorMsg = VoiceMessageService.voiceCloningTriggerFailed(category, 0); // 0 samples as fallback
+        throw new Error(error.message || errorMsg.message);
       }
       return response.json();
     },
@@ -143,7 +144,8 @@ export default function VoiceSamples() {
       });
 
       if (!response.ok) {
-        throw new Error(getErrorMessage(AUDIO_PROCESSING_CONFIG.errorCodes.saveVoiceModulationFailed, I18N_CONFIG.defaultLanguage));
+        const errorMsg = VoiceMessageService.voiceSaveFailed(emotion, selectedCategory);
+        throw new Error(errorMsg.message);
       }
 
       return response.json();
@@ -190,7 +192,8 @@ export default function VoiceSamples() {
       });
 
       if (!response.ok) {
-        throw new Error(getErrorMessage(AUDIO_PROCESSING_CONFIG.errorCodes.deleteVoiceModulationFailed, I18N_CONFIG.defaultLanguage));
+        const errorMsg = VoiceMessageService.voiceDeleteFailed(modulationKey);
+        throw new Error(errorMsg.message);
       }
 
       return response.json();
