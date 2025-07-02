@@ -4559,6 +4559,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const completedCount = recordedSamples.length;
       
       console.log(`📊 Voice progress: ${completedCount}/${totalTemplates} completed`);
+      console.log(`📊 Recorded samples:`, recordedSamples.map(s => s.emotion));
+      console.log(`📊 Available templates:`, [...emotionTemplates.map(t => t.emotion), ...soundTemplates.map(t => t.emotion), ...modTemplates.map(t => t.emotion)]);
       
       res.json({
         completed: completedCount,
