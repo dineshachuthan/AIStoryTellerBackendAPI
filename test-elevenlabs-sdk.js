@@ -4,8 +4,7 @@
  * Quick ElevenLabs SDK Structure Test
  */
 
-import pkg from 'elevenlabs';
-const { ElevenLabsClient } = pkg;
+import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
 
 async function testSDKStructure() {
   try {

@@ -3,10 +3,7 @@
  * Handles voice cloning and speech generation using ElevenLabs API
  */
 
-// @ts-ignore
-import pkg from 'elevenlabs';
-// @ts-ignore
-const { ElevenLabsClient } = pkg;
+import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
 import { BaseVoiceProvider } from './base-voice-provider';
 import { VoiceProviderConfig, VoiceTrainingRequest, VoiceTrainingResult } from './provider-manager';
 import { ExternalIntegrationStateReset } from '../external-integration-state-reset';
