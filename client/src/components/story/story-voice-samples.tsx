@@ -5,8 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { VoiceSampleCard } from "@/components/ui/voice-sample-card";
-import { VoiceCloneButton } from "@/components/ui/voice-clone-button";
-import { Zap, AlertCircle, Info } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 
 interface StoryAnalysis {
   emotions: Array<{
@@ -48,28 +47,7 @@ export default function StoryVoiceSamples({
   isPlayingSample,
   isPlayingUserRecording 
 }: StoryVoiceSamplesProps) {
-  const { user } = useAuth();
   const [selectedTab, setSelectedTab] = useState("emotions");
-
-  // Fetch voice cloning status for this story
-  const { data: voiceRequirements } = useQuery({
-    queryKey: [`/api/stories/${storyId}/voice-requirements`],
-    enabled: !!user?.id && !!storyId,
-  });
-
-  const { data: voiceCloneStatus } = useQuery({
-    queryKey: [`/api/voice-cloning/status`],
-    enabled: !!user?.id,
-  });
-
-  const getCloneStatus = (voiceName: string, voiceType: string) => {
-    // Check if this voice is already cloned
-    const requirements = Array.isArray(voiceRequirements) ? voiceRequirements : [];
-    const requirement = requirements.find((req: any) => 
-      req.voiceName === voiceName && req.voiceType === voiceType
-    );
-    return requirement?.cloneStatus || 'not_cloned';
-  };
 
   // Early return if no story analysis
   if (!storyAnalysis) {
@@ -86,12 +64,6 @@ export default function StoryVoiceSamples({
 
   return (
     <div className="space-y-6">
-      <div className="text-center">
-        <h2 className="text-2xl font-bold mb-2">Manual Voice Cloning</h2>
-        <p className="text-muted-foreground">
-          Create personalized voices for this story by recording voice samples and manually triggering cloning
-        </p>
-      </div>
 
       <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
         <TabsList className="grid w-full grid-cols-3">
@@ -133,25 +105,17 @@ export default function StoryVoiceSamples({
                     </div>
                   )}
                   
-                  {/* Manual Clone Button */}
-                  <VoiceCloneButton
-                    storyId={storyId}
-                    voiceName={emotion.emotion}
-                    voiceType="emotion"
+                  <VoiceSampleCard
+                    emotion={emotion.emotion}
                     intensity={emotion.intensity}
-                    context={emotion.context}
-                    quote={emotion.quote}
                     hasRecording={hasRecording(emotion.emotion)}
-                    cloneStatus={getCloneStatus(emotion.emotion, 'emotion')}
-                    variant="default"
-                    className="w-full"
+                    onRecord={(audioBlob) => onEmotionRecorded(emotion.emotion, audioBlob)}
+                    onPlay={() => onPlayEmotionSample(emotion.emotion, emotion.intensity)}
+                    onPlayUserRecording={() => onPlayUserRecording(emotion.emotion)}
+                    isPlaying={isPlayingSample === `${emotion.emotion}-${emotion.intensity}`}
+                    isPlayingUserRecording={isPlayingUserRecording === emotion.emotion}
+                    sampleText={emotion.quote || emotion.context || `Express ${emotion.emotion} with intensity ${emotion.intensity}`}
                   />
-                  
-                  {!hasRecording(emotion.emotion) && (
-                    <p className="text-xs text-orange-600">
-                      Go to global Voice Samples to record this emotion first
-                    </p>
-                  )}
                 </CardContent>
               </Card>
             )) || (
@@ -196,25 +160,17 @@ export default function StoryVoiceSamples({
                     </div>
                   )}
                   
-                  {/* Manual Clone Button */}
-                  <VoiceCloneButton
-                    storyId={storyId}
-                    voiceName={sound.sound}
-                    voiceType="sound"
+                  <VoiceSampleCard
+                    emotion={sound.sound}
                     intensity={sound.intensity}
-                    context={sound.context}
-                    quote={sound.quote}
                     hasRecording={hasRecording(sound.sound)}
-                    cloneStatus={getCloneStatus(sound.sound, 'sound')}
-                    variant="default"
-                    className="w-full"
+                    onRecord={(audioBlob) => onEmotionRecorded(sound.sound, audioBlob)}
+                    onPlay={() => onPlayEmotionSample(sound.sound, sound.intensity)}
+                    onPlayUserRecording={() => onPlayUserRecording(sound.sound)}
+                    isPlaying={isPlayingSample === `${sound.sound}-${sound.intensity}`}
+                    isPlayingUserRecording={isPlayingUserRecording === sound.sound}
+                    sampleText={sound.quote || sound.context || `Create ${sound.sound} sound effect`}
                   />
-                  
-                  {!hasRecording(sound.sound) && (
-                    <p className="text-xs text-orange-600">
-                      Go to global Voice Samples to record this sound first
-                    </p>
-                  )}
                 </CardContent>
               </Card>
             )) || (
@@ -262,24 +218,17 @@ export default function StoryVoiceSamples({
                     </p>
                   </div>
                   
-                  {/* Manual Clone Button */}
-                  <VoiceCloneButton
-                    storyId={storyId}
-                    voiceName={modulation.name!}
-                    voiceType="modulation"
+                  <VoiceSampleCard
+                    emotion={modulation.name!}
                     intensity={5}
-                    context={`${modulation.type} modulation`}
                     hasRecording={hasRecording(modulation.name!)}
-                    cloneStatus={getCloneStatus(modulation.name!, 'modulation')}
-                    variant="default"
-                    className="w-full"
+                    onRecord={(audioBlob) => onEmotionRecorded(modulation.name!, audioBlob)}
+                    onPlay={() => onPlayEmotionSample(modulation.name!, 5)}
+                    onPlayUserRecording={() => onPlayUserRecording(modulation.name!)}
+                    isPlaying={isPlayingSample === `${modulation.name}-5`}
+                    isPlayingUserRecording={isPlayingUserRecording === modulation.name}
+                    sampleText={`Express ${modulation.type}: ${modulation.name}`}
                   />
-                  
-                  {!hasRecording(modulation.name!) && (
-                    <p className="text-xs text-orange-600">
-                      Go to global Voice Samples to record this modulation first
-                    </p>
-                  )}
                 </CardContent>
               </Card>
             )) || (
@@ -291,23 +240,6 @@ export default function StoryVoiceSamples({
           </div>
         </TabsContent>
       </Tabs>
-
-      <Card className="bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
-        <CardContent className="pt-6">
-          <div className="flex items-start gap-3">
-            <Info className="h-5 w-5 text-blue-600 mt-0.5" />
-            <div>
-              <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-1">How Voice Cloning Works</h4>
-              <p className="text-sm text-blue-700 dark:text-blue-200">
-                1. Record a voice sample for each emotion/sound you want to clone<br/>
-                2. Click the "Clone Voice" button to manually start the cloning process<br/>
-                3. Wait for the training to complete (usually 2-5 minutes)<br/>
-                4. Your personalized voice will be ready for story narration
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }
