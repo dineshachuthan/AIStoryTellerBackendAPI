@@ -64,7 +64,7 @@ export default function StoryVoiceSamples({
 
   const getCloneStatus = (voiceName: string, voiceType: string) => {
     // Check if this voice is already cloned
-    const requirements = voiceRequirements || [];
+    const requirements = Array.isArray(voiceRequirements) ? voiceRequirements : [];
     const requirement = requirements.find((req: any) => 
       req.voiceName === voiceName && req.voiceType === voiceType
     );
@@ -111,20 +111,27 @@ export default function StoryVoiceSamples({
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {/* Voice Recording Section */}
-                  <VoiceSampleCard
-                    emotion={emotion.emotion.toLowerCase()}
-                    sampleText={emotion.quote || emotion.context}
-                    intensity={emotion.intensity}
-                    isRecorded={hasRecording(emotion.emotion)}
-                    isLocked={false}
-                    onEmotionRecorded={onEmotionRecorded}
-                    onPlayEmotionSample={onPlayEmotionSample}
-                    onPlayUserRecording={onPlayUserRecording}
-                    isPlayingSample={isPlayingSample}
-                    isPlayingUserRecording={isPlayingUserRecording}
-                    variant="compact"
-                  />
+                  {/* Recording Status */}
+                  <div className="flex items-center gap-2">
+                    {hasRecording(emotion.emotion) ? (
+                      <Badge variant="default" className="bg-green-100 text-green-800">
+                        ✓ Voice Sample Recorded
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary" className="bg-gray-100 text-gray-600">
+                        ⏺ No Recording Yet
+                      </Badge>
+                    )}
+                  </div>
+                  
+                  {/* Sample Text */}
+                  {(emotion.quote || emotion.context) && (
+                    <div className="bg-muted/50 p-3 rounded-md">
+                      <p className="text-sm text-muted-foreground italic">
+                        "{emotion.quote || emotion.context}"
+                      </p>
+                    </div>
+                  )}
                   
                   {/* Manual Clone Button */}
                   <VoiceCloneButton
@@ -140,9 +147,9 @@ export default function StoryVoiceSamples({
                     className="w-full"
                   />
                   
-                  {emotion.context && (
-                    <p className="text-xs text-muted-foreground">
-                      <strong>Context:</strong> {emotion.context}
+                  {!hasRecording(emotion.emotion) && (
+                    <p className="text-xs text-orange-600">
+                      Go to global Voice Samples to record this emotion first
                     </p>
                   )}
                 </CardContent>
@@ -167,20 +174,27 @@ export default function StoryVoiceSamples({
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {/* Voice Recording Section */}
-                  <VoiceSampleCard
-                    emotion={sound.sound.toLowerCase()}
-                    sampleText={sound.quote || sound.context}
-                    intensity={sound.intensity}
-                    isRecorded={hasRecording(sound.sound)}
-                    isLocked={false}
-                    onEmotionRecorded={onEmotionRecorded}
-                    onPlayEmotionSample={onPlayEmotionSample}
-                    onPlayUserRecording={onPlayUserRecording}
-                    isPlayingSample={isPlayingSample}
-                    isPlayingUserRecording={isPlayingUserRecording}
-                    variant="compact"
-                  />
+                  {/* Recording Status */}
+                  <div className="flex items-center gap-2">
+                    {hasRecording(sound.sound) ? (
+                      <Badge variant="default" className="bg-green-100 text-green-800">
+                        ✓ Voice Sample Recorded
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary" className="bg-gray-100 text-gray-600">
+                        ⏺ No Recording Yet
+                      </Badge>
+                    )}
+                  </div>
+                  
+                  {/* Sample Text */}
+                  {(sound.quote || sound.context) && (
+                    <div className="bg-muted/50 p-3 rounded-md">
+                      <p className="text-sm text-muted-foreground italic">
+                        "{sound.quote || sound.context}"
+                      </p>
+                    </div>
+                  )}
                   
                   {/* Manual Clone Button */}
                   <VoiceCloneButton
@@ -196,9 +210,9 @@ export default function StoryVoiceSamples({
                     className="w-full"
                   />
                   
-                  {sound.context && (
-                    <p className="text-xs text-muted-foreground">
-                      <strong>Context:</strong> {sound.context}
+                  {!hasRecording(sound.sound) && (
+                    <p className="text-xs text-orange-600">
+                      Go to global Voice Samples to record this sound first
                     </p>
                   )}
                 </CardContent>
@@ -228,20 +242,25 @@ export default function StoryVoiceSamples({
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {/* Voice Recording Section */}
-                  <VoiceSampleCard
-                    emotion={modulation.name!.toLowerCase()}
-                    sampleText={`Voice modulation for ${modulation.name} ${modulation.type.toLowerCase()}`}
-                    intensity={5}
-                    isRecorded={hasRecording(modulation.name!)}
-                    isLocked={false}
-                    onEmotionRecorded={onEmotionRecorded}
-                    onPlayEmotionSample={onPlayEmotionSample}
-                    onPlayUserRecording={onPlayUserRecording}
-                    isPlayingSample={isPlayingSample}
-                    isPlayingUserRecording={isPlayingUserRecording}
-                    variant="compact"
-                  />
+                  {/* Recording Status */}
+                  <div className="flex items-center gap-2">
+                    {hasRecording(modulation.name!) ? (
+                      <Badge variant="default" className="bg-green-100 text-green-800">
+                        ✓ Voice Sample Recorded
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary" className="bg-gray-100 text-gray-600">
+                        ⏺ No Recording Yet
+                      </Badge>
+                    )}
+                  </div>
+                  
+                  {/* Description */}
+                  <div className="bg-muted/50 p-3 rounded-md">
+                    <p className="text-sm text-muted-foreground">
+                      Practice {modulation.name} {modulation.type.toLowerCase()} voice modulation
+                    </p>
+                  </div>
                   
                   {/* Manual Clone Button */}
                   <VoiceCloneButton
@@ -255,6 +274,12 @@ export default function StoryVoiceSamples({
                     variant="default"
                     className="w-full"
                   />
+                  
+                  {!hasRecording(modulation.name!) && (
+                    <p className="text-xs text-orange-600">
+                      Go to global Voice Samples to record this modulation first
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             )) || (
