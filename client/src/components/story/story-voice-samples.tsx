@@ -49,6 +49,12 @@ export default function StoryVoiceSamples({
 }: StoryVoiceSamplesProps) {
   const [selectedTab, setSelectedTab] = useState("emotions");
 
+  // Debug logging
+  console.log('StoryVoiceSamples received storyAnalysis:', storyAnalysis);
+  console.log('StoryAnalysis type:', typeof storyAnalysis);
+  console.log('Has emotions:', !!storyAnalysis?.emotions);
+  console.log('Emotions array:', storyAnalysis?.emotions);
+
   // Early return if no story analysis
   if (!storyAnalysis) {
     return (

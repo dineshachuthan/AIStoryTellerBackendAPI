@@ -745,7 +745,7 @@ export default function StoryAnalysis() {
             <TabsContent value="voice-cloning" className="space-y-6">
               <StoryVoiceSamples
                 storyId={parseInt(storyId!)}
-                storyAnalysis={analysisData.analysis}
+                storyAnalysis={analysisData?.analysis}
                 userVoiceEmotions={userVoiceEmotions}
                 onEmotionRecorded={handleEmotionRecorded}
                 onPlayEmotionSample={handlePlayEmotionSample}
