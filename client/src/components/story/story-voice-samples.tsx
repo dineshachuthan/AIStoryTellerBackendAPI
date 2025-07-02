@@ -53,10 +53,12 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
   const [selectedCategory, setSelectedCategory] = useState<string>("emotions");
 
   // Get recorded samples from global voice samples system
-  const { data: recordedSamples = [] } = useQuery({
+  const { data: progress } = useQuery({
     queryKey: ["/api/voice-modulations/progress"],
     enabled: !!user?.id,
   });
+  
+  const recordedSamples: any[] = ((progress as any)?.recordedSamples) || [];
 
   // Generate story-specific templates from analysis
   const generateStoryTemplates = (): VoiceTemplate[] => {

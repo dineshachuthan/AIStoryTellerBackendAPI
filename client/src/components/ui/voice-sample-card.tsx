@@ -137,7 +137,6 @@ export function VoiceSampleCard({
         maxRecordingTime={targetDuration}
         intensity={intensity}
         onPlaySample={onPlaySample}
-        onDeleteSample={onDeleteSample}
         recordedSample={recordedSample}
       />
     </div>

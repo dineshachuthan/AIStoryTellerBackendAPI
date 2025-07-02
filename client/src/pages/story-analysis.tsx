@@ -687,7 +687,7 @@ export default function StoryAnalysis() {
           </div>
 
           {/* Story Narration Controls - Cost-Optimized (Author Only) */}
-          {storyId && storyDataFromQuery && user?.id === storyDataFromQuery.authorId ? (
+          {storyId && storyDataFromQuery && user?.id === (storyDataFromQuery as any).authorId ? (
             <StoryNarratorControls 
               storyId={parseInt(storyId)} 
               user={user}
