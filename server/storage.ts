@@ -118,6 +118,9 @@ export interface IStorage {
   getStoryUserConfidence(storyId: number, userId: string): Promise<any | undefined>;
   createStoryUserConfidence(confidence: any): Promise<any>;
   incrementConfidenceMetric(storyId: number, userId: string, metric: string): Promise<void>;
+  
+  // ESM User Recordings
+  getUserEsmRecordings(userId: string): Promise<any[]>;
   updateStoryAnalysisCacheReuse(id: number): Promise<void>;
   
   // Enhanced Story Narrations
@@ -1650,6 +1653,34 @@ export class DatabaseStorage implements IStorage {
   async incrementConfidenceMetric(storyId: number, userId: string, metric: string): Promise<void> {
     // Placeholder implementation - confidence tracking could be added to schema if needed
     console.log(`Incrementing confidence metric ${metric} for user ${userId} on story ${storyId}`);
+  }
+
+  // ESM User Recordings methods
+  async getUserEsmRecordings(userId: string): Promise<any[]> {
+    const { userEsmRecordings, userEsm, esmRef } = await import('@shared/schema');
+    const { eq } = await import('drizzle-orm');
+    
+    // Get user's ESM recordings with joined reference data
+    const recordings = await db
+      .select({
+        recording_id: userEsmRecordings.recording_id,
+        audio_url: userEsmRecordings.audio_url,
+        duration: userEsmRecordings.duration,
+        created_at: userEsmRecordings.created_at,
+        is_locked: userEsmRecordings.is_locked,
+        esmRef: {
+          name: esmRef.name,
+          display_name: esmRef.display_name,
+          category: esmRef.category
+        }
+      })
+      .from(userEsmRecordings)
+      .innerJoin(userEsm, eq(userEsmRecordings.user_esm_id, userEsm.user_esm_id))
+      .innerJoin(esmRef, eq(userEsm.esm_ref_id, esmRef.esm_ref_id))
+      .where(eq(userEsm.user_id, userId));
+    
+    console.log(`📊 Found ${recordings.length} ESM recordings for user ${userId}`);
+    return recordings;
   }
 
   // Add missing database access method for reference data service

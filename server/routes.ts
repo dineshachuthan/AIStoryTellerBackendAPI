@@ -4516,29 +4516,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: 'User not authenticated' });
       }
 
-      const { getVoiceSampleProgress } = await import('./voice-samples');
+      // Get user's recorded samples from ESM architecture
+      const userEsmRecordings = await storage.getUserEsmRecordings(userId);
+      console.log(`🎤 Found ${userEsmRecordings.length} ESM recordings for user ${userId}`);
       
-      // Get user's completed voice samples to calculate progress
-      const userVoiceSamples = await storage.getAllUserVoiceSamples(userId);
-      const completedSamples = userVoiceSamples
-        .filter(sample => sample.isCompleted)
-        .map(sample => sample.sampleType || '');
+      // Map ESM recordings to recorded samples format
+      const recordedSamples = userEsmRecordings.map((recording: any) => ({
+        emotion: recording.esmRef?.name || recording.emotion,
+        audioUrl: recording.audio_url,
+        recordedAt: recording.created_at,
+        duration: recording.duration || 0,
+        isLocked: recording.is_locked || false
+      }));
+
+      // Get templates from ESM reference data
+      const { getVoiceSamplesByType } = await import('./voice-samples');
+      const emotionTemplates = await getVoiceSamplesByType('emotions');
+      const soundTemplates = await getVoiceSamplesByType('sounds');  
+      const modTemplates = await getVoiceSamplesByType('descriptions');
       
-      const progress = await getVoiceSampleProgress(completedSamples);
+      const totalTemplates = emotionTemplates.length + soundTemplates.length + modTemplates.length;
+      const completedCount = recordedSamples.length;
       
-      // Add the actual recorded samples for visual indicators
-      const recordedSamples = userVoiceSamples
-        .filter(sample => sample.isCompleted)
-        .map(sample => ({
-          emotion: sample.sampleType,
-          audioUrl: sample.audioUrl,
-          recordedAt: sample.recordedAt,
-          duration: sample.duration,
-          isLocked: sample.isLocked || false
-        }));
+      console.log(`📊 Voice progress: ${completedCount}/${totalTemplates} completed`);
       
       res.json({
-        ...progress,
+        completed: completedCount,
+        total: totalTemplates,
+        completionPercentage: totalTemplates > 0 ? Math.round((completedCount / totalTemplates) * 100) : 0,
         recordedSamples
       });
     } catch (error: any) {
