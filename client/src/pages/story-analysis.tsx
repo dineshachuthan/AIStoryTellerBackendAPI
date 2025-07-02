@@ -338,12 +338,6 @@ export default function StoryAnalysis() {
     }
   };
 
-  // Fetch story data if storyId is provided
-  const { data: storyDataFromQuery, isLoading: storyLoading } = useQuery({
-    queryKey: [`/api/stories/${storyId}`],
-    enabled: !!storyId && !!user?.id,
-  });
-
   // Generate both narrative and roleplay analyses automatically
   const generateComprehensiveAnalysis = async (story: any) => {
     console.log('Starting comprehensive analysis for story:', storyId);
