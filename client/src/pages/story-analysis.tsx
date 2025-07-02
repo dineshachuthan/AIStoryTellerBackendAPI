@@ -63,7 +63,6 @@ export default function StoryAnalysis() {
   console.log('Extracted storyId:', storyId);
   
   const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
-  // Story data will come from the query
   const [rolePlayAnalysis, setRolePlayAnalysis] = useState<any>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -463,9 +462,9 @@ export default function StoryAnalysis() {
   useEffect(() => {
     
     
-    if (storyId && storyDataFromQuery && user?.id && !analysisData) {
+    if (storyId && user?.id && !analysisData) {
       // Only generate analysis if we don't already have it
-      generateComprehensiveAnalysis(storyDataFromQuery);
+      generateComprehensiveAnalysis({ id: storyId });
     } else if (!storyId) {
       console.log('No storyId - checking localStorage for upload flow');
       // Fall back to localStorage for upload flow
@@ -483,7 +482,7 @@ export default function StoryAnalysis() {
         setLocation('/upload-story');
       }
     }
-  }, [storyId, storyDataFromQuery, user?.id, setLocation]);
+  }, [storyId, user?.id, setLocation]);
 
   const generateTitleFromContent = (content: string, analysis: StoryAnalysis): string => {
     // Use the first character name + category as a simple title
@@ -598,14 +597,14 @@ export default function StoryAnalysis() {
 
 
   
-  if (storyLoading || isLoadingAnalyses) {
+  if (isLoadingAnalyses) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
         <div className="bg-white/10 backdrop-blur-sm rounded-lg p-8 max-w-md w-full mx-4">
           <div className="text-center text-white space-y-4">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto"></div>
             <h3 className="text-xl font-semibold">
-              {storyLoading ? "Loading Story" : "Generating Analysis"}
+              {"Generating Analysis"}
             </h3>
             {isLoadingAnalyses && (
               <div className="space-y-3">
@@ -682,21 +681,15 @@ export default function StoryAnalysis() {
             </div>
           </div>
 
-          {/* Story Narration Controls - Cost-Optimized (Author Only) */}
-          {storyId && storyDataFromQuery && user?.id === (storyDataFromQuery as any).authorId ? (
+          {/* Story Narration Controls */}
+          {storyId && user?.id && (
             <StoryNarratorControls 
               storyId={parseInt(storyId)} 
               user={user}
               canNarrate={true}
               className="mb-8"
             />
-          ) : storyId && storyDataFromQuery && user?.id !== (storyDataFromQuery as any).authorId ? (
-            <div className="mb-8 p-4 bg-blue-900/30 rounded-xl border border-blue-500/50">
-              <div className="text-blue-300 text-sm">
-                <span className="font-medium">📖 Story Narration:</span> Only the story author can generate narrations
-              </div>
-            </div>
-          ) : null}
+          )}
 
           {/* Enhanced Narration Player - ElevenLabs Voice Clone Integration */}
           {/* {storyId && user?.id && (
@@ -733,7 +726,7 @@ export default function StoryAnalysis() {
             <TabsContent value="roleplay" className="space-y-6">
               <RolePlayAnalysisPanel
                 storyId={parseInt(storyId!)}
-                storyContent={(storyDataFromQuery as any)?.content || ""}
+                storyContent={analysisData?.content || ""}
                 existingCharacters={analysisData.analysis.characters}
                 existingAnalysis={rolePlayAnalysis}
                 onAnalysisGenerated={(analysis) => {

@@ -719,6 +719,14 @@ Preferred communication style: Simple, everyday language.
 - No convenience hardcoding under any circumstances
 - Every function must connect to real data sources or fail authentically
 
+**CRITICAL DEBUGGING RULE: NEVER ADD DEBUGGING CODE TO WORKING SYSTEMS**
+- DO NOT add console.log, temporary variables, or debug code to functioning components
+- DO NOT modify working code for debugging purposes - use browser dev tools instead
+- If code is working, leave it completely untouched regardless of debugging needs
+- Only modify code when explicitly requested to add new functionality
+- Working functionality takes absolute priority over debugging convenience
+- Clean, working code is more valuable than verbose debug output
+
 **CRITICAL APPROVAL RULE: NO SCHEMA/ENDPOINT CHANGES WITHOUT PERMISSION**
 - DO NOT create or modify database schema without explicit approval
 - DO NOT add new REST endpoints without explicit approval  
