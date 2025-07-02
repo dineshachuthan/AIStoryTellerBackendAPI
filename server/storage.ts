@@ -113,6 +113,11 @@ export interface IStorage {
   // Story Analysis Cache
   getStoryAnalysisCache(contentHash: string): Promise<any | undefined>;
   createStoryAnalysisCache(cache: any): Promise<any>;
+  
+  // Story User Confidence
+  getStoryUserConfidence(storyId: number, userId: string): Promise<any | undefined>;
+  createStoryUserConfidence(confidence: any): Promise<any>;
+  incrementConfidenceMetric(storyId: number, userId: string, metric: string): Promise<void>;
   updateStoryAnalysisCacheReuse(id: number): Promise<void>;
   
   // Enhanced Story Narrations
@@ -1620,6 +1625,31 @@ export class DatabaseStorage implements IStorage {
   
   async migrateAllStoriesToReference(): Promise<any> {
     throw new Error('Use ReferenceDataService.migrateStoriesToReferenceData() instead');
+  }
+
+  // Story User Confidence methods
+  async getStoryUserConfidence(storyId: number, userId: string): Promise<any | undefined> {
+    // Since there's no specific story confidence table in schema, return placeholder
+    return {
+      storyId,
+      userId,
+      confidenceScore: 0,
+      metrics: {}
+    };
+  }
+
+  async createStoryUserConfidence(confidence: any): Promise<any> {
+    // Placeholder implementation - could create actual table if needed
+    return {
+      id: Date.now(),
+      ...confidence,
+      createdAt: new Date()
+    };
+  }
+
+  async incrementConfidenceMetric(storyId: number, userId: string, metric: string): Promise<void> {
+    // Placeholder implementation - confidence tracking could be added to schema if needed
+    console.log(`Incrementing confidence metric ${metric} for user ${userId} on story ${storyId}`);
   }
 
   // Add missing database access method for reference data service

@@ -162,6 +162,13 @@ This is a full-stack collaborative storytelling platform that enables users to c
 26. Create voice training progress display - show which emotions are training/ready
 27. Build narration player - play generated story audio with metadata
 
+### Contextual Help Bubbles with Character Mascot (Future Enhancement)
+- **Feature**: Interactive help system with animated character guide providing context-aware assistance
+- **Components**: Smart help bubbles, character mascot, progressive guidance based on user experience level
+- **Implementation**: Character appears for first-time users, contextual triggers on complex features, interactive guidance for current page tasks
+- **Voice App Integration**: Explain voice recording process, guide through emotion categories, clarify background color meanings, provide voice cloning tips
+- **Priority**: Medium (requested but deferred to complete pending items first)
+
 ### User Emotion Images (Future Enhancement)
 - **Feature**: Allow users to upload their own images for each emotion
 - **Purpose**: Personalized emotion representation in stories and roleplays
