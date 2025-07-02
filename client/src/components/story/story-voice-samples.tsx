@@ -69,6 +69,11 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
     );
   };
 
+  // Helper function to generate category-aware emotion key for saving
+  const generateEmotionKey = (itemName: string, category: string) => {
+    return `${category}-${itemName.toLowerCase()}`;
+  };
+
   // Generate story-specific templates from analysis
   const generateStoryTemplates = (): VoiceTemplate[] => {
     const templates: VoiceTemplate[] = [];
@@ -184,8 +189,8 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
       const formData = new FormData();
       formData.append('audio', audioBlob, 'voice-sample.mp3');
       
-      // Create modulationKey expected by the API endpoint
-      const modulationKey = `${selectedCategory}-${emotion.toLowerCase()}`;
+      // Create modulationKey using the same helper function as display logic
+      const modulationKey = generateEmotionKey(emotion, selectedCategory);
       formData.append('modulationKey', modulationKey);
       formData.append('modulationType', selectedCategory);
 
