@@ -603,14 +603,14 @@ export default function StoryAnalysis() {
 
 
   
-  if (storyLoading || isLoadingAnalyses) {
+  if (isLoadingAnalyses) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
         <div className="bg-white/10 backdrop-blur-sm rounded-lg p-8 max-w-md w-full mx-4">
           <div className="text-center text-white space-y-4">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto"></div>
             <h3 className="text-xl font-semibold">
-              {storyLoading ? "Loading Story" : "Generating Analysis"}
+              {"Generating Analysis"}
             </h3>
             {isLoadingAnalyses && (
               <div className="space-y-3">
