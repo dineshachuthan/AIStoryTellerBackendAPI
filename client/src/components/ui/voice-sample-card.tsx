@@ -128,9 +128,7 @@ export function VoiceSampleCard({
                 : "Hold button to record"
         }}
         sampleText={sampleText}
-        emotionDescription={description}
         emotionName={displayName}
-        category={category}
         isRecorded={isRecorded}
         isLocked={isLocked}
         onRecordingComplete={onRecordingComplete}

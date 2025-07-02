@@ -13,6 +13,7 @@ import { AppTopNavigation } from "@/components/app-top-navigation";
 import { StoryAnalysisPanel } from "@/components/story/StoryAnalysisPanel";
 import { RolePlayAnalysisPanel } from "@/components/story/RolePlayAnalysisPanel";
 import StoryNarratorControls from "@/components/ui/story-narrator-controls";
+import StoryVoiceSamples from "@/components/story/story-voice-samples";
 // import { EnhancedNarrationPlayer } from "@/components/enhanced-narration-player";
 
 interface StoryAnalysis {
@@ -714,9 +715,10 @@ export default function StoryAnalysis() {
 
           {/* Main Analysis Tabs */}
           <Tabs defaultValue="narrative" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
+            <TabsList className="grid w-full grid-cols-3 mb-6">
               <TabsTrigger value="narrative">Narrative Analysis</TabsTrigger>
               <TabsTrigger value="roleplay">Role Play Analysis</TabsTrigger>
+              <TabsTrigger value="voice-samples">Voice Samples</TabsTrigger>
             </TabsList>
 
             <TabsContent value="narrative" className="space-y-6">
@@ -741,6 +743,13 @@ export default function StoryAnalysis() {
                   console.log("Roleplay analysis generated:", analysis);
                   setRolePlayAnalysis(analysis);
                 }}
+              />
+            </TabsContent>
+
+            <TabsContent value="voice-samples" className="space-y-6">
+              <StoryVoiceSamples
+                storyId={parseInt(storyId!)}
+                analysisData={analysisData.analysis}
               />
             </TabsContent>
           </Tabs>
