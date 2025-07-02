@@ -533,29 +533,7 @@ export function EnhancedVoiceRecorder({
           </div>
         </div>
 
-        {/* Recorded Sample Info - Compact */}
-        {recordedSample && (
-          <div className="mt-2 p-2 bg-gray-900 border border-gray-600 rounded-md">
-            <div className="flex items-center gap-2 text-xs">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onPlaySample?.(recordedSample.audioUrl)}
-                className="h-6 w-6 p-0 shrink-0 text-green-400 hover:text-green-300"
-              >
-                <Play className="w-3 h-3" />
-              </Button>
-              
-              <div className="text-gray-300 flex-1 min-w-0">
-                <div className="flex items-center gap-1">
-                  <span>{recordedSample.duration ? `${recordedSample.duration}s` : 'Unknown'}</span>
-                  <span className="text-gray-500">•</span>
-                  <span className="truncate">{recordedSample.recordedAt.toLocaleDateString()}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Recorded Sample Info - Removed duration and date display as requested */}
 
         {/* Control Buttons - Minimal margin */}
         <div className="mt-1 flex gap-2 justify-center">
