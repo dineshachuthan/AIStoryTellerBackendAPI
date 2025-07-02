@@ -467,11 +467,9 @@ export default function StoryAnalysis() {
   };
 
   useEffect(() => {
-    console.log('StoryAnalysis useEffect triggered:', { storyId, hasStoryData: !!storyDataFromQuery, userId: user?.id });
     
-    if (storyId && storyDataFromQuery && user?.id) {
-      console.log('Triggering dual analysis for existing story');
-      // Automatically generate both analyses when story data is available
+    if (storyId && storyDataFromQuery && user?.id && !analysisData) {
+      // Only generate analysis if we don't already have it
       generateComprehensiveAnalysis(storyDataFromQuery);
     } else if (!storyId) {
       console.log('No storyId - checking localStorage for upload flow');
@@ -492,7 +490,7 @@ export default function StoryAnalysis() {
     } else {
       console.log('Waiting for story data or user auth...');
     }
-  }, [storyId, storyDataFromQuery, user?.id, setLocation]);
+  }, [storyId, storyDataFromQuery, user?.id, analysisData, setLocation]);
 
   const generateTitleFromContent = (content: string, analysis: StoryAnalysis): string => {
     // Use the first character name + category as a simple title
