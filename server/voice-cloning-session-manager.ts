@@ -405,8 +405,14 @@ export class VoiceCloningSessionManager {
    * Legacy method for backwards compatibility
    */
   static getCategoryFromModulationKey(modulationKey: string): VoiceCategoryType {
-    // For legacy compatibility, assume emotions by default
-    // The new system should use getCategoryFromEsmName instead
-    return 'emotions';
+    // Determine category based on modulation key prefix
+    if (modulationKey.startsWith('sounds-')) {
+      return 'sounds';
+    } else if (modulationKey.includes('modulation') || modulationKey.includes('mood')) {
+      return 'modulations';
+    } else {
+      // Default to emotions for direct emotion names
+      return 'emotions';
+    }
   }
 }

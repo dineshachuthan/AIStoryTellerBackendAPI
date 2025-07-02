@@ -94,7 +94,7 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
     if (analysisData.soundEffects) {
       analysisData.soundEffects.forEach((sound) => {
         const recordedSample = recordedSamples.find((r: any) => 
-          r.emotion === sound.sound.toLowerCase()
+          r.emotion === `sounds-${sound.sound.toLowerCase()}` || r.emotion === sound.sound.toLowerCase()
         );
         const isRecorded = !!recordedSample;
         const isLocked = recordedSample?.isLocked || false;
