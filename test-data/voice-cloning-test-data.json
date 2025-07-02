@@ -1,0 +1,122 @@
+{
+  "testUser": {
+    "id": "google_117487073695002443567",
+    "email": "test@example.com"
+  },
+  "testStory": {
+    "id": 75,
+    "title": "The Janitor's Name"
+  },
+  "voiceCloneTestCases": {
+    "emotions": [
+      {
+        "voiceName": "Frustration",
+        "voiceType": "emotion",
+        "intensity": 8,
+        "context": "Character experiencing workplace frustration",
+        "quote": "Why does this always happen to me?"
+      },
+      {
+        "voiceName": "Surprise",
+        "voiceType": "emotion", 
+        "intensity": 7,
+        "context": "Unexpected discovery moment",
+        "quote": "I never expected to find this here!"
+      },
+      {
+        "voiceName": "Hope",
+        "voiceType": "emotion",
+        "intensity": 6,
+        "context": "Character finding new possibility",
+        "quote": "Maybe there's still a chance."
+      }
+    ],
+    "sounds": [
+      {
+        "voiceName": "dog barking",
+        "voiceType": "sound",
+        "intensity": 5,
+        "context": "Background environmental sound",
+        "quote": "Woof! Woof!"
+      },
+      {
+        "voiceName": "rain falling",
+        "voiceType": "sound",
+        "intensity": 4,
+        "context": "Weather ambiance",
+        "quote": "Pitter-patter on the roof"
+      },
+      {
+        "voiceName": "footsteps",
+        "voiceType": "sound",
+        "intensity": 6,
+        "context": "Character movement",
+        "quote": "Tap, tap, tap down the hallway"
+      }
+    ],
+    "modulations": [
+      {
+        "voiceName": "mysterious",
+        "voiceType": "modulation",
+        "intensity": 5,
+        "context": "Secretive storytelling tone",
+        "quote": "There's something you should know..."
+      },
+      {
+        "voiceName": "confident",
+        "voiceType": "modulation",
+        "intensity": 8,
+        "context": "Assertive character voice",
+        "quote": "I know exactly what to do."
+      },
+      {
+        "voiceName": "nostalgic",
+        "voiceType": "modulation",
+        "intensity": 6,
+        "context": "Remembering the past",
+        "quote": "It reminds me of the old days..."
+      }
+    ]
+  },
+  "voiceProviders": [
+    {
+      "name": "elevenlabs",
+      "displayName": "ElevenLabs"
+    },
+    {
+      "name": "kling-voice",
+      "displayName": "Kling Voice"
+    }
+  ],
+  "errorTestCases": {
+    "invalidStoryId": 99999,
+    "invalidVoiceData": {
+      "voiceName": "",
+      "voiceType": "invalid_type",
+      "intensity": 15
+    },
+    "malformedRequirement": {
+      "storyId": "not_a_number",
+      "voiceName": null,
+      "voiceType": "emotion"
+    }
+  },
+  "expectedResponses": {
+    "sessionStatus": {
+      "requiredFields": ["sessionData"],
+      "sessionDataFields": ["emotions", "sounds", "modulations", "isAnyCloning"]
+    },
+    "voiceCloningStatus": {
+      "requiredFields": ["voiceName", "voiceType", "trainingStatus"],
+      "validStatuses": ["pending", "training", "completed", "failed"]
+    },
+    "voiceRequirements": {
+      "requiredFields": ["voiceName", "voiceType", "isRequired", "isRecorded"],
+      "validTypes": ["emotion", "sound", "modulation"]
+    },
+    "manualClone": {
+      "successFields": ["message", "voiceCloneId"],
+      "errorFields": ["message", "error"]
+    }
+  }
+}
