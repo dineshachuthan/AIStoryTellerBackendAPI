@@ -1696,9 +1696,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "User authentication required" });
       }
 
-      // Use simple audio player for reliable playback
-      const simplePlayer = await import('./simple-audio-player');
-      const narration = await simplePlayer.simpleAudioPlayer.generateSimpleNarration(storyId, userId);
+      // Use existing story narrator service
+      const { storyNarrator } = await import('./story-narrator');
+      const narration = await storyNarrator.generateStoryNarration(storyId, userId);
 
       console.log(`Generated character narration with ${narration.segments.length} segments`);
       res.json(narration);

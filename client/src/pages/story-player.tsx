@@ -112,13 +112,13 @@ export default function StoryPlayer() {
     : computedTotalDuration || 12000; // Default 12 seconds for 6 segments
   const progress = effectiveTotalDuration > 0 ? (currentTime / effectiveTotalDuration) * 100 : 0;
 
-  // Auto-start story playback when component loads
-  useEffect(() => {
-    if (story && !grandmaNarration && !generateNarrationMutation.isPending && !isPlaying) {
-      // Always use character-based narration for proper audio playback
-      playCharacterNarration();
-    }
-  }, [story, grandmaNarration]);
+  // Auto-start story playback when component loads - DISABLED to prevent automatic narration failures
+  // useEffect(() => {
+  //   if (story && !grandmaNarration && !generateNarrationMutation.isPending && !isPlaying) {
+  //     // Always use character-based narration for proper audio playback
+  //     playCharacterNarration();
+  //   }
+  // }, [story, grandmaNarration]);
 
   // Auto-play when grandma narration is loaded
   useEffect(() => {
