@@ -22,6 +22,7 @@ interface EnhancedVoiceRecorderProps {
   emotionName?: string;
   intensity?: number;
   isLocked?: boolean;
+  isRecorded?: boolean;
   // Optional existing recording display
   recordedSample?: {
     audioUrl: string;
@@ -49,6 +50,7 @@ export function EnhancedVoiceRecorder({
   emotionName,
   intensity,
   isLocked = false,
+  isRecorded = false,
   recordedSample,
   onPlaySample,
   onSaveSample,
@@ -91,7 +93,7 @@ export function EnhancedVoiceRecorder({
         label: "Locked", 
         description: "Used for voice cloning - locked from editing"
       };
-    } else if (recordedSample) {
+    } else if (isRecorded || recordedSample) {
       return {
         icon: <CheckCircle className="w-4 h-4 text-green-500" />,
         color: "green",
@@ -360,7 +362,7 @@ export function EnhancedVoiceRecorder({
         <div className={`rounded-2xl p-4 shadow-2xl border flex flex-col ${
           isLocked 
             ? 'bg-gradient-to-br from-blue-900/80 to-indigo-900/80 border-blue-400/60' 
-            : recordedSample
+            : (isRecorded || recordedSample)
               ? 'bg-gradient-to-br from-green-900/70 to-emerald-900/70 border-green-500/50'
               : 'bg-gradient-to-br from-gray-900 to-gray-800 border-gray-700'
         }`}>

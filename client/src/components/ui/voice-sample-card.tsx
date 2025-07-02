@@ -138,11 +138,6 @@ export function VoiceSampleCard({
         disabled={disabled || isLocked}
         maxRecordingTime={targetDuration}
         intensity={intensity}
-        statusConfig={getStatusConfig()}
-        existingRecording={isRecorded && recordedSample ? {
-          url: recordedSample.audioUrl,
-          recordedAt: recordedSample.recordedAt
-        } : undefined}
         onPlaySample={onPlaySample}
         onDeleteSample={onDeleteSample}
         recordedSample={recordedSample}
