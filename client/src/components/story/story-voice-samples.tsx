@@ -8,6 +8,8 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { VoiceSampleCard } from "@/components/ui/voice-sample-card";
 import { Mic, Volume2, Users } from "lucide-react";
+import { AUDIO_PROCESSING_CONFIG } from "@shared/audio-config";
+import { getErrorMessage, I18N_CONFIG } from "@shared/i18n-config";
 
 interface StoryAnalysis {
   emotions: Array<{

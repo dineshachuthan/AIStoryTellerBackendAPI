@@ -113,7 +113,7 @@ export default function VoiceSamples() {
       });
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || 'Failed to trigger voice cloning');
+        throw new Error(error.message || getErrorMessage(AUDIO_PROCESSING_CONFIG.errorCodes.voiceCloningTriggerFailed, I18N_CONFIG.defaultLanguage));
       }
       return response.json();
     },
@@ -143,7 +143,7 @@ export default function VoiceSamples() {
       });
 
       if (!response.ok) {
-        throw new Error(AUDIO_PROCESSING_CONFIG.errorMessages.saveVoiceModulationFailed);
+        throw new Error(getErrorMessage(AUDIO_PROCESSING_CONFIG.errorCodes.saveVoiceModulationFailed, I18N_CONFIG.defaultLanguage));
       }
 
       return response.json();
@@ -181,7 +181,7 @@ export default function VoiceSamples() {
   // Delete voice modulation mutation
   const deleteVoiceModulation = useMutation({
     mutationFn: async (modulationKey: string) => {
-      const response = await fetch(`/api/voice-modulations/delete`, {
+      const response = await fetch(AUDIO_PROCESSING_CONFIG.endpoints.voiceModulationsDelete, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -190,7 +190,7 @@ export default function VoiceSamples() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to delete voice modulation");
+        throw new Error(getErrorMessage(AUDIO_PROCESSING_CONFIG.errorCodes.deleteVoiceModulationFailed, I18N_CONFIG.defaultLanguage));
       }
 
       return response.json();
