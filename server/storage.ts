@@ -1,4 +1,4 @@
-import { users, localUsers, userProviders, userVoiceSamples, stories, storyCharacters, storyEmotions, characters, conversations, messages, storyCollaborations, storyGroups, storyGroupMembers, characterVoiceAssignments, storyPlaybacks, storyAnalyses, storyNarrations, audioFiles, videoGenerations, type User, type InsertUser, type UpsertUser, type UserProvider, type InsertUserProvider, type LocalUser, type InsertLocalUser, type UserVoiceSample, type InsertUserVoiceSample, type Story, type InsertStory, type StoryCharacter, type InsertStoryCharacter, type StoryEmotion, type InsertStoryEmotion, type Character, type InsertCharacter, type Conversation, type InsertConversation, type Message, type InsertMessage, type StoryCollaboration, type InsertStoryCollaboration, type StoryGroup, type InsertStoryGroup, type StoryGroupMember, type InsertStoryGroupMember, type CharacterVoiceAssignment, type InsertCharacterVoiceAssignment, type StoryPlayback, type InsertStoryPlayback, type StoryAnalysis, type InsertStoryAnalysis, type StoryNarration, type InsertStoryNarration, type AudioFile, type InsertAudioFile } from "@shared/schema";
+import { users, localUsers, userProviders, userVoiceSamples, stories, storyCharacters, storyEmotions, characters, conversations, messages, storyCollaborations, storyGroups, storyGroupMembers, characterVoiceAssignments, storyPlaybacks, storyAnalyses, storyNarrations, audioFiles, videoGenerations, userVoiceClones, storyVoiceRequirements, type User, type InsertUser, type UpsertUser, type UserProvider, type InsertUserProvider, type LocalUser, type InsertLocalUser, type UserVoiceSample, type InsertUserVoiceSample, type Story, type InsertStory, type StoryCharacter, type InsertStoryCharacter, type StoryEmotion, type InsertStoryEmotion, type Character, type InsertCharacter, type Conversation, type InsertConversation, type Message, type InsertMessage, type StoryCollaboration, type InsertStoryCollaboration, type StoryGroup, type InsertStoryGroup, type StoryGroupMember, type InsertStoryGroupMember, type CharacterVoiceAssignment, type InsertCharacterVoiceAssignment, type StoryPlayback, type InsertStoryPlayback, type StoryAnalysis, type InsertStoryAnalysis, type StoryNarration, type InsertStoryNarration, type AudioFile, type InsertAudioFile, type UserVoiceClone, type InsertUserVoiceClone, type StoryVoiceRequirement, type InsertStoryVoiceRequirement } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, like, lt, sql } from "drizzle-orm";
 import { ContentHashService } from './content-hash-service';
@@ -35,6 +35,20 @@ export interface IStorage {
   getUserVoiceEmotions(userId: string, storyId?: number): Promise<any[]>;
   createUserVoiceEmotion(emotion: any): Promise<any>;
   deleteUserVoiceEmotion(userId: string, emotion: string): Promise<void>;
+
+  // User Voice Clones (new architecture)
+  getUserVoiceClones(userId: string): Promise<UserVoiceClone[]>;
+  getUserVoiceClone(userId: string, voiceName: string, voiceType: string): Promise<UserVoiceClone | undefined>;
+  createUserVoiceClone(voiceClone: InsertUserVoiceClone): Promise<UserVoiceClone>;
+  updateUserVoiceClone(id: number, voiceClone: Partial<InsertUserVoiceClone>): Promise<void>;
+  deleteUserVoiceClone(id: number): Promise<void>;
+
+  // Story Voice Requirements (story-specific voice needs)
+  getStoryVoiceRequirements(storyId: number): Promise<StoryVoiceRequirement[]>;
+  createStoryVoiceRequirement(requirement: InsertStoryVoiceRequirement): Promise<StoryVoiceRequirement>;
+  updateStoryVoiceRequirement(id: number, requirement: Partial<InsertStoryVoiceRequirement>): Promise<void>;
+  deleteStoryVoiceRequirement(id: number): Promise<void>;
+  markVoiceRequirementAsRecorded(storyId: number, voiceName: string, voiceType: string): Promise<void>;
   
   // Emotion Templates
   getEmotionTemplate(emotion: string): Promise<any | null>;
@@ -1258,6 +1272,80 @@ export class DatabaseStorage implements IStorage {
   async deleteUserEmotionVoice(id: number): Promise<void> {
     const userEmotionVoices = await import("@shared/schema").then(m => m.userEmotionVoices);
     await db.delete(userEmotionVoices).where(eq(userEmotionVoices.id, id));
+  }
+
+  // User Voice Clones (new architecture)
+  async getUserVoiceClones(userId: string): Promise<UserVoiceClone[]> {
+    return await db.select()
+      .from(userVoiceClones)
+      .innerJoin(userVoiceProfiles, eq(userVoiceClones.userVoiceProfileId, userVoiceProfiles.id))
+      .where(eq(userVoiceProfiles.userId, userId));
+  }
+
+  async getUserVoiceClone(userId: string, voiceName: string, voiceType: string): Promise<UserVoiceClone | undefined> {
+    const [result] = await db.select()
+      .from(userVoiceClones)
+      .innerJoin(userVoiceProfiles, eq(userVoiceClones.userVoiceProfileId, userVoiceProfiles.id))
+      .where(and(
+        eq(userVoiceProfiles.userId, userId),
+        eq(userVoiceClones.voiceName, voiceName),
+        eq(userVoiceClones.voiceType, voiceType)
+      ));
+    return result?.user_voice_clones || undefined;
+  }
+
+  async createUserVoiceClone(voiceClone: InsertUserVoiceClone): Promise<UserVoiceClone> {
+    const [created] = await db.insert(userVoiceClones).values({
+      ...voiceClone,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }).returning();
+    return created;
+  }
+
+  async updateUserVoiceClone(id: number, voiceClone: Partial<InsertUserVoiceClone>): Promise<void> {
+    await db.update(userVoiceClones)
+      .set({ ...voiceClone, updatedAt: new Date() })
+      .where(eq(userVoiceClones.id, id));
+  }
+
+  async deleteUserVoiceClone(id: number): Promise<void> {
+    await db.delete(userVoiceClones).where(eq(userVoiceClones.id, id));
+  }
+
+  // Story Voice Requirements (story-specific voice needs)
+  async getStoryVoiceRequirements(storyId: number): Promise<StoryVoiceRequirement[]> {
+    return await db.select()
+      .from(storyVoiceRequirements)
+      .where(eq(storyVoiceRequirements.storyId, storyId));
+  }
+
+  async createStoryVoiceRequirement(requirement: InsertStoryVoiceRequirement): Promise<StoryVoiceRequirement> {
+    const [created] = await db.insert(storyVoiceRequirements).values({
+      ...requirement,
+      createdAt: new Date()
+    }).returning();
+    return created;
+  }
+
+  async updateStoryVoiceRequirement(id: number, requirement: Partial<InsertStoryVoiceRequirement>): Promise<void> {
+    await db.update(storyVoiceRequirements)
+      .set(requirement)
+      .where(eq(storyVoiceRequirements.id, id));
+  }
+
+  async deleteStoryVoiceRequirement(id: number): Promise<void> {
+    await db.delete(storyVoiceRequirements).where(eq(storyVoiceRequirements.id, id));
+  }
+
+  async markVoiceRequirementAsRecorded(storyId: number, voiceName: string, voiceType: string): Promise<void> {
+    await db.update(storyVoiceRequirements)
+      .set({ isRecorded: true })
+      .where(and(
+        eq(storyVoiceRequirements.storyId, storyId),
+        eq(storyVoiceRequirements.voiceName, voiceName),
+        eq(storyVoiceRequirements.voiceType, voiceType)
+      ));
   }
 
   // Voice Generation Cache

@@ -176,6 +176,18 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Priority**: Medium (requested but deferred for future implementation)
 
 ## Changelog
+- July 02, 2025: ✅ **MAJOR DATABASE MIGRATION COMPLETED** - Story-Centric Voice Cloning Architecture Implementation
+  - **RENAMED CORE TABLE**: user_emotion_voices → user_voice_clones with new unified architecture for emotions, sounds, and modulations
+  - **ENHANCED SCHEMA STRUCTURE**: Added voice_type column (emotion/sound/modulation) and voice_name for better categorization
+  - **NEW STORY REQUIREMENTS TABLE**: Created story_voice_requirements to track story-specific voice needs and recording status
+  - **UPDATED TYPESCRIPT SCHEMAS**: Complete type definitions for UserVoiceClone and StoryVoiceRequirement with proper validation
+  - **STORAGE INTERFACE ENHANCED**: Added 11 new storage methods for voice clone and story requirement management
+  - **ARCHITECTURAL SHIFT**: From automatic threshold-based cloning to manual story-driven voice collection and cloning
+  - **COST OPTIMIZATION**: Story-specific voice requirements prevent unnecessary ElevenLabs API calls for unused voices
+  - **MANUAL CONTROL**: Users will now see story-specific voice buttons instead of automatic background triggers
+  - **DATABASE CONSTRAINT**: Added check constraint for voice_type values (emotion, sound, modulation)
+  - **REFERENCE COLUMN UPDATE**: Updated user_voice_samples to reference new user_voice_clones table structure
+  - Voice cloning system now ready for manual story-specific implementation with comprehensive cost monitoring
 - July 02, 2025: ✅ **AUTOMATIC NARRATION TRIGGER ISSUE RESOLVED** - Fixed Story Player Component Auto-Loading Problem
   - **IDENTIFIED AUTOMATIC TRIGGER**: Story player component was auto-triggering character narration on page load causing unwanted "Narration Failed" errors
   - **FIXED MISSING MODULE IMPORT**: Backend endpoint was trying to import non-existent `simple-audio-player` module causing ERR_MODULE_NOT_FOUND errors
