@@ -11,6 +11,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Mic, Play, Trash2, CheckCircle, Circle, Volume2, LogOut, Lock, Unlock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { VoiceSampleCard } from "@/components/ui/voice-sample-card";
+import { AUDIO_PROCESSING_CONFIG } from "@shared/audio-config";
+import { getErrorMessage, I18N_CONFIG } from "@shared/i18n-config";
 // import { VoiceTrainingStatus } from "@/components/voice-training-status";
 
 interface EmotionTemplate {
@@ -131,17 +133,17 @@ export default function VoiceSamples() {
     mutationFn: async ({ emotion, audioBlob }: { emotion: string; audioBlob: Blob }) => {
       const formData = new FormData();
       formData.append("modulationKey", emotion);
-      formData.append("audio", audioBlob, `${emotion}_sample.webm`);
-      formData.append("duration", "10"); // Default duration
+      formData.append("audio", audioBlob, `${emotion}_sample.${AUDIO_PROCESSING_CONFIG.recording.defaultFormat}`);
+      formData.append("duration", AUDIO_PROCESSING_CONFIG.recording.defaultDuration.toString());
       formData.append("modulationType", selectedCategory); // Use current selected category
 
-      const response = await fetch("/api/voice-modulations/record", {
+      const response = await fetch(AUDIO_PROCESSING_CONFIG.endpoints.voiceModulations, {
         method: "POST",
         body: formData,
       });
 
       if (!response.ok) {
-        throw new Error("Failed to save voice modulation");
+        throw new Error(AUDIO_PROCESSING_CONFIG.errorMessages.saveVoiceModulationFailed);
       }
 
       return response.json();

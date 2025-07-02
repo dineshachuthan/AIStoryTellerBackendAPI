@@ -112,10 +112,34 @@ export const AUDIO_PROCESSING_CONFIG = {
   // Maximum file size for processing (in bytes)
   maxFileSizeBytes: 25 * 1024 * 1024, // 25MB - OpenAI's limit
   
-  // Error messages
-  errorMessages: {
-    noSpeechDetected: "No clear speech was detected in your audio recording. Please ensure you speak clearly and loudly enough, and try again.",
-    fileTooLarge: "Audio file is too large. Please upload a file smaller than 25MB.",
-    unsupportedFormat: "Unsupported audio format. Please use one of: WAV, MP3, M4A, OGG, FLAC, or WebM."
+  // Voice recording configuration
+  recording: {
+    defaultDuration: 10, // seconds
+    maxDuration: 60, // seconds
+    defaultFormat: 'webm', // determined by browser capabilities
+  },
+
+  // API endpoints
+  endpoints: {
+    voiceModulations: '/api/voice-modulations/record',
+    voiceModulationsDelete: '/api/voice-modulations/delete',
+    voiceModulationsProgress: '/api/voice-modulations/progress',
+    voiceModulationsTemplates: '/api/voice-modulations/templates',
+  },
+
+  // Error codes for i18n
+  errorCodes: {
+    noSpeechDetected: "NO_SPEECH_DETECTED",
+    fileTooLarge: "FILE_TOO_LARGE", 
+    unsupportedFormat: "UNSUPPORTED_FORMAT",
+    saveVoiceModulationFailed: "VOICE_SAVE_FAILED",
+    deleteVoiceModulationFailed: "VOICE_DELETE_FAILED",
+    voiceCloningTriggerFailed: "VOICE_CLONING_TRIGGER_FAILED",
+  },
+
+  // Success codes for i18n
+  successCodes: {
+    voiceSaved: "VOICE_SAVED",
+    voiceDeleted: "VOICE_DELETED",
   }
 };
