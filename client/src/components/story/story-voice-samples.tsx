@@ -3,11 +3,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { VoiceSampleCard } from "@/components/ui/voice-sample-card";
-import { Mic, Volume2, Users } from "lucide-react";
+import { Mic, Volume2, Users, Zap, DollarSign, Clock, AlertCircle } from "lucide-react";
 import { AUDIO_PROCESSING_CONFIG } from "@shared/audio-config";
 import { VoiceMessageService } from "@shared/i18n-config";
 
