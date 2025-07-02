@@ -39,6 +39,7 @@ interface StoryAnalysisData {
 
 interface StoryAnalysisPanelProps {
   analysis: StoryAnalysisData | null | undefined;
+  storyId?: number;
   userVoiceEmotions?: Record<string, boolean>;
   onEmotionRecorded?: (emotion: string, audioBlob: Blob) => void;
   onPlayEmotionSample?: (emotion: string, intensity: number) => void;
@@ -50,6 +51,7 @@ interface StoryAnalysisPanelProps {
 
 export function StoryAnalysisPanel({
   analysis,
+  storyId = 0,
   userVoiceEmotions = {},
   onEmotionRecorded,
   onPlayEmotionSample,
@@ -171,7 +173,7 @@ export function StoryAnalysisPanel({
             </CardHeader>
             <CardContent>
               <StoryVoiceSamples
-                storyId={0} // Will be passed from parent component
+                storyId={storyId}
                 analysisData={analysis}
               />
             </CardContent>

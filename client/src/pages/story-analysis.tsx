@@ -723,6 +723,7 @@ export default function StoryAnalysis() {
             <TabsContent value="narrative" className="space-y-6">
               <StoryAnalysisPanel
                 analysis={analysisData.analysis}
+                storyId={parseInt(storyId!)}
                 userVoiceEmotions={userVoiceEmotions}
                 onEmotionRecorded={handleEmotionRecorded}
                 onPlayEmotionSample={handlePlayEmotionSample}
