@@ -133,7 +133,7 @@ export default function VoiceSamples() {
       formData.append("modulationKey", emotion);
       formData.append("audio", audioBlob, `${emotion}_sample.webm`);
       formData.append("duration", "10"); // Default duration
-      formData.append("modulationType", "emotion"); // Default type
+      formData.append("modulationType", selectedCategory); // Use current selected category
 
       const response = await fetch("/api/voice-modulations/record", {
         method: "POST",
