@@ -434,6 +434,7 @@ export default function StoryAnalysis() {
       }
 
       // Analysis completed successfully - stop loading
+      console.log('Comprehensive analysis completed successfully');
       setIsLoadingAnalyses(false);
 
     } catch (error) {
