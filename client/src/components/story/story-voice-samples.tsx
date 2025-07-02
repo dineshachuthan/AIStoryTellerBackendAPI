@@ -194,17 +194,19 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
         credentials: 'include'
       });
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/api/voice-modulations/progress"] });
+      const successMsg = VoiceMessageService.voiceSaved(user?.email || 'User', variables.emotion, selectedCategory);
       toast({
         title: "Voice sample recorded",
-        description: "Your voice sample has been saved successfully",
+        description: successMsg.message,
       });
     },
-    onError: (error: any) => {
+    onError: (error: any, variables) => {
+      const errorMsg = VoiceMessageService.voiceSaveFailed(variables.emotion, selectedCategory);
       toast({
         title: "Recording failed",
-        description: error.message || "Failed to save voice sample",
+        description: error.message || errorMsg.message,
         variant: "destructive",
       });
     }
