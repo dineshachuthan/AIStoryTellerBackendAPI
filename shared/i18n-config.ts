@@ -204,6 +204,71 @@ export const MESSAGE_TEMPLATES: Record<string, I18nMessageTemplate> = {
       zh: '{category}的语音克隆已完成{progress}%，使用了{samplesCount}个样本',
       ko: '{category}의 음성 복제가 {samplesCount}개 샘플로 {progress}% 완료되었습니다'
     }
+  },
+
+  // Voice Cloning Button Labels
+  CNV_BUTTON_LABEL: {
+    code: 'CNV_BUTTON_LABEL',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Create Narrator Voice',
+      es: 'Crear Voz del Narrador',
+      fr: 'Créer la Voix du Narrateur',
+      de: 'Erzählerstimme Erstellen',
+      ja: 'ナレーター音声を作成',
+      zh: '创建叙述者声音',
+      ko: '나레이터 음성 생성'
+    }
+  },
+
+  CNV_INSUFFICIENT_SAMPLES: {
+    code: 'CNV_INSUFFICIENT_SAMPLES',
+    type: 'warning',
+    severity: 'medium',
+    variables: ['needed'],
+    templates: {
+      en: 'Record {needed} more voice samples to create narrator voice',
+      es: 'Graba {needed} muestras de voz más para crear la voz del narrador',
+      fr: 'Enregistrez {needed} échantillons vocaux supplémentaires pour créer la voix du narrateur',
+      de: 'Nehmen Sie {needed} weitere Stimmproben auf, um die Erzählerstimme zu erstellen',
+      ja: 'ナレーター音声を作成するためにあと{needed}個の音声サンプルを録音してください',
+      zh: '再录制{needed}个语音样本以创建叙述者声音',
+      ko: '나레이터 음성을 생성하려면 {needed}개의 음성 샘플을 더 녹음하세요'
+    }
+  },
+
+  CNV_IN_PROGRESS: {
+    code: 'CNV_IN_PROGRESS',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Voice cloning in progress...',
+      es: 'Clonación de voz en progreso...',
+      fr: 'Clonage vocal en cours...',
+      de: 'Stimmklonen läuft...',
+      ja: 'ボイスクローニング進行中...',
+      zh: '语音克隆进行中...',
+      ko: '음성 복제 진행 중...'
+    }
+  },
+
+  CNV_READY: {
+    code: 'CNV_READY',
+    type: 'success',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Narrator Voice Ready',
+      es: 'Voz del Narrador Lista',
+      fr: 'Voix du Narrateur Prête',
+      de: 'Erzählerstimme Bereit',
+      ja: 'ナレーター音声準備完了',
+      zh: '叙述者声音已准备就绪',
+      ko: '나레이터 음성 준비 완료'
+    }
   }
 };
 
@@ -296,6 +361,22 @@ export class VoiceMessageService {
       progress: String(progress), 
       samplesCount: String(samplesCount) 
     }, language || this.defaultLanguage);
+  }
+
+  static getButtonLabel(language?: Language) {
+    return getDynamicMessage('CNV_BUTTON_LABEL', {}, language || this.defaultLanguage);
+  }
+
+  static getInsufficientSamplesMessage(needed: number, language?: Language) {
+    return getDynamicMessage('CNV_INSUFFICIENT_SAMPLES', { needed: String(needed) }, language || this.defaultLanguage);
+  }
+
+  static getInProgressMessage(language?: Language) {
+    return getDynamicMessage('CNV_IN_PROGRESS', {}, language || this.defaultLanguage);
+  }
+
+  static getReadyMessage(language?: Language) {
+    return getDynamicMessage('CNV_READY', {}, language || this.defaultLanguage);
   }
 }
 

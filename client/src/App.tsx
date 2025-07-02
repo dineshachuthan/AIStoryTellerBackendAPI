@@ -21,6 +21,7 @@ import StoryPlayer from "@/pages/story-player";
 import StoryLibrary from "@/pages/story-library";
 import StoryCollaboration from "@/pages/story-collaboration";
 import VoiceModulationTest from "@/pages/voice-modulation-test";
+import VoiceCloningTest from "@/pages/voice-cloning-test";
 import CollaborativeRoleplay from "@/pages/collaborative-roleplay";
 import Invitation from "@/pages/invitation";
 import RoleplayRecording from "@/pages/roleplay-recording";
@@ -87,6 +88,7 @@ function AppContent() {
               <Route path="/invite/:token" component={Invitation} />
               <Route path="/roleplay/:token" component={RoleplayRecording} />
               <Route path="/voice-test" component={VoiceModulationTest} />
+              <Route path="/voice-cloning-test" component={VoiceCloningTest} />
               <Route component={NotFound} />
             </>
           ) : (
