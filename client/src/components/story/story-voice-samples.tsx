@@ -180,8 +180,11 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
     mutationFn: async ({ emotion, audioBlob }: { emotion: string; audioBlob: Blob }) => {
       const formData = new FormData();
       formData.append('audio', audioBlob, 'voice-sample.mp3');
-      formData.append('emotion', emotion);
-      formData.append('category', selectedCategory);
+      
+      // Create modulationKey expected by the API endpoint
+      const modulationKey = `${selectedCategory}-${emotion.toLowerCase()}`;
+      formData.append('modulationKey', modulationKey);
+      formData.append('modulationType', selectedCategory);
 
       return apiRequest('/api/voice-modulations/record', {
         method: 'POST',
