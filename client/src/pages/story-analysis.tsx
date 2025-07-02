@@ -715,10 +715,9 @@ export default function StoryAnalysis() {
 
           {/* Main Analysis Tabs */}
           <Tabs defaultValue="narrative" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 mb-6">
+            <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="narrative">Narrative Analysis</TabsTrigger>
               <TabsTrigger value="roleplay">Role Play Analysis</TabsTrigger>
-              <TabsTrigger value="voice-samples">Voice Samples</TabsTrigger>
             </TabsList>
 
             <TabsContent value="narrative" className="space-y-6">
@@ -746,12 +745,7 @@ export default function StoryAnalysis() {
               />
             </TabsContent>
 
-            <TabsContent value="voice-samples" className="space-y-6">
-              <StoryVoiceSamples
-                storyId={parseInt(storyId!)}
-                analysisData={analysisData.analysis}
-              />
-            </TabsContent>
+
           </Tabs>
         </div>
       </div>

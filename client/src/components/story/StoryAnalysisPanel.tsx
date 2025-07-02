@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { EmotionVoiceRecorder } from "./EmotionVoiceRecorder";
 import { CharacterAvatar } from "./CharacterAvatar";
 import { EmotionBadge } from "./EmotionBadge";
+import StoryVoiceSamples from "./story-voice-samples";
 import { Clock, BookOpen, Users, Tag } from "lucide-react";
 
 interface StoryAnalysisData {
@@ -168,26 +169,11 @@ export function StoryAnalysisPanel({
                 These recordings will be saved to your voice repository for use across all stories.
               </p>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {(analysis.emotions || []).map((emotion, index) => (
-                <EmotionVoiceRecorder
-                  key={`${emotion.emotion}-${emotion.intensity}`}
-                  emotion={emotion.emotion}
-                  intensity={emotion.intensity}
-                  hasUserRecording={userVoiceEmotions[emotion.emotion]}
-                  isPlayingSample={isPlayingSample === emotion.emotion}
-                  isPlayingUserRecording={isPlayingUserRecording === emotion.emotion}
-                  onRecordingComplete={(audioBlob) => handleEmotionRecording(emotion.emotion, audioBlob)}
-                  onPlaySample={() => handlePlaySample(emotion.emotion, emotion.intensity)}
-                  onPlayUserRecording={() => onPlayUserRecording?.(emotion.emotion)}
-                />
-              ))}
-              
-              {(!analysis.emotions || analysis.emotions.length === 0) && (
-                <p className="text-center text-muted-foreground py-8">
-                  No emotions detected in this story.
-                </p>
-              )}
+            <CardContent>
+              <StoryVoiceSamples
+                storyId={0} // Will be passed from parent component
+                analysisData={analysis}
+              />
             </CardContent>
           </Card>
         </TabsContent>
