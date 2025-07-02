@@ -433,6 +433,9 @@ export default function StoryAnalysis() {
         }
       }
 
+      // Analysis completed successfully - stop loading
+      setIsLoadingAnalyses(false);
+
     } catch (error) {
       console.error('Failed to generate comprehensive analysis:', error);
       
