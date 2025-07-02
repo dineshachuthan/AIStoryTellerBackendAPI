@@ -1099,6 +1099,60 @@ export type InsertUserStoryNarration = typeof userStoryNarrations.$inferInsert;
 export type UserRoleplaySegment = typeof userRoleplaySegments.$inferSelect;
 export type InsertUserRoleplaySegment = typeof userRoleplaySegments.$inferInsert;
 
+// =============================================================================
+// MANUAL VOICE CLONING SCHEMAS
+// =============================================================================
+
+// Cost tracking for ElevenLabs API usage
+export const voiceCloningCosts = pgTable("voice_cloning_costs", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  storyId: integer("story_id").references(() => stories.id),
+  operation: varchar("operation").notNull(), // 'voice_clone', 'audio_generation'
+  provider: varchar("provider").default("elevenlabs"),
+  costCents: integer("cost_cents").notNull(), // Cost in cents
+  apiCallsCount: integer("api_calls_count").default(1),
+  samplesProcessed: integer("samples_processed").default(0),
+  audioSecondsGenerated: integer("audio_seconds_generated").default(0),
+  metadata: jsonb("metadata"), // Additional operation details
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Manual cloning jobs for user-triggered operations
+export const voiceCloningJobs = pgTable("voice_cloning_jobs", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  storyId: integer("story_id").references(() => stories.id).notNull(),
+  category: varchar("category").notNull(), // 'emotions', 'sounds', 'modulations'
+  status: varchar("status").default("pending"), // 'pending', 'processing', 'completed', 'failed'
+  requiredSamples: integer("required_samples").notNull(),
+  completedSamples: integer("completed_samples").notNull(),
+  samplesList: jsonb("samples_list"), // List of emotion/sound names for this job
+  elevenLabsVoiceId: text("elevenlabs_voice_id"),
+  errorMessage: text("error_message"),
+  estimatedCostCents: integer("estimated_cost_cents"),
+  actualCostCents: integer("actual_cost_cents"),
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Voice cloning schemas
+export const insertVoiceCloningCostSchema = createInsertSchema(voiceCloningCosts).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertVoiceCloningJobSchema = createInsertSchema(voiceCloningJobs).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type VoiceCloningCost = typeof voiceCloningCosts.$inferSelect;
+export type InsertVoiceCloningCost = z.infer<typeof insertVoiceCloningCostSchema>;
+export type VoiceCloningJob = typeof voiceCloningJobs.$inferSelect;
+export type InsertVoiceCloningJob = z.infer<typeof insertVoiceCloningJobSchema>;
+
 // Reference Data Validation Schemas
 export const insertReferenceStorySchema = createInsertSchema(referenceStories);
 export const insertReferenceStoryAnalysisSchema = createInsertSchema(referenceStoryAnalyses);

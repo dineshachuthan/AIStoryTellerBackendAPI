@@ -5283,6 +5283,333 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // =============================================================================
+  // MANUAL VOICE CLONING REST ENDPOINTS  
+  // =============================================================================
+
+  // Validation endpoint - Check if story has required samples for cloning
+  app.get('/api/voice-cloning/validation/:storyId/:category', requireAuth, async (req, res) => {
+    try {
+      const { storyId, category } = req.params;
+      const userId = (req.user as any)?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
+
+      // Get story analysis to determine required samples
+      const story = await storage.getStory(parseInt(storyId));
+      if (!story) {
+        return res.status(404).json({ message: 'Story not found' });
+      }
+
+      const analysis = await storage.getStoryAnalysis(parseInt(storyId));
+      if (!analysis) {
+        return res.status(404).json({ message: 'Story analysis not found' });
+      }
+
+      const analysisData = analysis.analysisData as any;
+      let requiredSamples: string[] = [];
+      let completedSamples: string[] = [];
+
+      // Get user's recorded voice samples
+      const userSamples = await storage.getUserVoiceSamples(userId);
+      
+      if (category === 'emotions') {
+        requiredSamples = analysisData.emotions?.map((e: any) => e.emotion) || [];
+        completedSamples = userSamples
+          .filter((s: any) => s.sampleType === 'emotion' || s.sampleType === 'emotions')
+          .map((s: any) => s.label.replace('emotions-', ''));
+      } else if (category === 'sounds') {
+        requiredSamples = analysisData.soundEffects?.map((s: any) => s.sound) || [];
+        completedSamples = userSamples
+          .filter((s: any) => s.sampleType === 'sounds')
+          .map((s: any) => s.label.replace('sounds-', ''));
+      } else if (category === 'modulations') {
+        requiredSamples = [
+          ...(analysisData.emotionalTags || []),
+          ...(analysisData.genre ? [analysisData.genre] : []),
+          ...(analysisData.subGenre ? [analysisData.subGenre] : [])
+        ];
+        completedSamples = userSamples
+          .filter((s: any) => s.sampleType === 'modulations')
+          .map((s: any) => s.label.replace('modulations-', ''));
+      }
+
+      const missing = requiredSamples.filter(req => !completedSamples.includes(req));
+      const isReady = missing.length === 0 && requiredSamples.length > 0;
+
+      res.json({
+        category,
+        storyId: parseInt(storyId),
+        required: requiredSamples,
+        completed: completedSamples,
+        missing,
+        isReady,
+        totalRequired: requiredSamples.length,
+        totalCompleted: completedSamples.length,
+        completionPercentage: requiredSamples.length > 0 ? Math.round((completedSamples.length / requiredSamples.length) * 100) : 0
+      });
+
+    } catch (error: any) {
+      console.error('Voice cloning validation error:', error);
+      res.status(500).json({ message: 'Validation failed', error: error.message });
+    }
+  });
+
+  // Cost estimation endpoint
+  app.get('/api/voice-cloning/cost-estimate/:storyId/:category', requireAuth, async (req, res) => {
+    try {
+      const { storyId, category } = req.params;
+      const userId = (req.user as any)?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
+
+      // Base cost estimates in cents (ElevenLabs pricing approximation)
+      const costPerVoiceClone = 500; // $5.00 per voice clone
+      const costPerAudioSecond = 10; // $0.10 per second of generated audio
+
+      // Get validation data to calculate estimate
+      const validationResponse = await fetch(`${req.protocol}://${req.get('host')}/api/voice-cloning/validation/${storyId}/${category}`, {
+        headers: { 'Cookie': req.headers.cookie || '' }
+      });
+      const validation = await validationResponse.json();
+
+      if (!validation.isReady) {
+        return res.status(400).json({ 
+          message: 'Cannot estimate cost - missing required samples',
+          validation
+        });
+      }
+
+      const estimatedCostCents = validation.totalRequired * costPerVoiceClone;
+      const estimatedAudioSeconds = validation.totalRequired * 30; // Assume 30 seconds per sample
+      const estimatedAudioCostCents = estimatedAudioSeconds * costPerAudioSecond;
+      const totalEstimatedCostCents = estimatedCostCents + estimatedAudioCostCents;
+
+      res.json({
+        category,
+        storyId: parseInt(storyId),
+        voiceCloningCostCents: estimatedCostCents,
+        audioGenerationCostCents: estimatedAudioCostCents,
+        totalEstimatedCostCents,
+        totalEstimatedCostUSD: (totalEstimatedCostCents / 100).toFixed(2),
+        samplesRequired: validation.totalRequired,
+        estimatedAudioSeconds
+      });
+
+    } catch (error: any) {
+      console.error('Cost estimation error:', error);
+      res.status(500).json({ message: 'Cost estimation failed', error: error.message });
+    }
+  });
+
+  // Manual cloning trigger endpoints
+  app.post('/api/voice-cloning/manual/:category/:storyId', requireAuth, async (req, res) => {
+    try {
+      const { category, storyId } = req.params;
+      const userId = (req.user as any)?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
+
+      if (!['emotions', 'sounds', 'modulations'].includes(category)) {
+        return res.status(400).json({ message: 'Invalid category. Must be emotions, sounds, or modulations' });
+      }
+
+      // Check if validation passes
+      const validationResponse = await fetch(`${req.protocol}://${req.get('host')}/api/voice-cloning/validation/${storyId}/${category}`, {
+        headers: { 'Cookie': req.headers.cookie || '' }
+      });
+      const validation = await validationResponse.json();
+
+      if (!validation.isReady) {
+        return res.status(400).json({ 
+          message: `Cannot start ${category} cloning - missing required samples`,
+          validation
+        });
+      }
+
+      // Check if job already exists and is running
+      const { voiceCloningJobs } = await import('@shared/schema');
+      const { eq, and, inArray } = await import('drizzle-orm');
+      const db = storage.getDb();
+      
+      const existingJob = await db.select()
+        .from(voiceCloningJobs)
+        .where(and(
+          eq(voiceCloningJobs.userId, userId),
+          eq(voiceCloningJobs.storyId, parseInt(storyId)),
+          eq(voiceCloningJobs.category, category),
+          inArray(voiceCloningJobs.status, ['pending', 'processing'])
+        ))
+        .limit(1);
+
+      if (existingJob.length > 0) {
+        return res.status(409).json({ 
+          message: `${category} cloning already in progress`,
+          jobId: existingJob[0].id,
+          status: existingJob[0].status
+        });
+      }
+
+      // Get cost estimate
+      const costResponse = await fetch(`${req.protocol}://${req.get('host')}/api/voice-cloning/cost-estimate/${storyId}/${category}`, {
+        headers: { 'Cookie': req.headers.cookie || '' }
+      });
+      const costEstimate = await costResponse.json();
+
+      // Create new cloning job
+      const newJob = await storage.createVoiceCloningJob({
+        userId,
+        storyId: parseInt(storyId),
+        category,
+        status: 'pending',
+        requiredSamples: validation.totalRequired,
+        completedSamples: validation.totalCompleted,
+        samplesList: validation.required,
+        estimatedCostCents: costEstimate.totalEstimatedCostCents,
+        startedAt: new Date()
+      });
+
+      // Start background processing (placeholder for actual ElevenLabs integration)
+      setTimeout(async () => {
+        try {
+          console.log(`Starting ${category} voice cloning for story ${storyId}...`);
+          
+          // Update job status to processing
+          await storage.updateVoiceCloningJob(newJob.id, {
+            status: 'processing'
+          });
+
+          // Simulate ElevenLabs API call (replace with actual implementation)
+          await new Promise(resolve => setTimeout(resolve, 5000)); // 5 second simulation
+          
+          const mockVoiceId = `voice_${Date.now()}_${category}`;
+          
+          // Update job as completed
+          await storage.updateVoiceCloningJob(newJob.id, {
+            status: 'completed',
+            elevenLabsVoiceId: mockVoiceId,
+            actualCostCents: costEstimate.totalEstimatedCostCents,
+            completedAt: new Date()
+          });
+
+          // Record cost
+          await storage.createVoiceCloningCost({
+            userId,
+            storyId: parseInt(storyId),
+            operation: 'voice_clone',
+            costCents: costEstimate.totalEstimatedCostCents,
+            samplesProcessed: validation.totalRequired,
+            metadata: { category, voiceId: mockVoiceId }
+          });
+
+          console.log(`${category} voice cloning completed for story ${storyId}`);
+        } catch (error) {
+          console.error(`${category} voice cloning failed:`, error);
+          await storage.updateVoiceCloningJob(newJob.id, {
+            status: 'failed',
+            errorMessage: error.message,
+            completedAt: new Date()
+          });
+        }
+      }, 1000);
+
+      res.json({
+        success: true,
+        message: `${category} voice cloning started`,
+        jobId: newJob.id,
+        estimatedCostUSD: costEstimate.totalEstimatedCostUSD,
+        samplesRequired: validation.totalRequired
+      });
+
+    } catch (error: any) {
+      console.error('Manual voice cloning error:', error);
+      res.status(500).json({ message: 'Voice cloning failed to start', error: error.message });
+    }
+  });
+
+  // Get user's cloning jobs
+  app.get('/api/voice-cloning/jobs/:userId', requireAuth, async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const currentUserId = (req.user as any)?.id;
+      
+      if (currentUserId !== userId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      const jobs = await storage.getUserVoiceCloningJobs(userId);
+      res.json(jobs);
+
+    } catch (error: any) {
+      console.error('Get cloning jobs error:', error);
+      res.status(500).json({ message: 'Failed to get cloning jobs', error: error.message });
+    }
+  });
+
+  // Get specific job status
+  app.get('/api/voice-cloning/jobs/:jobId/status', requireAuth, async (req, res) => {
+    try {
+      const { jobId } = req.params;
+      const userId = (req.user as any)?.id;
+      
+      const job = await storage.getVoiceCloningJob(parseInt(jobId));
+      if (!job) {
+        return res.status(404).json({ message: 'Job not found' });
+      }
+
+      if (job.userId !== userId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      res.json(job);
+
+    } catch (error: any) {
+      console.error('Get job status error:', error);
+      res.status(500).json({ message: 'Failed to get job status', error: error.message });
+    }
+  });
+
+  // Get user's total costs
+  app.get('/api/voice-cloning/costs/:userId', requireAuth, async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const currentUserId = (req.user as any)?.id;
+      
+      if (currentUserId !== userId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      const costs = await storage.getUserVoiceCloningCosts(userId);
+      const totalCostCents = costs.reduce((sum: number, cost: any) => sum + cost.costCents, 0);
+      const totalApiCalls = costs.reduce((sum: number, cost: any) => sum + cost.apiCallsCount, 0);
+      const totalSamplesProcessed = costs.reduce((sum: number, cost: any) => sum + cost.samplesProcessed, 0);
+
+      res.json({
+        costs,
+        summary: {
+          totalCostCents,
+          totalCostUSD: (totalCostCents / 100).toFixed(2),
+          totalApiCalls,
+          totalSamplesProcessed,
+          costBreakdown: {
+            voiceCloning: costs.filter((c: any) => c.operation === 'voice_clone').reduce((sum: number, c: any) => sum + c.costCents, 0),
+            audioGeneration: costs.filter((c: any) => c.operation === 'audio_generation').reduce((sum: number, c: any) => sum + c.costCents, 0)
+          }
+        }
+      });
+
+    } catch (error: any) {
+      console.error('Get user costs error:', error);
+      res.status(500).json({ message: 'Failed to get user costs', error: error.message });
+    }
+  });
+
   // Serve static files from uploads directory (legacy)
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
   

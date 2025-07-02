@@ -1683,6 +1683,74 @@ export class DatabaseStorage implements IStorage {
     return recordings;
   }
 
+  // =============================================================================
+  // MANUAL VOICE CLONING STORAGE METHODS
+  // =============================================================================
+
+  async createVoiceCloningJob(job: any): Promise<any> {
+    const { voiceCloningJobs } = await import('@shared/schema');
+    
+    const [newJob] = await db.insert(voiceCloningJobs).values(job).returning();
+    console.log(`✨ Created voice cloning job ${newJob.id} for user ${job.userId}`);
+    return newJob;
+  }
+
+  async updateVoiceCloningJob(jobId: number, updates: any): Promise<void> {
+    const { voiceCloningJobs } = await import('@shared/schema');
+    const { eq } = await import('drizzle-orm');
+    
+    await db.update(voiceCloningJobs)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(voiceCloningJobs.id, jobId));
+    
+    console.log(`📝 Updated voice cloning job ${jobId}:`, updates);
+  }
+
+  async getVoiceCloningJob(jobId: number): Promise<any> {
+    const { voiceCloningJobs } = await import('@shared/schema');
+    const { eq } = await import('drizzle-orm');
+    
+    const [job] = await db.select()
+      .from(voiceCloningJobs)
+      .where(eq(voiceCloningJobs.id, jobId));
+    
+    return job;
+  }
+
+  async getUserVoiceCloningJobs(userId: string): Promise<any[]> {
+    const { voiceCloningJobs } = await import('@shared/schema');
+    const { eq, desc } = await import('drizzle-orm');
+    
+    const jobs = await db.select()
+      .from(voiceCloningJobs)
+      .where(eq(voiceCloningJobs.userId, userId))
+      .orderBy(desc(voiceCloningJobs.createdAt));
+    
+    console.log(`📋 Found ${jobs.length} voice cloning jobs for user ${userId}`);
+    return jobs;
+  }
+
+  async createVoiceCloningCost(cost: any): Promise<any> {
+    const { voiceCloningCosts } = await import('@shared/schema');
+    
+    const [newCost] = await db.insert(voiceCloningCosts).values(cost).returning();
+    console.log(`💰 Recorded voice cloning cost: $${(cost.costCents / 100).toFixed(2)} for user ${cost.userId}`);
+    return newCost;
+  }
+
+  async getUserVoiceCloningCosts(userId: string): Promise<any[]> {
+    const { voiceCloningCosts } = await import('@shared/schema');
+    const { eq, desc } = await import('drizzle-orm');
+    
+    const costs = await db.select()
+      .from(voiceCloningCosts)
+      .where(eq(voiceCloningCosts.userId, userId))
+      .orderBy(desc(voiceCloningCosts.createdAt));
+    
+    console.log(`💸 Found ${costs.length} cost records for user ${userId}`);
+    return costs;
+  }
+
   // Add missing database access method for reference data service
   getDb() {
     return db;
