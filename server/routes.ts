@@ -4516,18 +4516,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: 'User not authenticated' });
       }
 
-      // Get user's recorded samples from ESM architecture
-      const userEsmRecordings = await storage.getUserEsmRecordings(userId);
-      console.log(`🎤 Found ${userEsmRecordings.length} ESM recordings for user ${userId}`);
+      // Get user's recorded samples from both old and new systems
+      let recordedSamples: any[] = [];
       
-      // Map ESM recordings to recorded samples format
-      const recordedSamples = userEsmRecordings.map((recording: any) => ({
-        emotion: recording.esmRef?.name || recording.emotion,
-        audioUrl: recording.audio_url,
-        recordedAt: recording.created_at,
-        duration: recording.duration || 0,
-        isLocked: recording.is_locked || false
-      }));
+      try {
+        // Try ESM architecture first
+        const userEsmRecordings = await storage.getUserEsmRecordings(userId);
+        console.log(`🎤 Found ${userEsmRecordings.length} ESM recordings for user ${userId}`);
+        
+        recordedSamples = userEsmRecordings.map((recording: any) => ({
+          emotion: recording.esmRef?.name || recording.emotion,
+          audioUrl: recording.audio_url,
+          recordedAt: recording.created_at,
+          duration: recording.duration || 0,
+          isLocked: recording.is_locked || false
+        }));
+      } catch (esmError) {
+        console.log("ESM architecture not available, checking old voice samples system");
+        
+        // Fallback to old voice samples system
+        const userVoiceSamples = await storage.getAllUserVoiceSamples(userId);
+        console.log(`🎤 Found ${userVoiceSamples.length} old voice samples for user ${userId}`);
+        
+        recordedSamples = userVoiceSamples
+          .filter(sample => sample.isCompleted)
+          .map(sample => ({
+            emotion: sample.label || sample.sampleType,
+            audioUrl: sample.audioUrl,
+            recordedAt: sample.recordedAt,
+            duration: sample.duration,
+            isLocked: sample.isLocked || false
+          }));
+      }
 
       // Get templates from ESM reference data
       const { getVoiceSamplesByType } = await import('./voice-samples');
