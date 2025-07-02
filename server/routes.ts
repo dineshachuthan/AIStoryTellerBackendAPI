@@ -4257,6 +4257,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get voice modulation templates from story analysis data
   app.get('/api/voice-modulations/templates', requireAuth, async (req, res) => {
     try {
+      const userId = (req.user as any)?.id;
       const type = req.query.type as string;
       const { getVoiceSamplesByType, getAllVoiceSamples } = await import('./voice-samples');
       
@@ -4267,7 +4268,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
         templates = await getAllVoiceSamples();
       }
       
-      res.json(templates);
+      // Get user's recorded samples and add them as templates if they don't exist
+      let recordedSamples: any[] = [];
+      try {
+        const userVoiceSamples = await storage.getAllUserVoiceSamples(userId);
+        recordedSamples = userVoiceSamples
+          .filter(sample => sample.isCompleted)
+          .map(sample => ({
+            emotion: sample.label || sample.sampleType,
+            audioUrl: sample.audioUrl,
+            recordedAt: sample.recordedAt,
+            duration: sample.duration,
+            isLocked: sample.isLocked || false
+          }));
+      } catch (error) {
+        console.log("No recorded samples found for user");
+      }
+      
+      // Add user's recorded emotions that aren't in ESM templates
+      const userEmotions = [...new Set(recordedSamples.map(s => s.emotion))];
+      const existingEmotions = templates.map(t => t.emotion);
+      
+      const additionalUserTemplates = userEmotions
+        .filter(emotion => !existingEmotions.includes(emotion))
+        .map(emotion => ({
+          emotion,
+          displayName: emotion.charAt(0).toUpperCase() + emotion.slice(1),
+          description: `User recorded ${emotion} sample`,
+          sampleText: `Express ${emotion} in your voice`,
+          category: 'emotions',
+          isUserGenerated: true
+        }));
+      
+      const allTemplates = [...templates, ...additionalUserTemplates];
+      res.json(allTemplates);
     } catch (error: any) {
       console.error('Error fetching voice modulation templates from story analysis:', error);
       res.status(500).json({ message: 'Failed to fetch templates' });
@@ -4537,6 +4571,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Fallback to old voice samples system
         const userVoiceSamples = await storage.getAllUserVoiceSamples(userId);
         console.log(`🎤 Found ${userVoiceSamples.length} old voice samples for user ${userId}`);
+        console.log(`🎤 Raw voice samples:`, userVoiceSamples.map(s => ({ label: s.label, sampleType: s.sampleType, isCompleted: s.isCompleted })));
         
         recordedSamples = userVoiceSamples
           .filter(sample => sample.isCompleted)
@@ -4549,13 +4584,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }));
       }
 
-      // Get templates from ESM reference data
+      // Get templates from ESM reference data AND include user's recorded emotions
       const { getVoiceSamplesByType } = await import('./voice-samples');
       const emotionTemplates = await getVoiceSamplesByType('emotions');
       const soundTemplates = await getVoiceSamplesByType('sounds');  
       const modTemplates = await getVoiceSamplesByType('descriptions');
       
-      const totalTemplates = emotionTemplates.length + soundTemplates.length + modTemplates.length;
+      // Add user's recorded emotions that aren't in ESM templates
+      const userEmotions = [...new Set(recordedSamples.map(s => s.emotion))];
+      const existingEmotions = [...emotionTemplates.map(t => t.emotion), ...soundTemplates.map(t => t.emotion), ...modTemplates.map(t => t.emotion)];
+      
+      const additionalUserTemplates = userEmotions
+        .filter(emotion => !existingEmotions.includes(emotion))
+        .map(emotion => ({
+          emotion,
+          displayName: emotion.charAt(0).toUpperCase() + emotion.slice(1),
+          description: `User recorded ${emotion} sample`,
+          sampleText: `Express ${emotion} in your voice`,
+          category: 'emotions',
+          isUserGenerated: true
+        }));
+      
+      const allTemplates = [...emotionTemplates, ...soundTemplates, ...modTemplates, ...additionalUserTemplates];
+      const totalTemplates = allTemplates.length;
       const completedCount = recordedSamples.length;
       
       console.log(`📊 Voice progress: ${completedCount}/${totalTemplates} completed`);
