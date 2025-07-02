@@ -147,8 +147,6 @@ export default function VoiceSamples() {
       return response.json();
     },
     onSuccess: (data, variables) => {
-      console.log('Save success - data:', data, 'variables:', variables);
-      
       // Immediately update recordedSamples state for real-time visual updates
       const newSample = {
         emotion: variables.emotion,
@@ -156,25 +154,17 @@ export default function VoiceSamples() {
         isLocked: data.isLocked || false
       };
       
-      console.log('New sample to add:', newSample);
-      
       setRecordedSamples(prev => {
-        console.log('Previous recordedSamples:', prev);
-        
         // Filter out any invalid entries with wrong emotion names
         const validPrev = prev.filter(s => s.emotion !== 'emotion' && s.emotion !== 'sound' && s.emotion !== 'modulation');
         
         const existing = validPrev.find(s => s.emotion === variables.emotion);
         if (existing) {
           // Update existing sample
-          const updated = validPrev.map(s => s.emotion === variables.emotion ? newSample : s);
-          console.log('Updated recordedSamples:', updated);
-          return updated;
+          return validPrev.map(s => s.emotion === variables.emotion ? newSample : s);
         } else {
           // Add new sample
-          const added = [...validPrev, newSample];
-          console.log('Added to recordedSamples:', added);
-          return added;
+          return [...validPrev, newSample];
         }
       });
       
