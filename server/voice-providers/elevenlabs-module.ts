@@ -149,6 +149,9 @@ export class ElevenLabsModule extends BaseVoiceProvider {
       // ElevenLabs expects files as binary data with proper options - try stream approach
       audioFiles.forEach((file, index) => {
         this.log('info', `Adding file ${index + 1}: ${file.filename} (${file.buffer.length} bytes)`);
+        this.log('info', `File buffer type: ${typeof file.buffer}, isBuffer: ${Buffer.isBuffer(file.buffer)}`);
+        this.log('info', `File buffer first 20 bytes: ${file.buffer.slice(0, 20).toString('hex')}`);
+        
         formData.append('files', file.buffer, {
           filename: file.filename,
           contentType: 'audio/mpeg',
@@ -157,6 +160,16 @@ export class ElevenLabsModule extends BaseVoiceProvider {
       });
       
       this.log('info', `FormData prepared with ${audioFiles.length} audio files`);
+      
+      // Debug: Log FormData contents before sending
+      this.log('info', `FormData fields inspection:`);
+      for (const [key, value] of formData.entries()) {
+        if (Buffer.isBuffer(value)) {
+          this.log('info', `  ${key}: Buffer (${value.length} bytes) - ${value.slice(0, 10).toString('hex')}...`);
+        } else {
+          this.log('info', `  ${key}: ${typeof value} - ${String(value).substring(0, 100)}`);
+        }
+      }
       
       // Log all form fields for debugging
       this.log('info', `FormData fields: name=${voiceName}, description provided, labels provided, voice_settings provided, files count=${audioFiles.length}`);
