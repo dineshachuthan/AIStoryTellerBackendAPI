@@ -31,13 +31,36 @@ export default function VoiceCloningTest() {
   // Manual voice cloning mutation
   const createVoiceCloneMutation = useMutation({
     mutationFn: async (storyId: string) => {
-      return await apiRequest(`/api/voice-cloning/manual/all/${storyId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include'
-      });
+      // Process all categories that are ready
+      const categories = ['emotions', 'sounds', 'modulations'];
+      const results = [];
+      
+      for (const category of categories) {
+        try {
+          const result = await apiRequest(`/api/voice-cloning/manual/${category}/${storyId}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include'
+          });
+          results.push({ category, ...result });
+        } catch (error: any) {
+          // Skip categories that aren't ready, but don't fail the whole operation
+          console.log(`Skipping ${category}: ${error.message}`);
+        }
+      }
+      
+      if (results.length === 0) {
+        throw new Error('No categories are ready for voice cloning');
+      }
+      
+      return {
+        success: true,
+        jobId: results[0].jobId, // Use first job ID for tracking
+        jobs: results,
+        totalJobs: results.length
+      };
     },
     onSuccess: (data) => {
       setActiveJobId(data.jobId);
