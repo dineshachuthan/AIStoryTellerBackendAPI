@@ -5489,7 +5489,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { storage } = await import('./storage');
       
       // Get story analysis to determine required samples
-      const storyAnalysis = await storage.getStoryAnalysis(parseInt(storyId), userId);
+      const storyAnalysis = await storage.getStoryAnalysis(parseInt(storyId), 'narrative');
       if (!storyAnalysis) {
         return res.status(404).json({ message: 'Story analysis not found' });
       }
