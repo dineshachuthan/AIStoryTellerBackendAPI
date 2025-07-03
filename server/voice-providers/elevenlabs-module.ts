@@ -101,12 +101,12 @@ export class ElevenLabsModule extends BaseVoiceProvider {
       this.log('info', `All ${audioFiles.length} audio files processed. Starting ElevenLabs voice creation...`);
       
       // Create voice using ElevenLabs SDK
-      // Note: Using voices.add method which is the correct method for voice cloning
-      const voiceResult = await this.client.voices.add({
-        name: voiceName,
-        description: `Voice clone for user ${request.userId} with ${request.samples.length} emotion samples`,
-        files: audioFiles
-      });
+      // Note: Using voices.add method for voice cloning with proper file structure
+      const voiceResult = await this.client.voices.add(
+        voiceName,
+        audioFiles,
+        `Voice clone for user ${request.userId} with ${request.samples.length} emotion samples`
+      );
       
       this.log('info', `Voice created successfully with ID: ${voiceResult.voice_id}`);
       
