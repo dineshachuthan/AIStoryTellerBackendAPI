@@ -5561,11 +5561,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Get cost estimate
-      const costResponse = await fetch(`${req.protocol}://${req.get('host')}/api/voice-cloning/cost-estimate/${storyId}/${category}`, {
-        headers: { 'Cookie': req.headers.cookie || '' }
-      });
-      const costEstimate = await costResponse.json();
+      // Calculate cost estimate directly
+      const costPerVoiceClone = 500; // $5.00 per voice clone
+      const costPerAudioSecond = 10; // $0.10 per second of generated audio
+      const estimatedAudioSeconds = completedCount * 3; // 3 seconds per sample
+      const estimatedCostCents = completedCount * costPerVoiceClone;
+      const estimatedAudioCostCents = estimatedAudioSeconds * costPerAudioSecond;
+      const totalEstimatedCostCents = estimatedCostCents + estimatedAudioCostCents;
+      
+      const costEstimate = {
+        totalEstimatedCostCents,
+        totalEstimatedCostUSD: (totalEstimatedCostCents / 100).toFixed(2)
+      };
 
       // Create new cloning job
       const newJob = await storage.createVoiceCloningJob({
