@@ -171,8 +171,8 @@ export default function VoiceCloningTest() {
                 <AlertDescription>
                   <div className="font-medium">
                     {validationData.isReady ? 
-                      `✅ Ready for voice cloning! You have ${validationData.totalCompletedFromStory} voice samples.` :
-                      `Need ${validationData.missingCount} more voice samples to start cloning.`
+                      `✅ Ready for voice cloning! You have ${validationData.totalCompletedFromStory || 0} voice samples.` :
+                      `Need ${validationData.missingCount || 5} more voice samples to start cloning.`
                     }
                   </div>
                 </AlertDescription>
@@ -183,7 +183,7 @@ export default function VoiceCloningTest() {
                 <div className="flex items-center justify-between">
                   <span className="font-medium">Voice Sample Progress</span>
                   <span className="text-sm text-gray-600">
-                    {validationData.totalCompletedFromStory} / {validationData.minRequired} required
+                    {validationData.totalCompletedFromStory || 0} / {validationData.minRequired || 5} required
                   </span>
                 </div>
                 

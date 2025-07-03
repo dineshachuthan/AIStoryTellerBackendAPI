@@ -5313,21 +5313,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get user's recorded voice samples (all categories combined)
       const userSamples = await storage.getUserVoiceSamples(userId);
       
-      // Extract all available items from story analysis
-      const availableEmotions = analysisData.emotions?.map((e: any) => e.emotion) || [];
-      const availableSounds = analysisData.soundEffects?.map((s: any) => s.sound) || [];
+      // Extract all available items from story analysis with proper null checks
+      const availableEmotions = (analysisData.emotions || []).map((e: any) => e.emotion).filter(Boolean);
+      const availableSounds = (analysisData.soundEffects || []).map((s: any) => s.sound).filter(Boolean);
       const availableModulations = [
         ...(analysisData.emotionalTags || []),
         ...(analysisData.genre ? [analysisData.genre] : []),
         ...(analysisData.subGenre ? [analysisData.subGenre] : [])
-      ];
+      ].filter(Boolean);
       
       // Combine all available items for the story
       const allAvailableItems = [
         ...availableEmotions,
         ...availableSounds, 
         ...availableModulations
-      ];
+      ].filter(Boolean);
       
       // Get user's completed samples for the selected category
       let completedSamples: string[] = [];
@@ -5335,23 +5335,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (category === 'emotions') {
         categoryItems = availableEmotions;
-        completedSamples = userSamples
-          .filter((s: any) => s.sampleType === 'emotion' || s.sampleType === 'emotions')
-          .map((s: any) => s.label.replace('emotions-', ''));
+        completedSamples = (userSamples || [])
+          .filter((s: any) => s && (s.sampleType === 'emotion' || s.sampleType === 'emotions'))
+          .map((s: any) => s.label ? s.label.replace('emotions-', '') : '')
+          .filter(Boolean);
       } else if (category === 'sounds') {
         categoryItems = availableSounds;
-        completedSamples = userSamples
-          .filter((s: any) => s.sampleType === 'sounds')
-          .map((s: any) => s.label.replace('sounds-', ''));
+        completedSamples = (userSamples || [])
+          .filter((s: any) => s && s.sampleType === 'sounds')
+          .map((s: any) => s.label ? s.label.replace('sounds-', '') : '')
+          .filter(Boolean);
       } else if (category === 'modulations') {
         categoryItems = availableModulations;
-        completedSamples = userSamples
-          .filter((s: any) => s.sampleType === 'modulations')
-          .map((s: any) => s.label.replace('modulations-', ''));
+        completedSamples = (userSamples || [])
+          .filter((s: any) => s && s.sampleType === 'modulations')
+          .map((s: any) => s.label ? s.label.replace('modulations-', '') : '')
+          .filter(Boolean);
       }
       
-      // Get all user's voice samples (any category)
-      const allUserSamples = userSamples.map((s: any) => s.label.replace(/^(emotions|sounds|modulations)-/, ''));
+      // Get all user's voice samples (any category) with proper null checks
+      const allUserSamples = (userSamples || [])
+        .map((s: any) => s && s.label ? s.label.replace(/^(emotions|sounds|modulations)-/, '') : '')
+        .filter(Boolean);
       
       // Find which story items the user has actually recorded
       const completedFromStory = allAvailableItems.filter(item => allUserSamples.includes(item));
