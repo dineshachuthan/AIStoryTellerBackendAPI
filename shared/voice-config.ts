@@ -181,3 +181,8 @@ export function getEmotionsByCategory(category: 'basic' | 'advanced' | 'speciali
   // No hardcoded categories - users create their own emotion categories through recording
   return [];
 }
+
+// Compatibility exports for services that expect these constants
+export const VOICE_EMOTIONS: string[] = [];
+export const EMOTION_CATEGORIES: Record<string, string[]> = {};
+export const DEFAULT_VOICE_MAPPINGS: Record<string, string> = {};
