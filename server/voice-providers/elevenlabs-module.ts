@@ -136,8 +136,10 @@ export class ElevenLabsModule extends BaseVoiceProvider {
         emotionsProcessed: request.samples.map(s => s.emotion)
       });
       
-    } catch (error) {
-      this.log('error', `Voice training failed for user ${request.userId}`, error);
+    } catch (error: any) {
+      // Enhanced error logging following the TTS script pattern
+      const errorDetails = error.response?.data || error.message || String(error);
+      this.log('error', `Voice training failed for user ${request.userId}. API Response: ${JSON.stringify(errorDetails)}`);
       
       // Use standardized external integration failure handling - no completion records stored
       try {
@@ -145,7 +147,7 @@ export class ElevenLabsModule extends BaseVoiceProvider {
           'elevenlabs',
           'voice_training',
           request.userId,
-          `ElevenLabs API error: ${error instanceof Error ? error.message : String(error)} - Voice Profile ID: ${request.voiceProfileId}, Samples: ${request.samples.length}`
+          `ElevenLabs API error: ${JSON.stringify(errorDetails)} - Voice Profile ID: ${request.voiceProfileId}, Samples: ${request.samples.length}`
         );
         
         // Reset voice profile state to 'failed' 
