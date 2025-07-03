@@ -99,25 +99,25 @@ async function runManualVoiceCloningTests() {
     `/api/voice-cloning/cost-estimate/${TEST_STORY_ID}/modulations`
   );
   
-  // Test 7: Manual cloning trigger for emotions
+  // Test 7: Voice cloning trigger for emotions
   const emotionsJob = await testEndpoint(
-    'Manual Cloning Trigger - Emotions',
+    'Voice Cloning Trigger - Emotions',
     'post',
-    `/api/voice-cloning/manual/emotions/${TEST_STORY_ID}`
+    `/api/voice-cloning/emotions/${TEST_STORY_ID}`
   );
   
-  // Test 8: Manual cloning trigger for sounds
+  // Test 8: Voice cloning trigger for sounds
   const soundsJob = await testEndpoint(
-    'Manual Cloning Trigger - Sounds',
+    'Voice Cloning Trigger - Sounds',
     'post',
-    `/api/voice-cloning/manual/sounds/${TEST_STORY_ID}`
+    `/api/voice-cloning/sounds/${TEST_STORY_ID}`
   );
   
-  // Test 9: Manual cloning trigger for modulations
+  // Test 9: Voice cloning trigger for modulations
   const modulationsJob = await testEndpoint(
-    'Manual Cloning Trigger - Modulations',
+    'Voice Cloning Trigger - Modulations',
     'post',
-    `/api/voice-cloning/manual/modulations/${TEST_STORY_ID}`
+    `/api/voice-cloning/modulations/${TEST_STORY_ID}`
   );
   
   // Wait for background processing

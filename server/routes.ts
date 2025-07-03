@@ -5406,8 +5406,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Manual cloning trigger endpoints
-  app.post('/api/voice-cloning/manual/:category/:storyId', requireAuth, async (req, res) => {
+  // Voice cloning trigger endpoints
+  app.post('/api/voice-cloning/:category/:storyId', requireAuth, async (req, res) => {
     try {
       const { category, storyId } = req.params;
       const userId = (req.user as any)?.id;

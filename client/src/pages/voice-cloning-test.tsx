@@ -34,10 +34,10 @@ export default function VoiceCloningTest() {
     refetchInterval: 2000, // Poll every 2 seconds
   });
 
-  // Manual voice cloning mutation - uses exact same endpoint as other pages
+  // Voice cloning mutation - uses exact same endpoint as other pages
   const createVoiceCloneMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest(`/api/voice-cloning/manual/${category}/${storyId}`, {
+      return await apiRequest(`/api/voice-cloning/${category}/${storyId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
