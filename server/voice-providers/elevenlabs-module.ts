@@ -55,6 +55,7 @@ export class ElevenLabsModule extends BaseVoiceProvider {
 
   private async performVoiceTraining(request: VoiceTrainingRequest): Promise<VoiceTrainingResult> {
     this.log('info', `Starting voice training for user ${request.userId} with ${request.samples.length} samples`);
+    this.log('info', `Sample details: ${JSON.stringify(request.samples.map(s => ({ emotion: s.emotion, audioUrl: s.audioUrl })))}`);
     
     try {
       const voiceName = `User_${request.userId}_Voice_${Date.now()}`;
