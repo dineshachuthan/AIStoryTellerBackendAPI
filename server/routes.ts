@@ -5309,35 +5309,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const analysisData = analysis.analysisData as any;
-      let requiredSamples: string[] = [];
-      let completedSamples: string[] = [];
-
-      // Get user's recorded voice samples
+      
+      // Get user's recorded voice samples (all categories combined)
       const userSamples = await storage.getUserVoiceSamples(userId);
       
+      // Extract all available items from story analysis
+      const availableEmotions = analysisData.emotions?.map((e: any) => e.emotion) || [];
+      const availableSounds = analysisData.soundEffects?.map((s: any) => s.sound) || [];
+      const availableModulations = [
+        ...(analysisData.emotionalTags || []),
+        ...(analysisData.genre ? [analysisData.genre] : []),
+        ...(analysisData.subGenre ? [analysisData.subGenre] : [])
+      ];
+      
+      // Combine all available items for the story
+      const allAvailableItems = [
+        ...availableEmotions,
+        ...availableSounds, 
+        ...availableModulations
+      ];
+      
+      // Get user's completed samples for the selected category
+      let completedSamples: string[] = [];
+      let categoryItems: string[] = [];
+      
       if (category === 'emotions') {
-        requiredSamples = analysisData.emotions?.map((e: any) => e.emotion) || [];
+        categoryItems = availableEmotions;
         completedSamples = userSamples
           .filter((s: any) => s.sampleType === 'emotion' || s.sampleType === 'emotions')
           .map((s: any) => s.label.replace('emotions-', ''));
       } else if (category === 'sounds') {
-        requiredSamples = analysisData.soundEffects?.map((s: any) => s.sound) || [];
+        categoryItems = availableSounds;
         completedSamples = userSamples
           .filter((s: any) => s.sampleType === 'sounds')
           .map((s: any) => s.label.replace('sounds-', ''));
       } else if (category === 'modulations') {
-        requiredSamples = [
-          ...(analysisData.emotionalTags || []),
-          ...(analysisData.genre ? [analysisData.genre] : []),
-          ...(analysisData.subGenre ? [analysisData.subGenre] : [])
-        ];
+        categoryItems = availableModulations;
         completedSamples = userSamples
           .filter((s: any) => s.sampleType === 'modulations')
           .map((s: any) => s.label.replace('modulations-', ''));
       }
-
-      const missing = requiredSamples.filter(req => !completedSamples.includes(req));
-      const isReady = missing.length === 0 && requiredSamples.length > 0;
+      
+      // Simplified validation logic:
+      // Use minimum of (available items in category, 6) or ElevenLabs minimum of 5
+      const minRequired = Math.max(5, Math.min(categoryItems.length, 6));
+      const completedCount = completedSamples.filter(sample => categoryItems.includes(sample)).length;
+      const missing = categoryItems.filter(item => !completedSamples.includes(item)).slice(0, minRequired);
+      const isReady = completedCount >= minRequired;
 
       res.json({
         category,
