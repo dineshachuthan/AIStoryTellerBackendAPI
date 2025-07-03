@@ -129,6 +129,15 @@ export class ElevenLabsModule extends BaseVoiceProvider {
       formData.append('name', voiceName);
       formData.append('description', `Voice clone for user ${request.userId} with ${request.samples.length} emotion samples`);
       
+      // Add required labels field for ElevenLabs API
+      const labels = JSON.stringify({
+        accent: 'american',
+        age: 'middle_aged',
+        gender: 'neutral',
+        use_case: 'narration'
+      });
+      formData.append('labels', labels);
+      
       // ElevenLabs expects files as binary data with proper options
       audioFiles.forEach((file, index) => {
         this.log('info', `Adding file ${index + 1}: ${file.filename} (${file.buffer.length} bytes)`);
@@ -140,12 +149,15 @@ export class ElevenLabsModule extends BaseVoiceProvider {
       
       this.log('info', `FormData prepared with ${audioFiles.length} audio files`);
       
+      // Log all form fields for debugging
+      this.log('info', `FormData fields: name=${voiceName}, description provided, labels provided, files count=${audioFiles.length}`);
+      
       // Log headers for debugging
       const headers = {
         'xi-api-key': this.config.apiKey,
         ...formData.getHeaders()
       };
-      this.log('info', `Request headers: ${JSON.stringify(Object.keys(headers))}`);
+      this.log('info', `Request headers: ${JSON.stringify(headers, null, 2)}`);
       
       // Make direct API call to ElevenLabs using Node.js fetch with form-data
       this.log('info', `Making API call to ElevenLabs with voice name: ${voiceName}`);
@@ -156,13 +168,17 @@ export class ElevenLabsModule extends BaseVoiceProvider {
       });
       
       this.log('info', `ElevenLabs API response status: ${response.status} ${response.statusText}`);
+      this.log('info', `ElevenLabs API response headers: ${JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2)}`);
+      
+      const responseText = await response.text();
+      this.log('info', `ElevenLabs API complete response body: ${responseText}`);
       
       if (!response.ok) {
-        const errorData = await response.text();
-        throw new Error(`ElevenLabs API error: ${response.status} ${response.statusText} - ${errorData}`);
+        this.log('error', `ERROR: Voice training failed for user ${request.userId}. Complete API Response: ${responseText}`);
+        throw new Error(`ElevenLabs API error: ${response.status} ${response.statusText} - ${responseText}`);
       }
       
-      const voiceResult = await response.json();
+      const voiceResult = JSON.parse(responseText);
       
       this.log('info', `Voice created successfully with ID: ${voiceResult.voice_id}`);
       
