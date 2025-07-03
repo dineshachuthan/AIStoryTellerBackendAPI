@@ -138,6 +138,14 @@ export class ElevenLabsModule extends BaseVoiceProvider {
       });
       formData.append('labels', labels);
       
+      // Add required voice settings for ElevenLabs API
+      const voiceSettings = JSON.stringify({
+        stability: 0.3,
+        similarityBoost: 0.85,
+        style: 50
+      });
+      formData.append('voice_settings', voiceSettings);
+      
       // ElevenLabs expects files as binary data with proper options - try stream approach
       audioFiles.forEach((file, index) => {
         this.log('info', `Adding file ${index + 1}: ${file.filename} (${file.buffer.length} bytes)`);
@@ -151,7 +159,25 @@ export class ElevenLabsModule extends BaseVoiceProvider {
       this.log('info', `FormData prepared with ${audioFiles.length} audio files`);
       
       // Log all form fields for debugging
-      this.log('info', `FormData fields: name=${voiceName}, description provided, labels provided, files count=${audioFiles.length}`);
+      this.log('info', `FormData fields: name=${voiceName}, description provided, labels provided, voice_settings provided, files count=${audioFiles.length}`);
+      
+      // Debug logging as requested
+      console.log(JSON.stringify({
+        name: voiceName,
+        description: `Voice clone for user ${request.userId} with ${request.samples.length} emotion samples`,
+        labels: {
+          accent: 'american',
+          age: 'middle_aged',
+          gender: 'neutral',
+          use_case: 'narration'
+        },
+        voice_settings: {
+          stability: 0.3,
+          similarityBoost: 0.85,
+          style: 50
+        },
+        files_count: audioFiles.length
+      }, null, 2));
       
       // Log headers for debugging - don't manually set content-type
       const formHeaders = formData.getHeaders();
