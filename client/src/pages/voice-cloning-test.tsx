@@ -30,6 +30,10 @@ export default function VoiceCloningTest() {
   // Get job status when we have an active job
   const { data: jobStatus } = useQuery({
     queryKey: ["/api/voice-cloning/jobs", activeJobId, "status"],
+    queryFn: async () => {
+      if (!activeJobId) return null;
+      return await apiRequest(`/api/voice-cloning/jobs/${activeJobId}/status`);
+    },
     enabled: !!activeJobId,
     refetchInterval: 2000, // Poll every 2 seconds
   });
