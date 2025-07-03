@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,6 +33,13 @@ export default function VoiceCloningTest() {
     enabled: !!activeJobId,
     refetchInterval: 2000, // Poll every 2 seconds
   });
+
+  // Clear activeJobId when job completes or fails to stop infinite polling
+  useEffect(() => {
+    if (jobStatus && (jobStatus.status === 'completed' || jobStatus.status === 'failed')) {
+      setActiveJobId(null);
+    }
+  }, [jobStatus]);
 
   // Voice cloning mutation - uses exact same endpoint as other pages
   const createVoiceCloneMutation = useMutation({
