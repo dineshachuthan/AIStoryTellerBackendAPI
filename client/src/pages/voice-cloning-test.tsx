@@ -91,7 +91,7 @@ export default function VoiceCloningTest() {
     }
 
     if (!validationData.isReady) {
-      const needed = validationData.totalRequired - validationData.totalCompleted;
+      const needed = validationData.missingCount || 5;
       return VoiceMessageService.getInsufficientSamplesMessage(needed).message;
     }
 

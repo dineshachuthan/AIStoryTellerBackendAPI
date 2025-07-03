@@ -5293,6 +5293,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { storyId, category } = req.params;
       const userId = (req.user as any)?.id;
       
+      console.log(`🔍 VALIDATION REQUEST: story=${storyId}, category=${category}, user=${userId}`);
+      
       if (!userId) {
         return res.status(401).json({ message: 'User not authenticated' });
       }
