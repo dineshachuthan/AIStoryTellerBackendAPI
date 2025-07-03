@@ -4,6 +4,8 @@
  */
 
 import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
+import axios from 'axios';
+import FormData from 'form-data';
 import { spawn } from 'child_process';
 import * as fs from 'fs/promises';
 import * as path from 'path';
@@ -40,8 +42,12 @@ export class ElevenLabsModule extends BaseVoiceProvider {
     await super.performHealthCheck();
     
     try {
-      // Test API connectivity by listing voices
-      await this.client.voices.getAll();
+      // Test API connectivity using direct axios call
+      const response = await axios.get('https://api.elevenlabs.io/v1/voices', {
+        headers: {
+          'xi-api-key': this.config.apiKey
+        }
+      });
       this.log('info', 'ElevenLabs API connectivity confirmed');
     } catch (error) {
       throw new Error(`ElevenLabs API health check failed: ${error instanceof Error ? error.message : String(error)}`);
@@ -124,22 +130,39 @@ export class ElevenLabsModule extends BaseVoiceProvider {
         format: audioFiles.length > 0 ? detectAudioFormat(audioFiles[0].buffer) : "unknown"
       }, null, 2));
 
-      // Use ElevenLabs SDK for voice cloning - following interface-driven pattern
-      this.log('info', `Creating voice using ElevenLabs SDK voices.add method`);
+      // Use direct axios API for voice cloning as recommended
+      this.log('info', `Creating voice using direct ElevenLabs API with axios`);
       
-      const voiceCloneRequest = {
-        name: voiceName,
-        description: `Voice clone for user ${request.userId} with ${request.samples.length} emotion samples`,
-        labels: this.getVoiceLabelsFromConfig(),
-        files: audioFiles.map(file => ({
-          name: file.filename,
-          content: file.buffer
-        }))
-      };
-      
-      // Use base class retry mechanism with proper timeout handling
+      // Create voice using direct axios approach as recommended
       const voiceResult = await this.withRetry(async () => {
-        return await this.client.voices.add(voiceCloneRequest);
+        const form = new FormData();
+        form.append('name', voiceName);
+        
+        // Add audio files to FormData
+        audioFiles.forEach(file => {
+          form.append('files', file.buffer, {
+            filename: file.filename,
+            contentType: 'audio/mpeg'
+          });
+        });
+        
+        form.append('remove_background_noise', 'true');
+        form.append('description', `Voice clone for user ${request.userId} with ${request.samples.length} emotion samples`);
+        const labels = this.getVoiceLabelsFromConfig();
+        if (labels) form.append('labels', JSON.stringify(labels));
+
+        const response = await axios.post(
+          'https://api.elevenlabs.io/v1/voices/add',
+          form,
+          {
+            headers: {
+              'xi-api-key': this.config.apiKey,
+              ...form.getHeaders()
+            }
+          }
+        );
+        
+        return response.data;
       });
       
       this.log('info', `Voice created successfully with ID: ${voiceResult.voice_id}`);
@@ -180,14 +203,17 @@ export class ElevenLabsModule extends BaseVoiceProvider {
     }
   }
 
+
+
   async generateSpeech(text: string, voiceId: string, emotion?: string): Promise<ArrayBuffer> {
     console.log(`[ElevenLabs] Generating speech using ElevenLabs SDK for voice ID: ${voiceId}, text length: ${text.length} characters, emotion: ${emotion || 'neutral'}`);
     
     try {
-      const audioStream = await this.client.textToSpeech.stream(voiceId, {
+      // Use SDK for TTS as recommended in your first snippet
+      const audioStream = await this.client.textToSpeech.convert({
+        voiceId: voiceId,
         text: text,
-        modelId: 'eleven_multilingual_v2',
-        voice_settings: this.getEmotionSettings(emotion)
+        modelId: 'eleven_multilingual_v2'
       });
       
       // Convert stream to ArrayBuffer
