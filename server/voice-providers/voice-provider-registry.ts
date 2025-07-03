@@ -4,7 +4,7 @@
  */
 
 import { BaseVoiceProvider, VoiceCloneRequest, VoiceGenerationRequest, AudioResult, VoiceCloneResult } from './base-voice-provider';
-import { ElevenLabsProvider } from './elevenlabs-provider';
+import { ElevenLabsModule } from './elevenlabs-module';
 import { OpenAIProvider } from './openai-provider';
 import { VOICE_PROVIDERS, getEnabledVoiceProviders, getPrimaryVoiceProvider } from '@shared/voice-config';
 
@@ -37,7 +37,7 @@ export class VoiceProviderRegistry {
         
         switch (config.name.toLowerCase()) {
           case 'elevenlabs':
-            provider = new ElevenLabsProvider(config);
+            provider = new ElevenLabsModule(config);
             break;
           case 'openai':
             provider = new OpenAIProvider(config);
