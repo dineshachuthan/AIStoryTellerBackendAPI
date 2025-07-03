@@ -161,59 +161,72 @@ export default function VoiceCloningTest() {
           </div>
 
           {validationData && (
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                <div className="space-y-3">
-                  <div className="font-medium">Story {storyId} - Combined Validation Results:</div>
-                  
-                  {/* Story-level progress */}
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="default">Story Level</Badge>
-                      <span>{validationData.totalCompletedFromStory}/{validationData.minRequired} samples needed</span>
-                      {validationData.isReady ? 
-                        <CheckCircle className="h-4 w-4 text-green-600" /> : 
-                        <AlertCircle className="h-4 w-4 text-orange-500" />
-                      }
-                    </div>
-                    
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
-                        className={`h-2 rounded-full transition-all duration-300 ${
-                          validationData.isReady ? 'bg-green-500' : 'bg-blue-500'
-                        }`}
-                        style={{ width: `${validationData.overallCompletionPercentage}%` }}
-                      />
-                    </div>
-                    
-                    <div className="text-sm text-gray-600">
-                      Available in story: {validationData.totalAvailableInStory} items 
-                      ({validationData.allAvailableItems?.join(', ')})
-                    </div>
-                    
-                    {validationData.completedFromStory?.length > 0 && (
-                      <div className="text-sm text-green-600">
-                        Completed: {validationData.completedFromStory.join(', ')}
-                      </div>
-                    )}
-                    
-                    {validationData.missingCount > 0 && (
-                      <div className="text-sm text-orange-600">
-                        Need {validationData.missingCount} more samples from any category
-                      </div>
-                    )}
+            <div className="space-y-4">
+              {/* Main Status */}
+              <Alert className={validationData.isReady ? "border-green-200 bg-green-50" : "border-orange-200 bg-orange-50"}>
+                {validationData.isReady ? 
+                  <CheckCircle className="h-4 w-4 text-green-600" /> : 
+                  <AlertCircle className="h-4 w-4 text-orange-500" />
+                }
+                <AlertDescription>
+                  <div className="font-medium">
+                    {validationData.isReady ? 
+                      `✅ Ready for voice cloning! You have ${validationData.totalCompletedFromStory} voice samples.` :
+                      `Need ${validationData.missingCount} more voice samples to start cloning.`
+                    }
                   </div>
-                  
-                  {/* Category-specific details */}
-                  <div className="border-t pt-2">
-                    <div className="text-sm text-gray-500">
-                      <span className="font-medium">{category} category:</span> {validationData.categoryCompletedCount}/{validationData.categoryItems?.length || 0} completed
+                </AlertDescription>
+              </Alert>
+
+              {/* Progress Details */}
+              <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">Voice Sample Progress</span>
+                  <span className="text-sm text-gray-600">
+                    {validationData.totalCompletedFromStory} / {validationData.minRequired} required
+                  </span>
+                </div>
+                
+                <div className="w-full bg-gray-200 rounded-full h-3">
+                  <div 
+                    className={`h-3 rounded-full transition-all duration-300 ${
+                      validationData.isReady ? 'bg-green-500' : 'bg-blue-500'
+                    }`}
+                    style={{ width: `${Math.min(validationData.overallCompletionPercentage, 100)}%` }}
+                  />
+                </div>
+
+                {validationData.completedFromStory?.length > 0 && (
+                  <div className="text-sm">
+                    <span className="font-medium text-green-600">Your recorded samples:</span>
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {validationData.completedFromStory.map((item: string, index: number) => (
+                        <Badge key={index} variant="secondary" className="text-xs">
+                          {item}
+                        </Badge>
+                      ))}
                     </div>
+                  </div>
+                )}
+
+                <div className="text-sm">
+                  <span className="font-medium text-gray-600">Available in this story:</span>
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {validationData.allAvailableItems?.map((item: string, index: number) => (
+                      <Badge 
+                        key={index} 
+                        variant="outline" 
+                        className={`text-xs ${
+                          validationData.completedFromStory?.includes(item) ? 'bg-green-100 border-green-300' : ''
+                        }`}
+                      >
+                        {item}
+                      </Badge>
+                    ))}
                   </div>
                 </div>
-              </AlertDescription>
-            </Alert>
+              </div>
+            </div>
           )}
 
           <Button 
