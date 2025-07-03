@@ -5358,8 +5358,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .map((s: any) => s && s.label ? s.label.replace(/^(emotions|sounds|modulations)-/, '') : '')
         .filter(Boolean);
       
-      // Find which story items the user has actually recorded
-      const completedFromStory = allAvailableItems.filter(item => allUserSamples.includes(item));
+      // Find which story items the user has actually recorded (case-insensitive matching)
+      const completedFromStory = allAvailableItems.filter(item => 
+        allUserSamples.some(userSample => 
+          userSample.toLowerCase() === item.toLowerCase()
+        )
+      );
       
       // Simplified story-level validation logic:
       // Require minimum 5 samples, maximum 8 samples from ANY category combination
@@ -5367,6 +5371,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const completedCount = completedFromStory.length;
       const missingCount = Math.max(0, minRequired - completedCount);
       const isReady = completedCount >= minRequired;
+      
+      // Debug logging for story 75
+      if (parseInt(storyId) === 75) {
+        console.log('🔍 Debug Story 75 Validation:');
+        console.log('Available emotions:', availableEmotions);
+        console.log('Available sounds:', availableSounds);
+        console.log('Available modulations:', availableModulations);
+        console.log('All available items:', allAvailableItems);
+        console.log('User samples (cleaned):', allUserSamples);
+        console.log('Completed from story:', completedFromStory);
+        console.log('Min required:', minRequired);
+        console.log('Completed count:', completedCount);
+      }
 
       // For display purposes, show category-specific items
       const categoryCompletedCount = completedSamples.filter(sample => categoryItems.includes(sample)).length;
