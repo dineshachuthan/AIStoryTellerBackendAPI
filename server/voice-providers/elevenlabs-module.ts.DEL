@@ -1,18 +1,15 @@
 /**
- * ElevenLabs Voice Provider - Professional Implementation
- * Carries over all proven architectural patterns, utilities, error handling, timeout patterns, and state reset patterns
+ * ElevenLabs Voice Provider - Uses Abstract Base Class
+ * Handles voice cloning and speech generation using ElevenLabs API
  */
 
 import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
-import { spawn } from 'child_process';
-import * as fs from 'fs/promises';
-import * as path from 'path';
-import * as os from 'os';
 import { BaseVoiceProvider } from './base-voice-provider';
 import { VoiceProviderConfig, VoiceTrainingRequest, VoiceTrainingResult } from './provider-manager';
 import { ExternalIntegrationStateReset } from '../external-integration-state-reset';
 import { AUDIO_FORMAT_CONFIG, AUDIO_PROCESSING_CONFIG } from '@shared/audio-config';
 import { detectAudioFormat } from '../ai-analysis';
+import FormData from 'form-data';
 
 export class ElevenLabsModule extends BaseVoiceProvider {
   private client: any;
@@ -115,6 +112,15 @@ export class ElevenLabsModule extends BaseVoiceProvider {
       
       this.log('info', `All ${audioFiles.length} audio files processed. Starting ElevenLabs voice creation...`);
       
+      // Create voice using ElevenLabs SDK voice cloning method
+      this.log('info', `Creating voice clone using ElevenLabs SDK...`);
+      
+      // Convert audio files to the format expected by ElevenLabs SDK
+      const audioFiles_SDK = audioFiles.map(file => ({
+        audio: file.buffer,
+        filename: file.filename
+      }));
+      
       // Debug logging as requested - using config-driven values
       console.log(JSON.stringify({
         voiceId: "creating_new_voice",
@@ -186,8 +192,7 @@ export class ElevenLabsModule extends BaseVoiceProvider {
     try {
       const audioStream = await this.client.textToSpeech.stream(voiceId, {
         text: text,
-        modelId: 'eleven_multilingual_v2',
-        voice_settings: this.getEmotionSettings(emotion)
+        modelId: 'eleven_multilingual_v2'
       });
       
       // Convert stream to ArrayBuffer
@@ -200,7 +205,7 @@ export class ElevenLabsModule extends BaseVoiceProvider {
         chunks.push(value);
       }
       
-      const totalLength = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
+      const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
       const result = new Uint8Array(totalLength);
       let offset = 0;
       
@@ -209,48 +214,65 @@ export class ElevenLabsModule extends BaseVoiceProvider {
         offset += chunk.length;
       }
       
+      console.log(`[ElevenLabs] Speech generation completed successfully using ElevenLabs SDK. Generated ${result.length} bytes of audio data`);
       return result.buffer;
       
     } catch (error) {
-      this.log('error', `Speech generation failed for voice ${voiceId}`, error);
+      console.error(`[ElevenLabs] Speech generation failed:`, error);
       throw error;
     }
   }
 
   async getVoiceStatus(voiceId: string): Promise<{ status: string; ready: boolean }> {
+    console.log(`[ElevenLabs] Checking voice status for ElevenLabs voice ID: ${voiceId}`);
+    
     try {
       const voice = await this.client.voices.get(voiceId);
+      console.log(`[ElevenLabs] Voice status retrieved: ${voice.name}, Category: ${voice.category}`);
+      
       return {
-        status: voice.status || 'unknown',
-        ready: voice.status === 'ready'
+        status: 'ready',
+        ready: true
       };
     } catch (error) {
-      this.log('error', `Failed to get voice status for ${voiceId}`, error);
-      return { status: 'error', ready: false };
+      console.error(`[ElevenLabs] Failed to get voice status:`, error);
+      return {
+        status: 'error',
+        ready: false
+      };
     }
   }
 
+
+
   private async convertToMp3(audioBuffer: Buffer, fileName: string): Promise<Buffer> {
-    const format = detectAudioFormat(audioBuffer);
+    const { spawn } = await import('child_process');
+    const fs = await import('fs/promises');
+    const path = await import('path');
+    const os = await import('os');
     
-    // Skip conversion if already MP3
-    if (format === 'mp3') {
-      this.log('info', `${fileName} is already MP3 format, skipping conversion`);
-      return audioBuffer;
-    }
+    this.log('info', `Converting audio to MP3 format for ${fileName}`);
     
     try {
-      this.log('info', `Converting ${fileName} from ${format} to MP3`);
-      
-      // Create temporary directory and files
+      // Create temporary files
       const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'elevenlabs-'));
-      const inputPath = path.join(tempDir, `input_${Date.now()}.${format}`);
+      
+      // Detect actual file format from buffer or use fileName extension
+      const detectedExtension = detectAudioFormat(audioBuffer) || path.extname(fileName).slice(1) || 'mp3';
+      
+      // If already MP3, return as-is (MP3-only enforcement means no conversion needed)
+      if (detectedExtension === 'mp3') {
+        this.log('info', `File is already MP3 format, skipping conversion: ${fileName}`);
+        return audioBuffer;
+      }
+      
+      const inputPath = path.join(tempDir, `input_${Date.now()}.${detectedExtension}`);
       const outputPath = path.join(tempDir, `output_${Date.now()}.mp3`);
       
       // Write input file
       await fs.writeFile(inputPath, audioBuffer);
       
-      // Convert using FFmpeg with ElevenLabs-compatible settings
+      // Convert using FFmpeg with specific settings for ElevenLabs compatibility
       const ffmpegArgs = [
         '-i', inputPath,
         '-codec:a', 'libmp3lame',  // Use LAME MP3 encoder
@@ -313,14 +335,5 @@ export class ElevenLabsModule extends BaseVoiceProvider {
     };
     
     return emotionMap[emotion || 'neutral'] || { stability: 0.6, similarity_boost: 0.75 };
-  }
-
-  private getVoiceLabelsFromConfig(): any {
-    return {
-      accent: 'neutral',
-      age: 'adult',
-      gender: 'neutral',
-      use_case: 'storytelling'
-    };
   }
 }
