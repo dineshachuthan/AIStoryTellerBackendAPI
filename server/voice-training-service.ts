@@ -121,10 +121,18 @@ export class VoiceTrainingService {
 
         // Get voice samples for each unique emotion (one sample per emotion)
         const hybridSamples = [];
-        const allVoiceSamples = await storage.getUserVoiceEmotions(userId);
+        const allVoiceSamples = await storage.getUserVoiceSamples(userId);
         
         for (const emotion of uniqueEmotions.slice(0, 6)) { // Take first 6 emotions only
-          const emotionSamples = allVoiceSamples.filter(sample => sample.emotion === emotion);
+          // Match emotion names case-insensitively and handle label format
+          const emotionSamples = allVoiceSamples.filter(sample => {
+            if (!sample.label) return false;
+            
+            // Extract emotion from label (e.g., "emotions-curiosity" -> "curiosity")
+            const labelEmotion = sample.label.replace(/^emotions-/, '').toLowerCase();
+            return labelEmotion === emotion.toLowerCase();
+          });
+          
           if (emotionSamples.length > 0) {
             hybridSamples.push({
               emotion: emotion,
@@ -157,6 +165,7 @@ export class VoiceTrainingService {
         if (!userProfile) {
           userProfile = await storage.createUserVoiceProfile({
             userId: userId,
+            profileName: `Voice_${userId.substring(0, 8)}_${Date.now()}`,
             trainingStatus: 'training',
             trainingStartedAt: new Date()
           });
