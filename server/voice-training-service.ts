@@ -121,13 +121,15 @@ export class VoiceTrainingService {
 
         // Get voice samples for each unique emotion (one sample per emotion)
         const hybridSamples = [];
+        const allVoiceSamples = await storage.getUserVoiceEmotions(userId);
+        
         for (const emotion of uniqueEmotions.slice(0, 6)) { // Take first 6 emotions only
-          const voiceModulations = await this.getUserVoiceModulationsForEmotion(userId, emotion);
-          if (voiceModulations.length > 0) {
+          const emotionSamples = allVoiceSamples.filter(sample => sample.emotion === emotion);
+          if (emotionSamples.length > 0) {
             hybridSamples.push({
               emotion: emotion,
-              audioUrl: voiceModulations[0].audioUrl, // Take first recording for this emotion
-              fileName: voiceModulations[0].fileName
+              audioUrl: emotionSamples[0].audioUrl, // Take first recording for this emotion
+              isLocked: false
             });
           }
         }

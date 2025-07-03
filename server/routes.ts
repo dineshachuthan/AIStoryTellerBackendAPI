@@ -4736,24 +4736,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Invalid category' });
       }
       
-      const { voiceModulationService } = await import('./voice-modulation-service');
       const { voiceTrainingService } = await import('./voice-training-service');
       
-      // Check if user has enough samples for this category
-      const userModulations = await voiceModulationService.getUserVoiceModulations(userId);
-      let categoryCount = 0;
-      
-      switch (category) {
-        case 'emotions':
-          categoryCount = userModulations.filter(m => m.modulationType === 'emotion').length;
-          break;
-        case 'sounds':
-          categoryCount = userModulations.filter(m => m.modulationType === 'sound').length;
-          break;
-        case 'modulations':
-          categoryCount = userModulations.filter(m => m.modulationType === 'modulation').length;
-          break;
-      }
+      // Check if user has enough samples for this category using actual voice samples
+      const userVoiceSamples = await storage.getUserVoiceEmotions(userId);
+      const uniqueEmotions = [...new Set(userVoiceSamples.map(sample => sample.emotion))];
+      const categoryCount = uniqueEmotions.length;
       
       if (categoryCount < 5) {
         return res.status(400).json({ 
