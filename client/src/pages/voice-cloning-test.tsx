@@ -12,7 +12,7 @@ import { VoiceMessageService } from "@shared/i18n-config";
 import { Zap, AlertCircle, CheckCircle, Clock, Loader2 } from "lucide-react";
 
 export default function VoiceCloningTest() {
-  const [storyId, setStoryId] = useState("");
+  const [storyId, setStoryId] = useState("75");
   const [category, setCategory] = useState<'emotions' | 'sounds' | 'modulations'>('emotions');
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
   const { toast } = useToast();
