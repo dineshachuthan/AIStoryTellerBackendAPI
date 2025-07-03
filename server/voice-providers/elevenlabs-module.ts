@@ -120,15 +120,34 @@ export class ElevenLabsModule extends BaseVoiceProvider {
         filename: file.filename
       }));
       
-      // Debug: Check available methods on voices object
-      this.log('info', `Available voices methods: ${Object.getOwnPropertyNames(this.client.voices)}`);
+      // Use direct API call since SDK doesn't have voice creation methods
+      this.log('info', `Creating voice using direct API call to ElevenLabs /v1/voices/add endpoint`);
       
-      // Use ElevenLabs SDK voice cloning method - if it exists
-      const voiceResult = await this.client.voices.add({
-        name: voiceName,
-        description: `Voice clone for user ${request.userId} with ${request.samples.length} emotion samples`,
-        files: audioFiles_SDK
+      // Create FormData for the API request
+      const formData = new FormData();
+      formData.append('name', voiceName);
+      formData.append('description', `Voice clone for user ${request.userId} with ${request.samples.length} emotion samples`);
+      
+      // Add each audio file to the form data
+      audioFiles.forEach((file, index) => {
+        formData.append('files', new Blob([file.buffer], { type: 'audio/mpeg' }), file.filename);
       });
+      
+      // Make direct API call to ElevenLabs
+      const response = await fetch('https://api.elevenlabs.io/v1/voices/add', {
+        method: 'POST',
+        headers: {
+          'xi-api-key': this.config.apiKey
+        },
+        body: formData
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.text();
+        throw new Error(`ElevenLabs API error: ${response.status} ${response.statusText} - ${errorData}`);
+      }
+      
+      const voiceResult = await response.json();
       
       this.log('info', `Voice created successfully with ID: ${voiceResult.voice_id}`);
       
