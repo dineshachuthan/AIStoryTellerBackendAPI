@@ -250,7 +250,7 @@ export class ElevenLabsModule extends BaseVoiceProvider {
       const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'elevenlabs-'));
       
       // Detect actual file format from buffer or use fileName extension
-      const detectedExtension = this.detectAudioFormat(audioBuffer) || path.extname(fileName).slice(1) || 'mp3';
+      const detectedExtension = detectAudioFormat(audioBuffer) || path.extname(fileName).slice(1) || 'mp3';
       
       // If already MP3, return as-is (MP3-only enforcement means no conversion needed)
       if (detectedExtension === 'mp3') {
