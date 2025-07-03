@@ -166,6 +166,7 @@ export class VoiceTrainingService {
           userProfile = await storage.createUserVoiceProfile({
             userId: userId,
             profileName: `Voice_${userId.substring(0, 8)}_${Date.now()}`,
+            baseVoice: 'alloy', // Default OpenAI voice for base reference
             trainingStatus: 'training',
             trainingStartedAt: new Date()
           });
