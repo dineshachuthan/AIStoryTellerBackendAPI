@@ -111,35 +111,21 @@ export class ElevenLabsModule extends BaseVoiceProvider {
       
       this.log('info', `All ${audioFiles.length} audio files processed. Starting ElevenLabs voice creation...`);
       
-      // Create voice using ElevenLabs SDK
-      // Note: Using direct API call since SDK voice cloning methods may not be available
-      const formData = new FormData();
-      formData.append('name', voiceName);
-      formData.append('description', `Voice clone for user ${request.userId} with ${request.samples.length} emotion samples`);
+      // Create voice using ElevenLabs SDK voice cloning method
+      this.log('info', `Creating voice clone using ElevenLabs SDK...`);
       
-      // Add all audio files to FormData
-      audioFiles.forEach((file, index) => {
-        formData.append('files', file.buffer, {
-          filename: file.filename,
-          contentType: file.contentType
-        });
+      // Convert audio files to the format expected by ElevenLabs SDK
+      const audioFiles_SDK = audioFiles.map(file => ({
+        audio: file.buffer,
+        filename: file.filename
+      }));
+      
+      // Use ElevenLabs SDK voice cloning method
+      const voiceResult = await this.client.voices.clone({
+        name: voiceName,
+        description: `Voice clone for user ${request.userId} with ${request.samples.length} emotion samples`,
+        files: audioFiles_SDK
       });
-      
-      // Make direct API call to ElevenLabs voice cloning endpoint
-      const response = await fetch('https://api.elevenlabs.io/v1/voices/add', {
-        method: 'POST',
-        headers: {
-          'xi-api-key': this.config.apiKey,
-          ...formData.getHeaders()
-        },
-        body: formData
-      });
-      
-      if (!response.ok) {
-        throw new Error(`ElevenLabs API error: ${response.status} ${response.statusText}`);
-      }
-      
-      const voiceResult = await response.json();
       
       this.log('info', `Voice created successfully with ID: ${voiceResult.voice_id}`);
       
