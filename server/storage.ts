@@ -1207,57 +1207,67 @@ export class DatabaseStorage implements IStorage {
     await db.delete(userVoiceProfiles).where(eq(userVoiceProfiles.id, id));
   }
 
-  // ElevenLabs Emotion Voices
+  // ElevenLabs Emotion Voices - using existing user_voice_emotions table
   async getUserEmotionVoices(userId: string): Promise<any[]> {
-    const { userEmotionVoices, userVoiceProfiles } = await import("@shared/schema");
-    return await db.select({
-      id: userEmotionVoices.id,
-      emotion: userEmotionVoices.emotion,
-      elevenLabsVoiceId: userEmotionVoices.elevenLabsVoiceId,
-      status: userEmotionVoices.status,
-      sampleCount: userEmotionVoices.sampleCount,
-      qualityScore: userEmotionVoices.qualityScore,
-      voiceSettings: userEmotionVoices.voiceSettings,
-      lastUsedAt: userEmotionVoices.lastUsedAt,
-      usageCount: userEmotionVoices.usageCount,
-      createdAt: userEmotionVoices.createdAt,
-      updatedAt: userEmotionVoices.updatedAt
-    })
-    .from(userEmotionVoices)
-    .innerJoin(userVoiceProfiles, eq(userEmotionVoices.userVoiceProfileId, userVoiceProfiles.id))
-    .where(eq(userVoiceProfiles.userId, userId));
+    const result = await db.execute(sql`
+      SELECT 
+        id,
+        emotion,
+        intensity,
+        audio_url,
+        usage_count,
+        last_used_at,
+        created_at
+      FROM user_voice_emotions 
+      WHERE user_id = ${userId}
+    `);
+    return result.rows.map(row => ({
+      id: row.id,
+      emotion: row.emotion,
+      intensity: row.intensity,
+      audioUrl: row.audio_url,
+      usageCount: row.usage_count || 0,
+      lastUsedAt: row.last_used_at,
+      createdAt: row.created_at
+    }));
   }
 
   async getUserEmotionVoice(userId: string, emotion: string): Promise<any | undefined> {
-    const { userEmotionVoices, userVoiceProfiles } = await import("@shared/schema");
-    const [result] = await db.select()
-      .from(userEmotionVoices)
-      .innerJoin(userVoiceProfiles, eq(userEmotionVoices.userVoiceProfileId, userVoiceProfiles.id))
-      .where(and(
-        eq(userVoiceProfiles.userId, userId),
-        eq(userEmotionVoices.emotion, emotion)
-      ));
-    return result || undefined;
+    const result = await db.execute(sql`
+      SELECT 
+        id,
+        emotion,
+        intensity,
+        audio_url,
+        usage_count,
+        last_used_at,
+        created_at
+      FROM user_voice_emotions 
+      WHERE user_id = ${userId} AND emotion = ${emotion}
+      LIMIT 1
+    `);
+    const row = result.rows[0];
+    return row ? {
+      id: row.id,
+      emotion: row.emotion,
+      intensity: row.intensity,
+      audioUrl: row.audio_url,
+      usageCount: row.usage_count || 0,
+      lastUsedAt: row.last_used_at,
+      createdAt: row.created_at
+    } : undefined;
   }
 
   async createUserEmotionVoice(emotionVoice: any): Promise<any> {
-    const userEmotionVoices = await import("@shared/schema").then(m => m.userEmotionVoices);
-    const [created] = await db.insert(userEmotionVoices).values(emotionVoice).returning();
-    return created;
+    throw new Error("createUserEmotionVoice not implemented - requires database schema alignment with user_voice_emotions table");
   }
 
   async updateUserEmotionVoice(id: number, emotionVoice: any): Promise<any> {
-    const userEmotionVoices = await import("@shared/schema").then(m => m.userEmotionVoices);
-    const [updated] = await db.update(userEmotionVoices)
-      .set({ ...emotionVoice, updatedAt: new Date() })
-      .where(eq(userEmotionVoices.id, id))
-      .returning();
-    return updated;
+    throw new Error("updateUserEmotionVoice not implemented - requires database schema alignment with user_voice_emotions table");
   }
 
   async deleteUserEmotionVoice(id: number): Promise<void> {
-    const userEmotionVoices = await import("@shared/schema").then(m => m.userEmotionVoices);
-    await db.delete(userEmotionVoices).where(eq(userEmotionVoices.id, id));
+    throw new Error("deleteUserEmotionVoice not implemented - requires database schema alignment with user_voice_emotions table");
   }
 
   // Voice Generation Cache
