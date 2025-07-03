@@ -104,17 +104,7 @@ export class ExternalIntegrationStateReset {
       // Alternative: Reset using existing user_voice_emotions table if needed
       // This would require different logic based on actual table structure
       
-      // Step 3: Reset session state if available
-      try {
-        const { VoiceCloningSessionManager } = await import('./voice-cloning-session-manager');
-        // Reset all categories since we don't know which specific one failed
-        VoiceCloningSessionManager.completeCategoryCloning(userId, 'emotions', false);
-        VoiceCloningSessionManager.completeCategoryCloning(userId, 'sounds', false);
-        VoiceCloningSessionManager.completeCategoryCloning(userId, 'modulations', false);
-        console.log(`   ✅ Reset voice cloning session state for user ${userId}`);
-      } catch (sessionError) {
-        console.error(`   ⚠️ Could not reset session state:`, sessionError);
-      }
+      // Session cloning logic removed - no batch processing
       
       // Step 4: Unlock voice samples to allow re-training
       try {

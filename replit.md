@@ -767,6 +767,14 @@ Preferred communication style: Simple, everyday language.
 - Configuration determines single active provider - no backup providers allowed
 - System failures are acceptable - fallback providers are forbidden
 
+**CRITICAL CACHE VS FALLBACK DISTINCTION: CACHE LOGIC IS ACCEPTABLE**
+- **Cache Logic (NORMAL BUSINESS LOGIC)**: Read from cache → if cache miss/expired/dirty → go to source (database/file/API) → fetch data → re-cache with sliding expiration
+- **Write Cache Logic (NORMAL)**: Delete cache key → write to database → insert new data into cache (all in one transaction)
+- **Fallback Logic (FORBIDDEN)**: Hardcoding values, switching to different source systems, or switching to different providers when primary fails
+- **KEY DISTINCTION**: Going to database when cache is invalid = normal caching, NOT fallback logic
+- **FALLBACK DEFINITION**: Switching providers, using hardcoded alternatives, or using different source systems when primary system fails
+- Cache-to-database reads are standard cache invalidation patterns and should NOT be removed as "fallback logic"
+
 **CRITICAL ARCHITECTURE RULE: MANDATORY PLUG-AND-PLAY PATTERNS**
 - ALL external integrations MUST follow identical plug-and-play architecture patterns
 - Voice providers must use same abstract interfaces and patterns as video providers

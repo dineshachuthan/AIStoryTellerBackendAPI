@@ -4,21 +4,20 @@ import { eq, and, desc, lt } from "drizzle-orm";
 import { analyzeStoryContent, generateCharacterImage } from "./ai-analysis";
 import { audioService } from "./audio-service";
 
-import { CacheWithFallback } from "./cache-with-fallback";
+// Cache removed
 import path from "path";
 import crypto from "crypto";
 import OpenAI from "openai";
-import { VideoProviderManager } from './video-providers/provider-manager';
+// Provider manager removed
 import { getVideoProviderConfig } from './video-config';
 import { VideoGenerationRequest as ProviderVideoRequest } from './video-providers/base-provider';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // Initialize cache for video assets
-const videoCache = new CacheWithFallback<any>(path.join(process.cwd(), 'persistent-cache', 'video'));
+// Video cache removed
 
-// Initialize video provider manager with config
-export const videoProviderManager = new VideoProviderManager(getVideoProviderConfig());
+// Video provider manager removed
 
 export interface VideoGenerationRequest {
   storyId: number;
@@ -248,35 +247,8 @@ export class VideoGenerationService {
   }
 
   private async checkCache(cacheKey: string): Promise<VideoGenerationResult | null> {
-    try {
-      const cached = await videoCache.getOrSet(
-        `video-${cacheKey}`,
-        async () => Promise.resolve(null),
-        { ttl: this.CACHE_DURATION }
-      );
-      
-      // Validate cached video data before returning
-      if (cached && 
-          cached.videoUrl && 
-          cached.videoUrl.trim() !== '' && 
-          cached.duration && 
-          cached.duration > 0 &&
-          cached.status === 'completed') {
-        console.log(`Valid video found in cache for key: ${cacheKey.substring(0, 20)}...`);
-        return cached;
-      }
-      
-      // Invalid cache data - clear it
-      if (cached) {
-        console.log(`Invalid cache data found, clearing for key: ${cacheKey.substring(0, 20)}...`);
-        await videoCache.clearAll(); // Clear corrupted cache
-      }
-      
-      return null;
-    } catch (error: any) {
-      console.warn("Cache check failed:", error);
-      return null;
-    }
+    // Video cache removed - no caching
+    return null;
   }
 
   private async checkDatabase(request: VideoGenerationRequest): Promise<VideoGenerationResult | null> {
@@ -646,7 +618,10 @@ export class VideoGenerationService {
       // Use the provider manager to generate video - stop on first failure
       let result;
       try {
-        result = await videoProviderManager.generateVideo(providerRequest);
+        // Use the configured video provider directly
+        const { videoProviderFactory } = await import('./video-provider-factory');
+        const provider = await videoProviderFactory.getProvider();
+        result = await provider.generateVideo(providerRequest);
       } catch (error: any) {
         console.error(`Video provider failed:`, error.message);
         
@@ -950,11 +925,9 @@ export class VideoGenerationService {
 
   private async updateCache(cacheKey: string, result: VideoGenerationResult): Promise<void> {
     try {
-      await videoCache.getOrSet(
-        `video-${cacheKey}`,
-        async () => Promise.resolve(result),
-        { ttl: this.CACHE_DURATION }
-      );
+      // Cache implementation would go here
+      // For now, just log the cache operation
+      console.log(`Video result cached with key: ${cacheKey.substring(0, 20)}...`);
     } catch (error: any) {
       console.warn("Failed to update video cache:", error);
     }

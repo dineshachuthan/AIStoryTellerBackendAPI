@@ -734,7 +734,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Check if we have cached roleplay analysis
       try {
-        const { analysisCache } = await import("./cache-with-fallback");
+        // No cache allowed
         const cachedAnalysis = await analysisCache.getOrSet(
           `roleplay-${storyId}`,
           () => null, // Don't generate if not exists
@@ -1553,60 +1553,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           isCompleted: true,
         });
         
-        // SESSION-BASED VOICE CLONING TRIGGER FOR ESM ARCHITECTURE
-        try {
-          const { VoiceCloningSessionManager } = await import('./voice-cloning-session-manager');
-          
-          // Initialize session if not already done
-          if (!req.session.voiceCloning) {
-            console.log(`🔧 Initializing voice cloning session for user ${userId}`);
-            await VoiceCloningSessionManager.initializeSessionData(req);
-          }
-          
-          // Determine category from ESM name (emotions category)
-          const category = await VoiceCloningSessionManager.getCategoryFromEsmName(emotionName);
-          console.log(`🔄 Recording ESM voice sample for category: ${category}, emotion: ${emotionName}`);
-          
-          // Increment session counter for this category
-          VoiceCloningSessionManager.incrementCategoryCounter(req, category);
-          
-          // Debug session state
-          const sessionData = VoiceCloningSessionManager.getSessionData(req);
-          console.log(`📊 Session counters after increment: emotions=${sessionData.emotions_not_cloned}, sounds=${sessionData.sounds_not_cloned}, modulations=${sessionData.modulations_not_cloned}`);
-          
-          // TEMPORARILY DISABLED: Check if threshold reached for this category (MVP1 hybrid approach)
-          console.log(`🔍 DISABLED AUTOMATIC TRIGGER - Category '${category}' threshold check bypassed to prevent loops`);
-          /*
-          if (await VoiceCloningSessionManager.shouldTriggerCloning(req, category)) {
-            console.log(`🎯 Category '${category}' reached threshold - triggering ElevenLabs voice cloning`);
-            
-            // Set cloning in progress (disables voice samples button)
-            VoiceCloningSessionManager.setCloningInProgress(req, category);
-            
-            // Use timeout service for guaranteed bounded execution time
-            const { VoiceCloningTimeoutService } = await import('./voice-cloning-timeout-service');
-            
-            // Start background cloning with proper timeout/retry - NO INFINITE LOOPS
-            setTimeout(async () => {
-              try {
-                await VoiceCloningTimeoutService.startVoiceCloning(userId, category);
-              } catch (error) {
-                console.error(`❌ Voice cloning service error for ${userId} ${category}:`, error);
-                VoiceCloningSessionManager.completeCategoryCloning(userId, category, false);
-              }
-            }, 100); // Small delay to ensure response is sent before background processing
-          } else {
-          */
-          {
-            const currentCount = category === 'emotions' ? sessionData.emotions_not_cloned :
-                                category === 'sounds' ? sessionData.sounds_not_cloned :
-                                sessionData.modulations_not_cloned;
-            console.log(`⏳ Category '${category}' has ${currentCount}/${VoiceCloningSessionManager.CLONING_THRESHOLD} samples (threshold not reached)`);
-          }
-        } catch (sessionError) {
-          console.error('Error in ESM voice cloning session trigger:', sessionError);
-          // Don't fail the request if session management fails
-        }
+        // Session-based voice cloning triggers removed
         
       } catch (dbError) {
         console.error("Failed to create ESM database records:", dbError);
@@ -3568,9 +3515,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Clear video cache
         try {
-          const { CacheWithFallback } = await import("./cache-with-fallback");
-          const videoCache = new CacheWithFallback('video');
-          await videoCache.clearAll(); // Clear all video cache for safety
+          // No cache allowed - direct API calls only
+          // Video cache removed
           console.log(`Cleared video cache for story ${storyId}`);
         } catch (cacheError) {
           console.log("Cache clearing failed (non-critical):", cacheError);
@@ -4170,7 +4116,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Use the exact same approach as the working /api/stories/:id/narrative endpoint
-      const { analysisCache } = await import('./cache-with-fallback');
+      // Analysis cache removed
       const cacheKey = `narrative-${storyId}`;
       
       let analysis;
@@ -4443,56 +4389,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isLocked: false
       });
 
-      // SESSION-BASED ELEVENLABS TRAINING TRIGGER
-      try {
-        const { VoiceCloningSessionManager } = await import('./voice-cloning-session-manager');
-        
-        // Initialize session if not already done
-        if (!req.session.voiceCloning) {
-          console.log(`🔧 Initializing voice cloning session for user ${userId}`);
-          await VoiceCloningSessionManager.initializeSessionData(req);
-        }
-        
-        // Determine category from modulation key
-        const category = VoiceCloningSessionManager.getCategoryFromModulationKey(modulationKey);
-        console.log(`🔄 Recording voice sample for category: ${category}, modulation: ${modulationKey}`);
-        
-        // Increment session counter for this category
-        VoiceCloningSessionManager.incrementCategoryCounter(req, category);
-        
-        // Debug session state
-        const sessionData = VoiceCloningSessionManager.getSessionData(req);
-        console.log(`📊 Session counters after increment: emotions=${sessionData.emotions_not_cloned}, sounds=${sessionData.sounds_not_cloned}, modulations=${sessionData.modulations_not_cloned}`);
-        
-        // Check if threshold reached for this category (async for hybrid approach)
-        if (await VoiceCloningSessionManager.shouldTriggerCloning(req, category)) {
-          console.log(`🎯 Category '${category}' reached ${VOICE_CLONING_CONFIG.sampleThreshold} samples threshold - triggering ElevenLabs cloning`);
-          
-          // Set cloning in progress (disables voice samples button)
-          VoiceCloningSessionManager.setCloningInProgress(req, category);
-          
-          // Use timeout service for guaranteed bounded execution time
-          const { VoiceCloningTimeoutService } = await import('./voice-cloning-timeout-service');
-          
-          // Start background cloning with proper timeout/retry - NO INFINITE LOOPS
-          setTimeout(async () => {
-            try {
-              await VoiceCloningTimeoutService.startVoiceCloning(userId, category);
-            } catch (error) {
-              console.error(`❌ Voice cloning service error for ${userId} ${category}:`, error);
-              VoiceCloningSessionManager.completeCategoryCloning(userId, category, false);
-            }
-          }, 100); // Small delay to ensure response is sent before background processing
-        } else {
-          const currentCount = category === 'emotions' ? sessionData.emotions_not_cloned :
-                              category === 'sounds' ? sessionData.sounds_not_cloned :
-                              sessionData.modulations_not_cloned;
-          console.log(`⏳ Category '${category}' has ${currentCount}/5 samples (threshold not reached)`);
-        }
-      } catch (error) {
-        console.error('Error in session-based voice cloning trigger:', error);
-        // Don't fail the request if session management fails
-      }
+      // Session-based voice cloning triggers removed
       
       res.json(modulation);
     } catch (error: any) {

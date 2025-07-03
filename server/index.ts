@@ -4,7 +4,7 @@ import { setupVite, serveStatic, log } from "./vite";
 import { archetypeService } from "./character-archetype-service";
 import { collaborativeRoutes } from "./routes-collaborative";
 import videoRoutes from "./routes-video";
-import { registerVideoProviderRoutes } from "./routes-video-providers";
+// Video provider routes removed
 import { VoiceProviderRegistry } from "./voice-providers/provider-manager";
 import { getVoiceConfig } from "./voice-config";
 import referenceDataRoutes from "./routes-reference-data";
@@ -53,7 +53,7 @@ app.use((req, res, next) => {
   app.use(videoRoutes);
   
   // Add video provider management routes
-  registerVideoProviderRoutes(app);
+  // Video provider routes removed
   
   // Add reference data routes for the new architecture
   app.use('/api/reference-data', referenceDataRoutes);

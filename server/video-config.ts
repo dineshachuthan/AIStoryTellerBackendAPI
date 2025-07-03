@@ -58,7 +58,7 @@ export const defaultVideoConfig: VideoProviderConfiguration = {
       priority: 999
     }
   },
-  fallbackOrder: ['kling'], // Only Kling enabled
+  // No fallback providers allowed
   compatibility: {
     enforceMP4: true,
     enforceH264: true,
