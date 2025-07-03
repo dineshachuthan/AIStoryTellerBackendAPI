@@ -148,6 +148,7 @@ export class ElevenLabsModule extends BaseVoiceProvider {
       this.log('info', `Request headers: ${JSON.stringify(Object.keys(headers))}`);
       
       // Make direct API call to ElevenLabs using Node.js fetch with form-data
+      this.log('info', `Making API call to ElevenLabs with voice name: ${voiceName}`);
       const response = await fetch('https://api.elevenlabs.io/v1/voices/add', {
         method: 'POST',
         headers: headers,
