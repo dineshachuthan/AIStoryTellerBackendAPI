@@ -1433,13 +1433,19 @@ export class DatabaseStorage implements IStorage {
 
   // MVP1 Hybrid Voice Cloning - Get unique emotions recorded by user
   async getUserUniqueEmotions(userId: string): Promise<string[]> {
-    const { userVoiceModulations } = await import('@shared/schema');
     const { eq } = await import('drizzle-orm');
     const uniqueEmotions = await db
-      .selectDistinct({ emotion: userVoiceModulations.modulationKey })
-      .from(userVoiceModulations)
-      .where(eq(userVoiceModulations.userId, userId))
-      .then(rows => rows.map(row => row.emotion));
+      .selectDistinct({ emotion: userVoiceSamples.label })
+      .from(userVoiceSamples)
+      .where(eq(userVoiceSamples.userId, userId))
+      .then(rows => rows.map(row => {
+        // Strip category prefixes (emotions-, sounds-, modulations-)
+        const label = row.emotion;
+        if (label.includes('-')) {
+          return label.split('-').slice(1).join('-'); // Remove first prefix, keep rest
+        }
+        return label;
+      }).filter(Boolean));
     
     return uniqueEmotions;
   }
