@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -12,13 +13,18 @@ import { Zap, AlertCircle, CheckCircle, Clock, Loader2 } from "lucide-react";
 
 export default function VoiceCloningTest() {
   const [storyId, setStoryId] = useState("");
+  const [category, setCategory] = useState<'emotions' | 'sounds' | 'modulations'>('emotions');
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Get validation status for a story
+  // Get validation status for selected category and story
   const { data: validationData, refetch: refetchValidation } = useQuery({
-    queryKey: ["/api/voice-cloning/validation", storyId],
-    enabled: !!storyId && storyId.trim() !== "",
+    queryKey: ["/api/voice-cloning/validation", storyId, category],
+    queryFn: async () => {
+      if (!storyId || !category) return null;
+      return await apiRequest(`/api/voice-cloning/validation/${storyId}/${category}`);
+    },
+    enabled: !!storyId && !!category
   });
 
   // Get job status when we have an active job
@@ -28,45 +34,22 @@ export default function VoiceCloningTest() {
     refetchInterval: 2000, // Poll every 2 seconds
   });
 
-  // Manual voice cloning mutation
+  // Manual voice cloning mutation - uses exact same endpoint as other pages
   const createVoiceCloneMutation = useMutation({
-    mutationFn: async (storyId: string) => {
-      // Process all categories that are ready
-      const categories = ['emotions', 'sounds', 'modulations'];
-      const results = [];
-      
-      for (const category of categories) {
-        try {
-          const result = await apiRequest(`/api/voice-cloning/manual/${category}/${storyId}`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            credentials: 'include'
-          });
-          results.push({ category, ...result });
-        } catch (error: any) {
-          // Skip categories that aren't ready, but don't fail the whole operation
-          console.log(`Skipping ${category}: ${error.message}`);
-        }
-      }
-      
-      if (results.length === 0) {
-        throw new Error('No categories are ready for voice cloning');
-      }
-      
-      return {
-        success: true,
-        jobId: results[0].jobId, // Use first job ID for tracking
-        jobs: results,
-        totalJobs: results.length
-      };
+    mutationFn: async () => {
+      return await apiRequest(`/api/voice-cloning/manual/${category}/${storyId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include'
+      });
     },
     onSuccess: (data) => {
       setActiveJobId(data.jobId);
       toast({
         title: "Voice cloning started",
-        description: `Job ${data.jobId} created successfully. Processing in background...`,
+        description: `${category} voice cloning job ${data.jobId} started. Processing in background...`,
       });
     },
     onError: (error: any) => {
@@ -87,7 +70,15 @@ export default function VoiceCloningTest() {
       });
       return;
     }
-    createVoiceCloneMutation.mutate(storyId.trim());
+    if (!category) {
+      toast({
+        title: "Error", 
+        description: "Please select a category",
+        variant: "destructive",
+      });
+      return;
+    }
+    createVoiceCloneMutation.mutate();
   };
 
   const getButtonText = () => {
@@ -99,16 +90,8 @@ export default function VoiceCloningTest() {
       return VoiceMessageService.getButtonLabel().message;
     }
 
-    const totalRequired = (validationData.emotions?.required || 0) + 
-                         (validationData.sounds?.required || 0) + 
-                         (validationData.modulations?.required || 0);
-    
-    const totalRecorded = (validationData.emotions?.recorded || 0) + 
-                         (validationData.sounds?.recorded || 0) + 
-                         (validationData.modulations?.recorded || 0);
-
-    if (totalRecorded < totalRequired) {
-      const needed = totalRequired - totalRecorded;
+    if (!validationData.isReady) {
+      const needed = validationData.totalRequired - validationData.totalCompleted;
       return VoiceMessageService.getInsufficientSamplesMessage(needed).message;
     }
 
@@ -117,18 +100,8 @@ export default function VoiceCloningTest() {
 
   const isButtonDisabled = () => {
     if (createVoiceCloneMutation.isPending) return true;
-    
-    if (!validationData) return false;
-    
-    const totalRequired = (validationData.emotions?.required || 0) + 
-                         (validationData.sounds?.required || 0) + 
-                         (validationData.modulations?.required || 0);
-    
-    const totalRecorded = (validationData.emotions?.recorded || 0) + 
-                         (validationData.sounds?.recorded || 0) + 
-                         (validationData.modulations?.recorded || 0);
-
-    return totalRecorded < totalRequired;
+    if (!validationData) return true;
+    return !validationData.isReady;
   };
 
   return (
@@ -151,24 +124,40 @@ export default function VoiceCloningTest() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex gap-2">
-            <Input
-              placeholder="Enter story ID (e.g., 1, 2, 3...)"
-              value={storyId}
-              onChange={(e) => setStoryId(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  handleCreateVoiceClone();
-                }
-              }}
-            />
-            <Button 
-              onClick={() => refetchValidation()}
-              variant="outline"
-              disabled={!storyId.trim()}
-            >
-              Check
-            </Button>
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              <Input
+                placeholder="Enter story ID (e.g., 1, 2, 3...)"
+                value={storyId}
+                onChange={(e) => setStoryId(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleCreateVoiceClone();
+                  }
+                }}
+              />
+              <Button 
+                onClick={() => refetchValidation()}
+                variant="outline"
+                disabled={!storyId.trim()}
+              >
+                Check
+              </Button>
+            </div>
+            
+            <div>
+              <label className="text-sm font-medium mb-2 block">Category:</label>
+              <Select value={category} onValueChange={(value: 'emotions' | 'sounds' | 'modulations') => setCategory(value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="emotions">Emotions</SelectItem>
+                  <SelectItem value="sounds">Sounds</SelectItem>
+                  <SelectItem value="modulations">Modulations</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {validationData && (
@@ -176,38 +165,20 @@ export default function VoiceCloningTest() {
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
                 <div className="space-y-2">
-                  <div className="font-medium">Validation Results for Story {storyId}:</div>
+                  <div className="font-medium">Validation Results for Story {storyId} - {category}:</div>
                   
-                  {validationData.emotions && (
-                    <div className="flex items-center gap-2">
-                      <Badge variant="secondary">Emotions</Badge>
-                      <span>{validationData.emotions.recorded}/{validationData.emotions.required} recorded</span>
-                      {validationData.emotions.recorded >= validationData.emotions.required ? 
-                        <CheckCircle className="h-4 w-4 text-green-600" /> : 
-                        <AlertCircle className="h-4 w-4 text-orange-500" />
-                      }
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary">{category}</Badge>
+                    <span>{validationData.totalCompleted}/{validationData.totalRequired} recorded</span>
+                    {validationData.isReady ? 
+                      <CheckCircle className="h-4 w-4 text-green-600" /> : 
+                      <AlertCircle className="h-4 w-4 text-orange-500" />
+                    }
+                  </div>
                   
-                  {validationData.sounds && (
-                    <div className="flex items-center gap-2">
-                      <Badge variant="secondary">Sounds</Badge>
-                      <span>{validationData.sounds.recorded}/{validationData.sounds.required} recorded</span>
-                      {validationData.sounds.recorded >= validationData.sounds.required ? 
-                        <CheckCircle className="h-4 w-4 text-green-600" /> : 
-                        <AlertCircle className="h-4 w-4 text-orange-500" />
-                      }
-                    </div>
-                  )}
-                  
-                  {validationData.modulations && (
-                    <div className="flex items-center gap-2">
-                      <Badge variant="secondary">Modulations</Badge>
-                      <span>{validationData.modulations.recorded}/{validationData.modulations.required} recorded</span>
-                      {validationData.modulations.recorded >= validationData.modulations.required ? 
-                        <CheckCircle className="h-4 w-4 text-green-600" /> : 
-                        <AlertCircle className="h-4 w-4 text-orange-500" />
-                      }
+                  {validationData.missing && validationData.missing.length > 0 && (
+                    <div className="text-sm text-gray-600">
+                      Missing: {validationData.missing.join(', ')}
                     </div>
                   )}
                 </div>
