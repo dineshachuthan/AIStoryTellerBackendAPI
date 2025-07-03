@@ -9,6 +9,7 @@ import { VoiceProviderConfig, VoiceTrainingRequest, VoiceTrainingResult } from '
 import { ExternalIntegrationStateReset } from '../external-integration-state-reset';
 import { AUDIO_FORMAT_CONFIG, AUDIO_PROCESSING_CONFIG } from '@shared/audio-config';
 import { detectAudioFormat } from '../ai-analysis';
+import FormData from 'form-data';
 
 export class ElevenLabsModule extends BaseVoiceProvider {
   private client: any;
@@ -112,7 +113,6 @@ export class ElevenLabsModule extends BaseVoiceProvider {
       
       // Create voice using ElevenLabs SDK
       // Note: Using direct API call since SDK voice cloning methods may not be available
-      const FormData = require('form-data');
       const formData = new FormData();
       formData.append('name', voiceName);
       formData.append('description', `Voice clone for user ${request.userId} with ${request.samples.length} emotion samples`);

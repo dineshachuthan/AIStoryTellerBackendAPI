@@ -1,5 +1,6 @@
 import { audioService } from './audio-service';
 import { storage } from './storage';
+import { userContentStorage } from './user-content-storage';
 
 export interface NarrationSegment {
   text: string;
@@ -254,7 +255,6 @@ export class StoryNarrator {
     voice: string,
     userId: string
   ): Promise<string> {
-    const { userContentStorage } = require('./user-content-storage');
     
     // Use hierarchical storage: user-data/{userId}/audio/stories/{storyId}/segment-{n}.mp3
     const identifier = `story-${storyId}`;

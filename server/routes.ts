@@ -5525,28 +5525,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Check if job already exists and is running
-      const { voiceCloningJobs } = await import('@shared/schema');
-      const { eq, and, inArray } = await import('drizzle-orm');
-      const db = storage.getDb();
-      
-      const existingJob = await db.select()
-        .from(voiceCloningJobs)
-        .where(and(
-          eq(voiceCloningJobs.userId, userId),
-          eq(voiceCloningJobs.storyId, parseInt(storyId)),
-          eq(voiceCloningJobs.category, category),
-          inArray(voiceCloningJobs.status, ['pending', 'processing'])
-        ))
-        .limit(1);
-
-      if (existingJob.length > 0) {
-        return res.status(409).json({ 
-          message: `${category} cloning already in progress`,
-          jobId: existingJob[0].id,
-          status: existingJob[0].status
-        });
-      }
+      // Direct voice cloning without job architecture
 
       // Calculate cost estimate directly
       const costPerVoiceClone = 500; // $5.00 per voice clone
@@ -5603,49 +5582,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get user's cloning jobs
-  app.get('/api/voice-cloning/jobs/:userId', requireAuth, async (req, res) => {
-    try {
-      const { userId } = req.params;
-      const currentUserId = (req.user as any)?.id;
-      
-      if (currentUserId !== userId) {
-        return res.status(403).json({ message: 'Access denied' });
-      }
-
-      const jobs = await storage.getUserVoiceCloningJobs(userId);
-      res.json(jobs);
-
-    } catch (error: any) {
-      console.error('Get cloning jobs error:', error);
-      res.status(500).json({ message: 'Failed to get cloning jobs', error: error.message });
-    }
-  });
-
-  // Get specific job status
-  app.get('/api/voice-cloning/jobs/:jobId/status', requireAuth, async (req, res) => {
-    try {
-      const { jobId } = req.params;
-      const userId = (req.user as any)?.id;
-      
-      const job = await storage.getVoiceCloningJob(parseInt(jobId));
-      if (!job) {
-        return res.status(404).json({ message: 'Job not found' });
-      }
-
-      if (job.userId !== userId) {
-        return res.status(403).json({ message: 'Access denied' });
-      }
-
-      res.json(job);
-
-    } catch (error: any) {
-      console.error('Get job status error:', error);
-      res.status(500).json({ message: 'Failed to get job status', error: error.message });
-    }
-  });
-
-  // Get user's total costs
+  // Voice cloning costs tracking (simplified, no jobs)
   app.get('/api/voice-cloning/costs/:userId', requireAuth, async (req, res) => {
     try {
       const { userId } = req.params;
