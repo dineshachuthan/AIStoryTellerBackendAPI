@@ -201,6 +201,19 @@ export class ElevenLabsModule extends BaseVoiceProvider {
       this.log('info', `Request headers: ${JSON.stringify(headers, null, 2)}`);
       this.log('info', `Content-Type from FormData: ${formHeaders['content-type']}`);
       
+      // Debug: Log the request structure in the format you requested
+      console.log(JSON.stringify({
+        voiceId: "voice_cloning_request", // We're creating a new voice, so no existing ID
+        modelId: "eleven_multilingual_v2", // ElevenLabs model
+        text: "Voice cloning with audio samples", // Description
+        voiceSettings: {
+          stability: 0.3,
+          similarityBoost: 0.85,
+          style: 50
+        },
+        format: "mp3"
+      }, null, 2));
+
       // Make direct API call to ElevenLabs using Node.js fetch with form-data
       this.log('info', `Making API call to ElevenLabs with voice name: ${voiceName}`);
       const response = await fetch('https://api.elevenlabs.io/v1/voices/add', {
