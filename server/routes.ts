@@ -5597,33 +5597,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
             status: 'processing'
           });
 
-          // Use proper timeout service with state reset on failure
+          // Use REAL ElevenLabs integration with timeout service
           const { VoiceCloningTimeoutService } = await import('./voice-cloning-timeout-service');
           const result = await VoiceCloningTimeoutService.startVoiceCloning(userId, category as 'emotions' | 'sounds' | 'modulations');
           
-          if (result.success) {
-            // Voice cloning succeeded - get the actual voice ID from the service
-            const voiceId = `voice_${Date.now()}_${category}`;
-            
-            // Update job as completed
+          if (result.success && result.voiceId) {
+            // Real ElevenLabs voice cloning succeeded - use actual voice ID
             await storage.updateVoiceCloningJob(newJob.id, {
               status: 'completed',
-              elevenLabsVoiceId: voiceId,
+              elevenLabsVoiceId: result.voiceId,
               actualCostCents: costEstimate.totalEstimatedCostCents,
               completedAt: new Date()
             });
 
-            // Record cost
+            // Record cost with real voice ID
             await storage.createVoiceCloningCost({
               userId,
               storyId: parseInt(storyId),
               operation: 'voice_clone',
               costCents: costEstimate.totalEstimatedCostCents,
               samplesProcessed: minRequired,
-              metadata: { category, voiceId }
+              metadata: { category, voiceId: result.voiceId }
             });
 
-            console.log(`${category} voice cloning completed for story ${storyId}`);
+            console.log(`${category} voice cloning completed for story ${storyId} with voice ID: ${result.voiceId}`);
           } else {
             // Voice cloning failed - timeout service already handled state reset
             await storage.updateVoiceCloningJob(newJob.id, {
