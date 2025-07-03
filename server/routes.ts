@@ -5350,23 +5350,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .map((s: any) => s.label.replace('modulations-', ''));
       }
       
-      // Simplified validation logic:
-      // Use minimum of (available items in category, 6) or ElevenLabs minimum of 5
-      const minRequired = Math.max(5, Math.min(categoryItems.length, 6));
-      const completedCount = completedSamples.filter(sample => categoryItems.includes(sample)).length;
-      const missing = categoryItems.filter(item => !completedSamples.includes(item)).slice(0, minRequired);
+      // Get all user's voice samples (any category)
+      const allUserSamples = userSamples.map((s: any) => s.label.replace(/^(emotions|sounds|modulations)-/, ''));
+      
+      // Find which story items the user has actually recorded
+      const completedFromStory = allAvailableItems.filter(item => allUserSamples.includes(item));
+      
+      // Simplified story-level validation logic:
+      // Require minimum 5 samples, maximum 8 samples from ANY category combination
+      const minRequired = Math.max(5, Math.min(allAvailableItems.length, 8));
+      const completedCount = completedFromStory.length;
+      const missingCount = Math.max(0, minRequired - completedCount);
       const isReady = completedCount >= minRequired;
+
+      // For display purposes, show category-specific items
+      const categoryCompletedCount = completedSamples.filter(sample => categoryItems.includes(sample)).length;
 
       res.json({
         category,
         storyId: parseInt(storyId),
-        required: requiredSamples,
-        completed: completedSamples,
-        missing,
+        // Story-level data (for combined validation)
+        allAvailableItems,
+        completedFromStory,
+        totalAvailableInStory: allAvailableItems.length,
+        totalCompletedFromStory: completedCount,
+        minRequired,
+        missingCount,
         isReady,
-        totalRequired: requiredSamples.length,
-        totalCompleted: completedSamples.length,
-        completionPercentage: requiredSamples.length > 0 ? Math.round((completedSamples.length / requiredSamples.length) * 100) : 0
+        // Category-specific data (for display)
+        categoryItems,
+        categoryCompleted: completedSamples.filter(sample => categoryItems.includes(sample)),
+        categoryCompletedCount,
+        categoryCompletionPercentage: categoryItems.length > 0 ? Math.round((categoryCompletedCount / categoryItems.length) * 100) : 0,
+        // Overall progress
+        overallCompletionPercentage: minRequired > 0 ? Math.round((completedCount / minRequired) * 100) : 0
       });
 
     } catch (error: any) {
