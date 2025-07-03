@@ -5561,88 +5561,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
         totalEstimatedCostUSD: (totalEstimatedCostCents / 100).toFixed(2)
       };
 
-      // Create new cloning job
-      const newJob = await storage.createVoiceCloningJob({
-        userId,
-        storyId: parseInt(storyId),
-        category,
-        status: 'pending',
-        requiredSamples: minRequired,
-        completedSamples: completedCount,
-        samplesList: completedFromStory,
-        estimatedCostCents: costEstimate.totalEstimatedCostCents,
-        startedAt: new Date()
-      });
+      console.log(`🚀 Starting immediate ${category} voice cloning for story ${storyId}...`);
 
       // Start background processing with proper timeout and state management
       setTimeout(async () => {
         try {
-          console.log(`Starting ${category} voice cloning for story ${storyId}...`);
-          
-          // Update job status to processing
-          await storage.updateVoiceCloningJob(newJob.id, {
-            status: 'processing'
-          });
-
           // Use REAL ElevenLabs integration with timeout service
           const { VoiceCloningTimeoutService } = await import('./voice-cloning-timeout-service');
           const result = await VoiceCloningTimeoutService.startVoiceCloning(userId, category as 'emotions' | 'sounds' | 'modulations');
           
           if (result.success && result.voiceId) {
-            // Real ElevenLabs voice cloning succeeded - use actual voice ID
-            await storage.updateVoiceCloningJob(newJob.id, {
-              status: 'completed',
-              elevenLabsVoiceId: result.voiceId,
-              actualCostCents: costEstimate.totalEstimatedCostCents,
-              completedAt: new Date()
-            });
-
-            // Record cost with real voice ID
-            await storage.createVoiceCloningCost({
-              userId,
-              storyId: parseInt(storyId),
-              operation: 'voice_clone',
-              costCents: costEstimate.totalEstimatedCostCents,
-              samplesProcessed: minRequired,
-              metadata: { category, voiceId: result.voiceId }
-            });
-
-            console.log(`${category} voice cloning completed for story ${storyId} with voice ID: ${result.voiceId}`);
+            console.log(`✅ ${category} voice cloning COMPLETED for story ${storyId} with ElevenLabs voice ID: ${result.voiceId}`);
           } else {
-            // Voice cloning failed - timeout service already handled state reset
-            await storage.updateVoiceCloningJob(newJob.id, {
-              status: 'failed',
-              errorMessage: result.error || 'Voice cloning failed',
-              completedAt: new Date()
-            });
-            
-            console.error(`${category} voice cloning failed:`, result.error);
+            console.error(`❌ ${category} voice cloning FAILED:`, result.error);
           }
           
         } catch (error: any) {
-          console.error(`${category} voice cloning failed:`, error);
+          console.error(`❌ ${category} voice cloning EXCEPTION:`, error);
           
           // Use proper state reset service on exception
-          const { externalIntegrationStateReset } = await import('./external-integration-state-reset');
-          await externalIntegrationStateReset.logFailureWithoutStorage(
-            'elevenlabs',
-            'voice_training',
+          const { ExternalIntegrationStateReset } = await import('./external-integration-state-reset');
+          await ExternalIntegrationStateReset.logFailureWithoutStorage(
+            'elevenlabs_voice_training',
             userId,
-            error.message || 'Unknown error'
+            error.message || 'Unknown error',
+            { storyId, category, samplesCount: completedCount }
           );
-          
-          await storage.updateVoiceCloningJob(newJob.id, {
-            status: 'failed',
-            errorMessage: error.message || 'Unknown error',
-            completedAt: new Date()
-          });
         }
       }, 1000);
 
       res.json({
         success: true,
-        message: `${category} voice cloning started`,
-        jobId: newJob.id,
+        message: `${category} voice cloning started with ${completedCount} samples`,
         estimatedCostUSD: costEstimate.totalEstimatedCostUSD,
         samplesRequired: minRequired
       });
