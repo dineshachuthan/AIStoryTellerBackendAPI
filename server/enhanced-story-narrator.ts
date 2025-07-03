@@ -117,7 +117,7 @@ export class EnhancedStoryNarrator {
         const paragraph = paragraphs[i].trim();
         if (paragraph) {
           // Detect if this is dialogue or narrative
-          const isDialogue = paragraph.includes('"') || paragraph.includes(''') || paragraph.includes(''');
+          const isDialogue = paragraph.includes('"') || paragraph.includes("'") || paragraph.includes("'");
           
           if (isDialogue) {
             // Extract dialogue segments with character detection

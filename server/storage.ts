@@ -78,7 +78,7 @@ export interface IStorage {
     transcribed_text?: string;
     created_by: string;
   }): Promise<any>;
-  getUserEsmRecordings(userEsmId: number): Promise<any[]>;
+
   
   // ElevenLabs Voice Profiles
   getUserVoiceProfiles(userId: string): Promise<any[]>;
@@ -267,7 +267,6 @@ export interface IStorage {
   getExpiredAudioCacheEntries(maxAge: number): Promise<any[]>;
   
   // Story Narrations Enhanced
-  getStoryNarration(storyId: number): Promise<any | undefined>;
   createStoryNarrationRecord(narrationData: any): Promise<any>;
 
   // REFERENCE DATA ARCHITECTURE METHODS
@@ -1156,12 +1155,7 @@ export class DatabaseStorage implements IStorage {
     return result.rows[0];
   }
 
-  async getUserEsmRecordings(userEsmId: number): Promise<any[]> {
-    const result = await db.execute(
-      sql`SELECT * FROM user_esm_recordings WHERE user_esm_id = ${userEsmId} ORDER BY created_date DESC`
-    );
-    return result.rows;
-  }
+
 
   // ElevenLabs Voice Profiles
   async getUserVoiceProfiles(userId: string): Promise<any[]> {
@@ -1414,12 +1408,6 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Story Narrations Enhanced methods
-  async getStoryNarration(storyId: number): Promise<any | undefined> {
-    const enhancedStoryNarrations = await import("@shared/schema").then(m => m.storyNarrations);
-    const [narration] = await db.select().from(enhancedStoryNarrations)
-      .where(eq(enhancedStoryNarrations.storyId, storyId));
-    return narration || undefined;
-  }
 
   async createStoryNarrationRecord(narrationData: any): Promise<any> {
     const enhancedStoryNarrations = await import("@shared/schema").then(m => m.storyNarrations);
