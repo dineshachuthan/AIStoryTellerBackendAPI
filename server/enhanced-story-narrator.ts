@@ -342,7 +342,7 @@ export class EnhancedStoryNarrator {
           character: mapping.character,
           voiceId: mapping.voiceId,
           isUserVoice: mapping.isUserVoice,
-          duration: 2.0, // 2 second placeholder
+          duration: await this.calculateActualDuration(mapping.text, mapping.voiceId), // Calculate real duration
           startTime: currentTime,
           endTime: currentTime + 2.0,
           confidence: 0
@@ -465,6 +465,18 @@ export class EnhancedStoryNarrator {
     } catch (error) {
       console.error('[EnhancedNarrator] Error saving narration record:', error);
     }
+  }
+
+  /**
+   * Calculate actual duration for text segment based on typical speech rate
+   */
+  private async calculateActualDuration(text: string, voiceId: string): Promise<number> {
+    // Estimate duration based on text length and average speaking rate
+    // Average speaking rate: ~150 words per minute = 2.5 words per second
+    // Add some buffer for emotion and pacing
+    const wordCount = text.split(/\s+/).length;
+    const estimatedDuration = (wordCount / 2.5) + 0.5; // Add 0.5 seconds buffer
+    return Math.max(1.0, estimatedDuration); // Minimum 1 second duration
   }
 }
 

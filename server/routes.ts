@@ -1049,9 +1049,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Default emotion sound endpoint
   app.get("/api/emotions/default-sound", (req, res) => {
     const { emotion, intensity } = req.query;
-    // Return a placeholder sound URL - in production this would be actual sound files
-    const defaultSoundUrl = `/sounds/${emotion}-${intensity}.mp3`;
-    res.json({ url: defaultSoundUrl });
+    // Default sound files not implemented - real sound library required
+    throw new Error(`Default sound files not implemented for emotion: ${emotion}, intensity: ${intensity}`);
   });
 
   // Step 3: Assign character voices based on story context

@@ -1632,27 +1632,18 @@ export class DatabaseStorage implements IStorage {
 
   // Story User Confidence methods
   async getStoryUserConfidence(storyId: number, userId: string): Promise<any | undefined> {
-    // Since there's no specific story confidence table in schema, return placeholder
-    return {
-      storyId,
-      userId,
-      confidenceScore: 0,
-      metrics: {}
-    };
+    // No story confidence table in schema - implementation required
+    throw new Error('Story user confidence tracking not implemented - database schema required');
   }
 
   async createStoryUserConfidence(confidence: any): Promise<any> {
-    // Placeholder implementation - could create actual table if needed
-    return {
-      id: Date.now(),
-      ...confidence,
-      createdAt: new Date()
-    };
+    // No story confidence table in schema - implementation required
+    throw new Error('Story user confidence creation not implemented - database schema required');
   }
 
   async incrementConfidenceMetric(storyId: number, userId: string, metric: string): Promise<void> {
-    // Placeholder implementation - confidence tracking could be added to schema if needed
-    console.log(`Incrementing confidence metric ${metric} for user ${userId} on story ${storyId}`);
+    // No story confidence table in schema - implementation required
+    throw new Error('Confidence metric tracking not implemented - database schema required');
   }
 
   // ESM User Recordings methods

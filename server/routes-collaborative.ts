@@ -427,17 +427,15 @@ router.get("/api/invitations/:token/session", async (req, res) => {
     // Get story analysis from the original story using storage import
     const { storage } = await import("./storage");
     const story = await storage.getStory(template.originalStoryId);
-    // Mock story analysis since getStoryAnalysis may not exist
-    const storyAnalysis = story ? {
-      characters: [
-        { name: "Narrator", description: "Story narrator", assignedVoice: "alloy" },
-        { name: "Hero", description: "Brave protagonist", assignedVoice: "echo" }
-      ],
-      emotions: [
-        { emotion: "calm", intensity: 3 },
-        { emotion: "determined", intensity: 8 }
-      ]
-    } : null;
+    // Real story analysis required - no mock data allowed
+    if (!story) {
+      throw new Error('Story not found for collaborative roleplay');
+    }
+    
+    const storyAnalysis = await storage.getStoryAnalysis(template.originalStoryId);
+    if (!storyAnalysis) {
+      throw new Error('Story analysis required for collaborative roleplay - please analyze story first');
+    }
     
     res.json({
       instance: invitation.instance,

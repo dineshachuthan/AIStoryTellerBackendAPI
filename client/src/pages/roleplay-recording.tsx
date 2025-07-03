@@ -252,8 +252,8 @@ export default function RoleplayRecording() {
       const formData = new FormData();
       formData.append('audio', blob, `recording_${segmentId}.webm`);
       
-      // Mock successful save
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Real implementation required - no mock data allowed
+      throw new Error('Real audio upload implementation required');
       
       setSavedRecordings(prev => new Set(prev).add(segmentId));
       

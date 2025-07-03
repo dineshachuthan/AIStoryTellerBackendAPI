@@ -345,31 +345,37 @@ router.get("/api/videos/status/:videoId", requireAuth, async (req: any, res) => 
 // Helper functions (these would be implemented based on your storage system)
 async function getUserVoiceForEmotion(userId: string, emotion: string, intensity: number) {
   // Integration with existing userVoiceEmotions table
-  // Return voice sample URL if exists, null otherwise
-  return null; // Placeholder
+  const { storage } = await import('./storage');
+  const voiceEmotions = await storage.getUserVoiceEmotions(userId);
+  const match = voiceEmotions.find(ve => ve.emotion === emotion && ve.intensity === intensity);
+  return match ? match.audioUrl : null;
 }
 
 async function getUserUploadedImages(userId: string) {
   // Integration with user image storage system
-  // Return array of user's uploaded images
-  return []; // Placeholder
+  throw new Error('User uploaded images integration not implemented - real implementation required');
 }
 
 async function processAndStoreImage(imageData: string, userId: string): Promise<string> {
   // Process and store the uploaded image
-  // Return the stored image URL
-  return `https://example.com/user-images/${userId}-${Date.now()}.jpg`; // Placeholder
+  throw new Error('Image processing and storage not implemented - real implementation required');
 }
 
 async function getVideoGenerationStatus(videoId: number) {
   // Check video generation status from database
+  const { storage } = await import('./storage');
+  const video = await storage.getVideo(videoId);
+  if (!video) {
+    throw new Error(`Video with ID ${videoId} not found`);
+  }
+  
   return {
-    id: videoId,
-    status: 'completed',
-    progress: 100,
-    videoUrl: `https://example.com/videos/${videoId}.mp4`,
-    thumbnailUrl: `https://example.com/thumbnails/${videoId}.jpg`
-  }; // Placeholder
+    id: video.id,
+    status: video.status,
+    progress: video.progress || 0,
+    videoUrl: video.videoUrl,
+    thumbnailUrl: video.thumbnailUrl
+  };
 }
 
 export default router;

@@ -160,10 +160,8 @@ export class VideoGenerationModule {
     thumbnailUrl?: string;
   }> {
     // This would call the Kling status endpoint
-    // For now, return placeholder until API is working
-    return {
-      completed: false
-    };
+    // Real Kling status endpoint implementation required
+    throw new Error('Kling video status checking not implemented - real API integration required');
   }
 
   /**
