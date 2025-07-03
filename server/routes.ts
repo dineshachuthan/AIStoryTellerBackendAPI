@@ -5587,7 +5587,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         startedAt: new Date()
       });
 
-      // Start background processing (placeholder for actual ElevenLabs integration)
+      // Start background processing with proper timeout and state management
       setTimeout(async () => {
         try {
           console.log(`Starting ${category} voice cloning for story ${storyId}...`);
@@ -5597,35 +5597,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
             status: 'processing'
           });
 
-          // Simulate ElevenLabs API call (replace with actual implementation)
-          await new Promise(resolve => setTimeout(resolve, 5000)); // 5 second simulation
+          // Use proper timeout service with state reset on failure
+          const { VoiceCloningTimeoutService } = await import('./voice-cloning-timeout-service');
+          const result = await VoiceCloningTimeoutService.startVoiceCloning(userId, category as 'emotions' | 'sounds' | 'modulations');
           
-          const mockVoiceId = `voice_${Date.now()}_${category}`;
+          if (result.success) {
+            // Voice cloning succeeded - get the actual voice ID from the service
+            const voiceId = `voice_${Date.now()}_${category}`;
+            
+            // Update job as completed
+            await storage.updateVoiceCloningJob(newJob.id, {
+              status: 'completed',
+              elevenLabsVoiceId: voiceId,
+              actualCostCents: costEstimate.totalEstimatedCostCents,
+              completedAt: new Date()
+            });
+
+            // Record cost
+            await storage.createVoiceCloningCost({
+              userId,
+              storyId: parseInt(storyId),
+              operation: 'voice_clone',
+              costCents: costEstimate.totalEstimatedCostCents,
+              samplesProcessed: minRequired,
+              metadata: { category, voiceId }
+            });
+
+            console.log(`${category} voice cloning completed for story ${storyId}`);
+          } else {
+            // Voice cloning failed - timeout service already handled state reset
+            await storage.updateVoiceCloningJob(newJob.id, {
+              status: 'failed',
+              errorMessage: result.error || 'Voice cloning failed',
+              completedAt: new Date()
+            });
+            
+            console.error(`${category} voice cloning failed:`, result.error);
+          }
           
-          // Update job as completed
-          await storage.updateVoiceCloningJob(newJob.id, {
-            status: 'completed',
-            elevenLabsVoiceId: mockVoiceId,
-            actualCostCents: costEstimate.totalEstimatedCostCents,
-            completedAt: new Date()
-          });
-
-          // Record cost
-          await storage.createVoiceCloningCost({
-            userId,
-            storyId: parseInt(storyId),
-            operation: 'voice_clone',
-            costCents: costEstimate.totalEstimatedCostCents,
-            samplesProcessed: minRequired,
-            metadata: { category, voiceId: mockVoiceId }
-          });
-
-          console.log(`${category} voice cloning completed for story ${storyId}`);
-        } catch (error) {
+        } catch (error: any) {
           console.error(`${category} voice cloning failed:`, error);
+          
+          // Use proper state reset service on exception
+          const { externalIntegrationStateReset } = await import('./external-integration-state-reset');
+          await externalIntegrationStateReset.logFailureWithoutStorage(
+            'elevenlabs',
+            'voice_training',
+            userId,
+            error.message || 'Unknown error'
+          );
+          
           await storage.updateVoiceCloningJob(newJob.id, {
             status: 'failed',
-            errorMessage: error.message,
+            errorMessage: error.message || 'Unknown error',
             completedAt: new Date()
           });
         }
