@@ -1,0 +1,137 @@
+/**
+ * npm install axios dotenv yargs
+ * 
+ * Usage:
+ * node tts.js --voice_id=your_voice_id --text="Hello world!" --style=80 --stability=0.4 --similarity=0.8 --output=output.mp3
+ */
+
+import fs from 'fs';
+import axios from 'axios';
+import dotenv from 'dotenv';
+import yargs from 'yargs';
+
+dotenv.config();
+
+const argv = yargs
+  .option('voice_id', {
+    alias: 'v',
+    describe: 'Voice ID to use',
+    type: 'string',
+    demandOption: true
+  })
+  .option('text', {
+    alias: 't',
+    describe: 'Text to synthesize',
+    type: 'string'
+  })
+  .option('text_file', {
+    alias: 'f',
+    describe: 'Path to a text file to read input from',
+    type: 'string'
+  })
+  .option('style', {
+    describe: 'Style setting (0-100)',
+    type: 'number',
+    default: 50
+  })
+  .option('stability', {
+    describe: 'Stability (0-1)',
+    type: 'number',
+    default: 0.5
+  })
+  .option('similarity', {
+    describe: 'Similarity boost (0-1)',
+    type: 'number',
+    default: 0.7
+  })
+  .option('model', {
+    describe: 'Model ID to use (eleven_multilingual_v2, eleven_monolingual_v1, etc)',
+    type: 'string',
+    default: 'eleven_multilingual_v2'
+  })
+  .option('output', {
+    alias: 'o',
+    describe: 'Output audio file (e.g. output.mp3)',
+    type: 'string',
+    default: 'output.mp3'
+  })
+  .help()
+  .argv;
+
+async function synthesizeSpeech({
+  voiceId,
+  text,
+  style,
+  stability,
+  similarity,
+  model,
+  outputFile
+}) {
+  const payload = {
+    text,
+    model_id: model,
+    voice_settings: {
+      stability,
+      similarity_boost: similarity,
+      style
+    }
+  };
+
+  console.log("\n🔍 Synthesis parameters:");
+  console.table({
+    voiceId, model, style, stability, similarity, outputFile
+  });
+
+  try {
+    const response = await axios.post(
+      `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
+      payload,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'xi-api-key': process.env.ELEVENLABS_API_KEY
+        },
+        responseType: 'stream'
+      }
+    );
+
+    console.log("🎧 Writing audio stream to:", outputFile);
+
+    const writer = fs.createWriteStream(outputFile);
+    response.data.pipe(writer);
+
+    await new Promise((resolve, reject) => {
+      writer.on('finish', () => {
+        console.log("✅ Done! Audio file saved:", outputFile);
+        resolve();
+      });
+      writer.on('error', reject);
+    });
+
+  } catch (err) {
+    console.error("❌ Error during TTS:", err.response?.data || err.message);
+    throw err;
+  }
+}
+
+(async () => {
+  let text = argv.text;
+  if (argv.text_file) {
+    text = fs.readFileSync(argv.text_file, 'utf-8');
+    console.log(`📝 Loaded text from ${argv.text_file} (${text.length} chars)`);
+  }
+  if (!text) {
+    text = "Hello! This is a test of ElevenLabs expressive voice synthesis.";
+    console.log("⚠️ No text provided. Using default:", text);
+  }
+
+  await synthesizeSpeech({
+    voiceId: argv.voice_id,
+    text,
+    style: argv.style,
+    stability: argv.stability,
+    similarity: argv.similarity,
+    model: argv.model,
+    outputFile: argv.output
+  });
+})();
