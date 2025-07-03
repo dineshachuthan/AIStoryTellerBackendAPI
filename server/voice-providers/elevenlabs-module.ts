@@ -7,7 +7,8 @@ import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
 import { BaseVoiceProvider } from './base-voice-provider';
 import { VoiceProviderConfig, VoiceTrainingRequest, VoiceTrainingResult } from './provider-manager';
 import { ExternalIntegrationStateReset } from '../external-integration-state-reset';
-import { AUDIO_FORMAT_CONFIG } from '@shared/audio-config';
+import { AUDIO_FORMAT_CONFIG, AUDIO_PROCESSING_CONFIG } from '@shared/audio-config';
+import { detectAudioFormat } from '../ai-analysis';
 
 export class ElevenLabsModule extends BaseVoiceProvider {
   private client: any;
@@ -59,7 +60,7 @@ export class ElevenLabsModule extends BaseVoiceProvider {
       this.log('info', `Generated voice name: ${voiceName}`);
       
       // Process audio files using base class utilities
-      const audioFiles: File[] = [];
+      const audioFiles: Array<{buffer: Buffer, filename: string, contentType: string}> = [];
       
       for (let index = 0; index < request.samples.length; index++) {
         const sample = request.samples[index];
@@ -81,14 +82,23 @@ export class ElevenLabsModule extends BaseVoiceProvider {
           const arrayBuffer = await audioResponse.arrayBuffer();
           const audioBuffer = Buffer.from(arrayBuffer);
           
-          // Convert WebM to MP3 for ElevenLabs compatibility
+          // Use helper function to detect actual audio format
+          const detectedFormat = detectAudioFormat(audioBuffer);
           const fileName = `${sample.emotion}_sample_${index + 1}.mp3`;
-          const convertedAudioBuffer = await this.convertToMp3(audioBuffer, fileName);
+          
+          // Convert to MP3 for ElevenLabs compatibility if needed
+          const convertedAudioBuffer = detectedFormat === 'mp3' 
+            ? audioBuffer 
+            : await this.convertToMp3(audioBuffer, fileName);
           
           // Use base class validation on converted audio
           this.validateAudioFile(convertedAudioBuffer, fileName);
           
-          const audioFile = new File([convertedAudioBuffer], fileName, { type: 'audio/mpeg' });
+          const audioFile = {
+            buffer: convertedAudioBuffer,
+            filename: fileName,
+            contentType: 'audio/mpeg'
+          };
           audioFiles.push(audioFile);
           
           this.log('info', `Successfully processed ${sample.emotion} sample (${audioBuffer.length} bytes)`);
@@ -111,7 +121,7 @@ export class ElevenLabsModule extends BaseVoiceProvider {
       audioFiles.forEach((file, index) => {
         formData.append('files', file.buffer, {
           filename: file.filename,
-          contentType: 'audio/mpeg'
+          contentType: file.contentType
         });
       });
       
@@ -145,11 +155,11 @@ export class ElevenLabsModule extends BaseVoiceProvider {
       
       // Use standardized external integration failure handling - no completion records stored
       try {
-        await ExternalIntegrationStateReset.logFailureWithoutStorage(
-          'elevenlabs_voice_training',
+        ExternalIntegrationStateReset.logFailureWithoutStorage(
+          'elevenlabs',
+          'voice_training',
           request.userId,
-          `ElevenLabs API error: ${error instanceof Error ? error.message : String(error)}`,
-          { voiceProfileId: request.voiceProfileId, samplesCount: request.samples.length }
+          `ElevenLabs API error: ${error instanceof Error ? error.message : String(error)} - Voice Profile ID: ${request.voiceProfileId}, Samples: ${request.samples.length}`
         );
         
         // Reset voice profile state to 'failed' 
@@ -225,39 +235,7 @@ export class ElevenLabsModule extends BaseVoiceProvider {
     }
   }
 
-  private detectAudioFormat(buffer: Buffer): string | null {
-    // Use existing audio format detection from shared config
-    
-    const header = buffer.subarray(0, 12);
-    
-    for (const format of AUDIO_FORMAT_CONFIG) {
-      let matches = true;
-      
-      for (const signature of format.signatures) {
-        let signatureBuffer: Buffer;
-        if (typeof signature.pattern === 'string') {
-          signatureBuffer = Buffer.from(signature.pattern);
-        } else {
-          signatureBuffer = Buffer.from(signature.pattern);
-        }
-        
-        const headerSection = header.subarray(signature.offset, signature.offset + signatureBuffer.length);
-        
-        if (!headerSection.equals(signatureBuffer)) {
-          matches = false;
-          break;
-        }
-      }
-      
-      if (matches) {
-        this.log('info', `Detected audio format: ${format.name} (.${format.extension})`);
-        return format.extension;
-      }
-    }
-    
-    this.log('warn', `Unknown audio format detected, header: ${header.toString('hex')}`);
-    return null;
-  }
+
 
   private async convertToMp3(audioBuffer: Buffer, fileName: string): Promise<Buffer> {
     const { spawn } = await import('child_process');

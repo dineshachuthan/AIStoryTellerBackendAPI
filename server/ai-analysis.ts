@@ -5,7 +5,7 @@ import { storage } from "./storage";
 import { ContentHashService } from './content-hash-service';
 
 // Audio format detection using configuration
-function detectAudioFormat(buffer: Buffer): string {
+export function detectAudioFormat(buffer: Buffer): string {
   const header = buffer.subarray(0, 12);
   
   for (const format of AUDIO_FORMAT_CONFIG) {
