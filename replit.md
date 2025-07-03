@@ -176,6 +176,15 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Priority**: Medium (requested but deferred for future implementation)
 
 ## Changelog
+- July 03, 2025: ✅ **VOICE RECORDING VALIDATION ENHANCED** - Added 5-Second Minimum Duration Requirement for ElevenLabs Voice Cloning
+  - **FRONTEND VALIDATION**: Updated VoiceRecordingCard component to enforce 5-second minimum recording duration instead of 1 second
+  - **BACKEND VALIDATION**: Added FFprobe duration checking in voice sample upload route with proper error handling
+  - **USER EXPERIENCE**: Updated UI text to clearly indicate 5-second requirement for voice cloning compatibility
+  - **ERROR MESSAGING**: Enhanced error messages to show actual duration vs required 5 seconds when recordings are too short
+  - **ElevenLabs COMPLIANCE**: Recording validation now matches ElevenLabs API requirement of 4.6+ seconds with background noise removal
+  - **DUAL VALIDATION**: Both client-side (immediate feedback) and server-side (authoritative) validation ensures data integrity
+  - **CLEANUP HANDLING**: Proper temporary file cleanup when validation fails to prevent storage waste
+  - Voice recording system now enforces ElevenLabs-compatible duration requirements preventing API rejection errors
 - July 03, 2025: ✅ **DEPLOYMENT BUILD FIXES COMPLETED** - Resolved Missing Module Dependencies for Production Deployment
   - **CREATED MISSING ELEVENLABS PROVIDER**: Fixed import path issue by creating `server/voice-providers/elevenlabs-provider.ts` with proper ElevenLabsModule wrapper
   - **COMPATIBILITY LAYER IMPLEMENTED**: New provider file wraps existing ElevenLabsModule with default configuration and method delegation

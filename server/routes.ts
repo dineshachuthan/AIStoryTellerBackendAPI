@@ -1442,6 +1442,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       filePath = path.join(cacheDir, fileName);
       
       try {
+        // First, check audio duration before processing
+        const { stdout: durationOutput } = await execAsync(`ffprobe -v quiet -show_entries format=duration -of csv=p=0 "${tempInputPath}"`);
+        const duration = parseFloat(durationOutput.trim());
+        
+        console.log(`Audio duration: ${duration} seconds`);
+        
+        // Validate minimum duration (5 seconds for ElevenLabs voice cloning)
+        if (duration < 5.0) {
+          await fs.unlink(tempInputPath).catch(() => {}); // Cleanup temp file
+          return res.status(400).json({ 
+            message: `Recording too short (${duration.toFixed(1)}s). Voice cloning requires at least 5 seconds.` 
+          });
+        }
+        
         // Convert to MP3 using FFmpeg with volume amplification
         await execAsync(`ffmpeg -i "${tempInputPath}" -acodec libmp3lame -b:a 192k -ar 44100 -af "volume=40dB" -y "${filePath}"`);
         

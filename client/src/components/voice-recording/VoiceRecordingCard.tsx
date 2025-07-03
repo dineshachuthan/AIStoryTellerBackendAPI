@@ -128,8 +128,8 @@ export function VoiceRecordingCard({
           const audioBlob = new Blob(audioChunksRef.current, { type: mediaRecorder.mimeType });
           const url = URL.createObjectURL(audioBlob);
           
-          // Only proceed if recording is at least 1 second AND actually started recording
-          if (recordingTime >= 1 && audioBlob.size > 0 && isRecording) {
+          // Only proceed if recording is at least 5 seconds (ElevenLabs requirement) AND actually started recording
+          if (recordingTime >= 5 && audioBlob.size > 0 && isRecording) {
             // Store temporary recording for user verification
             setTempRecording({
               blob: audioBlob,
@@ -139,8 +139,11 @@ export function VoiceRecordingCard({
             
             setRecordingState('recorded'); // Go to verification state
           } else {
-            // Recording too short or invalid - go back to idle
+            // Recording too short or invalid - show error message
             setRecordingState('idle');
+            if (recordingTime < 5) {
+              setMicError(`Recording too short (${recordingTime}s). Please record at least 5 seconds for voice cloning.`);
+            }
             URL.revokeObjectURL(url);
           }
           
@@ -237,7 +240,7 @@ export function VoiceRecordingCard({
     if (!tempRecording) return;
     
     setRecordingState('saving');
-    setSaveError(null);
+    setSaveError('');
     
     try {
       await onRecord(template.modulationKey, tempRecording.blob);
@@ -356,7 +359,7 @@ export function VoiceRecordingCard({
               Hold to Record Your Voice
             </Button>
             <p className="text-xs text-center text-muted-foreground">
-              Press and hold for at least 1 second to record
+              Press and hold for at least 5 seconds to record
             </p>
           </div>
         )}
@@ -374,7 +377,7 @@ export function VoiceRecordingCard({
               Release to Stop Recording
             </Button>
             <p className="text-xs text-center text-muted-foreground">
-              Keep recording for at least 3 seconds for best results
+              Keep recording for at least 5 seconds (required for voice cloning)
             </p>
           </div>
         )}
