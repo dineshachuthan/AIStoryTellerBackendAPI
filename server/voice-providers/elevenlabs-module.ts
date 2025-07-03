@@ -128,23 +128,33 @@ export class ElevenLabsModule extends BaseVoiceProvider {
       formData.append('name', voiceName);
       formData.append('description', `Voice clone for user ${request.userId} with ${request.samples.length} emotion samples`);
       
-      // Add each audio file to the form data
+      // ElevenLabs expects each file as a separate 'files' field
       audioFiles.forEach((file, index) => {
+        this.log('info', `Adding file ${index + 1}: ${file.filename} (${file.buffer.length} bytes)`);
         formData.append('files', file.buffer, {
           filename: file.filename,
-          contentType: 'audio/mpeg'
+          contentType: 'audio/mpeg',
+          knownLength: file.buffer.length
         });
       });
+      
+      this.log('info', `FormData prepared with ${audioFiles.length} audio files`);
+      
+      // Log headers for debugging
+      const headers = {
+        'xi-api-key': this.config.apiKey,
+        ...formData.getHeaders()
+      };
+      this.log('info', `Request headers: ${JSON.stringify(Object.keys(headers))}`);
       
       // Make direct API call to ElevenLabs using Node.js fetch with form-data
       const response = await fetch('https://api.elevenlabs.io/v1/voices/add', {
         method: 'POST',
-        headers: {
-          'xi-api-key': this.config.apiKey,
-          ...formData.getHeaders()
-        },
+        headers: headers,
         body: formData as any  // Cast to any for Node.js compatibility
       });
+      
+      this.log('info', `ElevenLabs API response status: ${response.status} ${response.statusText}`);
       
       if (!response.ok) {
         const errorData = await response.text();
