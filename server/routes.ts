@@ -5390,7 +5390,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // For display purposes, show category-specific items
       const categoryCompletedCount = completedSamples.filter(sample => categoryItems.includes(sample)).length;
 
-      res.json({
+      const response = {
         category,
         storyId: parseInt(storyId),
         // Story-level data (for combined validation)
@@ -5408,7 +5408,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         categoryCompletionPercentage: categoryItems.length > 0 ? Math.round((categoryCompletedCount / categoryItems.length) * 100) : 0,
         // Overall progress
         overallCompletionPercentage: minRequired > 0 ? Math.round((completedCount / minRequired) * 100) : 0
-      });
+      };
+      
+      console.log(`🔍 VALIDATION RESPONSE for story ${storyId}:`, JSON.stringify(response, null, 2));
+      
+      res.json(response);
 
     } catch (error: any) {
       console.error('Voice cloning validation error:', error);
