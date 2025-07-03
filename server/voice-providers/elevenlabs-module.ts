@@ -123,23 +123,27 @@ export class ElevenLabsModule extends BaseVoiceProvider {
       // Use direct API call since SDK doesn't have voice creation methods
       this.log('info', `Creating voice using direct API call to ElevenLabs /v1/voices/add endpoint`);
       
-      // Create FormData for the API request
+      // Create FormData using Node.js form-data package
       const formData = new FormData();
       formData.append('name', voiceName);
       formData.append('description', `Voice clone for user ${request.userId} with ${request.samples.length} emotion samples`);
       
       // Add each audio file to the form data
       audioFiles.forEach((file, index) => {
-        formData.append('files', new Blob([file.buffer], { type: 'audio/mpeg' }), file.filename);
+        formData.append('files', file.buffer, {
+          filename: file.filename,
+          contentType: 'audio/mpeg'
+        });
       });
       
-      // Make direct API call to ElevenLabs
+      // Make direct API call to ElevenLabs using Node.js fetch with form-data
       const response = await fetch('https://api.elevenlabs.io/v1/voices/add', {
         method: 'POST',
         headers: {
-          'xi-api-key': this.config.apiKey
+          'xi-api-key': this.config.apiKey,
+          ...formData.getHeaders()
         },
-        body: formData
+        body: formData as any  // Cast to any for Node.js compatibility
       });
       
       if (!response.ok) {
