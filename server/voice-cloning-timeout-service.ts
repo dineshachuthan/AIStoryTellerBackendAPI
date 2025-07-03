@@ -96,12 +96,43 @@ export class VoiceCloningTimeoutService {
         // Import voice training service dynamically
         const { voiceTrainingService } = await import('./voice-training-service');
         
-        // Execute voice training with 60-second timeout per attempt (main thread operation)
-        // Use hybrid approach for emotions, original approach for sounds/modulations
+        // Get user voice samples using current ESM data structure
+        const { storage } = await import('./storage');
+        const userVoiceSamples = await storage.getUserVoiceSamples(userId);
+        
+        // Filter samples based on category and convert to training format
+        const relevantSamples = userVoiceSamples
+          .filter(sample => {
+            const label = sample.label.toLowerCase();
+            if (category === 'emotions') return label.startsWith('emotions-');
+            if (category === 'sounds') return label.startsWith('sounds-');
+            if (category === 'modulations') return label.startsWith('modulations-');
+            return false;
+          })
+          .map(sample => ({
+            emotion: sample.label,
+            audioUrl: sample.audioUrl,
+            isLocked: false
+          }));
+
+        console.log(`🎯 Found ${relevantSamples.length} ${category} samples for user ${userId}`);
+
+        if (relevantSamples.length === 0) {
+          throw new Error(`No ${category} samples found for voice cloning`);
+        }
+
+        // Execute voice training with 60-second timeout per attempt using voice provider factory
+        const { VoiceProviderFactory } = await import('./voice-providers/voice-provider-factory');
+        const provider = await VoiceProviderFactory.getProvider();
+        
+        const trainingRequest = {
+          userId,
+          voiceProfileId: 1, // Use default voice profile
+          samples: relevantSamples
+        };
+
         const result = await this.executeWithTimeout(
-          () => category === 'emotions' 
-            ? voiceTrainingService.triggerHybridEmotionCloning(userId)
-            : voiceTrainingService.triggerAutomaticTraining(userId),
+          () => provider.trainVoice(trainingRequest),
           timeouts.mainThreadSeconds * 1000 // 60 seconds per attempt
         );
 
