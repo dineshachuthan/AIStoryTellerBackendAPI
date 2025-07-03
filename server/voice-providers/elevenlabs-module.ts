@@ -129,14 +129,10 @@ export class ElevenLabsModule extends BaseVoiceProvider {
       formData.append('name', voiceName);
       formData.append('description', `Voice clone for user ${request.userId} with ${request.samples.length} emotion samples`);
       
-      // ElevenLabs expects each file as a separate 'files' field
+      // ElevenLabs expects files in 'files' field as array
       audioFiles.forEach((file, index) => {
         this.log('info', `Adding file ${index + 1}: ${file.filename} (${file.buffer.length} bytes)`);
-        formData.append('files', file.buffer, {
-          filename: file.filename,
-          contentType: 'audio/mpeg',
-          knownLength: file.buffer.length
-        });
+        formData.append('files', file.buffer, file.filename);
       });
       
       this.log('info', `FormData prepared with ${audioFiles.length} audio files`);
