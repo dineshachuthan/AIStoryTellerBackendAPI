@@ -123,7 +123,8 @@ export class VoiceCloningTimeoutService {
 
         // Execute voice training with 60-second timeout per attempt using voice provider factory
         const { VoiceProviderFactory } = await import('./voice-providers/voice-provider-factory');
-        const provider = await VoiceProviderFactory.getProvider();
+        const activeProvider = await VoiceProviderFactory.getActiveProvider();
+        const provider = await VoiceProviderFactory.getModule(activeProvider);
         
         const trainingRequest = {
           userId,
