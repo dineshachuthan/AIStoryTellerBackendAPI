@@ -138,12 +138,13 @@ export class ElevenLabsModule extends BaseVoiceProvider {
       });
       formData.append('labels', labels);
       
-      // ElevenLabs expects files as binary data with proper options
+      // ElevenLabs expects files as binary data with proper options - try stream approach
       audioFiles.forEach((file, index) => {
         this.log('info', `Adding file ${index + 1}: ${file.filename} (${file.buffer.length} bytes)`);
         formData.append('files', file.buffer, {
           filename: file.filename,
-          contentType: 'audio/mpeg'
+          contentType: 'audio/mpeg',
+          knownLength: file.buffer.length
         });
       });
       
@@ -152,12 +153,14 @@ export class ElevenLabsModule extends BaseVoiceProvider {
       // Log all form fields for debugging
       this.log('info', `FormData fields: name=${voiceName}, description provided, labels provided, files count=${audioFiles.length}`);
       
-      // Log headers for debugging
+      // Log headers for debugging - don't manually set content-type
+      const formHeaders = formData.getHeaders();
       const headers = {
         'xi-api-key': this.config.apiKey,
-        ...formData.getHeaders()
+        ...formHeaders
       };
       this.log('info', `Request headers: ${JSON.stringify(headers, null, 2)}`);
+      this.log('info', `Content-Type from FormData: ${formHeaders['content-type']}`);
       
       // Make direct API call to ElevenLabs using Node.js fetch with form-data
       this.log('info', `Making API call to ElevenLabs with voice name: ${voiceName}`);
