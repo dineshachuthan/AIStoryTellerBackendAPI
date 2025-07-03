@@ -203,15 +203,15 @@ export class ElevenLabsModule extends BaseVoiceProvider {
       
       // Debug: Log the request structure in the format you requested
       console.log(JSON.stringify({
-        voiceId: "voice_cloning_request", // We're creating a new voice, so no existing ID
-        modelId: "eleven_multilingual_v2", // ElevenLabs model
-        text: "Voice cloning with audio samples", // Description
+        voiceId: request.voiceProfileId,
+        modelId: request.samples.length > 0 ? "voice_cloning" : "unknown",
+        text: `Voice cloning for ${request.category} with ${audioFiles.length} samples`,
         voiceSettings: {
-          stability: 0.3,
-          similarityBoost: 0.85,
-          style: 50
+          stability: voiceSettings.includes('stability') ? JSON.parse(voiceSettings).stability : 0.3,
+          similarityBoost: voiceSettings.includes('similarityBoost') ? JSON.parse(voiceSettings).similarityBoost : 0.85,
+          style: voiceSettings.includes('style') ? JSON.parse(voiceSettings).style : 50
         },
-        format: "mp3"
+        format: audioFiles.length > 0 ? audioFiles[0].contentType.split('/')[1] : "unknown"
       }, null, 2));
 
       // Make direct API call to ElevenLabs using Node.js fetch with form-data
