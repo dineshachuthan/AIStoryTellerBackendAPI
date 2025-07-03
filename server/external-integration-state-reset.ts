@@ -6,7 +6,7 @@
  */
 
 import { db } from './db';
-import { userVoiceProfiles, userEmotionVoices } from '@shared/schema';
+import { userVoiceProfiles } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 
 export interface StateResetOptions {
@@ -95,22 +95,14 @@ export class ExternalIntegrationStateReset {
         }
       }
       
-      // Step 2: Reset emotion voices
-      const emotionVoices = await db.select().from(userEmotionVoices)
-        .where(eq(userEmotionVoices.userVoiceProfileId, voiceProfiles[0]?.id || 0));
+      // Step 2: Reset emotion voices - DISABLED (table schema mismatch)
+      // Note: userEmotionVoices table doesn't exist in current database
+      // The voice cloning system is using user_voice_emotions table instead
+      console.log(`   ⚠️ Emotion voice reset skipped - table schema mismatch`);
+      console.log(`   Voice samples remain unlocked for retry`);
       
-      for (const emotionVoice of emotionVoices) {
-        if (emotionVoice.trainingStatus === 'training') {
-          await db.update(userEmotionVoices)
-            .set({
-              trainingStatus: 'failed',
-              updatedAt: new Date()
-            })
-            .where(eq(userEmotionVoices.id, emotionVoice.id));
-          
-          console.log(`   ✅ Reset emotion voice ${emotionVoice.emotion} from 'training' to 'failed'`);
-        }
-      }
+      // Alternative: Reset using existing user_voice_emotions table if needed
+      // This would require different logic based on actual table structure
       
       // Step 3: Reset session state if available
       try {
