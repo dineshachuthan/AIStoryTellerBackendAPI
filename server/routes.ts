@@ -5483,16 +5483,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Invalid category. Must be emotions, sounds, or modulations' });
       }
 
-      // Check if validation passes
-      const validationResponse = await fetch(`${req.protocol}://${req.get('host')}/api/voice-cloning/validation/${storyId}/${category}`, {
-        headers: { 'Cookie': req.headers.cookie || '' }
-      });
-      const validation = await validationResponse.json();
+      console.log(`🔧 Starting voice cloning for user ${userId}, story ${storyId}, category ${category}`);
+      
+      // Check if validation passes by calling validation logic directly instead of HTTP request
+      const { storage } = await import('./storage');
+      
+      // Get story analysis to determine required samples
+      const storyAnalysis = await storage.getStoryAnalysis(parseInt(storyId), userId);
+      if (!storyAnalysis) {
+        return res.status(404).json({ message: 'Story analysis not found' });
+      }
+      
+      const analysis = storyAnalysis.analysisData as any;
+      
+      // Extract all available items from story analysis
+      const availableEmotions = (analysis?.emotions || []).map((e: any) => e.emotion || e);
+      const availableSounds = (analysis?.soundEffects || []).map((s: any) => s.sound || s);
+      const availableModulations = [
+        analysis?.moodCategory,
+        analysis?.genre,
+        analysis?.subGenre,
+        ...(analysis?.emotionalTags || [])
+      ].filter(Boolean);
+      
+      const allAvailableItems = [...availableEmotions, ...availableSounds, ...availableModulations];
+      
+      // Get user's voice samples
+      const userSamples = await storage.getUserVoiceEmotions(userId);
+      const allUserSamples = (userSamples || [])
+        .map((s: any) => s && s.label ? s.label.replace(/^(emotions|sounds|modulations)-/, '') : '')
+        .filter(Boolean);
+      
+      // Check case-insensitive matching
+      const completedFromStory = allAvailableItems.filter(item => 
+        allUserSamples.some(userSample => 
+          userSample.toLowerCase() === item.toLowerCase()
+        )
+      );
+      
+      const minRequired = Math.max(5, Math.min(allAvailableItems.length, 8));
+      const completedCount = completedFromStory.length;
+      const isReady = completedCount >= minRequired;
+      
+      console.log(`🔍 Direct validation: ${completedCount}/${minRequired} completed, ready: ${isReady}`);
 
-      if (!validation.isReady) {
+      if (!isReady) {
         return res.status(400).json({ 
-          message: `Cannot start ${category} cloning - missing required samples`,
-          validation
+          message: `Cannot start ${category} cloning - missing required samples. Need ${minRequired - completedCount} more samples.`,
+          completedCount,
+          minRequired,
+          missingCount: minRequired - completedCount
         });
       }
 
@@ -5531,9 +5571,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         storyId: parseInt(storyId),
         category,
         status: 'pending',
-        requiredSamples: validation.totalRequired,
-        completedSamples: validation.totalCompleted,
-        samplesList: validation.required,
+        requiredSamples: minRequired,
+        completedSamples: completedCount,
+        samplesList: completedFromStory,
         estimatedCostCents: costEstimate.totalEstimatedCostCents,
         startedAt: new Date()
       });
@@ -5567,7 +5607,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             storyId: parseInt(storyId),
             operation: 'voice_clone',
             costCents: costEstimate.totalEstimatedCostCents,
-            samplesProcessed: validation.totalRequired,
+            samplesProcessed: minRequired,
             metadata: { category, voiceId: mockVoiceId }
           });
 
@@ -5587,7 +5627,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: `${category} voice cloning started`,
         jobId: newJob.id,
         estimatedCostUSD: costEstimate.totalEstimatedCostUSD,
-        samplesRequired: validation.totalRequired
+        samplesRequired: minRequired
       });
 
     } catch (error: any) {
