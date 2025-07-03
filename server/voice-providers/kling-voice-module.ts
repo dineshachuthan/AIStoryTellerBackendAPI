@@ -40,18 +40,8 @@ export class KlingVoiceModule extends BaseVoiceProvider {
     this.log('info', `Kling Voice training for user ${request.userId} with ${request.samples.length} samples`);
     
     try {
-      // Future implementation: Process audio files and call Kling Voice API
-      this.log('info', 'Processing audio files for Kling Voice API...');
-      
-      // Placeholder for actual Kling Voice implementation
-      const mockVoiceId = `kling_voice_${request.userId}_${Date.now()}`;
-      
-      return this.createSuccessResult(mockVoiceId, request.samples.length, {
-        klingVoiceId: mockVoiceId,
-        voiceName: `User_${request.userId}_KlingVoice`,
-        emotionsProcessed: request.samples.map(s => s.emotion),
-        note: 'Kling Voice implementation coming soon'
-      });
+      // Real Kling Voice implementation required
+      throw new Error('Kling Voice API integration not implemented - requires real API credentials and implementation');
       
     } catch (error) {
       this.log('error', `Kling Voice training failed for user ${request.userId}`, error);

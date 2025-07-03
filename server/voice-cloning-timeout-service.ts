@@ -25,7 +25,7 @@ export class VoiceCloningTimeoutService {
   static async startVoiceCloning(
     userId: string, 
     category: 'emotions' | 'sounds' | 'modulations'
-  ): Promise<{ success: boolean; error?: string }> {
+  ): Promise<{ success: boolean; voiceId?: string; error?: string }> {
     
     const operationKey = `${userId}-${category}`;
     
@@ -83,7 +83,7 @@ export class VoiceCloningTimeoutService {
   private static async executeWithRetries(
     operationKey: string, 
     operation: VoiceCloningOperation
-  ): Promise<{ success: boolean; error?: string }> {
+  ): Promise<{ success: boolean; voiceId?: string; error?: string }> {
     
     const { userId, category } = operation;
     const { timeouts } = VOICE_CLONING_CONFIG;
@@ -105,16 +105,15 @@ export class VoiceCloningTimeoutService {
           timeouts.mainThreadSeconds * 1000 // 60 seconds per attempt
         );
 
-        if (result.success) {
-          console.log(`✅ Voice cloning SUCCESS on attempt ${attempt + 1} for ${userId} ${category}`);
-          return { success: true };
-        }
-
-        // If not last attempt, wait before retry using configured exponential backoff
-        if (attempt < 2) { // 0, 1 (not 2 which is the last attempt)
-          const delayMs = timeouts.retryDelayMs[attempt]; // [1000, 2000, 4000]
-          console.log(`⏳ Retrying in ${delayMs}ms for ${userId} ${category}`);
-          await this.delay(delayMs);
+        if (result.success && result.voiceId) {
+          console.log(`✅ Voice cloning SUCCESS on attempt ${attempt + 1} for ${userId} ${category}, voiceId: ${result.voiceId}`);
+          return { success: true, voiceId: result.voiceId };
+        } else if (result.success && !result.voiceId) {
+          console.log(`⚠️ Voice cloning returned success but no voiceId on attempt ${attempt + 1} for ${userId} ${category}`);
+          throw new Error('Voice training succeeded but no voiceId returned');
+        } else {
+          console.log(`❌ Voice cloning failed on attempt ${attempt + 1} for ${userId} ${category}: ${result.error}`);
+          throw new Error(result.error || 'Voice training failed');
         }
 
       } catch (error) {
