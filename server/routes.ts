@@ -1574,7 +1574,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const sessionData = VoiceCloningSessionManager.getSessionData(req);
           console.log(`📊 Session counters after increment: emotions=${sessionData.emotions_not_cloned}, sounds=${sessionData.sounds_not_cloned}, modulations=${sessionData.modulations_not_cloned}`);
           
-          // Check if threshold reached for this category (MVP1 hybrid approach)
+          // TEMPORARILY DISABLED: Check if threshold reached for this category (MVP1 hybrid approach)
+          console.log(`🔍 DISABLED AUTOMATIC TRIGGER - Category '${category}' threshold check bypassed to prevent loops`);
+          /*
           if (await VoiceCloningSessionManager.shouldTriggerCloning(req, category)) {
             console.log(`🎯 Category '${category}' reached threshold - triggering ElevenLabs voice cloning`);
             
@@ -1594,6 +1596,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               }
             }, 100); // Small delay to ensure response is sent before background processing
           } else {
+          */
+          {
             const currentCount = category === 'emotions' ? sessionData.emotions_not_cloned :
                                 category === 'sounds' ? sessionData.sounds_not_cloned :
                                 sessionData.modulations_not_cloned;
@@ -4579,22 +4583,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           isLocked: recording.is_locked || false
         }));
       } catch (esmError) {
-        console.log("ESM architecture not available, checking old voice samples system");
+        console.log("ESM query error - using empty samples list:", esmError.message);
         
-        // Fallback to old voice samples system
-        const userVoiceSamples = await storage.getAllUserVoiceSamples(userId);
-        console.log(`🎤 Found ${userVoiceSamples.length} old voice samples for user ${userId}`);
-        console.log(`🎤 Raw voice samples:`, userVoiceSamples.map(s => ({ label: s.label, sampleType: s.sampleType, isCompleted: s.isCompleted })));
-        
-        recordedSamples = userVoiceSamples
-          .filter(sample => sample.isCompleted)
-          .map(sample => ({
-            emotion: sample.label || sample.sampleType,
-            audioUrl: sample.audioUrl,
-            recordedAt: sample.recordedAt,
-            duration: sample.duration,
-            isLocked: sample.isLocked || false
-          }));
+        // ESM is the only supported architecture - no fallback to old systems
+        recordedSamples = [];
       }
 
       // Get templates from ESM reference data AND include user's recorded emotions
