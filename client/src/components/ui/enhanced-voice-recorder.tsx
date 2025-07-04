@@ -434,9 +434,10 @@ export function EnhancedVoiceRecorder({
             </div>
           )}
           
-          {/* Static Progress Bar - Always visible */}
+          {/* Single Duration Status Line */}
           <div className="mb-2">
-            <div className="flex justify-between text-xs text-gray-400 mb-1">
+            <div className="flex justify-between text-xs text-gray-400">
+              <span>Duration:</span>
               <span className={cn(
                 recordingState === 'recording' ? 
                   (recordingTime >= 6 ? "text-green-400" : "text-orange-400") 
@@ -445,52 +446,13 @@ export function EnhancedVoiceRecorder({
                     : "text-gray-400"
               )}>
                 {recordingState === 'recording' 
-                  ? formatTime(recordingTime) 
+                  ? `${formatTime(recordingTime)} / ${formatTime(maxRecordingTime)}`
                   : recordedSample?.duration 
-                    ? formatTime(Math.round(recordedSample.duration))
-                    : '00:00'
+                    ? `${recordedSample.duration.toFixed(1)}s ${recordedSample.duration >= 6 ? "✓" : ""}`
+                    : `${formatTime(maxRecordingTime)} max`
                 }
-                {(recordingState === 'recording' && recordingTime >= 6) || 
-                 (recordedSample?.duration && recordedSample.duration >= 6) ? " ✓" : ""}
               </span>
-              <span>{formatTime(maxRecordingTime)}</span>
             </div>
-            <div className="relative">
-              <Progress 
-                value={
-                  recordingState === 'recording' 
-                    ? progressPercentage 
-                    : (recordedSample?.duration && maxRecordingTime > 0)
-                      ? Math.min((recordedSample.duration / maxRecordingTime) * 100, 100)
-                      : 0
-                } 
-                className="h-2 bg-gray-700" 
-              />
-              {/* 6-second minimum marker - Always visible */}
-              <div 
-                className="absolute top-0 h-2 w-0.5 bg-red-500 z-10"
-                style={{ left: `${Math.min((6 / maxRecordingTime) * 100, 95)}%` }}
-                title="6-second minimum for voice cloning"
-              />
-              <div className="flex justify-between text-xs text-gray-500 mt-1">
-                <span>0s</span>
-                <span className="text-red-400 text-xs">6s min</span>
-                <span>{maxRecordingTime}s ✓</span>
-              </div>
-            </div>
-            {recordedSample && (
-              <div className="flex justify-between text-xs text-gray-400 mt-1">
-                <span>Recorded Duration:</span>
-                <span className={cn(
-                  recordedSample.duration && recordedSample.duration >= 6 
-                    ? "text-green-400 font-medium" 
-                    : "text-red-400 font-medium"
-                )}>
-                  {recordedSample.duration ? `${recordedSample.duration.toFixed(1)}s` : "Unknown"} 
-                  {recordedSample.duration && recordedSample.duration >= 6 ? " ✓" : " ✗"}
-                </span>
-              </div>
-            )}
           </div>
           
           <div className="flex items-start space-x-4">
