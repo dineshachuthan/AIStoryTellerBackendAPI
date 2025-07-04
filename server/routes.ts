@@ -1512,7 +1512,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           audio_url: relativeAudioUrl,
           duration: Math.round(duration),
           file_size: stats.size,
-          audio_quality_score: 85, // Default quality score
+          audio_quality_score: 8.5, // Default quality score (0-9.99 range)
           transcribed_text: text,
           created_by: userId
         });
@@ -2596,7 +2596,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "User authentication required" });
       }
 
-      const userVoiceSamples = await storage.getUserVoiceSamples(userId);
+      const userVoiceSamples = await storage.getAllUserVoiceSamples(userId);
       const storyEmotions = await storage.getStoryEmotions(storyId);
 
       for (const [emotionId, voiceSampleId] of Object.entries(emotionVoiceMapping)) {
@@ -4469,7 +4469,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         audio_url: audioUrl,
         duration: parseInt(duration) || template.targetDuration || 10,
         file_size: audioFile.size,
-        audio_quality_score: 85, // Default quality score
+        audio_quality_score: 8.5, // Default quality score (0-9.99 range)
         transcribed_text: null,
         created_by: userId
       });
@@ -4560,8 +4560,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let recordedSamples: any[] = [];
       
       try {
-        // Get from user_voice_samples table directly  
-        const userVoiceSamples = await storage.getUserVoiceSamples(userId);
+        // Get from ESM tables using getAllUserVoiceSamples  
+        const userVoiceSamples = await storage.getAllUserVoiceSamples(userId);
         console.log(`🎤 Found ${userVoiceSamples.length} voice samples for user ${userId}`);
         
         recordedSamples = userVoiceSamples.map((sample: any) => ({
