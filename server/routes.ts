@@ -5463,6 +5463,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // State Management API Routes
+  // GET /api/states/:stateType - Get all valid states for a state type
+  app.get('/api/states/:stateType', async (req, res) => {
+    try {
+      const { stateType } = req.params;
+      
+      // Import state manager and validate state type
+      const { stateManager } = await import('../shared/state-manager');
+      const validStateTypes = ['story', 'story_instance', 'video_job', 'voice_training', 'story_processing'];
+      
+      if (!validStateTypes.includes(stateType)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid state type'
+        });
+      }
+      
+      // Get states from state manager
+      const states = await stateManager.getValidStates(stateType as any);
+      
+      res.json({
+        success: true,
+        stateType,
+        states,
+        count: states.length
+      });
+    } catch (error) {
+      console.error('Error fetching states:', error);
+      res.status(400).json({
+        success: false,
+        error: 'Failed to fetch states'
+      });
+    }
+  });
+
+  // GET /api/states/health - Health check endpoint
+  app.get('/api/states/health', async (req, res) => {
+    try {
+      const { stateManager } = await import('../shared/state-manager');
+      
+      // Simple health check - try to get story states
+      const storyStates = await stateManager.getValidStates('story');
+      
+      res.json({
+        success: true,
+        status: 'healthy',
+        stateTypesLoaded: storyStates.length > 0,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('State management health check failed:', error);
+      res.status(500).json({
+        success: false,
+        status: 'unhealthy',
+        error: 'State management system not functioning'
+      });
+    }
+  });
+
   // Serve static files from uploads directory (legacy)
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
   

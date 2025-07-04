@@ -8,6 +8,7 @@ import videoRoutes from "./routes-video";
 import { VoiceProviderRegistry } from "./voice-providers/provider-manager";
 import { getVoiceConfig } from "./voice-config";
 import referenceDataRoutes from "./routes-reference-data";
+import { stateManager } from "../shared/state-manager";
 
 const app = express();
 app.use(express.json());
@@ -57,6 +58,16 @@ app.use((req, res, next) => {
   
   // Add reference data routes for the new architecture
   app.use('/api/reference-data', referenceDataRoutes);
+  
+
+  
+  // Initialize state manager before other services
+  try {
+    await stateManager.initialize();
+    console.log('State manager initialized successfully');
+  } catch (error) {
+    console.error('Failed to initialize state manager:', error);
+  }
   
   // Initialize voice provider registry with configuration
   try {

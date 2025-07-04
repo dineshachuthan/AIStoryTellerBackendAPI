@@ -2,6 +2,38 @@ import { pgTable, text, serial, integer, boolean, timestamp, jsonb, varchar, ind
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// ===== CENTRALIZED STATE MANAGEMENT SYSTEM =====
+
+// Main app_states table - Single source of truth for all application states
+export const appStates = pgTable("app_states", {
+  id: serial("id").primaryKey(),
+  stateType: varchar("state_type", { length: 50 }).notNull(), // 'story', 'story_instance', 'video_job', etc.
+  stateKey: varchar("state_key", { length: 50 }).notNull(), // 'draft', 'published', 'processing', etc.
+  displayName: varchar("display_name", { length: 100 }).notNull(), // 'Draft', 'Published', 'Processing'
+  description: text("description"),
+  isInitial: boolean("is_initial").default(false),
+  isTerminal: boolean("is_terminal").default(false),
+  sortOrder: integer("sort_order").default(0),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_app_states_type_key").on(table.stateType, table.stateKey),
+]);
+
+// State transitions table - Defines valid state flow rules
+export const stateTransitions = pgTable("state_transitions", {
+  id: serial("id").primaryKey(),
+  stateType: varchar("state_type", { length: 50 }).notNull(),
+  fromState: varchar("from_state", { length: 50 }).notNull(),
+  toState: varchar("to_state", { length: 50 }).notNull(),
+  isAutomatic: boolean("is_automatic").default(false),
+  requiresPermission: boolean("requires_permission").default(false),
+  validationRules: jsonb("validation_rules"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_state_transitions_type_from").on(table.stateType, table.fromState),
+]);
+
 // Session storage table for authentication
 export const sessions = pgTable(
   "sessions",
