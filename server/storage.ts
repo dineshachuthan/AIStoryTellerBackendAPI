@@ -481,7 +481,49 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserVoiceSamples(userId: string): Promise<UserVoiceSample[]> {
-    return await db.select().from(userVoiceSamples).where(eq(userVoiceSamples.userId, userId));
+    // Use ESM architecture - get user's recordings with ESM reference data
+    const result = await db.execute(
+      sql`SELECT 
+            uer.id,
+            uer.audio_url as "audioUrl",
+            uer.duration,
+            uer.file_size as "fileSize",
+            uer.recording_timestamp as "recordingTimestamp",
+            uer.audio_quality_score as "audioQualityScore",
+            uer.transcribed_text as "transcribedText",
+            ue.sample_count as "sampleCount",
+            ue.quality_tier as "qualityTier",
+            ue.voice_cloning_status as "voiceCloningStatus",
+            ue.is_locked as "isLocked",
+            er.category,
+            er.name,
+            er.display_name as "displayName",
+            er.sample_text as "sampleText",
+            er.intensity,
+            (CASE WHEN uer.id IS NOT NULL THEN true ELSE false END) as "isCompleted"
+          FROM esm_ref er
+          LEFT JOIN user_esm ue ON er.esm_ref_id = ue.esm_ref_id AND ue.user_id = ${userId}
+          LEFT JOIN user_esm_recordings uer ON ue.user_esm_id = uer.user_esm_id
+          ORDER BY er.category, er.name`
+    );
+    
+    return result.rows.map((row: any) => ({
+      id: row.id || 0,
+      userId: userId,
+      sampleType: row.category === 1 ? 'emotions' : row.category === 2 ? 'sounds' : 'modulations',
+      label: `${row.category === 1 ? 'emotions' : row.category === 2 ? 'sounds' : 'modulations'}-${row.name}`,
+      audioUrl: row.audioUrl || '',
+      duration: row.duration || 0,
+      fileSize: row.fileSize || 0,
+      isCompleted: row.isCompleted || false,
+      isLocked: row.isLocked || false,
+      recordingTimestamp: row.recordingTimestamp,
+      displayName: row.displayName,
+      sampleText: row.sampleText,
+      intensity: row.intensity,
+      qualityTier: row.qualityTier,
+      voiceCloningStatus: row.voiceCloningStatus
+    }));
   }
 
   async getAllUserVoiceSamples(userId: string): Promise<UserVoiceSample[]> {

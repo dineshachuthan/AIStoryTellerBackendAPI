@@ -1396,10 +1396,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
 
-  // Save user voice recording for emotion
+  // Save user voice recording for emotion - ESM Architecture
   app.post("/api/emotions/save-voice-sample", upload.single('audio'), async (req, res) => {
     try {
-      console.log("Received voice sample save request:", req.body);
+      console.log("ESM Voice Sample Save - Request:", req.body);
       const { emotion, intensity, text, userId, storyId } = req.body;
       const audioFile = req.file;
       
@@ -1407,46 +1407,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Audio file, emotion, text, and userId are required" });
       }
 
-      // Delete any existing recordings for this emotion/intensity combination
-      const cacheDir = path.join(process.cwd(), 'persistent-cache', 'user-voice-samples');
-      await fs.mkdir(cacheDir, { recursive: true });
+      // Find ESM reference for this emotion
+      const esmRef = await storage.getEsmRef(1, emotion); // category 1 = emotions
+      if (!esmRef) {
+        return res.status(400).json({ message: `ESM reference not found for emotion: ${emotion}` });
+      }
+
+      // Use hierarchical storage structure: user-data/{userId}/audio/emotions/{emotion}-{intensity}/
+      const userDir = path.join(process.cwd(), 'user-data', userId, 'audio', 'emotions', `${emotion}-${intensity}`);
+      await fs.mkdir(userDir, { recursive: true });
       
+      // Clean up existing recordings for this emotion/intensity
       try {
-        const files = await fs.readdir(cacheDir);
-        const existingFiles = files.filter(file => 
-          file.startsWith(`${userId}-${emotion}-${intensity}-`) && 
-          (file.endsWith('.mp3') || file.endsWith('.json'))
-        );
-        
-        for (const file of existingFiles) {
-          await fs.unlink(path.join(cacheDir, file));
-          console.log("Deleted old voice sample:", file);
+        const files = await fs.readdir(userDir);
+        for (const file of files) {
+          if (file.endsWith('.mp3') || file.endsWith('.json')) {
+            await fs.unlink(path.join(userDir, file));
+            console.log(`ESM Cleanup: Deleted ${file}`);
+          }
         }
       } catch (cleanupError) {
-        console.log("No existing files to clean up");
+        console.log("ESM: No existing files to clean up");
       }
       
-      // Use constant filename to override previous recordings
-      let fileName: string;
-      let filePath: string;
+      // Convert to MP3 format
+      const tempInputFile = `temp_${Date.now()}.${audioFile.mimetype.includes('webm') ? 'webm' : 'mp4'}`;
+      const tempInputPath = path.join(userDir, tempInputFile);
+      const finalFileName = `sample-1.mp3`;
+      const finalFilePath = path.join(userDir, finalFileName);
       
-      // ENFORCE MP3-ONLY: Convert all formats to MP3, no fallbacks
-      const tempInputFile = `temp_${userId}-${emotion}-${intensity}.${audioFile.mimetype.includes('webm') ? 'webm' : 'mp4'}`;
-      const tempInputPath = path.join(cacheDir, tempInputFile);
-      
-      console.log(`Converting audio to MP3: ${audioFile.buffer.length} bytes`);
+      console.log(`ESM: Converting audio to MP3: ${audioFile.buffer.length} bytes`);
       await fs.writeFile(tempInputPath, audioFile.buffer);
       
-      // Always convert to MP3 format
-      fileName = `${userId}-${emotion}-${intensity}.mp3`;
-      filePath = path.join(cacheDir, fileName);
-      
       try {
-        // First, check audio duration before processing
+        // Check audio duration before processing
         const { stdout: durationOutput } = await execAsync(`ffprobe -v quiet -show_entries format=duration -of csv=p=0 "${tempInputPath}"`);
         const duration = parseFloat(durationOutput.trim());
         
-        console.log(`Audio duration: ${duration} seconds`);
+        console.log(`ESM: Audio duration: ${duration} seconds`);
         
         // Validate minimum duration (5 seconds for ElevenLabs voice cloning)
         if (duration < 5.0) {
@@ -1456,118 +1454,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
         
-        // Convert to MP3 using FFmpeg with volume amplification
-        await execAsync(`ffmpeg -i "${tempInputPath}" -acodec libmp3lame -b:a 192k -ar 44100 -af "volume=40dB" -y "${filePath}"`);
+        // Convert to MP3 using FFmpeg
+        await execAsync(`ffmpeg -i "${tempInputPath}" -acodec libmp3lame -b:a 192k -ar 44100 -af "volume=40dB" -y "${finalFilePath}"`);
         
-        const stats = await fs.stat(filePath);
-        console.log(`MP3 file created: ${stats.size} bytes`);
+        const stats = await fs.stat(finalFilePath);
+        console.log(`ESM: MP3 file created: ${stats.size} bytes`);
         
         // Clean up temporary file
         await fs.unlink(tempInputPath);
         
-        // Update metadata to use MP3 format
-        const metadata = {
-          userId,
-          storyId,
-          emotion,
-          intensity: parseInt(intensity),
-          text,
-          fileName,
-          filePath,
-          fileSize: stats.size,
-          timestamp: Date.now(),
-          mimeType: 'audio/mpeg',
-          originalMimeType: audioFile.mimetype,
-        };
+        // Save to database using existing user_voice_samples table
+        const relativeAudioUrl = `/api/user-content/${userId}/audio/emotions/${emotion}-${intensity}/${finalFileName}`;
         
-        // Save metadata
-        const metadataPath = path.join(cacheDir, `${fileName}.json`);
-        await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2));
-        
-      } catch (conversionError) {
-        console.error("MP3 conversion failed:", conversionError);
-        // NO FALLBACKS - fail completely if conversion fails
-        await fs.unlink(tempInputPath).catch(() => {});
-        throw new Error('Audio conversion to MP3 failed. Only MP3 format is supported.');
-      }
-      
-      console.log(`Saved user voice sample: ${fileName} (${audioFile.size} bytes)`);
-      
-      // Create database record using new ESM architecture
-      try {
-        const audioUrl = `/api/emotions/user-voice-sample/${fileName}`;
-        
-        // First, find or create ESM reference entry for this emotion
-        const emotionName = emotion.toLowerCase().trim();
-        let esmRef = await storage.getEsmRef(1, emotionName); // Category 1 = Emotions
-        
-        if (!esmRef) {
-          console.log(`Creating new ESM reference for emotion: ${emotionName}`);
-          esmRef = await storage.createEsmRef({
-            category: 1, // Emotions
-            name: emotionName,
-            display_name: emotion,
-            sample_text: text || `Express the emotion of ${emotion}`,
-            intensity: parseInt(intensity) || 5,
-            description: `User-recorded emotion from voice sample`,
-            ai_variations: {
-              userGenerated: true,
-              originalText: text
-            },
-            created_by: userId
-          });
-        }
-        
-        // Check if user already has this ESM entry
-        let userEsm = await storage.getUserEsm(userId, esmRef.esm_ref_id);
-        
-        if (!userEsm) {
-          console.log(`Creating user ESM entry for ${emotionName}`);
-          userEsm = await storage.createUserEsm({
-            user_id: userId,
-            esm_ref_id: esmRef.esm_ref_id,
-            created_by: userId
-          });
-        }
-        
-        // Create the recording entry
-        await storage.createUserEsmRecording({
-          user_esm_id: userEsm.user_esm_id,
-          audio_url: audioUrl,
-          duration: 0, // Will be determined when played
-          file_size: audioFile.size,
-          audio_quality_score: 85, // Default quality score
-          transcribed_text: text,
-          created_by: userId
-        });
-        
-        console.log(`✅ ESM architecture: Created recording for emotion ${emotionName}`);
-        
-        // Also maintain backwards compatibility with old system
         await storage.createUserVoiceSample({
           userId,
           sampleType: 'emotion',
           label: emotion,
-          audioUrl,
-          duration: null,
+          audioUrl: relativeAudioUrl,
+          duration: Math.round(duration),
           isCompleted: true,
+          isLocked: false,
+          recordedAt: new Date()
         });
         
-        // Session-based voice cloning triggers removed
+        console.log(`✅ Voice Sample Saved: ${emotion} for user ${userId}`);
         
-      } catch (dbError) {
-        console.error("Failed to create ESM database records:", dbError);
-        // Continue even if DB creation fails - file is saved
+      } catch (conversionError) {
+        console.error("Audio processing failed:", conversionError);
+        await fs.unlink(tempInputPath).catch(() => {});
+        throw new Error('Audio conversion to MP3 failed. Only MP3 format is supported.');
       }
       
-      res.json({ 
-        message: "Voice sample saved successfully",
-        fileName,
-        url: `/api/emotions/user-voice-sample/${fileName}`
+      res.json({
+        success: true,
+        message: `Voice sample saved successfully for emotion: ${emotion}`,
+        audioUrl: relativeAudioUrl,
+        emotion: emotion,
+        intensity: parseInt(intensity),
+        duration: Math.round(duration)
       });
-    } catch (error) {
-      console.error("Voice sample save error:", error);
-      res.status(500).json({ message: error instanceof Error ? error.message : "Failed to save voice sample" });
+      
+    } catch (error: any) {
+      console.error("ESM Voice Sample Save Error:", error);
+      res.status(500).json({ 
+        message: "Failed to save voice sample", 
+        error: error.message 
+      });
     }
   });
 
@@ -1593,11 +1525,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Serve user voice samples (all converted to MP3)
-  app.get("/api/emotions/user-voice-sample/:fileName", async (req, res) => {
+  // Serve user voice samples from hierarchical storage
+  app.get("/api/user-content/:userId/audio/emotions/:emotionIntensity/:fileName", async (req, res) => {
     try {
-      const { fileName } = req.params;
-      const filePath = path.join(process.cwd(), 'persistent-cache', 'user-voice-samples', fileName);
+      const { userId, emotionIntensity, fileName } = req.params;
+      const filePath = path.join(process.cwd(), 'user-data', userId, 'audio', 'emotions', emotionIntensity, fileName);
       
       // Check if file exists
       try {
