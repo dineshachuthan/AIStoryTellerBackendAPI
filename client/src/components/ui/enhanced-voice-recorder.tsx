@@ -103,8 +103,8 @@ export function EnhancedVoiceRecorder({
       };
     } else {
       return {
-        icon: <Circle className="w-4 h-4 text-gray-400" />,
-        color: "gray",
+        icon: <Unlock className="w-4 h-4 text-gray-400" />,
+        color: "gray", 
         label: "Empty",
         description: "No sample recorded yet"
       };
@@ -113,545 +113,476 @@ export function EnhancedVoiceRecorder({
 
   const statusConfig = getStatusConfig();
 
-  // Progress calculation
   const progressPercentage = (recordingTime / maxRecordingTime) * 100;
 
-  // Clean up on unmount
   useEffect(() => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
       if (countdownRef.current) clearInterval(countdownRef.current);
       if (holdDelayRef.current) clearTimeout(holdDelayRef.current);
-      if (equalizerIntervalRef.current) clearInterval(equalizerIntervalRef.current);
-      if (tempRecording?.url) {
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+        mediaRecorderRef.current.stop();
+      }
+      if (tempRecording) {
         URL.revokeObjectURL(tempRecording.url);
       }
     };
   }, [tempRecording]);
 
-  const startCountdown = () => {
-    setRecordingState('countdown');
-    setCountdownTime(3);
-    
-    countdownRef.current = setInterval(() => {
-      setCountdownTime(prev => {
-        if (prev <= 1) {
-          clearInterval(countdownRef.current!);
-          beginRecording();
-          return 0;
+  const startCountdown = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: false,
+          sampleRate: 44100
         }
-        return prev - 1;
+      });
+
+      setRecordingState('countdown');
+      setCountdownTime(3);
+
+      countdownRef.current = setInterval(() => {
+        setCountdownTime(prev => {
+          if (prev <= 1) {
+            if (countdownRef.current) clearInterval(countdownRef.current);
+            startActualRecording(stream);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+    } catch (error) {
+      console.error('Error accessing microphone:', error);
+      toast({
+        title: "Microphone Error",
+        description: "Could not access microphone. Please check permissions.",
+        variant: "destructive"
+      });
+      setRecordingState('idle');
+    }
+  };
+
+  const startActualRecording = (stream: MediaStream) => {
+    audioChunksRef.current = [];
+    setRecordingTime(0);
+    setRecordingState('recording');
+
+    const options = AUDIO_PROCESSING_CONFIG.preferredRecordingFormats.find((format: string) => 
+      MediaRecorder.isTypeSupported(format)
+    );
+
+    mediaRecorderRef.current = new MediaRecorder(stream, { 
+      mimeType: options || 'audio/webm' 
+    });
+
+    mediaRecorderRef.current.ondataavailable = (event) => {
+      if (event.data.size > 0) {
+        audioChunksRef.current.push(event.data);
+      }
+    };
+
+    mediaRecorderRef.current.onstop = () => {
+      const audioBlob = new Blob(audioChunksRef.current, { 
+        type: mediaRecorderRef.current?.mimeType || 'audio/webm' 
+      });
+      
+      const audioUrl = URL.createObjectURL(audioBlob);
+      
+      // Use requestAnimationFrame to prevent flickering during state transition
+      requestAnimationFrame(() => {
+        setTempRecording({ blob: audioBlob, url: audioUrl });
+        setRecordingState('recorded');
+      });
+      
+      stream.getTracks().forEach(track => track.stop());
+    };
+
+    mediaRecorderRef.current.start();
+
+    timerRef.current = setInterval(() => {
+      setRecordingTime(prev => {
+        const newTime = prev + 1;
+        if (newTime >= maxRecordingTime) {
+          stopRecording();
+          return maxRecordingTime;
+        }
+        return newTime;
       });
     }, 1000);
   };
 
-  const beginRecording = async () => {
-    try {
-      // Use similar constraints to mictests.com for optimal microphone capture
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        audio: {
-          echoCancellation: false, // Disable echo cancellation like mictests.com
-          noiseSuppression: false, // Disable noise suppression like mictests.com
-          autoGainControl: false,  // Disable auto gain control for raw audio
-          sampleRate: 44100,      // Use CD quality sample rate
-          channelCount: 1         // Mono recording
-        }
-      });
-      
-      // Try to use the best available format from configuration
-      let mimeType = AUDIO_PROCESSING_CONFIG.fallbackRecordingFormat;
-      for (const format of AUDIO_PROCESSING_CONFIG.preferredRecordingFormats) {
-        if (MediaRecorder.isTypeSupported(format)) {
-          mimeType = format;
-          break;
-        }
-      }
-      
-      const mediaRecorder = new MediaRecorder(stream, { mimeType });
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
-
-      // Implement microphone monitoring like mictests.com - direct audio feedback
-      const audioContext = new AudioContext();
-      const source = audioContext.createMediaStreamSource(stream);
-      const analyser = audioContext.createAnalyser();
-      analyser.fftSize = 256;
-      analyser.smoothingTimeConstant = 0.8;
-      source.connect(analyser);
-      
-      // Store for cleanup
-      (mediaRecorderRef.current as any).audioContext = audioContext;
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-
-      mediaRecorder.onstop = () => {
-        // Use the actual MIME type that MediaRecorder supports
-        const actualMimeType = mediaRecorder.mimeType || 'audio/webm';
-        const audioBlob = new Blob(audioChunksRef.current, { type: actualMimeType });
-        
-        // Log recording results after completion
-        console.log(`Audio blob created:`, {
-          size: audioBlob.size,
-          type: audioBlob.type,
-          chunks: audioChunksRef.current.length
-        });
-        
-        const url = URL.createObjectURL(audioBlob);
-        setTempRecording({ blob: audioBlob, url });
-        setRecordingState('recorded');
-        setRecordingTime(0);
-        
-        // Clean up stream and audio context
-        stream.getTracks().forEach(track => track.stop());
-        if ((mediaRecorderRef.current as any)?.audioContext) {
-          (mediaRecorderRef.current as any).audioContext.close();
-        }
-        
-        // Stop equalizer animation
-        if (equalizerIntervalRef.current) {
-          clearInterval(equalizerIntervalRef.current);
-          setEqualizerBars(Array(8).fill(2));
-        }
-      };
-
-      setRecordingState('recording');
-      setRecordingTime(0);
-      mediaRecorder.start();
-
-      // Start equalizer animation with real-time audio analysis
-      equalizerIntervalRef.current = setInterval(() => {
-        const dataArray = new Uint8Array(analyser.frequencyBinCount);
-        analyser.getByteFrequencyData(dataArray);
-        
-        // Convert frequency data to equalizer bars
-        const barCount = 8;
-        const barWidth = dataArray.length / barCount;
-        const newBars = [];
-        
-        for (let i = 0; i < barCount; i++) {
-          const start = Math.floor(i * barWidth);
-          const end = Math.floor((i + 1) * barWidth);
-          let sum = 0;
-          for (let j = start; j < end; j++) {
-            sum += dataArray[j];
-          }
-          const average = sum / (end - start);
-          // Scale to appropriate height (2-25px)
-          const height = Math.max(2, Math.min(25, (average / 255) * 25));
-          newBars.push(height);
-        }
-        
-        setEqualizerBars(newBars);
-      }, 100);
-
-      // Recording timer
-      timerRef.current = setInterval(() => {
-        setRecordingTime(prev => {
-          const newTime = prev + 0.1;
-          if (newTime >= maxRecordingTime) {
-            stopRecording();
-            return maxRecordingTime;
-          }
-          return newTime;
-        });
-      }, 100);
-
-    } catch (error) {
-      console.error('Recording setup error:', error);
-      setRecordingState('idle');
-      toast({
-        title: "Recording Error",
-        description: "Failed to start recording. Please check microphone permissions.",
-        variant: "destructive"
-      });
-    }
-  };
-
   const stopRecording = () => {
-    if (mediaRecorderRef.current && recordingState === 'recording') {
+    if (timerRef.current) clearInterval(timerRef.current);
+    
+    // Smooth transition for equalizer before stopping
+    if (equalizerIntervalRef.current) {
+      clearInterval(equalizerIntervalRef.current);
+      // Gradually reduce equalizer bars to prevent abrupt stop
+      setTimeout(() => {
+        setEqualizerBars(Array(8).fill(1));
+      }, 100);
+    }
+    
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
       mediaRecorderRef.current.stop();
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
     }
   };
 
-  const handleMouseDown = () => {
-    if (recordingState !== 'idle' || disabled || isLocked) return;
+  const playTempRecording = () => {
+    if (!tempRecording) return;
     
-    // Start recording after 300ms hold delay (prevents accidental clicks)
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+
+    audioRef.current = new Audio(tempRecording.url);
+    audioRef.current.onended = () => setIsPlayingTemp(false);
+    audioRef.current.play();
+    setIsPlayingTemp(true);
+  };
+
+  const playExistingRecording = () => {
+    if (!recordedSample?.audioUrl) return;
+    
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+      setIsPlayingExisting(false);
+    }
+
+    audioRef.current = new Audio(recordedSample.audioUrl);
+    audioRef.current.onended = () => setIsPlayingExisting(false);
+    audioRef.current.onerror = () => setIsPlayingExisting(false);
+    audioRef.current.play().catch(() => setIsPlayingExisting(false));
+    setIsPlayingExisting(true);
+    
+    if (onPlaySample) {
+      onPlaySample(recordedSample.audioUrl);
+    }
+  };
+
+
+
+  const saveRecording = () => {
+    if (tempRecording) {
+      // Optimistic update - immediately show saved state to prevent flickering
+      const blob = tempRecording.blob;
+      const url = tempRecording.url;
+      
+      setTempRecording(null);
+      setRecordingState('idle');
+      setRecordingTime(0);
+      setCountdownTime(3);
+      
+      // Then trigger the actual save
+      if (onSaveSample) {
+        onSaveSample();
+      }
+      onRecordingComplete(blob, url);
+    }
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (disabled || isLocked) return;
+    if (recordingState !== 'idle' && recordingState !== 'recorded') return;
+    
+    // Reset temp recording if re-recording
+    if (tempRecording) {
+      URL.revokeObjectURL(tempRecording.url);
+      setTempRecording(null);
+    }
+    
+    // Add 300ms hold delay before starting countdown
     holdDelayRef.current = setTimeout(() => {
       startCountdown();
     }, 300);
   };
 
-  const handleMouseUp = () => {
-    // Cancel hold timer if released before 300ms
+  const handleMouseUp = (e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    // Clear hold delay if user releases before 300ms
     if (holdDelayRef.current) {
       clearTimeout(holdDelayRef.current);
       holdDelayRef.current = null;
     }
     
-    // Stop recording if currently recording
     if (recordingState === 'recording') {
       stopRecording();
-    }
-  };
-
-  const handleMouseLeave = () => {
-    // Same as mouse up - stop recording if dragged off button
-    handleMouseUp();
-  };
-
-  const playTempRecording = () => {
-    if (tempRecording?.url) {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.currentTime = 0;
-      }
-      
-      const audio = new Audio(tempRecording.url);
-      audioRef.current = audio;
-      
-      audio.onended = () => setIsPlayingTemp(false);
-      audio.play();
-      setIsPlayingTemp(true);
-    }
-  };
-
-  const playExistingRecording = () => {
-    if (recordedSample?.audioUrl) {
-      if (onPlaySample) {
-        onPlaySample(recordedSample.audioUrl);
-      } else {
-        if (audioRef.current) {
-          audioRef.current.pause();
-          audioRef.current.currentTime = 0;
-        }
-        
-        const audio = new Audio(recordedSample.audioUrl);
-        audioRef.current = audio;
-        
-        audio.onended = () => setIsPlayingExisting(false);
-        audio.play();
-        setIsPlayingExisting(true);
-      }
-    }
-  };
-
-  const saveRecording = () => {
-    if (tempRecording) {
-      onRecordingComplete(tempRecording.blob, tempRecording.url);
-      if (onSaveSample) {
-        onSaveSample();
-      }
-      setTempRecording(null);
+    } else if (recordingState === 'countdown') {
+      if (countdownRef.current) clearInterval(countdownRef.current);
       setRecordingState('idle');
+      setCountdownTime(3);
     }
   };
 
-  const discardRecording = () => {
-    if (tempRecording?.url) {
+  const handleTouchStart = (e: React.TouchEvent) => {
+    e.preventDefault();
+    if (disabled || isLocked) return;
+    if (recordingState !== 'idle' && recordingState !== 'recorded') return;
+    
+    // Reset temp recording if re-recording
+    if (tempRecording) {
       URL.revokeObjectURL(tempRecording.url);
+      setTempRecording(null);
     }
-    setTempRecording(null);
-    setRecordingState('idle');
-    setIsPlayingTemp(false);
+    
+    // Add 300ms hold delay before starting countdown
+    holdDelayRef.current = setTimeout(() => {
+      startCountdown();
+    }, 300);
   };
 
-  const reRecord = () => {
-    discardRecording();
-    startCountdown();
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    e.preventDefault();
+    
+    // Clear hold delay if user releases before 300ms
+    if (holdDelayRef.current) {
+      clearTimeout(holdDelayRef.current);
+      holdDelayRef.current = null;
+    }
+    
+    if (recordingState === 'recording') {
+      stopRecording();
+    } else if (recordingState === 'countdown') {
+      if (countdownRef.current) clearInterval(countdownRef.current);
+      setRecordingState('idle');
+      setCountdownTime(3);
+    }
   };
 
-  // Simple mode for narrative analysis
-  if (simpleMode) {
-    return (
-      <TooltipProvider>
-        <div className={cn("w-full max-w-md mx-auto", className)}>
-          {title && (
-            <h3 className="text-lg font-semibold mb-4 text-center">{title}</h3>
-          )}
-          
-          <div className="bg-black text-white p-6 rounded-lg space-y-4">
-            <div className="text-center">
-              <h4 className="text-lg font-medium mb-2">Voice Recording</h4>
-              <p className="text-sm text-gray-300">{buttonText.instructions}</p>
-            </div>
-
-            {/* Recording interface */}
-            <div className="flex flex-col items-center space-y-4">
-              <div className="relative">
-                <button
-                  onMouseDown={handleMouseDown}
-                  onMouseUp={handleMouseUp}
-                  onMouseLeave={handleMouseLeave}
-                  disabled={disabled || recordingState === 'countdown'}
-                  className={cn(
-                    "w-16 h-16 rounded-full flex items-center justify-center transition-all duration-200 select-none",
-                    recordingState === 'recording' 
-                      ? "bg-red-600 hover:bg-red-700 scale-110 shadow-lg shadow-red-500/50" 
-                      : recordingState === 'countdown'
-                      ? "bg-yellow-600 animate-pulse"
-                      : "bg-blue-600 hover:bg-blue-700",
-                    disabled && "opacity-50 cursor-not-allowed"
-                  )}
-                >
-                  {recordingState === 'countdown' ? (
-                    <span className="text-2xl font-bold text-white">{countdownTime}</span>
-                  ) : (
-                    <Mic className="w-6 h-6 text-white" />
-                  )}
-                </button>
-              </div>
-
-              {/* Recording status */}
-              {recordingState === 'recording' && (
-                <div className="text-center space-y-2">
-                  <div className="flex items-center justify-center space-x-2">
-                    <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-                    <span className="text-sm font-mono">{formatTime(Math.floor(recordingTime))}</span>
-                  </div>
-                  <Progress value={progressPercentage} className="w-40 h-2" />
-                </div>
-              )}
-
-              {/* Action buttons */}
-              {(tempRecording || hasRecording) && (
-                <div className="flex items-center justify-center space-x-3">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        onClick={tempRecording ? playTempRecording : playExistingRecording}
-                        disabled={isPlayingTemp || isPlayingExisting}
-                        size="sm"
-                        className="bg-green-600 hover:bg-green-700"
-                      >
-                        <Play className="w-4 h-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Play recording</p>
-                    </TooltipContent>
-                  </Tooltip>
-
-                  {tempRecording && (
-                    <>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            onClick={saveRecording}
-                            size="sm"
-                            className="bg-purple-600 hover:bg-purple-700"
-                          >
-                            <Save className="w-4 h-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Save recording</p>
-                        </TooltipContent>
-                      </Tooltip>
-
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            onClick={discardRecording}
-                            size="sm"
-                            variant="outline"
-                            className="border-gray-400 text-gray-400"
-                          >
-                            <RotateCcw className="w-4 h-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Discard and re-record</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </TooltipProvider>
-    );
-  }
-
-  // Voice sample card mode with radio styling
   return (
     <TooltipProvider>
-      <div className={cn("w-full", className)}>
-        <div className="bg-black text-white p-4 rounded-lg">
-          {/* Header with emotion name and status */}
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-2">
-              <Radio className="w-4 h-4 text-blue-400" />
-              <span className="font-medium">{emotionName || "Voice Sample"}</span>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex items-center">
-                    {statusConfig.icon}
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{statusConfig.description}</p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
+      <div className={`w-full max-w-sm mx-auto ${className}`}>
+        {/* Radio/TV Style Voice Recorder Panel - Dynamic background for three states */}
+        <div className={`rounded-2xl p-4 shadow-2xl border flex flex-col ${
+          isLocked 
+            ? 'bg-gradient-to-br from-blue-900/80 to-indigo-900/80 border-blue-400/60' 
+            : (isRecorded || recordedSample)
+              ? 'bg-gradient-to-br from-green-900/70 to-emerald-900/70 border-green-500/50'
+              : 'bg-gradient-to-br from-gray-900 to-gray-800 border-gray-700'
+        }`}>
+        
+        {/* Header with Emotion Info */}
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="cursor-help">
+                  {statusConfig.icon}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p><strong>{statusConfig.label}</strong></p>
+                <p className="text-sm text-gray-400">{statusConfig.description}</p>
+              </TooltipContent>
+            </Tooltip>
+            <span className="text-sm font-medium text-gray-300">
+              {emotionName && emotionName.length > 20 ? emotionName.substring(0, 20) + '...' : emotionName || 'Voice Recorder'}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
             {intensity && (
-              <Badge variant="outline" className="text-xs border-gray-400 text-gray-300">
-                Intensity: {intensity}
+              <Badge variant="outline" className="text-xs text-blue-400 border-blue-400">
+                {intensity}/10
               </Badge>
             )}
           </div>
+          
+          {/* Horizontal Equalizer Visual in Header */}
+          <div className="flex items-end space-x-1 h-4">
+            {[...Array(6)].map((_, i) => {
+              const isActive = recordingState === 'recording' || recordingState === 'countdown';
+              const baseHeight = 2;
+              const maxHeight = 12;
+              const animationHeight = isActive ? baseHeight + (Math.sin(Date.now() / 150 + i) + 1) * (maxHeight - baseHeight) / 2 : baseHeight;
+              
+              return (
+                <div
+                  key={i}
+                  className={`w-0.5 rounded-sm transition-all duration-100 ${
+                    isActive 
+                      ? 'bg-gradient-to-t from-green-600 to-green-400 opacity-100' 
+                      : 'bg-gray-600 opacity-40'
+                  }`}
+                  style={{
+                    height: `${animationHeight}px`,
+                    minHeight: `${baseHeight}px`
+                  }}
+                />
+              );
+            })}
+          </div>
+        </div>
 
-          {/* Main content: Button on left, text on right */}
+        {/* Main Recording Display - Flexible container */}
+        <div className="bg-black rounded-lg p-4 border border-gray-600 flex-1 flex flex-col">
+          {/* Title and Instructions */}
+          {!simpleMode && sampleText && (
+            <div className="text-blue-300 text-xs font-medium mb-2 text-left tracking-wide">
+              📖 {emotionName ? `Read this text with ${emotionName.toLowerCase()} emotion` : 'Read this text aloud'}
+            </div>
+          )}
+          {simpleMode && title && (
+            <div className="text-blue-300 text-xs font-medium mb-2 text-left tracking-wide">
+              🎙️ {title}
+            </div>
+          )}
+          
+          {/* Single Duration Status Line */}
+          <div className="mb-2">
+            <div className="flex justify-between text-xs text-gray-400">
+              <span>Duration:</span>
+              <span className={cn(
+                recordingState === 'recording' ? 
+                  (recordingTime >= 6 ? "text-green-400" : "text-orange-400") 
+                  : recordedSample?.duration 
+                    ? (recordedSample.duration >= 6 ? "text-green-400" : "text-red-400")
+                    : "text-gray-400"
+              )}>
+                {recordingState === 'recording' 
+                  ? `${formatTime(recordingTime)} / ${formatTime(maxRecordingTime)}`
+                  : recordedSample?.duration 
+                    ? `${recordedSample.duration.toFixed(1)}s ${recordedSample.duration >= 6 ? "✓" : ""}`
+                    : `${formatTime(maxRecordingTime)} max`
+                }
+              </span>
+            </div>
+          </div>
+          
           <div className="flex items-start space-x-4">
-            {/* Left: Recording button with status */}
-            <div className="flex flex-col items-center space-y-2">
-              <div className="relative">
-                <button
-                  onMouseDown={handleMouseDown}
-                  onMouseUp={handleMouseUp}
-                  onMouseLeave={handleMouseLeave}
-                  disabled={disabled || isLocked || recordingState === 'countdown'}
-                  className={cn(
-                    "w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 select-none",
-                    recordingState === 'recording' 
-                      ? "bg-red-600 hover:bg-red-700 scale-110 shadow-lg shadow-red-500/50" 
-                      : recordingState === 'countdown'
-                      ? "bg-yellow-600 animate-pulse"
-                      : "bg-blue-600 hover:bg-blue-700",
-                    (disabled || isLocked) && "opacity-50 cursor-not-allowed"
-                  )}
-                >
-                  {recordingState === 'countdown' ? (
-                    <span className="text-lg font-bold text-white">{countdownTime}</span>
-                  ) : (
-                    <Mic className="w-5 h-5 text-white" />
-                  )}
-                </button>
-              </div>
+            
+            {/* Recording Button */}
+            <div className="flex flex-col items-center mb-2">
+              <div className="relative mb-1">
+                {recordingState === 'idle' && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onMouseDown={handleMouseDown}
+                        onMouseUp={handleMouseUp}
+                        onMouseLeave={handleMouseUp}
+                        onTouchStart={handleTouchStart}
+                        onTouchEnd={handleTouchEnd}
+                        disabled={disabled}
+                        className="w-16 h-16 rounded-full bg-red-500 hover:bg-red-600 disabled:bg-gray-600 flex items-center justify-center text-white transition-all duration-200 select-none touch-manipulation shadow-lg hover:shadow-red-500/25"
+                      >
+                        <Mic className="w-6 h-6" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Hold to record voice sample</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
 
-              {/* Status indicator */}
-              <div className="text-xs text-gray-400 text-center">
-                {recordingState === 'recording' ? (
-                  <span className="text-red-400">{formatTime(Math.floor(recordingTime))}</span>
-                ) : recordingState === 'countdown' ? (
-                  <span className="text-yellow-400">Get ready...</span>
-                ) : isLocked ? (
-                  <span className="text-blue-400">Locked</span>
-                ) : tempRecording ? (
-                  <span className="text-green-400">Recorded</span>
-                ) : recordedSample ? (
-                  <span className="text-green-400">Saved</span>
+                {recordingState === 'countdown' && (
+                  <div className="w-16 h-16 rounded-full bg-orange-500 flex items-center justify-center text-white text-xl font-bold select-none shadow-lg animate-pulse">
+                    {countdownTime}
+                  </div>
+                )}
+
+                {recordingState === 'recording' && (
+                  <button
+                    onMouseUp={handleMouseUp}
+                    onMouseLeave={handleMouseUp}
+                    onTouchEnd={handleTouchEnd}
+                    className="w-16 h-16 rounded-full bg-red-600 flex items-center justify-center text-white animate-pulse cursor-pointer select-none touch-manipulation shadow-lg shadow-red-500/50"
+                  >
+                    <Mic className="w-6 h-6" />
+                  </button>
+                )}
+
+                {recordingState === 'recorded' && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onMouseDown={handleMouseDown}
+                        onMouseUp={handleMouseUp}
+                        onMouseLeave={handleMouseUp}
+                        onTouchStart={handleTouchStart}
+                        onTouchEnd={handleTouchEnd}
+                        disabled={disabled}
+                        className="w-16 h-16 rounded-full bg-red-500 hover:bg-red-600 disabled:bg-gray-600 flex items-center justify-center text-white transition-all duration-200 select-none touch-manipulation shadow-lg hover:shadow-red-500/25"
+                      >
+                        <Mic className="w-6 h-6" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Hold to re-record voice sample</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+              </div>
+              
+              {/* Instructions under mic - Fixed height to prevent flickering */}
+              <div className="text-xs text-gray-400 text-center leading-tight h-6 flex items-center justify-center">
+                {recordedSample || tempRecording ? (
+                  <div>
+                    Hold to<br />re-record
+                  </div>
                 ) : (
-                  <span>Hold to record</span>
+                  <div>
+                    Hold to<br />record
+                  </div>
                 )}
               </div>
             </div>
 
-            {/* Right: Sample text */}
-            <div className="flex-1">
-              {sampleText && (
-                <div className="mb-3">
-                  <p className="text-sm italic text-gray-300 leading-relaxed">
-                    "{sampleText}"
-                  </p>
-                </div>
-              )}
-              
-              <div className="text-xs text-gray-400">
-                Target: {maxRecordingTime}s • {buttonText.instructions}
+            {/* Sample Text Display - Compact */}
+            <div className="mb-2">
+              <div className="text-white text-sm leading-relaxed">
+                <span className="italic text-blue-200">
+                  "{(sampleText && sampleText.length > 100 ? sampleText.substring(0, 100) + '...' : sampleText) || 'Sample text not provided'}"
+                </span>
               </div>
-
-              {/* Recording progress */}
-              {recordingState === 'recording' && (
-                <div className="mt-2 space-y-1">
-                  <Progress value={progressPercentage} className="w-full h-1" />
-                  <div className="flex justify-between text-xs text-gray-400">
-                    <span>{formatTime(Math.floor(recordingTime))}</span>
-                    <span>{formatTime(maxRecordingTime)}</span>
-                  </div>
-                </div>
-              )}
-
-              {/* Equalizer animation during recording */}
-              {recordingState === 'recording' && (
-                <div className="flex items-end space-x-1 mt-2 h-8">
-                  {equalizerBars.map((height, index) => (
-                    <div
-                      key={index}
-                      className="bg-blue-400 w-1 transition-all duration-100 ease-out"
-                      style={{ height: `${height}px` }}
-                    />
-                  ))}
-                </div>
-              )}
             </div>
           </div>
+        </div>
 
-          {/* Bottom: Action buttons - always visible */}
-          <div className="flex items-center justify-center space-x-3 mt-4">
-            {/* Play button */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  onClick={tempRecording ? playTempRecording : playExistingRecording}
-                  disabled={!hasRecording || isPlayingTemp || isPlayingExisting}
-                  size="sm"
-                  className="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:opacity-50"
-                >
-                  <Play className="w-4 h-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Play recording</p>
-              </TooltipContent>
-            </Tooltip>
+        {/* Recorded Sample Info - Removed duration and date display as requested */}
 
-            {/* Save button - only for temp recordings */}
-            {tempRecording && (
+        {/* Control Buttons - Minimal margin */}
+        <div className="mt-1 flex gap-2 justify-center">
+              {/* Single Play button - prioritizes new recording over existing */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={tempRecording ? playTempRecording : playExistingRecording}
+                    disabled={!tempRecording && !recordedSample || isPlayingTemp || isPlayingExisting || isLocked}
+                    variant="outline"
+                    size="sm"
+                    className="bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700 disabled:opacity-50 flex-1 max-w-[100px]"
+                  >
+                    <Play className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{tempRecording ? "Play new recording" : recordedSample ? "Play saved recording" : "No recording to play"}</p>
+                </TooltipContent>
+              </Tooltip>
+              
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     onClick={saveRecording}
+                    disabled={!tempRecording || isPlayingTemp || isLocked}
+                    variant="default"
                     size="sm"
-                    className="bg-purple-600 hover:bg-purple-700"
+                    className="bg-green-600 hover:bg-green-700 disabled:opacity-50 flex-1 max-w-[100px]"
                   >
                     <Save className="w-4 h-4" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Save recording</p>
+                  <p>{recordedSample ? "Save new recording" : "Save recording"}</p>
                 </TooltipContent>
               </Tooltip>
-            )}
-
-            {/* Re-record button */}
-            {(tempRecording || recordedSample) && !isLocked && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    onClick={tempRecording ? reRecord : () => startCountdown()}
-                    size="sm"
-                    variant="outline"
-                    className="border-gray-400 text-gray-400 hover:border-gray-300 hover:text-gray-300"
-                  >
-                    <RotateCcw className="w-4 h-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Re-record</p>
-                </TooltipContent>
-              </Tooltip>
-            )}
           </div>
         </div>
       </div>
