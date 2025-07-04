@@ -576,6 +576,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Content has changed, regenerate analysis
         const analysis = await analyzeStoryContentWithHashCache(storyId, story.content, userId);
         
+        // Update story title if it was generated in analysis and current title is generic
+        if (analysis.title && (story.title === 'New Story' || story.title === 'Untitled Story' || !story.title.trim())) {
+          try {
+            await storage.updateStory(storyId, { title: analysis.title });
+            console.log(`📝 Updated story title to: "${analysis.title}"`);
+          } catch (titleUpdateError) {
+            console.warn(`Failed to update story title:`, titleUpdateError);
+          }
+        }
+        
         // When content changes, also regenerate roleplay analysis for consistency
         console.log(`Content changed - also triggering roleplay analysis regeneration for story ${storyId}`);
         try {
@@ -595,16 +605,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log("⚠️ Failed to regenerate roleplay analysis:", roleplayError);
         }
         
-        // Extract and store reference data from analysis
-        console.log("🔄 Extracting reference data from narrative analysis...");
-        try {
-          const { referenceDataService } = await import('./reference-data-service');
-          await referenceDataService.processAnalysisForReferenceData(analysis, storyId);
-          console.log("✅ Reference data extraction completed successfully");
-        } catch (refDataError) {
-          console.error("❌ Failed to extract reference data:", refDataError);
-          // Don't fail the request if reference data extraction fails
-        }
+        // Reference data extraction already happens within analyzeStoryContentWithHashCache via populateEsmReferenceData
+        console.log("✅ Reference data extraction completed as part of analysis generation");
         
         return res.json(analysis);
       }
@@ -640,16 +642,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const analysis = await analyzeStoryContentWithHashCache(storyId, story.content, userId);
       
-      // Extract and store reference data from analysis
-      console.log("🔄 Extracting reference data from narrative analysis...");
-      try {
-        const { referenceDataService } = await import('./reference-data-service');
-        await referenceDataService.processAnalysisForReferenceData(analysis, storyId);
-        console.log("✅ Reference data extraction completed successfully");
-      } catch (refDataError) {
-        console.error("❌ Failed to extract reference data:", refDataError);
-        // Don't fail the request if reference data extraction fails
-      }
+      // Reference data extraction already happens within analyzeStoryContentWithHashCache via populateEsmReferenceData
+      console.log("✅ Reference data extraction completed as part of analysis generation");
       
       // Update story title with AI-generated title if the story currently has default title
       if (story.title === "New Story" || story.title === "Untitled Story" || !story.title.trim()) {
@@ -4246,17 +4240,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get reference data statistics
-  app.get('/api/voice-modulations/reference-data-stats', requireAuth, async (req, res) => {
-    try {
-      const { referenceDataService } = await import('./reference-data-service');
-      const stats = await referenceDataService.getReferenceDataStats();
-      res.json(stats);
-    } catch (error: any) {
-      console.error('Error fetching reference data stats:', error);
-      res.status(500).json({ message: 'Failed to fetch reference data stats' });
-    }
-  });
+  // Get reference data statistics (temporarily disabled - method doesn't exist yet)
+  // app.get('/api/voice-modulations/reference-data-stats', requireAuth, async (req, res) => {
+  //   try {
+  //     const { ReferenceDataService } = await import('./reference-data-service');
+  //     const referenceDataService = new ReferenceDataService(storage);
+  //     const stats = await referenceDataService.getReferenceDataStats();
+  //     res.json(stats);
+  //   } catch (error: any) {
+  //     console.error('Error fetching reference data stats:', error);
+  //     res.status(500).json({ message: 'Failed to fetch reference data stats' });
+  //   }
+  // });
 
   // Get user voice modulations (all recordings across stories)
   app.get('/api/voice-modulations/user', requireAuth, async (req, res) => {
