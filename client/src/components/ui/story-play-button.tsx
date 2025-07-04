@@ -238,10 +238,7 @@ export function StoryPlayButton({
     }
   };
 
-  const navigateToVoiceRecording = () => {
-    // Navigate to analysis page for this story to record voice samples
-    setLocation(`/analysis/${storyId}`);
-  };
+
 
   // Auto-play next segment when currentSegment changes
   useEffect(() => {
@@ -259,28 +256,23 @@ export function StoryPlayButton({
     return null;
   }
 
-  // Mini variant - just a play button or voice recording action
+  // Mini variant - just a play button
   if (variant === 'mini') {
-    const canNarrate = narrationStatus?.canNarrate;
-    const hasVoiceSamples = narrationStatus?.emotions && narrationStatus.emotions.length > 0;
-    
     return (
       <Button
-        onClick={canNarrate ? playNarration : navigateToVoiceRecording}
-        disabled={isLoading}
+        onClick={playNarration}
+        disabled={isLoading || !narrationStatus?.canNarrate}
         size="sm"
-        variant={canNarrate ? "default" : "ghost"}
-        className={`${className} ${canNarrate ? 'text-purple-400 hover:text-purple-300' : 'text-gray-500'}`}
-        title={canNarrate ? "Play story narration" : "Record voice samples to enable narration"}
+        variant="default"
+        className={`${className} text-purple-400 hover:text-purple-300`}
+        title="Play story narration"
       >
         {isLoading ? (
           <Loader2 className="w-4 h-4 animate-spin" />
         ) : isPlaying ? (
           <Pause className="w-4 h-4" />
-        ) : canNarrate ? (
-          <Headphones className="w-4 h-4" />
         ) : (
-          <Mic className="w-4 h-4" />
+          <Headphones className="w-4 h-4" />
         )}
       </Button>
     );
@@ -288,20 +280,14 @@ export function StoryPlayButton({
 
   // Compact variant - horizontal button with basic info
   if (variant === 'compact') {
-    const canNarrate = narrationStatus?.canNarrate;
-    const hasVoiceSamples = narrationStatus?.emotions && narrationStatus.emotions.length > 0;
-    
     return (
       <div className={`flex items-center space-x-3 bg-white/10 p-4 rounded-lg border border-purple-500/30 ${className}`}>
         <Button
-          onClick={canNarrate ? (isPlaying ? pauseNarration : playNarration) : navigateToVoiceRecording}
-          disabled={isLoading}
+          onClick={isPlaying ? pauseNarration : playNarration}
+          disabled={isLoading || !narrationStatus?.canNarrate}
           size="lg"
-          className={canNarrate 
-            ? "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white" 
-            : "bg-orange-600 hover:bg-orange-700 text-white"
-          }
-          title={canNarrate ? "Play story narration" : "Record voice samples to enable narration"}
+          className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
+          title="Play story narration"
         >
           {isLoading || isCheckingStatus ? (
             <>
@@ -313,15 +299,10 @@ export function StoryPlayButton({
               <Pause className="w-5 h-5 mr-2" />
               Pause Story
             </>
-          ) : canNarrate ? (
+          ) : (
             <>
               <Headphones className="w-5 h-5 mr-2" />
               Play Story
-            </>
-          ) : (
-            <>
-              <Mic className="w-5 h-5 mr-2" />
-              Record Voice Samples
             </>
           )}
         </Button>
@@ -431,14 +412,11 @@ export function StoryPlayButton({
           {/* Controls */}
           <div className="flex items-center justify-center space-x-4">
             <Button
-              onClick={narrationStatus?.canNarrate ? (isPlaying ? pauseNarration : playNarration) : navigateToVoiceRecording}
-              disabled={isLoading}
+              onClick={isPlaying ? pauseNarration : playNarration}
+              disabled={isLoading || !narrationStatus?.canNarrate}
               size="lg"
-              className={narrationStatus?.canNarrate 
-                ? "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white" 
-                : "bg-orange-600 hover:bg-orange-700 text-white"
-              }
-              title={narrationStatus?.canNarrate ? "Play story narration" : "Record voice samples to enable narration"}
+              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
+              title="Play story narration"
             >
               {isLoading ? (
                 <>
@@ -450,15 +428,10 @@ export function StoryPlayButton({
                   <Pause className="w-5 h-5 mr-2" />
                   Pause Story
                 </>
-              ) : narrationStatus?.canNarrate ? (
+              ) : (
                 <>
                   <Play className="w-5 h-5 mr-2" />
                   {narrationSegments.length > 0 ? 'Continue Story' : 'Play Story'}
-                </>
-              ) : (
-                <>
-                  <Mic className="w-5 h-5 mr-2" />
-                  Record Voice Samples
                 </>
               )}
             </Button>
