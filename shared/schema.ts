@@ -262,69 +262,19 @@ export const userEmotionVoices = pgTable("user_emotion_voices", {
 });
 
 // Voice modulation templates - configurable database-driven voice samples
-export const voiceModulationTemplates = pgTable("voice_modulation_templates", {
-  id: serial("id").primaryKey(),
-  modulationType: varchar("modulation_type").notNull(), // 'emotion', 'sound', 'description'
-  modulationKey: varchar("modulation_key").notNull(), // 'happy', 'cat_sound', 'fast_description'
-  displayName: varchar("display_name").notNull(),
-  description: text("description").notNull(),
-  sampleText: text("sample_text").notNull(),
-  targetDuration: integer("target_duration").default(10), // seconds
-  category: varchar("category").default('basic'), // 'basic', 'advanced', 'specialized'
-  voiceSettings: jsonb("voice_settings"), // ElevenLabs settings for this modulation
-  isActive: boolean("is_active").default(true),
-  sortOrder: integer("sort_order").default(0),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
+// Voice modulation templates removed - functionality integrated into ESM reference data
 
 // User voice samples - story-level collection that accumulates across stories
-export const userVoiceModulations = pgTable("user_voice_modulations", {
-  id: serial("id").primaryKey(),
-  userId: varchar("user_id").references(() => users.id).notNull(),
-  storyId: integer("story_id").references(() => stories.id), // Story where first recorded
-  templateId: integer("template_id").references(() => voiceModulationTemplates.id).notNull(),
-  modulationType: varchar("modulation_type").notNull(), // 'emotion', 'sound', 'description'
-  modulationKey: varchar("modulation_key").notNull(), // 'happy', 'cat_sound', 'fast_description'
-  audioUrl: text("audio_url").notNull(),
-  fileName: varchar("file_name").notNull(),
-  duration: integer("duration"), // in milliseconds
-  qualityScore: doublePrecision("quality_score"), // AI assessment of recording quality (0-1)
-  isPreferred: boolean("is_preferred").default(false), // User's preferred version if multiple exist
-  usageCount: integer("usage_count").default(0), // How many times used in story generation
-  lastUsedAt: timestamp("last_used_at"),
-  recordedAt: timestamp("recorded_at").defaultNow(),
-  // New fields for voice cloning integration
-  userEmotionVoiceId: integer("user_emotion_voice_id").references(() => userEmotionVoices.id),
-  isUsedForTraining: boolean("is_used_for_training").default(false),
-  qualityRating: integer("quality_rating"), // 1-5 quality score
-  trainingBatchId: varchar("training_batch_id"), // group samples sent together
-});
+// User voice modulations removed - functionality integrated into ESM user_esm_recordings table
 
-// Generated audio cache for reuse across stories
-export const generatedAudioCache = pgTable("generated_audio_cache", {
-  id: serial("id").primaryKey(),
-  contentHash: varchar("content_hash").notNull().unique(), // MD5 of (text + emotion + voiceId)
-  text: text("text").notNull(),
-  emotion: varchar("emotion").notNull(),
-  voiceId: varchar("voice_id").notNull(), // ElevenLabs or OpenAI voice used
-  provider: varchar("provider").notNull(), // "elevenlabs", "openai"
-  audioUrl: text("audio_url").notNull(),
-  fileSize: integer("file_size"), // in bytes
-  duration: doublePrecision("duration"), // in seconds
-  apiCost: numeric("api_cost"), // track cost per generation
-  generatedAt: timestamp("generated_at").defaultNow(),
-  lastAccessedAt: timestamp("last_accessed_at").defaultNow(),
-  accessCount: integer("access_count").default(1), // reuse tracking
-  expiresAt: timestamp("expires_at"), // cleanup after 90 days unused
-});
+// Generated audio cache removed - functionality integrated into ESM system
 
 // Link cache to stories (many-to-many reuse)
 export const storyAudioSegments = pgTable("story_audio_segments", {
   id: serial("id").primaryKey(),
   storyId: integer("story_id").references(() => stories.id).notNull(),
   segmentOrder: integer("segment_order").notNull(),
-  generatedAudioCacheId: integer("generated_audio_cache_id").references(() => generatedAudioCache.id).notNull(),
+  // generatedAudioCacheId removed - using ESM architecture
   characterName: varchar("character_name"),
   isReused: boolean("is_reused").default(false), // was this reused from cache?
   createdAt: timestamp("created_at").defaultNow(),
@@ -362,7 +312,7 @@ export const storyModulationRequirements = pgTable("story_modulation_requirement
   storyId: integer("story_id").references(() => stories.id).notNull(),
   modulationType: varchar("modulation_type").notNull(), // 'emotion', 'sound', 'description'
   modulationKey: varchar("modulation_key").notNull(), // 'happy', 'cat_sound', 'fast_description'
-  templateId: integer("template_id").references(() => voiceModulationTemplates.id),
+  // templateId removed - using ESM architecture
   isRequired: boolean("is_required").default(true),
   contextUsage: text("context_usage"), // Where in story this modulation is used
   detectedBy: varchar("detected_by").default('ai'), // 'ai', 'user', 'manual'
@@ -1397,24 +1347,9 @@ export type InsertVersionLineage = z.infer<typeof insertVersionLineageSchema>;
 // VOICE MODULATION SYSTEM SCHEMAS
 // =============================================================================
 
-// Voice Modulation Template schemas
-export const insertVoiceModulationTemplateSchema = createInsertSchema(voiceModulationTemplates).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
+// Voice Modulation Template schemas removed - functionality integrated into ESM system
 
-export type VoiceModulationTemplate = typeof voiceModulationTemplates.$inferSelect;
-export type InsertVoiceModulationTemplate = z.infer<typeof insertVoiceModulationTemplateSchema>;
-
-// User Voice Modulation schemas
-export const insertUserVoiceModulationSchema = createInsertSchema(userVoiceModulations).omit({
-  id: true,
-  recordedAt: true,
-});
-
-export type UserVoiceModulation = typeof userVoiceModulations.$inferSelect;
-export type InsertUserVoiceModulation = z.infer<typeof insertUserVoiceModulationSchema>;
+// User Voice Modulation schemas removed - functionality integrated into ESM system
 
 // Story Modulation Requirement schemas
 export const insertStoryModulationRequirementSchema = createInsertSchema(storyModulationRequirements).omit({

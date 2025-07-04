@@ -5441,7 +5441,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'Access denied' });
       }
 
-      const costs = await storage.getUserVoiceCloningCosts(userId);
+      // Voice cloning costs tracking removed - using ESM architecture
+      const costs: any[] = [];
       const totalCostCents = costs.reduce((sum: number, cost: any) => sum + cost.costCents, 0);
       const totalApiCalls = costs.reduce((sum: number, cost: any) => sum + cost.apiCallsCount, 0);
       const totalSamplesProcessed = costs.reduce((sum: number, cost: any) => sum + cost.samplesProcessed, 0);

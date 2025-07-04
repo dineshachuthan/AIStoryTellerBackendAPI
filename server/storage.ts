@@ -530,7 +530,7 @@ export class DatabaseStorage implements IStorage {
     // Use ESM architecture - get user's recordings with ESM reference data
     const result = await db.execute(
       sql`SELECT 
-            uer.user_esm_recordings_id as id,
+            uer.id,
             uer.audio_url as "audioUrl",
             uer.duration,
             uer.file_size as "fileSize",
@@ -1373,35 +1373,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Voice Generation Cache
-  async getVoiceGenerationCache(contentHash: string): Promise<any | undefined> {
-    const generatedAudioCache = await import("@shared/schema").then(m => m.generatedAudioCache);
-    const [cached] = await db.select().from(generatedAudioCache)
-      .where(eq(generatedAudioCache.contentHash, contentHash));
-    return cached || undefined;
-  }
+  // Voice generation cache removed - using ESM architecture
 
-  async createVoiceGenerationCache(cache: any): Promise<any> {
-    const generatedAudioCache = await import("@shared/schema").then(m => m.generatedAudioCache);
-    const [created] = await db.insert(generatedAudioCache).values(cache).returning();
-    return created;
-  }
-
-  async updateVoiceGenerationCacheAccess(id: number): Promise<void> {
-    const generatedAudioCache = await import("@shared/schema").then(m => m.generatedAudioCache);
-    await db.update(generatedAudioCache)
-      .set({ 
-        lastAccessedAt: new Date(),
-        accessCount: sql`${generatedAudioCache.accessCount} + 1`
-      })
-      .where(eq(generatedAudioCache.id, id));
-  }
-
-  async cleanupExpiredVoiceCache(): Promise<number> {
-    const generatedAudioCache = await import("@shared/schema").then(m => m.generatedAudioCache);
-    const result = await db.delete(generatedAudioCache)
-      .where(lt(generatedAudioCache.expiresAt, new Date()));
-    return result.rowCount || 0;
-  }
+  // All voice generation cache methods removed - using ESM architecture
 
   // Story Analysis Cache
   async getStoryAnalysisCache(contentHash: string): Promise<any | undefined> {
@@ -1466,54 +1440,15 @@ export class DatabaseStorage implements IStorage {
 
 
   // Audio Cache System methods
-  async getAudioCacheEntry(contentHash: string): Promise<any | undefined> {
-    const generatedAudioCache = await import("@shared/schema").then(m => m.generatedAudioCache);
-    const [entry] = await db.select().from(generatedAudioCache)
-      .where(eq(generatedAudioCache.contentHash, contentHash));
-    return entry || undefined;
-  }
+  // getAudioCacheEntry removed - using ESM architecture
 
-  async createAudioCacheEntry(cacheData: any): Promise<any> {
-    const generatedAudioCache = await import("@shared/schema").then(m => m.generatedAudioCache);
-    const [created] = await db.insert(generatedAudioCache).values({
-      ...cacheData,
-      createdAt: new Date(),
-      lastAccessedAt: new Date()
-    }).returning();
-    return created;
-  }
+  // createAudioCacheEntry removed - using ESM architecture
 
-  async updateAudioCacheUsage(id: number): Promise<void> {
-    const generatedAudioCache = await import("@shared/schema").then(m => m.generatedAudioCache);
-    await db.update(generatedAudioCache)
-      .set({
-        lastAccessedAt: new Date(),
-        accessCount: sql`${generatedAudioCache.accessCount} + 1`
-      })
-      .where(eq(generatedAudioCache.id, id));
-  }
+  // updateAudioCacheUsage removed - using ESM architecture
 
-  async deleteAudioCacheEntry(id: number): Promise<void> {
-    const generatedAudioCache = await import("@shared/schema").then(m => m.generatedAudioCache);
-    await db.delete(generatedAudioCache).where(eq(generatedAudioCache.id, id));
-  }
+  // deleteAudioCacheEntry removed - using ESM architecture
 
-  async getAudioCacheStats(): Promise<any> {
-    const generatedAudioCache = await import("@shared/schema").then(m => m.generatedAudioCache);
-    const [stats] = await db.select({
-      totalEntries: sql`count(*)`,
-      totalSizeBytes: sql`sum(${generatedAudioCache.fileSizeBytes})`,
-      avgAccessCount: sql`avg(${generatedAudioCache.accessCount})`
-    }).from(generatedAudioCache);
-    return stats || { totalEntries: 0, totalSizeBytes: 0, avgAccessCount: 0 };
-  }
-
-  async getExpiredAudioCacheEntries(maxAge: number): Promise<any[]> {
-    const generatedAudioCache = await import("@shared/schema").then(m => m.generatedAudioCache);
-    const cutoffDate = new Date(Date.now() - maxAge);
-    return await db.select().from(generatedAudioCache)
-      .where(lt(generatedAudioCache.lastAccessedAt, cutoffDate));
-  }
+  // getAudioCacheStats and getExpiredAudioCacheEntries removed - using ESM architecture
 
   // Story Narrations Enhanced methods
 
@@ -1866,26 +1801,7 @@ export class DatabaseStorage implements IStorage {
     return jobs;
   }
 
-  async createVoiceCloningCost(cost: any): Promise<any> {
-    const { voiceCloningCosts } = await import('@shared/schema');
-    
-    const [newCost] = await db.insert(voiceCloningCosts).values(cost).returning();
-    console.log(`💰 Recorded voice cloning cost: $${(cost.costCents / 100).toFixed(2)} for user ${cost.userId}`);
-    return newCost;
-  }
-
-  async getUserVoiceCloningCosts(userId: string): Promise<any[]> {
-    const { voiceCloningCosts } = await import('@shared/schema');
-    const { eq, desc } = await import('drizzle-orm');
-    
-    const costs = await db.select()
-      .from(voiceCloningCosts)
-      .where(eq(voiceCloningCosts.userId, userId))
-      .orderBy(desc(voiceCloningCosts.createdAt));
-    
-    console.log(`💸 Found ${costs.length} cost records for user ${userId}`);
-    return costs;
-  }
+  // Voice cloning cost tracking removed - functionality integrated into ESM voice cloning jobs table
 
   // Add missing database access method for reference data service
   getDb() {

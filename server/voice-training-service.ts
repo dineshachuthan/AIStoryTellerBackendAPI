@@ -273,20 +273,17 @@ export class VoiceTrainingService {
   }
 
   /**
-   * Get voice modulations for specific emotion
+   * Get voice modulations for specific emotion - now uses ESM architecture
    */
   private async getUserVoiceModulationsForEmotion(userId: string, emotion: string): Promise<any[]> {
-    const { userVoiceModulations } = await import('@shared/schema');
-    const { eq, and } = await import('drizzle-orm');
-    const { db } = await import('./db');
+    // ESM architecture: Get user's ESM recordings for the specific emotion
+    const { storage } = await import('./storage');
+    const esmRecordings = await storage.getUserEsmRecordings(userId);
     
-    return await db
-      .select()
-      .from(userVoiceModulations)
-      .where(and(
-        eq(userVoiceModulations.userId, userId),
-        eq(userVoiceModulations.modulationKey, emotion)
-      ));
+    // Filter for the specific emotion
+    return esmRecordings.filter(recording => 
+      recording.name.toLowerCase() === emotion.toLowerCase()
+    );
   }
 
   /**
