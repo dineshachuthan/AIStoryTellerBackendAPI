@@ -57,6 +57,7 @@ export interface IStorage {
   }): Promise<any>;
   getAllEsmRefs(): Promise<any[]>;
   getEsmRefsByCategory(category: number): Promise<any[]>;
+  updateEsmRef(esmRefId: number, updates: Partial<{ sample_text: string; display_name: string; description: string }>): Promise<void>;
   
   // User ESM Data
   getUserEsm(userId: string, esmRefId: number): Promise<any | null>;
@@ -1208,6 +1209,31 @@ export class DatabaseStorage implements IStorage {
       sql`SELECT * FROM esm_ref WHERE category = ${category} ORDER BY name`
     );
     return result.rows;
+  }
+
+  async updateEsmRef(esmRefId: number, updates: Partial<{ sample_text: string; display_name: string; description: string }>): Promise<void> {
+    const updateFields: string[] = [];
+    const values: any[] = [];
+    
+    if (updates.sample_text !== undefined) {
+      updateFields.push('sample_text = ?');
+      values.push(updates.sample_text);
+    }
+    if (updates.display_name !== undefined) {
+      updateFields.push('display_name = ?');
+      values.push(updates.display_name);
+    }
+    if (updates.description !== undefined) {
+      updateFields.push('description = ?');
+      values.push(updates.description);
+    }
+    
+    if (updateFields.length > 0) {
+      values.push(esmRefId);
+      await db.execute(
+        sql.raw(`UPDATE esm_ref SET ${updateFields.join(', ')} WHERE esm_ref_id = ?`, values)
+      );
+    }
   }
 
   // User ESM Data Implementation

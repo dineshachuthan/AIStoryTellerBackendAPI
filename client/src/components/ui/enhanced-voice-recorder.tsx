@@ -440,16 +440,30 @@ export function EnhancedVoiceRecorder({
               <span className={cn(
                 recordingState === 'recording' ? 
                   (recordingTime >= 6 ? "text-green-400" : "text-orange-400") 
-                  : "text-gray-400"
+                  : recordedSample?.duration 
+                    ? (recordedSample.duration >= 6 ? "text-green-400" : "text-red-400")
+                    : "text-gray-400"
               )}>
-                {recordingState === 'recording' ? formatTime(recordingTime) : '00:00'}
-                {recordingState === 'recording' && recordingTime >= 6 ? " ✓" : ""}
+                {recordingState === 'recording' 
+                  ? formatTime(recordingTime) 
+                  : recordedSample?.duration 
+                    ? formatTime(Math.round(recordedSample.duration))
+                    : '00:00'
+                }
+                {(recordingState === 'recording' && recordingTime >= 6) || 
+                 (recordedSample?.duration && recordedSample.duration >= 6) ? " ✓" : ""}
               </span>
               <span>{formatTime(maxRecordingTime)}</span>
             </div>
             <div className="relative">
               <Progress 
-                value={recordingState === 'recording' ? progressPercentage : 0} 
+                value={
+                  recordingState === 'recording' 
+                    ? progressPercentage 
+                    : (recordedSample?.duration && maxRecordingTime > 0)
+                      ? Math.min((recordedSample.duration / maxRecordingTime) * 100, 100)
+                      : 0
+                } 
                 className="h-2 bg-gray-700" 
               />
               {/* 6-second minimum marker - Always visible */}
@@ -460,10 +474,8 @@ export function EnhancedVoiceRecorder({
               />
               <div className="flex justify-between text-xs text-gray-500 mt-1">
                 <span>0s</span>
-                <span className="text-red-400 text-xs" style={{ marginLeft: `${Math.max((6 / maxRecordingTime) * 100 - 3, 0)}%` }}>
-                  6s min
-                </span>
-                <span>{maxRecordingTime}s</span>
+                <span className="text-red-400 text-xs">6s min</span>
+                <span>{maxRecordingTime}s ✓</span>
               </div>
             </div>
             {recordedSample && (
