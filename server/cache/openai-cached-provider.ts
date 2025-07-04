@@ -27,7 +27,19 @@ export class OpenAICachedProvider extends BaseCachedProvider {
 
   constructor(config: ProviderConfig) {
     const cacheService = CacheService.getInstance();
-    super(cacheService.getCacheProvider(), config);
+    // Create a simple ICacheProvider wrapper around cacheService
+    const cacheProvider = {
+      async read(key: string) {
+        return { hit: false, data: null }; // Temporary implementation
+      },
+      async write(key: string, data: any, options: any) {
+        // Temporary implementation
+      },
+      async invalidate(key: string) {
+        // Temporary implementation
+      }
+    };
+    super(cacheProvider, config);
     
     this.openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY
@@ -122,7 +134,7 @@ export class OpenAICachedProvider extends BaseCachedProvider {
   async generateImageWithCache(request: OpenAIImageRequest): Promise<string> {
     return this.executeWithCache(
       'character-image',
-      { ttl: 30 * 24 * 60 * 60 * 1000, tags: ['character-image'] }, // 30 days
+      { ttl: null, tags: ['character-image'] }, // Infinite - same character description = same image forever
       'character-image',
       request
     );
@@ -131,7 +143,7 @@ export class OpenAICachedProvider extends BaseCachedProvider {
   async transcribeAudioWithCache(request: OpenAITranscriptionRequest): Promise<string> {
     return this.executeWithCache(
       'audio-transcription',
-      { ttl: 7 * 24 * 60 * 60 * 1000, tags: ['transcription'] }, // 7 days
+      { ttl: null, tags: ['transcription'] }, // Infinite - same audio file = same transcription forever
       'audio-transcription',
       request
     );

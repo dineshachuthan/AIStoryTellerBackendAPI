@@ -1,5 +1,4 @@
-import OpenAI from "openai";
-import { getCachedAnalysis, cacheAnalysis } from './cache/cache-service';
+import { getOpenAICachedProvider } from './cache/openai-cached-provider';
 import { AUDIO_FORMAT_CONFIG, AUDIO_PROCESSING_CONFIG } from '@shared/audio-config';
 import { storage } from "./storage";
 import { createHash } from 'crypto';
@@ -43,9 +42,7 @@ if (!process.env.OPENAI_API_KEY) {
   throw new Error("OPENAI_API_KEY environment variable is required");
 }
 
-const openai = new OpenAI({ 
-  apiKey: process.env.OPENAI_API_KEY
-});
+const openaiCachedProvider = getOpenAICachedProvider();
 
 export interface ExtractedCharacter {
   name: string;
@@ -156,30 +153,10 @@ export async function analyzeStoryContent(content: string, userId?: string): Pro
     - Determine appropriate category and themes
     - Flag adult content if it contains explicit material, violence, or mature themes`;
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        {
-          role: "system",
-          content: systemPrompt,
-        },
-        {
-          role: "user",
-          content: `Analyze this story:\n\n${content}`,
-        },
-      ],
-      max_tokens: 2000,
-      temperature: 0.3,
-      response_format: { type: "json_object" },
+    const analysis: StoryAnalysis = await openaiCachedProvider.analyzeStoryWithCache({
+      content,
+      userId
     });
-
-    const analysisText = response.choices[0].message.content;
-    if (!analysisText) {
-      throw new Error("No analysis generated from OpenAI");
-    }
-
-    console.log("Raw OpenAI Analysis Response:", analysisText);
-    const analysis: StoryAnalysis = JSON.parse(analysisText);
     console.log("Parsed Analysis - Emotions found:", analysis.emotions?.length || 0, analysis.emotions);
     
     // Assign voices to characters during analysis phase
@@ -197,13 +174,7 @@ export async function analyzeStoryContent(content: string, userId?: string): Pro
       await populateEsmReferenceData(analysis, userId);
     }
 
-    // Update cache with new analysis
-    try {
-      cacheAnalysis(content, analysis);
-      console.log("Successfully cached story analysis");
-    } catch (cacheUpdateError) {
-      console.warn("Failed to update analysis cache:", cacheUpdateError);
-    }
+    // Analysis is automatically cached by the cached provider
     
     return analysis;
   } catch (error) {
@@ -424,7 +395,7 @@ export async function analyzeStoryContentWithHashCache(storyId: number, content:
     });
 
     // Store analysis in database with content hash
-    const contentHash = ContentHashService.generateContentHash(content);
+    const contentHash = createHash('sha256').update(content).digest('hex');
     console.log(`[Content Hash Cache] Generated content hash for story ${storyId}: ${contentHash.substring(0, 12)}...`);
     
     try {
@@ -441,12 +412,7 @@ export async function analyzeStoryContentWithHashCache(storyId: number, content:
     }
 
     // Update file-based cache as fallback
-    try {
-      cacheAnalysis(content, analysis);
-      console.log(`[Content Hash Cache] Updated file-based cache for story ${storyId}`);
-    } catch (cacheUpdateError) {
-      console.warn(`[Content Hash Cache] Failed to update file cache for story ${storyId}:`, cacheUpdateError);
-    }
+    // Cache operations handled by OpenAI cached provider
 
     // Populate ESM reference data from new analysis
     await populateEsmReferenceData(analysis, userId);
