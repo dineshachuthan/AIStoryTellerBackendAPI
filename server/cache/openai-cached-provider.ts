@@ -113,7 +113,7 @@ export class OpenAICachedProvider extends BaseCachedProvider {
   async analyzeStoryWithCache(request: OpenAIAnalysisRequest): Promise<any> {
     return this.executeWithCache(
       'story-analysis',
-      { ttl: 30 * 24 * 60 * 60 * 1000, tags: ['story-analysis'] }, // 30 days
+      { ttl: 3 * 24 * 60 * 60 * 1000, tags: ['story-analysis'] }, // 3 days - allows for model improvements and prompt changes
       'story-analysis',
       request
     );

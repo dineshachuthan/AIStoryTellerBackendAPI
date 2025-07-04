@@ -183,7 +183,7 @@ This is a full-stack collaborative storytelling platform that enables users to c
   - **CONTENT HASH CACHING**: Story analysis, character images, and transcription now use SHA256 content hashing to prevent duplicate external API calls
   - **UNIFIED CACHE PATTERN**: generateCharacterImage(), transcribeAudio(), and analyzeStoryContentWithHashCache() all use OpenAICachedProvider
   - **CACHE-FIRST ENFORCEMENT**: Abstract base class makes all cache hit/miss decisions, concrete providers only handle actual API calls
-  - **30-DAY CACHE TTL**: OpenAI results cached for 30 days (story analysis, images) and 7 days (transcription) with automatic cleanup
+  - **OPTIMIZED CACHE TTL**: Story analysis cached for 3 days (allows model improvements), character images 30 days (expensive/consistent), transcription 7 days (immutable content)
   - **DATABASE-FIRST PATTERN**: All cache writes go to database first, then file cache, ensuring data integrity and consistency
   - **COST OPTIMIZATION**: System prevents duplicate API calls to expensive external services through intelligent content hashing
   - **PROVIDER STATISTICS**: Comprehensive cache hit/miss tracking and performance monitoring across all external integrations
