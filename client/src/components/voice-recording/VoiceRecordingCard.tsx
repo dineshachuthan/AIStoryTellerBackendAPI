@@ -317,6 +317,42 @@ export function VoiceRecordingCard({
               </p>
             )}
           </div>
+          
+          {/* Duration Requirement Indicator - Always Visible */}
+          <div className="mt-2">
+            <div className="flex justify-between text-xs text-muted-foreground mb-1">
+              <span>Duration Requirement</span>
+              <span className={cn(
+                recordedSample && recordedSample.duration >= 6 
+                  ? "text-green-600 font-medium" 
+                  : "text-red-600 font-medium"
+              )}>
+                {recordedSample 
+                  ? `${recordedSample.duration.toFixed(1)}s ${recordedSample.duration >= 6 ? "✓" : "✗"}` 
+                  : "6s minimum required"
+                }
+              </span>
+            </div>
+            <div className="relative">
+              <Progress 
+                value={recordedSample ? Math.min((recordedSample.duration / 30) * 100, 100) : 0} 
+                className="h-2" 
+              />
+              {/* 6-second minimum marker - Always visible */}
+              <div 
+                className="absolute top-0 h-2 w-0.5 bg-red-500 z-10"
+                style={{ left: `${Math.min((6 / 30) * 100, 95)}%` }}
+                title="6-second minimum for voice cloning"
+              />
+              <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                <span>0s</span>
+                <span className="text-red-600 text-xs" style={{ marginLeft: `${Math.max((6 / 30) * 100 - 3, 0)}%` }}>
+                  6s
+                </span>
+                <span>30s</span>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Recording Progress */}

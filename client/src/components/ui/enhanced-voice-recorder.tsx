@@ -436,13 +436,48 @@ export function EnhancedVoiceRecorder({
           {/* Static Progress Bar - Always visible */}
           <div className="mb-2">
             <div className="flex justify-between text-xs text-gray-400 mb-1">
-              <span>{recordingState === 'recording' ? formatTime(recordingTime) : '00:00'}</span>
+              <span className={cn(
+                recordingState === 'recording' ? 
+                  (recordingTime >= 6 ? "text-green-400" : "text-orange-400") 
+                  : "text-gray-400"
+              )}>
+                {recordingState === 'recording' ? formatTime(recordingTime) : '00:00'}
+                {recordingState === 'recording' && recordingTime >= 6 ? " ✓" : ""}
+              </span>
               <span>{formatTime(maxRecordingTime)}</span>
             </div>
-            <Progress 
-              value={recordingState === 'recording' ? progressPercentage : 0} 
-              className="h-1 bg-gray-700" 
-            />
+            <div className="relative">
+              <Progress 
+                value={recordingState === 'recording' ? progressPercentage : 0} 
+                className="h-2 bg-gray-700" 
+              />
+              {/* 6-second minimum marker - Always visible */}
+              <div 
+                className="absolute top-0 h-2 w-0.5 bg-red-500 z-10"
+                style={{ left: `${Math.min((6 / maxRecordingTime) * 100, 95)}%` }}
+                title="6-second minimum for voice cloning"
+              />
+              <div className="flex justify-between text-xs text-gray-500 mt-1">
+                <span>0s</span>
+                <span className="text-red-400 text-xs" style={{ marginLeft: `${Math.max((6 / maxRecordingTime) * 100 - 3, 0)}%` }}>
+                  6s min
+                </span>
+                <span>{maxRecordingTime}s</span>
+              </div>
+            </div>
+            {recordedSample && (
+              <div className="flex justify-between text-xs text-gray-400 mt-1">
+                <span>Recorded Duration:</span>
+                <span className={cn(
+                  recordedSample.duration && recordedSample.duration >= 6 
+                    ? "text-green-400 font-medium" 
+                    : "text-red-400 font-medium"
+                )}>
+                  {recordedSample.duration ? `${recordedSample.duration.toFixed(1)}s` : "Unknown"} 
+                  {recordedSample.duration && recordedSample.duration >= 6 ? " ✓" : " ✗"}
+                </span>
+              </div>
+            )}
           </div>
           
           <div className="flex items-start space-x-4">
