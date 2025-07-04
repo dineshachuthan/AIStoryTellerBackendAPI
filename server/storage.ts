@@ -1,7 +1,7 @@
 import { users, localUsers, userProviders, userVoiceSamples, stories, storyCharacters, storyEmotions, characters, conversations, messages, storyCollaborations, storyGroups, storyGroupMembers, characterVoiceAssignments, storyPlaybacks, storyAnalyses, storyNarrations, audioFiles, videoGenerations, type User, type InsertUser, type UpsertUser, type UserProvider, type InsertUserProvider, type LocalUser, type InsertLocalUser, type UserVoiceSample, type InsertUserVoiceSample, type Story, type InsertStory, type StoryCharacter, type InsertStoryCharacter, type StoryEmotion, type InsertStoryEmotion, type Character, type InsertCharacter, type Conversation, type InsertConversation, type Message, type InsertMessage, type StoryCollaboration, type InsertStoryCollaboration, type StoryGroup, type InsertStoryGroup, type StoryGroupMember, type InsertStoryGroupMember, type CharacterVoiceAssignment, type InsertCharacterVoiceAssignment, type StoryPlayback, type InsertStoryPlayback, type StoryAnalysis, type InsertStoryAnalysis, type StoryNarration, type InsertStoryNarration, type AudioFile, type InsertAudioFile } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, like, lt, sql } from "drizzle-orm";
-import { ContentHashService } from './content-hash-service';
+// Content hash functionality moved to unified cache architecture
 
 export interface IStorage {
   // Users
@@ -306,6 +306,20 @@ export interface IStorage {
   // Reference Data Migration
   migrateStoryToReference(storyId: number): Promise<any>;
   migrateAllStoriesToReference(): Promise<any>;
+  
+  // Cache Management Methods
+  getCacheEntry(key: string): Promise<any | null>;
+  createCacheEntry(entry: any): Promise<any>;
+  updateCacheEntry(key: string, entry: any): Promise<any>;
+  updateCacheUsage(key: string): Promise<void>;
+  deleteCacheEntry(key: string): Promise<boolean>;
+  getCacheEntriesByPattern(pattern: string): Promise<any[]>;
+  getCacheEntriesByTags(tags: string[]): Promise<any[]>;
+  getCacheStats(): Promise<any>;
+  getAllCacheEntries(): Promise<any[]>;
+  clearAllCacheEntries(): Promise<void>;
+  getExpiredCacheEntries(): Promise<any[]>;
+  getOldestCacheEntries(limit: number): Promise<any[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1806,6 +1820,71 @@ export class DatabaseStorage implements IStorage {
   // Add missing database access method for reference data service
   getDb() {
     return db;
+  }
+
+  // Cache Management Methods Implementation
+  async getCacheEntry(key: string): Promise<any | null> {
+    // Cache table implementation will be added with database schema
+    // For now, return null to indicate cache miss
+    return null;
+  }
+
+  async createCacheEntry(entry: any): Promise<any> {
+    // Cache entry creation will be implemented with database schema
+    return entry;
+  }
+
+  async updateCacheEntry(key: string, entry: any): Promise<any> {
+    // Cache entry update will be implemented with database schema
+    return entry;
+  }
+
+  async updateCacheUsage(key: string): Promise<void> {
+    // Cache usage tracking will be implemented with database schema
+  }
+
+  async deleteCacheEntry(key: string): Promise<boolean> {
+    // Cache entry deletion will be implemented with database schema
+    return true;
+  }
+
+  async getCacheEntriesByPattern(pattern: string): Promise<any[]> {
+    // Pattern-based cache retrieval will be implemented with database schema
+    return [];
+  }
+
+  async getCacheEntriesByTags(tags: string[]): Promise<any[]> {
+    // Tag-based cache retrieval will be implemented with database schema
+    return [];
+  }
+
+  async getCacheStats(): Promise<any> {
+    // Cache statistics will be implemented with database schema
+    return {
+      totalEntries: 0,
+      totalSize: 0,
+      hitRate: 0,
+      missRate: 0
+    };
+  }
+
+  async getAllCacheEntries(): Promise<any[]> {
+    // All cache entries retrieval will be implemented with database schema
+    return [];
+  }
+
+  async clearAllCacheEntries(): Promise<void> {
+    // Cache clearing will be implemented with database schema
+  }
+
+  async getExpiredCacheEntries(): Promise<any[]> {
+    // Expired cache entries retrieval will be implemented with database schema
+    return [];
+  }
+
+  async getOldestCacheEntries(limit: number): Promise<any[]> {
+    // Oldest cache entries retrieval will be implemented with database schema
+    return [];
   }
 }
 

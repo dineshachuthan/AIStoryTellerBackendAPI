@@ -1,7 +1,7 @@
 import OpenAI from 'openai';
 import fs from 'fs/promises';
 import path from 'path';
-import { getCachedAudio, cacheAudio } from './content-cache';
+import { getCachedAudio, cacheAudio } from './cache/cache-service';
 import { pool } from './db';
 
 export interface AudioGenerationOptions {

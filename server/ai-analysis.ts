@@ -1,8 +1,8 @@
 import OpenAI from "openai";
-import { getCachedAnalysis, cacheAnalysis } from './content-cache';
+import { getCachedAnalysis, cacheAnalysis } from './cache/cache-service';
 import { AUDIO_FORMAT_CONFIG, AUDIO_PROCESSING_CONFIG } from '@shared/audio-config';
 import { storage } from "./storage";
-import { ContentHashService } from './content-hash-service';
+import { createHash } from 'crypto';
 
 // Audio format detection using configuration
 export function detectAudioFormat(buffer: Buffer): string {
@@ -96,20 +96,9 @@ export async function analyzeStoryContent(content: string, userId?: string): Pro
     throw new Error("Cannot analyze empty story content. Please add text to your story first.");
   }
 
-  // Try cache first, fallback to source with cache update
-  try {
-    const cachedAnalysis = getCachedAnalysis(content);
-    if (cachedAnalysis) {
-      console.log("Using cached story analysis");
-      // Still populate ESM reference data even for cached analysis
-      if (userId) {
-        await populateEsmReferenceData(cachedAnalysis, userId);
-      }
-      return cachedAnalysis;
-    }
-  } catch (cacheError) {
-    console.warn("Cache read failed, generating analysis from source:", cacheError);
-  }
+  // Cache functionality will be implemented with unified cache architecture
+  // For now, proceed directly to analysis generation
+  // Direct AI analysis generation without cache
 
   // Cache miss/error - generate from source and update cache
   try {

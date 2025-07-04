@@ -12,7 +12,7 @@ import { createHash } from 'crypto';
 import { generateRolePlayAnalysis, enhanceExistingRolePlay, generateSceneDialogue } from "./roleplay-analysis";
 import { rolePlayAudioService } from "./roleplay-audio-service";
 import { collaborativeRoleplayService } from "./collaborative-roleplay-service";
-import { getCachedCharacterImage, cacheCharacterImage, getCachedAudio, cacheAudio, getCachedAnalysis, cacheAnalysis, getAllCacheStats, cleanOldCacheFiles } from "./content-cache";
+// Legacy content cache functionality moved to unified cache architecture
 import { pool } from "./db";
 import { db } from "./db";
 import { eq, desc, and } from "drizzle-orm";
@@ -20,6 +20,7 @@ import { videoGenerations } from "@shared/schema";
 import { audioService } from "./audio-service";
 import { VOICE_CLONING_CONFIG } from "@shared/voice-config";
 import { userContentStorage } from "./user-content-storage";
+import { getCachedCharacterImage, cacheCharacterImage, getAllCacheStats, cleanOldCacheFiles, getCachedAudio } from "./cache/cache-service";
 
 import { storyNarrator } from "./story-narrator";
 import { grandmaVoiceNarrator } from "./voice-narrator";
@@ -596,8 +597,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const targetDurationSeconds = videoConfig.roleplay?.targetDurationSeconds || 60;
           
           const rolePlayAnalysis = await generateRolePlayAnalysis(story.content, [], targetDurationSeconds);
-          const { ContentHashService } = await import("./content-hash-service");
-          const contentHash = ContentHashService.generateContentHash(story.content);
+          // Content hash functionality temporarily disabled during cache architecture transformation
+          const contentHash = createHash('sha256').update(story.content).digest('hex');
           
           await storage.updateStoryAnalysis(storyId, 'roleplay', rolePlayAnalysis, userId);
           console.log("✅ Roleplay analysis regenerated successfully");
