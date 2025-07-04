@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Lock, Unlock, Play, Pause, Volume2, Mic, Clock, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { EnhancedVoiceRecorder } from "@/components/ui/enhanced-voice-recorder";
+import { VoiceRecordingCard, VoiceTemplate, RecordedSample } from "@/components/voice-recording/VoiceRecordingCard";
 
 interface VoiceSampleCardProps {
   // Template data
@@ -20,11 +20,7 @@ interface VoiceSampleCardProps {
   // Recording state
   isRecorded: boolean;
   isLocked: boolean;
-  recordedSample?: {
-    audioUrl: string;
-    recordedAt: Date;
-    duration?: number;
-  };
+  recordedSample?: RecordedSample;
   
   // UI state
   disabled?: boolean;
@@ -103,41 +99,37 @@ export function VoiceSampleCard({
     }
   };
 
+  // Create VoiceTemplate for VoiceRecordingCard
+  const template: VoiceTemplate = {
+    id: 0, // Not used in this context
+    modulationType: category,
+    modulationKey: emotion,
+    displayName: displayName,
+    description: description,
+    sampleText: sampleText,
+    targetDuration: targetDuration || 10,
+    category: category,
+    voiceSettings: undefined
+  };
+
+  // Handle the recording callback to match VoiceRecordingCard's signature
+  const handleRecord = async (modulationKey: string, audioBlob: Blob): Promise<void> => {
+    onRecordingComplete(audioBlob);
+  };
+
   return (
     <div className={cn(
       "w-full max-w-sm mx-auto",
       disabled && "opacity-60 cursor-not-allowed",
       className
     )}>
-      <EnhancedVoiceRecorder
-        buttonText={{
-          hold: disabled
-            ? "🚫 Disabled"
-            : isLocked 
-              ? "🔒 Locked" 
-              : isRecorded 
-                ? "Re-record" 
-                : "Record",
-          recording: "Recording...",
-          instructions: disabled
-            ? "Recording disabled"
-            : isLocked 
-              ? "Sample locked for voice cloning" 
-              : isRecorded 
-                ? "Hold to re-record your voice" 
-                : "Hold button to record"
-        }}
-        sampleText={sampleText}
-        emotionName={displayName}
-        isRecorded={isRecorded}
-        isLocked={isLocked}
-        onRecordingComplete={onRecordingComplete}
-        className="w-full"
-        disabled={disabled || isLocked}
-        maxRecordingTime={targetDuration}
-        intensity={intensity}
-        onPlaySample={onPlaySample}
+      <VoiceRecordingCard
+        template={template}
         recordedSample={recordedSample}
+        isRecorded={isRecorded}
+        onRecord={handleRecord}
+        onPlayRecorded={onPlaySample}
+        className="w-full"
       />
     </div>
   );
