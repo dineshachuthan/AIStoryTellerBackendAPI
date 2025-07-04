@@ -26,6 +26,24 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Migration Management**: Drizzle Kit for schema migrations
 - **Session Storage**: PostgreSQL-backed session store using connect-pg-simple
 
+## CRITICAL DEVELOPMENT RULES (NEVER VIOLATE)
+
+### Zero Tolerance Hardcoding Policy
+**ABSOLUTELY NO HARDCODED TEXT, LABELS, BUTTONS, TITLES, TOOLTIPS, OR MESSAGES ANYWHERE IN THE CODEBASE**
+- ALL user-facing text MUST use UIMessages internationalization system from shared/i18n-config.ts
+- ALL configuration values MUST come from dedicated config files (shared/draft-config.ts, etc.)
+- ALL database counts MUST be sourced from actual database queries
+- VIOLATION OF THIS RULE IS UNACCEPTABLE - user has spent hours establishing these patterns
+- When adding ANY text, immediately create corresponding i18n template with proper variables
+- Pattern: `{UIMessages.getTitle('MESSAGE_CODE')}` or `{getDynamicMessage('CODE', variables).message}`
+
+### Mandatory Architectural Patterns (ALWAYS FOLLOW)
+- **BaseCachedProvider**: All external API integrations MUST use cached provider pattern
+- **UIMessages I18N**: All text MUST use internationalization system with proper template interpolation
+- **Plug-and-Play External APIs**: Zero fallback provider logic anywhere in system
+- **Database-First Operations**: All data operations go to database first, then cache
+- **State-Driven Workflow**: All story states use established state transition system
+
 ## Key Components
 
 ### Authentication System
