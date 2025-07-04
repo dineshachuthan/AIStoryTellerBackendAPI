@@ -3,7 +3,8 @@
  * Template-based messages with variable interpolation for multi-language support
  */
 
-export type Language = 'en' | 'es' | 'fr' | 'de' | 'ja' | 'zh' | 'ko';
+import { getCurrentUserLanguage, type Language } from './language-config';
+
 export type MessageType = 'error' | 'warning' | 'success' | 'info';
 export type MessageSeverity = 'low' | 'medium' | 'high' | 'critical';
 
@@ -24,6 +25,546 @@ export interface I18nMessageTemplate {
 }
 
 export const MESSAGE_TEMPLATES: Record<string, I18nMessageTemplate> = {
+  // Navigation and Common UI Labels
+  'NAV_HOME': {
+    code: 'NAV_HOME',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Home',
+      es: 'Inicio',
+      fr: 'Accueil',
+      de: 'Startseite',
+      ja: 'ホーム',
+      zh: '首页',
+      ko: '홈'
+    }
+  },
+  'NAV_STORIES': {
+    code: 'NAV_STORIES',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Stories',
+      es: 'Historias',
+      fr: 'Histoires',
+      de: 'Geschichten',
+      ja: 'ストーリー',
+      zh: '故事',
+      ko: '스토리'
+    }
+  },
+  'NAV_VOICE_SAMPLES': {
+    code: 'NAV_VOICE_SAMPLES',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Voice Samples',
+      es: 'Muestras de Voz',
+      fr: 'Échantillons Vocaux',
+      de: 'Sprachproben',
+      ja: '音声サンプル',
+      zh: '语音样本',
+      ko: '음성 샘플'
+    }
+  },
+  'NAV_LIBRARY': {
+    code: 'NAV_LIBRARY',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Library',
+      es: 'Biblioteca',
+      fr: 'Bibliothèque',
+      de: 'Bibliothek',
+      ja: 'ライブラリ',
+      zh: '图书馆',
+      ko: '라이브러리'
+    }
+  },
+  'NAV_PROFILE': {
+    code: 'NAV_PROFILE',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Profile',
+      es: 'Perfil',
+      fr: 'Profil',
+      de: 'Profil',
+      ja: 'プロフィール',
+      zh: '个人资料',
+      ko: '프로필'
+    }
+  },
+
+  // Story related labels
+  'STORY_CREATE_TITLE': {
+    code: 'STORY_CREATE_TITLE',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Create Story',
+      es: 'Crear Historia',
+      fr: 'Créer une Histoire',
+      de: 'Geschichte Erstellen',
+      ja: 'ストーリーを作成',
+      zh: '创建故事',
+      ko: '스토리 만들기'
+    }
+  },
+  'STORY_EDIT_TITLE': {
+    code: 'STORY_EDIT_TITLE',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Edit Story',
+      es: 'Editar Historia',
+      fr: 'Modifier l\'Histoire',
+      de: 'Geschichte Bearbeiten',
+      ja: 'ストーリーを編集',
+      zh: '编辑故事',
+      ko: '스토리 편집'
+    }
+  },
+  'STORY_TITLE_PLACEHOLDER': {
+    code: 'STORY_TITLE_PLACEHOLDER',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Enter your story title...',
+      es: 'Ingresa el título de tu historia...',
+      fr: 'Saisissez le titre de votre histoire...',
+      de: 'Geben Sie Ihren Geschichtentitel ein...',
+      ja: 'ストーリーのタイトルを入力...',
+      zh: '输入您的故事标题...',
+      ko: '스토리 제목을 입력하세요...'
+    }
+  },
+  'STORY_CONTENT_PLACEHOLDER': {
+    code: 'STORY_CONTENT_PLACEHOLDER',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Write your story here...',
+      es: 'Escribe tu historia aquí...',
+      fr: 'Écrivez votre histoire ici...',
+      de: 'Schreiben Sie Ihre Geschichte hier...',
+      ja: 'ここにストーリーを書いてください...',
+      zh: '在此处写下您的故事...',
+      ko: '여기에 스토리를 작성하세요...'
+    }
+  },
+
+  // Button labels
+  'BTN_SAVE': {
+    code: 'BTN_SAVE',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Save',
+      es: 'Guardar',
+      fr: 'Enregistrer',
+      de: 'Speichern',
+      ja: '保存',
+      zh: '保存',
+      ko: '저장'
+    }
+  },
+  'BTN_CANCEL': {
+    code: 'BTN_CANCEL',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Cancel',
+      es: 'Cancelar',
+      fr: 'Annuler',
+      de: 'Abbrechen',
+      ja: 'キャンセル',
+      zh: '取消',
+      ko: '취소'
+    }
+  },
+  'BTN_EDIT': {
+    code: 'BTN_EDIT',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Edit',
+      es: 'Editar',
+      fr: 'Modifier',
+      de: 'Bearbeiten',
+      ja: '編集',
+      zh: '编辑',
+      ko: '편집'
+    }
+  },
+  'BTN_DELETE': {
+    code: 'BTN_DELETE',
+    type: 'error',
+    severity: 'medium',
+    variables: [],
+    templates: {
+      en: 'Delete',
+      es: 'Eliminar',
+      fr: 'Supprimer',
+      de: 'Löschen',
+      ja: '削除',
+      zh: '删除',
+      ko: '삭제'
+    }
+  },
+  'BTN_UPLOAD': {
+    code: 'BTN_UPLOAD',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Upload',
+      es: 'Subir',
+      fr: 'Télécharger',
+      de: 'Hochladen',
+      ja: 'アップロード',
+      zh: '上传',
+      ko: '업로드'
+    }
+  },
+  'BTN_RECORD': {
+    code: 'BTN_RECORD',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Record',
+      es: 'Grabar',
+      fr: 'Enregistrer',
+      de: 'Aufnehmen',
+      ja: '録音',
+      zh: '录音',
+      ko: '녹음'
+    }
+  },
+  'BTN_PLAY': {
+    code: 'BTN_PLAY',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Play',
+      es: 'Reproducir',
+      fr: 'Jouer',
+      de: 'Abspielen',
+      ja: '再生',
+      zh: '播放',
+      ko: '재생'
+    }
+  },
+  'BTN_STOP': {
+    code: 'BTN_STOP',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Stop',
+      es: 'Detener',
+      fr: 'Arrêter',
+      de: 'Stoppen',
+      ja: '停止',
+      zh: '停止',
+      ko: '정지'
+    }
+  },
+
+  // Audio related labels
+  'AUDIO_PROCESSED_TITLE': {
+    code: 'AUDIO_PROCESSED_TITLE',
+    type: 'success',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Audio Processed Successfully',
+      es: 'Audio Procesado Exitosamente',
+      fr: 'Audio Traité avec Succès',
+      de: 'Audio Erfolgreich Verarbeitet',
+      ja: 'オーディオの処理が完了しました',
+      zh: '音频处理成功',
+      ko: '오디오 처리 완료'
+    }
+  },
+  'AUDIO_PROCESSED_DESC': {
+    code: 'AUDIO_PROCESSED_DESC',
+    type: 'success',
+    severity: 'low',
+    variables: ['characters'],
+    templates: {
+      en: 'Your audio has been converted to text ({characters} characters).',
+      es: 'Tu audio se ha convertido en texto ({characters} caracteres).',
+      fr: 'Votre audio a été converti en texte ({characters} caractères).',
+      de: 'Ihr Audio wurde in Text umgewandelt ({characters} Zeichen).',
+      ja: 'オーディオがテキストに変換されました（{characters}文字）。',
+      zh: '您的音频已转换为文本（{characters} 个字符）。',
+      ko: '오디오가 텍스트로 변환되었습니다 ({characters}자).'
+    }
+  },
+  'AUDIO_RECORDING_INSTRUCTION': {
+    code: 'AUDIO_RECORDING_INSTRUCTION',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Hold to record',
+      es: 'Mantén presionado para grabar',
+      fr: 'Maintenez pour enregistrer',
+      de: 'Halten zum Aufnehmen',
+      ja: '録音するには長押し',
+      zh: '按住录音',
+      ko: '녹음하려면 길게 누르세요'
+    }
+  },
+  'AUDIO_RECORDING_STOP': {
+    code: 'AUDIO_RECORDING_STOP',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Release to stop',
+      es: 'Suelta para detener',
+      fr: 'Relâchez pour arrêter',
+      de: 'Loslassen zum Stoppen',
+      ja: '停止するには離す',
+      zh: '松开停止',
+      ko: '놓으면 정지'
+    }
+  },
+
+  // Status and progress labels
+  'STATUS_LOADING': {
+    code: 'STATUS_LOADING',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Loading...',
+      es: 'Cargando...',
+      fr: 'Chargement...',
+      de: 'Lädt...',
+      ja: '読み込み中...',
+      zh: '加载中...',
+      ko: '로딩 중...'
+    }
+  },
+  'STATUS_PROCESSING': {
+    code: 'STATUS_PROCESSING',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Processing...',
+      es: 'Procesando...',
+      fr: 'Traitement...',
+      de: 'Verarbeitung...',
+      ja: '処理中...',
+      zh: '处理中...',
+      ko: '처리 중...'
+    }
+  },
+  'STATUS_COMPLETED': {
+    code: 'STATUS_COMPLETED',
+    type: 'success',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Completed',
+      es: 'Completado',
+      fr: 'Terminé',
+      de: 'Abgeschlossen',
+      ja: '完了',
+      zh: '已完成',
+      ko: '완료됨'
+    }
+  },
+  'STATUS_FAILED': {
+    code: 'STATUS_FAILED',
+    type: 'error',
+    severity: 'medium',
+    variables: [],
+    templates: {
+      en: 'Failed',
+      es: 'Falló',
+      fr: 'Échoué',
+      de: 'Fehlgeschlagen',
+      ja: '失敗',
+      zh: '失败',
+      ko: '실패'
+    }
+  },
+
+  // Form validation messages
+  'FORM_REQUIRED_FIELD': {
+    code: 'FORM_REQUIRED_FIELD',
+    type: 'error',
+    severity: 'medium',
+    variables: ['field'],
+    templates: {
+      en: '{field} is required',
+      es: '{field} es requerido',
+      fr: '{field} est requis',
+      de: '{field} ist erforderlich',
+      ja: '{field}は必須です',
+      zh: '{field}是必填项',
+      ko: '{field}는 필수입니다'
+    }
+  },
+  'FORM_INVALID_EMAIL': {
+    code: 'FORM_INVALID_EMAIL',
+    type: 'error',
+    severity: 'medium',
+    variables: [],
+    templates: {
+      en: 'Please enter a valid email address',
+      es: 'Por favor, ingresa un email válido',
+      fr: 'Veuillez saisir une adresse e-mail valide',
+      de: 'Bitte geben Sie eine gültige E-Mail-Adresse ein',
+      ja: '有効なメールアドレスを入力してください',
+      zh: '请输入有效的电子邮件地址',
+      ko: '유효한 이메일 주소를 입력하세요'
+    }
+  },
+  'FORM_MIN_LENGTH': {
+    code: 'FORM_MIN_LENGTH',
+    type: 'error',
+    severity: 'medium',
+    variables: ['field', 'min'],
+    templates: {
+      en: '{field} must be at least {min} characters',
+      es: '{field} debe tener al menos {min} caracteres',
+      fr: '{field} doit contenir au moins {min} caractères',
+      de: '{field} muss mindestens {min} Zeichen haben',
+      ja: '{field}は最低{min}文字必要です',
+      zh: '{field}必须至少包含{min}个字符',
+      ko: '{field}은 최소 {min}자 이상이어야 합니다'
+    }
+  },
+
+  // Time and date labels
+  'TIME_JUST_NOW': {
+    code: 'TIME_JUST_NOW',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Just now',
+      es: 'Justo ahora',
+      fr: 'À l\'instant',
+      de: 'Gerade eben',
+      ja: 'たった今',
+      zh: '刚刚',
+      ko: '방금'
+    }
+  },
+  'TIME_MINUTES_AGO': {
+    code: 'TIME_MINUTES_AGO',
+    type: 'info',
+    severity: 'low',
+    variables: ['minutes'],
+    templates: {
+      en: '{minutes} minutes ago',
+      es: 'hace {minutes} minutos',
+      fr: 'il y a {minutes} minutes',
+      de: 'vor {minutes} Minuten',
+      ja: '{minutes}分前',
+      zh: '{minutes}分钟前',
+      ko: '{minutes}분 전'
+    }
+  },
+  'TIME_HOURS_AGO': {
+    code: 'TIME_HOURS_AGO',
+    type: 'info',
+    severity: 'low',
+    variables: ['hours'],
+    templates: {
+      en: '{hours} hours ago',
+      es: 'hace {hours} horas',
+      fr: 'il y a {hours} heures',
+      de: 'vor {hours} Stunden',
+      ja: '{hours}時間前',
+      zh: '{hours}小时前',
+      ko: '{hours}시간 전'
+    }
+  },
+  'TIME_DAYS_AGO': {
+    code: 'TIME_DAYS_AGO',
+    type: 'info',
+    severity: 'low',
+    variables: ['days'],
+    templates: {
+      en: '{days} days ago',
+      es: 'hace {days} días',
+      fr: 'il y a {days} jours',
+      de: 'vor {days} Tagen',
+      ja: '{days}日前',
+      zh: '{days}天前',
+      ko: '{days}일 전'
+    }
+  },
+
+  // Voice cloning specific labels
+  'VOICE_CLONING_TITLE': {
+    code: 'VOICE_CLONING_TITLE',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Voice Cloning',
+      es: 'Clonación de Voz',
+      fr: 'Clonage Vocal',
+      de: 'Stimm-Kloning',
+      ja: 'ボイスクローニング',
+      zh: '语音克隆',
+      ko: '음성 복제'
+    }
+  },
+  'VOICE_TRAINING_PROGRESS': {
+    code: 'VOICE_TRAINING_PROGRESS',
+    type: 'info',
+    severity: 'low',
+    variables: ['progress'],
+    templates: {
+      en: 'Training Progress: {progress}%',
+      es: 'Progreso de Entrenamiento: {progress}%',
+      fr: 'Progression de l\'Entraînement: {progress}%',
+      de: 'Trainingsfortschritt: {progress}%',
+      ja: 'トレーニング進捗: {progress}%',
+      zh: '训练进度: {progress}%',
+      ko: '훈련 진행률: {progress}%'
+    }
+  },
+  'VOICE_SAMPLES_NEEDED': {
+    code: 'VOICE_SAMPLES_NEEDED',
+    type: 'info',
+    severity: 'low',
+    variables: ['needed'],
+    templates: {
+      en: '{needed} more samples needed',
+      es: 'Se necesitan {needed} muestras más',
+      fr: '{needed} échantillons supplémentaires nécessaires',
+      de: '{needed} weitere Proben benötigt',
+      ja: 'あと{needed}個のサンプルが必要',
+      zh: '还需要{needed}个样本',
+      ko: '{needed}개의 샘플이 더 필요합니다'
+    }
+  },
   // Voice Sample Operations
   VOICE_SAVE_FAILED: {
     code: 'VOICE_SAVE_FAILED',
@@ -302,6 +843,458 @@ export const MESSAGE_TEMPLATES: Record<string, I18nMessageTemplate> = {
       zh: '已发布的故事 - 对所有用户可见',
       ko: '게시된 이야기 - 모든 사용자에게 표시'
     }
+  },
+
+  // Audio Processing Messages
+  AUDIO_PROCESSING_FAILED: {
+    code: 'AUDIO_PROCESSING_FAILED',
+    type: 'error',
+    severity: 'medium',
+    variables: [],
+    templates: {
+      en: 'Audio Processing Failed',
+      es: 'Procesamiento de Audio Falló',
+      fr: 'Échec du Traitement Audio',
+      de: 'Audio-Verarbeitung Fehlgeschlagen',
+      ja: 'オーディオ処理が失敗しました',
+      zh: '音频处理失败',
+      ko: '오디오 처리 실패'
+    }
+  },
+
+  AUDIO_PROCESSING_FAILED_DESC: {
+    code: 'AUDIO_PROCESSING_FAILED_DESC',
+    type: 'error',
+    severity: 'medium',
+    variables: [],
+    templates: {
+      en: 'Could not process the audio file.',
+      es: 'No se pudo procesar el archivo de audio.',
+      fr: 'Impossible de traiter le fichier audio.',
+      de: 'Die Audiodatei konnte nicht verarbeitet werden.',
+      ja: 'オーディオファイルを処理できませんでした。',
+      zh: '无法处理音频文件。',
+      ko: '오디오 파일을 처리할 수 없습니다.'
+    }
+  },
+
+  AUDIO_PROCESSING_SUCCESS: {
+    code: 'AUDIO_PROCESSING_SUCCESS',
+    type: 'success',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Audio Processed Successfully',
+      es: 'Audio Procesado Exitosamente',
+      fr: 'Audio Traité avec Succès',
+      de: 'Audio Erfolgreich Verarbeitet',
+      ja: 'オーディオが正常に処理されました',
+      zh: '音频处理成功',
+      ko: '오디오 처리 성공'
+    }
+  },
+
+  AUDIO_PROCESSING_SUCCESS_DESC: {
+    code: 'AUDIO_PROCESSING_SUCCESS_DESC',
+    type: 'success',
+    severity: 'low',
+    variables: ['characters'],
+    templates: {
+      en: 'Your audio has been converted to text ({characters} characters).',
+      es: 'Su audio ha sido convertido a texto ({characters} caracteres).',
+      fr: 'Votre audio a été converti en texte ({characters} caractères).',
+      de: 'Ihr Audio wurde in Text umgewandelt ({characters} Zeichen).',
+      ja: 'オーディオがテキストに変換されました（{characters}文字）。',
+      zh: '您的音频已转换为文本（{characters}个字符）。',
+      ko: '오디오가 텍스트로 변환되었습니다（{characters}자）.'
+    }
+  },
+
+  // Story Validation Messages
+  STORY_ID_MISSING: {
+    code: 'STORY_ID_MISSING',
+    type: 'error',
+    severity: 'medium',
+    variables: [],
+    templates: {
+      en: 'No Story ID',
+      es: 'No hay ID de Historia',
+      fr: 'Aucun ID d\'Histoire',
+      de: 'Keine Geschichten-ID',
+      ja: 'ストーリーIDがありません',
+      zh: '没有故事ID',
+      ko: '스토리 ID 없음'
+    }
+  },
+
+  STORY_ID_MISSING_DESC: {
+    code: 'STORY_ID_MISSING_DESC',
+    type: 'error',
+    severity: 'medium',
+    variables: [],
+    templates: {
+      en: 'Story ID is missing.',
+      es: 'El ID de la historia está faltando.',
+      fr: 'L\'ID de l\'histoire est manquant.',
+      de: 'Die Geschichten-ID fehlt.',
+      ja: 'ストーリーIDが不足しています。',
+      zh: '故事ID缺失。',
+      ko: '스토리 ID가 누락되었습니다.'
+    }
+  },
+
+  STORY_CONTENT_EMPTY: {
+    code: 'STORY_CONTENT_EMPTY',
+    type: 'error',
+    severity: 'medium',
+    variables: [],
+    templates: {
+      en: 'No Content',
+      es: 'Sin Contenido',
+      fr: 'Aucun Contenu',
+      de: 'Kein Inhalt',
+      ja: 'コンテンツなし',
+      zh: '没有内容',
+      ko: '콘텐츠 없음'
+    }
+  },
+
+  STORY_CONTENT_EMPTY_DESC: {
+    code: 'STORY_CONTENT_EMPTY_DESC',
+    type: 'error',
+    severity: 'medium',
+    variables: [],
+    templates: {
+      en: 'Please write your story content.',
+      es: 'Por favor escribe el contenido de tu historia.',
+      fr: 'Veuillez écrire le contenu de votre histoire.',
+      de: 'Bitte schreiben Sie Ihren Geschichteninhalt.',
+      ja: 'ストーリーの内容を書いてください。',
+      zh: '请写下您的故事内容。',
+      ko: '스토리 내용을 작성해 주세요.'
+    }
+  },
+
+  // Story Update Messages
+  CONTENT_SAVED: {
+    code: 'CONTENT_SAVED',
+    type: 'success',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Content Saved',
+      es: 'Contenido Guardado',
+      fr: 'Contenu Sauvegardé',
+      de: 'Inhalt Gespeichert',
+      ja: 'コンテンツが保存されました',
+      zh: '内容已保存',
+      ko: '콘텐츠 저장됨'
+    }
+  },
+
+  CONTENT_SAVED_DESC: {
+    code: 'CONTENT_SAVED_DESC',
+    type: 'success',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Your story content has been saved.',
+      es: 'El contenido de tu historia ha sido guardado.',
+      fr: 'Le contenu de votre histoire a été sauvegardé.',
+      de: 'Ihr Geschichteninhalt wurde gespeichert.',
+      ja: 'ストーリーの内容が保存されました。',
+      zh: '您的故事内容已保存。',
+      ko: '스토리 내용이 저장되었습니다.'
+    }
+  },
+
+  SAVE_FAILED: {
+    code: 'SAVE_FAILED',
+    type: 'error',
+    severity: 'high',
+    variables: [],
+    templates: {
+      en: 'Save Failed',
+      es: 'Error al Guardar',
+      fr: 'Échec de la Sauvegarde',
+      de: 'Speichern Fehlgeschlagen',
+      ja: '保存に失敗しました',
+      zh: '保存失败',
+      ko: '저장 실패'
+    }
+  },
+
+  SAVE_FAILED_DESC: {
+    code: 'SAVE_FAILED_DESC',
+    type: 'error',
+    severity: 'high',
+    variables: [],
+    templates: {
+      en: 'Could not save story content. Please try again.',
+      es: 'No se pudo guardar el contenido de la historia. Por favor, inténtalo de nuevo.',
+      fr: 'Impossible de sauvegarder le contenu de l\'histoire. Veuillez réessayer.',
+      de: 'Geschichteninhalt konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.',
+      ja: 'ストーリーの内容を保存できませんでした。もう一度お試しください。',
+      zh: '无法保存故事内容。请重试。',
+      ko: '스토리 내용을 저장할 수 없습니다. 다시 시도해 주세요.'
+    }
+  },
+
+  NO_STORY: {
+    code: 'NO_STORY',
+    type: 'error',
+    severity: 'medium',
+    variables: [],
+    templates: {
+      en: 'No Story',
+      es: 'Sin Historia',
+      fr: 'Aucune Histoire',
+      de: 'Keine Geschichte',
+      ja: 'ストーリーなし',
+      zh: '没有故事',
+      ko: '스토리 없음'
+    }
+  },
+
+  ANALYSIS_CONTENT_EMPTY_DESC: {
+    code: 'ANALYSIS_CONTENT_EMPTY_DESC',
+    type: 'error',
+    severity: 'medium',
+    variables: [],
+    templates: {
+      en: 'Please add content to your story before analyzing.',
+      es: 'Por favor añade contenido a tu historia antes de analizarla.',
+      fr: 'Veuillez ajouter du contenu à votre histoire avant d\'analyser.',
+      de: 'Bitte fügen Sie Inhalt zu Ihrer Geschichte hinzu, bevor Sie sie analysieren.',
+      ja: '分析する前にストーリーにコンテンツを追加してください。',
+      zh: '请在分析之前为您的故事添加内容。',
+      ko: '분석하기 전에 스토리에 내용을 추가해 주세요.'
+    }
+  },
+
+  // Upload Story Form Labels
+  STORY_TITLE_LABEL: {
+    code: 'STORY_TITLE_LABEL',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Story Title (Optional)',
+      es: 'Título de la Historia (Opcional)',
+      fr: 'Titre de l\'Histoire (Facultatif)',
+      de: 'Geschichte Titel (Optional)',
+      ja: 'ストーリータイトル（任意）',
+      zh: '故事标题（可选）',
+      ko: '스토리 제목 (선택사항)'
+    }
+  },
+
+  STORY_TITLE_PLACEHOLDER: {
+    code: 'STORY_TITLE_PLACEHOLDER',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Enter your story title...',
+      es: 'Ingresa el título de tu historia...',
+      fr: 'Entrez le titre de votre histoire...',
+      de: 'Geben Sie Ihren Geschichtentitel ein...',
+      ja: 'ストーリーのタイトルを入力してください...',
+      zh: '输入您的故事标题...',
+      ko: '스토리 제목을 입력하세요...'
+    }
+  },
+
+  LANGUAGE_LABEL: {
+    code: 'LANGUAGE_LABEL',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Language',
+      es: 'Idioma',
+      fr: 'Langue',
+      de: 'Sprache',
+      ja: '言語',
+      zh: '语言',
+      ko: '언어'
+    }
+  },
+
+  SELECT_LANGUAGE_PLACEHOLDER: {
+    code: 'SELECT_LANGUAGE_PLACEHOLDER',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Select language',
+      es: 'Seleccionar idioma',
+      fr: 'Sélectionner la langue',
+      de: 'Sprache auswählen',
+      ja: '言語を選択',
+      zh: '选择语言',
+      ko: '언어 선택'
+    }
+  },
+
+  YOUR_STORY_LABEL: {
+    code: 'YOUR_STORY_LABEL',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Your Story',
+      es: 'Tu Historia',
+      fr: 'Votre Histoire',
+      de: 'Ihre Geschichte',
+      ja: 'あなたのストーリー',
+      zh: '您的故事',
+      ko: '당신의 스토리'
+    }
+  },
+
+  PROCESSING_AUDIO: {
+    code: 'PROCESSING_AUDIO',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Processing your audio...',
+      es: 'Procesando tu audio...',
+      fr: 'Traitement de votre audio...',
+      de: 'Verarbeitung Ihrer Audio...',
+      ja: 'オーディオを処理中...',
+      zh: '正在处理您的音频...',
+      ko: '오디오 처리 중...'
+    }
+  },
+
+  AUDIO_TRANSCRIPTION_DESC: {
+    code: 'AUDIO_TRANSCRIPTION_DESC',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Converting speech to text using AI transcription',
+      es: 'Convirtiendo voz a texto usando transcripción de IA',
+      fr: 'Conversion de la parole en texte utilisant la transcription IA',
+      de: 'Sprache zu Text mit KI-Transkription konvertieren',
+      ja: 'AI転写を使用して音声をテキストに変換',
+      zh: '使用AI转录将语音转换为文本',
+      ko: 'AI 전사를 사용하여 음성을 텍스트로 변환'
+    }
+  },
+
+  STORY_PLACEHOLDER: {
+    code: 'STORY_PLACEHOLDER',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Write your story here... (500-1000 words recommended)',
+      es: 'Escribe tu historia aquí... (500-1000 palabras recomendadas)',
+      fr: 'Écrivez votre histoire ici... (500-1000 mots recommandés)',
+      de: 'Schreiben Sie Ihre Geschichte hier... (500-1000 Wörter empfohlen)',
+      ja: 'ここにストーリーを書いてください...（500-1000語推奨）',
+      zh: '在这里写您的故事...（推荐500-1000字）',
+      ko: '여기에 스토리를 작성하세요... (500-1000단어 권장)'
+    }
+  },
+
+  WORD_COUNT: {
+    code: 'WORD_COUNT',
+    type: 'info',
+    severity: 'low',
+    variables: ['count'],
+    templates: {
+      en: 'Word count: {count}',
+      es: 'Recuento de palabras: {count}',
+      fr: 'Nombre de mots: {count}',
+      de: 'Wortanzahl: {count}',
+      ja: '単語数: {count}',
+      zh: '字数: {count}',
+      ko: '단어 수: {count}'
+    }
+  },
+
+  RECOMMENDED_WORDS: {
+    code: 'RECOMMENDED_WORDS',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Recommended: 500-1000 words',
+      es: 'Recomendado: 500-1000 palabras',
+      fr: 'Recommandé: 500-1000 mots',
+      de: 'Empfohlen: 500-1000 Wörter',
+      ja: '推奨: 500-1000語',
+      zh: '推荐: 500-1000字',
+      ko: '권장: 500-1000단어'
+    }
+  },
+
+  STARTING_ANALYSIS: {
+    code: 'STARTING_ANALYSIS',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Starting Analysis...',
+      es: 'Iniciando Análisis...',
+      fr: 'Démarrage de l\'Analyse...',
+      de: 'Analyse starten...',
+      ja: '分析を開始中...',
+      zh: '开始分析...',
+      ko: '분석 시작 중...'
+    }
+  },
+
+  ANALYZE_STORY: {
+    code: 'ANALYZE_STORY',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Analyze Story',
+      es: 'Analizar Historia',
+      fr: 'Analyser l\'Histoire',
+      de: 'Geschichte Analysieren',
+      ja: 'ストーリーを分析',
+      zh: '分析故事',
+      ko: '스토리 분석'
+    }
+  },
+
+  CREATE_STORY_FROM_HOME: {
+    code: 'CREATE_STORY_FROM_HOME',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Please create a story from the home page to continue.',
+      es: 'Por favor crea una historia desde la página de inicio para continuar.',
+      fr: 'Veuillez créer une histoire depuis la page d\'accueil pour continuer.',
+      de: 'Bitte erstellen Sie eine Geschichte von der Startseite, um fortzufahren.',
+      ja: '続行するにはホームページからストーリーを作成してください。',
+      zh: '请从主页创建故事以继续。',
+      ko: '계속하려면 홈페이지에서 스토리를 생성해 주세요.'
+    }
+  },
+
+  GO_TO_HOME: {
+    code: 'GO_TO_HOME',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Go to Home',
+      es: 'Ir al Inicio',
+      fr: 'Aller à l\'Accueil',
+      de: 'Zur Startseite',
+      ja: 'ホームに移動',
+      zh: '返回主页',
+      ko: '홈으로 이동'
+    }
   }
 };
 
@@ -326,8 +1319,10 @@ function interpolateTemplate(template: string, variables: Record<string, string 
 export function getDynamicMessage(
   messageCode: string,
   variables: Record<string, string | number> = {},
-  language: Language = 'en'
+  language?: Language
 ): { message: string; type: MessageType; severity: MessageSeverity } {
+  // Use provided language or fall back to current user language from config
+  const userLanguage = language || getCurrentUserLanguage();
   const template = MESSAGE_TEMPLATES[messageCode];
   
   if (!template) {
@@ -346,7 +1341,7 @@ export function getDynamicMessage(
   }
 
   // Get template for language (fallback to English)
-  const messageTemplate = template.templates[language] || template.templates.en;
+  const messageTemplate = template.templates[userLanguage] || template.templates.en;
   
   // Interpolate variables into template
   const interpolatedMessage = interpolateTemplate(messageTemplate, variables);

@@ -14,6 +14,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { UIMessages } from "@shared/i18n-config";
 
 export default function UploadStory() {
   const [, setLocation] = useLocation();
@@ -140,8 +141,8 @@ export default function UploadStory() {
             setIsLoadingContent(false);
             sessionStorage.removeItem('pendingAudioBlob');
             toast({
-              title: "Audio Processing Failed",
-              description: "Could not process the audio file.",
+              title: UIMessages.getError('AUDIO_PROCESSING_FAILED'),
+              description: UIMessages.getError('AUDIO_PROCESSING_FAILED_DESC'),
               variant: "destructive",
             });
             setHasLoadedOnce(true);
@@ -158,8 +159,8 @@ export default function UploadStory() {
           sessionStorage.removeItem('uploadedStoryContent');
           
           toast({
-            title: "Audio Processed Successfully",
-            description: `Your audio has been converted to text (${extractedContent.length} characters).`,
+            title: UIMessages.getSuccess('AUDIO_PROCESSING_SUCCESS'),
+            description: UIMessages.getSuccess('AUDIO_PROCESSING_SUCCESS_DESC', { characters: extractedContent.length }),
           });
         }
         setIsLoadingContent(false);
@@ -179,8 +180,8 @@ export default function UploadStory() {
   async function updateStoryContent() {
     if (!storyId) {
       toast({
-        title: "No Story ID",
-        description: "Story ID is missing.",
+        title: UIMessages.getError('STORY_ID_MISSING'),
+        description: UIMessages.getError('STORY_ID_MISSING_DESC'),
         variant: "destructive",
       });
       return;
@@ -188,8 +189,8 @@ export default function UploadStory() {
 
     if (!storyContent.trim()) {
       toast({
-        title: "No Content",
-        description: "Please write your story content.",
+        title: UIMessages.getError('STORY_CONTENT_EMPTY'),
+        description: UIMessages.getError('STORY_CONTENT_EMPTY_DESC'),
         variant: "destructive",
       });
       return;
@@ -212,8 +213,8 @@ export default function UploadStory() {
       const hasContentChanged = storyContent.trim() !== originalContent.trim();
       if (hasContentChanged) {
         toast({
-          title: "Content Saved",
-          description: "Your story content has been saved.",
+          title: UIMessages.getSuccess('CONTENT_SAVED'),
+          description: UIMessages.getSuccess('CONTENT_SAVED_DESC'),
           duration: 2000, // Auto-dismiss after 2 seconds
         });
         // Update the original content after successful save
@@ -222,8 +223,8 @@ export default function UploadStory() {
     } catch (error) {
       console.error("Content update error:", error);
       toast({
-        title: "Save Failed",
-        description: "Could not save story content. Please try again.",
+        title: UIMessages.getError('SAVE_FAILED'),
+        description: UIMessages.getError('SAVE_FAILED_DESC'),
         variant: "destructive",
       });
     }
@@ -233,8 +234,8 @@ export default function UploadStory() {
   async function analyzeStory() {
     if (!storyId) {
       toast({
-        title: "No Story",
-        description: "Story ID is missing.",
+        title: UIMessages.getError('NO_STORY'),
+        description: UIMessages.getError('STORY_ID_MISSING_DESC'),
         variant: "destructive",
       });
       return;
@@ -242,8 +243,8 @@ export default function UploadStory() {
 
     if (!storyContent.trim()) {
       toast({
-        title: "No Content",
-        description: "Please add content to your story before analyzing.",
+        title: UIMessages.getError('NO_CONTENT'),
+        description: UIMessages.getError('ANALYSIS_CONTENT_EMPTY_DESC'),
         variant: "destructive",
       });
       return;
@@ -299,21 +300,21 @@ export default function UploadStory() {
             <CardContent className="space-y-4">
               {/* Title Input */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-white">Story Title (Optional)</label>
+                <label className="text-sm font-medium text-white">{UIMessages.getLabel('STORY_TITLE_LABEL')}</label>
                 <Input
                   value={storyTitle}
                   onChange={(e) => setStoryTitle(e.target.value)}
-                  placeholder="Enter your story title..."
+                  placeholder={UIMessages.getLabel('STORY_TITLE_PLACEHOLDER')}
                   className="bg-white/10 border-white/20 text-white placeholder-white/50"
                 />
               </div>
 
               {/* Language Selection */}
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-white">Language</Label>
+                <Label className="text-sm font-medium text-white">{UIMessages.getLabel('LANGUAGE_LABEL')}</Label>
                 <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
                   <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                    <SelectValue placeholder="Select language" />
+                    <SelectValue placeholder={UIMessages.getLabel('SELECT_LANGUAGE_PLACEHOLDER')} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="en-US">English</SelectItem>
@@ -331,7 +332,7 @@ export default function UploadStory() {
 
               {/* Story Content */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-white">Your Story</label>
+                <label className="text-sm font-medium text-white">{UIMessages.getLabel('YOUR_STORY_LABEL')}</label>
                 
                 {/* Loading state for audio transcription */}
                 {isLoadingContent ? (

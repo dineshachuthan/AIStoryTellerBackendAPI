@@ -803,6 +803,13 @@ This is a full-stack collaborative storytelling platform that enables users to c
 
 Preferred communication style: Simple, everyday language.
 
+**MANDATORY ARCHITECTURAL PATTERNS (ALWAYS FOLLOW):**
+- **Caching Pattern**: All external API integrations must use the BaseCachedProvider architecture with infinite TTL content hashing - no direct API calls bypassing cache layer
+- **Internationalization Pattern**: All user-facing text must use the UIMessages utility system with centralized message templates in i18n-config.ts - zero hardcoded strings in components
+- **External API Integration Pattern**: All external services must follow the plug-and-play provider architecture with abstract base classes, configuration-driven initialization, and unified error handling
+
+These patterns must be followed in all future work without explicit instruction.
+
 **CRITICAL DEVELOPMENT RULE: NEVER HARDCODE ANYTHING**
 - All functions must be data-driven and configurable
 - No hardcoded return values or placeholder implementations
