@@ -307,89 +307,40 @@ export function VoiceRecordingCard({
           <p className="text-sm text-muted-foreground italic">
             "{template.sampleText}"
           </p>
-          <div className="flex justify-between items-center mt-1">
-            <p className="text-xs text-muted-foreground">
+          {/* Single Duration Status Line */}
+          <div className="flex justify-between items-center mt-2">
+            <span className="text-xs text-muted-foreground">
               Target: {template.targetDuration}s
-            </p>
-            {isRecorded && (
-              <p className="text-xs text-green-600 font-medium">
-                ✓ Voice sample exists
-              </p>
-            )}
-          </div>
-          
-          {/* Duration Requirement Indicator - Always Visible */}
-          <div className="mt-2">
-            <div className="flex justify-between text-xs text-muted-foreground mb-1">
-              <span>Duration Requirement</span>
-              <span className={cn(
-                recordedSample && recordedSample.duration >= 6 
-                  ? "text-green-600 font-medium" 
-                  : "text-red-600 font-medium"
-              )}>
-                {recordedSample 
-                  ? `${recordedSample.duration.toFixed(1)}s ${recordedSample.duration >= 6 ? "✓" : "✗"}` 
-                  : "6s minimum required"
-                }
-              </span>
-            </div>
-            <div className="relative">
-              <Progress 
-                value={recordedSample ? Math.min((recordedSample.duration / 30) * 100, 100) : 0} 
-                className="h-2" 
-              />
-              {/* 6-second minimum marker - Always visible */}
-              <div 
-                className="absolute top-0 h-2 w-0.5 bg-red-500 z-10"
-                style={{ left: `${Math.min((6 / 30) * 100, 95)}%` }}
-                title="6-second minimum for voice cloning"
-              />
-              <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                <span>0s</span>
-                <span className="text-red-600 text-xs" style={{ marginLeft: `${Math.max((6 / 30) * 100 - 3, 0)}%` }}>
-                  6s
-                </span>
-                <span>30s</span>
-              </div>
-            </div>
+            </span>
+            <span className={cn(
+              "text-xs font-medium",
+              recordedSample && recordedSample.duration >= 6 
+                ? "text-green-600" 
+                : isRecorded ? "text-red-600" : "text-muted-foreground"
+            )}>
+              {recordedSample 
+                ? `${recordedSample.duration.toFixed(1)}s ${recordedSample.duration >= 6 ? "✓" : ""}` 
+                : isRecorded ? "6s min required" : "No recording"
+              }
+            </span>
           </div>
         </div>
 
-        {/* Recording Progress */}
+        {/* Simple Recording Status */}
         {recordingState === 'recording' && (
           <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span>Recording...</span>
+            <div className="flex justify-between items-center">
+              <span className="text-sm">Recording...</span>
               <span className={cn(
-                recordingTime >= 6 ? "text-green-600 font-medium" : "text-orange-600",
+                "text-sm font-medium",
+                recordingTime >= 6 ? "text-green-600" : "text-orange-600"
               )}>
                 {formatTime(recordingTime)} {recordingTime >= 6 ? "✓" : ""}
               </span>
             </div>
-            <div className="relative">
-              <Progress value={progressPercentage} className="h-3" />
-              {/* 6-second minimum marker */}
-              <div 
-                className="absolute top-0 h-3 w-0.5 bg-red-500 z-10"
-                style={{ left: `${Math.min((6 / 30) * 100, 95)}%` }}
-                title="6-second minimum for voice cloning"
-              />
-              <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                <span>0s</span>
-                <span className="text-red-600 font-medium" style={{ marginLeft: `${Math.max((6 / 30) * 100 - 5, 0)}%` }}>
-                  6s min
-                </span>
-                <span>30s</span>
-              </div>
-            </div>
             {recordingTime < 6 && (
-              <p className="text-xs text-orange-600 animate-pulse">
-                ⏱️ Record for at least 6 seconds for voice cloning compatibility
-              </p>
-            )}
-            {recordingTime >= 6 && (
-              <p className="text-xs text-green-600">
-                ✅ Recording meets minimum duration requirement
+              <p className="text-xs text-orange-600 text-center animate-pulse">
+                Keep recording for at least 6 seconds
               </p>
             )}
           </div>
