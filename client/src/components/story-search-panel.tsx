@@ -15,12 +15,17 @@ import {
   EyeOff,
   Eye,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Trash2
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
-import { UIMessages } from "@shared/i18n-config";
+import { UIMessages, getDynamicMessage } from "@shared/i18n-config";
+import { MAX_DRAFT_STORIES } from "@shared/draft-config";
+import { useToast } from "@/hooks/use-toast";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 interface Story {
   id: number;
@@ -35,6 +40,8 @@ interface Story {
   summary?: string;
   viewCount?: number;
   likes?: number;
+  narratorVoice?: string;
+  narratorVoiceType?: string;
 }
 
 interface StorySearchPanelProps {
@@ -53,18 +60,48 @@ export function StorySearchPanel({
   const [, setLocation] = useLocation();
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
+  const { toast } = useToast();
+
+  // Delete story mutation
+  const deleteStoryMutation = useMutation({
+    mutationFn: async (storyId: number) => {
+      return apiRequest(`/api/stories/${storyId}`, {
+        method: 'DELETE'
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Story deleted",
+        description: "Draft story has been successfully deleted.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/stories"] });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete story. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
   
   const { data: stories = [], isLoading } = useQuery<Story[]>({
     queryKey: ["/api/stories", user?.id],
     enabled: !!user?.id,
   });
 
-  // Filter stories based on search query
-  const filteredStories = stories.filter(story => 
-    story.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    story.content?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    story.category?.toLowerCase().includes(searchQuery.toLowerCase())
-  ).slice(0, 100);
+  // Filter stories based on search query AND draft status (no narrator voice)
+  const draftStories = stories.filter(story => {
+    // Only show draft stories (stories without narrator voice)
+    return !story.narratorVoice && !story.narratorVoiceType;
+  });
+
+  // Show all draft stories (no filtering needed since limit is 5)
+  const filteredStories = draftStories;
+
+  // Constants for draft story limits
+  const draftCount = draftStories.length;
+  const canCreateMore = draftCount < MAX_DRAFT_STORIES;
 
   // Group stories by genre/category
   const storiesByGenre = filteredStories.reduce((acc, story) => {
@@ -102,24 +139,20 @@ export function StorySearchPanel({
         {!isCollapsed && (
           <div className="flex-1 p-2 sm:p-4 space-y-3 sm:space-y-4 overflow-y-auto pb-20 sm:pb-24">
             <div className="flex items-center space-x-2">
-              <Book className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-tiktok-red" />
-              <h1 className="text-base sm:text-lg lg:text-xl font-bold text-white">Story Library</h1>
-            </div>
-            
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                type="text"
-                placeholder="Search stories..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-gray-800 border-gray-700 text-white placeholder-gray-400 focus:border-tiktok-red"
-              />
-            </div>
-
-            <div className="text-sm text-gray-400">
-              {filteredStories.length} of {stories.length} stories
-              {filteredStories.length === 100 && stories.length > 100 && " (limited to 100)"}
+              <Book className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-orange-500" />
+              <div className="flex flex-col">
+                <h1 className="text-base sm:text-lg lg:text-xl font-bold text-white">
+                  {UIMessages.getTitle('DRAFT_STORIES_PANEL_TITLE')}
+                </h1>
+                <div className="text-xs sm:text-sm text-gray-400">
+                  {getDynamicMessage('DRAFT_STORIES_COUNT', { currentCount: draftCount.toString(), maxCount: MAX_DRAFT_STORIES.toString() }).message}
+                  {!canCreateMore && (
+                    <span className="text-orange-400 block mt-1">
+                      {getDynamicMessage('DRAFT_STORIES_LIMIT_REACHED', {}).message}
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* Story Results */}

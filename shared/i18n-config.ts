@@ -1105,6 +1105,54 @@ export const MESSAGE_TEMPLATES: Record<string, I18nMessageTemplate> = {
     }
   },
 
+  DRAFT_STORIES_COUNT: {
+    code: 'DRAFT_STORIES_COUNT',
+    type: 'info',
+    severity: 'low',
+    variables: ['currentCount', 'maxCount'],
+    templates: {
+      en: '{currentCount}/{maxCount} stories',
+      es: '{currentCount}/{maxCount} historias',
+      fr: '{currentCount}/{maxCount} histoires',
+      de: '{currentCount}/{maxCount} Geschichten',
+      ja: '{currentCount}/{maxCount}つのストーリー',
+      zh: '{currentCount}/{maxCount} 个故事',
+      ko: '{currentCount}/{maxCount} 스토리'
+    }
+  },
+
+  DRAFT_STORIES_LIMIT_REACHED: {
+    code: 'DRAFT_STORIES_LIMIT_REACHED',
+    type: 'warning',
+    severity: 'medium',
+    variables: [],
+    templates: {
+      en: 'Limit reached - delete a story to create new ones',
+      es: 'Límite alcanzado - elimina una historia para crear nuevas',
+      fr: 'Limite atteinte - supprimez une histoire pour en créer de nouvelles',
+      de: 'Limit erreicht - löschen Sie eine Geschichte, um neue zu erstellen',
+      ja: '上限に達しました - 新しいストーリーを作成するには既存のものを削除してください',
+      zh: '已达上限 - 删除一个故事以创建新故事',
+      ko: '한도 도달 - 새 스토리를 만들려면 기존 스토리를 삭제하세요'
+    }
+  },
+
+  DRAFT_STORIES_PANEL_TITLE: {
+    code: 'DRAFT_STORIES_PANEL_TITLE',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Your Draft Stories',
+      es: 'Tus Borradores',
+      fr: 'Vos Brouillons',
+      de: 'Ihre Entwürfe',
+      ja: 'あなたの下書き',
+      zh: '您的草稿故事',
+      ko: '초안 스토리'
+    }
+  },
+
   LANGUAGE_LABEL: {
     code: 'LANGUAGE_LABEL',
     type: 'info',
