@@ -9,7 +9,7 @@ import {
   Book, 
   Search, 
   Users, 
-  Play, 
+  Mic, 
   Clock, 
   Globe, 
   EyeOff,
@@ -201,22 +201,22 @@ export function StorySearchPanel({
                                     <Button
                                       size="sm"
                                       variant="outline"
-                                      onClick={() => setLocation(`/story/${story.id}`)}
-                                      className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-700 text-xs h-6"
+                                      onClick={() => setLocation(`/analysis/${story.id}`)}
+                                      className="flex-1 border-orange-600 text-orange-400 hover:bg-orange-900/20 text-xs h-6"
                                     >
-                                      <Play className="w-3 h-3 mr-1" />
-                                      Play
+                                      <Mic className="w-3 h-3 mr-1" />
+                                      Record Voice Samples
                                     </Button>
                                   </>
                                 ) : (
-                                  // Public story from another user - only show play option
+                                  // Public story from another user - allow voice sample recording
                                   <Button
                                     size="sm"
-                                    onClick={() => setLocation(`/story/${story.id}`)}
-                                    className="w-full bg-tiktok-red hover:bg-tiktok-red/80 text-white text-xs h-6"
+                                    onClick={() => setLocation(`/analysis/${story.id}`)}
+                                    className="w-full bg-orange-600 hover:bg-orange-700 text-white text-xs h-6"
                                   >
-                                    <Play className="w-3 h-3 mr-1" />
-                                    Play Story
+                                    <Mic className="w-3 h-3 mr-1" />
+                                    Record Voice Samples
                                   </Button>
                                 )}
                               </div>
