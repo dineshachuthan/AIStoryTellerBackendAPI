@@ -2309,6 +2309,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Start private testing (transition from analyzed to private_testing)
+  app.post("/api/stories/:id/start-private-testing", requireAuth, async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.id);
+      const userId = (req.user as any)?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      // Verify ownership and current state
+      const story = await storage.getStory(storyId);
+      if (!story || story.authorId !== userId) {
+        return res.status(404).json({ message: "Story not found or access denied" });
+      }
+
+      // Check if story is in 'analyzed' state
+      if (story.status !== 'analyzed') {
+        return res.status(400).json({ 
+          message: "Story must be in 'analyzed' state to start private testing",
+          currentState: story.status 
+        });
+      }
+
+      // Update story status to private_testing
+      const updatedStory = await storage.updateStory(storyId, { status: 'private_testing' });
+      
+      res.json({
+        success: true,
+        message: "Story moved to private testing phase",
+        story: updatedStory
+      });
+    } catch (error) {
+      console.error("Error starting private testing:", error);
+      res.status(500).json({ message: "Failed to start private testing" });
+    }
+  });
+
   // Get archived stories
   app.get("/api/stories/archived", requireAuth, async (req, res) => {
     try {
@@ -4123,47 +4161,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const uniqueEmotions = [...new Set(emotions.map((e: any) => e.emotion))];
       
-      // Check if user has recorded any of these emotions by calling existing endpoint
-      let hasVoices = false;
+      // Enhanced narrator voice validation: Check if complete narrator voice exists
+      let canNarrate = false;
+      let reason = 'Unknown';
+      
       try {
         const fs = await import('fs/promises');
         const path = await import('path');
         
-        // Use the same logic as the existing user voice emotions endpoint
+        // First, check if user has any voice samples
         const userVoiceDir = path.join(process.cwd(), 'persistent-cache', 'user-voice-emotions');
         
-        const files = await fs.readdir(userVoiceDir);
-        const userFiles = files.filter(file => 
-          file.startsWith(`${userId}-`) && file.endsWith('.mp3')
-        );
-        
-        console.log(`DEBUG - Narration check for story ${storyId}:`);
-        console.log(`- Story emotions: ${uniqueEmotions.join(', ')}`);
-        console.log(`- User files found: ${userFiles.length}`);
-        
-        if (userFiles.length > 0) {
-          // Extract emotions from filenames (format: userId-emotion-intensity-timestamp.mp3)
-          const userEmotions = userFiles.map(filename => {
-            const parts = filename.split('-');
-            return parts[1]; // emotion is second part
-          });
-          
-          console.log(`- User emotions: ${userEmotions.join(', ')}`);
-          
-          hasVoices = uniqueEmotions.some(emotion => 
-            userEmotions.map(e => e.toLowerCase()).includes(emotion.toLowerCase())
+        let userFiles = [];
+        try {
+          const files = await fs.readdir(userVoiceDir);
+          userFiles = files.filter(file => 
+            file.startsWith(`${userId}-`) && file.endsWith('.mp3')
           );
-          
-          console.log(`- Can narrate: ${hasVoices}`);
+        } catch (error) {
+          console.log('User voice directory not found or empty');
+          reason = 'No voice samples recorded yet';
         }
+        
+        console.log(`DEBUG - Enhanced narration check for story ${storyId}:`);
+        console.log(`- Story emotions: ${uniqueEmotions.join(', ')}`);
+        console.log(`- User voice files found: ${userFiles.length}`);
+        
+        if (userFiles.length === 0) {
+          reason = 'No voice samples recorded yet';
+          canNarrate = false;
+        } else {
+          // Check if narrator voice has been generated for this story
+          const narratorDir = path.join(process.cwd(), 'user-data', userId, 'audio', 'stories', storyId.toString());
+          
+          let narratorExists = false;
+          try {
+            await fs.access(narratorDir);
+            const narratorFiles = await fs.readdir(narratorDir);
+            narratorExists = narratorFiles.some(file => file.startsWith('segment-') && file.endsWith('.mp3'));
+            console.log(`- Narrator audio exists: ${narratorExists} (${narratorFiles.length} files)`);
+          } catch (error) {
+            console.log('- Narrator audio directory not found');
+          }
+          
+          if (narratorExists) {
+            canNarrate = true;
+            reason = 'Narrator voice ready';
+          } else {
+            // Check if user has voice samples for the story emotions
+            const userEmotions = userFiles.map(filename => {
+              const parts = filename.split('-');
+              return parts[1]; // emotion is second part
+            });
+            
+            console.log(`- User emotions available: ${userEmotions.join(', ')}`);
+            
+            const hasMatchingEmotions = uniqueEmotions.some(emotion => 
+              userEmotions.map(e => e.toLowerCase()).includes(emotion.toLowerCase())
+            );
+            
+            if (hasMatchingEmotions) {
+              canNarrate = false;
+              reason = 'Voice samples available - narrator voice not generated yet';
+            } else {
+              canNarrate = false;
+              reason = `Need voice samples for: ${uniqueEmotions.join(', ')}`;
+            }
+          }
+        }
+        
+        console.log(`- Final result: canNarrate=${canNarrate}, reason="${reason}"`);
+        
       } catch (error) {
-        console.error('Error checking user voices:', error);
+        console.error('Error checking narrator voice:', error);
+        canNarrate = false;
+        reason = 'Error checking voice status';
       }
 
       res.json({ 
-        canNarrate: hasVoices,
+        canNarrate,
         emotions: uniqueEmotions,
-        storyTitle: story.title || 'Untitled Story'
+        storyTitle: story.title || 'Untitled Story',
+        reason
       });
     } catch (error: any) {
       console.error('Error checking narration capability:', error);
