@@ -176,6 +176,15 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Priority**: Medium (requested but deferred for future implementation)
 
 ## Changelog
+- July 04, 2025: ✅ **ESM VOICE TRAINING INTEGRATION COMPLETED** - Voice Training Service Fully Converted to ESM Architecture
+  - **VOICE TRAINING SERVICE UPDATED**: Completely converted voice training service to use ESM architecture instead of deprecated userVoiceSamples table
+  - **ESM STORAGE METHODS IMPLEMENTED**: Added getUserUniqueEmotions() method using ESM tables (esm_ref, user_esm, user_esm_recordings)
+  - **SAMPLE LOCKING FUNCTIONALITY**: Added proper voice sample locking during training using is_locked and locked_at fields in user_esm_recordings table
+  - **SPLIT-BRAIN ARCHITECTURE RESOLVED**: Voice training service now uses same ESM tables where voice samples are saved, eliminating data inconsistency
+  - **DATABASE INTEGRATION VERIFIED**: ESM tables confirmed operational with 36 reference emotions populated from story analysis
+  - **UNIFIED WORKFLOW**: Voice sample saving → ESM storage → training trigger → sample locking → ElevenLabs integration all use consistent ESM architecture
+  - **ARCHITECTURAL CONSISTENCY**: Routes, storage methods, and voice training service all unified under single ESM data model
+  - Voice cloning system now fully operational with complete ESM integration and proper sample locking during training
 - July 03, 2025: ✅ **VOICE RECORDING VALIDATION ENHANCED** - Added 5-Second Minimum Duration Requirement for ElevenLabs Voice Cloning
   - **FRONTEND VALIDATION**: Updated VoiceRecordingCard component to enforce 5-second minimum recording duration instead of 1 second
   - **BACKEND VALIDATION**: Added FFprobe duration checking in voice sample upload route with proper error handling

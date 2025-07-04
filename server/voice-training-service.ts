@@ -121,6 +121,7 @@ export class VoiceTrainingService {
 
         // Get voice samples for each unique emotion (one sample per emotion)
         const hybridSamples = [];
+        const samplesToLock = []; // Track samples to lock during training
         const allVoiceSamples = await storage.getUserVoiceSamples(userId);
         
         for (const emotion of uniqueEmotions.slice(0, 6)) { // Take first 6 emotions only
@@ -134,11 +135,28 @@ export class VoiceTrainingService {
           });
           
           if (emotionSamples.length > 0) {
+            const selectedSample = emotionSamples[0]; // Take first recording for this emotion
             hybridSamples.push({
               emotion: emotion,
-              audioUrl: emotionSamples[0].audioUrl, // Take first recording for this emotion
+              audioUrl: selectedSample.audioUrl,
               isLocked: false
             });
+            samplesToLock.push(selectedSample.id); // Track sample ID for locking
+          }
+        }
+
+        console.log(`[HybridCloning] Collected ${hybridSamples.length} emotion samples for hybrid voice cloning`);
+        
+        // Lock samples before training to prevent modification
+        console.log(`[HybridCloning] Locking ${samplesToLock.length} voice samples during training`);
+        for (const sampleId of samplesToLock) {
+          try {
+            await storage.updateUserVoiceSample(sampleId, {
+              isLocked: true,
+              lockedAt: new Date()
+            });
+          } catch (error) {
+            console.error(`[HybridCloning] Error locking sample ${sampleId}:`, error);
           }
         }
 

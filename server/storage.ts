@@ -527,18 +527,69 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllUserVoiceSamples(userId: string): Promise<UserVoiceSample[]> {
-    return await db.select().from(userVoiceSamples).where(eq(userVoiceSamples.userId, userId));
+    // Use ESM architecture - get user's recordings with ESM reference data
+    const result = await db.execute(
+      sql`SELECT 
+            uer.user_esm_recordings_id as id,
+            uer.audio_url as "audioUrl",
+            uer.duration,
+            uer.file_size as "fileSize",
+            uer.is_locked as "isLocked",
+            uer.locked_at as "lockedAt",
+            uer.created_date as "recordedAt",
+            uer.audio_quality_score as "audioQualityScore",
+            uer.transcribed_text as "transcribedText",
+            ue.sample_count as "sampleCount",
+            ue.quality_tier as "qualityTier",
+            ue.voice_cloning_status as "voiceCloningStatus",
+            er.category,
+            er.name,
+            er.display_name as "displayName",
+            er.sample_text as "sampleText",
+            er.intensity,
+            CONCAT(CASE 
+              WHEN er.category = 1 THEN 'emotions'
+              WHEN er.category = 2 THEN 'sounds' 
+              ELSE 'modulations'
+            END, '-', er.name) as label,
+            true as "isCompleted"
+          FROM user_esm_recordings uer
+          JOIN user_esm ue ON uer.user_esm_id = ue.user_esm_id
+          JOIN esm_ref er ON ue.esm_ref_id = er.esm_ref_id
+          WHERE ue.user_id = ${userId}
+          ORDER BY er.category, er.name, uer.created_date DESC`
+    );
+    
+    return result.rows.map((row: any) => ({
+      id: row.id,
+      userId: userId,
+      sampleType: row.category === 1 ? 'emotions' : row.category === 2 ? 'sounds' : 'modulations',
+      label: row.label,
+      audioUrl: row.audioUrl || '',
+      duration: row.duration || 0,
+      fileSize: row.fileSize || 0,
+      isCompleted: row.isCompleted || false,
+      isLocked: row.isLocked || false,
+      lockedAt: row.lockedAt || null,
+      recordedAt: row.recordedAt,
+      displayName: row.displayName,
+      sampleText: row.sampleText,
+      intensity: row.intensity,
+      qualityTier: row.qualityTier,
+      voiceCloningStatus: row.voiceCloningStatus
+    }));
   }
 
   async getUserUnlockedSamplesCount(userId: string): Promise<number> {
-    const result = await db.select({ count: sql<number>`count(*)` })
-      .from(userVoiceSamples)
-      .where(and(
-        eq(userVoiceSamples.userId, userId),
-        eq(userVoiceSamples.isLocked, false),
-        eq(userVoiceSamples.isCompleted, true)
-      ));
-    return result[0]?.count || 0;
+    // Use ESM architecture - count unlocked recordings
+    const result = await db.execute(
+      sql`SELECT COUNT(*) as count
+          FROM user_esm_recordings uer
+          JOIN user_esm ue ON uer.user_esm_id = ue.user_esm_id
+          WHERE ue.user_id = ${userId} 
+          AND (uer.is_locked = false OR uer.is_locked IS NULL)`
+    );
+    return Number(result.rows[0]?.count) || 0;
   }
 
   async getUserTotalSamplesCount(userId: string): Promise<number> {
@@ -562,7 +613,22 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUserVoiceSample(id: number, sample: Partial<InsertUserVoiceSample>): Promise<void> {
-    await db.update(userVoiceSamples).set(sample).where(eq(userVoiceSamples.id, id));
+    // Update ESM recording with lock status
+    const updates: any = {};
+    if (sample.isLocked !== undefined) {
+      updates.is_locked = sample.isLocked;
+    }
+    if (sample.lockedAt !== undefined) {
+      updates.locked_at = sample.lockedAt;
+    }
+    
+    if (Object.keys(updates).length > 0) {
+      await db.execute(
+        sql`UPDATE user_esm_recordings 
+            SET ${sql.raw(Object.keys(updates).map(key => `${key} = ${updates[key] === null ? 'NULL' : `'${updates[key]}'`}`).join(', '))}
+            WHERE user_esm_recordings_id = ${id}`
+      );
+    }
   }
 
   async deleteUserVoiceSample(id: number): Promise<void> {
@@ -1463,21 +1529,18 @@ export class DatabaseStorage implements IStorage {
 
   // MVP1 Hybrid Voice Cloning - Get unique emotions recorded by user
   async getUserUniqueEmotions(userId: string): Promise<string[]> {
-    const { eq } = await import('drizzle-orm');
-    const uniqueEmotions = await db
-      .selectDistinct({ emotion: userVoiceSamples.label })
-      .from(userVoiceSamples)
-      .where(eq(userVoiceSamples.userId, userId))
-      .then(rows => rows.map(row => {
-        // Strip category prefixes (emotions-, sounds-, modulations-)
-        const label = row.emotion;
-        if (label.includes('-')) {
-          return label.split('-').slice(1).join('-'); // Remove first prefix, keep rest
-        }
-        return label;
-      }).filter(Boolean));
+    // Use ESM architecture - get unique emotions from ESM reference data
+    const result = await db.execute(
+      sql`SELECT DISTINCT er.name as emotion
+          FROM user_esm_recordings uer
+          JOIN user_esm ue ON uer.user_esm_id = ue.user_esm_id
+          JOIN esm_ref er ON ue.esm_ref_id = er.esm_ref_id
+          WHERE ue.user_id = ${userId} 
+          AND er.category = 1
+          ORDER BY er.name`
+    );
     
-    return uniqueEmotions;
+    return result.rows.map((row: any) => row.emotion).filter(Boolean);
   }
 
   // REFERENCE DATA ARCHITECTURE IMPLEMENTATIONS
