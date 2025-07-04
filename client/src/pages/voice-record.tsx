@@ -4,7 +4,7 @@ import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Play, Pause, RotateCcw, ArrowRight, Shield } from "lucide-react";
-import { PressHoldRecorder } from "@/components/ui/press-hold-recorder";
+import { EnhancedVoiceRecorder } from "@/components/ui/enhanced-voice-recorder";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -178,9 +178,11 @@ export function VoiceRecordPage() {
 
             {/* Recording Section */}
             {!audioBlob && (
-              <PressHoldRecorder
+              <EnhancedVoiceRecorder
                 onRecordingComplete={handleRecordingComplete}
                 maxRecordingTime={300}
+                simpleMode={true}
+                title="Voice Recording"
                 buttonText={{
                   hold: "Hold",
                   recording: "Release",
