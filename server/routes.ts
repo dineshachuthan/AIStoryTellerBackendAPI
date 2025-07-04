@@ -4464,25 +4464,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: 'User not authenticated' });
       }
 
-      // Get user's recorded samples from both old and new systems
+      // Get user's recorded samples from user_voice_samples table
       let recordedSamples: any[] = [];
       
       try {
-        // Try ESM architecture first
-        const userEsmRecordings = await storage.getUserEsmRecordings(userId);
-        console.log(`🎤 Found ${userEsmRecordings.length} ESM recordings for user ${userId}`);
+        // Get from user_voice_samples table directly  
+        const userVoiceSamples = await storage.getUserVoiceSamples(userId);
+        console.log(`🎤 Found ${userVoiceSamples.length} voice samples for user ${userId}`);
         
-        recordedSamples = userEsmRecordings.map((recording: any) => ({
-          emotion: recording.esmRef?.name || recording.emotion,
-          audioUrl: recording.audio_url,
-          recordedAt: recording.created_at,
-          duration: recording.duration || 0,
-          isLocked: recording.is_locked || false
+        recordedSamples = userVoiceSamples.map((sample: any) => ({
+          emotion: sample.label, // Using label field which contains emotion name
+          audioUrl: sample.audioUrl,
+          recordedAt: sample.recordedAt,
+          duration: sample.duration || 0,
+          isLocked: sample.isLocked || false,
+          sampleType: sample.sampleType // emotions, sounds, modulations
         }));
-      } catch (esmError) {
-        console.log("ESM query error - using empty samples list:", esmError.message);
-        
-        // ESM is the only supported architecture - no fallback to old systems
+      } catch (error) {
+        console.log("Error fetching user voice samples:", error);
         recordedSamples = [];
       }
 
@@ -4714,50 +4713,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // SESSION-BASED VOICE CLONING MANAGEMENT ENDPOINTS
 
-  // Initialize session voice cloning data (called on login)
+  // OLD: Initialize session voice cloning data - REMOVED
   app.post('/api/voice-cloning/initialize-session', requireAuth, async (req, res) => {
-    try {
-      const { VoiceCloningSessionManager } = await import('./voice-cloning-session-manager');
-      const sessionData = await VoiceCloningSessionManager.initializeSessionData(req);
-      res.json({
-        success: true,
-        sessionData,
-        navigationButtonLabel: VoiceCloningSessionManager.getNavigationButtonLabel(req)
-      });
-    } catch (error: any) {
-      console.error('Error initializing voice cloning session:', error);
-      res.status(500).json({ message: 'Failed to initialize session data' });
-    }
+    res.status(410).json({ message: 'Session-based voice cloning has been removed' });
   });
 
-  // Get current session voice cloning status (with auto-initialization)
+  // OLD: Get current session voice cloning status - REMOVED 
   app.get('/api/voice-cloning/session-status', requireAuth, async (req, res) => {
-    try {
-      const { VoiceCloningSessionManager } = await import('./voice-cloning-session-manager');
-      
-      // Auto-initialize session if not already done
-      if (!req.session.voiceCloning) {
-        const userId = (req.user as any)?.id;
-        console.log(`🔧 Auto-initializing voice cloning session for user ${userId}`);
-        await VoiceCloningSessionManager.initializeSessionData(req);
-      }
-      
-      const sessionData = VoiceCloningSessionManager.getSessionData(req);
-      const isAnyCloning = VoiceCloningSessionManager.isAnyCategoryCloning(req);
-      const navigationButtonLabel = VoiceCloningSessionManager.getNavigationButtonLabel(req);
-      
-      console.log(`📊 Current session state: emotions=${sessionData.emotions_not_cloned}, sounds=${sessionData.sounds_not_cloned}, modulations=${sessionData.modulations_not_cloned}, isAnyCloning=${isAnyCloning}`);
-      
-      res.json({
-        sessionData,
-        isAnyCloning,
-        navigationButtonLabel,
-        voiceSamplesButtonDisabled: isAnyCloning
-      });
-    } catch (error: any) {
-      console.error('Error fetching voice cloning session status:', error);
-      res.status(500).json({ message: 'Failed to fetch session status' });
-    }
+    res.status(410).json({ message: 'Session-based voice cloning has been removed' });
   });
 
   // Voice Training Trigger (Internal - called after voice sample save)
@@ -5057,9 +5020,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`🚨 EMERGENCY RESET: Clearing all voice cloning states for user ${userId}`);
 
-      // Clear timeout service operations
-      const { VoiceCloningTimeoutService } = await import('./voice-cloning-timeout-service');
-      const stoppedOperations = VoiceCloningTimeoutService.forceStopAllUserOperations(userId);
+      // OLD: Clear timeout service operations - REMOVED
+      const stoppedOperations = 0; // No operations to stop
 
       // Clear external integration states
       const { externalIntegrationStateReset } = await import('./external-integration-state-reset');
@@ -5448,9 +5410,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Start background processing with proper timeout and state management
       setTimeout(async () => {
         try {
-          // Use REAL ElevenLabs integration with timeout service
-          const { VoiceCloningTimeoutService } = await import('./voice-cloning-timeout-service');
-          const result = await VoiceCloningTimeoutService.startVoiceCloning(userId, category as 'emotions' | 'sounds' | 'modulations');
+          // OLD: ElevenLabs integration with timeout service - REMOVED
+          const result = { success: false, message: 'Voice cloning system has been simplified' };
           
           if (result.success && result.voiceId) {
             console.log(`✅ ${category} voice cloning COMPLETED for story ${storyId} with ElevenLabs voice ID: ${result.voiceId}`);
