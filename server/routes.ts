@@ -438,8 +438,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/users/:userId/voice-samples", requireAuth, async (req, res) => {
     try {
       const userId = req.params.userId;
-      const samples = await storage.getUserVoiceSamples(userId);
-      const progress = await storage.getUserVoiceProgress(userId);
+      const esmRecordings = await storage.getUserEsmRecordings(userId);
+      
+      // Map ESM recordings to voice sample format
+      const samples = esmRecordings.map(recording => ({
+        id: recording.user_esm_recordings_id,
+        audioUrl: recording.audio_url,
+        label: recording.name,
+        emotion: recording.name,
+        duration: recording.duration,
+        isCompleted: true,
+        sampleType: recording.category === 1 ? 'emotions' : recording.category === 2 ? 'sounds' : 'modulations'
+      }));
+      
+      const progress = { completed: samples.length, total: samples.length };
       res.json({ samples, progress });
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch voice samples" });
@@ -4196,19 +4208,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         templates = await getAllVoiceSamples();
       }
       
-      // Get user's recorded samples and add them as templates if they don't exist
+      // Get user's recorded samples from ESM tables
       let recordedSamples: any[] = [];
       try {
-        const userVoiceSamples = await storage.getAllUserVoiceSamples(userId);
-        recordedSamples = userVoiceSamples
-          .filter(sample => sample.isCompleted)
-          .map(sample => ({
-            emotion: sample.label || sample.sampleType,
-            audioUrl: sample.audioUrl,
-            recordedAt: sample.recordedAt,
-            duration: sample.duration,
-            isLocked: sample.isLocked || false
-          }));
+        const esmRecordings = await storage.getUserEsmRecordings(userId);
+        recordedSamples = esmRecordings.map(recording => ({
+          emotion: recording.name,
+          audioUrl: recording.audio_url,
+          recordedAt: recording.created_date,
+          duration: recording.duration,
+          isLocked: false
+        }));
       } catch (error) {
         console.log("No recorded samples found for user");
       }
@@ -4729,9 +4739,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: 'User not authenticated' });
       }
 
-      const samples = await storage.getAllUserVoiceSamples(userId);
+      const esmRecordings = await storage.getUserEsmRecordings(userId);
       
-      // Separate unlocked and locked samples
+      // Map ESM recordings to voice sample format
+      const samples = esmRecordings.map(recording => ({
+        id: recording.user_esm_recordings_id,
+        audioUrl: recording.audio_url,
+        emotion: recording.name,
+        duration: recording.duration,
+        isCompleted: true,
+        isLocked: false
+      }));
+      
+      // Separate unlocked and locked samples (all ESM recordings are unlocked currently)
       const unlocked = samples.filter(s => !s.isLocked && s.isCompleted);
       const locked = samples.filter(s => s.isLocked && s.isCompleted);
 
