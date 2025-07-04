@@ -11,7 +11,7 @@ import {
   Play, 
   Clock, 
   Globe, 
-  Lock,
+  EyeOff,
   Eye,
   ChevronLeft,
   ChevronRight
@@ -164,7 +164,7 @@ export function StorySearchPanel({
                                   {story.isPublished ? (
                                     <Globe className="w-3 h-3 text-green-400" />
                                   ) : (
-                                    <Lock className="w-3 h-3 text-gray-400" />
+                                    <EyeOff className="w-3 h-3 text-gray-400" />
                                   )}
                                 </div>
                               </div>

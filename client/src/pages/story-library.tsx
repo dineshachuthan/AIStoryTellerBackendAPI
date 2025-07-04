@@ -22,7 +22,7 @@ import {
   Play, 
   Clock, 
   Globe, 
-  Lock,
+  EyeOff,
   Star,
   MessageSquare,
   Eye,
@@ -402,7 +402,7 @@ export default function StoryLibrary() {
                           ) : (
                             <div className="text-center py-2">
                               <div className="text-sm text-gray-400 flex items-center justify-center">
-                                <Lock className="w-4 h-4 mr-1" />
+                                <EyeOff className="w-4 h-4 mr-1" />
                                 Private
                               </div>
                             </div>
@@ -636,7 +636,7 @@ export default function StoryLibrary() {
                           ) : (
                             <div className="text-center py-2">
                               <div className="text-sm text-gray-400 flex items-center justify-center">
-                                <Lock className="w-4 h-4 mr-1" />
+                                <EyeOff className="w-4 h-4 mr-1" />
                                 Private Story
                               </div>
                               <p className="text-xs text-gray-500 mt-1">Only visible to you</p>
