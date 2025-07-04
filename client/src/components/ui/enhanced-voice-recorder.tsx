@@ -541,6 +541,55 @@ export function EnhancedVoiceRecorder({
                   "{(sampleText && sampleText.length > 100 ? sampleText.substring(0, 100) + '...' : sampleText) || 'Sample text not provided'}"
                 </span>
               </div>
+              
+              {/* Length indicator - always visible */}
+              <div className="mt-3 space-y-2">
+                <div className="flex items-center justify-between text-xs text-gray-400">
+                  <span className="font-mono">
+                    {recordingState === 'recording' ? formatTime(Math.floor(recordingTime)) : 
+                     tempRecording ? formatTime(Math.floor(recordingTime)) :
+                     recordedSample ? `${recordedSample.duration?.toFixed(1) || '0.0'}s` : '0s'}
+                  </span>
+                  <span>6s minimum</span>
+                  <span className="font-mono">{formatTime(maxRecordingTime)}</span>
+                </div>
+                <div className="relative">
+                  <Progress 
+                    value={recordingState === 'recording' ? progressPercentage : 
+                           tempRecording ? (recordingTime / maxRecordingTime) * 100 :
+                           recordedSample ? ((recordedSample.duration || 0) / maxRecordingTime) * 100 : 0} 
+                    className="w-full h-2 bg-gray-700" 
+                  />
+                  {/* 6-second minimum marker */}
+                  <div 
+                    className="absolute top-0 w-0.5 h-2 bg-yellow-400"
+                    style={{ left: `${(6 / maxRecordingTime) * 100}%` }}
+                  />
+                </div>
+                <div className="text-xs text-center">
+                  {recordingState === 'recording' ? (
+                    recordingTime >= 6 ? (
+                      <span className="text-green-400">✓ Minimum length reached</span>
+                    ) : (
+                      <span className="text-yellow-400">Need {(6 - recordingTime).toFixed(1)}s more</span>
+                    )
+                  ) : tempRecording ? (
+                    recordingTime >= 6 ? (
+                      <span className="text-green-400">✓ Ready to save</span>
+                    ) : (
+                      <span className="text-yellow-400">Too short - need {(6 - recordingTime).toFixed(1)}s more</span>
+                    )
+                  ) : recordedSample ? (
+                    (recordedSample.duration || 0) >= 6 ? (
+                      <span className="text-green-400">✓ Valid recording</span>
+                    ) : (
+                      <span className="text-yellow-400">Recording too short</span>
+                    )
+                  ) : (
+                    <span className="text-gray-400">No recording yet</span>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>
