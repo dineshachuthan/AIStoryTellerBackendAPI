@@ -20,7 +20,6 @@ import {
   Book, 
   Search, 
   Users, 
-  Play, 
   Clock, 
   Globe, 
   EyeOff,
@@ -29,7 +28,8 @@ import {
   Eye,
   Loader2,
   Trash2,
-  AlertTriangle
+  AlertTriangle,
+  Mic
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useLocation } from "wouter";
@@ -315,11 +315,11 @@ export default function StoryLibrary() {
                             <div className="flex space-x-2">
                               <Button
                                 size="sm"
-                                onClick={() => setLocation(`/story/${story.id}`)}
-                                className="flex-1 bg-tiktok-red hover:bg-tiktok-red/80 text-white text-xs"
+                                onClick={() => setLocation(`/analysis/${story.id}`)}
+                                className="flex-1 bg-orange-600 hover:bg-orange-700 text-white text-xs"
                               >
-                                <Play className="w-3 h-3 mr-1" />
-                                Play
+                                <Mic className="w-3 h-3 mr-1" />
+                                Record Voice Samples
                               </Button>
                               <Button
                                 size="sm"
@@ -570,11 +570,11 @@ export default function StoryLibrary() {
                             <div className="flex space-x-2">
                               <Button
                                 size="sm"
-                                onClick={() => setLocation(`/story/${story.id}`)}
-                                className="flex-1 bg-tiktok-red hover:bg-tiktok-red/80 text-white"
+                                onClick={() => setLocation(`/analysis/${story.id}`)}
+                                className="flex-1 bg-orange-600 hover:bg-orange-700 text-white"
                               >
-                                <Play className="w-4 h-4 mr-1" />
-                                Play
+                                <Mic className="w-4 h-4 mr-1" />
+                                Record Voice Samples
                               </Button>
                               <Button
                                 size="sm"
