@@ -1694,30 +1694,66 @@ export class DatabaseStorage implements IStorage {
 
   // ESM User Recordings methods
   async getUserEsmRecordings(userId: string): Promise<any[]> {
-    const { userEsmRecordings, userEsm, esmRef } = await import('@shared/schema');
-    const { eq } = await import('drizzle-orm');
+    const result = await db.execute(
+      sql`SELECT 
+            uer.user_esm_recordings_id,
+            uer.audio_url,
+            uer.duration,
+            uer.created_date,
+            er.name,
+            er.display_name,
+            er.category
+          FROM user_esm_recordings uer
+          INNER JOIN user_esm ue ON uer.user_esm_id = ue.user_esm_id
+          INNER JOIN esm_ref er ON ue.esm_ref_id = er.esm_ref_id
+          WHERE ue.user_id = ${userId}
+          ORDER BY uer.created_date DESC`
+    );
     
-    // Get user's ESM recordings with joined reference data
-    const recordings = await db
-      .select({
-        recording_id: userEsmRecordings.recording_id,
-        audio_url: userEsmRecordings.audio_url,
-        duration: userEsmRecordings.duration,
-        created_at: userEsmRecordings.created_at,
-        is_locked: userEsmRecordings.is_locked,
-        esmRef: {
-          name: esmRef.name,
-          display_name: esmRef.display_name,
-          category: esmRef.category
-        }
-      })
-      .from(userEsmRecordings)
-      .innerJoin(userEsm, eq(userEsmRecordings.user_esm_id, userEsm.user_esm_id))
-      .innerJoin(esmRef, eq(userEsm.esm_ref_id, esmRef.esm_ref_id))
-      .where(eq(userEsm.user_id, userId));
-    
-    console.log(`📊 Found ${recordings.length} ESM recordings for user ${userId}`);
-    return recordings;
+    console.log(`📊 Found ${result.rows.length} ESM recordings for user ${userId}`);
+    return result.rows;
+  }
+
+  async getEsmRef(category: number, name: string): Promise<any> {
+    const result = await db.execute(
+      sql`SELECT * FROM esm_ref WHERE category = ${category} AND name = ${name} LIMIT 1`
+    );
+    return result.rows[0] || null;
+  }
+
+  async createEsmRef(data: any): Promise<any> {
+    const result = await db.execute(
+      sql`INSERT INTO esm_ref (category, name, display_name, sample_text, intensity, description, ai_variations, created_by, created_date)
+          VALUES (${data.category}, ${data.name}, ${data.display_name}, ${data.sample_text}, ${data.intensity}, 
+                  ${data.description}, ${JSON.stringify(data.ai_variations)}, ${data.created_by}, NOW())
+          RETURNING *`
+    );
+    return result.rows[0];
+  }
+
+  async getUserEsm(userId: string, esmRefId: number): Promise<any> {
+    const result = await db.execute(
+      sql`SELECT * FROM user_esm WHERE user_id = ${userId} AND esm_ref_id = ${esmRefId} LIMIT 1`
+    );
+    return result.rows[0] || null;
+  }
+
+  async createUserEsm(data: any): Promise<any> {
+    const result = await db.execute(
+      sql`INSERT INTO user_esm (user_id, esm_ref_id, sample_count, created_by, created_date)
+          VALUES (${data.user_id}, ${data.esm_ref_id}, ${data.sample_count || 1}, ${data.created_by}, NOW())
+          RETURNING *`
+    );
+    return result.rows[0];
+  }
+
+  async createUserEsmRecording(data: any): Promise<any> {
+    const result = await db.execute(
+      sql`INSERT INTO user_esm_recordings (user_esm_id, audio_url, duration, file_size, audio_quality_score, transcribed_text, created_by, created_date)
+          VALUES (${data.user_esm_id}, ${data.audio_url}, ${data.duration}, ${data.file_size}, ${data.audio_quality_score}, ${data.transcribed_text}, ${data.created_by}, NOW())
+          RETURNING *`
+    );
+    return result.rows[0];
   }
 
   // =============================================================================

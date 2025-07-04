@@ -1463,18 +1463,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Clean up temporary file
         await fs.unlink(tempInputPath);
         
-        // Save to database using existing user_voice_samples table
+        // Save to database using ESM architecture
         const relativeAudioUrl = `/api/user-content/${userId}/audio/emotions/${emotion}-${intensity}/${finalFileName}`;
         
-        await storage.createUserVoiceSample({
-          userId,
-          sampleType: 'emotion',
-          label: emotion,
-          audioUrl: relativeAudioUrl,
+        // Find or create ESM reference entry for this emotion
+        const emotionName = emotion.toLowerCase().trim();
+        let esmRef = await storage.getEsmRef(1, emotionName); // Category 1 = Emotions
+        
+        if (!esmRef) {
+          console.log(`ESM: Creating new ESM reference for emotion: ${emotionName}`);
+          esmRef = await storage.createEsmRef({
+            category: 1, // Emotions
+            name: emotionName,
+            display_name: emotion,
+            sample_text: text || `Express the emotion of ${emotion}`,
+            intensity: parseInt(intensity) || 5,
+            description: `User-recorded emotion from voice sample`,
+            ai_variations: {
+              userGenerated: true,
+              originalText: text
+            },
+            created_by: userId
+          });
+        }
+        
+        // Check if user already has this ESM entry
+        let userEsm = await storage.getUserEsm(userId, esmRef.esm_ref_id);
+        
+        if (!userEsm) {
+          console.log(`ESM: Creating user ESM entry for ${emotionName}`);
+          userEsm = await storage.createUserEsm({
+            user_id: userId,
+            esm_ref_id: esmRef.esm_ref_id,
+            created_by: userId
+          });
+        }
+        
+        // Create the recording entry
+        await storage.createUserEsmRecording({
+          user_esm_id: userEsm.user_esm_id,
+          audio_url: relativeAudioUrl,
           duration: Math.round(duration),
-          isCompleted: true,
-          isLocked: false,
-          recordedAt: new Date()
+          file_size: stats.size,
+          audio_quality_score: 85, // Default quality score
+          transcribed_text: text,
+          created_by: userId
         });
         
         console.log(`✅ Voice Sample Saved: ${emotion} for user ${userId}`);
