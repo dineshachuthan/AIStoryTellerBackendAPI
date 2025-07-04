@@ -43,6 +43,7 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Plug-and-Play External APIs**: Zero fallback provider logic anywhere in system
 - **Database-First Operations**: All data operations go to database first, then cache
 - **State-Driven Workflow**: All story states use established state transition system
+- **EnhancedVoiceRecorder**: Single voice recording component - NEVER create copies or alternatives. Reuse EnhancedVoiceRecorder with different props for all voice recording needs across the application
 
 ## Key Components
 
@@ -277,6 +278,7 @@ This is a full-stack collaborative storytelling platform that enables users to c
   - **BACKUP FILES PRESERVED**: Original components marked with _DEL suffix for future reference
   - **VOICE-RECORD PAGE UPDATED**: Uses EnhancedVoiceRecorder in simpleMode for narrative voice recording
   - **COMPLETE AUDIO PROCESSING**: Real-time equalizer, proper MIME type detection, audio context cleanup
+  - **ARCHITECTURAL PRINCIPLE ESTABLISHED**: EnhancedVoiceRecorder is the single voice recording component across entire application - NEVER create copies or alternatives
   - Enhanced voice recording system now fully operational with professional radio-style interface and all advanced features
 - January 04, 2025: ✅ **DUPLICATE COMPONENT ELIMINATION COMPLETED** - Removed EnhancedVoiceRecorder and Unified Voice Recording Components
   - **MARKED ENHANCEDVOICERECORDER FOR DELETION**: Added _DEL suffix to 590-line duplicate component that was reimplementing VoiceRecordingCard functionality
