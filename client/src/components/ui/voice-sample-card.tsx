@@ -143,43 +143,100 @@ export function VoiceSampleCard({
         </p>
       </CardHeader>
       
-      <CardContent className="space-y-4">
-        {/* Sample text display */}
-        <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-md">
-          <p className="text-sm italic text-gray-700 dark:text-gray-300">
-            "{sampleText}"
-          </p>
-          <p className="text-xs text-gray-500 mt-1">
-            Target: {targetDuration}s minimum
-          </p>
-        </div>
+      <CardContent className="p-0">
+        {/* Radio-style recording interface with black background */}
+        <div className="bg-black text-white p-4 rounded-lg">
+          <div className="flex items-center gap-4">
+            {/* Left side: Press and hold button with status */}
+            <div className="flex flex-col items-center gap-2">
+              <PressHoldRecorder
+                onRecordingComplete={handleRecordingComplete}
+                maxRecordingTime={15}
+                disabled={disabled || isLocked}
+                buttonText={{
+                  hold: "Hold",
+                  recording: "Recording",
+                  instructions: "Press & hold to record"
+                }}
+              />
+              
+              {/* Status indicators */}
+              <div className="flex items-center gap-1 text-xs">
+                {isLocked && (
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <Lock className="w-3 h-3 text-blue-400" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Locked for voice cloning</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+                {recordedSample && (
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <span className="text-green-400">{recordedSample.duration.toFixed(1)}s</span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Recording duration</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+              </div>
+            </div>
 
-        {/* Play existing recording if available */}
-        {isRecorded && recordedSample && (
-          <div className="flex justify-center">
-            <Button
-              onClick={playExistingRecording}
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-2"
-            >
-              <Play className="w-4 h-4" />
-              Play Your Recording
-            </Button>
+            {/* Right side: Sample text */}
+            <div className="flex-1">
+              <p className="text-sm italic text-gray-300 leading-relaxed">
+                "{sampleText}"
+              </p>
+              <p className="text-xs text-gray-400 mt-2">
+                Minimum: {targetDuration}s required
+              </p>
+            </div>
           </div>
-        )}
 
-        {/* Your working PressHoldRecorder component */}
-        <PressHoldRecorder
-          onRecordingComplete={handleRecordingComplete}
-          maxRecordingTime={15}
-          disabled={disabled || isLocked}
-          buttonText={{
-            hold: "Hold to Record",
-            recording: "Release to Stop",
-            instructions: "Press and hold microphone to record"
-          }}
-        />
+          {/* Control buttons - always visible */}
+          <div className="flex justify-center gap-3 mt-4">
+            {/* Play button */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={playExistingRecording}
+                  disabled={!isRecorded || !recordedSample}
+                  size="sm"
+                  variant="secondary"
+                  className="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:opacity-50"
+                >
+                  <Play className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Play your recording</p>
+              </TooltipContent>
+            </Tooltip>
+
+            {/* Save button - enabled when recording meets minimum duration */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={() => {/* Will be handled by PressHoldRecorder */}}
+                  disabled={!recordedSample || (recordedSample.duration < 6)}
+                  size="sm"
+                  variant="secondary"
+                  className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:opacity-50"
+                >
+                  Save
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{recordedSample && recordedSample.duration < 6 ? 
+                   `Need ${(6 - recordedSample.duration).toFixed(1)}s more` : 
+                   'Save recording'}</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        </div>
       </CardContent>
     </Card>
   );
