@@ -120,6 +120,58 @@ This is a full-stack collaborative storytelling platform that enables users to c
 
 ## Future Roadmap
 
+### Enhanced Story Narration with Collaborative Voice Testing (New Priority)
+**Complete Multi-User Voice Narration System with State-Driven Workflow**
+
+**Phase 1: Private Testing State Implementation**
+1. Implement story state transitions from "analyzed" to "private_testing"
+2. Create voice sample management interface for private testing phase
+3. Build narrator voice generation system using user's voice samples
+4. Add story playback controls with multiple voice options
+5. Implement iterative refinement workflow (testing → analysis → testing loop)
+
+**Phase 2: Collaborative Review Infrastructure**
+6. Create story invitation system for friends and family
+7. Implement guest user voice sample collection (no account required)
+8. Build multi-user voice management - users can see each other's narrator voices
+9. Add voice selection interface - choose which voice to play story with
+10. Create feedback collection system for collaborative reviewers
+
+**Phase 3: Voice Inheritance and Cloning System**
+11. Implement story finalization workflow with feedback incorporation
+12. Create public story publishing with original author's voice as default
+13. Build story cloning system - users can copy stories with inherited narrator voice
+14. Add voice sample override system - cloners can create their own narrator voices
+15. Implement voice lineage tracking - show original author vs custom voices
+
+**Phase 4: State-Driven Workflow Management**
+16. Create UI components for each story state (private testing, collaborative review, finalized)
+17. Build state transition controls - buttons to move stories between states
+18. Add state-specific permissions - only authors can invite, reviewers can test voices
+19. Implement automatic state progression based on completion criteria
+20. Create state dashboard - show stories in each phase of narration workflow
+
+**Phase 5: Multi-Voice Story Experience**
+21. Build story player with voice switching capability during playback
+22. Create voice comparison interface - A/B test different narrator voices
+23. Add voice quality metrics - user ratings and preference tracking
+24. Implement collaborative decision making - group vote on best voice
+25. Create voice performance analytics - usage stats and popularity
+
+**Phase 6: Advanced Voice Features**
+26. Add emotion-based voice modulation during story narration
+27. Create character-specific voice assignment for multi-character stories
+28. Build voice blending capabilities - combine multiple user voices
+29. Implement voice coaching system - help users improve their narration
+30. Add voice style templates - dramatic, comedic, mysterious narration styles
+
+**Phase 7: Community and Discovery**
+31. Create public story gallery with voice previews
+32. Build voice artist profiles - showcase users' narration skills
+33. Add story recommendation system based on voice preferences
+34. Implement voice collaboration marketplace - users can offer narration services
+35. Create voice challenges and competitions for community engagement
+
 ### ElevenLabs Voice Cloning Integration (In Progress)
 **Phase 1: Database Schema Implementation**
 1. Extend existing database schema with new tables for voice profiles, emotion voices, audio cache
