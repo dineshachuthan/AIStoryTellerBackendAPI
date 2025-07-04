@@ -535,72 +535,11 @@ export function EnhancedVoiceRecorder({
             </div>
 
             {/* Sample Text Display - Compact */}
-            <div className="mb-2">
+            <div className="mb-4">
               <div className="text-white text-sm leading-relaxed">
                 <span className="italic text-blue-200">
                   "{(sampleText && sampleText.length > 100 ? sampleText.substring(0, 100) + '...' : sampleText) || 'Sample text not provided'}"
                 </span>
-              </div>
-              
-              {/* Length indicator - fixed height for consistent card layout */}
-              <div className="mt-2 -mb-2 px-2">
-                <div className="bg-gray-800/50 rounded-lg p-3 h-[72px] flex flex-col justify-between">
-                  <div className="flex items-center justify-between text-xs text-gray-300">
-                    {recordingState === 'recording' ? (
-                      <>
-                        <span className="font-mono text-blue-400">{formatTime(Math.floor(recordingTime))}</span>
-                        <span className="text-yellow-400 font-medium">6s minimum</span>
-                        <span className="font-mono text-gray-400">{formatTime(maxRecordingTime)}</span>
-                      </>
-                    ) : (tempRecording || recordedSample) ? (
-                      <>
-                        <span className="font-mono text-blue-400">
-                          {tempRecording ? formatTime(Math.floor(recordingTime)) : 
-                           recordedSample ? `${recordedSample.duration?.toFixed(1) || '0.0'}s` : '0s'}
-                        </span>
-                        <span className="text-yellow-400 font-medium">6s minimum</span>
-                        <span className="font-mono text-gray-400">{formatTime(maxRecordingTime)}</span>
-                      </>
-                    ) : (
-                      <>
-                        <span></span>
-                        <span className="text-yellow-400 font-medium">6s minimum required</span>
-                        <span></span>
-                      </>
-                    )}
-                  </div>
-                  
-                  <div className="relative">
-                    <Progress 
-                      value={recordingState === 'recording' ? progressPercentage : 
-                             tempRecording ? (recordingTime / maxRecordingTime) * 100 :
-                             recordedSample ? ((recordedSample.duration || 0) / maxRecordingTime) * 100 : 0} 
-                      className="w-full h-3 bg-gray-700" 
-                    />
-                    <div 
-                      className="absolute top-0 w-1 h-3 bg-yellow-400 rounded-sm"
-                      style={{ left: `${(6 / maxRecordingTime) * 100}%` }}
-                    />
-                  </div>
-                  
-                  <div className="text-xs text-center">
-                    {recordingState === 'recording' ? (
-                      recordingTime >= 6 ? (
-                        <span className="text-green-400 font-medium">✓ Minimum length reached</span>
-                      ) : (
-                        <span className="text-yellow-400">Need {(6 - recordingTime).toFixed(1)}s more</span>
-                      )
-                    ) : (tempRecording || recordedSample) ? (
-                      ((tempRecording && recordingTime >= 6) || (recordedSample && (recordedSample.duration || 0) >= 6)) ? (
-                        <span className="text-green-400 font-medium">✓ Valid recording</span>
-                      ) : (
-                        <span className="text-yellow-400">Recording too short</span>
-                      )
-                    ) : (
-                      <span className="text-gray-400">Press and hold to record</span>
-                    )}
-                  </div>
-                </div>
               </div>
             </div>
           </div>
