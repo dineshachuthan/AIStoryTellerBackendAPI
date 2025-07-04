@@ -290,42 +290,29 @@ function generateRoleBasedAvatar(character: ExtractedCharacter): string {
 export async function generateCharacterImage(character: ExtractedCharacter, storyContext: string): Promise<string> {
   return imageQueue.add(async () => {
     try {
-      const prompt = `Create a high-quality digital portrait of ${character.name}, a ${character.role} character from a story. 
+      // Use OpenAI Cached Provider - it handles all cache decisions
+      const { getOpenAICachedProvider } = await import('./cache/openai-cached-provider');
+      const openaiProvider = getOpenAICachedProvider();
       
-      Character details:
-      - Description: ${character.description}
-      - Personality: ${character.personality}
-      - Appearance: ${character.appearance || "To be imagined based on personality"}
-      - Story context: ${storyContext}
-      
-      Style: Digital art, portrait orientation, detailed and expressive, suitable for character representation in a story app. Professional quality, clean background.`;
-
-      const response = await openai.images.generate({
-        model: "dall-e-3",
-        prompt: prompt,
-        n: 1,
-        size: "1024x1024",
-        quality: "standard",
+      const imageUrl = await openaiProvider.generateImageWithCache({
+        character,
+        storyContext
       });
 
-      const originalImageUrl = response.data?.[0]?.url;
-      if (!originalImageUrl) {
-        return generateRoleBasedAvatar(character);
-      }
-
-      // Cache the generated image locally
+      // Cache the generated image locally using existing image service
       try {
         const { imageAssetService } = await import('./image-asset-service');
-        const cachedAsset = await imageAssetService.cacheImage(originalImageUrl, `character-${character.name}`);
+        const cachedAsset = await imageAssetService.cacheImage(imageUrl, `character-${character.name}`);
         
         // Return the local cached URL
         const baseUrl = process.env.REPLIT_DEV_DOMAIN ? 
           `https://${process.env.REPLIT_DEV_DOMAIN}` : 
           'http://localhost:5000';
+        
         return imageAssetService.getAbsoluteUrl(cachedAsset.publicUrl, baseUrl);
       } catch (cacheError) {
-        console.warn('Failed to cache character image, using original URL:', cacheError.message);
-        return originalImageUrl;
+        console.warn('Failed to cache character image locally, using OpenAI URL:', cacheError);
+        return imageUrl;
       }
     } catch (error: any) {
       console.error("Character image generation error:", error);
@@ -340,56 +327,15 @@ export async function transcribeAudio(audioBuffer: Buffer): Promise<string> {
   console.log("Starting audio transcription, buffer size:", audioBuffer.length);
   
   try {
-    // Convert buffer to a stream for OpenAI API
-    const fs = await import('fs');
-    const path = await import('path');
-    const os = await import('os');
+    // Use OpenAI Cached Provider - it handles all cache decisions
+    const { getOpenAICachedProvider } = await import('./cache/openai-cached-provider');
+    const openaiProvider = getOpenAICachedProvider();
     
-    // Detect file format and use appropriate extension
-    const fileExtension = detectAudioFormat(audioBuffer);
-    const tempFilePath = path.join(os.tmpdir(), `audio_${Date.now()}.${fileExtension}`);
-    console.log("Creating temporary file:", tempFilePath, "Format detected:", fileExtension);
+    const transcription = await openaiProvider.transcribeAudioWithCache({
+      audioBuffer
+    });
     
-    await fs.promises.writeFile(tempFilePath, audioBuffer);
-    console.log("Temporary file created successfully");
-    
-    try {
-      // Verify file exists and has content
-      const stats = await fs.promises.stat(tempFilePath);
-      console.log("Temp file stats:", { size: stats.size, path: tempFilePath });
-      
-      // Create a readable stream from the file
-      const audioReadStream = fs.createReadStream(tempFilePath);
-      console.log("Created read stream, calling OpenAI API...");
-      
-      const transcription = await openai.audio.transcriptions.create({
-        file: audioReadStream,
-        model: "whisper-1",
-        // Removed prompt to get authentic transcription without fallback text
-      });
-
-      console.log("OpenAI Whisper transcription successful:");
-      console.log("- Full API response:", JSON.stringify(transcription, null, 2));
-      console.log("- Text length:", transcription.text.length);
-      console.log("- Transcribed text:", JSON.stringify(transcription.text));
-      
-      // Check for poor quality transcription results using configuration
-      if (transcription.text.trim().length < AUDIO_PROCESSING_CONFIG.minimumTranscriptionLength) {
-        console.log("Warning: Very short transcription result, audio may be unclear or too quiet");
-        throw new Error(AUDIO_PROCESSING_CONFIG.errorMessages.noSpeechDetected);
-      }
-      
-      // Return the exact transcription without any defaults or modifications
-      return transcription.text;
-    } finally {
-      // Clean up temporary file
-      try {
-        await fs.promises.unlink(tempFilePath);
-        console.log("Temporary file cleaned up");
-      } catch (cleanupError) {
-        console.warn("Failed to clean up temp file:", cleanupError);
-      }
-    }
+    return transcription;
   } catch (error) {
     console.error("Audio transcription error details:", {
       message: error instanceof Error ? error.message : 'Unknown error',
@@ -452,88 +398,20 @@ export async function analyzeStoryContentWithHashCache(storyId: number, content:
     console.warn(`[Content Hash Cache] Database cache check failed for story ${storyId}:`, error);
   }
 
-  // Generate fresh analysis using OpenAI
-  console.log(`[Content Hash Cache] Calling OpenAI API for story ${storyId} analysis`);
+  // Generate fresh analysis using OpenAI Cached Provider
+  console.log(`[Content Hash Cache] Calling OpenAI Cached Provider for story ${storyId} analysis`);
   
   try {
-    const systemPrompt = `You are an expert story analyst. Analyze the provided story text and extract detailed information about characters, emotions, themes, and content.
-
-    Respond with valid JSON in this exact format:
-    {
-      "title": "A compelling, creative title for the story (3-8 words, engaging and descriptive)",
-      "characters": [
-        {
-          "name": "Character name",
-          "description": "Brief description of the character",
-          "personality": "Personality traits and characteristics",
-          "role": "protagonist|antagonist|supporting|narrator|other",
-          "appearance": "Physical description if available",
-          "traits": ["trait1", "trait2", "trait3"]
-        }
-      ],
-      "emotions": [
-        {
-          "emotion": "Any emotion detected in the story (grief, sympathy, empathy, melancholy, despair, hope, relief, guilt, shame, regret, acceptance, compassion, love, fear, anger, sadness, joy, etc.)",
-          "intensity": 7,
-          "context": "Context where this emotion appears",
-          "quote": "Relevant quote from the story if available"
-        }
-      ],
-      "soundEffects": [
-        {
-          "sound": "Environmental or audio effects mentioned in the story (dog barking, train whistling, rain falling, door slamming, footsteps, car engine, bird chirping, wind howling, ocean waves, thunder, music playing, phone ringing, etc.)",
-          "intensity": 6,
-          "context": "Where this sound appears in the story",
-          "quote": "Quote from story mentioning this sound"
-        }
-      ],
-      "summary": "2-3 sentence summary of the story",
-      "category": "Category like Romance, Adventure, Mystery, Fantasy, Sci-Fi, Drama, Comedy, Horror, Thriller",
-      "genre": "Primary genre (Drama, Fantasy, Mystery, Romance, etc.)",
-      "subGenre": "Sub-genre if applicable",
-      "themes": ["theme1", "theme2", "theme3"],
-      "suggestedTags": ["tag1", "tag2", "tag3"],
-      "emotionalTags": ["emotional_tag1", "emotional_tag2"],
-      "moodCategory": "Overall mood/atmosphere (dark, light, mysterious, hopeful, melancholic, suspenseful, etc.)",
-      "ageRating": "general|teen|mature",
-      "readingTime": 5,
-      "isAdultContent": false
-    }
-
-    CRITICAL REQUIREMENTS:
-    1. Extract ALL emotions present in the story - never limit to predefined lists
-    2. Extract ALL environmental sounds and audio effects mentioned in the story (dog barking, rain, footsteps, music, etc.)
-    3. Include character voice traits (deep, raspy, melodic, etc.) and sound descriptions (whispering, shouting, laughing)
-    4. Capture mood categories (moodCategory) and emotional atmosphere
-    5. Generate compelling, creative titles that capture the story essence
-    6. Provide intensity ratings 1-10 for all emotions based on story context
-    7. Extract exact quotes that demonstrate emotional moments
-    8. Generate comprehensive themes and tags for story categorization`;
-
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        {
-          role: "system",
-          content: systemPrompt,
-        },
-        {
-          role: "user",
-          content: `Analyze this story:\n\n${content}`,
-        },
-      ],
-      max_tokens: 2000,
-      temperature: 0.3,
-      response_format: { type: "json_object" },
+    // Use OpenAI Cached Provider - it handles all cache decisions
+    const { getOpenAICachedProvider } = await import('./cache/openai-cached-provider');
+    const openaiProvider = getOpenAICachedProvider();
+    
+    const analysis = await openaiProvider.analyzeStoryWithCache({
+      content,
+      userId
     });
 
-    const analysisText = response.choices[0].message.content;
-    if (!analysisText) {
-      throw new Error("No analysis generated from OpenAI");
-    }
-
-    console.log(`[Content Hash Cache] OpenAI analysis completed for story ${storyId}, response length: ${analysisText.length} characters`);
-    const analysis: StoryAnalysis = JSON.parse(analysisText);
+    console.log(`[Content Hash Cache] OpenAI analysis completed for story ${storyId}, characters: ${analysis.characters?.length || 0}, emotions: ${analysis.emotions?.length || 0}`);
     
     // Assign voices to characters during analysis phase
     analysis.characters = analysis.characters.map(character => {

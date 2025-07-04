@@ -1,0 +1,290 @@
+/**
+ * OpenAI Cached Provider - Content Hash Based External API Decisions
+ * Extends BaseCachedProvider to enforce cache-first pattern for OpenAI API calls
+ */
+
+import { BaseCachedProvider, ProviderConfig, ExternalApiContext } from './base-cached-provider';
+import { ICacheProvider, CacheOptions } from './cache-interfaces';
+import { CacheService } from './cache-service';
+import OpenAI from 'openai';
+
+export interface OpenAIAnalysisRequest {
+  content: string;
+  userId?: string;
+}
+
+export interface OpenAIImageRequest {
+  character: any;
+  storyContext: string;
+}
+
+export interface OpenAITranscriptionRequest {
+  audioBuffer: Buffer;
+}
+
+export class OpenAICachedProvider extends BaseCachedProvider {
+  private openai: OpenAI;
+
+  constructor(config: ProviderConfig) {
+    const cacheService = CacheService.getInstance();
+    super(cacheService.getCacheProvider(), config);
+    
+    this.openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY
+    });
+  }
+
+  protected generateCacheKey(...args: any[]): string {
+    const [requestType, data] = args;
+    
+    switch (requestType) {
+      case 'story-analysis':
+        return `story-analysis:${this.generateContentHash(data.content)}`;
+      case 'character-image':
+        return `character-image:${this.generateContentHash(JSON.stringify(data))}`;
+      case 'audio-transcription':
+        return `transcription:${this.generateContentHash(data.audioBuffer)}`;
+      default:
+        return `openai:${this.generateContentHash(JSON.stringify(args))}`;
+    }
+  }
+
+  private generateContentHash(content: string | Buffer): string {
+    const crypto = require('crypto');
+    return crypto.createHash('sha256').update(content).digest('hex');
+  }
+
+  protected async callExternalApi<T>(context: ExternalApiContext, ...args: any[]): Promise<T> {
+    const [requestType, data] = args;
+    
+    console.log(`[OpenAI] Calling external API for ${requestType} (attempt ${context.attempt})`);
+    
+    switch (requestType) {
+      case 'story-analysis':
+        return await this.analyzeStoryContent(data) as T;
+      case 'character-image':
+        return await this.generateCharacterImage(data) as T;
+      case 'audio-transcription':
+        return await this.transcribeAudio(data) as T;
+      default:
+        throw new Error(`Unsupported OpenAI request type: ${requestType}`);
+    }
+  }
+
+  protected async writeToDatabaseFirst<T>(key: string, data: T, options: CacheOptions): Promise<void> {
+    // Database write happens first - implemented in storage layer
+    console.log(`[OpenAI] Writing to database first: ${key.substring(0, 12)}...`);
+    // This will be integrated with storage.ts cache methods
+  }
+
+  protected async readFromDatabase<T>(key: string): Promise<T | null> {
+    // Database read for cache misses - implemented in storage layer
+    console.log(`[OpenAI] Reading from database: ${key.substring(0, 12)}...`);
+    return null; // Will be integrated with storage.ts
+  }
+
+  protected validateResponse<T>(data: T): boolean {
+    if (!data) return false;
+    
+    // Validate based on response type
+    if (typeof data === 'object' && data !== null) {
+      const obj = data as any;
+      
+      // Story analysis validation
+      if (obj.title && obj.characters && obj.emotions) {
+        return Array.isArray(obj.characters) && Array.isArray(obj.emotions);
+      }
+      
+      // Image URL validation
+      if (typeof obj === 'string' && obj.startsWith('http')) {
+        return true;
+      }
+      
+      // Transcription validation
+      if (typeof obj === 'string' && obj.length > 0) {
+        return true;
+      }
+    }
+    
+    return false;
+  }
+
+  // Public methods that use cache-first pattern
+  async analyzeStoryWithCache(request: OpenAIAnalysisRequest): Promise<any> {
+    return this.executeWithCache(
+      'story-analysis',
+      { ttl: 30 * 24 * 60 * 60 * 1000, tags: ['story-analysis'] }, // 30 days
+      'story-analysis',
+      request
+    );
+  }
+
+  async generateImageWithCache(request: OpenAIImageRequest): Promise<string> {
+    return this.executeWithCache(
+      'character-image',
+      { ttl: 30 * 24 * 60 * 60 * 1000, tags: ['character-image'] }, // 30 days
+      'character-image',
+      request
+    );
+  }
+
+  async transcribeAudioWithCache(request: OpenAITranscriptionRequest): Promise<string> {
+    return this.executeWithCache(
+      'audio-transcription',
+      { ttl: 7 * 24 * 60 * 60 * 1000, tags: ['transcription'] }, // 7 days
+      'audio-transcription',
+      request
+    );
+  }
+
+  // Private methods that call actual OpenAI APIs
+  private async analyzeStoryContent(request: OpenAIAnalysisRequest): Promise<any> {
+    if (!request.content || request.content.trim().length === 0) {
+      throw new Error("Cannot analyze empty story content");
+    }
+
+    const systemPrompt = `You are an expert story analyst. Analyze the provided story text and extract detailed information about characters, emotions, themes, and content.
+
+    Respond with valid JSON in this exact format:
+    {
+      "title": "A compelling, creative title for the story (3-8 words, engaging and descriptive)",
+      "characters": [
+        {
+          "name": "Character name",
+          "description": "Brief description of the character",
+          "personality": "Personality traits and characteristics",
+          "role": "protagonist|antagonist|supporting|narrator|other",
+          "appearance": "Physical description if available",
+          "traits": ["trait1", "trait2", "trait3"]
+        }
+      ],
+      "emotions": [
+        {
+          "emotion": "Any emotion detected in the story",
+          "intensity": 7,
+          "context": "Context where this emotion appears",
+          "quote": "Relevant quote from the story if available"
+        }
+      ],
+      "summary": "2-3 sentence summary of the story",
+      "category": "Category like Romance, Adventure, Mystery, Fantasy, Sci-Fi, Drama, Comedy, Horror, Thriller",
+      "genre": "Primary genre (Drama, Fantasy, Mystery, Romance, etc.)",
+      "subGenre": "Sub-genre if applicable",
+      "themes": ["theme1", "theme2", "theme3"],
+      "suggestedTags": ["tag1", "tag2", "tag3"],
+      "emotionalTags": ["emotional_tag1", "emotional_tag2"],
+      "moodCategory": "Overall mood/atmosphere (dark, light, mysterious, hopeful, melancholic, suspenseful, etc.)",
+      "ageRating": "general|teen|mature",
+      "readingTime": 5,
+      "isAdultContent": false
+    }`;
+
+    const response = await this.openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: `Analyze this story:\n\n${request.content}` }
+      ],
+      max_tokens: 2000,
+      temperature: 0.3,
+      response_format: { type: "json_object" }
+    });
+
+    const analysisText = response.choices[0].message.content;
+    if (!analysisText) {
+      throw new Error("No analysis generated from OpenAI");
+    }
+
+    return JSON.parse(analysisText);
+  }
+
+  private async generateCharacterImage(request: OpenAIImageRequest): Promise<string> {
+    const { character, storyContext } = request;
+    
+    const prompt = `Create a high-quality digital portrait of ${character.name}, a ${character.role} character from a story. 
+    
+    Character details:
+    - Description: ${character.description}
+    - Personality: ${character.personality}
+    - Appearance: ${character.appearance || "To be imagined based on personality"}
+    - Story context: ${storyContext}
+    
+    Style: Digital art, portrait orientation, detailed and expressive, suitable for character representation in a story app. Professional quality, clean background.`;
+
+    const response = await this.openai.images.generate({
+      model: "dall-e-3",
+      prompt: prompt,
+      n: 1,
+      size: "1024x1024",
+      quality: "standard"
+    });
+
+    const imageUrl = response.data?.[0]?.url;
+    if (!imageUrl) {
+      throw new Error("No image URL generated from OpenAI");
+    }
+
+    return imageUrl;
+  }
+
+  private async transcribeAudio(request: OpenAITranscriptionRequest): Promise<string> {
+    const { audioBuffer } = request;
+    
+    const fs = await import('fs');
+    const path = await import('path');
+    const os = await import('os');
+    
+    // Create temporary file
+    const tempFilePath = path.join(os.tmpdir(), `audio_${Date.now()}.mp3`);
+    await fs.promises.writeFile(tempFilePath, audioBuffer);
+    
+    try {
+      const audioReadStream = fs.createReadStream(tempFilePath);
+      
+      const transcription = await this.openai.audio.transcriptions.create({
+        file: audioReadStream,
+        model: "whisper-1"
+      });
+
+      if (!transcription.text || transcription.text.trim().length < 5) {
+        throw new Error("Audio transcription failed - no speech detected");
+      }
+      
+      return transcription.text;
+    } finally {
+      // Clean up temporary file
+      try {
+        await fs.promises.unlink(tempFilePath);
+      } catch (cleanupError) {
+        console.warn("Failed to clean up temp file:", cleanupError);
+      }
+    }
+  }
+
+  // Stats and monitoring
+  getStats() {
+    return {
+      ...this.stats,
+      provider: 'openai',
+      cacheHitRate: this.stats.totalRequests > 0 ? 
+        (this.stats.cacheHits / this.stats.totalRequests * 100).toFixed(2) + '%' : '0%'
+    };
+  }
+}
+
+// Singleton instance
+let openaiProvider: OpenAICachedProvider | null = null;
+
+export function getOpenAICachedProvider(): OpenAICachedProvider {
+  if (!openaiProvider) {
+    openaiProvider = new OpenAICachedProvider({
+      name: 'openai',
+      timeout: 60000, // 60 seconds
+      retryCount: 3,
+      retryDelays: [1000, 2000, 4000],
+      enableCaching: true,
+      defaultTtl: 30 * 24 * 60 * 60 * 1000 // 30 days
+    });
+  }
+  return openaiProvider;
+}
