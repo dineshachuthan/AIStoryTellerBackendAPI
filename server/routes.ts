@@ -4428,20 +4428,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       const audioUrl = `/cache/user-voice-modulations/${userId}/${fileName}`;
 
-      // Save voice sample directly to storage
-      const modulation = await storage.createUserVoiceSample({
-        userId,
-        sampleType: template.modulationType,
-        label: modulationKey,
-        audioUrl,
+      // Parse emotion name from modulationKey (e.g., "emotions-frustration" -> "frustration")
+      const emotionName = modulationKey.split('-').slice(1).join('-');
+      
+      // Save voice sample using ESM architecture
+      // 1. Find or create ESM reference entry for this emotion
+      let esmRef = await storage.getEsmRef(1, emotionName); // Category 1 = Emotions
+      
+      if (!esmRef) {
+        console.log(`ESM: Creating new ESM reference for emotion: ${emotionName}`);
+        esmRef = await storage.createEsmRef({
+          category: 1, // Emotions
+          name: emotionName,
+          display_name: emotionName.charAt(0).toUpperCase() + emotionName.slice(1),
+          sample_text: `Express the emotion of ${emotionName}`,
+          intensity: 5,
+          description: `User-recorded emotion from voice sample`,
+          ai_variations: {
+            userGenerated: true
+          },
+          created_by: userId
+        });
+      }
+      
+      // 2. Check if user already has this ESM entry
+      let userEsm = await storage.getUserEsm(userId, esmRef.esm_ref_id);
+      
+      if (!userEsm) {
+        console.log(`ESM: Creating user ESM entry for ${emotionName}`);
+        userEsm = await storage.createUserEsm({
+          user_id: userId,
+          esm_ref_id: esmRef.esm_ref_id,
+          created_by: userId
+        });
+      }
+      
+      // 3. Create the recording entry  
+      const modulation = await storage.createUserEsmRecording({
+        user_esm_id: userEsm.user_esm_id,
+        audio_url: audioUrl,
         duration: parseInt(duration) || template.targetDuration || 10,
-        isCompleted: true,
-        isLocked: false
+        file_size: audioFile.size,
+        audio_quality_score: 85, // Default quality score
+        transcribed_text: null,
+        created_by: userId
       });
 
       // Session-based voice cloning triggers removed
       
-      res.json(modulation);
+      res.json({
+        success: true,
+        emotion: emotionName,
+        modulationKey: modulationKey,
+        audioUrl: audioUrl,
+        duration: parseInt(duration) || template.targetDuration || 10,
+        isLocked: false
+      });
     } catch (error: any) {
       console.error('Error recording voice modulation:', error);
       res.status(500).json({ message: 'Failed to record voice modulation' });
