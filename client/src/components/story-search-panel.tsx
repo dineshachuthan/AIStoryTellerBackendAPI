@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { 
   Book, 
   Search, 
@@ -19,6 +20,7 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
+import { UIMessages } from "@shared/i18n-config";
 
 interface Story {
   id: number;
@@ -161,11 +163,27 @@ export function StorySearchPanel({
                                       {story.readingTime}m
                                     </div>
                                   )}
-                                  {story.isPublished ? (
-                                    <Globe className="w-3 h-3 text-green-400" />
-                                  ) : (
-                                    <EyeOff className="w-3 h-3 text-gray-400" />
-                                  )}
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <div>
+                                          {story.isPublished ? (
+                                            <Globe className="w-3 h-3 text-green-400" />
+                                          ) : (
+                                            <EyeOff className="w-3 h-3 text-gray-400" />
+                                          )}
+                                        </div>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>
+                                          {story.isPublished 
+                                            ? UIMessages.getTooltip('STORY_PUBLIC_TOOLTIP')
+                                            : UIMessages.getTooltip('STORY_PRIVATE_TOOLTIP')
+                                          }
+                                        </p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
                                 </div>
                               </div>
                               <div className="flex space-x-1">

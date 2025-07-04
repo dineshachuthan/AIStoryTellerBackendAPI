@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,6 +37,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { BottomNavigation } from "@/components/bottom-navigation";
 import { apiRequest } from "@/lib/queryClient";
+import { UIMessages } from "@shared/i18n-config";
 
 interface Story {
   id: number;
@@ -395,15 +397,37 @@ export default function StoryLibrary() {
                           {story.isPublic ? (
                             <div className="text-center py-2">
                               <div className="text-sm text-green-400 flex items-center justify-center">
-                                <Globe className="w-4 h-4 mr-1" />
-                                Published
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <div className="flex items-center">
+                                        <Globe className="w-4 h-4 mr-1" />
+                                        Published
+                                      </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>{UIMessages.getTooltip('STORY_PUBLIC_TOOLTIP')}</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
                               </div>
                             </div>
                           ) : (
                             <div className="text-center py-2">
                               <div className="text-sm text-gray-400 flex items-center justify-center">
-                                <EyeOff className="w-4 h-4 mr-1" />
-                                Private
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <div className="flex items-center">
+                                        <EyeOff className="w-4 h-4 mr-1" />
+                                        Private
+                                      </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>{UIMessages.getTooltip('STORY_PRIVATE_TOOLTIP')}</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
                               </div>
                             </div>
                           )}
@@ -628,16 +652,38 @@ export default function StoryLibrary() {
                           {story.isPublic ? (
                             <div className="text-center py-2">
                               <div className="text-sm text-green-400 flex items-center justify-center">
-                                <Globe className="w-4 h-4 mr-1" />
-                                Published {story.publishedAt && formatDistanceToNow(new Date(story.publishedAt), { addSuffix: true })}
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <div className="flex items-center">
+                                        <Globe className="w-4 h-4 mr-1" />
+                                        Published {story.publishedAt && formatDistanceToNow(new Date(story.publishedAt), { addSuffix: true })}
+                                      </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>{UIMessages.getTooltip('STORY_PUBLIC_TOOLTIP')}</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
                               </div>
                               <p className="text-xs text-gray-500 mt-1">Available to all users</p>
                             </div>
                           ) : (
                             <div className="text-center py-2">
                               <div className="text-sm text-gray-400 flex items-center justify-center">
-                                <EyeOff className="w-4 h-4 mr-1" />
-                                Private Story
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <div className="flex items-center">
+                                        <EyeOff className="w-4 h-4 mr-1" />
+                                        Private Story
+                                      </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>{UIMessages.getTooltip('STORY_PRIVATE_TOOLTIP')}</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
                               </div>
                               <p className="text-xs text-gray-500 mt-1">Only visible to you</p>
                             </div>

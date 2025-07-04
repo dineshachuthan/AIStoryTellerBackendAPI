@@ -269,6 +269,39 @@ export const MESSAGE_TEMPLATES: Record<string, I18nMessageTemplate> = {
       zh: '叙述者声音已准备就绪',
       ko: '나레이터 음성 준비 완료'
     }
+  },
+
+  // Story Privacy Tooltips
+  STORY_PRIVATE_TOOLTIP: {
+    code: 'STORY_PRIVATE_TOOLTIP',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Private story - only visible to you',
+      es: 'Historia privada - solo visible para ti',
+      fr: 'Histoire privée - visible seulement pour vous',
+      de: 'Private Geschichte - nur für Sie sichtbar',
+      ja: 'プライベートストーリー - あなたにのみ表示',
+      zh: '私人故事 - 仅对您可见',
+      ko: '비공개 이야기 - 본인만 볼 수 있음'
+    }
+  },
+
+  STORY_PUBLIC_TOOLTIP: {
+    code: 'STORY_PUBLIC_TOOLTIP',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Published story - visible to all users',
+      es: 'Historia publicada - visible para todos los usuarios',
+      fr: 'Histoire publiée - visible par tous les utilisateurs',
+      de: 'Veröffentlichte Geschichte - für alle Nutzer sichtbar',
+      ja: '公開されたストーリー - すべてのユーザーに表示',
+      zh: '已发布的故事 - 对所有用户可见',
+      ko: '게시된 이야기 - 모든 사용자에게 표시'
+    }
   }
 };
 
@@ -397,6 +430,14 @@ export class StoryMessageService {
   static storyAnalysisFailed(storyTitle: string, errorReason: string, language?: Language) {
     return getDynamicMessage('STORY_ANALYSIS_FAILED', { storyTitle, errorReason }, language || this.defaultLanguage);
   }
+
+  static getPrivateTooltip(language?: Language) {
+    return getDynamicMessage('STORY_PRIVATE_TOOLTIP', {}, language || this.defaultLanguage);
+  }
+
+  static getPublicTooltip(language?: Language) {
+    return getDynamicMessage('STORY_PUBLIC_TOOLTIP', {}, language || this.defaultLanguage);
+  }
 }
 
 /**
@@ -434,20 +475,109 @@ export class UserMessageService {
 }
 
 /**
- * Legacy compatibility functions (deprecated - use service classes instead)
+ * Common utility function for getting UI messages
+ * Agnostic of data source and usable throughout the application
+ * @param code - Message code from MESSAGE_TEMPLATES
+ * @param type - Type of message (Label, Error, Warning, Title, etc.)
+ * @param variables - Variables for template interpolation
+ * @param language - Optional language override
+ */
+export function getUIMessage(
+  code: string,
+  type: 'Label' | 'Error' | 'Warning' | 'Title' | 'Tooltip' | 'Header' | 'Button' | 'Info' | 'Success',
+  variables: Record<string, string | number> = {},
+  language: Language = 'en'
+): string {
+  const template = MESSAGE_TEMPLATES[code];
+  if (!template) {
+    console.warn(`Missing i18n template for code: ${code}`);
+    return `[Missing: ${code}]`;
+  }
+
+  const messageTemplate = template.templates[language] || template.templates.en;
+  if (!messageTemplate) {
+    console.warn(`Missing ${language} translation for code: ${code}`);
+    return `[Missing ${language}: ${code}]`;
+  }
+
+  return interpolateTemplate(messageTemplate, variables);
+}
+
+/**
+ * Utility functions for common UI message types
+ * These are the recommended functions to use throughout the application
+ */
+export const UIMessages = {
+  /**
+   * Get label text (buttons, form fields, navigation items)
+   */
+  getLabel: (code: string, variables?: Record<string, string | number>, language?: Language) =>
+    getUIMessage(code, 'Label', variables, language),
+  
+  /**
+   * Get error messages (validation errors, API failures, system errors)
+   */
+  getError: (code: string, variables?: Record<string, string | number>, language?: Language) =>
+    getUIMessage(code, 'Error', variables, language),
+  
+  /**
+   * Get warning messages (cautions, alerts, non-critical issues)
+   */
+  getWarning: (code: string, variables?: Record<string, string | number>, language?: Language) =>
+    getUIMessage(code, 'Warning', variables, language),
+  
+  /**
+   * Get title text (page titles, modal headers, section headings)
+   */
+  getTitle: (code: string, variables?: Record<string, string | number>, language?: Language) =>
+    getUIMessage(code, 'Title', variables, language),
+  
+  /**
+   * Get tooltip text (hover help, explanatory text)
+   */
+  getTooltip: (code: string, variables?: Record<string, string | number>, language?: Language) =>
+    getUIMessage(code, 'Tooltip', variables, language),
+  
+  /**
+   * Get header text (main headings, section headers)
+   */
+  getHeader: (code: string, variables?: Record<string, string | number>, language?: Language) =>
+    getUIMessage(code, 'Header', variables, language),
+  
+  /**
+   * Get button text (action buttons, submit buttons)
+   */
+  getButton: (code: string, variables?: Record<string, string | number>, language?: Language) =>
+    getUIMessage(code, 'Button', variables, language),
+  
+  /**
+   * Get informational messages (help text, descriptions)
+   */
+  getInfo: (code: string, variables?: Record<string, string | number>, language?: Language) =>
+    getUIMessage(code, 'Info', variables, language),
+  
+  /**
+   * Get success messages (confirmations, completion messages)
+   */
+  getSuccess: (code: string, variables?: Record<string, string | number>, language?: Language) =>
+    getUIMessage(code, 'Success', variables, language)
+};
+
+/**
+ * Legacy compatibility functions (deprecated - use UIMessages instead)
  */
 export function getErrorMessage(errorCode: string, language: Language = 'en'): string {
-  console.warn('getErrorMessage is deprecated. Use service classes instead.');
+  console.warn('getErrorMessage is deprecated. Use UIMessages.getError() instead.');
   return getDynamicMessage(errorCode, {}, language).message;
 }
 
 export function getSuccessMessage(successCode: string, language: Language = 'en'): string {
-  console.warn('getSuccessMessage is deprecated. Use service classes instead.');
+  console.warn('getSuccessMessage is deprecated. Use UIMessages.getSuccess() instead.');
   return getDynamicMessage(successCode, {}, language).message;
 }
 
 export function getUILabel(labelCode: string, language: Language = 'en'): string {
-  console.warn('getUILabel is deprecated. Use service classes instead.');
+  console.warn('getUILabel is deprecated. Use UIMessages.getLabel() instead.');
   return getDynamicMessage(labelCode, {}, language).message;
 }
 
