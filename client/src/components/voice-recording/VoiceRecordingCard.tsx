@@ -324,9 +324,38 @@ export function VoiceRecordingCard({
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span>Recording...</span>
-              <span>{formatTime(recordingTime)}</span>
+              <span className={cn(
+                recordingTime >= 6 ? "text-green-600 font-medium" : "text-orange-600",
+              )}>
+                {formatTime(recordingTime)} {recordingTime >= 6 ? "✓" : ""}
+              </span>
             </div>
-            <Progress value={progressPercentage} className="h-2" />
+            <div className="relative">
+              <Progress value={progressPercentage} className="h-3" />
+              {/* 6-second minimum marker */}
+              <div 
+                className="absolute top-0 h-3 w-0.5 bg-red-500 z-10"
+                style={{ left: `${Math.min((6 / 30) * 100, 95)}%` }}
+                title="6-second minimum for voice cloning"
+              />
+              <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                <span>0s</span>
+                <span className="text-red-600 font-medium" style={{ marginLeft: `${Math.max((6 / 30) * 100 - 5, 0)}%` }}>
+                  6s min
+                </span>
+                <span>30s</span>
+              </div>
+            </div>
+            {recordingTime < 6 && (
+              <p className="text-xs text-orange-600 animate-pulse">
+                ⏱️ Record for at least 6 seconds for voice cloning compatibility
+              </p>
+            )}
+            {recordingTime >= 6 && (
+              <p className="text-xs text-green-600">
+                ✅ Recording meets minimum duration requirement
+              </p>
+            )}
           </div>
         )}
 
@@ -413,11 +442,24 @@ export function VoiceRecordingCard({
 
             <Button
               size="lg"
-              className="w-full h-12 bg-green-600 hover:bg-green-700"
+              className={cn(
+                "w-full h-12",
+                tempRecording && tempRecording.duration >= 6 
+                  ? "bg-green-600 hover:bg-green-700" 
+                  : "bg-gray-400 cursor-not-allowed"
+              )}
               onClick={saveRecording}
+              disabled={!tempRecording || tempRecording.duration < 6}
+              title={tempRecording && tempRecording.duration < 6 
+                ? `Recording too short (${tempRecording.duration.toFixed(1)}s). Need at least 6 seconds.`
+                : undefined
+              }
             >
               <Save className="w-4 h-4 mr-2" />
-              Save Voice Sample
+              {tempRecording && tempRecording.duration < 6 
+                ? `Too Short (${tempRecording.duration.toFixed(1)}s)` 
+                : "Save Voice Sample"
+              }
             </Button>
           </div>
         )}

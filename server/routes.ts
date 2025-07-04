@@ -1453,11 +1453,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         console.log(`ESM: Audio duration: ${duration} seconds`);
         
-        // Validate minimum duration (5 seconds for ElevenLabs voice cloning)
-        if (duration < 5.0) {
+        // Validate minimum duration (6 seconds for ElevenLabs voice cloning)
+        if (duration < 6.0) {
           await fs.unlink(tempInputPath).catch(() => {}); // Cleanup temp file
           return res.status(400).json({ 
-            message: `Recording too short (${duration.toFixed(1)}s). Voice cloning requires at least 5 seconds.` 
+            message: `Recording too short (${duration.toFixed(1)}s). Voice cloning requires at least 6 seconds.` 
           });
         }
         
@@ -4408,10 +4408,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const tempFilePath = path.join(cacheDir, tempFileName);
       const filePath = path.join(cacheDir, fileName);
       
-      // Save temporary file and convert to MP3
+      // Save temporary file and check duration before conversion
       await fs.writeFile(tempFilePath, audioFile.buffer);
       
       try {
+        // Check audio duration before processing  
+        const { stdout: durationOutput } = await execAsync(`ffprobe -v quiet -show_entries format=duration -of csv=p=0 "${tempFilePath}"`);
+        const audioDuration = parseFloat(durationOutput.trim());
+        
+        console.log(`Voice modulation duration: ${audioDuration} seconds`);
+        
+        // Validate minimum duration (6 seconds for ElevenLabs voice cloning)
+        if (audioDuration < 6.0) {
+          await fs.unlink(tempFilePath).catch(() => {}); // Cleanup temp file
+          return res.status(400).json({ 
+            message: `Recording too short (${audioDuration.toFixed(1)}s). Voice cloning requires at least 6 seconds.` 
+          });
+        }
+        
         // Convert to MP3 using FFmpeg
         const ffmpegCommand = `ffmpeg -i "${tempFilePath}" -acodec libmp3lame -b:a 192k -ar 44100 -y "${filePath}"`;
         await execAsync(ffmpegCommand);
