@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
+import { useLocation } from "wouter";
 
 interface StoryPlayButtonProps {
   storyId: number;
@@ -54,6 +55,7 @@ export function StoryPlayButton({
   const visualizerIntervalRef = useRef<number | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
+  const [, setLocation] = useLocation();
 
   // Check narration capability on mount
   useEffect(() => {
@@ -236,6 +238,11 @@ export function StoryPlayButton({
     }
   };
 
+  const navigateToVoiceRecording = () => {
+    // Navigate to analysis page for this story to record voice samples
+    setLocation(`/analysis/${storyId}`);
+  };
+
   // Auto-play next segment when currentSegment changes
   useEffect(() => {
     if (isPlaying && currentSegment > 0) {
@@ -252,22 +259,28 @@ export function StoryPlayButton({
     return null;
   }
 
-  // Mini variant - just a play button
+  // Mini variant - just a play button or voice recording action
   if (variant === 'mini') {
+    const canNarrate = narrationStatus?.canNarrate;
+    const hasVoiceSamples = narrationStatus?.emotions && narrationStatus.emotions.length > 0;
+    
     return (
       <Button
-        onClick={narrationStatus?.canNarrate ? playNarration : checkNarrationStatus}
-        disabled={isLoading || !narrationStatus?.canNarrate}
+        onClick={canNarrate ? playNarration : navigateToVoiceRecording}
+        disabled={isLoading}
         size="sm"
-        variant={narrationStatus?.canNarrate ? "default" : "ghost"}
-        className={`${className} ${narrationStatus?.canNarrate ? 'text-purple-400 hover:text-purple-300' : 'text-gray-500'}`}
+        variant={canNarrate ? "default" : "ghost"}
+        className={`${className} ${canNarrate ? 'text-purple-400 hover:text-purple-300' : 'text-gray-500'}`}
+        title={canNarrate ? "Play story narration" : "Record voice samples to enable narration"}
       >
         {isLoading ? (
           <Loader2 className="w-4 h-4 animate-spin" />
         ) : isPlaying ? (
           <Pause className="w-4 h-4" />
-        ) : (
+        ) : canNarrate ? (
           <Headphones className="w-4 h-4" />
+        ) : (
+          <Mic className="w-4 h-4" />
         )}
       </Button>
     );
@@ -275,16 +288,20 @@ export function StoryPlayButton({
 
   // Compact variant - horizontal button with basic info
   if (variant === 'compact') {
+    const canNarrate = narrationStatus?.canNarrate;
+    const hasVoiceSamples = narrationStatus?.emotions && narrationStatus.emotions.length > 0;
+    
     return (
       <div className={`flex items-center space-x-3 bg-white/10 p-4 rounded-lg border border-purple-500/30 ${className}`}>
         <Button
-          onClick={narrationStatus?.canNarrate ? (isPlaying ? pauseNarration : playNarration) : checkNarrationStatus}
+          onClick={canNarrate ? (isPlaying ? pauseNarration : playNarration) : navigateToVoiceRecording}
           disabled={isLoading}
           size="lg"
-          className={narrationStatus?.canNarrate 
+          className={canNarrate 
             ? "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white" 
             : "bg-orange-600 hover:bg-orange-700 text-white"
           }
+          title={canNarrate ? "Play story narration" : "Record voice samples to enable narration"}
         >
           {isLoading || isCheckingStatus ? (
             <>
@@ -296,10 +313,15 @@ export function StoryPlayButton({
               <Pause className="w-5 h-5 mr-2" />
               Pause Story
             </>
-          ) : (
+          ) : canNarrate ? (
             <>
               <Headphones className="w-5 h-5 mr-2" />
-              {narrationStatus?.canNarrate ? 'Play Story' : 'Check Voice Status'}
+              Play Story
+            </>
+          ) : (
+            <>
+              <Mic className="w-5 h-5 mr-2" />
+              Record Voice Samples
             </>
           )}
         </Button>
@@ -409,13 +431,14 @@ export function StoryPlayButton({
           {/* Controls */}
           <div className="flex items-center justify-center space-x-4">
             <Button
-              onClick={isPlaying ? pauseNarration : playNarration}
-              disabled={isLoading || !narrationStatus?.canNarrate}
+              onClick={narrationStatus?.canNarrate ? (isPlaying ? pauseNarration : playNarration) : navigateToVoiceRecording}
+              disabled={isLoading}
               size="lg"
               className={narrationStatus?.canNarrate 
                 ? "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white" 
-                : "bg-gray-600 hover:bg-gray-700 text-gray-300"
+                : "bg-orange-600 hover:bg-orange-700 text-white"
               }
+              title={narrationStatus?.canNarrate ? "Play story narration" : "Record voice samples to enable narration"}
             >
               {isLoading ? (
                 <>
@@ -427,10 +450,15 @@ export function StoryPlayButton({
                   <Pause className="w-5 h-5 mr-2" />
                   Pause Story
                 </>
-              ) : (
+              ) : narrationStatus?.canNarrate ? (
                 <>
                   <Play className="w-5 h-5 mr-2" />
                   {narrationSegments.length > 0 ? 'Continue Story' : 'Play Story'}
+                </>
+              ) : (
+                <>
+                  <Mic className="w-5 h-5 mr-2" />
+                  Record Voice Samples
                 </>
               )}
             </Button>
