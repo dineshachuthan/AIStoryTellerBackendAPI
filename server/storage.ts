@@ -422,7 +422,9 @@ export class DatabaseStorage implements IStorage {
     }
 
     // Check if content has changed using hash comparison
-    const needsRegeneration = ContentHashService.hasContentChanged(currentContent, analysis.contentHash);
+    const crypto = await import('crypto');
+    const currentContentHash = crypto.createHash('sha256').update(currentContent).digest('hex');
+    const needsRegeneration = !analysis.contentHash || analysis.contentHash !== currentContentHash;
     
     return { 
       analysis: analysis || undefined, 
@@ -498,13 +500,13 @@ export class DatabaseStorage implements IStorage {
     // Use ESM architecture - get user's recordings with ESM reference data
     const result = await db.execute(
       sql`SELECT 
-            uer.id,
-            uer.audio_url as "audioUrl",
-            uer.duration,
-            uer.file_size as "fileSize",
-            uer.recording_timestamp as "recordingTimestamp",
-            uer.audio_quality_score as "audioQualityScore",
-            uer.transcribed_text as "transcribedText",
+            user_recordings.user_esm_recordings_id as id,
+            user_recordings.audio_url as "audioUrl",
+            user_recordings.duration,
+            user_recordings.file_size as "fileSize",
+            user_recordings.created_date as "recordingTimestamp",
+            user_recordings.audio_quality_score as "audioQualityScore",
+            user_recordings.transcribed_text as "transcribedText",
             ue.sample_count as "sampleCount",
             ue.quality_tier as "qualityTier",
             ue.voice_cloning_status as "voiceCloningStatus",
@@ -514,10 +516,10 @@ export class DatabaseStorage implements IStorage {
             er.display_name as "displayName",
             er.sample_text as "sampleText",
             er.intensity,
-            (CASE WHEN uer.id IS NOT NULL THEN true ELSE false END) as "isCompleted"
+            (CASE WHEN user_recordings.user_esm_recordings_id IS NOT NULL THEN true ELSE false END) as "isCompleted"
           FROM esm_ref er
           LEFT JOIN user_esm ue ON er.esm_ref_id = ue.esm_ref_id AND ue.user_id = ${userId}
-          LEFT JOIN user_esm_recordings uer ON ue.user_esm_id = uer.user_esm_id
+          LEFT JOIN user_esm_recordings user_recordings ON ue.user_esm_id = user_recordings.user_esm_id
           ORDER BY er.category, er.name`
     );
     
@@ -528,15 +530,10 @@ export class DatabaseStorage implements IStorage {
       label: `${row.category === 1 ? 'emotions' : row.category === 2 ? 'sounds' : 'modulations'}-${row.name}`,
       audioUrl: row.audioUrl || '',
       duration: row.duration || 0,
-      fileSize: row.fileSize || 0,
       isCompleted: row.isCompleted || false,
       isLocked: row.isLocked || false,
-      recordingTimestamp: row.recordingTimestamp,
-      displayName: row.displayName,
-      sampleText: row.sampleText,
-      intensity: row.intensity,
-      qualityTier: row.qualityTier,
-      voiceCloningStatus: row.voiceCloningStatus
+      lockedAt: row.lockedAt || null,
+      recordedAt: row.recordingTimestamp || null
     }));
   }
 
@@ -544,15 +541,15 @@ export class DatabaseStorage implements IStorage {
     // Use ESM architecture - get user's recordings with ESM reference data
     const result = await db.execute(
       sql`SELECT 
-            uer.id,
-            uer.audio_url as "audioUrl",
-            uer.duration,
-            uer.file_size as "fileSize",
-            uer.is_locked as "isLocked",
-            uer.locked_at as "lockedAt",
-            uer.created_date as "recordedAt",
-            uer.audio_quality_score as "audioQualityScore",
-            uer.transcribed_text as "transcribedText",
+            user_recordings.user_esm_recordings_id as id,
+            user_recordings.audio_url as "audioUrl",
+            user_recordings.duration,
+            user_recordings.file_size as "fileSize",
+            user_recordings.is_locked as "isLocked",
+            user_recordings.locked_at as "lockedAt",
+            user_recordings.created_date as "recordedAt",
+            user_recordings.audio_quality_score as "audioQualityScore",
+            user_recordings.transcribed_text as "transcribedText",
             ue.sample_count as "sampleCount",
             ue.quality_tier as "qualityTier",
             ue.voice_cloning_status as "voiceCloningStatus",
@@ -567,11 +564,11 @@ export class DatabaseStorage implements IStorage {
               ELSE 'modulations'
             END, '-', er.name) as label,
             true as "isCompleted"
-          FROM user_esm_recordings uer
-          JOIN user_esm ue ON uer.user_esm_id = ue.user_esm_id
+          FROM user_esm_recordings user_recordings
+          JOIN user_esm ue ON user_recordings.user_esm_id = ue.user_esm_id
           JOIN esm_ref er ON ue.esm_ref_id = er.esm_ref_id
           WHERE ue.user_id = ${userId}
-          ORDER BY er.category, er.name, uer.created_date DESC`
+          ORDER BY er.category, er.name, user_recordings.created_date DESC`
     );
     
     return result.rows.map((row: any) => ({
@@ -581,16 +578,10 @@ export class DatabaseStorage implements IStorage {
       label: row.label,
       audioUrl: row.audioUrl || '',
       duration: row.duration || 0,
-      fileSize: row.fileSize || 0,
       isCompleted: row.isCompleted || false,
       isLocked: row.isLocked || false,
       lockedAt: row.lockedAt || null,
-      recordedAt: row.recordedAt,
-      displayName: row.displayName,
-      sampleText: row.sampleText,
-      intensity: row.intensity,
-      qualityTier: row.qualityTier,
-      voiceCloningStatus: row.voiceCloningStatus
+      recordedAt: row.recordedAt
     }));
   }
 

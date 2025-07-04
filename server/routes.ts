@@ -5070,6 +5070,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // CREATE NARRATOR VOICE - Direct ElevenLabs Integration
+  app.post('/api/narrator/create-voice', requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any)?.id;
+      if (!userId) {
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
+
+      const { voiceName } = req.body;
+      if (!voiceName) {
+        return res.status(400).json({ message: 'Voice name is required' });
+      }
+
+      // Get user's voice samples from ESM system
+      const voiceSamples = await storage.getAllUserVoiceSamples(userId);
+      
+      if (voiceSamples.length < 3) {
+        return res.status(400).json({ 
+          message: `Need at least 3 voice samples for narrator voice creation. You have ${voiceSamples.length}.` 
+        });
+      }
+
+      // Import voice provider registry
+      const { voiceProviderRegistry } = await import('./voice-providers/voice-provider-registry');
+      const activeProvider = voiceProviderRegistry.getActiveProvider();
+      
+      if (!activeProvider) {
+        return res.status(500).json({ message: 'No voice provider available' });
+      }
+
+      // Prepare samples for ElevenLabs
+      const samples = voiceSamples.slice(0, 10).map(sample => ({
+        emotion: sample.label,
+        audioUrl: sample.audioUrl,
+        userId: userId
+      }));
+
+      // Create voice training request
+      const trainingRequest = {
+        userId: userId,
+        voiceProfileId: 0, // Not used for narrator voices
+        samples: samples,
+        voiceName: voiceName
+      };
+
+      console.log(`🎙️ Creating narrator voice "${voiceName}" with ${samples.length} samples for user ${userId}`);
+
+      // Start voice training
+      const result = await activeProvider.trainVoice(trainingRequest);
+      
+      if (result.success) {
+        res.json({
+          success: true,
+          voiceId: result.voiceId,
+          voiceName: voiceName,
+          samplesUsed: samples.length,
+          message: `Narrator voice "${voiceName}" created successfully`
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          message: result.error || 'Voice creation failed'
+        });
+      }
+
+    } catch (error: any) {
+      console.error('Error creating narrator voice:', error);
+      res.status(500).json({ 
+        success: false,
+        message: error.message || 'Failed to create narrator voice' 
+      });
+    }
+  });
+
   // EMERGENCY RESET ALL VOICE CLONING STATES
   app.post('/api/voice/emergency-reset', requireAuth, async (req, res) => {
     try {
