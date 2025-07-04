@@ -5,6 +5,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useToast } from "@/hooks/use-toast";
 import { Mic, Play, RotateCcw, Save, Radio, Volume2, CheckCircle, Circle, Lock, Unlock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import { AUDIO_PROCESSING_CONFIG } from "../../../../shared/audio-config";
 
 interface EnhancedVoiceRecorderProps {

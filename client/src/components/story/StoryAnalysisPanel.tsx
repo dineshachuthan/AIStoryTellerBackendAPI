@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { EmotionVoiceRecorder } from "./EmotionVoiceRecorder";
+// EmotionVoiceRecorder has been deprecated and replaced with enhanced voice sample system
 import { CharacterAvatar } from "./CharacterAvatar";
 import { EmotionBadge } from "./EmotionBadge";
 import StoryVoiceSamples from "./story-voice-samples";
