@@ -346,10 +346,7 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
                           <h3 className="font-medium">{emotionName}</h3>
                         </div>
                         
-                        {/* Static Error Message Placeholder */}
-                        <div className="h-10 text-sm text-red-600 bg-red-50 dark:bg-red-950 p-2 rounded flex items-center justify-center">
-                          {recordingState.errorMessage || ''}
-                        </div>
+
 
                         {/* Static Recording Duration Progress */}
                         <div className="space-y-1 h-12">
