@@ -4087,6 +4087,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Voice Sample Text Generation API - Manual trigger for OpenAI sample text generation (Admin only)
+  app.post('/api/admin/generate-voice-sample-texts', async (req, res) => {
+    try {
+
+      console.log('🎙️ Starting manual voice sample text generation...');
+      
+      const { voiceSampleTextGenerator } = await import('./voice-sample-text-generator');
+      const result = await voiceSampleTextGenerator.generateAllEmotionTexts();
+      
+      console.log(`✅ Voice sample text generation completed: ${result.updated} updated, ${result.errors.length} errors`);
+      
+      res.json({
+        success: true,
+        updated: result.updated,
+        errors: result.errors,
+        message: `Successfully generated sample texts for ${result.updated} emotions`
+      });
+    } catch (error: any) {
+      console.error('Error generating voice sample texts:', error);
+      res.status(500).json({ 
+        message: 'Failed to generate voice sample texts',
+        error: error.message 
+      });
+    }
+  });
+
   // Story narration API endpoints
   app.post('/api/stories/:storyId/narration/preview', requireAuth, async (req, res) => {
     try {

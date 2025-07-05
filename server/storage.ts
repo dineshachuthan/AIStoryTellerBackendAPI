@@ -1212,26 +1212,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateEsmRef(esmRefId: number, updates: Partial<{ sample_text: string; display_name: string; description: string }>): Promise<void> {
-    const updateFields: string[] = [];
-    const values: any[] = [];
+    if (Object.keys(updates).length === 0) return;
     
     if (updates.sample_text !== undefined) {
-      updateFields.push('sample_text = ?');
-      values.push(updates.sample_text);
+      await db.execute(
+        sql`UPDATE esm_ref SET sample_text = ${updates.sample_text} WHERE esm_ref_id = ${esmRefId}`
+      );
     }
     if (updates.display_name !== undefined) {
-      updateFields.push('display_name = ?');
-      values.push(updates.display_name);
+      await db.execute(
+        sql`UPDATE esm_ref SET display_name = ${updates.display_name} WHERE esm_ref_id = ${esmRefId}`
+      );
     }
     if (updates.description !== undefined) {
-      updateFields.push('description = ?');
-      values.push(updates.description);
-    }
-    
-    if (updateFields.length > 0) {
-      values.push(esmRefId);
       await db.execute(
-        sql.raw(`UPDATE esm_ref SET ${updateFields.join(', ')} WHERE esm_ref_id = ?`, values)
+        sql`UPDATE esm_ref SET description = ${updates.description} WHERE esm_ref_id = ${esmRefId}`
       );
     }
   }
