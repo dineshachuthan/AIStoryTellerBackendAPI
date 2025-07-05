@@ -415,13 +415,13 @@ export function EnhancedVoiceRecorder({
   // Status configuration for visual indicators
   const statusConfig = {
     icon: isLocked ? <Lock className="w-4 h-4 text-blue-400" /> 
-          : (isRecorded || recordedSample) ? <CheckCircle className="w-4 h-4 text-green-400" />
+          : (isRecorded || recordedSample || recordingState === 'saved') ? <CheckCircle className="w-4 h-4 text-green-400" />
           : <Unlock className="w-4 h-4 text-gray-300" />,
     label: isLocked ? UIMessages.getLabel('VOICE_SAMPLE_LOCKED')
-           : (isRecorded || recordedSample) ? UIMessages.getSuccess('VOICE_SAMPLE_RECORDED')
+           : (isRecorded || recordedSample || recordingState === 'saved') ? UIMessages.getSuccess('VOICE_SAMPLE_RECORDED')
            : UIMessages.getLabel('VOICE_SAMPLE_NEEDED'),
     description: isLocked ? UIMessages.getInfo('VOICE_SAMPLE_CLONING_DESCRIPTION')
-                 : (isRecorded || recordedSample) ? UIMessages.getSuccess('VOICE_SAMPLE_READY_DESCRIPTION')
+                 : (isRecorded || recordedSample || recordingState === 'saved') ? UIMessages.getSuccess('VOICE_SAMPLE_READY_DESCRIPTION')
                  : UIMessages.getInfo('VOICE_SAMPLE_RECORD_DESCRIPTION')
   };
 
@@ -432,7 +432,7 @@ export function EnhancedVoiceRecorder({
         <div className={`rounded-2xl p-4 shadow-2xl border flex flex-col ${
           isLocked 
             ? 'bg-gradient-to-br from-blue-900/80 to-indigo-900/80 border-blue-400/60' 
-            : (isRecorded || recordedSample)
+            : (isRecorded || recordedSample || recordingState === 'saved')
               ? 'bg-gradient-to-br from-green-900/70 to-emerald-900/70 border-green-500/50'
               : 'bg-gradient-to-br from-gray-900 to-gray-800 border-gray-700'
         }`}>
@@ -603,7 +603,7 @@ export function EnhancedVoiceRecorder({
                   </button>
                 )}
 
-                {recordingState === 'recorded' && (
+                {(recordingState === 'recorded' || recordingState === 'saved') && (
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <button
