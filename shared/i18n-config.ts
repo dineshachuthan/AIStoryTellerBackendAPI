@@ -1089,22 +1089,6 @@ export const MESSAGE_TEMPLATES: Record<string, I18nMessageTemplate> = {
     }
   },
 
-  STORY_TITLE_PLACEHOLDER: {
-    code: 'STORY_TITLE_PLACEHOLDER',
-    type: 'info',
-    severity: 'low',
-    variables: [],
-    templates: {
-      en: 'Enter your story title...',
-      es: 'Ingresa el título de tu historia...',
-      fr: 'Entrez le titre de votre histoire...',
-      de: 'Geben Sie Ihren Geschichtentitel ein...',
-      ja: 'ストーリーのタイトルを入力してください...',
-      zh: '输入您的故事标题...',
-      ko: '스토리 제목을 입력하세요...'
-    }
-  },
-
   DRAFT_STORIES_COUNT: {
     code: 'DRAFT_STORIES_COUNT',
     type: 'info',

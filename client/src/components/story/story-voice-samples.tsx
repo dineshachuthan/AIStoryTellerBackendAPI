@@ -366,8 +366,8 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
                   </p>
                 </div>
               ) : (
-              <div className="grid gap-4 grid-cols-1">
-                {categoryData.sort((a, b) => {
+                <div className="grid gap-4 grid-cols-1">
+                  {categoryData.sort((a, b) => {
                   const aName = a.emotion || a.sound || a.name || 'unknown';
                   const bName = b.emotion || b.sound || b.name || 'unknown';
                   
@@ -461,11 +461,12 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
                       </div>
                     </Card>
                   );
-                })}
-              </div>
-            )}
-          </TabsContent>
-        ))}
+                  })}
+                </div>
+              )}
+            </TabsContent>
+          );
+        })}
       </Tabs>
 
       <div className="text-center text-sm text-gray-500 mt-8">
