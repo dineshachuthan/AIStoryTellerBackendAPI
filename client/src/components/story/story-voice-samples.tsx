@@ -111,6 +111,62 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
     audioUrl?: string;
   }>>({});
 
+  // Initialize recording states from backend data when voice samples load
+  useEffect(() => {
+    if (voiceSamplesData && Object.keys(voiceSamplesData).length > 0) {
+      console.log('Initializing recording states from backend data:', voiceSamplesData);
+      const newStates: Record<string, any> = {};
+      
+      // Process emotions
+      if (voiceSamplesData.emotions) {
+        voiceSamplesData.emotions.forEach((emotion: any) => {
+          const emotionName = emotion.displayName || emotion.name || emotion.emotion;
+          console.log('Processing emotion:', emotionName, 'isRecorded:', emotion.isRecorded, 'userRecording:', emotion.userRecording);
+          if (emotionName && emotion.isRecorded) {
+            newStates[emotionName] = {
+              isRecorded: true,
+              isSaving: false,
+              errorMessage: '',
+              duration: emotion.userRecording?.duration || 0
+            };
+          }
+        });
+      }
+      
+      // Process sounds
+      if (voiceSamplesData.sounds) {
+        voiceSamplesData.sounds.forEach((sound: any) => {
+          const soundName = sound.sound || sound.name || sound.displayName;
+          if (soundName && sound.isRecorded) {
+            newStates[soundName] = {
+              isRecorded: true,
+              isSaving: false,
+              errorMessage: '',
+              duration: sound.userRecording?.duration || 0
+            };
+          }
+        });
+      }
+      
+      // Process modulations
+      if (voiceSamplesData.modulations) {
+        voiceSamplesData.modulations.forEach((modulation: any) => {
+          const modName = modulation.modulation || modulation.name || modulation.displayName;
+          if (modName && modulation.isRecorded) {
+            newStates[modName] = {
+              isRecorded: true,
+              isSaving: false,
+              errorMessage: '',
+              duration: modulation.userRecording?.duration || 0
+            };
+          }
+        });
+      }
+      
+      setRecordingStates(prev => ({ ...prev, ...newStates }));
+    }
+  }, [voiceSamplesData]);
+
   // Mutation for recording voice samples
   const recordVoiceMutation = useMutation({
     mutationFn: async ({ emotion, audioBlob }: { emotion: string; audioBlob: Blob }) => {
