@@ -93,10 +93,10 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
     return organized;
   }, [esmTemplates]);
 
-  // Helper function to get professional ESM sample text instead of story-based text
-  const getOptimalSampleText = (itemName: string, category: string, storyQuote?: string, storyContext?: string): string => {
+  // Abstract function for cards to get sample voice text - single point of truth
+  const getSampleVoiceText = (itemName: string, categoryName: string, storyQuote?: string, storyContext?: string): string => {
     // First priority: Check ESM reference data for professional sample text
-    const categoryData = (esmData as any)?.[category] || [];
+    const categoryData = (esmData as any)?.[categoryName] || [];
     const esmItem = categoryData.find((item: any) => 
       item.emotion?.toLowerCase() === itemName.toLowerCase() || 
       item.sound?.toLowerCase() === itemName.toLowerCase() ||
@@ -118,7 +118,7 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
     }
     
     // Fallback: Return best available text even if short
-    const fallbackText = esmItem?.sampleText || storyQuote || storyContext || `Express the ${category.slice(0, -1)} of ${itemName}`;
+    const fallbackText = esmItem?.sampleText || storyQuote || storyContext || `Express the ${categoryName.slice(0, -1)} of ${itemName}`;
     return fallbackText;
   };
 
@@ -191,8 +191,8 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
         const isRecorded = !!recordedSample;
         const isLocked = recordedSample?.isLocked || false;
 
-        // Apply intelligent text selection with ESM professional texts priority
-        const sampleText = getOptimalSampleText(
+        // Call abstract function for sample text - single point of truth
+        const sampleText = getSampleVoiceText(
           emotion.emotion,
           "emotions",
           emotion.quote,
@@ -221,8 +221,8 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
         const isRecorded = !!recordedSample;
         const isLocked = recordedSample?.isLocked || false;
 
-        // Apply intelligent text selection with ESM professional texts priority
-        const sampleText = getOptimalSampleText(
+        // Call abstract function for sample text - single point of truth
+        const sampleText = getSampleVoiceText(
           sound.sound,
           "sounds",
           sound.quote,
@@ -256,8 +256,8 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
       const isRecorded = !!recordedSample;
       const isLocked = recordedSample?.isLocked || false;
 
-      // Apply intelligent text selection with ESM professional texts priority
-      const sampleText = getOptimalSampleText(
+      // Call abstract function for sample text - single point of truth
+      const sampleText = getSampleVoiceText(
         modulation,
         "modulations",
         "",
