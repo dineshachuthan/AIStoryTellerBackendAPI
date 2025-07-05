@@ -410,11 +410,14 @@ export function EnhancedVoiceRecorder({
     }
   };
 
+  // Debug logging
+  console.log('EnhancedVoiceRecorder status:', { isLocked, isRecorded, recordedSample, emotionName });
+
   // Status configuration for visual indicators
   const statusConfig = {
     icon: isLocked ? <Lock className="w-4 h-4 text-blue-400" /> 
           : (isRecorded || recordedSample) ? <CheckCircle className="w-4 h-4 text-green-400" />
-          : <Circle className="w-4 h-4 text-gray-400" />,
+          : <Unlock className="w-4 h-4 text-gray-300" />,
     label: isLocked ? UIMessages.getLabel('VOICE_SAMPLE_LOCKED')
            : (isRecorded || recordedSample) ? UIMessages.getSuccess('VOICE_SAMPLE_RECORDED')
            : UIMessages.getLabel('VOICE_SAMPLE_NEEDED'),
