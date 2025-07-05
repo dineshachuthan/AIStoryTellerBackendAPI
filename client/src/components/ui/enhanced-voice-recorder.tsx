@@ -495,6 +495,15 @@ export function EnhancedVoiceRecorder({
               📖 {emotionName ? `Read this text with ${emotionName.toLowerCase()} emotion` : 'Read this text aloud'}
             </div>
           )}
+          
+          {/* Sample Text Display */}
+          {!simpleMode && sampleText && (
+            <div className="bg-gray-900 rounded p-3 mb-3 border-l-2 border-blue-400">
+              <p className="text-gray-200 text-sm leading-relaxed">
+                {sampleText}
+              </p>
+            </div>
+          )}
           {simpleMode && title && (
             <div className="text-blue-300 text-xs font-medium mb-2 text-left tracking-wide">
               🎙️ {title}

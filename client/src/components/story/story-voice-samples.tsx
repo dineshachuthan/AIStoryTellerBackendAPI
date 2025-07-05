@@ -8,7 +8,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
-import { Mic, Volume2, Users, Zap, DollarSign, Clock, AlertCircle, Radio, Lock, CheckCircle, Unlock } from "lucide-react";
+import { Mic, Volume2, Users, Zap, DollarSign, Clock, AlertCircle, Radio, Lock, CheckCircle, Unlock, Save, Play } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { EnhancedVoiceRecorder } from "@/components/ui/enhanced-voice-recorder";
 import { AUDIO_PROCESSING_CONFIG } from "@shared/audio-config";
 import { VoiceMessageService } from "@shared/i18n-config";
@@ -305,7 +306,7 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {currentCategoryData.map((item: any, index: number) => {
                   const emotionName = item.emotion || item.sound || item.name || 'unknown';
-                  const sampleText = item.esmSampleText || item.quote || item.context || 
+                  const sampleText = item.sampleText || item.quote || item.context || 
                     `Express the emotion of ${emotionName} with clear articulation and natural pacing for high-quality voice cloning.`;
                   
                   const recordingState = recordingStates[emotionName] || {
@@ -344,8 +345,6 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
                           {getStatusIcon()}
                           <h3 className="font-medium">{emotionName}</h3>
                         </div>
-                        
-                        <p className="text-sm text-gray-600">{sampleText}</p>
                         
                         {/* Error Message */}
                         {recordingState.errorMessage && (
