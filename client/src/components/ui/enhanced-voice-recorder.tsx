@@ -658,13 +658,13 @@ export function EnhancedVoiceRecorder({
                 </TooltipContent>
               </Tooltip>
               
-              {/* Save button only shows when saveConfig is provided and we have a temp recording */}
-              {saveConfig && tempRecording && (
+              {/* Save button always visible when saveConfig is provided */}
+              {saveConfig && (
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
                       onClick={handleSaveRecording}
-                      disabled={recordingState === 'saving' || isPlayingTemp || isLocked}
+                      disabled={!tempRecording || recordingState === 'saving' || isPlayingTemp || isLocked}
                       variant="default"
                       size="sm"
                       className="bg-green-600 hover:bg-green-700 disabled:opacity-50 flex-1 max-w-[100px]"
@@ -677,7 +677,7 @@ export function EnhancedVoiceRecorder({
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>{recordingState === 'saving' ? 'Saving...' : 'Save recording'}</p>
+                    <p>{recordingState === 'saving' ? 'Saving...' : !tempRecording ? 'Record audio first' : 'Save recording'}</p>
                   </TooltipContent>
                 </Tooltip>
               )}
