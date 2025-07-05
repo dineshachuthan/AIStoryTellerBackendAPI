@@ -344,14 +344,6 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
                   return (
                     <Card key={`${category.id}-${index}`} className={`${getCardClassName()} min-h-[450px] w-full`}>
                       <div className="space-y-4 flex flex-col h-full p-6">
-                        {/* Centered emotion header with status */}
-                        <div className="text-center">
-                          <div className="flex items-center justify-center gap-2 mb-2">
-                            {getStatusIcon()}
-                            <h3 className="text-xl font-semibold">{emotionName}</h3>
-                          </div>
-                        </div>
-                        
                         <div className="flex-grow">
                           <EnhancedVoiceRecorder
                             sampleText={sampleText}
