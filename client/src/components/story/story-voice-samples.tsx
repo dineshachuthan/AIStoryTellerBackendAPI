@@ -64,6 +64,41 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
   
   const recordedSamples: any[] = ((progress as any)?.recordedSamples) || [];
 
+  // Get ESM reference data for professional sample texts
+  const { data: esmData = {} } = useQuery({
+    queryKey: ["/api/voice-modulations/templates"],
+    enabled: true,
+  });
+
+  // Helper function to get professional ESM sample text instead of story-based text
+  const getOptimalSampleText = (emotionName: string, storyQuote?: string, storyContext?: string): string => {
+    // First priority: Check ESM reference data for professional sample text
+    const emotions = (esmData as any)?.emotions || [];
+    const esmEmotion = emotions.find((e: any) => e.emotion?.toLowerCase() === emotionName.toLowerCase());
+    
+    if (esmEmotion?.sampleText && isTextSuitableForRecording(esmEmotion.sampleText)) {
+      console.log(`✨ Using ESM professional text for ${emotionName}: "${esmEmotion.sampleText.substring(0, 50)}..."`);
+      return esmEmotion.sampleText;
+    }
+    
+    // Second priority: Story quote if suitable length
+    if (storyQuote && isTextSuitableForRecording(storyQuote)) {
+      console.log(`📖 Using story quote for ${emotionName}: "${storyQuote.substring(0, 50)}..."`);
+      return storyQuote;
+    }
+    
+    // Third priority: Story context if suitable length
+    if (storyContext && isTextSuitableForRecording(storyContext)) {
+      console.log(`📝 Using story context for ${emotionName}: "${storyContext.substring(0, 50)}..."`);
+      return storyContext;
+    }
+    
+    // Fallback: Return best available text even if short
+    const fallbackText = esmEmotion?.sampleText || storyQuote || storyContext || `Express the emotion of ${emotionName}`;
+    console.warn(`⚠️ Using fallback text for ${emotionName}: "${fallbackText.substring(0, 50)}..."`);
+    return fallbackText;
+  };
+
   // Helper function to find recorded sample with category-aware matching
   const findRecordedSample = (itemName: string, category: string) => {
     return recordedSamples.find((r: any) => 
@@ -133,17 +168,12 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
         const isRecorded = !!recordedSample;
         const isLocked = recordedSample?.isLocked || false;
 
-        // Apply intelligent text selection with length checking
-        let sampleText = emotion.quote || emotion.context || '';
-        
-        // Check if current text is suitable for 6-second recording
-        if (!isTextSuitableForRecording(sampleText)) {
-          // Try the alternative text option
-          const alternativeText = emotion.context || emotion.quote || '';
-          if (isTextSuitableForRecording(alternativeText)) {
-            sampleText = alternativeText;
-          }
-        }
+        // Apply intelligent text selection with ESM professional texts priority
+        const sampleText = getOptimalSampleText(
+          emotion.emotion,
+          emotion.quote,
+          emotion.context
+        );
 
         templates.push({
           emotion: emotion.emotion.toLowerCase(),
