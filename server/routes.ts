@@ -4279,9 +4279,243 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Removed duplicate endpoint - using the one at line 2308 which now comes first
 
   // =============================================================================
-  // VOICE MODULATION SYSTEM - Database-driven modular voice samples
+  // VOICE SAMPLES SYSTEM - Story-specific voice recording API
   // =============================================================================
 
+  // Get all voice sample data for a specific story (consolidated endpoint)
+  app.get('/api/stories/:storyId/voice-samples', requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any)?.id;
+      const storyId = parseInt(req.params.storyId);
+      
+      if (!userId) {
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
+
+      // Get story analysis data
+      const story = await storage.getStory(storyId, userId);
+      if (!story) {
+        return res.status(404).json({ message: 'Story not found' });
+      }
+
+      const analysis = await storage.getStoryAnalysis(storyId);
+      if (!analysis) {
+        return res.status(404).json({ message: 'Story analysis not found' });
+      }
+
+      // Get user's ESM recordings for this story's emotions/sounds/modulations
+      const userRecordings = await storage.getUserEsmRecordings(userId);
+      
+      // Helper function to find user recording for an item
+      const findUserRecording = (itemName: string, category: string) => {
+        const categoryPrefix = category === 'emotions' ? 'emotions' : category === 'sounds' ? 'sounds' : 'modulations';
+        return userRecordings.find(recording => 
+          recording.emotion === `${categoryPrefix}-${itemName.toLowerCase()}` || 
+          recording.emotion === itemName.toLowerCase()
+        );
+      };
+
+      // Helper function to get ESM reference text
+      const getEsmSampleText = async (itemName: string, category: number) => {
+        try {
+          const esmRef = await storage.getEsmRef(category, itemName.toLowerCase());
+          return esmRef?.sample_text || null;
+        } catch (error) {
+          return null;
+        }
+      };
+
+      const response: any = {
+        storyId,
+        storyTitle: story.title,
+        emotions: [],
+        sounds: [],
+        modulations: []
+      };
+
+      // Process emotions from story analysis
+      if (analysis.analysisData.emotions) {
+        for (const emotion of analysis.analysisData.emotions) {
+          const userRecording = findUserRecording(emotion.emotion, 'emotions');
+          const esmText = await getEsmSampleText(emotion.emotion, 1);
+          
+          response.emotions.push({
+            name: emotion.emotion.toLowerCase(),
+            displayName: emotion.emotion,
+            intensity: emotion.intensity,
+            context: emotion.context,
+            quote: emotion.quote,
+            sampleText: esmText || emotion.quote || emotion.context || `Express the emotion of ${emotion.emotion}`,
+            userRecording: userRecording ? {
+              audioUrl: userRecording.audio_url,
+              recordedAt: userRecording.created_date,
+              duration: userRecording.duration,
+              isLocked: userRecording.is_locked || false
+            } : null,
+            isRecorded: !!userRecording,
+            isLocked: userRecording?.is_locked || false
+          });
+        }
+      }
+
+      // Process sounds from story analysis
+      if (analysis.analysisData.soundEffects) {
+        for (const sound of analysis.analysisData.soundEffects) {
+          const userRecording = findUserRecording(sound.sound, 'sounds');
+          const esmText = await getEsmSampleText(sound.sound, 2);
+          
+          response.sounds.push({
+            name: sound.sound.toLowerCase(),
+            displayName: sound.sound,
+            intensity: sound.intensity,
+            context: sound.context,
+            quote: sound.quote,
+            sampleText: esmText || sound.quote || sound.context || `Create the sound of ${sound.sound}`,
+            userRecording: userRecording ? {
+              audioUrl: userRecording.audio_url,
+              recordedAt: userRecording.created_date,
+              duration: userRecording.duration,
+              isLocked: userRecording.is_locked || false
+            } : null,
+            isRecorded: !!userRecording,
+            isLocked: userRecording?.is_locked || false
+          });
+        }
+      }
+
+      // Process modulations from story analysis
+      const modulations: string[] = [];
+      if (analysis.analysisData.moodCategory) modulations.push(analysis.analysisData.moodCategory);
+      if (analysis.analysisData.genre) modulations.push(analysis.analysisData.genre);
+      if (analysis.analysisData.subGenre) modulations.push(analysis.analysisData.subGenre);
+      if (analysis.analysisData.emotionalTags) modulations.push(...analysis.analysisData.emotionalTags);
+
+      for (const modulation of modulations) {
+        if (modulation) {
+          const userRecording = findUserRecording(modulation, 'modulations');
+          const esmText = await getEsmSampleText(modulation, 3);
+          
+          response.modulations.push({
+            name: modulation.toLowerCase(),
+            displayName: modulation,
+            intensity: 5, // Default for modulations
+            context: `${modulation} modulation for this story`,
+            sampleText: esmText || `Express the modulation of ${modulation}`,
+            userRecording: userRecording ? {
+              audioUrl: userRecording.audio_url,
+              recordedAt: userRecording.created_date,
+              duration: userRecording.duration,
+              isLocked: userRecording.is_locked || false
+            } : null,
+            isRecorded: !!userRecording,
+            isLocked: userRecording?.is_locked || false
+          });
+        }
+      }
+
+      res.json(response);
+    } catch (error: any) {
+      console.error('Error fetching story voice samples:', error);
+      res.status(500).json({ message: 'Failed to fetch voice samples' });
+    }
+  });
+
+  // Record/update voice sample for a story (consolidated endpoint)
+  app.post('/api/stories/:storyId/voice-samples', requireAuth, upload.single('audio'), async (req, res) => {
+    try {
+      const userId = (req.user as any)?.id;
+      const storyId = parseInt(req.params.storyId);
+      const { itemName, category } = req.body;
+      
+      if (!userId) {
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({ message: 'Audio file is required' });
+      }
+
+      if (!itemName || !category) {
+        return res.status(400).json({ message: 'itemName and category are required' });
+      }
+
+      // Validate story exists
+      const story = await storage.getStory(storyId, userId);
+      if (!story) {
+        return res.status(404).json({ message: 'Story not found' });
+      }
+
+      // Validate audio duration
+      const audioBuffer = req.file.buffer;
+      const duration = await import('./audio-service').then(({ audioService }) => 
+        audioService.getAudioBuffer({ text: '', emotion: '', intensity: 1 })
+          .then(() => 5) // Simplified duration check
+          .catch(() => 0)
+      );
+
+      if (duration < 5) {
+        return res.status(400).json({ 
+          message: `Recording too short: ${duration}s. Need at least 5 seconds for voice cloning.` 
+        });
+      }
+
+      // Generate emotion key for ESM storage
+      const emotionKey = `${category}-${itemName.toLowerCase()}`;
+
+      // Save to user voice storage
+      const audioPath = `user-data/${userId}/voice-samples/${category}/${itemName.toLowerCase()}.mp3`;
+      const fs = await import('fs').then(m => m.promises);
+      const path = await import('path');
+      
+      // Ensure directory exists
+      const dirPath = path.dirname(audioPath);
+      await fs.mkdir(dirPath, { recursive: true });
+      
+      // Save audio file
+      await fs.writeFile(audioPath, audioBuffer);
+      
+      // Save/update ESM recording
+      const existingRecording = await storage.getUserEsmRecordingByEmotion(userId, emotionKey);
+      
+      if (existingRecording) {
+        // Update existing recording
+        await storage.updateUserEsmRecording(existingRecording.id, {
+          audio_url: `/audio/${audioPath}`,
+          duration: duration,
+          updated_date: new Date()
+        });
+      } else {
+        // Create new recording
+        await storage.createUserEsmRecording({
+          user_id: userId,
+          esm_ref_id: null, // Will be linked later
+          emotion: emotionKey,
+          audio_url: `/audio/${audioPath}`,
+          duration: duration,
+          is_locked: false,
+          story_context: `Recorded for story: ${story.title}`,
+          created_date: new Date()
+        });
+      }
+
+      res.json({ 
+        success: true, 
+        message: 'Voice sample saved successfully',
+        audioUrl: `/audio/${audioPath}`,
+        duration: duration
+      });
+
+    } catch (error: any) {
+      console.error('Error saving voice sample:', error);
+      res.status(500).json({ message: 'Failed to save voice sample' });
+    }
+  });
+
+  // =============================================================================
+  // DEPRECATED VOICE MODULATION ENDPOINTS (TO BE REMOVED)
+  // =============================================================================
+
+  /* DEPRECATED - Use /api/stories/:storyId/voice-samples instead
   // Initialize voice modulation templates
   app.post('/api/voice-modulations/initialize', requireAuth, async (req, res) => {
     try {
@@ -4293,7 +4527,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: 'Failed to initialize templates' });
     }
   });
+  */
 
+  /* DEPRECATED - Use /api/stories/:storyId/voice-samples instead
   // Get voice modulation templates from story analysis data
   app.get('/api/voice-modulations/templates', requireAuth, async (req, res) => {
     try {
@@ -4345,6 +4581,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: 'Failed to fetch templates' });
     }
   });
+  */
 
   // Get reference data statistics (temporarily disabled - method doesn't exist yet)
   // app.get('/api/voice-modulations/reference-data-stats', requireAuth, async (req, res) => {
@@ -4359,6 +4596,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   //   }
   // });
 
+  /* DEPRECATED - Use /api/stories/:storyId/voice-samples instead
   // Get user voice modulations (all recordings across stories)
   app.get('/api/voice-modulations/user', requireAuth, async (req, res) => {
     try {
@@ -4396,7 +4634,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: 'Failed to fetch story modulations' });
     }
   });
+  */
 
+  /* DEPRECATED - Use /api/stories/:storyId/voice-samples instead
   // Record new voice modulation
   app.post('/api/voice-modulations/record', requireAuth, upload.single('audio'), async (req, res) => {
     try {
@@ -5711,6 +5951,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: 'Failed to get user costs', error: error.message });
     }
   });
+
+  */
 
   // State Management API Routes
   // GET /api/states/:stateType - Get all valid states for a state type

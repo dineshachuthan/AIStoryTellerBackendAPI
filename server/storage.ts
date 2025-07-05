@@ -1197,6 +1197,29 @@ export class DatabaseStorage implements IStorage {
     return result.rows;
   }
 
+  async getUserEsmRecordingByEmotion(userId: string, emotion: string): Promise<any | null> {
+    const result = await db.execute(
+      sql`SELECT * FROM user_esm_recordings WHERE user_id = ${userId} AND emotion = ${emotion} LIMIT 1`
+    );
+    return result.rows[0] || null;
+  }
+
+  async updateUserEsmRecording(id: number, updates: {
+    audio_url?: string;
+    duration?: number;
+    updated_date?: Date;
+  }): Promise<any> {
+    const result = await db.execute(
+      sql`UPDATE user_esm_recordings 
+          SET audio_url = COALESCE(${updates.audio_url || null}, audio_url),
+              duration = COALESCE(${updates.duration || null}, duration),
+              updated_date = COALESCE(${updates.updated_date?.toISOString() || null}, updated_date)
+          WHERE id = ${id}
+          RETURNING *`
+    );
+    return result.rows[0];
+  }
+
   async getEsmRefsByCategory(category: number): Promise<any[]> {
     const result = await db.execute(
       sql`SELECT * FROM esm_ref WHERE category = ${category} ORDER BY name`
