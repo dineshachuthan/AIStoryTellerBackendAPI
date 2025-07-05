@@ -342,7 +342,7 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
                   };
                   
                   return (
-                    <Card key={`${category.id}-${index}`} className={`${getCardClassName()} min-h-[450px]`}>
+                    <Card key={`${category.id}-${index}`} className={`${getCardClassName()} min-h-[450px] w-full`}>
                       <div className="space-y-3 flex flex-col h-full p-4">
                         <div className="flex items-center gap-2">
                           {getStatusIcon()}
