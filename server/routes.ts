@@ -4362,27 +4362,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Save audio file
       await fs.writeFile(audioPath, audioBuffer);
       
-      // Save/update ESM recording
-      const existingRecording = await storage.getUserEsmRecordingByEmotion(userId, emotionKey);
+      // Save/update voice sample using existing working approach
+      const existingRecording = await storage.getUserVoiceEmotionByEmotion(userId, emotionKey);
       
       if (existingRecording) {
         // Update existing recording
-        await storage.updateUserEsmRecording(existingRecording.id, {
-          audio_url: `/audio/${audioPath}`,
+        await storage.updateUserVoiceEmotion(existingRecording.id, {
+          audioUrl: `/audio/${audioPath}`,
           duration: duration,
-          updated_date: new Date()
+          updatedAt: new Date()
         });
       } else {
         // Create new recording
-        await storage.createUserEsmRecording({
-          user_id: userId,
-          esm_ref_id: null, // Will be linked later
+        await storage.createUserVoiceEmotion({
+          userId: userId,
           emotion: emotionKey,
-          audio_url: `/audio/${audioPath}`,
+          audioUrl: `/audio/${audioPath}`,
           duration: duration,
-          is_locked: false,
-          story_context: `Recorded for story: ${story.title}`,
-          created_date: new Date()
+          storyId: storyId,
+          createdAt: new Date()
         });
       }
 
