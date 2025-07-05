@@ -553,32 +553,72 @@ async function populateEsmReferenceData(analysis: StoryAnalysis, userId: string)
       }
     }
 
-    // Process mood category as modulation (category 3)
+    // Process modulations (category 3) - mood category, emotional tags, genre, subGenre
+    const modulations: string[] = [];
+    
+    // Collect all modulation items
     if (analysis.moodCategory) {
-      const moodName = analysis.moodCategory.toLowerCase().trim();
-      
-      // Check if mood already exists
-      const existingMood = await storage.getEsmRef(3, moodName);
-      
-      if (!existingMood) {
-        console.log(`➕ Adding new mood to ESM reference: ${moodName}`);
+      modulations.push(analysis.moodCategory);
+    }
+    if (analysis.emotionalTags && Array.isArray(analysis.emotionalTags)) {
+      modulations.push(...analysis.emotionalTags);
+    }
+    if (analysis.genre) {
+      modulations.push(analysis.genre);
+    }
+    if (analysis.subGenre) {
+      modulations.push(analysis.subGenre);
+    }
+    
+    // Process each modulation with OpenAI-generated sample texts
+    for (const modulation of modulations) {
+      if (modulation) {
+        const modulationName = modulation.toLowerCase().trim();
         
-        await storage.createEsmRef({
-          category: 3, // Modulations/Moods
-          name: moodName,
-          display_name: analysis.moodCategory,
-          sample_text: `Express how do you narrate a ${analysis.moodCategory} expression in a story`,
-          intensity: 5,
-          description: `Overall mood from story analysis`,
-          ai_variations: {
-            genre: analysis.genre,
-            category: analysis.category,
-            themes: analysis.themes
-          },
-          created_by: userId
-        });
+        // Check if modulation already exists
+        const existingModulation = await storage.getEsmRef(3, modulationName);
         
-        console.log(`✅ Successfully added mood: ${moodName}`);
+        if (!existingModulation) {
+          console.log(`➕ Adding new modulation to ESM reference: ${modulationName}`);
+          
+          // Generate professional voice sample text using OpenAI cached provider
+          let sampleText: string;
+          try {
+            const result = await openaiProvider.generateCompletionWithCache({
+              messages: [{ 
+                role: 'user', 
+                content: `Generate a 6-second voice recording sample text for the narrative modulation "${modulation}". Be exactly 35-45 words, natural conversational language that demonstrates how to speak with ${modulation} tone/mood/style. No character names or story references. Focus on vocal delivery instructions.`
+              }],
+              maxTokens: 100,
+              temperature: 0.7
+            });
+            sampleText = result.content.trim().replace(/^["']|["']$/g, '');
+            console.log(`✅ Generated professional modulation sample text for ${modulationName}: "${sampleText.substring(0, 50)}..."`);
+          } catch (error) {
+            console.error(`⚠️ Failed to generate sample text for ${modulationName}, using fallback: ${error.message}`);
+            sampleText = `Express how to narrate with a ${modulation} tone and delivery style`;
+          }
+          
+          await storage.createEsmRef({
+            category: 3, // Modulations/Moods
+            name: modulationName,
+            display_name: modulation,
+            sample_text: sampleText,
+            intensity: 5,
+            description: `Narrative modulation from story analysis`,
+            ai_variations: {
+              genre: analysis.genre,
+              category: analysis.category,
+              themes: analysis.themes,
+              type: 'modulation'
+            },
+            created_by: userId
+          });
+          
+          console.log(`✅ Successfully added modulation: ${modulationName}`);
+        } else {
+          console.log(`🔄 Modulation already exists in reference data: ${modulationName}`);
+        }
       }
     }
 
