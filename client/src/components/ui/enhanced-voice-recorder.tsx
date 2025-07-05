@@ -453,7 +453,7 @@ export function EnhancedVoiceRecorder({
               {emotionName && emotionName.length > 20 ? emotionName.substring(0, 20) + '...' : emotionName || 'Voice Recorder'}
             </span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="ml-auto">
             {intensity && (
               <Badge variant="outline" className="text-xs text-blue-400 border-blue-400">
                 {intensity}/10
