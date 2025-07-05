@@ -353,9 +353,31 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
                         <div className="flex-grow">
                           <EnhancedVoiceRecorder
                             sampleText={sampleText}
+                            emotionName={emotionName}
+                            intensity={intensity}
+                            isLocked={isLocked}
+                            isRecorded={isRecorded}
                             onRecordingComplete={handleRecordingComplete(emotionName)}
                             disabled={recordingState.isSaving}
                             simpleMode={true}
+                            saveConfig={{
+                              endpoint: '/api/voice-samples/save',
+                              payload: {
+                                emotion: emotionName,
+                                category: 1,
+                                storyId: storyId,
+                                intensity: intensity
+                              },
+                              minDuration: 5,
+                              onSaveSuccess: (data) => {
+                                console.log('Voice sample saved successfully:', data);
+                                // Trigger refresh of voice samples data
+                                window.location.reload();
+                              },
+                              onSaveError: (error) => {
+                                console.error('Failed to save voice sample:', error);
+                              }
+                            }}
                           />
                         </div>
                       </div>
