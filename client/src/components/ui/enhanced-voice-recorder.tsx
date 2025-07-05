@@ -553,10 +553,9 @@ export function EnhancedVoiceRecorder({
             </div>
           </div>
           
-          <div className="flex items-start space-x-4">
-            
-            {/* Recording Button */}
-            <div className="flex flex-col items-center mb-2">
+          {/* Recording Button - Centered */}
+          <div className="flex justify-center mb-4">
+            <div className="flex flex-col items-center">
               <div className="relative mb-1">
                 {recordingState === 'idle' && (
                   <Tooltip>
