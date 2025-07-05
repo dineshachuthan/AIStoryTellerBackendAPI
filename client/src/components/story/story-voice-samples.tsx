@@ -444,7 +444,7 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
                               duration: item.userRecording.duration
                             } : undefined}
                             saveConfig={{
-                              endpoint: '/api/emotions/save-voice-sample',
+                              endpoint: `/api/stories/${storyId}/emotions/save-voice-sample`,
                               payload: {
                                 emotion: emotionName,
                                 category: 1,

@@ -1404,10 +1404,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
   // Save user voice recording for emotion - ESM Architecture
-  app.post("/api/emotions/save-voice-sample", upload.single('audio'), async (req, res) => {
+  app.post("/api/stories/:storyId/emotions/save-voice-sample", upload.single('audio'), async (req, res) => {
     try {
       console.log("ESM Voice Sample Save - Request:", req.body);
-      const { emotion, intensity, text, userId, storyId } = req.body;
+      const { emotion, intensity, text, userId } = req.body;
+      const storyId = parseInt(req.params.storyId);
       const audioFile = req.file;
       
       if (!audioFile || !emotion || !text || !userId) {
