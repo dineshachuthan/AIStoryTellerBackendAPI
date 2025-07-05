@@ -428,7 +428,7 @@ export function EnhancedVoiceRecorder({
 
   return (
     <TooltipProvider>
-      <div className={`w-full max-w-sm mx-auto ${className}`}>
+      <div className={`w-full max-w-lg mx-auto ${className}`}>
         {/* Radio/TV Style Voice Recorder Panel - Dynamic background for three states */}
         <div className={`rounded-2xl p-4 shadow-2xl border flex flex-col ${
           isLocked 
