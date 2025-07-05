@@ -468,6 +468,11 @@ export function EnhancedVoiceRecorder({
                 style={{ left: `${(5 / maxRecordingTime) * 100}%` }}
               />
             </div>
+            
+            {/* Fixed height placeholder for validation messages to prevent button movement */}
+            <div className="h-4 text-xs text-center">
+              {/* Space reserved for validation messages without shifting layout */}
+            </div>
           </div>
           
           <div className="flex items-start space-x-4">
