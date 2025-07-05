@@ -490,21 +490,21 @@ export function EnhancedVoiceRecorder({
         {/* Main Recording Display - Flexible container */}
         <div className="bg-black rounded-lg p-4 border border-gray-600 flex-1 flex flex-col">
           {/* Title and Instructions */}
-          {!simpleMode && sampleText && (
+          {sampleText && (
             <div className="text-blue-300 text-xs font-medium mb-2 text-left tracking-wide">
               📖 {emotionName ? `Read this text with ${emotionName.toLowerCase()} emotion` : 'Read this text aloud'}
             </div>
           )}
           
           {/* Sample Text Display */}
-          {!simpleMode && sampleText && (
+          {sampleText && (
             <div className="bg-gray-900 rounded p-3 mb-3 border-l-2 border-blue-400">
               <p className="text-gray-200 text-sm leading-relaxed">
                 {sampleText}
               </p>
             </div>
           )}
-          {simpleMode && title && (
+          {simpleMode && title && !sampleText && (
             <div className="text-blue-300 text-xs font-medium mb-2 text-left tracking-wide">
               🎙️ {title}
             </div>
