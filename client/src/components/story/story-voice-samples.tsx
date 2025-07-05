@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -90,24 +90,11 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
       }
     });
     
-    console.log('🔧 Transformed ESM data:', {
-      emotions: organized.emotions.length,
-      sounds: organized.sounds.length, 
-      modulations: organized.modulations.length
-    });
-    
     return organized;
   }, [esmTemplates]);
 
   // Helper function to get professional ESM sample text instead of story-based text
   const getOptimalSampleText = (itemName: string, category: string, storyQuote?: string, storyContext?: string): string => {
-    // Debug: Log the ESM data structure
-    console.log(`🔍 ESM Debug for ${itemName} (${category}):`, {
-      esmDataKeys: Object.keys(esmData || {}),
-      categoryData: (esmData as any)?.[category]?.slice(0, 3), // Show first 3 items
-      categoryCount: (esmData as any)?.[category]?.length || 0
-    });
-    
     // First priority: Check ESM reference data for professional sample text
     const categoryData = (esmData as any)?.[category] || [];
     const esmItem = categoryData.find((item: any) => 
@@ -117,25 +104,21 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
     );
     
     if (esmItem?.sampleText && isTextSuitableForRecording(esmItem.sampleText)) {
-      console.log(`✨ Using ESM professional text for ${itemName} (${category}): "${esmItem.sampleText.substring(0, 50)}..."`);
       return esmItem.sampleText;
     }
     
     // Second priority: Story quote if suitable length
     if (storyQuote && isTextSuitableForRecording(storyQuote)) {
-      console.log(`📖 Using story quote for ${itemName}: "${storyQuote.substring(0, 50)}..."`);
       return storyQuote;
     }
     
     // Third priority: Story context if suitable length
     if (storyContext && isTextSuitableForRecording(storyContext)) {
-      console.log(`📝 Using story context for ${itemName}: "${storyContext.substring(0, 50)}..."`);
       return storyContext;
     }
     
     // Fallback: Return best available text even if short
     const fallbackText = esmItem?.sampleText || storyQuote || storyContext || `Express the ${category.slice(0, -1)} of ${itemName}`;
-    console.warn(`⚠️ Using fallback text for ${itemName}: "${fallbackText.substring(0, 50)}..."`);
     return fallbackText;
   };
 
