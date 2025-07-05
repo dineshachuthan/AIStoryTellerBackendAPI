@@ -348,17 +348,7 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
                         
 
 
-                        {/* Static Recording Duration Progress */}
-                        <div className="space-y-1 h-12">
-                          <div className="flex justify-between text-xs text-gray-500">
-                            <span>Duration: {recordingState.duration ? recordingState.duration.toFixed(1) : '0.0'}s</span>
-                            <span>Target: 6s+</span>
-                          </div>
-                          <Progress 
-                            value={recordingState.duration ? Math.min((recordingState.duration / 6) * 100, 100) : 0} 
-                            className="w-full h-2"
-                          />
-                        </div>
+
                         
                         <div className="flex-grow">
                           <EnhancedVoiceRecorder
