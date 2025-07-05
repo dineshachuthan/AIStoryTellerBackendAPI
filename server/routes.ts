@@ -4354,8 +4354,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Save to user voice storage
       const audioPath = `user-data/${userId}/voice-samples/${category}/${itemName.toLowerCase()}.mp3`;
-      const fs = await import('fs').then(m => m.promises);
-      const path = await import('path');
       
       // Ensure directory exists
       const dirPath = path.dirname(audioPath);

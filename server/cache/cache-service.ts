@@ -5,6 +5,7 @@
 
 import { DatabaseCacheProvider } from './database-cache-provider.ts';
 import { storage } from '../storage.ts';
+import crypto from 'crypto';
 
 export class CacheService {
   private static instance: CacheService;
@@ -88,7 +89,6 @@ export class CacheService {
 
   // Content Hash Generation
   private generateContentHash(content: string): string {
-    const crypto = require('crypto');
     return crypto.createHash('sha256').update(content).digest('hex');
   }
 }
