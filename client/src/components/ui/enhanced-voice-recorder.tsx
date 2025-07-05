@@ -556,10 +556,11 @@ export function EnhancedVoiceRecorder({
             </div>
           </div>
           
-          {/* Recording Button - Centered */}
-          <div className="flex justify-center mb-4">
+          {/* All Control Buttons in Single Row */}
+          <div className="flex gap-3 justify-center items-center">
+            {/* Hold to Record Button */}
             <div className="flex flex-col items-center">
-              <div className="relative mb-1">
+              <div className="relative">
                 {recordingState === 'idle' && (
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -621,7 +622,7 @@ export function EnhancedVoiceRecorder({
               </div>
               
               {/* Instructions under mic - Fixed height to prevent flickering */}
-              <div className="text-xs text-gray-400 text-center leading-tight h-6 flex items-center justify-center">
+              <div className="text-xs text-gray-400 text-center leading-tight h-6 flex items-center justify-center mt-1">
                 {recordedSample || tempRecording ? (
                   <div>
                     Hold to<br />re-record
@@ -634,15 +635,8 @@ export function EnhancedVoiceRecorder({
               </div>
             </div>
 
-
-          </div>
-        </div>
-
-        {/* Recorded Sample Info - Removed duration and date display as requested */}
-
-        {/* Control Buttons - Minimal margin */}
-        <div className="mt-1 flex gap-2 justify-center">
-              {/* Single Play button - prioritizes new recording over existing */}
+            {/* Play Button */}
+            <div className="flex flex-col items-center">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -650,18 +644,23 @@ export function EnhancedVoiceRecorder({
                     disabled={!tempRecording && !recordedSample || isPlayingTemp || isPlayingExisting || isLocked}
                     variant="outline"
                     size="sm"
-                    className="bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700 disabled:opacity-50 flex-1 max-w-[100px]"
+                    className="bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700 disabled:opacity-50 w-16 h-16 rounded-full"
                   >
-                    <Play className="w-4 h-4" />
+                    <Play className="w-6 h-6" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>{tempRecording ? UIMessages.getTooltip('VOICE_RECORDER_PLAY_NEW') : recordedSample ? UIMessages.getTooltip('VOICE_RECORDER_PLAY_SAVED') : UIMessages.getTooltip('VOICE_RECORDER_NO_RECORDING')}</p>
                 </TooltipContent>
               </Tooltip>
-              
-              {/* Save button always visible when saveConfig is provided */}
-              {saveConfig && (
+              <div className="text-xs text-gray-400 text-center leading-tight h-6 flex items-center justify-center mt-1">
+                Play
+              </div>
+            </div>
+            
+            {/* Save Button */}
+            {saveConfig && (
+              <div className="flex flex-col items-center">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
@@ -669,12 +668,12 @@ export function EnhancedVoiceRecorder({
                       disabled={!tempRecording || recordingState === 'saving' || isPlayingTemp || isLocked}
                       variant="default"
                       size="sm"
-                      className="bg-green-600 hover:bg-green-700 disabled:opacity-50 flex-1 max-w-[100px]"
+                      className="bg-green-600 hover:bg-green-700 disabled:opacity-50 w-16 h-16 rounded-full"
                     >
                       {recordingState === 'saving' ? (
                         <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
                       ) : (
-                        <Save className="w-4 h-4" />
+                        <Save className="w-6 h-6" />
                       )}
                     </Button>
                   </TooltipTrigger>
@@ -682,8 +681,13 @@ export function EnhancedVoiceRecorder({
                     <p>{recordingState === 'saving' ? 'Saving...' : !tempRecording ? 'Record audio first' : 'Save recording'}</p>
                   </TooltipContent>
                 </Tooltip>
-              )}
+                <div className="text-xs text-gray-400 text-center leading-tight h-6 flex items-center justify-center mt-1">
+                  Save
+                </div>
+              </div>
+            )}
           </div>
+        </div>
         </div>
       </div>
     </TooltipProvider>
