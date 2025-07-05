@@ -4362,14 +4362,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Save audio file
       await fs.writeFile(audioPath, audioBuffer);
       
-      // Save voice sample using existing working storage methods
+      // Save voice sample using existing working storage methods  
       await storage.createUserVoiceEmotion({
-        userId: userId,
-        emotion: emotionKey,
+        user_id: userId,  // Match database column name
+        sampleType: 'emotion',
+        label: emotionKey,
         audioUrl: `/audio/${audioPath}`,
         duration: duration,
-        storyId: storyId,
-        createdAt: new Date()
+        recordedAt: new Date()
       });
 
       res.json({ 

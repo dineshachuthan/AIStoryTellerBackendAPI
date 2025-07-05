@@ -403,8 +403,19 @@ export function EnhancedVoiceRecorder({
       if (tempRecording?.duration) {
         setLastSavedDuration(tempRecording.duration);
       }
-      setRecordingState('saved');
+      
+      // Cleanup temp recording URL
+      if (tempRecording) {
+        URL.revokeObjectURL(tempRecording.url);
+      }
+      
+      // Reset to fully idle state
+      setRecordingState('idle');
       setTempRecording(null);
+      setRecordingTime(0);
+      setCountdownTime(3);
+      setSaveError(null);
+      
       saveConfig.onSaveSuccess?.(response);
     } catch (error: any) {
       // Error
