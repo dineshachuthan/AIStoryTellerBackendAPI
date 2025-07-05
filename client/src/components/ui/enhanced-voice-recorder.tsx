@@ -410,8 +410,7 @@ export function EnhancedVoiceRecorder({
     }
   };
 
-  // Debug logging
-  console.log('EnhancedVoiceRecorder status:', { isLocked, isRecorded, recordedSample, emotionName });
+
 
   // Status configuration for visual indicators
   const statusConfig = {
