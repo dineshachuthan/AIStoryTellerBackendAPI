@@ -303,7 +303,7 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
                 </p>
               </div>
             ) : (
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                 {currentCategoryData.map((item: any, index: number) => {
                   const emotionName = item.emotion || item.sound || item.name || 'unknown';
                   const sampleText = item.sampleText || item.quote || item.context || 
@@ -339,8 +339,8 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
                   };
                   
                   return (
-                    <Card key={`${category.id}-${index}`} className={getCardClassName()}>
-                      <div className="space-y-4">
+                    <Card key={`${category.id}-${index}`} className={`${getCardClassName()} min-h-[450px]`}>
+                      <div className="space-y-3 flex flex-col h-full p-4">
                         <div className="flex items-center gap-2">
                           {getStatusIcon()}
                           <h3 className="font-medium">{emotionName}</h3>
@@ -365,12 +365,14 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
                           />
                         </div>
                         
-                        <EnhancedVoiceRecorder
-                          sampleText={sampleText}
-                          onRecordingComplete={handleRecordingComplete(emotionName)}
-                          disabled={recordingState.isSaving}
-                          simpleMode={true}
-                        />
+                        <div className="flex-grow">
+                          <EnhancedVoiceRecorder
+                            sampleText={sampleText}
+                            onRecordingComplete={handleRecordingComplete(emotionName)}
+                            disabled={recordingState.isSaving}
+                            simpleMode={true}
+                          />
+                        </div>
 
                         {/* Static Save Button - Always Present */}
                         <Button
