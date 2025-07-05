@@ -4309,10 +4309,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Helper function to find user recording for an item
       const findUserRecording = (itemName: string, category: string) => {
         const categoryPrefix = category === 'emotions' ? 'emotions' : category === 'sounds' ? 'sounds' : 'modulations';
-        return userRecordings.find(recording => 
+        console.log(`Looking for user recording: itemName="${itemName}", category="${category}", categoryPrefix="${categoryPrefix}"`);
+        console.log('Available user recordings:', userRecordings.map(r => ({ emotion: r.emotion, audio_url: r.audio_url })));
+        
+        const found = userRecordings.find(recording => 
           recording.emotion === `${categoryPrefix}-${itemName.toLowerCase()}` || 
           recording.emotion === itemName.toLowerCase()
         );
+        
+        console.log(`Found recording for ${itemName}:`, found ? 'YES' : 'NO');
+        return found;
       };
 
       // Helper function to get ESM reference text

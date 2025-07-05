@@ -117,52 +117,32 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
       console.log('Initializing recording states from backend data:', voiceSamplesData);
       const newStates: Record<string, any> = {};
       
-      // Process emotions
-      if (voiceSamplesData.emotions) {
-        voiceSamplesData.emotions.forEach((emotion: any) => {
-          const emotionName = emotion.displayName || emotion.name || emotion.emotion;
-          console.log('Processing emotion:', emotionName, 'isRecorded:', emotion.isRecorded, 'userRecording:', emotion.userRecording);
-          if (emotionName && emotion.isRecorded) {
-            newStates[emotionName] = {
-              isRecorded: true,
-              isSaving: false,
-              errorMessage: '',
-              duration: emotion.userRecording?.duration || 0
-            };
-          }
-        });
-      }
+      // Generic function to process any category items
+      const processCategory = (items: any[], categoryName: string) => {
+        if (items && Array.isArray(items)) {
+          items.forEach((item: any) => {
+            // Get item name from any possible field
+            const itemName = item.displayName || item.name || item.emotion || item.sound || item.modulation;
+            console.log(`Processing ${categoryName}:`, itemName, 'isRecorded:', item.isRecorded, 'userRecording:', item.userRecording);
+            
+            if (itemName && item.isRecorded) {
+              newStates[itemName] = {
+                isRecorded: true,
+                isSaving: false,
+                errorMessage: '',
+                duration: item.userRecording?.duration || 0
+              };
+            }
+          });
+        }
+      };
       
-      // Process sounds
-      if (voiceSamplesData.sounds) {
-        voiceSamplesData.sounds.forEach((sound: any) => {
-          const soundName = sound.sound || sound.name || sound.displayName;
-          if (soundName && sound.isRecorded) {
-            newStates[soundName] = {
-              isRecorded: true,
-              isSaving: false,
-              errorMessage: '',
-              duration: sound.userRecording?.duration || 0
-            };
-          }
-        });
-      }
+      // Process all categories using the generic function
+      processCategory(voiceSamplesData.emotions, 'emotion');
+      processCategory(voiceSamplesData.sounds, 'sound');
+      processCategory(voiceSamplesData.modulations, 'modulation');
       
-      // Process modulations
-      if (voiceSamplesData.modulations) {
-        voiceSamplesData.modulations.forEach((modulation: any) => {
-          const modName = modulation.modulation || modulation.name || modulation.displayName;
-          if (modName && modulation.isRecorded) {
-            newStates[modName] = {
-              isRecorded: true,
-              isSaving: false,
-              errorMessage: '',
-              duration: modulation.userRecording?.duration || 0
-            };
-          }
-        });
-      }
-      
+      console.log('Final recording states to set:', newStates);
       setRecordingStates(prev => ({ ...prev, ...newStates }));
     }
   }, [voiceSamplesData]);
