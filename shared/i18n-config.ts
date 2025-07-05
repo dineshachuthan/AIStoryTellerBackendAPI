@@ -1343,6 +1343,244 @@ export const MESSAGE_TEMPLATES: Record<string, I18nMessageTemplate> = {
       zh: '返回主页',
       ko: '홈으로 이동'
     }
+  },
+
+  // Voice Recorder Component Labels
+  VOICE_RECORDER_HOLD_TO_RECORD: {
+    code: 'VOICE_RECORDER_HOLD_TO_RECORD',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Hold to Record',
+      es: 'Mantén para Grabar',
+      fr: 'Maintenir pour Enregistrer',
+      de: 'Halten zum Aufnehmen',
+      ja: '長押しで録音',
+      zh: '按住录音',
+      ko: '길게 눌러 녹음'
+    }
+  },
+
+  VOICE_RECORDER_RECORDING: {
+    code: 'VOICE_RECORDER_RECORDING',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Recording...',
+      es: 'Grabando...',
+      fr: 'Enregistrement...',
+      de: 'Aufnahme...',
+      ja: '録音中...',
+      zh: '录音中...',
+      ko: '녹음 중...'
+    }
+  },
+
+  VOICE_RECORDER_INSTRUCTIONS: {
+    code: 'VOICE_RECORDER_INSTRUCTIONS',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Press and hold to record',
+      es: 'Presiona y mantén para grabar',
+      fr: 'Appuyez et maintenez pour enregistrer',
+      de: 'Drücken und halten zum Aufnehmen',
+      ja: '長押しして録音してください',
+      zh: '按住录音',
+      ko: '길게 눌러서 녹음하세요'
+    }
+  },
+
+  VOICE_RECORDER_MIC_ERROR_TITLE: {
+    code: 'VOICE_RECORDER_MIC_ERROR_TITLE',
+    type: 'error',
+    severity: 'high',
+    variables: [],
+    templates: {
+      en: 'Microphone Error',
+      es: 'Error de Micrófono',
+      fr: 'Erreur de Microphone',
+      de: 'Mikrofonfehler',
+      ja: 'マイクロフォンエラー',
+      zh: '麦克风错误',
+      ko: '마이크 오류'
+    }
+  },
+
+  VOICE_RECORDER_MIC_ERROR_DESCRIPTION: {
+    code: 'VOICE_RECORDER_MIC_ERROR_DESCRIPTION',
+    type: 'error',
+    severity: 'high',
+    variables: [],
+    templates: {
+      en: 'Could not access microphone. Please check permissions.',
+      es: 'No se pudo acceder al micrófono. Verifique los permisos.',
+      fr: 'Impossible d\'accéder au microphone. Vérifiez les autorisations.',
+      de: 'Mikrofon nicht zugänglich. Bitte Berechtigungen prüfen.',
+      ja: 'マイクにアクセスできません。権限を確認してください。',
+      zh: '无法访问麦克风。请检查权限。',
+      ko: '마이크에 액세스할 수 없습니다. 권한을 확인하세요.'
+    }
+  },
+
+  VOICE_SAMPLE_LOCKED: {
+    code: 'VOICE_SAMPLE_LOCKED',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Voice Sample Locked',
+      es: 'Muestra de Voz Bloqueada',
+      fr: 'Échantillon Vocal Verrouillé',
+      de: 'Sprachprobe Gesperrt',
+      ja: '音声サンプルロック済み',
+      zh: '语音样本已锁定',
+      ko: '음성 샘플 잠김'
+    }
+  },
+
+  VOICE_SAMPLE_RECORDED: {
+    code: 'VOICE_SAMPLE_RECORDED',
+    type: 'success',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Voice Sample Recorded',
+      es: 'Muestra de Voz Grabada',
+      fr: 'Échantillon Vocal Enregistré',
+      de: 'Sprachprobe Aufgenommen',
+      ja: '音声サンプル録音済み',
+      zh: '语音样本已录制',
+      ko: '음성 샘플 녹음됨'
+    }
+  },
+
+  VOICE_SAMPLE_NEEDED: {
+    code: 'VOICE_SAMPLE_NEEDED',
+    type: 'info',
+    severity: 'medium',
+    variables: [],
+    templates: {
+      en: 'Voice Sample Needed',
+      es: 'Se Necesita Muestra de Voz',
+      fr: 'Échantillon Vocal Requis',
+      de: 'Sprachprobe Erforderlich',
+      ja: '音声サンプルが必要',
+      zh: '需要语音样本',
+      ko: '음성 샘플 필요'
+    }
+  },
+
+  VOICE_SAMPLE_CLONING_DESCRIPTION: {
+    code: 'VOICE_SAMPLE_CLONING_DESCRIPTION',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'This sample is being used for voice cloning',
+      es: 'Esta muestra se está usando para clonación de voz',
+      fr: 'Cet échantillon est utilisé pour le clonage vocal',
+      de: 'Diese Probe wird für Sprachklonierung verwendet',
+      ja: 'このサンプルは音声クローニングに使用中です',
+      zh: '此样本正用于语音克隆',
+      ko: '이 샘플은 음성 복제에 사용 중입니다'
+    }
+  },
+
+  VOICE_SAMPLE_READY_DESCRIPTION: {
+    code: 'VOICE_SAMPLE_READY_DESCRIPTION',
+    type: 'success',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Ready for voice cloning',
+      es: 'Listo para clonación de voz',
+      fr: 'Prêt pour le clonage vocal',
+      de: 'Bereit für Sprachklonierung',
+      ja: '音声クローニングの準備完了',
+      zh: '准备进行语音克隆',
+      ko: '음성 복제 준비 완료'
+    }
+  },
+
+  VOICE_SAMPLE_RECORD_DESCRIPTION: {
+    code: 'VOICE_SAMPLE_RECORD_DESCRIPTION',
+    type: 'info',
+    severity: 'medium',
+    variables: [],
+    templates: {
+      en: 'Record a voice sample for this emotion',
+      es: 'Graba una muestra de voz para esta emoción',
+      fr: 'Enregistrez un échantillon vocal pour cette émotion',
+      de: 'Nehmen Sie eine Sprachprobe für diese Emotion auf',
+      ja: 'この感情の音声サンプルを録音してください',
+      zh: '为此情感录制语音样本',
+      ko: '이 감정에 대한 음성 샘플을 녹음하세요'
+    }
+  },
+
+  VOICE_RECORDER_SAVE_FAILED: {
+    code: 'VOICE_RECORDER_SAVE_FAILED',
+    type: 'error',
+    severity: 'high',
+    variables: [],
+    templates: {
+      en: 'Failed to save voice sample',
+      es: 'Error al guardar muestra de voz',
+      fr: 'Échec de sauvegarde de l\'échantillon vocal',
+      de: 'Sprachprobe konnte nicht gespeichert werden',
+      ja: '音声サンプルの保存に失敗しました',
+      zh: '保存语音样本失败',
+      ko: '음성 샘플 저장 실패'
+    }
+  },
+
+  VOICE_RECORDER_TOO_SHORT: {
+    code: 'VOICE_RECORDER_TOO_SHORT',
+    type: 'error',
+    severity: 'medium',
+    variables: ['duration', 'minDuration'],
+    templates: {
+      en: 'Recording too short: {duration}s. Need at least {minDuration} seconds for voice cloning.',
+      es: 'Grabación muy corta: {duration}s. Se necesitan al menos {minDuration} segundos para clonación de voz.',
+      fr: 'Enregistrement trop court: {duration}s. Il faut au moins {minDuration} secondes pour le clonage vocal.',
+      de: 'Aufnahme zu kurz: {duration}s. Mindestens {minDuration} Sekunden für Sprachklonierung erforderlich.',
+      ja: '録音が短すぎます: {duration}秒。音声クローニングには最低{minDuration}秒必要です。',
+      zh: '录音太短：{duration}秒。语音克隆至少需要{minDuration}秒。',
+      ko: '녹음이 너무 짧습니다: {duration}초. 음성 복제를 위해 최소 {minDuration}초가 필요합니다.'
+    }
+  },
+
+  // Voice Recorder Tooltips
+  VOICE_RECORDER_PLAY_NEW: {
+    code: 'VOICE_RECORDER_PLAY_NEW',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Play new recording'
+    }
+  },
+  VOICE_RECORDER_PLAY_SAVED: {
+    code: 'VOICE_RECORDER_PLAY_SAVED',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Play saved recording'
+    }
+  },
+  VOICE_RECORDER_NO_RECORDING: {
+    code: 'VOICE_RECORDER_NO_RECORDING',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'No recording to play'
+    }
   }
 };
 

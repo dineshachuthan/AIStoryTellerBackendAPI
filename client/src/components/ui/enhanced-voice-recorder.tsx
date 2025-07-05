@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { AUDIO_PROCESSING_CONFIG } from "../../../../shared/audio-config";
 import { apiRequest } from "@/lib/queryClient";
+import { UIMessages } from "@shared/i18n-config";
 
 interface EnhancedVoiceRecorderProps {
   onRecordingComplete?: (audioBlob: Blob, audioUrl: string) => void;
@@ -51,9 +52,9 @@ export function EnhancedVoiceRecorder({
   disabled = false,
   className = "",
   buttonText = {
-    hold: "Hold to Record",
-    recording: "Recording...",
-    instructions: "Press and hold to record"
+    hold: UIMessages.getLabel('VOICE_RECORDER_HOLD_TO_RECORD'),
+    recording: UIMessages.getLabel('VOICE_RECORDER_RECORDING'),
+    instructions: UIMessages.getLabel('VOICE_RECORDER_INSTRUCTIONS')
   },
   sampleText,
   emotionName,
@@ -117,31 +118,7 @@ export function EnhancedVoiceRecorder({
   // Get the current recording URL for playback
   const currentRecordingUrl = tempRecording?.url || recordedSample?.audioUrl;
 
-  // Status configuration for locked/unlocked states
-  const statusConfig = (() => {
-    if (isLocked) {
-      return {
-        icon: <Lock className="w-4 h-4 text-blue-500" />,
-        color: "blue",
-        label: "Locked", 
-        description: "Used for voice cloning - locked from editing"
-      };
-    } else if (isRecorded || recordedSample) {
-      return {
-        icon: <CheckCircle className="w-4 h-4 text-green-500" />,
-        color: "green",
-        label: "Recorded",
-        description: "Sample recorded - available for voice cloning"
-      };
-    } else {
-      return {
-        icon: <Unlock className="w-4 h-4 text-gray-400" />,
-        color: "gray", 
-        label: "Empty",
-        description: "No sample recorded yet"
-      };
-    }
-  })();
+
 
   const progressPercentage = (recordingTime / maxRecordingTime) * 100;
 
@@ -187,8 +164,8 @@ export function EnhancedVoiceRecorder({
     } catch (error) {
       console.error('Error accessing microphone:', error);
       toast({
-        title: "Microphone Error",
-        description: "Could not access microphone. Please check permissions.",
+        title: UIMessages.getError('VOICE_RECORDER_MIC_ERROR_TITLE'),
+        description: UIMessages.getError('VOICE_RECORDER_MIC_ERROR_DESCRIPTION'),
         variant: "destructive"
       });
       setRecordingState('idle');
@@ -438,12 +415,12 @@ export function EnhancedVoiceRecorder({
     icon: isLocked ? <Lock className="w-3 h-3 text-blue-400" /> 
           : (isRecorded || recordedSample) ? <CheckCircle className="w-3 h-3 text-green-400" />
           : <Circle className="w-3 h-3 text-gray-400" />,
-    label: isLocked ? "Voice Sample Locked" 
-           : (isRecorded || recordedSample) ? "Voice Sample Recorded"
-           : "Voice Sample Needed",
-    description: isLocked ? "This sample is being used for voice cloning"
-                 : (isRecorded || recordedSample) ? "Ready for voice cloning"
-                 : "Record a voice sample for this emotion"
+    label: isLocked ? UIMessages.getLabel('VOICE_SAMPLE_LOCKED')
+           : (isRecorded || recordedSample) ? UIMessages.getSuccess('VOICE_SAMPLE_RECORDED')
+           : UIMessages.getLabel('VOICE_SAMPLE_NEEDED'),
+    description: isLocked ? UIMessages.getInfo('VOICE_SAMPLE_CLONING_DESCRIPTION')
+                 : (isRecorded || recordedSample) ? UIMessages.getSuccess('VOICE_SAMPLE_READY_DESCRIPTION')
+                 : UIMessages.getInfo('VOICE_SAMPLE_RECORD_DESCRIPTION')
   };
 
   return (
@@ -668,7 +645,7 @@ export function EnhancedVoiceRecorder({
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>{tempRecording ? "Play new recording" : recordedSample ? "Play saved recording" : "No recording to play"}</p>
+                  <p>{tempRecording ? UIMessages.getTooltip('VOICE_RECORDER_PLAY_NEW') : recordedSample ? UIMessages.getTooltip('VOICE_RECORDER_PLAY_SAVED') : UIMessages.getTooltip('VOICE_RECORDER_NO_RECORDING')}</p>
                 </TooltipContent>
               </Tooltip>
               
