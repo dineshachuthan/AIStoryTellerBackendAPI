@@ -4364,7 +4364,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Save voice sample using existing working storage methods  
       await storage.createUserVoiceEmotion({
-        user_id: userId,  // Match database column name
+        userId: userId,  // Use TypeScript field name (Drizzle handles DB column mapping)
         sampleType: 'emotion',
         label: emotionKey,
         audioUrl: `/audio/${audioPath}`,
