@@ -438,6 +438,11 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
                             onRecordingComplete={handleRecordingComplete(emotionName)}
                             disabled={recordingState.isSaving}
                             simpleMode={true}
+                            recordedSample={item.userRecording ? {
+                              audioUrl: item.userRecording.audioUrl,
+                              recordedAt: new Date(item.userRecording.recordedAt),
+                              duration: item.userRecording.duration
+                            } : undefined}
                             saveConfig={{
                               endpoint: '/api/voice-samples/save',
                               payload: {
