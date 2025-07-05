@@ -200,13 +200,17 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
     return fallbackText;
   };
 
-  // Generate story-specific templates from analysis  
+  // Generate comprehensive templates from ALL sources (story analysis + user recordings + ESM reference)
   const generateStoryTemplates = (): VoiceTemplate[] => {
     const templates: VoiceTemplate[] = [];
+    const processedEmotions = new Set<string>();
 
-    // Add emotions from story analysis
+    // PRIORITY 1: Add emotions from story analysis (if available)
     if (analysisData.emotions) {
       analysisData.emotions.forEach((emotion) => {
+        const emotionKey = emotion.emotion.toLowerCase();
+        processedEmotions.add(emotionKey);
+        
         const recordedSample = findRecordedSample(emotion.emotion, 'emotions');
         const isRecorded = !!recordedSample;
         const isLocked = recordedSample?.isLocked || false;
@@ -220,7 +224,7 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
         );
 
         templates.push({
-          emotion: emotion.emotion.toLowerCase(),
+          emotion: emotionKey,
           displayName: emotion.emotion.charAt(0).toUpperCase() + emotion.emotion.slice(1),
           sampleText,
           category: "emotions",
@@ -234,9 +238,63 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
       });
     }
 
-    // Add sounds from story analysis
+    // PRIORITY 2: Add ANY user recordings that weren't in story analysis
+    recordedSamples.forEach((recording: any) => {
+      if (recording.emotion?.startsWith('emotions-')) {
+        const emotionName = recording.emotion.replace('emotions-', '');
+        const emotionKey = emotionName.toLowerCase();
+        
+        if (!processedEmotions.has(emotionKey)) {
+          processedEmotions.add(emotionKey);
+          
+          const sampleText = getSampleVoiceText(emotionName, "emotions", "", "");
+          
+          templates.push({
+            emotion: emotionKey,
+            displayName: emotionName.charAt(0).toUpperCase() + emotionName.slice(1),
+            sampleText,
+            category: "emotions",
+            intensity: 5, // Default intensity
+            description: `User recorded emotion: ${emotionName}`,
+            recordedSample: recording,
+            isRecorded: true,
+            isLocked: recording.isLocked || false,
+            sortOrder: recording.isLocked ? 3 : 2
+          });
+        }
+      }
+    });
+
+    // PRIORITY 3: Add ESM reference emotions that have NO recordings (show available options)
+    const emotionsFromESM = esmData?.emotions || [];
+    emotionsFromESM.forEach((esmEmotion: any) => {
+      const emotionKey = esmEmotion.emotion?.toLowerCase() || esmEmotion.name?.toLowerCase();
+      
+      if (emotionKey && !processedEmotions.has(emotionKey)) {
+        processedEmotions.add(emotionKey);
+        
+        templates.push({
+          emotion: emotionKey,
+          displayName: esmEmotion.displayName || (emotionKey.charAt(0).toUpperCase() + emotionKey.slice(1)),
+          sampleText: esmEmotion.sampleText || `Express the emotion of ${emotionKey}`,
+          category: "emotions",
+          intensity: 5, // Default intensity
+          description: `Available emotion from reference data`,
+          recordedSample: null,
+          isRecorded: false,
+          isLocked: false,
+          sortOrder: 1
+        });
+      }
+    });
+
+    // PRIORITY 1: Add sounds from story analysis (if available)
+    const processedSounds = new Set<string>();
     if (analysisData.soundEffects) {
       analysisData.soundEffects.forEach((sound) => {
+        const soundKey = sound.sound.toLowerCase();
+        processedSounds.add(soundKey);
+        
         const recordedSample = findRecordedSample(sound.sound, 'sounds');
         const isRecorded = !!recordedSample;
         const isLocked = recordedSample?.isLocked || false;
@@ -250,7 +308,7 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
         );
 
         templates.push({
-          emotion: sound.sound.toLowerCase(),
+          emotion: soundKey,
           displayName: sound.sound.charAt(0).toUpperCase() + sound.sound.slice(1),
           sampleText,
           category: "sounds",
@@ -264,7 +322,58 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
       });
     }
 
-    // Add modulations from story analysis
+    // PRIORITY 2: Add ANY user sound recordings that weren't in story analysis
+    recordedSamples.forEach((recording: any) => {
+      if (recording.emotion?.startsWith('sounds-')) {
+        const soundName = recording.emotion.replace('sounds-', '');
+        const soundKey = soundName.toLowerCase();
+        
+        if (!processedSounds.has(soundKey)) {
+          processedSounds.add(soundKey);
+          
+          const sampleText = getSampleVoiceText(soundName, "sounds", "", "");
+          
+          templates.push({
+            emotion: soundKey,
+            displayName: soundName.charAt(0).toUpperCase() + soundName.slice(1),
+            sampleText,
+            category: "sounds",
+            intensity: 5, // Default intensity
+            description: `User recorded sound: ${soundName}`,
+            recordedSample: recording,
+            isRecorded: true,
+            isLocked: recording.isLocked || false,
+            sortOrder: recording.isLocked ? 3 : 2
+          });
+        }
+      }
+    });
+
+    // PRIORITY 3: Add ESM reference sounds that have NO recordings (show available options)
+    const soundsFromESM = esmData?.sounds || [];
+    soundsFromESM.forEach((esmSound: any) => {
+      const soundKey = esmSound.sound?.toLowerCase() || esmSound.name?.toLowerCase();
+      
+      if (soundKey && !processedSounds.has(soundKey)) {
+        processedSounds.add(soundKey);
+        
+        templates.push({
+          emotion: soundKey,
+          displayName: esmSound.displayName || (soundKey.charAt(0).toUpperCase() + soundKey.slice(1)),
+          sampleText: esmSound.sampleText || `Create the sound of ${soundKey}`,
+          category: "sounds",
+          intensity: 5, // Default intensity
+          description: `Available sound from reference data`,
+          recordedSample: null,
+          isRecorded: false,
+          isLocked: false,
+          sortOrder: 1
+        });
+      }
+    });
+
+    // PRIORITY 1: Add modulations from story analysis (if available)
+    const processedModulations = new Set<string>();
     const modulations: string[] = [];
     if (analysisData.moodCategory) modulations.push(analysisData.moodCategory);
     if (analysisData.genre) modulations.push(analysisData.genre);
@@ -272,6 +381,9 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
     if (analysisData.emotionalTags) modulations.push(...analysisData.emotionalTags);
 
     modulations.forEach((modulation) => {
+      const modulationKey = modulation.toLowerCase();
+      processedModulations.add(modulationKey);
+      
       const recordedSample = findRecordedSample(modulation, 'modulations');
       const isRecorded = !!recordedSample;
       const isLocked = recordedSample?.isLocked || false;
@@ -285,7 +397,7 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
       );
 
       templates.push({
-        emotion: modulation.toLowerCase(),
+        emotion: modulationKey,
         displayName: modulation.charAt(0).toUpperCase() + modulation.slice(1),
         sampleText,
         category: "modulations",
@@ -296,6 +408,56 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
         isLocked,
         sortOrder: isLocked ? 3 : (isRecorded ? 2 : 1)
       });
+    });
+
+    // PRIORITY 2: Add ANY user modulation recordings that weren't in story analysis
+    recordedSamples.forEach((recording: any) => {
+      if (recording.emotion?.startsWith('modulations-')) {
+        const modulationName = recording.emotion.replace('modulations-', '');
+        const modulationKey = modulationName.toLowerCase();
+        
+        if (!processedModulations.has(modulationKey)) {
+          processedModulations.add(modulationKey);
+          
+          const sampleText = getSampleVoiceText(modulationName, "modulations", "", "");
+          
+          templates.push({
+            emotion: modulationKey,
+            displayName: modulationName.charAt(0).toUpperCase() + modulationName.slice(1),
+            sampleText,
+            category: "modulations",
+            intensity: 5, // Default intensity
+            description: `User recorded modulation: ${modulationName}`,
+            recordedSample: recording,
+            isRecorded: true,
+            isLocked: recording.isLocked || false,
+            sortOrder: recording.isLocked ? 3 : 2
+          });
+        }
+      }
+    });
+
+    // PRIORITY 3: Add ESM reference modulations that have NO recordings (show available options)
+    const modulationsFromESM = esmData?.modulations || [];
+    modulationsFromESM.forEach((esmModulation: any) => {
+      const modulationKey = esmModulation.emotion?.toLowerCase() || esmModulation.name?.toLowerCase();
+      
+      if (modulationKey && !processedModulations.has(modulationKey)) {
+        processedModulations.add(modulationKey);
+        
+        templates.push({
+          emotion: modulationKey,
+          displayName: esmModulation.displayName || (modulationKey.charAt(0).toUpperCase() + modulationKey.slice(1)),
+          sampleText: esmModulation.sampleText || `Express the modulation of ${modulationKey}`,
+          category: "modulations",
+          intensity: 5, // Default intensity
+          description: `Available modulation from reference data`,
+          recordedSample: null,
+          isRecorded: false,
+          isLocked: false,
+          sortOrder: 1
+        });
+      }
     });
 
     return templates;
