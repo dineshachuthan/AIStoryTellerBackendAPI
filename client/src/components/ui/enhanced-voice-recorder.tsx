@@ -434,24 +434,54 @@ export function EnhancedVoiceRecorder({
             </div>
           )}
           
-          {/* Single Duration Status Line */}
-          <div className="mb-2">
+          {/* Duration Status with Progress Bar */}
+          <div className="mb-3 space-y-2">
             <div className="flex justify-between text-xs text-gray-400">
               <span>Duration:</span>
               <span className={cn(
                 recordingState === 'recording' ? 
-                  (recordingTime >= 6 ? "text-green-400" : "text-orange-400") 
+                  (recordingTime >= 5 ? "text-green-400" : "text-orange-400") 
                   : recordedSample?.duration 
-                    ? (recordedSample.duration >= 6 ? "text-green-400" : "text-red-400")
+                    ? (recordedSample.duration >= 5 ? "text-green-400" : "text-red-400")
                     : "text-gray-400"
               )}>
                 {recordingState === 'recording' 
-                  ? `${formatTime(recordingTime)} / ${formatTime(maxRecordingTime)}`
+                  ? `${formatTime(recordingTime)} / ${formatTime(maxRecordingTime)} ${recordingTime >= 5 ? "✓" : ""}`
                   : recordedSample?.duration 
-                    ? `${recordedSample.duration.toFixed(1)}s ${recordedSample.duration >= 6 ? "✓" : ""}`
+                    ? `${recordedSample.duration.toFixed(1)}s ${recordedSample.duration >= 5 ? "✓" : "⚠️"}`
                     : `${formatTime(maxRecordingTime)} max`
                 }
               </span>
+            </div>
+            
+            {/* Progress Bar with Minimum Length Indicator */}
+            <div className="relative">
+              <Progress 
+                value={recordingState === 'recording' ? progressPercentage : 
+                       recordedSample?.duration ? Math.min((recordedSample.duration / maxRecordingTime) * 100, 100) : 0} 
+                className="h-2 bg-gray-700"
+              />
+              
+              {/* Minimum length indicator at 5 seconds */}
+              <div 
+                className="absolute top-0 h-2 w-0.5 bg-yellow-400"
+                style={{ left: `${(5 / maxRecordingTime) * 100}%` }}
+              />
+              
+              {/* Frontend validation message */}
+              {recordingState === 'recording' && recordingTime < 5 && (
+                <div className="text-xs text-orange-400 mt-1 animate-pulse">
+                  Keep recording... minimum 5 seconds needed
+                </div>
+              )}
+              
+              {/* Post-recording validation */}
+              {(recordedSample?.duration || (recordingState === 'recorded' && tempRecording)) && 
+               (recordedSample?.duration || 0) < 5 && (
+                <div className="text-xs text-red-400 mt-1">
+                  Recording too short - need at least 5 seconds for voice cloning
+                </div>
+              )}
             </div>
           </div>
           

@@ -13,6 +13,26 @@ import { Mic, Volume2, Users, Zap, DollarSign, Clock, AlertCircle } from "lucide
 import { AUDIO_PROCESSING_CONFIG } from "@shared/audio-config";
 import { VoiceMessageService } from "@shared/i18n-config";
 
+// Helper function to get audio duration from blob
+const getAudioDuration = (audioBlob: Blob): Promise<number> => {
+  return new Promise((resolve) => {
+    const audio = new Audio();
+    const url = URL.createObjectURL(audioBlob);
+    
+    audio.addEventListener('loadedmetadata', () => {
+      resolve(audio.duration);
+      URL.revokeObjectURL(url);
+    });
+    
+    audio.addEventListener('error', () => {
+      resolve(0); // Return 0 on error
+      URL.revokeObjectURL(url);
+    });
+    
+    audio.src = url;
+  });
+};
+
 interface StoryAnalysis {
   emotions: Array<{
     emotion: string;
@@ -313,9 +333,15 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
     }
   ];
 
-  // Voice recording mutation (using global voice samples API)
+  // Voice recording mutation with frontend validation
   const recordVoiceMutation = useMutation({
     mutationFn: async ({ emotion, audioBlob }: { emotion: string; audioBlob: Blob }) => {
+      // Frontend validation: Check if audio is long enough
+      const audioDuration = await getAudioDuration(audioBlob);
+      if (audioDuration < 5) {
+        throw new Error(`Recording too short: ${audioDuration.toFixed(1)}s. Need at least 5 seconds for voice cloning.`);
+      }
+      
       const formData = new FormData();
       formData.append('audio', audioBlob, 'voice-sample.mp3');
       
@@ -339,6 +365,14 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
       });
     },
     onError: (error: any, variables) => {
+      // Don't show permanent toast for validation errors - they're handled in UI
+      if (error.message?.includes('Recording too short')) {
+        // Frontend validation error - no toast needed as UI shows the message
+        console.log('Frontend validation prevented short recording submission');
+        return;
+      }
+      
+      // Only show toast for unexpected backend errors
       const errorMsg = VoiceMessageService.voiceSaveFailed(variables.emotion, selectedCategory);
       toast({
         title: "Recording failed",
