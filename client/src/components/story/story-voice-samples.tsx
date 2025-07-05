@@ -114,15 +114,19 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
   const storySounds = voiceSamplesData.sounds || [];
   const storyModulations = voiceSamplesData.modulations || [];
 
+  // Track recording state per emotion for individual card feedback
+  const [recordingStates, setRecordingStates] = useState<Record<string, {
+    isRecorded: boolean;
+    isSaving: boolean;
+    errorMessage: string;
+    duration?: number;
+    audioBlob?: Blob;
+    audioUrl?: string;
+  }>>({});
+
   // Mutation for recording voice samples
   const recordVoiceMutation = useMutation({
     mutationFn: async ({ emotion, audioBlob }: { emotion: string; audioBlob: Blob }) => {
-      // Frontend validation: Check if audio is long enough
-      const audioDuration = await getAudioDuration(audioBlob);
-      if (audioDuration < 5) {
-        throw new Error(`Recording too short: ${audioDuration.toFixed(1)}s. Need at least 5 seconds for voice cloning.`);
-      }
-      
       const formData = new FormData();
       formData.append('audio', audioBlob, 'voice-sample.mp3');
       formData.append('emotion', emotion);
@@ -135,32 +139,81 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
       });
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/stories", storyId, "voice-samples"] });
-      const successMsg = VoiceMessageService.voiceSaved(user?.email || 'User', variables.emotion, selectedCategory);
-      toast({
-        title: "Voice sample recorded",
-        description: successMsg.message,
-      });
+      // Update recording state for this emotion
+      setRecordingStates(prev => ({
+        ...prev,
+        [variables.emotion]: {
+          ...prev[variables.emotion],
+          isRecorded: true,
+          isSaving: false,
+          errorMessage: ''
+        }
+      }));
+      
+      // Invalidate query to refresh data and trigger reordering
+      queryClient.invalidateQueries({ queryKey: [`/api/stories/${storyId}/voice-samples`] });
     },
     onError: (error: any, variables) => {
-      // Don't show permanent toast for validation errors - they're handled in UI
-      if (error.message?.includes('Recording too short')) {
-        console.log('Frontend validation prevented short recording submission');
-        return;
-      }
-      
-      const errorMsg = VoiceMessageService.voiceSaveFailed(variables.emotion, selectedCategory);
-      toast({
-        title: "Recording failed",
-        description: error.message || errorMsg.message,
-        variant: "destructive",
-      });
+      // Update error state for this specific emotion
+      setRecordingStates(prev => ({
+        ...prev,
+        [variables.emotion]: {
+          ...prev[variables.emotion],
+          isSaving: false,
+          errorMessage: error.message || 'Failed to save voice sample'
+        }
+      }));
     }
   });
 
-  // Handle recording completion
-  const handleRecordingComplete = (emotion: string) => (audioBlob: Blob) => {
-    recordVoiceMutation.mutate({ emotion, audioBlob });
+  // Handle recording completion (just store the recording, don't save yet)
+  const handleRecordingComplete = (emotion: string) => (audioBlob: Blob, audioUrl: string) => {
+    getAudioDuration(audioBlob).then(duration => {
+      setRecordingStates(prev => ({
+        ...prev,
+        [emotion]: {
+          ...prev[emotion],
+          duration,
+          audioBlob,
+          audioUrl,
+          errorMessage: '',
+          isSaving: false,
+          isRecorded: false
+        }
+      }));
+    });
+  };
+
+  // Handle save button click with frontend validation
+  const handleSaveRecording = async (emotion: string) => {
+    const recordingState = recordingStates[emotion];
+    if (!recordingState?.audioBlob) return;
+
+    // Frontend validation: Check if audio is long enough
+    const audioDuration = recordingState.duration || 0;
+    if (audioDuration < 6) {
+      setRecordingStates(prev => ({
+        ...prev,
+        [emotion]: {
+          ...prev[emotion],
+          errorMessage: `Recording too short: ${audioDuration.toFixed(1)}s. Need at least 6 seconds for voice cloning.`
+        }
+      }));
+      return;
+    }
+
+    // Set saving state
+    setRecordingStates(prev => ({
+      ...prev,
+      [emotion]: {
+        ...prev[emotion],
+        isSaving: true,
+        errorMessage: ''
+      }
+    }));
+
+    // Call API
+    recordVoiceMutation.mutate({ emotion, audioBlob: recordingState.audioBlob });
   };
 
   // Generate categories with counts
@@ -255,27 +308,111 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
                   const sampleText = item.esmSampleText || item.quote || item.context || 
                     `Express the emotion of ${emotionName} with clear articulation and natural pacing for high-quality voice cloning.`;
                   
+                  const recordingState = recordingStates[emotionName] || {
+                    isRecorded: false,
+                    isSaving: false,
+                    errorMessage: '',
+                    duration: 0
+                  };
+
+                  // Determine background color based on state
+                  const getCardClassName = () => {
+                    if (recordingState.isRecorded || hasRecording(item)) {
+                      return "p-4 bg-green-50 dark:bg-green-950 border-green-200";
+                    }
+                    if (recordingState.isSaving) {
+                      return "p-4 bg-blue-50 dark:bg-blue-950 border-blue-200";
+                    }
+                    return "p-4";
+                  };
+
+                  // Determine status icon
+                  const getStatusIcon = () => {
+                    if (recordingState.isRecorded || hasRecording(item)) {
+                      return <CheckCircle className="w-4 h-4 text-green-500" />;
+                    }
+                    if (recordingState.isSaving) {
+                      return <Lock className="w-4 h-4 text-blue-500" />;
+                    }
+                    return <Unlock className="w-4 h-4 text-gray-400" />;
+                  };
+                  
                   return (
-                    <Card key={`${category.id}-${index}`} className="p-4">
+                    <Card key={`${category.id}-${index}`} className={getCardClassName()}>
                       <div className="space-y-4">
                         <div className="flex items-center gap-2">
-                          <Radio className="w-4 h-4" />
+                          {getStatusIcon()}
                           <h3 className="font-medium">{emotionName}</h3>
-                          {hasRecording(item) ? (
-                            <CheckCircle className="w-4 h-4 text-green-500" />
-                          ) : (
-                            <Unlock className="w-4 h-4 text-gray-400" />
-                          )}
                         </div>
                         
                         <p className="text-sm text-gray-600">{sampleText}</p>
                         
+                        {/* Error Message */}
+                        {recordingState.errorMessage && (
+                          <div className="text-sm text-red-600 bg-red-50 dark:bg-red-950 p-2 rounded">
+                            {recordingState.errorMessage}
+                          </div>
+                        )}
+
+                        {/* Recording Duration Progress */}
+                        {recordingState.duration && recordingState.duration > 0 && (
+                          <div className="space-y-1">
+                            <div className="flex justify-between text-xs text-gray-500">
+                              <span>Duration: {recordingState.duration.toFixed(1)}s</span>
+                              <span>Target: 6s+</span>
+                            </div>
+                            <Progress 
+                              value={Math.min((recordingState.duration / 6) * 100, 100)} 
+                              className="w-full h-2"
+                            />
+                          </div>
+                        )}
+                        
                         <EnhancedVoiceRecorder
                           sampleText={sampleText}
                           onRecordingComplete={handleRecordingComplete(emotionName)}
-                          disabled={false}
+                          disabled={recordingState.isSaving}
                           simpleMode={true}
                         />
+
+                        {/* Save Button */}
+                        {recordingState.audioBlob && !recordingState.isRecorded && !hasRecording(item) && (
+                          <Button
+                            onClick={() => handleSaveRecording(emotionName)}
+                            disabled={recordingState.isSaving || (recordingState.duration || 0) < 6}
+                            className="w-full"
+                            variant={recordingState.isSaving ? "outline" : "default"}
+                          >
+                            {recordingState.isSaving ? (
+                              <>
+                                <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin mr-2" />
+                                Saving...
+                              </>
+                            ) : (recordingState.duration || 0) < 6 ? (
+                              `Too Short (${(recordingState.duration || 0).toFixed(1)}s)`
+                            ) : (
+                              <>
+                                <Save className="w-4 h-4 mr-2" />
+                                Save Voice Sample
+                              </>
+                            )}
+                          </Button>
+                        )}
+
+                        {/* Play Existing Recording */}
+                        {(recordingState.isRecorded || hasRecording(item)) && (
+                          <Button
+                            variant="outline"
+                            className="w-full"
+                            onClick={() => {
+                              // Play existing recording logic would go here
+                              console.log('Play existing recording for', emotionName);
+                            }}
+                          >
+                            <Play className="w-4 h-4 mr-2" />
+                            Play Your Voice
+                          </Button>
+                        )}
                       </div>
                     </Card>
                   );

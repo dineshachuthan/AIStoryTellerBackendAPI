@@ -7,9 +7,10 @@ import { Mic, Play, RotateCcw, Save, Radio, Volume2, CheckCircle, Circle, Lock, 
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { AUDIO_PROCESSING_CONFIG } from "../../../../shared/audio-config";
+import { apiRequest } from "@/lib/queryClient";
 
 interface EnhancedVoiceRecorderProps {
-  onRecordingComplete: (audioBlob: Blob, audioUrl: string) => void;
+  onRecordingComplete?: (audioBlob: Blob, audioUrl: string) => void;
   maxRecordingTime?: number;
   disabled?: boolean;
   className?: string;
@@ -18,12 +19,20 @@ interface EnhancedVoiceRecorderProps {
     recording: string;
     instructions: string;
   };
-  // Optional context for voice samples
+  // Voice sample context and save configuration
   sampleText?: string;
   emotionName?: string;
   intensity?: number;
   isLocked?: boolean;
   isRecorded?: boolean;
+  // Save configuration - when provided, component handles save internally
+  saveConfig?: {
+    endpoint: string; // API endpoint for saving
+    payload: Record<string, any>; // Additional data to send with save
+    minDuration: number; // Minimum recording duration in seconds
+    onSaveSuccess?: (data: any) => void; // Called after successful save
+    onSaveError?: (error: string) => void; // Called on save error
+  };
   // Optional existing recording display
   recordedSample?: {
     audioUrl: string;
@@ -31,7 +40,6 @@ interface EnhancedVoiceRecorderProps {
     duration?: number;
   };
   onPlaySample?: (audioUrl: string) => void;
-  onSaveSample?: () => void;
   // Simple mode for narrative analysis
   simpleMode?: boolean;
   title?: string;
@@ -54,17 +62,18 @@ export function EnhancedVoiceRecorder({
   isRecorded = false,
   recordedSample,
   onPlaySample,
-  onSaveSample,
+  saveConfig,
   simpleMode = false,
   title
 }: EnhancedVoiceRecorderProps) {
-  const [recordingState, setRecordingState] = useState<'idle' | 'countdown' | 'recording' | 'recorded'>('idle');
+  const [recordingState, setRecordingState] = useState<'idle' | 'countdown' | 'recording' | 'recorded' | 'saving' | 'saved'>('idle');
   const [countdownTime, setCountdownTime] = useState(3);
   const [recordingTime, setRecordingTime] = useState(0);
-  const [tempRecording, setTempRecording] = useState<{blob: Blob, url: string} | null>(null);
+  const [tempRecording, setTempRecording] = useState<{blob: Blob, url: string, duration: number} | null>(null);
   const [isPlayingTemp, setIsPlayingTemp] = useState(false);
   const [isPlayingExisting, setIsPlayingExisting] = useState(false);
   const [equalizerBars, setEqualizerBars] = useState<number[]>(Array(8).fill(2));
+  const [errorMessage, setErrorMessage] = useState('');
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -79,6 +88,70 @@ export function EnhancedVoiceRecorder({
     return `${seconds.toString().padStart(2, '0')}s`;
   };
 
+  // Helper function to get audio duration
+  const getAudioDuration = (audioBlob: Blob): Promise<number> => {
+    return new Promise((resolve) => {
+      const audio = new Audio();
+      const url = URL.createObjectURL(audioBlob);
+      
+      audio.addEventListener('loadedmetadata', () => {
+        URL.revokeObjectURL(url);
+        resolve(audio.duration);
+      });
+      
+      audio.addEventListener('error', () => {
+        URL.revokeObjectURL(url);
+        resolve(0);
+      });
+      
+      audio.src = url;
+    });
+  };
+
+  // Handle save button click with frontend validation
+  const handleSaveRecording = async () => {
+    if (!tempRecording || !saveConfig) return;
+
+    // Frontend validation: Check if audio is long enough
+    const audioDuration = tempRecording.duration;
+    if (audioDuration < saveConfig.minDuration) {
+      setErrorMessage(`Recording too short: ${audioDuration.toFixed(1)}s. Need at least ${saveConfig.minDuration} seconds for voice cloning.`);
+      return;
+    }
+
+    // Set saving state
+    setRecordingState('saving');
+    setErrorMessage('');
+
+    try {
+      // Prepare form data
+      const formData = new FormData();
+      formData.append('audio', tempRecording.blob, 'voice-sample.mp3');
+      
+      // Add additional payload data
+      Object.entries(saveConfig.payload).forEach(([key, value]) => {
+        formData.append(key, String(value));
+      });
+
+      // Make API call
+      const response = await apiRequest(saveConfig.endpoint, {
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+      });
+
+      // Success
+      setRecordingState('saved');
+      setTempRecording(null);
+      saveConfig.onSaveSuccess?.(response);
+    } catch (error: any) {
+      // Error
+      setRecordingState('recorded');
+      setErrorMessage(error.message || 'Failed to save voice sample');
+      saveConfig.onSaveError?.(error.message || 'Failed to save voice sample');
+    }
+  };
+
   // Calculate if we have a recording (either new temp recording or existing)
   const hasRecording = !!tempRecording || !!recordedSample;
 
@@ -86,7 +159,7 @@ export function EnhancedVoiceRecorder({
   const currentRecordingUrl = tempRecording?.url || recordedSample?.audioUrl;
 
   // Status configuration for locked/unlocked states
-  const getStatusConfig = () => {
+  const statusConfig = (() => {
     if (isLocked) {
       return {
         icon: <Lock className="w-4 h-4 text-blue-500" />,
@@ -109,9 +182,7 @@ export function EnhancedVoiceRecorder({
         description: "No sample recorded yet"
       };
     }
-  };
-
-  const statusConfig = getStatusConfig();
+  })();
 
   const progressPercentage = (recordingTime / maxRecordingTime) * 100;
 
@@ -184,17 +255,23 @@ export function EnhancedVoiceRecorder({
       }
     };
 
-    mediaRecorderRef.current.onstop = () => {
+    mediaRecorderRef.current.onstop = async () => {
       const audioBlob = new Blob(audioChunksRef.current, { 
         type: mediaRecorderRef.current?.mimeType || 'audio/webm' 
       });
       
       const audioUrl = URL.createObjectURL(audioBlob);
       
+      // Calculate duration
+      const duration = await getAudioDuration(audioBlob);
+      
       // Use requestAnimationFrame to prevent flickering during state transition
       requestAnimationFrame(() => {
-        setTempRecording({ blob: audioBlob, url: audioUrl });
+        setTempRecording({ blob: audioBlob, url: audioUrl, duration });
         setRecordingState('recorded');
+        
+        // Call the optional callback if provided
+        onRecordingComplete?.(audioBlob, audioUrl);
       });
       
       stream.getTracks().forEach(track => track.stop());
@@ -278,11 +355,8 @@ export function EnhancedVoiceRecorder({
       setRecordingTime(0);
       setCountdownTime(3);
       
-      // Then trigger the actual save
-      if (onSaveSample) {
-        onSaveSample();
-      }
-      onRecordingComplete(blob, url);
+      // Call the optional callback if provided
+      onRecordingComplete?.(blob, url);
     }
   };
 
@@ -469,9 +543,11 @@ export function EnhancedVoiceRecorder({
               />
             </div>
             
-            {/* Fixed height placeholder for validation messages to prevent button movement */}
+            {/* Error display section */}
             <div className="h-4 text-xs text-center">
-              {/* Space reserved for validation messages without shifting layout */}
+              {saveError && (
+                <span className="text-red-400">{saveError}</span>
+              )}
             </div>
           </div>
           
@@ -587,22 +663,29 @@ export function EnhancedVoiceRecorder({
                 </TooltipContent>
               </Tooltip>
               
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    onClick={saveRecording}
-                    disabled={!tempRecording || isPlayingTemp || isLocked}
-                    variant="default"
-                    size="sm"
-                    className="bg-green-600 hover:bg-green-700 disabled:opacity-50 flex-1 max-w-[100px]"
-                  >
-                    <Save className="w-4 h-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{recordedSample ? "Save new recording" : "Save recording"}</p>
-                </TooltipContent>
-              </Tooltip>
+              {/* Save button only shows when saveConfig is provided and we have a temp recording */}
+              {saveConfig && tempRecording && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      onClick={handleSaveRecording}
+                      disabled={recordingState === 'saving' || isPlayingTemp || isLocked}
+                      variant="default"
+                      size="sm"
+                      className="bg-green-600 hover:bg-green-700 disabled:opacity-50 flex-1 max-w-[100px]"
+                    >
+                      {recordingState === 'saving' ? (
+                        <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                      ) : (
+                        <Save className="w-4 h-4" />
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{recordingState === 'saving' ? 'Saving...' : 'Save recording'}</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
           </div>
         </div>
       </div>
