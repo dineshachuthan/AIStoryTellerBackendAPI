@@ -346,26 +346,24 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
                           <h3 className="font-medium">{emotionName}</h3>
                         </div>
                         
-                        {/* Error Message */}
-                        {recordingState.errorMessage && (
-                          <div className="text-sm text-red-600 bg-red-50 dark:bg-red-950 p-2 rounded">
-                            {recordingState.errorMessage}
-                          </div>
-                        )}
+                        {/* Static Error Message Placeholder */}
+                        <div className="h-10 text-sm text-red-600 bg-red-50 dark:bg-red-950 p-2 rounded flex items-center justify-center">
+                          {recordingState.errorMessage || (
+                            <span className="text-gray-400">Ready to record</span>
+                          )}
+                        </div>
 
-                        {/* Recording Duration Progress */}
-                        {recordingState.duration && recordingState.duration > 0 && (
-                          <div className="space-y-1">
-                            <div className="flex justify-between text-xs text-gray-500">
-                              <span>Duration: {recordingState.duration.toFixed(1)}s</span>
-                              <span>Target: 6s+</span>
-                            </div>
-                            <Progress 
-                              value={Math.min((recordingState.duration / 6) * 100, 100)} 
-                              className="w-full h-2"
-                            />
+                        {/* Static Recording Duration Progress */}
+                        <div className="space-y-1 h-12">
+                          <div className="flex justify-between text-xs text-gray-500">
+                            <span>Duration: {recordingState.duration ? recordingState.duration.toFixed(1) : '0.0'}s</span>
+                            <span>Target: 6s+</span>
                           </div>
-                        )}
+                          <Progress 
+                            value={recordingState.duration ? Math.min((recordingState.duration / 6) * 100, 100) : 0} 
+                            className="w-full h-2"
+                          />
+                        </div>
                         
                         <EnhancedVoiceRecorder
                           sampleText={sampleText}
@@ -374,44 +372,46 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
                           simpleMode={true}
                         />
 
-                        {/* Save Button */}
-                        {recordingState.audioBlob && !recordingState.isRecorded && !hasRecording(item) && (
-                          <Button
-                            onClick={() => handleSaveRecording(emotionName)}
-                            disabled={recordingState.isSaving || (recordingState.duration || 0) < 6}
-                            className="w-full"
-                            variant={recordingState.isSaving ? "outline" : "default"}
-                          >
-                            {recordingState.isSaving ? (
-                              <>
-                                <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin mr-2" />
-                                Saving...
-                              </>
-                            ) : (recordingState.duration || 0) < 6 ? (
-                              `Too Short (${(recordingState.duration || 0).toFixed(1)}s)`
-                            ) : (
-                              <>
-                                <Save className="w-4 h-4 mr-2" />
-                                Save Voice Sample
-                              </>
-                            )}
-                          </Button>
-                        )}
+                        {/* Static Save Button - Always Present */}
+                        <Button
+                          onClick={() => handleSaveRecording(emotionName)}
+                          disabled={recordingState.isSaving || !recordingState.audioBlob || (recordingState.duration || 0) < 6 || recordingState.isRecorded || hasRecording(item)}
+                          className="w-full h-10"
+                          variant={recordingState.isSaving ? "outline" : "default"}
+                        >
+                          {recordingState.isSaving ? (
+                            <>
+                              <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin mr-2" />
+                              Saving...
+                            </>
+                          ) : (recordingState.duration || 0) < 6 ? (
+                            `Too Short (${(recordingState.duration || 0).toFixed(1)}s)`
+                          ) : recordingState.isRecorded || hasRecording(item) ? (
+                            <>
+                              <Save className="w-4 h-4 mr-2" />
+                              Voice Saved
+                            </>
+                          ) : (
+                            <>
+                              <Save className="w-4 h-4 mr-2" />
+                              Save Voice Sample
+                            </>
+                          )}
+                        </Button>
 
-                        {/* Play Existing Recording */}
-                        {(recordingState.isRecorded || hasRecording(item)) && (
-                          <Button
-                            variant="outline"
-                            className="w-full"
-                            onClick={() => {
-                              // Play existing recording logic would go here
-                              console.log('Play existing recording for', emotionName);
-                            }}
-                          >
-                            <Play className="w-4 h-4 mr-2" />
-                            Play Your Voice
-                          </Button>
-                        )}
+                        {/* Static Play Button - Always Present */}
+                        <Button
+                          variant="outline"
+                          className="w-full h-10"
+                          disabled={!recordingState.isRecorded && !hasRecording(item)}
+                          onClick={() => {
+                            // Play existing recording logic would go here
+                            console.log('Play existing recording for', emotionName);
+                          }}
+                        >
+                          <Play className="w-4 h-4 mr-2" />
+                          Play Your Voice
+                        </Button>
                       </div>
                     </Card>
                   );
