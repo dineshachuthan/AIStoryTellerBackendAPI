@@ -225,14 +225,39 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
     }
   ];
 
-  // Get current category data
+  // Get current category data with proper sorting
   const getCurrentCategoryData = () => {
+    let data;
     switch (selectedCategory) {
-      case "emotions": return storyEmotions;
-      case "sounds": return storySounds;
-      case "modulations": return storyModulations;
-      default: return [];
+      case "emotions": data = storyEmotions; break;
+      case "sounds": data = storySounds; break;
+      case "modulations": data = storyModulations; break;
+      default: data = [];
     }
+    
+    // Sort data: unrecorded first, recorded unlocked next, recorded locked last
+    return data.sort((a, b) => {
+      const aName = a.emotion || a.sound || a.name || 'unknown';
+      const bName = b.emotion || b.sound || b.name || 'unknown';
+      
+      const aState = recordingStates[aName];
+      const bState = recordingStates[bName];
+      
+      const aRecorded = aState?.isRecorded || hasRecording(a);
+      const bRecorded = bState?.isRecorded || hasRecording(b);
+      const aLocked = a.isLocked || false;
+      const bLocked = b.isLocked || false;
+      
+      // Determine sort priority: 0=unrecorded, 1=recorded+unlocked, 2=recorded+locked
+      const aPriority = !aRecorded ? 0 : (aLocked ? 2 : 1);
+      const bPriority = !bRecorded ? 0 : (bLocked ? 2 : 1);
+      
+      // Sort by priority, then by name alphabetically
+      if (aPriority !== bPriority) {
+        return aPriority - bPriority;
+      }
+      return aName.localeCompare(bName);
+    });
   };
 
   const currentCategoryData = getCurrentCategoryData();

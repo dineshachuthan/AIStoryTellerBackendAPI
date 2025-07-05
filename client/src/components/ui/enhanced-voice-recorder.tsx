@@ -71,6 +71,7 @@ export function EnhancedVoiceRecorder({
   const [countdownTime, setCountdownTime] = useState(3);
   const [recordingTime, setRecordingTime] = useState(0);
   const [tempRecording, setTempRecording] = useState<{blob: Blob, url: string, duration: number} | null>(null);
+  const [lastSavedDuration, setLastSavedDuration] = useState<number | null>(null);
   const [isPlayingTemp, setIsPlayingTemp] = useState(false);
   const [isPlayingExisting, setIsPlayingExisting] = useState(false);
   const [equalizerBars, setEqualizerBars] = useState<number[]>(Array(8).fill(2));
@@ -398,7 +399,10 @@ export function EnhancedVoiceRecorder({
         credentials: 'include'
       });
 
-      // Success
+      // Success - store duration before clearing tempRecording
+      if (tempRecording?.duration) {
+        setLastSavedDuration(tempRecording.duration);
+      }
       setRecordingState('saved');
       setTempRecording(null);
       saveConfig.onSaveSuccess?.(response);
@@ -527,11 +531,13 @@ export function EnhancedVoiceRecorder({
               )}>
                 {recordingState === 'recording' 
                   ? `${formatTime(recordingTime)} / ${formatTime(maxRecordingTime)} ${recordingTime >= 5 ? "✓" : ""}`
-                  : tempRecording?.duration 
-                    ? `${tempRecording.duration.toFixed(1)}s ${tempRecording.duration >= 5 ? "✓" : "⚠️"}`
-                    : recordedSample?.duration 
-                      ? `${recordedSample.duration.toFixed(1)}s ${recordedSample.duration >= 5 ? "✓" : "⚠️"}`
-                      : `${formatTime(maxRecordingTime)} max`
+                  : recordingState === 'saved' && lastSavedDuration
+                    ? `${lastSavedDuration.toFixed(1)}s ${lastSavedDuration >= 5 ? "✓" : "⚠️"}`
+                    : tempRecording?.duration 
+                      ? `${tempRecording.duration.toFixed(1)}s ${tempRecording.duration >= 5 ? "✓" : "⚠️"}`
+                      : recordedSample?.duration 
+                        ? `${recordedSample.duration.toFixed(1)}s ${recordedSample.duration >= 5 ? "✓" : "⚠️"}`
+                        : `${formatTime(maxRecordingTime)} max`
                 }
               </span>
             </div>
@@ -540,6 +546,7 @@ export function EnhancedVoiceRecorder({
             <div className="relative">
               <Progress 
                 value={recordingState === 'recording' ? progressPercentage : 
+                       recordingState === 'saved' && lastSavedDuration ? Math.min((lastSavedDuration / maxRecordingTime) * 100, 100) :
                        tempRecording?.duration ? Math.min((tempRecording.duration / maxRecordingTime) * 100, 100) :
                        recordedSample?.duration ? Math.min((recordedSample.duration / maxRecordingTime) * 100, 100) : 0} 
                 className="h-2 bg-gray-700"
