@@ -270,6 +270,15 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Priority**: Medium (requested but deferred for future implementation)
 
 ## Changelog
+- January 05, 2025: ✅ **INTELLIGENT TEXT LENGTH PRIORITY LOGIC IMPLEMENTED** - Voice Sample Text Selection Now Optimized for 6-Second Recordings
+  - **LENGTH-BASED PRIORITY SYSTEM**: Enhanced story-voice-samples.tsx with intelligent text selection using word count (≥15 words) and character count (≥80 characters) validation
+  - **DUAL TEXT VALIDATION**: System now checks both emotion.quote and emotion.context for recording suitability, selecting the text with adequate length for 6-second voice samples
+  - **SPEECH TIMING CALCULATION**: Implemented speech rate estimation (~3-4 words per second) to ensure selected texts provide sufficient content for quality voice recordings
+  - **ESM REFERENCE INTEGRATION**: Added async selectOptimalSampleText() function to prioritize professional ESM reference texts when available and suitable length
+  - **FALLBACK HIERARCHY**: Smart priority logic: ESM professional text (if adequate) → story quote (if adequate) → story context (if adequate) → fallback text
+  - **COMPREHENSIVE LOGGING**: Added detailed console logging to track text selection decisions for emotions and sounds with length validation feedback
+  - **TYPESCRIPT SAFETY**: Fixed all undefined parameter issues with proper null coalescing for robust text handling across emotions and sound effects
+  - Voice sample text selection now ensures users always receive appropriately-sized texts for professional voice recording quality and ElevenLabs compatibility
 - January 05, 2025: ✅ **COMPLETE OPENAI VOICE SAMPLE TEXT INTEGRATION** - Story Analysis Now Generates Professional Voice Recording Texts
   - **AI ANALYSIS INTEGRATION**: Enhanced populateEsmReferenceData() function to use OpenAI cached provider for generating professional voice sample texts
   - **AUTOMATIC PROFESSIONAL TEXT GENERATION**: When story analysis discovers new emotions, system automatically generates 35-45 word optimized voice recording texts

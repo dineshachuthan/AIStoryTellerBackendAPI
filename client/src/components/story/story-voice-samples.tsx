@@ -76,7 +76,53 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
     return `${category}-${itemName.toLowerCase()}`;
   };
 
-  // Generate story-specific templates from analysis
+  // Helper function to check if text has enough length for 6-second recording
+  const isTextSuitableForRecording = (text: string): boolean => {
+    if (!text) return false;
+    // Estimate: ~3-4 words per second for natural speech, so ~18-24 words for 6 seconds
+    // Use word count as primary metric, with character count as backup
+    const wordCount = text.trim().split(/\s+/).length;
+    const charCount = text.trim().length;
+    
+    // Minimum thresholds: 15 words OR 80 characters for 6-second recording
+    return wordCount >= 15 || charCount >= 80;
+  };
+
+  // Enhanced sample text selection with ESM reference priority and length checking
+  const selectOptimalSampleText = async (emotionName: string, category: string, storyQuote?: string, storyContext?: string): Promise<string> => {
+    try {
+      // First, try to get professional ESM reference text
+      const response = await fetch(`/api/voice-modulations/templates?category=${category}`);
+      if (response.ok) {
+        const templates = await response.json();
+        const esmTemplate = templates.find((t: any) => t.emotion.toLowerCase() === emotionName.toLowerCase());
+        
+        if (esmTemplate?.sampleText && isTextSuitableForRecording(esmTemplate.sampleText)) {
+          console.log(`✅ Using ESM reference text for ${emotionName}: "${esmTemplate.sampleText.substring(0, 50)}..."`);
+          return esmTemplate.sampleText;
+        }
+      }
+    } catch (error) {
+      console.warn(`Failed to fetch ESM reference for ${emotionName}:`, error);
+    }
+
+    // Fallback to story data with length checking
+    const candidates = [storyQuote, storyContext].filter(Boolean);
+    
+    for (const text of candidates) {
+      if (text && isTextSuitableForRecording(text)) {
+        console.log(`📖 Using story text for ${emotionName}: "${text.substring(0, 50)}..."`);
+        return text;
+      }
+    }
+    
+    // Last resort: return best available text even if short
+    const fallbackText = storyQuote || storyContext || `Express the emotion of ${emotionName}`;
+    console.warn(`⚠️ Using short text for ${emotionName}: "${fallbackText}"`);
+    return fallbackText;
+  };
+
+  // Generate story-specific templates from analysis  
   const generateStoryTemplates = (): VoiceTemplate[] => {
     const templates: VoiceTemplate[] = [];
 
@@ -87,13 +133,25 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
         const isRecorded = !!recordedSample;
         const isLocked = recordedSample?.isLocked || false;
 
+        // Apply intelligent text selection with length checking
+        let sampleText = emotion.quote || emotion.context || '';
+        
+        // Check if current text is suitable for 6-second recording
+        if (!isTextSuitableForRecording(sampleText)) {
+          // Try the alternative text option
+          const alternativeText = emotion.context || emotion.quote || '';
+          if (isTextSuitableForRecording(alternativeText)) {
+            sampleText = alternativeText;
+          }
+        }
+
         templates.push({
           emotion: emotion.emotion.toLowerCase(),
           displayName: emotion.emotion.charAt(0).toUpperCase() + emotion.emotion.slice(1),
-          sampleText: emotion.quote || emotion.context,
+          sampleText,
           category: "emotions",
           intensity: emotion.intensity,
-          description: emotion.context,
+          description: emotion.context || '',
           recordedSample,
           isRecorded,
           isLocked,
@@ -109,13 +167,25 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
         const isRecorded = !!recordedSample;
         const isLocked = recordedSample?.isLocked || false;
 
+        // Apply intelligent text selection with length checking for sounds
+        let sampleText = sound.quote || sound.context || '';
+        
+        // Check if current text is suitable for 6-second recording
+        if (!isTextSuitableForRecording(sampleText)) {
+          // Try the alternative text option
+          const alternativeText = sound.context || sound.quote || '';
+          if (isTextSuitableForRecording(alternativeText)) {
+            sampleText = alternativeText;
+          }
+        }
+
         templates.push({
           emotion: sound.sound.toLowerCase(),
           displayName: sound.sound.charAt(0).toUpperCase() + sound.sound.slice(1),
-          sampleText: sound.quote || sound.context,
+          sampleText,
           category: "sounds",
           intensity: sound.intensity,
-          description: sound.context,
+          description: sound.context || '',
           recordedSample,
           isRecorded,
           isLocked,
