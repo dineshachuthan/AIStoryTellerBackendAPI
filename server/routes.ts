@@ -4471,14 +4471,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Parse emotion name from modulationKey (e.g., "emotions-frustration" -> "frustration")
       const emotionName = modulationKey.split('-').slice(1).join('-');
       
-      // Map modulationType to ESM category number
-      const categoryMap: { [key: string]: number } = {
-        'emotions': 1,
-        'sounds': 2,
-        'descriptions': 3
-      };
+      // Use the same category mapping logic as voice-samples service
+      let esmCategory: number;
+      if (modulationType === 'emotions') {
+        esmCategory = 1; // Emotions
+      } else if (modulationType === 'sounds') {
+        esmCategory = 2; // Sounds/Voice Traits
+      } else if (modulationType === 'modulations') {
+        esmCategory = 3; // Modulations/Descriptions
+      } else {
+        esmCategory = 1; // Default to emotions if unknown
+      }
       
-      const esmCategory = categoryMap[modulationType] || 1; // Default to emotions if unknown
       console.log(`ESM Category mapping: ${modulationType} -> ${esmCategory}`);
       
       // Save voice sample using ESM architecture
