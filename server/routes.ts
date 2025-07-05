@@ -4471,19 +4471,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Parse emotion name from modulationKey (e.g., "emotions-frustration" -> "frustration")
       const emotionName = modulationKey.split('-').slice(1).join('-');
       
+      // Map modulationType to ESM category number
+      const categoryMap: { [key: string]: number } = {
+        'emotions': 1,
+        'sounds': 2,
+        'descriptions': 3
+      };
+      
+      const esmCategory = categoryMap[modulationType] || 1; // Default to emotions if unknown
+      console.log(`ESM Category mapping: ${modulationType} -> ${esmCategory}`);
+      
       // Save voice sample using ESM architecture
       // 1. Find or create ESM reference entry for this emotion
-      let esmRef = await storage.getEsmRef(1, emotionName); // Category 1 = Emotions
+      let esmRef = await storage.getEsmRef(esmCategory, emotionName);
       
       if (!esmRef) {
-        console.log(`ESM: Creating new ESM reference for emotion: ${emotionName}`);
+        console.log(`ESM: Creating new ESM reference for ${modulationType}: ${emotionName}`);
         esmRef = await storage.createEsmRef({
-          category: 1, // Emotions
+          category: esmCategory,
           name: emotionName,
           display_name: emotionName.charAt(0).toUpperCase() + emotionName.slice(1),
-          sample_text: `Express the emotion of ${emotionName}`,
+          sample_text: `Express the ${modulationType.slice(0, -1)} of ${emotionName}`,
           intensity: 5,
-          description: `User-recorded emotion from voice sample`,
+          description: `User-recorded ${modulationType.slice(0, -1)} from voice sample`,
           ai_variations: {
             userGenerated: true
           },
