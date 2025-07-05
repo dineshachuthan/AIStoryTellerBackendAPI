@@ -90,24 +90,10 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
   const queryClient = useQueryClient();
   const [selectedCategory, setSelectedCategory] = useState<string>("emotions");
 
-  console.log('StoryVoiceSamples component rendered with:', { 
-    storyId, 
-    userId: user?.id, 
-    hasAnalysisData: !!analysisData 
-  });
-
   // Get consolidated voice samples data for this story
   const voiceSamplesQuery = useQuery({
     queryKey: [`/api/stories/${storyId}/voice-samples`],
     enabled: !!user?.id && !!storyId,
-  });
-
-  console.log('Voice samples query state:', {
-    isLoading: voiceSamplesQuery.isLoading,
-    isError: voiceSamplesQuery.isError,
-    data: voiceSamplesQuery.data,
-    error: voiceSamplesQuery.error,
-    queryKey: [`/api/stories/${storyId}/voice-samples`]
   });
 
   const voiceSamplesData = voiceSamplesQuery.data || {};
@@ -364,9 +350,9 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
                               },
                               minDuration: 5,
                               onSaveSuccess: (data) => {
-                                console.log('Voice sample saved successfully:', data);
-                                // Trigger refresh of voice samples data
-                                window.location.reload();
+                                // Invalidate queries to refresh data without page reload
+                                queryClient.invalidateQueries({ queryKey: ['/api/stories', storyId, 'voice-samples'] });
+                                queryClient.invalidateQueries({ queryKey: ['/api/user-voice-emotions', user?.id] });
                               },
                               onSaveError: (error) => {
                                 console.error('Failed to save voice sample:', error);

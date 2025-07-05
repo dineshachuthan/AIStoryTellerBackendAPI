@@ -519,15 +519,19 @@ export function EnhancedVoiceRecorder({
               <span className={cn(
                 recordingState === 'recording' ? 
                   (recordingTime >= 5 ? "text-green-400" : "text-orange-400") 
-                  : recordedSample?.duration 
-                    ? (recordedSample.duration >= 5 ? "text-green-400" : "text-red-400")
-                    : "text-gray-400"
+                  : tempRecording?.duration 
+                    ? (tempRecording.duration >= 5 ? "text-green-400" : "text-red-400")
+                    : recordedSample?.duration 
+                      ? (recordedSample.duration >= 5 ? "text-green-400" : "text-red-400")
+                      : "text-gray-400"
               )}>
                 {recordingState === 'recording' 
                   ? `${formatTime(recordingTime)} / ${formatTime(maxRecordingTime)} ${recordingTime >= 5 ? "✓" : ""}`
-                  : recordedSample?.duration 
-                    ? `${recordedSample.duration.toFixed(1)}s ${recordedSample.duration >= 5 ? "✓" : "⚠️"}`
-                    : `${formatTime(maxRecordingTime)} max`
+                  : tempRecording?.duration 
+                    ? `${tempRecording.duration.toFixed(1)}s ${tempRecording.duration >= 5 ? "✓" : "⚠️"}`
+                    : recordedSample?.duration 
+                      ? `${recordedSample.duration.toFixed(1)}s ${recordedSample.duration >= 5 ? "✓" : "⚠️"}`
+                      : `${formatTime(maxRecordingTime)} max`
                 }
               </span>
             </div>
@@ -536,6 +540,7 @@ export function EnhancedVoiceRecorder({
             <div className="relative">
               <Progress 
                 value={recordingState === 'recording' ? progressPercentage : 
+                       tempRecording?.duration ? Math.min((tempRecording.duration / maxRecordingTime) * 100, 100) :
                        recordedSample?.duration ? Math.min((recordedSample.duration / maxRecordingTime) * 100, 100) : 0} 
                 className="h-2 bg-gray-700"
               />
