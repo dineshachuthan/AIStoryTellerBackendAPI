@@ -72,7 +72,7 @@ export function VoiceSampleCard({
       };
     } else if (isRecorded) {
       return {
-        icon: <CheckCircle className="w-4 h-4 text-green-500" />,
+        icon: <Unlock className="w-4 h-4 text-green-500" />,
         color: "green", 
         label: "Recorded",
         description: "Sample recorded - available for voice cloning",

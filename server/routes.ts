@@ -4309,9 +4309,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Helper function to find user recording for an item
       const findUserRecording = (itemName: string, category: string) => {
         const categoryPrefix = category === 'emotions' ? 'emotions' : category === 'sounds' ? 'sounds' : 'modulations';
-        console.log(`Looking for user recording: itemName="${itemName}", category="${category}", categoryPrefix="${categoryPrefix}"`);
         
-        const found = userRecordings.find(recording => {
+        return userRecordings.find(recording => {
           // Extract emotion from file path since emotion field is undefined
           if (recording.audio_url) {
             const fileName = recording.audio_url.split('/').pop() || '';
@@ -4326,9 +4325,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
           return false;
         });
-        
-        console.log(`Found recording for ${itemName}:`, found ? 'YES' : 'NO');
-        return found;
       };
 
       // Helper function to get ESM reference text

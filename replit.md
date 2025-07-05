@@ -270,6 +270,15 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Priority**: Medium (requested but deferred for future implementation)
 
 ## Changelog
+- January 05, 2025: ✅ **VOICE SAMPLE RECORDING PERSISTENCE BUG COMPLETELY RESOLVED** - File Path Emotion Extraction and Status Icon Logic Fixed
+  - **FIXED ROOT CAUSE**: Database had `emotion: undefined` but actual emotion names were embedded in file paths like `emotions-frustration_timestamp.mp3`
+  - **ENHANCED RECORDING LOOKUP**: Modified backend `findUserRecording()` function to extract emotions from file paths instead of relying on corrupted emotion field
+  - **COMPREHENSIVE PATH PARSING**: System now correctly matches `emotions-frustration`, `sounds-footsteps`, and `modulations-drama` format from audio file names
+  - **STATUS ICON PREFERENCE UPDATED**: Changed recorded samples to show green Unlock icon instead of CheckCircle icon per user preference
+  - **UNIFIED ICON SYSTEM**: Gray unlock (empty), green unlock (recorded), blue lock (locked for voice cloning) across all components
+  - **REMOVED DEBUG LOGGING**: Cleaned up temporary debugging code after successful fix validation
+  - **UPDATED DOCUMENTATION**: Modified replit.md to reflect corrected status icon behavior and file path-based emotion detection
+  - Voice samples now correctly persist across page reloads with proper green background colors and unlock icons for recorded emotions
 - January 05, 2025: ✅ **ENHANCED VOICE RECORDER FINALIZED** - Component Marked as Stable Reusable Element
   - **FINALIZED COMPONENT ARCHITECTURE**: EnhancedVoiceRecorder established as single reusable voice recording component across entire application
   - **HORIZONTAL BUTTON LAYOUT**: Hold to Record, Play, and Save buttons arranged in single row with consistent 16x16 circular design
@@ -469,7 +478,7 @@ This is a full-stack collaborative storytelling platform that enables users to c
     - Blue background for locked samples (used in voice cloning)
   - **CARD ORDERING LOGIC**: Preserved original sorting order (Empty=1, Recorded=2, Locked=3) for optimal user workflow
   - **REMOVED RADIO ICON DUPLICATION**: Eliminated extra Radio icon to show only status icon before emotion name
-  - **THREE STATUS STATES**: Gray unlock icon (Empty), green checkmark (Recorded), blue lock icon (Locked) with descriptive tooltips
+  - **THREE STATUS STATES**: Gray unlock icon (Empty), green unlock icon (Recorded), blue lock icon (Locked) with descriptive tooltips
   - **PRESERVED BUSINESS LOGIC**: All functionality from original voice-sample-card maintained including disabled states for locked samples
   - **CLEAN HEADER LAYOUT**: Single status icon before emotion name provides clear visual indication of sample state
 - July 01, 2025: ✅ **ENHANCED VOICE RECORDER SPACING OPTIMIZATION** - Removed Fixed Height and Empty Space Issues
