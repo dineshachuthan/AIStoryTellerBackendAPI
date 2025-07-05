@@ -461,6 +461,9 @@ async function populateEsmReferenceData(analysis: StoryAnalysis, userId: string)
   console.log("🎭 Starting ESM reference data population for story analysis...");
   
   try {
+    // Get OpenAI cached provider for generating professional voice sample texts
+    const openaiProvider = getOpenAICachedProvider();
+    
     // Process emotions (category 1)
     if (analysis.emotions && analysis.emotions.length > 0) {
       console.log(`📊 Processing ${analysis.emotions.length} emotions from story analysis`);
@@ -474,12 +477,30 @@ async function populateEsmReferenceData(analysis: StoryAnalysis, userId: string)
         if (!existingEmotion) {
           console.log(`➕ Adding new emotion to ESM reference: ${emotionName}`);
           
+          // Generate professional voice sample text using OpenAI cached provider
+          let sampleText: string;
+          try {
+            const result = await openaiProvider.generateCompletionWithCache({
+              messages: [{ 
+                role: 'user', 
+                content: `Generate a 6-second voice recording sample text for the emotion "${emotion.emotion}". Be exactly 35-45 words, natural conversational language, first person perspective that clearly expresses ${emotion.emotion}. No character names or story references. Just the emotional sample text.`
+              }],
+              maxTokens: 100,
+              temperature: 0.7
+            });
+            sampleText = result.content.trim().replace(/^["']|["']$/g, '');
+            console.log(`✅ Generated professional sample text for ${emotionName}: "${sampleText.substring(0, 50)}..."`);
+          } catch (error) {
+            console.error(`⚠️ Failed to generate sample text for ${emotionName}, using fallback: ${error.message}`);
+            sampleText = `Express the emotion of ${emotion.emotion}`;
+          }
+          
           // Create new ESM reference entry for emotion
           await storage.createEsmRef({
             category: 1, // Emotions
             name: emotionName,
             display_name: emotion.emotion,
-            sample_text: emotion.quote || `Express the emotion of ${emotion.emotion}`,
+            sample_text: sampleText,
             intensity: emotion.intensity,
             description: emotion.context,
             ai_variations: {
