@@ -348,9 +348,7 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
                         
                         {/* Static Error Message Placeholder */}
                         <div className="h-10 text-sm text-red-600 bg-red-50 dark:bg-red-950 p-2 rounded flex items-center justify-center">
-                          {recordingState.errorMessage || (
-                            <span className="text-gray-400">Ready to record</span>
-                          )}
+                          {recordingState.errorMessage || ''}
                         </div>
 
                         {/* Static Recording Duration Progress */}
