@@ -7,6 +7,7 @@ import { BaseCachedProvider, ProviderConfig, ExternalApiContext } from './base-c
 import { ICacheProvider, CacheOptions } from './cache-interfaces';
 import { CacheService } from './cache-service';
 import OpenAI from 'openai';
+import crypto from 'crypto';
 
 export interface OpenAIAnalysisRequest {
   content: string;
@@ -70,7 +71,6 @@ export class OpenAICachedProvider extends BaseCachedProvider {
   }
 
   private generateContentHash(content: string | Buffer): string {
-    const crypto = require('crypto');
     return crypto.createHash('sha256').update(content).digest('hex');
   }
 
