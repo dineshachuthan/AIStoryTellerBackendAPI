@@ -954,6 +954,22 @@ export const MESSAGE_TEMPLATES: Record<string, I18nMessageTemplate> = {
     }
   },
 
+  VOICE_SAMPLE_TEXT_LABEL: {
+    code: 'VOICE_SAMPLE_TEXT_LABEL',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Sample Text to Read:',
+      es: 'Texto de Muestra para Leer:',
+      fr: 'Texte d\'Échantillon à Lire:',
+      de: 'Beispieltext zum Vorlesen:',
+      ja: '読み上げサンプルテキスト:',
+      zh: '朗读示例文本:',
+      ko: '읽을 샘플 텍스트:'
+    }
+  },
+
   // Success Messages
   VOICE_SAVED: {
     code: 'VOICE_SAVED',

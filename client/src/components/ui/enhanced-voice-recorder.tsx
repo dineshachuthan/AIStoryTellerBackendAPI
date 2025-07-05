@@ -632,6 +632,19 @@ export function EnhancedVoiceRecorder({
               </div>
             </div>
 
+            {/* Sample Text Display */}
+            {sampleText && (
+              <div className="flex-1 ml-4">
+                <div className="text-sm text-gray-300 p-3 bg-gray-800 rounded-lg border border-gray-600">
+                  <div className="text-blue-400 text-xs font-medium mb-2">
+                    {UIMessages.getInfo('VOICE_SAMPLE_TEXT_LABEL')}
+                  </div>
+                  <div className="text-gray-200 leading-relaxed">
+                    {sampleText}
+                  </div>
+                </div>
+              </div>
+            )}
 
           </div>
         </div>
