@@ -1,6 +1,6 @@
 import { storage } from './storage';
 import { voiceTrainingService } from './voice-training-service';
-import { VOICE_EMOTIONS } from '@shared/voice-config';
+// ELIMINATED LEGACY VOICE CONFIG - Voice emotions now come from ESM database
 
 export interface VoiceMapping {
   text: string;

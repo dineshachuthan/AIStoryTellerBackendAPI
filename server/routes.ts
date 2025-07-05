@@ -18,7 +18,7 @@ import { db } from "./db";
 import { eq, desc, and } from "drizzle-orm";
 import { videoGenerations } from "@shared/schema";
 import { audioService } from "./audio-service";
-import { VOICE_CLONING_CONFIG } from "@shared/voice-config";
+// ELIMINATED LEGACY VOICE CONFIG - Voice cloning config now hardcoded where needed
 import { userContentStorage } from "./user-content-storage";
 import { getCachedCharacterImage, cacheCharacterImage, getAllCacheStats, cleanOldCacheFiles, getCachedAudio } from "./cache/cache-service";
 

@@ -6,7 +6,8 @@
 import { BaseVoiceProvider, VoiceCloneRequest, VoiceGenerationRequest, AudioResult, VoiceCloneResult } from './base-voice-provider';
 import { ElevenLabsModule } from './elevenlabs-module';
 import { OpenAIProvider } from './openai-provider';
-import { VOICE_PROVIDERS, getEnabledVoiceProviders, getPrimaryVoiceProvider } from '@shared/voice-config';
+// ELIMINATED LEGACY VOICE CONFIG - Voice providers now use direct configuration
+// All voice provider configuration comes from environment variables and direct initialization
 
 export interface VoiceProviderHealth {
   provider: string;

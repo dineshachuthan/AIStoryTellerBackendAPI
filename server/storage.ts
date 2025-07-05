@@ -1150,26 +1150,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getVoiceModulationTemplates(): Promise<any[]> {
-    // Get templates from voice-config.ts since they're already configured there
-    const { getAllEmotionConfigs } = await import('../shared/voice-config');
-    const emotionConfigs = getAllEmotionConfigs();
-    
-    // Convert to the expected format with modulationType and modulationKey
-    return emotionConfigs.map((config, index) => ({
-      id: index + 1,
-      modulationType: 'emotion',
-      modulationKey: config.emotion,
-      displayName: config.displayName,
-      description: config.description,
-      sampleText: config.sampleText,
-      targetDuration: config.targetDuration,
-      category: config.category,
-      voiceSettings: config.voiceSettings,
-      isActive: true,
-      sortOrder: index,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }));
+    // ELIMINATED LEGACY VOICE CONFIG - Now uses ESM database exclusively
+    // All voice templates come from story analysis via ESM reference data
+    const result = await db.execute(
+      sql`SELECT esm_ref_id as id, 'emotion' as modulationType, name as modulationKey, 
+          display_name as displayName, sample_text as sampleText, 
+          category, name as emotion, display_name as displayName, sample_text as description,
+          6 as targetDuration, true as isActive, 0 as sortOrder,
+          NOW() as createdAt, NOW() as updatedAt
+          FROM esm_ref 
+          WHERE category = 1 
+          ORDER BY display_name`
+    );
+    return result.rows;
   }
 
   // ESM Reference Data Implementation
