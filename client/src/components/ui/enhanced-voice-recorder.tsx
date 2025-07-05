@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { AUDIO_PROCESSING_CONFIG } from "../../../../shared/audio-config";
 import { apiRequest } from "@/lib/queryClient";
+import { UIMessages } from "../../../../shared/i18n-config";
 
 interface EnhancedVoiceRecorderProps {
   onRecordingComplete?: (audioBlob: Blob, audioUrl: string) => void;
@@ -74,6 +75,7 @@ export function EnhancedVoiceRecorder({
   const [isPlayingExisting, setIsPlayingExisting] = useState(false);
   const [equalizerBars, setEqualizerBars] = useState<number[]>(Array(8).fill(2));
   const [errorMessage, setErrorMessage] = useState('');
+  const [saveError, setSaveError] = useState('');
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -164,22 +166,22 @@ export function EnhancedVoiceRecorder({
       return {
         icon: <Lock className="w-4 h-4 text-blue-500" />,
         color: "blue",
-        label: "Locked", 
-        description: "Used for voice cloning - locked from editing"
+        label: UIMessages.getLabel('VOICE_STATUS_LOCKED_LABEL'), 
+        description: UIMessages.getTooltip('VOICE_STATUS_LOCKED_TOOLTIP')
       };
     } else if (isRecorded || recordedSample) {
       return {
         icon: <CheckCircle className="w-4 h-4 text-green-500" />,
         color: "green",
-        label: "Recorded",
-        description: "Sample recorded - available for voice cloning"
+        label: UIMessages.getLabel('VOICE_STATUS_RECORDED_LABEL'),
+        description: UIMessages.getTooltip('VOICE_STATUS_RECORDED_TOOLTIP')
       };
     } else {
       return {
         icon: <Unlock className="w-4 h-4 text-gray-400" />,
         color: "gray", 
-        label: "Empty",
-        description: "No sample recorded yet"
+        label: UIMessages.getLabel('VOICE_STATUS_EMPTY_LABEL'),
+        description: UIMessages.getTooltip('VOICE_STATUS_EMPTY_TOOLTIP')
       };
     }
   })();
@@ -457,7 +459,7 @@ export function EnhancedVoiceRecorder({
               </TooltipContent>
             </Tooltip>
             <span className="text-sm font-medium text-gray-300">
-              {emotionName && emotionName.length > 20 ? emotionName.substring(0, 20) + '...' : emotionName || 'Voice Recorder'}
+              {emotionName && emotionName.length > 20 ? emotionName.substring(0, 20) + '...' : emotionName || UIMessages.getLabel('VOICE_RECORDER_DEFAULT_TITLE')}
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -499,12 +501,12 @@ export function EnhancedVoiceRecorder({
           {/* Title and Instructions */}
           {!simpleMode && sampleText && (
             <div className="text-blue-300 text-xs font-medium mb-2 text-left tracking-wide">
-              📖 {emotionName ? `Read this text with ${emotionName.toLowerCase()} emotion` : 'Read this text aloud'}
+              {emotionName ? UIMessages.getInfo('VOICE_EMOTION_READ_INSTRUCTION', { emotion: emotionName.toLowerCase() }) : UIMessages.getInfo('VOICE_EMOTION_READ_INSTRUCTION', { emotion: 'neutral' })}
             </div>
           )}
           {simpleMode && title && (
             <div className="text-blue-300 text-xs font-medium mb-2 text-left tracking-wide">
-              🎙️ {title}
+              {UIMessages.getInfo('VOICE_SIMPLE_MODE_INSTRUCTION', { title })}
             </div>
           )}
           
@@ -572,7 +574,7 @@ export function EnhancedVoiceRecorder({
                       </button>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>Hold to record voice sample</p>
+                      <p>{UIMessages.getTooltip('VOICE_INSTRUCTION_HOLD_TO_RECORD')}</p>
                     </TooltipContent>
                   </Tooltip>
                 )}
@@ -610,7 +612,7 @@ export function EnhancedVoiceRecorder({
                       </button>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>Hold to re-record voice sample</p>
+                      <p>{UIMessages.getTooltip('VOICE_INSTRUCTION_HOLD_TO_RERECORD')}</p>
                     </TooltipContent>
                   </Tooltip>
                 )}
@@ -619,12 +621,12 @@ export function EnhancedVoiceRecorder({
               {/* Instructions under mic - Fixed height to prevent flickering */}
               <div className="text-xs text-gray-400 text-center leading-tight h-6 flex items-center justify-center">
                 {recordedSample || tempRecording ? (
-                  <div>
-                    Hold to<br />re-record
+                  <div style={{ whiteSpace: 'pre-line' }}>
+                    {UIMessages.getInfo('VOICE_INSTRUCTION_HOLD_TO_RERECORD')}
                   </div>
                 ) : (
-                  <div>
-                    Hold to<br />record
+                  <div style={{ whiteSpace: 'pre-line' }}>
+                    {UIMessages.getInfo('VOICE_INSTRUCTION_HOLD_TO_RECORD')}
                   </div>
                 )}
               </div>
@@ -652,7 +654,7 @@ export function EnhancedVoiceRecorder({
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>{tempRecording ? "Play new recording" : recordedSample ? "Play saved recording" : "No recording to play"}</p>
+                  <p>{tempRecording ? UIMessages.getTooltip('VOICE_BUTTON_PLAY_NEW_TOOLTIP') : recordedSample ? UIMessages.getTooltip('VOICE_BUTTON_PLAY_SAVED_TOOLTIP') : UIMessages.getTooltip('VOICE_BUTTON_NO_RECORDING_TOOLTIP')}</p>
                 </TooltipContent>
               </Tooltip>
               
@@ -675,7 +677,7 @@ export function EnhancedVoiceRecorder({
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>{recordingState === 'saving' ? 'Saving...' : 'Save recording'}</p>
+                    <p>{recordingState === 'saving' ? UIMessages.getInfo('VOICE_STATUS_SAVING') : UIMessages.getTooltip('VOICE_BUTTON_SAVE_TOOLTIP')}</p>
                   </TooltipContent>
                 </Tooltip>
               )}

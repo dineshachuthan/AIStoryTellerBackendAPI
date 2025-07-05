@@ -37,6 +37,17 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - When adding ANY text, immediately create corresponding i18n template with proper variables
 - Pattern: `{UIMessages.getTitle('MESSAGE_CODE')}` or `{getDynamicMessage('CODE', variables).message}`
 
+### MANDATORY I18N ENFORCEMENT FOR ALL UI ELEMENTS
+**EVERY SINGLE UI ELEMENT MUST USE ESTABLISHED I18N UTILITY FUNCTIONS - NO EXCEPTIONS**
+- Tooltips: MUST use `UIMessages.getTooltip('CODE', variables)` 
+- Button labels: MUST use `UIMessages.getButton('CODE', variables)`
+- Error messages: MUST use `UIMessages.getError('CODE', variables)`
+- Status labels: MUST use `UIMessages.getLabel('CODE', variables)`
+- Headers/titles: MUST use `UIMessages.getTitle('CODE', variables)`
+- ALL text strings require corresponding MESSAGE_TEMPLATES entry in shared/i18n-config.ts
+- **BEFORE WRITING ANY UI TEXT**: Check existing templates, create new template if needed, use utility function
+- **DEVELOPER VIOLATION CONSEQUENCE**: User has spent hours establishing these patterns - repeated violations are unacceptable
+
 ### Mandatory Architectural Patterns (ALWAYS FOLLOW)
 - **BaseCachedProvider**: All external API integrations MUST use cached provider pattern
 - **UIMessages I18N**: All text MUST use internationalization system with proper template interpolation
