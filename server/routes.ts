@@ -4310,12 +4310,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const findUserRecording = (itemName: string, category: string) => {
         const categoryPrefix = category === 'emotions' ? 'emotions' : category === 'sounds' ? 'sounds' : 'modulations';
         console.log(`Looking for user recording: itemName="${itemName}", category="${category}", categoryPrefix="${categoryPrefix}"`);
-        console.log('Available user recordings:', userRecordings.map(r => ({ emotion: r.emotion, audio_url: r.audio_url })));
         
-        const found = userRecordings.find(recording => 
-          recording.emotion === `${categoryPrefix}-${itemName.toLowerCase()}` || 
-          recording.emotion === itemName.toLowerCase()
-        );
+        const found = userRecordings.find(recording => {
+          // Extract emotion from file path since emotion field is undefined
+          if (recording.audio_url) {
+            const fileName = recording.audio_url.split('/').pop() || '';
+            const emotionFromPath = fileName.split('_')[0]; // e.g., "emotions-frustration" from "emotions-frustration_1751647642196.mp3"
+            
+            // Check if this matches what we're looking for
+            const expectedFormat = `${categoryPrefix}-${itemName.toLowerCase()}`;
+            return emotionFromPath === expectedFormat || 
+                   emotionFromPath === itemName.toLowerCase() ||
+                   recording.emotion === expectedFormat ||
+                   recording.emotion === itemName.toLowerCase();
+          }
+          return false;
+        });
         
         console.log(`Found recording for ${itemName}:`, found ? 'YES' : 'NO');
         return found;
