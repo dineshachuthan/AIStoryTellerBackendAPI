@@ -373,47 +373,6 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
                             simpleMode={true}
                           />
                         </div>
-
-                        {/* Static Save Button - Always Present */}
-                        <Button
-                          onClick={() => handleSaveRecording(emotionName)}
-                          disabled={recordingState.isSaving || !recordingState.audioBlob || (recordingState.duration || 0) < 6 || recordingState.isRecorded || hasRecording(item)}
-                          className="w-full h-10"
-                          variant={recordingState.isSaving ? "outline" : "default"}
-                        >
-                          {recordingState.isSaving ? (
-                            <>
-                              <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin mr-2" />
-                              Saving...
-                            </>
-                          ) : (recordingState.duration || 0) < 6 ? (
-                            `Too Short (${(recordingState.duration || 0).toFixed(1)}s)`
-                          ) : recordingState.isRecorded || hasRecording(item) ? (
-                            <>
-                              <Save className="w-4 h-4 mr-2" />
-                              Voice Saved
-                            </>
-                          ) : (
-                            <>
-                              <Save className="w-4 h-4 mr-2" />
-                              Save Voice Sample
-                            </>
-                          )}
-                        </Button>
-
-                        {/* Static Play Button - Always Present */}
-                        <Button
-                          variant="outline"
-                          className="w-full h-10"
-                          disabled={!recordingState.isRecorded && !hasRecording(item)}
-                          onClick={() => {
-                            // Play existing recording logic would go here
-                            console.log('Play existing recording for', emotionName);
-                          }}
-                        >
-                          <Play className="w-4 h-4 mr-2" />
-                          Play Your Voice
-                        </Button>
                       </div>
                     </Card>
                   );
