@@ -89,10 +89,24 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
   const queryClient = useQueryClient();
   const [selectedCategory, setSelectedCategory] = useState<string>("emotions");
 
+  console.log('StoryVoiceSamples component rendered with:', { 
+    storyId, 
+    userId: user?.id, 
+    hasAnalysisData: !!analysisData 
+  });
+
   // Get consolidated voice samples data for this story
   const voiceSamplesQuery = useQuery({
-    queryKey: ["/api/stories", storyId, "voice-samples"],
+    queryKey: [`/api/stories/${storyId}/voice-samples`],
     enabled: !!user?.id && !!storyId,
+  });
+
+  console.log('Voice samples query state:', {
+    isLoading: voiceSamplesQuery.isLoading,
+    isError: voiceSamplesQuery.isError,
+    data: voiceSamplesQuery.data,
+    error: voiceSamplesQuery.error,
+    queryKey: [`/api/stories/${storyId}/voice-samples`]
   });
 
   const voiceSamplesData = voiceSamplesQuery.data || {};

@@ -4298,7 +4298,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Story not found' });
       }
 
-      const analysis = await storage.getStoryAnalysis(storyId);
+      const analysis = await storage.getStoryAnalysis(storyId, 'narrative');
       if (!analysis) {
         return res.status(404).json({ message: 'Story analysis not found' });
       }
