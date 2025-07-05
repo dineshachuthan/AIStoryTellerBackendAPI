@@ -345,27 +345,34 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
                           <h3 className="font-medium">{emotionName}</h3>
                         </div>
                         
+                        <p className="text-sm text-gray-600">{sampleText}</p>
+                        
                         {/* Error Message */}
                         {recordingState.errorMessage && (
                           <div className="text-sm text-red-600 bg-red-50 dark:bg-red-950 p-2 rounded">
                             {recordingState.errorMessage}
                           </div>
                         )}
+
+                        {/* Recording Duration Progress */}
+                        {recordingState.duration && recordingState.duration > 0 && (
+                          <div className="space-y-1">
+                            <div className="flex justify-between text-xs text-gray-500">
+                              <span>Duration: {recordingState.duration.toFixed(1)}s</span>
+                              <span>Target: 6s+</span>
+                            </div>
+                            <Progress 
+                              value={Math.min((recordingState.duration / 6) * 100, 100)} 
+                              className="w-full h-2"
+                            />
+                          </div>
+                        )}
                         
                         <EnhancedVoiceRecorder
-                          emotionName={emotionName}
                           sampleText={sampleText}
                           onRecordingComplete={handleRecordingComplete(emotionName)}
                           disabled={recordingState.isSaving}
-                          simpleMode={false}
-                          saveConfig={{
-                            apiEndpoint: '/api/voice-modulations/record',
-                            data: {
-                              emotion: emotionName,
-                              storyId: storyId,
-                              category: category.id
-                            }
-                          }}
+                          simpleMode={true}
                         />
 
                         {/* Save Button */}
