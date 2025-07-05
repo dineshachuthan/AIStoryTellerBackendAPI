@@ -306,7 +306,10 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
     );
   }
 
-  if (!analysisData || currentCategoryData.length === 0) {
+  // Check if there's any data across all categories
+  const hasAnyData = storyEmotions.length > 0 || storySounds.length > 0 || storyModulations.length > 0;
+  
+  if (!analysisData || !hasAnyData) {
     return (
       <div className="text-center p-8">
         <p className="text-gray-500">No emotions, sounds, or modulations found in this story.</p>
@@ -341,17 +344,51 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
           ))}
         </TabsList>
 
-        {categories.map((category) => (
-          <TabsContent key={category.id} value={category.id} className="space-y-4">
-            {currentCategoryData.length === 0 ? (
-              <div className="text-center p-8">
-                <p className="text-gray-500">
-                  No {category.name.toLowerCase()} found in this story.
-                </p>
-              </div>
-            ) : (
+        {categories.map((category) => {
+          // Get the data for this specific category
+          const getCategoryData = () => {
+            switch (category.id) {
+              case "emotions": return storyEmotions;
+              case "sounds": return storySounds;  
+              case "modulations": return storyModulations;
+              default: return [];
+            }
+          };
+          
+          const categoryData = getCategoryData();
+          
+          return (
+            <TabsContent key={category.id} value={category.id} className="space-y-4">
+              {categoryData.length === 0 ? (
+                <div className="text-center p-8">
+                  <p className="text-gray-500">
+                    No {category.name.toLowerCase()} found in this story.
+                  </p>
+                </div>
+              ) : (
               <div className="grid gap-4 grid-cols-1">
-                {currentCategoryData.map((item: any, index: number) => {
+                {categoryData.sort((a, b) => {
+                  const aName = a.emotion || a.sound || a.name || 'unknown';
+                  const bName = b.emotion || b.sound || b.name || 'unknown';
+                  
+                  const aState = recordingStates[aName];
+                  const bState = recordingStates[bName];
+                  
+                  const aRecorded = aState?.isRecorded || hasRecording(a);
+                  const bRecorded = bState?.isRecorded || hasRecording(b);
+                  const aLocked = a.isLocked || false;
+                  const bLocked = b.isLocked || false;
+                  
+                  // Determine sort priority: 0=unrecorded, 1=recorded+unlocked, 2=recorded+locked
+                  const aPriority = !aRecorded ? 0 : (aLocked ? 2 : 1);
+                  const bPriority = !bRecorded ? 0 : (bLocked ? 2 : 1);
+                  
+                  // Sort by priority, then by name alphabetically
+                  if (aPriority !== bPriority) {
+                    return aPriority - bPriority;
+                  }
+                  return aName.localeCompare(bName);
+                }).map((item: any, index: number) => {
                   const emotionName = item.emotion || item.sound || item.name || 'unknown';
                   const intensity = item.intensity || 5;
                   const isLocked = item.isLocked || false;
