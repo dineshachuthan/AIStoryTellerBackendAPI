@@ -306,6 +306,9 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
               <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                 {currentCategoryData.map((item: any, index: number) => {
                   const emotionName = item.emotion || item.sound || item.name || 'unknown';
+                  const intensity = item.intensity || 5;
+                  const isLocked = item.isLocked || false;
+                  const isRecorded = item.isRecorded || false;
                   const sampleText = item.sampleText || item.quote || item.context || 
                     `Express the emotion of ${emotionName} with clear articulation and natural pacing for high-quality voice cloning.`;
                   
