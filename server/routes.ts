@@ -4362,27 +4362,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Save audio file
       await fs.writeFile(audioPath, audioBuffer);
       
-      // Save/update voice sample using existing working approach
-      const existingRecording = await storage.getUserVoiceEmotionByEmotion(userId, emotionKey);
-      
-      if (existingRecording) {
-        // Update existing recording
-        await storage.updateUserVoiceEmotion(existingRecording.id, {
-          audioUrl: `/audio/${audioPath}`,
-          duration: duration,
-          updatedAt: new Date()
-        });
-      } else {
-        // Create new recording
-        await storage.createUserVoiceEmotion({
-          userId: userId,
-          emotion: emotionKey,
-          audioUrl: `/audio/${audioPath}`,
-          duration: duration,
-          storyId: storyId,
-          createdAt: new Date()
-        });
-      }
+      // Save voice sample using existing working storage methods
+      await storage.createUserVoiceEmotion({
+        userId: userId,
+        emotion: emotionKey,
+        audioUrl: `/audio/${audioPath}`,
+        duration: duration,
+        storyId: storyId,
+        createdAt: new Date()
+      });
 
       res.json({ 
         success: true, 
