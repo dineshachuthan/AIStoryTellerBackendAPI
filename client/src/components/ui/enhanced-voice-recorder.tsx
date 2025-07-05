@@ -467,21 +467,6 @@ export function EnhancedVoiceRecorder({
                 className="absolute top-0 h-2 w-0.5 bg-yellow-400"
                 style={{ left: `${(5 / maxRecordingTime) * 100}%` }}
               />
-              
-              {/* Frontend validation message */}
-              {recordingState === 'recording' && recordingTime < 5 && (
-                <div className="text-xs text-orange-400 mt-1 animate-pulse">
-                  Keep recording... minimum 5 seconds needed
-                </div>
-              )}
-              
-              {/* Post-recording validation */}
-              {(recordedSample?.duration || (recordingState === 'recorded' && tempRecording)) && 
-               (recordedSample?.duration || 0) < 5 && (
-                <div className="text-xs text-red-400 mt-1">
-                  Recording too short - need at least 5 seconds for voice cloning
-                </div>
-              )}
             </div>
           </div>
           
