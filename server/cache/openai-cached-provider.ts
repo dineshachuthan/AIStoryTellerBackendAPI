@@ -22,6 +22,12 @@ export interface OpenAITranscriptionRequest {
   audioBuffer: Buffer;
 }
 
+export interface OpenAICompletionRequest {
+  messages: Array<{ role: string; content: string }>;
+  maxTokens?: number;
+  temperature?: number;
+}
+
 export class OpenAICachedProvider extends BaseCachedProvider {
   private openai: OpenAI;
 
@@ -56,6 +62,8 @@ export class OpenAICachedProvider extends BaseCachedProvider {
         return `character-image:${this.generateContentHash(JSON.stringify(data))}`;
       case 'audio-transcription':
         return `transcription:${this.generateContentHash(data.audioBuffer)}`;
+      case 'text-completion':
+        return `completion:${this.generateContentHash(JSON.stringify(data.messages))}`;
       default:
         return `openai:${this.generateContentHash(JSON.stringify(args))}`;
     }
@@ -78,6 +86,8 @@ export class OpenAICachedProvider extends BaseCachedProvider {
         return await this.generateCharacterImage(data) as T;
       case 'audio-transcription':
         return await this.transcribeAudio(data) as T;
+      case 'text-completion':
+        return await this.generateTextCompletion(data) as T;
       default:
         throw new Error(`Unsupported OpenAI request type: ${requestType}`);
     }
@@ -107,12 +117,17 @@ export class OpenAICachedProvider extends BaseCachedProvider {
         return Array.isArray(obj.characters) && Array.isArray(obj.emotions);
       }
       
+      // Text completion validation
+      if (obj.content && typeof obj.content === 'string' && obj.content.length > 0) {
+        return true;
+      }
+      
       // Image URL validation
       if (typeof obj === 'string' && obj.startsWith('http')) {
         return true;
       }
       
-      // Transcription validation
+      // Transcription validation (string response)
       if (typeof obj === 'string' && obj.length > 0) {
         return true;
       }
@@ -145,6 +160,15 @@ export class OpenAICachedProvider extends BaseCachedProvider {
       'audio-transcription',
       { ttl: null, tags: ['transcription'] }, // Infinite - same audio file = same transcription forever
       'audio-transcription',
+      request
+    );
+  }
+
+  async generateCompletionWithCache(request: OpenAICompletionRequest): Promise<{ content: string }> {
+    return this.executeWithCache(
+      'text-completion',
+      { ttl: null, tags: ['completion'] }, // Infinite - same prompt = same completion forever
+      'text-completion',
       request
     );
   }
@@ -271,6 +295,25 @@ export class OpenAICachedProvider extends BaseCachedProvider {
         console.warn("Failed to clean up temp file:", cleanupError);
       }
     }
+  }
+
+  private async generateTextCompletion(request: OpenAICompletionRequest): Promise<{ content: string }> {
+    // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+    const response = await this.openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: request.messages,
+      max_tokens: request.maxTokens || 150,
+      temperature: request.temperature || 0.7,
+    });
+
+    const content = response.choices[0].message.content;
+    if (!content || content.trim().length === 0) {
+      throw new Error("OpenAI completion failed - no content generated");
+    }
+
+    return {
+      content: content.trim()
+    };
   }
 
   // Stats and monitoring
