@@ -8,8 +8,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
-import { VoiceSampleCard } from "@/components/ui/voice-sample-card";
-import { Mic, Volume2, Users, Zap, DollarSign, Clock, AlertCircle } from "lucide-react";
+import { Mic, Volume2, Users, Zap, DollarSign, Clock, AlertCircle, Radio, Lock, CheckCircle, Unlock } from "lucide-react";
+import { EnhancedVoiceRecorder } from "@/components/ui/enhanced-voice-recorder";
 import { AUDIO_PROCESSING_CONFIG } from "@shared/audio-config";
 import { VoiceMessageService } from "@shared/i18n-config";
 
@@ -70,270 +70,37 @@ interface VoiceTemplate {
   sortOrder: number;
 }
 
+// Helper function to check if an item has a recording
+const hasRecording = (item: any): boolean => {
+  return item?.userRecording?.audioUrl !== undefined && item?.userRecording?.audioUrl !== null;
+};
+
+// Helper function to check if text is suitable for voice recording (adequate length)
+const isTextSuitableForRecording = (text: string): boolean => {
+  if (!text) return false;
+  const wordCount = text.trim().split(/\s+/).length;
+  const charCount = text.trim().length;
+  return wordCount >= 15 && charCount >= 80; // ~5-6 seconds of speech
+};
+
 export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceSamplesProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedCategory, setSelectedCategory] = useState<string>("emotions");
 
-  // Get recorded samples from global voice samples system
-  const { data: progress } = useQuery({
-    queryKey: ["/api/voice-modulations/progress"],
-    enabled: !!user?.id,
-  });
-  
-  const recordedSamples: any[] = ((progress as any)?.recordedSamples) || [];
-
-  // Get ESM reference data for professional sample texts  
-  const { data: esmTemplates = [] } = useQuery({
-    queryKey: ["/api/voice-modulations/templates"],
-    enabled: true,
+  // Get consolidated voice samples data for this story
+  const voiceSamplesQuery = useQuery({
+    queryKey: ["/api/stories", storyId, "voice-samples"],
+    enabled: !!user?.id && !!storyId,
   });
 
-  // Transform templates array into category-organized ESM data
-  const esmData = React.useMemo(() => {
-    const organized: any = {
-      emotions: [],
-      sounds: [],
-      modulations: []
-    };
-    
-    (esmTemplates as any[])?.forEach((template: any) => {
-      if (template.category && organized[template.category]) {
-        organized[template.category].push({
-          emotion: template.emotion,
-          sound: template.emotion, // Use emotion field for sound name
-          name: template.emotion,
-          sampleText: template.sampleText,
-          displayName: template.displayName
-        });
-      }
-    });
-    
-    return organized;
-  }, [esmTemplates]);
+  const voiceSamplesData = voiceSamplesQuery.data || {};
+  const storyEmotions = voiceSamplesData.emotions || [];
+  const storySounds = voiceSamplesData.sounds || [];
+  const storyModulations = voiceSamplesData.modulations || [];
 
-  // Abstract function for cards to get sample voice text - single point of truth
-  const getSampleVoiceText = (itemName: string, categoryName: string, storyQuote?: string, storyContext?: string): string => {
-    // First priority: Check ESM reference data for professional sample text
-    const categoryData = (esmData as any)?.[categoryName] || [];
-    const esmItem = categoryData.find((item: any) => 
-      item.emotion?.toLowerCase() === itemName.toLowerCase() || 
-      item.sound?.toLowerCase() === itemName.toLowerCase() ||
-      item.name?.toLowerCase() === itemName.toLowerCase()
-    );
-    
-    if (esmItem?.sampleText && isTextSuitableForRecording(esmItem.sampleText)) {
-      return esmItem.sampleText;
-    }
-    
-    // Second priority: Story quote if suitable length
-    if (storyQuote && isTextSuitableForRecording(storyQuote)) {
-      return storyQuote;
-    }
-    
-    // Third priority: Story context if suitable length
-    if (storyContext && isTextSuitableForRecording(storyContext)) {
-      return storyContext;
-    }
-    
-    // Fallback: Return best available text even if short
-    const fallbackText = esmItem?.sampleText || storyQuote || storyContext || `Express the ${categoryName.slice(0, -1)} of ${itemName}`;
-    return fallbackText;
-  };
-
-  // Helper function to find recorded sample with category-aware matching
-  const findRecordedSample = (itemName: string, category: string) => {
-    return recordedSamples.find((r: any) => 
-      r.emotion === `${category}-${itemName.toLowerCase()}` || r.emotion === itemName.toLowerCase()
-    );
-  };
-
-  // Helper function to generate category-aware emotion key for saving
-  const generateEmotionKey = (itemName: string, category: string) => {
-    return `${category}-${itemName.toLowerCase()}`;
-  };
-
-  // Helper function to check if text has enough length for 6-second recording
-  const isTextSuitableForRecording = (text: string): boolean => {
-    if (!text) return false;
-    // Estimate: ~3-4 words per second for natural speech, so ~18-24 words for 6 seconds
-    // Use word count as primary metric, with character count as backup
-    const wordCount = text.trim().split(/\s+/).length;
-    const charCount = text.trim().length;
-    
-    // Minimum thresholds: 15 words OR 80 characters for 6-second recording
-    return wordCount >= 15 || charCount >= 80;
-  };
-
-  // Enhanced sample text selection with ESM reference priority and length checking
-  const selectOptimalSampleText = async (emotionName: string, category: string, storyQuote?: string, storyContext?: string): Promise<string> => {
-    try {
-      // First, try to get professional ESM reference text
-      const response = await fetch(`/api/voice-modulations/templates?category=${category}`);
-      if (response.ok) {
-        const templates = await response.json();
-        const esmTemplate = templates.find((t: any) => t.emotion.toLowerCase() === emotionName.toLowerCase());
-        
-        if (esmTemplate?.sampleText && isTextSuitableForRecording(esmTemplate.sampleText)) {
-          console.log(`✅ Using ESM reference text for ${emotionName}: "${esmTemplate.sampleText.substring(0, 50)}..."`);
-          return esmTemplate.sampleText;
-        }
-      }
-    } catch (error) {
-      console.warn(`Failed to fetch ESM reference for ${emotionName}:`, error);
-    }
-
-    // Fallback to story data with length checking
-    const candidates = [storyQuote, storyContext].filter(Boolean);
-    
-    for (const text of candidates) {
-      if (text && isTextSuitableForRecording(text)) {
-        console.log(`📖 Using story text for ${emotionName}: "${text.substring(0, 50)}..."`);
-        return text;
-      }
-    }
-    
-    // Last resort: return best available text even if short
-    const fallbackText = storyQuote || storyContext || `Express the emotion of ${emotionName}`;
-    console.warn(`⚠️ Using short text for ${emotionName}: "${fallbackText}"`);
-    return fallbackText;
-  };
-
-  // Generate story-specific templates from analysis  
-  const generateStoryTemplates = (): VoiceTemplate[] => {
-    const templates: VoiceTemplate[] = [];
-
-    // Add emotions from story analysis
-    if (analysisData.emotions) {
-      analysisData.emotions.forEach((emotion) => {
-        const recordedSample = findRecordedSample(emotion.emotion, 'emotions');
-        const isRecorded = !!recordedSample;
-        const isLocked = recordedSample?.isLocked || false;
-
-        // Call abstract function for sample text - single point of truth
-        const sampleText = getSampleVoiceText(
-          emotion.emotion,
-          "emotions",
-          emotion.quote,
-          emotion.context || ""
-        );
-
-        templates.push({
-          emotion: emotion.emotion.toLowerCase(),
-          displayName: emotion.emotion.charAt(0).toUpperCase() + emotion.emotion.slice(1),
-          sampleText,
-          category: "emotions",
-          intensity: emotion.intensity,
-          description: emotion.context || '',
-          recordedSample,
-          isRecorded,
-          isLocked,
-          sortOrder: isLocked ? 3 : (isRecorded ? 2 : 1)
-        });
-      });
-    }
-
-    // Add sounds from story analysis
-    if (analysisData.soundEffects) {
-      analysisData.soundEffects.forEach((sound) => {
-        const recordedSample = findRecordedSample(sound.sound, 'sounds');
-        const isRecorded = !!recordedSample;
-        const isLocked = recordedSample?.isLocked || false;
-
-        // Call abstract function for sample text - single point of truth
-        const sampleText = getSampleVoiceText(
-          sound.sound,
-          "sounds",
-          sound.quote,
-          sound.context || ""
-        );
-
-        templates.push({
-          emotion: sound.sound.toLowerCase(),
-          displayName: sound.sound.charAt(0).toUpperCase() + sound.sound.slice(1),
-          sampleText,
-          category: "sounds",
-          intensity: sound.intensity,
-          description: sound.context || '',
-          recordedSample,
-          isRecorded,
-          isLocked,
-          sortOrder: isLocked ? 3 : (isRecorded ? 2 : 1)
-        });
-      });
-    }
-
-    // Add modulations from story analysis
-    const modulations: string[] = [];
-    if (analysisData.moodCategory) modulations.push(analysisData.moodCategory);
-    if (analysisData.genre) modulations.push(analysisData.genre);
-    if (analysisData.subGenre) modulations.push(analysisData.subGenre);
-    if (analysisData.emotionalTags) modulations.push(...analysisData.emotionalTags);
-
-    modulations.forEach((modulation) => {
-      const recordedSample = findRecordedSample(modulation, 'modulations');
-      const isRecorded = !!recordedSample;
-      const isLocked = recordedSample?.isLocked || false;
-
-      // Call abstract function for sample text - single point of truth
-      const sampleText = getSampleVoiceText(
-        modulation,
-        "modulations",
-        "",
-        ""
-      );
-
-      templates.push({
-        emotion: modulation.toLowerCase(),
-        displayName: modulation.charAt(0).toUpperCase() + modulation.slice(1),
-        sampleText,
-        category: "modulations",
-        intensity: 5, // Default intensity for modulations
-        description: `${modulation} modulation for this story`,
-        recordedSample,
-        isRecorded,
-        isLocked,
-        sortOrder: isLocked ? 3 : (isRecorded ? 2 : 1)
-      });
-    });
-
-    return templates;
-  };
-
-  const storyTemplates = generateStoryTemplates();
-
-  // Filter templates by category
-  const filteredTemplates = storyTemplates.filter(template => 
-    template.category === selectedCategory
-  );
-
-  // Sort templates (same as voice-samples page)
-  const sortedTemplates = filteredTemplates.sort((a, b) => a.sortOrder - b.sortOrder);
-
-  // Get categories with counts
-  const categories = [
-    { 
-      id: "emotions", 
-      name: "Emotions", 
-      count: storyTemplates.filter(t => t.category === "emotions").length,
-      icon: <Mic className="w-4 h-4" />
-    },
-    { 
-      id: "sounds", 
-      name: "Sounds", 
-      count: storyTemplates.filter(t => t.category === "sounds").length,
-      icon: <Volume2 className="w-4 h-4" />
-    },
-    { 
-      id: "modulations", 
-      name: "Modulations", 
-      count: storyTemplates.filter(t => t.category === "modulations").length,
-      icon: <Users className="w-4 h-4" />
-    }
-  ];
-
-  // Voice recording mutation with frontend validation
+  // Mutation for recording voice samples
   const recordVoiceMutation = useMutation({
     mutationFn: async ({ emotion, audioBlob }: { emotion: string; audioBlob: Blob }) => {
       // Frontend validation: Check if audio is long enough
@@ -344,20 +111,17 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
       
       const formData = new FormData();
       formData.append('audio', audioBlob, 'voice-sample.mp3');
-      
-      // Create modulationKey using the same helper function as display logic
-      const modulationKey = generateEmotionKey(emotion, selectedCategory);
-      formData.append('modulationKey', modulationKey);
-      formData.append('modulationType', selectedCategory);
+      formData.append('emotion', emotion);
+      formData.append('category', selectedCategory);
 
-      return apiRequest('/api/voice-modulations/record', {
+      return apiRequest(`/api/stories/${storyId}/voice-samples/record`, {
         method: 'POST',
         body: formData,
         credentials: 'include'
       });
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/voice-modulations/progress"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/stories", storyId, "voice-samples"] });
       const successMsg = VoiceMessageService.voiceSaved(user?.email || 'User', variables.emotion, selectedCategory);
       toast({
         title: "Voice sample recorded",
@@ -367,12 +131,10 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
     onError: (error: any, variables) => {
       // Don't show permanent toast for validation errors - they're handled in UI
       if (error.message?.includes('Recording too short')) {
-        // Frontend validation error - no toast needed as UI shows the message
         console.log('Frontend validation prevented short recording submission');
         return;
       }
       
-      // Only show toast for unexpected backend errors
       const errorMsg = VoiceMessageService.voiceSaveFailed(variables.emotion, selectedCategory);
       toast({
         title: "Recording failed",
@@ -382,16 +144,54 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
     }
   });
 
+  // Handle recording completion
   const handleRecordingComplete = (emotion: string) => (audioBlob: Blob) => {
     recordVoiceMutation.mutate({ emotion, audioBlob });
   };
 
-  const handlePlaySample = (audioUrl: string) => {
-    const audio = new Audio(audioUrl);
-    audio.play().catch(console.error);
+  // Generate categories with counts
+  const categories = [
+    { 
+      id: "emotions", 
+      name: "Emotions", 
+      count: storyEmotions.length,
+      icon: <Mic className="w-4 h-4" />
+    },
+    { 
+      id: "sounds", 
+      name: "Sounds", 
+      count: storySounds.length,
+      icon: <Volume2 className="w-4 h-4" />
+    },
+    { 
+      id: "modulations", 
+      name: "Modulations", 
+      count: storyModulations.length,
+      icon: <Users className="w-4 h-4" />
+    }
+  ];
+
+  // Get current category data
+  const getCurrentCategoryData = () => {
+    switch (selectedCategory) {
+      case "emotions": return storyEmotions;
+      case "sounds": return storySounds;
+      case "modulations": return storyModulations;
+      default: return [];
+    }
   };
 
-  if (!analysisData || storyTemplates.length === 0) {
+  const currentCategoryData = getCurrentCategoryData();
+
+  if (voiceSamplesQuery.isLoading) {
+    return (
+      <div className="text-center p-8">
+        <p className="text-gray-500">Loading voice samples...</p>
+      </div>
+    );
+  }
+
+  if (!analysisData || currentCategoryData.length === 0) {
     return (
       <div className="text-center p-8">
         <p className="text-gray-500">No emotions, sounds, or modulations found in this story.</p>
@@ -428,7 +228,7 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
 
         {categories.map((category) => (
           <TabsContent key={category.id} value={category.id} className="space-y-4">
-            {sortedTemplates.length === 0 ? (
+            {currentCategoryData.length === 0 ? (
               <div className="text-center p-8">
                 <p className="text-gray-500">
                   No {category.name.toLowerCase()} found in this story.
@@ -436,24 +236,36 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
               </div>
             ) : (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {sortedTemplates.map((template) => (
-                  <VoiceSampleCard
-                    key={`${template.category}-${template.emotion}`}
-                    emotion={template.emotion}
-                    displayName={template.displayName}
-                    sampleText={template.sampleText}
-                    category={template.category}
-                    intensity={template.intensity}
-                    description={template.description}
-                    recordedSample={template.recordedSample}
-                    isRecorded={template.isRecorded}
-                    isLocked={template.isLocked}
-                    onRecordingComplete={handleRecordingComplete(template.emotion)}
-                    onPlaySample={handlePlaySample}
-                    targetDuration={10}
-                    disabled={false}
-                  />
-                ))}
+                {currentCategoryData.map((item: any, index: number) => {
+                  const emotionName = item.emotion || item.sound || item.name || 'unknown';
+                  const sampleText = item.esmSampleText || item.quote || item.context || 
+                    `Express the emotion of ${emotionName} with clear articulation and natural pacing for high-quality voice cloning.`;
+                  
+                  return (
+                    <Card key={`${category.id}-${index}`} className="p-4">
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2">
+                          <Radio className="w-4 h-4" />
+                          <h3 className="font-medium">{emotionName}</h3>
+                          {hasRecording(item) ? (
+                            <CheckCircle className="w-4 h-4 text-green-500" />
+                          ) : (
+                            <Unlock className="w-4 h-4 text-gray-400" />
+                          )}
+                        </div>
+                        
+                        <p className="text-sm text-gray-600">{sampleText}</p>
+                        
+                        <EnhancedVoiceRecorder
+                          sampleText={sampleText}
+                          onRecordingComplete={handleRecordingComplete(emotionName)}
+                          disabled={false}
+                          simpleMode={true}
+                        />
+                      </div>
+                    </Card>
+                  );
+                })}
               </div>
             )}
           </TabsContent>
