@@ -74,6 +74,7 @@ export function EnhancedVoiceRecorder({
   const [isPlayingExisting, setIsPlayingExisting] = useState(false);
   const [equalizerBars, setEqualizerBars] = useState<number[]>(Array(8).fill(2));
   const [errorMessage, setErrorMessage] = useState('');
+  const [saveError, setSaveError] = useState<string | null>(null);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -108,49 +109,7 @@ export function EnhancedVoiceRecorder({
     });
   };
 
-  // Handle save button click with frontend validation
-  const handleSaveRecording = async () => {
-    if (!tempRecording || !saveConfig) return;
 
-    // Frontend validation: Check if audio is long enough
-    const audioDuration = tempRecording.duration;
-    if (audioDuration < saveConfig.minDuration) {
-      setErrorMessage(`Recording too short: ${audioDuration.toFixed(1)}s. Need at least ${saveConfig.minDuration} seconds for voice cloning.`);
-      return;
-    }
-
-    // Set saving state
-    setRecordingState('saving');
-    setErrorMessage('');
-
-    try {
-      // Prepare form data
-      const formData = new FormData();
-      formData.append('audio', tempRecording.blob, 'voice-sample.mp3');
-      
-      // Add additional payload data
-      Object.entries(saveConfig.payload).forEach(([key, value]) => {
-        formData.append(key, String(value));
-      });
-
-      // Make API call
-      const response = await apiRequest(saveConfig.endpoint, {
-        method: 'POST',
-        body: formData,
-        credentials: 'include'
-      });
-
-      // Success
-      setRecordingState('saved');
-      setTempRecording(null);
-      saveConfig.onSaveSuccess?.(response);
-    } catch (error: any) {
-      // Error
-      setRecordingState('recorded');
-      setErrorMessage(error.message || 'Failed to save voice sample');
-      saveConfig.onSaveError?.(error.message || 'Failed to save voice sample');
-    }
-  };
 
   // Calculate if we have a recording (either new temp recording or existing)
   const hasRecording = !!tempRecording || !!recordedSample;
@@ -428,6 +387,63 @@ export function EnhancedVoiceRecorder({
       setRecordingState('idle');
       setCountdownTime(3);
     }
+  };
+
+  // Save recording function for internal save handling
+  const handleSaveRecording = async () => {
+    if (!tempRecording || !saveConfig) return;
+
+    // Frontend validation: Check if audio is long enough
+    const audioDuration = tempRecording.duration;
+    if (audioDuration < saveConfig.minDuration) {
+      setSaveError(`Recording too short: ${audioDuration.toFixed(1)}s. Need at least ${saveConfig.minDuration} seconds for voice cloning.`);
+      return;
+    }
+
+    // Set saving state
+    setRecordingState('saving');
+    setSaveError(null);
+
+    try {
+      // Prepare form data
+      const formData = new FormData();
+      formData.append('audio', tempRecording.blob, 'voice-sample.mp3');
+      
+      // Add additional payload data
+      Object.entries(saveConfig.payload).forEach(([key, value]) => {
+        formData.append(key, String(value));
+      });
+
+      // Make API call
+      const response = await apiRequest(saveConfig.endpoint, {
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+      });
+
+      // Success
+      setRecordingState('saved');
+      setTempRecording(null);
+      saveConfig.onSaveSuccess?.(response);
+    } catch (error: any) {
+      // Error
+      setRecordingState('recorded');
+      setSaveError(error.message || 'Failed to save voice sample');
+      saveConfig.onSaveError?.(error.message || 'Failed to save voice sample');
+    }
+  };
+
+  // Status configuration for visual indicators
+  const statusConfig = {
+    icon: isLocked ? <Lock className="w-3 h-3 text-blue-400" /> 
+          : (isRecorded || recordedSample) ? <CheckCircle className="w-3 h-3 text-green-400" />
+          : <Circle className="w-3 h-3 text-gray-400" />,
+    label: isLocked ? "Voice Sample Locked" 
+           : (isRecorded || recordedSample) ? "Voice Sample Recorded"
+           : "Voice Sample Needed",
+    description: isLocked ? "This sample is being used for voice cloning"
+                 : (isRecorded || recordedSample) ? "Ready for voice cloning"
+                 : "Record a voice sample for this emotion"
   };
 
   return (
