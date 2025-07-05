@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { AUDIO_PROCESSING_CONFIG } from "../../../../shared/audio-config";
 import { apiRequest } from "@/lib/queryClient";
-import { UIMessages } from "../../../../shared/i18n-config";
+// Removed unnecessary i18n import that was breaking functionality
 
 interface EnhancedVoiceRecorderProps {
   onRecordingComplete?: (audioBlob: Blob, audioUrl: string) => void;
