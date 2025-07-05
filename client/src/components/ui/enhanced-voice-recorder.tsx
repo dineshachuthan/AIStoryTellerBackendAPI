@@ -630,14 +630,7 @@ export function EnhancedVoiceRecorder({
               </div>
             </div>
 
-            {/* Sample Text Display - Compact */}
-            <div className="mb-4">
-              <div className="text-white text-sm leading-relaxed">
-                <span className="italic text-blue-200">
-                  "{(sampleText && sampleText.length > 100 ? sampleText.substring(0, 100) + '...' : sampleText) || 'Sample text not provided'}"
-                </span>
-              </div>
-            </div>
+
           </div>
         </div>
 
