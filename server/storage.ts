@@ -1347,12 +1347,32 @@ export class DatabaseStorage implements IStorage {
     const audioQualityScore = recording.audio_quality_score ?? null;
     const transcribedText = recording.transcribed_text ?? null;
     
-    const result = await db.execute(
-      sql`INSERT INTO user_esm_recordings (user_esm_id, audio_url, duration, file_size, audio_quality_score, transcribed_text, created_by)
-          VALUES (${recording.user_esm_id}, ${recording.audio_url}, ${recording.duration}, ${recording.file_size}, ${audioQualityScore}, ${transcribedText}, ${recording.created_by})
-          RETURNING *`
-    );
-    return result.rows[0];
+    console.log('🔍 SQL Debug - Values:', {
+      user_esm_id: recording.user_esm_id,
+      audio_url: recording.audio_url,
+      duration: recording.duration,
+      file_size: recording.file_size,
+      audioQualityScore,
+      transcribedText,
+      created_by: recording.created_by
+    });
+    
+    try {
+      const result = await db.execute(
+        sql`INSERT INTO user_esm_recordings (user_esm_id, audio_url, duration, file_size, audio_quality_score, transcribed_text, created_by)
+            VALUES (${recording.user_esm_id}, ${recording.audio_url}, ${recording.duration}, ${recording.file_size}, ${audioQualityScore}, ${transcribedText}, ${recording.created_by})
+            RETURNING *`
+      );
+      return result.rows[0];
+    } catch (sqlError) {
+      console.error('🚨 SQL Error Details:', {
+        message: sqlError.message,
+        position: sqlError.position,
+        query: `INSERT INTO user_esm_recordings VALUES(${recording.user_esm_id}, '${recording.audio_url}', ${recording.duration}, ${recording.file_size}, ${audioQualityScore}, ${transcribedText === null ? 'NULL' : `'${transcribedText}'`}, '${recording.created_by}')`,
+        values: [recording.user_esm_id, recording.audio_url, recording.duration, recording.file_size, audioQualityScore, transcribedText, recording.created_by]
+      });
+      throw sqlError;
+    }
   }
 
 
