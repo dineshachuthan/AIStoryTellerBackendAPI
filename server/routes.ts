@@ -5540,7 +5540,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Story analysis not found' });
       }
 
-      const analysisData = analysis.analysisData as any;
+      let analysisData: any;
+      try {
+        // Handle both string and object analysis data
+        if (typeof analysis.analysisData === 'string') {
+          analysisData = JSON.parse(analysis.analysisData);
+        } else {
+          analysisData = analysis.analysisData;
+        }
+      } catch (parseError) {
+        console.error('Failed to parse analysis data:', parseError);
+        return res.status(500).json({ message: 'Invalid story analysis data' });
+      }
       
       // Get user's ESM recordings using consistent ESM architecture
       const userEsmRecordings = await storage.getUserEsmRecordings(userId);
@@ -5611,11 +5622,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('Available sounds:', availableSounds);
         console.log('Available modulations:', availableModulations);
         console.log('All available items:', allAvailableItems);
-        console.log('User ESM recordings raw:', userEsmRecordings);
+        console.log('User ESM recordings raw:', userEsmRecordings.length, 'records');
         console.log('User samples (cleaned):', allUserSamples);
         console.log('Completed from story:', completedFromStory);
         console.log('Min required:', minRequired);
         console.log('Completed count:', completedCount);
+        console.log('Category filter:', category);
+        console.log('Category items:', categoryItems);
+        console.log('Completed samples for category:', completedSamples);
       }
 
       // For display purposes, show category-specific items

@@ -13,22 +13,43 @@ import { Zap, AlertCircle, CheckCircle, Clock, Loader2 } from "lucide-react";
 
 export default function VoiceCloningTest() {
   const [storyId, setStoryId] = useState("75");
-  const [category, setCategory] = useState<'emotions' | 'sounds' | 'modulations'>('emotions');
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Get validation status for selected category and story
-  const { data: validationData, refetch: refetchValidation } = useQuery({
-    queryKey: ["/api/voice-cloning/validation", storyId, category],
+  // Get validation status for all categories
+  const { data: emotionsData, refetch: refetchEmotions } = useQuery({
+    queryKey: ["/api/voice-cloning/validation", storyId, "emotions"],
     queryFn: async () => {
-      if (!storyId || !category) return null;
-      console.log(`🔍 Frontend making validation request for story ${storyId}, category ${category}`);
-      const result = await apiRequest(`/api/voice-cloning/validation/${storyId}/${category}`);
-      console.log(`📊 Validation response:`, result);
-      return result;
+      if (!storyId) return null;
+      return await apiRequest(`/api/voice-cloning/validation/${storyId}/emotions`);
     },
-    enabled: !!storyId && !!category
+    enabled: !!storyId
   });
+
+  const { data: soundsData, refetch: refetchSounds } = useQuery({
+    queryKey: ["/api/voice-cloning/validation", storyId, "sounds"],
+    queryFn: async () => {
+      if (!storyId) return null;
+      return await apiRequest(`/api/voice-cloning/validation/${storyId}/sounds`);
+    },
+    enabled: !!storyId
+  });
+
+  const { data: modulationsData, refetch: refetchModulations } = useQuery({
+    queryKey: ["/api/voice-cloning/validation", storyId, "modulations"],
+    queryFn: async () => {
+      if (!storyId) return null;
+      return await apiRequest(`/api/voice-cloning/validation/${storyId}/modulations`);
+    },
+    enabled: !!storyId
+  });
+
+  // Calculate total counts
+  const emotionsCount = emotionsData?.totalCompletedFromStory || 0;
+  const soundsCount = soundsData?.totalCompletedFromStory || 0;
+  const modulationsCount = modulationsData?.totalCompletedFromStory || 0;
+  const totalCount = emotionsCount + soundsCount + modulationsCount;
+  const isReady = totalCount >= 5;
 
   // Get job status when we have an active job
   const { data: jobStatus } = useQuery({
@@ -48,10 +69,10 @@ export default function VoiceCloningTest() {
     }
   }, [jobStatus]);
 
-  // Voice cloning mutation - uses exact same endpoint as other pages
+  // Voice cloning mutation - MVP1 approach for all ESM samples
   const createVoiceCloneMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest(`/api/voice-cloning/${category}/${storyId}`, {
+      return await apiRequest(`/api/voice-cloning/emotions/${storyId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -63,7 +84,7 @@ export default function VoiceCloningTest() {
       setActiveJobId(data.jobId);
       toast({
         title: "Voice cloning started",
-        description: `${category} voice cloning job ${data.jobId} started. Processing in background...`,
+        description: `MVP1 voice cloning job ${data.jobId} started. Processing all ESM samples...`,
       });
     },
     onError: (error: any) => {
@@ -84,10 +105,10 @@ export default function VoiceCloningTest() {
       });
       return;
     }
-    if (!category) {
+    if (!isReady) {
       toast({
         title: "Error", 
-        description: "Please select a category",
+        description: `Need at least 5 total ESM samples. You have ${totalCount}.`,
         variant: "destructive",
       });
       return;
@@ -97,25 +118,26 @@ export default function VoiceCloningTest() {
 
   const getButtonText = () => {
     if (createVoiceCloneMutation.isPending) {
-      return VoiceMessageService.getInProgressMessage().message;
+      return "Processing All ESM Samples...";
     }
     
-    if (!validationData) {
-      return VoiceMessageService.getButtonLabel().message;
+    if (!isReady) {
+      const needed = Math.max(0, 5 - totalCount);
+      return `Need ${needed} more samples (have ${totalCount}/5)`;
     }
 
-    if (!validationData.isReady) {
-      const needed = validationData.missingCount || 5;
-      return VoiceMessageService.getInsufficientSamplesMessage(needed).message;
-    }
-
-    return VoiceMessageService.getButtonLabel().message;
+    return `Create Voice Clone (${totalCount} samples)`;
   };
 
   const isButtonDisabled = () => {
     if (createVoiceCloneMutation.isPending) return true;
-    if (!validationData) return true;
-    return !validationData.isReady;
+    return !isReady;
+  };
+
+  const refetchAll = () => {
+    refetchEmotions();
+    refetchSounds();
+    refetchModulations();
   };
 
   return (
@@ -151,71 +173,74 @@ export default function VoiceCloningTest() {
                 }}
               />
               <Button 
-                onClick={() => refetchValidation()}
+                onClick={() => refetchAll()}
                 variant="outline"
                 disabled={!storyId.trim()}
               >
-                Check
+                Refresh
               </Button>
-            </div>
-            
-            <div>
-              <label className="text-sm font-medium mb-2 block">Category:</label>
-              <Select value={category} onValueChange={(value: 'emotions' | 'sounds' | 'modulations') => setCategory(value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="emotions">Emotions</SelectItem>
-                  <SelectItem value="sounds">Sounds</SelectItem>
-                  <SelectItem value="modulations">Modulations</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
           </div>
 
-          {validationData && (
+          {(emotionsData || soundsData || modulationsData) && (
             <div className="space-y-4">
               {/* Main Status */}
-              <Alert className={validationData.isReady ? "border-green-200 bg-green-50" : "border-orange-200 bg-orange-50"}>
-                {validationData.isReady ? 
+              <Alert className={isReady ? "border-green-200 bg-green-50" : "border-orange-200 bg-orange-50"}>
+                {isReady ? 
                   <CheckCircle className="h-4 w-4 text-green-600" /> : 
                   <AlertCircle className="h-4 w-4 text-orange-500" />
                 }
                 <AlertDescription>
                   <div className="font-medium">
-                    {validationData.isReady ? 
-                      `✅ Ready for voice cloning! You have ${validationData.totalCompletedFromStory || 0} voice samples.` :
-                      `Need ${validationData.missingCount || 5} more voice samples to start cloning.`
+                    {isReady ? 
+                      `✅ Ready for voice cloning! You have ${totalCount} total ESM samples.` :
+                      `Need ${Math.max(0, 5 - totalCount)} more ESM samples to start cloning.`
                     }
                   </div>
                 </AlertDescription>
               </Alert>
 
-              {/* Progress Details */}
-              <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+              {/* ESM Category Breakdown */}
+              <div className="bg-gray-50 rounded-lg p-4 space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="font-medium">Voice Sample Progress</span>
+                  <span className="font-medium">ESM Sample Breakdown</span>
                   <span className="text-sm text-gray-600">
-                    {validationData.totalCompletedFromStory || 0} / {validationData.minRequired || 5} required
+                    {totalCount} / 5 minimum required
                   </span>
                 </div>
                 
                 <div className="w-full bg-gray-200 rounded-full h-3">
                   <div 
                     className={`h-3 rounded-full transition-all duration-300 ${
-                      validationData.isReady ? 'bg-green-500' : 'bg-blue-500'
+                      isReady ? 'bg-green-500' : 'bg-blue-500'
                     }`}
-                    style={{ width: `${Math.min(validationData.overallCompletionPercentage, 100)}%` }}
+                    style={{ width: `${Math.min((totalCount / 5) * 100, 100)}%` }}
                   />
                 </div>
 
-                {validationData.completedFromStory?.length > 0 && (
+                {/* Category Counts */}
+                <div className="grid grid-cols-3 gap-4 text-center">
+                  <div className="bg-white rounded-lg p-3">
+                    <div className="text-2xl font-bold text-blue-600">{emotionsCount}</div>
+                    <div className="text-sm text-gray-600">Emotions</div>
+                  </div>
+                  <div className="bg-white rounded-lg p-3">
+                    <div className="text-2xl font-bold text-green-600">{soundsCount}</div>
+                    <div className="text-sm text-gray-600">Sounds</div>
+                  </div>
+                  <div className="bg-white rounded-lg p-3">
+                    <div className="text-2xl font-bold text-purple-600">{modulationsCount}</div>
+                    <div className="text-sm text-gray-600">Modulations</div>
+                  </div>
+                </div>
+
+                {/* Sample Lists */}
+                {emotionsData?.completedFromStory?.length > 0 && (
                   <div className="text-sm">
-                    <span className="font-medium text-green-600">Your recorded samples:</span>
+                    <span className="font-medium text-blue-600">Recorded Emotions:</span>
                     <div className="mt-1 flex flex-wrap gap-1">
-                      {validationData.completedFromStory.map((item: string, index: number) => (
-                        <Badge key={index} variant="secondary" className="text-xs">
+                      {emotionsData.completedFromStory.map((item: string, index: number) => (
+                        <Badge key={index} variant="secondary" className="text-xs bg-blue-100">
                           {item}
                         </Badge>
                       ))}
@@ -223,22 +248,31 @@ export default function VoiceCloningTest() {
                   </div>
                 )}
 
-                <div className="text-sm">
-                  <span className="font-medium text-gray-600">Available in this story:</span>
-                  <div className="mt-1 flex flex-wrap gap-1">
-                    {validationData.allAvailableItems?.map((item: string, index: number) => (
-                      <Badge 
-                        key={index} 
-                        variant="outline" 
-                        className={`text-xs ${
-                          validationData.completedFromStory?.includes(item) ? 'bg-green-100 border-green-300' : ''
-                        }`}
-                      >
-                        {item}
-                      </Badge>
-                    ))}
+                {soundsData?.completedFromStory?.length > 0 && (
+                  <div className="text-sm">
+                    <span className="font-medium text-green-600">Recorded Sounds:</span>
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {soundsData.completedFromStory.map((item: string, index: number) => (
+                        <Badge key={index} variant="secondary" className="text-xs bg-green-100">
+                          {item}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
+
+                {modulationsData?.completedFromStory?.length > 0 && (
+                  <div className="text-sm">
+                    <span className="font-medium text-purple-600">Recorded Modulations:</span>
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {modulationsData.completedFromStory.map((item: string, index: number) => (
+                        <Badge key={index} variant="secondary" className="text-xs bg-purple-100">
+                          {item}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -292,10 +326,9 @@ export default function VoiceCloningTest() {
 
       <div className="text-center text-sm text-gray-500 max-w-2xl mx-auto">
         <p>
-          This test page calls the manual voice cloning endpoints. 
-          Cost estimates are captured internally but hidden from the UI as requested.
-          The system processes all categories (emotions, sounds, modulations) simultaneously
-          while maintaining individual voice clone records for future expansion.
+          MVP1 ElevenLabs Integration: All ESM samples (emotions, sounds, modulations) are sent together to create one universal narrator voice.
+          The system requires a minimum of 5 total ESM samples from any combination of categories.
+          Your narrator voice will be stored across all ESM recordings for future story narration.
         </p>
       </div>
     </div>
