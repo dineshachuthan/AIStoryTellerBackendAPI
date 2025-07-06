@@ -5542,8 +5542,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const analysisData = analysis.analysisData as any;
       
-      // Get user's recorded voice samples (all categories combined)
-      const userSamples = await storage.getUserVoiceSamples(userId);
+      // Get user's ESM recordings using consistent ESM architecture
+      const userEsmRecordings = await storage.getUserEsmRecordings(userId);
       
       // Extract all available items from story analysis with proper null checks
       const availableEmotions = (analysisData.emotions || []).map((e: any) => e.emotion).filter(Boolean);
@@ -5561,33 +5561,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...availableModulations
       ].filter(Boolean);
       
-      // Get user's completed samples for the selected category
+      // Get user's completed samples for the selected category using ESM data
       let completedSamples: string[] = [];
       let categoryItems: string[] = [];
       
       if (category === 'emotions') {
         categoryItems = availableEmotions;
-        completedSamples = (userSamples || [])
-          .filter((s: any) => s && (s.sampleType === 'emotion' || s.sampleType === 'emotions'))
-          .map((s: any) => s.label ? s.label.replace('emotions-', '') : '')
+        completedSamples = userEsmRecordings
+          .filter(recording => recording.category === 1)
+          .map(recording => recording.name)
           .filter(Boolean);
       } else if (category === 'sounds') {
         categoryItems = availableSounds;
-        completedSamples = (userSamples || [])
-          .filter((s: any) => s && s.sampleType === 'sounds')
-          .map((s: any) => s.label ? s.label.replace('sounds-', '') : '')
+        completedSamples = userEsmRecordings
+          .filter(recording => recording.category === 2)
+          .map(recording => recording.name)
           .filter(Boolean);
       } else if (category === 'modulations') {
         categoryItems = availableModulations;
-        completedSamples = (userSamples || [])
-          .filter((s: any) => s && s.sampleType === 'modulations')
-          .map((s: any) => s.label ? s.label.replace('modulations-', '') : '')
+        completedSamples = userEsmRecordings
+          .filter(recording => recording.category === 3)
+          .map(recording => recording.name)
           .filter(Boolean);
       }
       
-      // Get all user's voice samples (any category) with proper null checks
-      const allUserSamples = (userSamples || [])
-        .map((s: any) => s && s.label ? s.label.replace(/^(emotions|sounds|modulations)-/, '') : '')
+      // Get all user's voice samples (any category) using ESM architecture
+      const allUserSamples = userEsmRecordings
+        .map(recording => recording.name)
         .filter(Boolean);
       
       // Find which story items the user has actually recorded (case-insensitive matching)
@@ -5740,10 +5740,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const allAvailableItems = [...availableEmotions, ...availableSounds, ...availableModulations];
       
-      // Get user's voice samples
-      const userSamples = await storage.getUserVoiceEmotions(userId);
-      const allUserSamples = (userSamples || [])
-        .map((s: any) => s && s.label ? s.label.replace(/^(emotions|sounds|modulations)-/, '') : '')
+      // Get user's ESM recordings using consistent ESM architecture
+      const userEsmRecordings = await storage.getUserEsmRecordings(userId);
+      const allUserSamples = userEsmRecordings
+        .map(recording => recording.name)
         .filter(Boolean);
       
       // Check case-insensitive matching
