@@ -60,7 +60,8 @@ export interface IStorage {
   updateEsmRef(esmRefId: number, updates: Partial<{ sample_text: string; display_name: string; description: string }>): Promise<void>;
   
   // User ESM Data
-  getUserEsm(userId: string, esmRefId: number): Promise<any | null>;
+  // getUserEsm(userId: string, esmRefId: number): Promise<any | null>; // COMMENTED OUT - use getUserEsmByRef instead
+  getUserEsmByRef(userId: string, esmRefId: number): Promise<any | null>;
   createUserEsm(userEsm: {
     user_id: string;
     esm_ref_id: number;
