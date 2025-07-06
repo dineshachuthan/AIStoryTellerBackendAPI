@@ -4931,10 +4931,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const { voiceTrainingService } = await import('./voice-training-service');
       
-      // Check if user has enough samples for this category using actual voice samples
-      const userVoiceSamples = await storage.getUserVoiceEmotions(userId);
-      const uniqueEmotions = [...new Set(userVoiceSamples.map(sample => sample.emotion))];
-      const categoryCount = uniqueEmotions.length;
+      // Check if user has enough samples for this category using ESM recordings
+      const userEsmRecordings = await storage.getUserEsmRecordings(userId);
+      const categoryRecordings = userEsmRecordings.filter(recording => {
+        const categoryId = category === 'emotions' ? 1 : category === 'sounds' ? 2 : 3;
+        return recording.category === categoryId;
+      });
+      const categoryCount = categoryRecordings.length;
       
       if (categoryCount < 5) {
         return res.status(400).json({ 
