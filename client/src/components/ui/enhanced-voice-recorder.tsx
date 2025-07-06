@@ -547,7 +547,7 @@ export function EnhancedVoiceRecorder({
                     : tempRecording?.duration 
                       ? `${tempRecording.duration.toFixed(1)}s ${tempRecording.duration >= 5 ? "✓" : "⚠️"}`
                       : recordedSample?.duration 
-                        ? `${recordedSample.duration.toFixed(1)}s ${recordedSample.duration >= 5 ? "✓" : "⚠️"}`
+                        ? `${parseFloat(recordedSample.duration).toFixed(1)}s ${parseFloat(recordedSample.duration) >= 5 ? "✓" : "⚠️"}`
                         : `${formatTime(maxRecordingTime)} max`
                 }
               </span>
