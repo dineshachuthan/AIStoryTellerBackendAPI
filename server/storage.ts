@@ -1835,8 +1835,8 @@ export class DatabaseStorage implements IStorage {
    */
   async createUserEsm(data: any): Promise<any> {
     const sampleCount = data.sample_count ?? 0;
-    const qualityTier = data.quality_tier ?? 1;
-    const voiceCloningStatus = data.voice_cloning_status ?? 'inactive';
+    const qualityTier = data.quality_tier ?? 'none';
+    const voiceCloningStatus = data.voice_cloning_status ?? 'not_started';
     const createdBy = data.created_by ?? data.user_id;
     
     const result = await db.execute(
