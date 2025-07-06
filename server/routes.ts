@@ -4362,14 +4362,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Save audio file
       await fs.writeFile(audioPath, audioBuffer);
       
-      // Save voice sample using existing working storage methods  
-      await storage.createUserVoiceEmotion({
-        userId: userId,  // Use TypeScript field name (Drizzle handles DB column mapping)
-        sampleType: 'emotion',
-        label: emotionKey,
-        audioUrl: `/audio/${audioPath}`,
+      // Save using ESM system - need to find or create user_esm record first
+      const emotionName = emotionKey;
+      
+      // Get or create ESM reference
+      let esmRef = await storage.getEsmRef(1, emotionName); // category 1 = emotions
+      if (!esmRef) {
+        // Create new ESM reference if doesn't exist
+        esmRef = await storage.createEsmRef({
+          category: 1,
+          name: emotionName,
+          display_name: emotionName.charAt(0).toUpperCase() + emotionName.slice(1),
+          sample_text: `Sample text for ${emotionName}`,
+          intensity: 5,
+          created_by: userId
+        });
+      }
+      
+      // Get or create user_esm record
+      let userEsm = await storage.getUserEsmByRef(userId, esmRef.esm_ref_id);
+      if (!userEsm) {
+        userEsm = await storage.createUserEsm({
+          user_id: userId,
+          esm_ref_id: esmRef.esm_ref_id,
+          sample_count: 0,
+          quality_tier: 1,
+          voice_cloning_status: 'inactive'
+        });
+      }
+      
+      // Create the actual recording
+      await storage.createUserEsmRecording({
+        user_esm_id: userEsm.user_esm_id,
+        audio_url: `/cache/user-voice-modulations/${userId}/${audioPath}`,
         duration: duration,
-        recordedAt: new Date()
+        file_size: audioBuffer.length,
+        created_by: userId
       });
 
       res.json({ 

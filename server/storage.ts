@@ -1,4 +1,4 @@
-import { users, localUsers, userProviders, userVoiceSamples, stories, storyCharacters, storyEmotions, characters, conversations, messages, storyCollaborations, storyGroups, storyGroupMembers, characterVoiceAssignments, storyPlaybacks, storyAnalyses, storyNarrations, audioFiles, videoGenerations, type User, type InsertUser, type UpsertUser, type UserProvider, type InsertUserProvider, type LocalUser, type InsertLocalUser, type UserVoiceSample, type InsertUserVoiceSample, type Story, type InsertStory, type StoryCharacter, type InsertStoryCharacter, type StoryEmotion, type InsertStoryEmotion, type Character, type InsertCharacter, type Conversation, type InsertConversation, type Message, type InsertMessage, type StoryCollaboration, type InsertStoryCollaboration, type StoryGroup, type InsertStoryGroup, type StoryGroupMember, type InsertStoryGroupMember, type CharacterVoiceAssignment, type InsertCharacterVoiceAssignment, type StoryPlayback, type InsertStoryPlayback, type StoryAnalysis, type InsertStoryAnalysis, type StoryNarration, type InsertStoryNarration, type AudioFile, type InsertAudioFile } from "@shared/schema";
+import { users, localUsers, userProviders, stories, storyCharacters, storyEmotions, characters, conversations, messages, storyCollaborations, storyGroups, storyGroupMembers, characterVoiceAssignments, storyPlaybacks, storyAnalyses, storyNarrations, audioFiles, videoGenerations, type User, type InsertUser, type UpsertUser, type UserProvider, type InsertUserProvider, type LocalUser, type InsertLocalUser, type Story, type InsertStory, type StoryCharacter, type InsertStoryCharacter, type StoryEmotion, type InsertStoryEmotion, type Character, type InsertCharacter, type Conversation, type InsertConversation, type Message, type InsertMessage, type StoryCollaboration, type InsertStoryCollaboration, type StoryGroup, type InsertStoryGroup, type StoryGroupMember, type InsertStoryGroupMember, type CharacterVoiceAssignment, type InsertCharacterVoiceAssignment, type StoryPlayback, type InsertStoryPlayback, type StoryAnalysis, type InsertStoryAnalysis, type StoryNarration, type InsertStoryNarration, type AudioFile, type InsertAudioFile } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, like, lt, sql } from "drizzle-orm";
 // Content hash functionality moved to unified cache architecture
@@ -599,23 +599,25 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserTotalSamplesCount(userId: string): Promise<number> {
-    const result = await db.select({ count: sql<number>`count(*)` })
-      .from(userVoiceSamples)
-      .where(and(
-        eq(userVoiceSamples.userId, userId),
-        eq(userVoiceSamples.isCompleted, true)
-      ));
-    return result[0]?.count || 0;
+    // Use ESM system for count
+    const result = await db.execute(
+      sql`SELECT COUNT(*) as count 
+          FROM user_esm_recordings uer
+          JOIN user_esm ue ON uer.user_esm_id = ue.user_esm_id
+          WHERE ue.user_id = ${userId}`
+    );
+    return Number(result.rows[0]?.count) || 0;
   }
 
-  async getUserVoiceSample(userId: string, label: string): Promise<UserVoiceSample | undefined> {
-    const [sample] = await db.select().from(userVoiceSamples).where(and(eq(userVoiceSamples.userId, userId), eq(userVoiceSamples.label, label)));
-    return sample || undefined;
+  async getUserVoiceSample(userId: string, label: string): Promise<any | undefined> {
+    // Use ESM system
+    const samples = await this.getAllUserVoiceSamples(userId);
+    return samples.find(sample => sample.label === label);
   }
 
-  async createUserVoiceSample(sample: InsertUserVoiceSample): Promise<UserVoiceSample> {
-    const [created] = await db.insert(userVoiceSamples).values(sample).returning();
-    return created;
+  async createUserVoiceSample(sample: any): Promise<any> {
+    // Use ESM system
+    return await this.createUserVoiceEmotion(sample);
   }
 
   async updateUserVoiceSample(id: number, sample: Partial<InsertUserVoiceSample>): Promise<void> {
@@ -638,7 +640,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteUserVoiceSample(id: number): Promise<void> {
-    await db.delete(userVoiceSamples).where(eq(userVoiceSamples.id, id));
+    // Use ESM system
+    await db.execute(
+      sql`DELETE FROM user_esm_recordings WHERE user_esm_recordings_id = ${id}`
+    );
   }
 
   async getUserVoiceProgress(userId: string): Promise<{ completed: number; total: number; percentage: number }> {
@@ -1120,22 +1125,30 @@ export class DatabaseStorage implements IStorage {
 
   // User Voice Emotions (for voice samples service)
   async getUserVoiceEmotions(userId: string, storyId?: number): Promise<any[]> {
-    // Note: userVoiceSamples table doesn't have storyId column, so we ignore storyId parameter
-    return await db.select().from(userVoiceSamples)
-      .where(eq(userVoiceSamples.userId, userId));
+    // Use ESM system for voice recordings
+    return await this.getAllUserVoiceSamples(userId);
   }
 
-  async createUserVoiceEmotion(emotion: any): Promise<any> {
-    const [result] = await db.insert(userVoiceSamples).values(emotion).returning();
-    return result;
+  async createUserVoiceEmotion(data: any): Promise<any> {
+    // Use ESM system - need to create user_esm_recordings entry
+    const result = await db.execute(
+      sql`INSERT INTO user_esm_recordings (user_esm_id, audio_url, duration, file_size, audio_quality_score, transcribed_text, created_by, created_date)
+          VALUES (${data.user_esm_id}, ${data.audioUrl}, ${data.duration}, ${data.file_size || 0}, ${data.audio_quality_score || 0.8}, ${data.transcribed_text || ''}, ${data.userId}, NOW())
+          RETURNING *`
+    );
+    return result.rows[0];
   }
 
   async deleteUserVoiceEmotion(userId: string, emotion: string): Promise<void> {
-    await db.delete(userVoiceSamples)
-      .where(and(
-        eq(userVoiceSamples.userId, userId),
-        eq(userVoiceSamples.label, emotion)
-      ));
+    // Use ESM system to delete recordings
+    await db.execute(
+      sql`DELETE FROM user_esm_recordings 
+          WHERE user_esm_id IN (
+            SELECT ue.user_esm_id FROM user_esm ue 
+            JOIN esm_ref er ON ue.esm_ref_id = er.esm_ref_id 
+            WHERE ue.user_id = ${userId} AND er.name = ${emotion}
+          )`
+    );
   }
 
   // Emotion Templates (simple implementation)
@@ -1790,7 +1803,23 @@ export class DatabaseStorage implements IStorage {
   async createUserEsmRecording(data: any): Promise<any> {
     const result = await db.execute(
       sql`INSERT INTO user_esm_recordings (user_esm_id, audio_url, duration, file_size, audio_quality_score, transcribed_text, created_by, created_date)
-          VALUES (${data.user_esm_id}, ${data.audio_url}, ${data.duration}, ${data.file_size}, ${data.audio_quality_score}, ${data.transcribed_text}, ${data.created_by}, NOW())
+          VALUES (${data.user_esm_id}, ${data.audio_url}, ${data.duration}, ${data.file_size || 0}, ${data.audio_quality_score || 0.8}, ${data.transcribed_text || ''}, ${data.created_by}, NOW())
+          RETURNING *`
+    );
+    return result.rows[0];
+  }
+
+  async getUserEsmByRef(userId: string, esmRefId: number): Promise<any | null> {
+    const result = await db.execute(
+      sql`SELECT * FROM user_esm WHERE user_id = ${userId} AND esm_ref_id = ${esmRefId} LIMIT 1`
+    );
+    return result.rows[0] || null;
+  }
+
+  async createUserEsm(data: any): Promise<any> {
+    const result = await db.execute(
+      sql`INSERT INTO user_esm (user_id, esm_ref_id, sample_count, quality_tier, voice_cloning_status, created_date)
+          VALUES (${data.user_id}, ${data.esm_ref_id}, ${data.sample_count || 0}, ${data.quality_tier || 1}, ${data.voice_cloning_status || 'inactive'}, NOW())
           RETURNING *`
     );
     return result.rows[0];
