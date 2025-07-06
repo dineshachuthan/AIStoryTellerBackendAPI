@@ -269,6 +269,19 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Technical Notes**: Would extend the current image caching system to handle user-uploaded content
 - **Priority**: Medium (requested but deferred for future implementation)
 
+## Database Tables Missing Storage Mappings
+
+### Critical Missing Storage Methods (15 tables):
+**State Management:** app_states, state_transitions
+**Reference Data:** character_archetypes, character_assets, story_scenes, story_modulation_requirements  
+**User Data:** user_character_preferences, user_session_metadata, story_user_confidence
+**ESM System:** user_esm (partial), esm_ref (partial)
+**Cache/Analysis:** ai_asset_cache, story_analysis_cache, reference_roleplay_analyses, reference_stories, reference_story_analyses
+**Story Management:** story_customizations
+**Voice System:** voice_cloning_jobs (partial)
+
+*Note: Most use specialized managers or are rarely modified reference data*
+
 ## Changelog
 - January 05, 2025: ✅ **VOICE SAMPLE RECORDING PERSISTENCE BUG COMPLETELY RESOLVED** - File Path Emotion Extraction and Status Icon Logic Fixed
   - **FIXED ROOT CAUSE**: Database had `emotion: undefined` but actual emotion names were embedded in file paths like `emotions-frustration_timestamp.mp3`
