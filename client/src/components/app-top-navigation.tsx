@@ -99,13 +99,6 @@ export function AppTopNavigation() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56 bg-dark-card border-gray-700">
               <DropdownMenuItem 
-                onClick={() => setLocation("/profile")}
-                className="text-white hover:bg-gray-700 focus:bg-gray-700"
-              >
-                <User className="mr-2 h-4 w-4" />
-                <span>Profile</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem 
                 onClick={() => window.location.href = '/api/auth/logout'}
                 className="text-red-400 hover:bg-gray-700 focus:bg-gray-700"
               >
