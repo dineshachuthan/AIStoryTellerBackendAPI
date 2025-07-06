@@ -49,7 +49,10 @@ export default function VoiceCloningTest() {
   const soundsCount = soundsData?.totalCompletedFromStory || 0;
   const modulationsCount = modulationsData?.totalCompletedFromStory || 0;
   const totalCount = emotionsCount + soundsCount + modulationsCount;
-  const isReady = totalCount >= 5;
+  
+  // Use overall ESM count from any category response (they should all have the same totalEsmCount)
+  const overallEsmCount = emotionsData?.totalEsmCount || soundsData?.totalEsmCount || modulationsData?.totalEsmCount || 0;
+  const isReady = overallEsmCount >= 5;
 
   // Get job status when we have an active job
   const { data: jobStatus } = useQuery({
@@ -193,8 +196,8 @@ export default function VoiceCloningTest() {
                 <AlertDescription>
                   <div className="font-medium">
                     {isReady ? 
-                      `✅ Ready for voice cloning! You have ${totalCount} total ESM samples.` :
-                      `Need ${Math.max(0, 5 - totalCount)} more ESM samples to start cloning.`
+                      `✅ Ready for voice cloning! You have ${overallEsmCount} total ESM samples.` :
+                      `Need ${Math.max(0, 5 - overallEsmCount)} more ESM samples to start cloning.`
                     }
                   </div>
                 </AlertDescription>
@@ -205,7 +208,7 @@ export default function VoiceCloningTest() {
                 <div className="flex items-center justify-between">
                   <span className="font-medium">ESM Sample Breakdown</span>
                   <span className="text-sm text-gray-600">
-                    {totalCount} / 5 minimum required
+                    {overallEsmCount} / 5 minimum required
                   </span>
                 </div>
                 
@@ -214,7 +217,7 @@ export default function VoiceCloningTest() {
                     className={`h-3 rounded-full transition-all duration-300 ${
                       isReady ? 'bg-green-500' : 'bg-blue-500'
                     }`}
-                    style={{ width: `${Math.min((totalCount / 5) * 100, 100)}%` }}
+                    style={{ width: `${Math.min((overallEsmCount / 5) * 100, 100)}%` }}
                   />
                 </div>
 
