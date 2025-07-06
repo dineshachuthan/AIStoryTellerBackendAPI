@@ -447,7 +447,7 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
                               endpoint: `/api/stories/${storyId}/voice-samples`,
                               payload: {
                                 itemName: emotionName,
-                                category: 1,
+                                category: category.id === 'emotions' ? 1 : category.id === 'sounds' ? 2 : 3,
                                 storyId: storyId,
                                 intensity: intensity
                               },
