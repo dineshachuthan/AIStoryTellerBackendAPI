@@ -22,7 +22,10 @@ export default function VoiceCloningTest() {
     queryKey: ["/api/voice-cloning/validation", storyId, category],
     queryFn: async () => {
       if (!storyId || !category) return null;
-      return await apiRequest(`/api/voice-cloning/validation/${storyId}/${category}`);
+      console.log(`🔍 Frontend making validation request for story ${storyId}, category ${category}`);
+      const result = await apiRequest(`/api/voice-cloning/validation/${storyId}/${category}`);
+      console.log(`📊 Validation response:`, result);
+      return result;
     },
     enabled: !!storyId && !!category
   });

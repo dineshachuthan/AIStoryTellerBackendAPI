@@ -5611,6 +5611,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('Available sounds:', availableSounds);
         console.log('Available modulations:', availableModulations);
         console.log('All available items:', allAvailableItems);
+        console.log('User ESM recordings raw:', userEsmRecordings);
         console.log('User samples (cleaned):', allUserSamples);
         console.log('Completed from story:', completedFromStory);
         console.log('Min required:', minRequired);
