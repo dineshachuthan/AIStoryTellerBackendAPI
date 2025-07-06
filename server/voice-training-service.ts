@@ -132,20 +132,21 @@ export class VoiceTrainingService {
           samplesToUpdate.push(esmRecording.id); // Track ESM recording ID for narrator voice storage
         }
 
-        console.log(`[HybridCloning] Collected ${hybridSamples.length} emotion samples for hybrid voice cloning`);
-        
-        // Lock samples before training to prevent modification
-        console.log(`[HybridCloning] Locking ${samplesToLock.length} voice samples during training`);
-        for (const sampleId of samplesToLock) {
-          try {
-            await storage.updateUserVoiceSample(sampleId, {
-              isLocked: true,
-              lockedAt: new Date()
-            });
-          } catch (error) {
-            console.error(`[HybridCloning] Error locking sample ${sampleId}:`, error);
-          }
-        }
+        // OLD HYBRID CODE - Commented out for MVP1 implementation
+        // console.log(`[HybridCloning] Collected ${hybridSamples.length} emotion samples for hybrid voice cloning`);
+        // 
+        // // Lock samples before training to prevent modification
+        // console.log(`[HybridCloning] Locking ${samplesToLock.length} voice samples during training`);
+        // for (const sampleId of samplesToLock) {
+        //   try {
+        //     await storage.updateUserVoiceSample(sampleId, {
+        //       isLocked: true,
+        //       lockedAt: new Date()
+        //     });
+        //   } catch (error) {
+        //     console.error(`[HybridCloning] Error locking sample ${sampleId}:`, error);
+        //   }
+        // }
 
         console.log(`[MVP1] Collected ${mvp1Samples.length} ESM samples for MVP1 voice cloning`);
         
@@ -200,20 +201,20 @@ export class VoiceTrainingService {
         await this.storeMVP1NarratorVoiceInAllEsmRecordings(userId, cloneResult.voiceId, samplesToUpdate);
         
         clearTimeout(timeout);
-        console.log(`[HybridCloning] Hybrid voice cloning completed successfully for user ${userId}`);
+        console.log(`[MVP1] MVP1 voice cloning completed successfully for user ${userId}`);
         
         resolve({
           success: true,
           voiceId: cloneResult.voiceId,
-          samplesProcessed: hybridSamples.length
+          samplesProcessed: mvp1Samples.length
         });
         
       } catch (error) {
         clearTimeout(timeout);
-        console.error(`[HybridCloning] Error in hybrid voice cloning:`, error);
+        console.error(`[MVP1] Error in MVP1 voice cloning:`, error);
         resolve({
           success: false,
-          error: error instanceof Error ? error.message : 'Unknown hybrid cloning error',
+          error: error instanceof Error ? error.message : 'Unknown MVP1 cloning error',
           samplesProcessed: 0
         });
       }
@@ -221,7 +222,34 @@ export class VoiceTrainingService {
   }
 
   /**
-   * Store the same voice clone as separate entities for each emotion (MVP1 approach)
+   * MVP1: Store narrator voice ID in ALL ESM recording rows
+   * @param userId - User ID for the voice recordings
+   * @param narratorVoiceId - ElevenLabs voice ID to store in all ESM recordings
+   * @param esmRecordingIds - Array of ESM recording IDs to update
+   */
+  private async storeMVP1NarratorVoiceInAllEsmRecordings(userId: string, narratorVoiceId: string, esmRecordingIds: number[]): Promise<void> {
+    console.log(`[MVP1] Storing narrator voice ${narratorVoiceId} in ${esmRecordingIds.length} ESM recordings for user ${userId}`);
+    
+    for (const esmRecordingId of esmRecordingIds) {
+      try {
+        // Update ESM recording with narrator voice ID
+        await storage.updateUserEsmRecording(esmRecordingId, {
+          narrator_voice_id: narratorVoiceId,
+          updated_at: new Date()
+        });
+        
+        console.log(`[MVP1] ✅ Updated ESM recording ${esmRecordingId} with narrator voice ${narratorVoiceId}`);
+      } catch (error) {
+        console.error(`[MVP1] Error updating ESM recording ${esmRecordingId}:`, error);
+      }
+    }
+    
+    console.log(`[MVP1] Successfully stored narrator voice ID in all ${esmRecordingIds.length} ESM recordings`);
+  }
+
+  /**
+   * OLD HYBRID: Store the same voice clone as separate entities for each emotion (MVP1 approach)
+   * COMMENTED OUT - Using MVP1 approach instead
    */
   private async storeHybridVoiceCloneForAllEmotions(userId: string, voiceId: string, emotions: string[]): Promise<void> {
     console.log(`[HybridCloning] Storing voice clone ${voiceId} as separate entities for ${emotions.length} emotions`);
