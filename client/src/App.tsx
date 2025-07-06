@@ -22,6 +22,7 @@ import StoryLibrary from "@/pages/story-library";
 import StoryCollaboration from "@/pages/story-collaboration";
 import VoiceModulationTest from "@/pages/voice-modulation-test";
 import VoiceCloningTest from "@/pages/voice-cloning-test";
+import VoiceCloningTest1 from "@/pages/voice-cloning-test1";
 import CollaborativeRoleplay from "@/pages/collaborative-roleplay";
 import Invitation from "@/pages/invitation";
 import RoleplayRecording from "@/pages/roleplay-recording";
@@ -89,6 +90,7 @@ function AppContent() {
               <Route path="/roleplay/:token" component={RoleplayRecording} />
               <Route path="/voice-test" component={VoiceModulationTest} />
               <Route path="/voice-cloning-test" component={VoiceCloningTest} />
+              <Route path="/voice-cloning-test1" component={VoiceCloningTest1} />
               <Route component={NotFound} />
             </>
           ) : (
