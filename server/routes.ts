@@ -207,28 +207,31 @@ const upload = multer({
 export async function registerRoutes(app: Express): Promise<Server> {
   
   // =============================================================================
-  // VOICE CLONING API ROUTES - REGISTER FIRST TO PREVENT VITE INTERFERENCE
+  // VOICE CLONING DIRECT DATABASE QUERY - BYPASS VITE MIDDLEWARE
   // =============================================================================
   
-  // Simple validation test without middleware
-  app.get('/api/voice-cloning/validation-simple/:storyId/:category', async (req, res) => {
-    console.log('🔥 SIMPLE VALIDATION ENDPOINT HIT');
-    const { storyId, category } = req.params;
+  // Direct database query endpoint
+  app.get('/api/voice-samples/count/:userId/:category', async (req, res) => {
+    const { userId, category } = req.params;
     
     try {
-      // Return simple response to test if route works
+      // Map category to database category ID
+      const categoryId = category === 'emotions' ? 1 : category === 'sounds' ? 2 : 3;
+      
+      // Query actual database for user's recordings and filter by category
+      const allRecordings = await storage.getUserEsmRecordings(userId);
+      const recordings = allRecordings.filter(r => r.category === categoryId);
+      
       res.json({
-        storyId: parseInt(storyId),
         category,
-        test: true,
-        totalCompletedFromStory: 8,
-        completedFromStory: ['frustration', 'surprise', 'resolution'],
-        totalEsmCount: 8,
-        isReady: true
+        categoryId,
+        totalCount: recordings.length,
+        recordings: recordings.map(r => r.emotion || r.sound || r.modulation),
+        isReady: recordings.length >= 5
       });
     } catch (error) {
-      console.error('Simple validation error:', error);
-      res.status(500).json({ error: 'Simple validation failed' });
+      console.error('Direct database query error:', error);
+      res.status(500).json({ error: 'Database query failed' });
     }
   });
 
