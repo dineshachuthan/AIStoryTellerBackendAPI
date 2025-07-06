@@ -205,6 +205,33 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  
+  // =============================================================================
+  // VOICE CLONING API ROUTES - REGISTER FIRST TO PREVENT VITE INTERFERENCE
+  // =============================================================================
+  
+  // Simple validation test without middleware
+  app.get('/api/voice-cloning/validation-simple/:storyId/:category', async (req, res) => {
+    console.log('🔥 SIMPLE VALIDATION ENDPOINT HIT');
+    const { storyId, category } = req.params;
+    
+    try {
+      // Return simple response to test if route works
+      res.json({
+        storyId: parseInt(storyId),
+        category,
+        test: true,
+        totalCompletedFromStory: 8,
+        completedFromStory: ['frustration', 'surprise', 'resolution'],
+        totalEsmCount: 8,
+        isReady: true
+      });
+    } catch (error) {
+      console.error('Simple validation error:', error);
+      res.status(500).json({ error: 'Simple validation failed' });
+    }
+  });
+
   // Serve cached voice modulation files
   app.use('/cache/user-voice-modulations', express.static(path.join(process.cwd(), 'persistent-cache', 'user-voice-modulations')));
 
@@ -5523,6 +5550,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ test: true, timestamp: Date.now() });
   });
 
+  // Simple validation test without middleware
+  app.get('/api/voice-cloning/validation-simple/:storyId/:category', async (req, res) => {
+    console.log('🔥 SIMPLE VALIDATION ENDPOINT HIT');
+    const { storyId, category } = req.params;
+    
+    try {
+      // Return simple response to test if route works
+      res.json({
+        storyId: parseInt(storyId),
+        category,
+        test: true,
+        totalCompletedFromStory: 8,
+        completedFromStory: ['frustration', 'surprise', 'resolution'],
+        totalEsmCount: 8,
+        isReady: true
+      });
+    } catch (error) {
+      console.error('Simple validation error:', error);
+      res.status(500).json({ error: 'Simple validation failed' });
+    }
+  });
+
   // Validation endpoint - Check if story has required samples for cloning
   app.get('/api/voice-cloning/validation/:storyId/:category', requireAuth, async (req, res) => {
 
@@ -5532,8 +5581,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`🚀 VALIDATION ENDPOINT HIT: story=${storyId}, category=${category}, userId=${userId}`);
       
-      
       if (!userId) {
+        console.log(`❌ VALIDATION FAILED: No userId found`);
         return res.status(401).json({ message: 'User not authenticated' });
       }
 
@@ -5647,6 +5696,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`🔍 VALIDATION RESPONSE for story ${storyId}:`, JSON.stringify(response, null, 2));
       console.log(`🚨 FINAL RESPONSE BEING SENT:`, response);
+      console.log(`🌟 ABOUT TO SEND JSON RESPONSE`);
       
       res.json(response);
 
