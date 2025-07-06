@@ -129,8 +129,12 @@ export class VoiceTrainingService {
           const emotionSamples = allVoiceSamples.filter(sample => {
             if (!sample.label) return false;
             
-            // Extract emotion from label (e.g., "emotions-curiosity" -> "curiosity")
-            const labelEmotion = sample.label.replace(/^emotions-/, '').toLowerCase();
+            // PATTERN 1 DEPRECATED - Extract emotion from label (e.g., "emotions-curiosity" -> "curiosity") 
+            // const labelEmotion = sample.label.replace(/^emotions-/, '').toLowerCase();
+            
+            // PATTERN 2: Extract emotion from file path /voice-samples/1/emotion.mp3
+            const fileName = sample.audioUrl.split('/').pop() || '';
+            const labelEmotion = fileName.split('.')[0].toLowerCase();
             return labelEmotion === emotion.toLowerCase();
           });
           

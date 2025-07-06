@@ -4169,26 +4169,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Helper function to find user recording for an item
       const findUserRecording = (itemName: string, category: string) => {
-        const categoryPrefix = category === 'emotions' ? 'emotions' : category === 'sounds' ? 'sounds' : 'modulations';
+        // Pattern 2: Clean organized structure /voice-samples/{categoryId}/{emotionName}.mp3
+        // Categories: 1=emotions, 2=sounds, 3=modulations
+        const categoryId = category === 'emotions' ? '1' : category === 'sounds' ? '2' : '3';
         
         return userRecordings.find(recording => {
-          // Extract emotion from file path since emotion field is undefined
-          if (recording.audio_url) {
+          if (recording.audio_url && recording.audio_url.includes('/voice-samples/')) {
             const fileName = recording.audio_url.split('/').pop() || '';
+            const fileNameWithoutExt = fileName.split('.')[0]; // e.g., "resolution"
+            const pathCategoryId = recording.audio_url.split('/voice-samples/')[1]?.split('/')[0]; // Extract category from path
             
-            // Handle new path format: /voice-samples/1/resolution.mp3
-            if (recording.audio_url.includes('/voice-samples/')) {
-              const fileNameWithoutExt = fileName.split('.')[0]; // e.g., "resolution"
-              return fileNameWithoutExt.toLowerCase() === itemName.toLowerCase();
-            }
-            
-            // Handle old path format: emotions-frustration_1751647642196.mp3
-            const emotionFromPath = fileName.split('_')[0]; // e.g., "emotions-frustration"
-            const expectedFormat = `${categoryPrefix}-${itemName.toLowerCase()}`;
-            return emotionFromPath === expectedFormat || 
-                   emotionFromPath === itemName.toLowerCase() ||
-                   recording.emotion === expectedFormat ||
-                   recording.emotion === itemName.toLowerCase();
+            return pathCategoryId === categoryId && 
+                   fileNameWithoutExt.toLowerCase() === itemName.toLowerCase();
           }
           return false;
         });
@@ -4361,8 +4353,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Save to user voice storage
-      const audioPath = `user-data/${userId}/voice-samples/${category}/${itemName.toLowerCase()}.mp3`;
+      // Save to user voice storage using Pattern 2: /voice-samples/{categoryId}/{emotionName}.mp3
+      const audioPath = `voice-samples/${category}/${itemName.toLowerCase()}.mp3`;
       
       // Ensure directory exists
       const dirPath = path.dirname(audioPath);
