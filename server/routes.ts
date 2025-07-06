@@ -5648,7 +5648,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('User samples (cleaned):', allUserSamples);
         console.log('Completed from story:', completedFromStory);
         console.log('Min required:', minRequired);
-        console.log('Completed count:', completedCount);
+        console.log('Completed count:', categoryCompletedCount);
         console.log('Category filter:', category);
         console.log('Category items:', categoryItems);
         console.log('Completed samples for category:', completedSamples);
