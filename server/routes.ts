@@ -5528,29 +5528,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log(`🔄 VALIDATION ENDPOINT HIT: ${req.params.storyId}/${req.params.category}`);
     console.log(`🔄 REQ USER:`, req.user);
     
-    // TEMPORARY DEBUG: Log immediately
-    const userId = (req.user as any)?.id;
-    console.log(`🧪 TEMP DEBUG: userId=${userId}, storyId=${req.params.storyId}, category=${req.params.category}`);
-    
-    // TEMPORARY: Force return your known data for testing
-    if (req.params.storyId === '75') {
-      const categoryData = {
-        emotions: { count: 3, items: ['frustration', 'surprise', 'resolution'] },
-        sounds: { count: 0, items: [] },
-        modulations: { count: 5, items: ['suspenseful', 'resolution', 'drama', 'psychological', 'frustration'] }
-      };
-      
-      const data = categoryData[req.params.category as keyof typeof categoryData] || { count: 0, items: [] };
-      
-      return res.json({
-        category: req.params.category,
-        totalCompletedFromStory: data.count,
-        completedFromStory: data.items,
-        totalEsmCount: 8,
-        isReady: true,
-        debugMode: true
-      });
-    }
+
     
 
     
@@ -5586,7 +5564,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userEsmRecordings = await storage.getUserEsmRecordings(userId);
       console.log(`✅ Found ${userEsmRecordings.length} ESM recordings for user ${userId}`);
       console.log(`📋 ESM recordings:`, userEsmRecordings.map(r => `${r.name} (cat:${r.category})`).join(', '));
-      console.log(`🧪 TEMP DEBUG: Full ESM data:`, JSON.stringify(userEsmRecordings, null, 2));
+
 
       let analysisData: any;
       try {
