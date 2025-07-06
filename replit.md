@@ -28,6 +28,15 @@ This is a full-stack collaborative storytelling platform that enables users to c
 
 ## CRITICAL DEVELOPMENT RULES (NEVER VIOLATE)
 
+### Zero Tolerance Code Duplication Policy
+**ABSOLUTELY NO DUPLICATE METHODS, FUNCTIONS, OR CODE BLOCKS ANYWHERE IN THE CODEBASE**
+- ALWAYS fix bugs in existing methods - NEVER create new duplicate methods
+- When fixing bugs, use str_replace to modify the existing code directly
+- If method needs complete rewrite, comment out old method first, then replace
+- Before adding ANY new method, search for existing implementations
+- VIOLATION OF THIS RULE CREATES SQL SYNTAX ERRORS AND CODE BLOAT
+- Pattern: Fix existing code → Test → Remove old code if commenting was needed
+
 ### Zero Tolerance Hardcoding Policy
 **ABSOLUTELY NO HARDCODED TEXT, LABELS, BUTTONS, TITLES, TOOLTIPS, OR MESSAGES ANYWHERE IN THE CODEBASE**
 - ALL user-facing text MUST use UIMessages internationalization system from shared/i18n-config.ts

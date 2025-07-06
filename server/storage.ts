@@ -1777,29 +1777,31 @@ export class DatabaseStorage implements IStorage {
     return result.rows;
   }
 
-  async getEsmRef(category: number, name: string): Promise<any> {
-    const result = await db.execute(
-      sql`SELECT * FROM esm_ref WHERE category = ${category} AND name = ${name} LIMIT 1`
-    );
-    return result.rows[0] || null;
-  }
+  // DUPLICATE METHOD - Commented out (was causing SQL conflicts)
+  // async getEsmRef(category: number, name: string): Promise<any> {
+  //   const result = await db.execute(
+  //     sql`SELECT * FROM esm_ref WHERE category = ${category} AND name = ${name} LIMIT 1`
+  //   );
+  //   return result.rows[0] || null;
+  // }
 
   async createEsmRef(data: any): Promise<any> {
     const result = await db.execute(
-      sql`INSERT INTO esm_ref (category, name, display_name, sample_text, intensity, description, ai_variations, created_by, created_date)
+      sql`INSERT INTO esm_ref (category, name, display_name, sample_text, intensity, description, ai_variations, created_by)
           VALUES (${data.category}, ${data.name}, ${data.display_name}, ${data.sample_text}, ${data.intensity}, 
-                  ${data.description}, ${JSON.stringify(data.ai_variations)}, ${data.created_by}, NOW())
+                  ${data.description}, ${JSON.stringify(data.ai_variations)}, ${data.created_by})
           RETURNING *`
     );
     return result.rows[0];
   }
 
-  async getUserEsm(userId: string, esmRefId: number): Promise<any> {
-    const result = await db.execute(
-      sql`SELECT * FROM user_esm WHERE user_id = ${userId} AND esm_ref_id = ${esmRefId} LIMIT 1`
-    );
-    return result.rows[0] || null;
-  }
+  // DUPLICATE METHOD - Commented out (identical to getUserEsmByRef)
+  // async getUserEsm(userId: string, esmRefId: number): Promise<any> {
+  //   const result = await db.execute(
+  //     sql`SELECT * FROM user_esm WHERE user_id = ${userId} AND esm_ref_id = ${esmRefId} LIMIT 1`
+  //   );
+  //   return result.rows[0] || null;
+  // }
 
   async getUserEsmByRef(userId: string, esmRefId: number): Promise<any | null> {
     const result = await db.execute(
