@@ -12,7 +12,7 @@ import { createServer as createViteServer, createLogger } from "vite";
 import { type Server } from "http";
 import viteConfig from "../vite.config";
 import { nanoid } from "nanoid";
-import { createApiExclusionPlugin } from "./vite-api-exclusion-plugin";
+
 
 const viteLogger = createLogger();
 
@@ -41,7 +41,7 @@ export async function setupViteEnhanced(app: Express, server: Server) {
     allowedHosts: true,
   };
 
-  console.log("🎯 Setting up Vite with strategic API route exclusion...");
+  console.log("🎯 Setting up Vite...");
 
   const vite = await createViteServer({
     ...viteConfig,
@@ -56,9 +56,7 @@ export async function setupViteEnhanced(app: Express, server: Server) {
     server: serverOptions,
     appType: "custom",
     plugins: [
-      ...(viteConfig.plugins || []),
-      // Strategic solution: Add API exclusion plugin
-      createApiExclusionPlugin()
+      ...(viteConfig.plugins || [])
     ]
   });
 
@@ -68,9 +66,8 @@ export async function setupViteEnhanced(app: Express, server: Server) {
   app.use("*", async (req, res, next) => {
     const url = req.originalUrl;
 
-    // Double-check: If this is an API route, it should have been handled already
+    // If this is an API route, it should have been handled already
     if (url.startsWith('/api/')) {
-      console.warn(`⚠️ API route ${url} reached catch-all handler - this should not happen with strategic exclusion`);
       return res.status(404).json({ error: "API endpoint not found" });
     }
 
@@ -96,7 +93,7 @@ export async function setupViteEnhanced(app: Express, server: Server) {
     }
   });
 
-  console.log("✅ Vite setup complete with API route exclusion");
+  console.log("✅ Vite setup complete");
 }
 
 /**
