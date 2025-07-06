@@ -4295,10 +4295,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Record/update voice sample for a story (consolidated endpoint)
   app.post('/api/stories/:storyId/voice-samples', requireAuth, upload.single('audio'), async (req, res) => {
+    console.log('🔍 ROUTE START - POST /api/stories/:storyId/voice-samples');
+    console.log('🔍 ROUTE START - Request body:', req.body);
+    console.log('🔍 ROUTE START - File present:', !!req.file);
+    
     try {
       const userId = (req.user as any)?.id;
       const storyId = parseInt(req.params.storyId);
       const { itemName, category } = req.body;
+      
+      console.log('🔍 ROUTE START - Parsed values:', { userId, storyId, itemName, category });
       
       if (!userId) {
         return res.status(401).json({ message: 'User not authenticated' });
