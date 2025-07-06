@@ -208,47 +208,27 @@ This is a full-stack collaborative storytelling platform that enables users to c
 34. Implement voice collaboration marketplace - users can offer narration services
 35. Create voice challenges and competitions for community engagement
 
-### ElevenLabs Voice Cloning Integration (In Progress)
-**Phase 1: Database Schema Implementation**
-1. Extend existing database schema with new tables for voice profiles, emotion voices, audio cache
-2. Run database migrations to create all new tables
-3. Update storage interface to handle new voice cloning data operations
+### ElevenLabs Voice Cloning Integration (Hybrid MVP1/MVP2 Design)
 
-**Phase 2: Voice Training Pipeline**
-4. Create voice profile initialization - when user starts recording samples
-5. Implement emotion voice training trigger - when sufficient samples collected per emotion
-6. Build ElevenLabs voice cloning integration - actual API calls to create emotion-specific voices
-7. Add training status tracking - database updates during cloning process
+**MVP1 DESIGN - Single Narrator Voice Approach**
+- **All ESM Samples Combined**: Send all user voice recordings (emotions, sounds, modulations) together to ElevenLabs
+- **Single Trained Voice**: ElevenLabs returns one trained narrator voice for the user
+- **Universal Storage**: Store the narrator voice ID in each ESM user voice recording row
+- **Voice Modulation**: Apply audio processing factors to make the single voice sound like different emotions/sounds/modulations
+- **Simple & Extensible**: Clean foundation for MVP2 enhancement without architectural changes
 
-**Phase 3: Audio Generation Cache System**
-8. Implement content hashing for audio segments to enable cache lookups
-9. Create audio cache storage - save generated audio with metadata for reuse
-10. Build cache-first audio generation - check cache before external API calls
-11. Add cache cleanup logic - remove expired/unused cached audio
+**MVP2 FUTURE ENHANCEMENT - Multi-Voice Specialization**
+- **Category-Specific Training**: Train separate voices for emotions, sounds, and modulations
+- **Emotion-Specific Voices**: Individual ElevenLabs voices for each emotion type
+- **Advanced Modulation**: Sophisticated audio processing for specialized voice effects
+- **Intelligent Voice Selection**: Smart matching of story content to appropriate trained voice
 
-**Phase 4: Voice Selection Intelligence**
-12. Create voice mapping logic - determine which voice to use per story segment
-13. Implement user voice prioritization - prefer user's cloned voices when available
-14. Build emotion matching system - match story emotions to available user voices
-15. Add intelligent fallback - only to other user emotions, never to hardcoded defaults
-
-**Phase 5: Story Narration Engine**
-16. Enhance story analysis to extract character-emotion mapping per scene
-17. Build narration segment processor - break story into voice-specific segments
-18. Create multi-voice audio generation - coordinate different voices per character
-19. Implement audio sequencing - combine segments into single story narration
-
-**Phase 6: API Integration**
-20. Create voice training status endpoints - show training progress to user
-21. Build narration generation API - single-click story narration
-22. Add cost tracking endpoints - monitor API usage and cache savings
-23. Implement progress tracking - real-time narration generation status
-
-**Phase 7: Frontend Integration**
-24. Extend voice samples UI with training status indicators
-25. Add story narration controls - generate narration button on story pages
-26. Create voice training progress display - show which emotions are training/ready
-27. Build narration player - play generated story audio with metadata
+**CURRENT MVP1 IMPLEMENTATION STATUS**
+- ✅ ESM data architecture completed with consistent category mapping
+- ✅ Voice recording system operational with proper duration requirements
+- ✅ Database schema supports narrator voice storage per ESM recording
+- 🚧 ElevenLabs API integration needs MVP1 implementation (send all samples together)
+- 🚧 Audio processing factors for voice modulation need implementation
 
 ### Contextual Help Bubbles with Character Mascot (Future Enhancement)
 - **Feature**: Interactive help system with animated character guide providing context-aware assistance

@@ -99,54 +99,37 @@ export class VoiceTrainingService {
       }, 120000); // 2 minutes
 
       try {
-        console.log(`[HybridCloning] ============================= STARTING HYBRID VOICE CLONING =============================`);
-        console.log(`[HybridCloning] Beginning MVP1 hybrid voice cloning process for user ${userId} at ${new Date().toISOString()}`);
-        console.log(`[HybridCloning] Hybrid approach: Collect 6 different emotion samples → Create ONE voice clone → Store as separate entities per emotion`);
+        console.log(`[MVP1] ============================= STARTING MVP1 VOICE CLONING =============================`);
+        console.log(`[MVP1] Beginning MVP1 voice cloning process for user ${userId} at ${new Date().toISOString()}`);
+        console.log(`[MVP1] MVP1 approach: Send ALL ESM samples (emotions+sounds+modulations) → Create ONE narrator voice → Store in each ESM row`);
         
-        // Get unique emotions recorded by user
+        // Get ALL ESM recordings for user (emotions, sounds, modulations)
         const { storage } = await import('./storage');
-        const uniqueEmotions = await storage.getUserUniqueEmotions(userId);
+        const allEsmRecordings = await storage.getUserEsmRecordings(userId);
         
-        console.log(`[HybridCloning] User has recorded ${uniqueEmotions.length} unique emotions: [${uniqueEmotions.join(', ')}]`);
+        console.log(`[MVP1] User has recorded ${allEsmRecordings.length} total ESM samples across all categories`);
         
-        if (uniqueEmotions.length < 6) {
+        if (allEsmRecordings.length < this.TRAINING_THRESHOLD) {
           clearTimeout(timeout);
-          console.log(`[HybridCloning] ❌ Insufficient unique emotions for hybrid cloning: ${uniqueEmotions.length}/6 required`);
+          console.log(`[MVP1] ❌ Insufficient ESM samples for voice cloning: ${allEsmRecordings.length}/${this.TRAINING_THRESHOLD} required`);
           return resolve({
             success: false,
-            error: `Need 6 different emotions for hybrid cloning. Currently have: ${uniqueEmotions.length}`,
+            error: `Need ${this.TRAINING_THRESHOLD} ESM samples for voice cloning. Currently have: ${allEsmRecordings.length}`,
             samplesProcessed: 0
           });
         }
 
-        // Get voice samples for each unique emotion (one sample per emotion)
-        const hybridSamples = [];
-        const samplesToLock = []; // Track samples to lock during training
-        const allVoiceSamples = await storage.getUserVoiceSamples(userId);
+        // Prepare all ESM samples for ElevenLabs (emotions, sounds, modulations combined)
+        const mvp1Samples = [];
+        const samplesToUpdate = []; // Track ESM recordings to update with narrator voice ID
         
-        for (const emotion of uniqueEmotions.slice(0, 6)) { // Take first 6 emotions only
-          // Match emotion names case-insensitively and handle label format
-          const emotionSamples = allVoiceSamples.filter(sample => {
-            if (!sample.label) return false;
-            
-            // PATTERN 1 DEPRECATED - Extract emotion from label (e.g., "emotions-curiosity" -> "curiosity") 
-            // const labelEmotion = sample.label.replace(/^emotions-/, '').toLowerCase();
-            
-            // PATTERN 2: Extract emotion from file path /voice-samples/1/emotion.mp3
-            const fileName = sample.audioUrl.split('/').pop() || '';
-            const labelEmotion = fileName.split('.')[0].toLowerCase();
-            return labelEmotion === emotion.toLowerCase();
+        for (const esmRecording of allEsmRecordings) {
+          mvp1Samples.push({
+            emotion: esmRecording.name, // Use the ESM name (e.g. "frustration", "footsteps", "drama")
+            audioUrl: esmRecording.audioUrl,
+            isLocked: false
           });
-          
-          if (emotionSamples.length > 0) {
-            const selectedSample = emotionSamples[0]; // Take first recording for this emotion
-            hybridSamples.push({
-              emotion: emotion,
-              audioUrl: selectedSample.audioUrl,
-              isLocked: false
-            });
-            samplesToLock.push(selectedSample.id); // Track sample ID for locking
-          }
+          samplesToUpdate.push(esmRecording.id); // Track ESM recording ID for narrator voice storage
         }
 
         console.log(`[HybridCloning] Collected ${hybridSamples.length} emotion samples for hybrid voice cloning`);
@@ -164,9 +147,9 @@ export class VoiceTrainingService {
           }
         }
 
-        console.log(`[HybridCloning] Collected ${hybridSamples.length} emotion samples for hybrid voice cloning`);
+        console.log(`[MVP1] Collected ${mvp1Samples.length} ESM samples for MVP1 voice cloning`);
         
-        // Use voice provider to create ONE voice clone from diverse emotion samples
+        // Use voice provider to create ONE narrator voice from ALL ESM samples
         const { VoiceProviderRegistry } = await import('./voice-providers/provider-manager');
         const voiceProvider = VoiceProviderRegistry.getModule();
         
@@ -174,20 +157,20 @@ export class VoiceTrainingService {
           clearTimeout(timeout);
           return resolve({
             success: false,
-            error: 'No voice provider available for hybrid cloning',
+            error: 'No voice provider available for MVP1 cloning',
             samplesProcessed: 0
           });
         }
 
-        // Create ONE voice clone from all emotion samples
-        console.log(`[HybridCloning] Creating ONE voice clone from ${hybridSamples.length} different emotion samples using ${voiceProvider.constructor.name}`);
+        // Create ONE narrator voice from ALL ESM samples (emotions + sounds + modulations)
+        console.log(`[MVP1] Creating ONE narrator voice from ${mvp1Samples.length} ESM samples using ${voiceProvider.constructor.name}`);
         
         // Get or create user voice profile
         let userProfile = await storage.getUserVoiceProfile(userId);
         if (!userProfile) {
           userProfile = await storage.createUserVoiceProfile({
             userId: userId,
-            profileName: `Voice_${userId.substring(0, 8)}_${Date.now()}`,
+            profileName: `Narrator_${userId.substring(0, 8)}_${Date.now()}`,
             baseVoice: 'alloy', // Default OpenAI voice for base reference
             trainingStatus: 'training',
             trainingStartedAt: new Date()
@@ -197,7 +180,7 @@ export class VoiceTrainingService {
         const voiceTrainingRequest = {
           userId: userId,
           voiceProfileId: userProfile.id,
-          samples: hybridSamples
+          samples: mvp1Samples
         };
         
         const cloneResult = await voiceProvider.trainVoice(voiceTrainingRequest);
@@ -206,15 +189,15 @@ export class VoiceTrainingService {
           clearTimeout(timeout);
           return resolve({
             success: false,
-            error: cloneResult.error || 'Failed to create hybrid voice clone',
-            samplesProcessed: hybridSamples.length
+            error: cloneResult.error || 'Failed to create MVP1 narrator voice',
+            samplesProcessed: mvp1Samples.length
           });
         }
 
-        console.log(`[HybridCloning] ✅ SUCCESS: Created voice clone ${cloneResult.voiceId} from ${hybridSamples.length} emotion samples`);
+        console.log(`[MVP1] ✅ SUCCESS: Created narrator voice ${cloneResult.voiceId} from ${mvp1Samples.length} ESM samples`);
         
-        // Store the SAME voice clone as separate entities for each emotion
-        await this.storeHybridVoiceCloneForAllEmotions(userId, cloneResult.voiceId, uniqueEmotions.slice(0, 6));
+        // Store the SAME narrator voice ID in ALL ESM recording rows
+        await this.storeMVP1NarratorVoiceInAllEsmRecordings(userId, cloneResult.voiceId, samplesToUpdate);
         
         clearTimeout(timeout);
         console.log(`[HybridCloning] Hybrid voice cloning completed successfully for user ${userId}`);
