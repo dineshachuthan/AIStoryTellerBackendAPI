@@ -454,8 +454,9 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
                               minDuration: 5,
                               onSaveSuccess: (data) => {
                                 // Invalidate queries to refresh data without page reload
-                                queryClient.invalidateQueries({ queryKey: ['/api/stories', storyId, 'voice-samples'] });
-                                queryClient.invalidateQueries({ queryKey: ['/api/user-voice-emotions', user?.id] });
+                                queryClient.invalidateQueries({ queryKey: [`/api/stories/${storyId}/voice-samples`] });
+                                queryClient.invalidateQueries({ queryKey: [`/api/user-voice-emotions/${user?.id}`] });
+                                console.log('Voice sample saved successfully - invalidating cache');
                               },
                               onSaveError: (error) => {
                                 console.error('Failed to save voice sample:', error);
