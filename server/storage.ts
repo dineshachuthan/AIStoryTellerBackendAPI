@@ -1357,6 +1357,15 @@ export class DatabaseStorage implements IStorage {
       created_by: recording.created_by
     });
     
+    // Build the exact SQL that will be executed
+    const fullSQL = `INSERT INTO user_esm_recordings (user_esm_id, audio_url, duration, file_size, audio_quality_score, transcribed_text, created_by) VALUES (${recording.user_esm_id}, '${recording.audio_url}', ${recording.duration}, ${recording.file_size}, ${audioQualityScore}, ${transcribedText === null ? 'NULL' : `'${transcribedText}'`}, '${recording.created_by}') RETURNING *`;
+    
+    console.log('🔍 FULL SQL STATEMENT:');
+    console.log(fullSQL);
+    console.log('🔍 SQL LENGTH:', fullSQL.length);
+    console.log('🔍 CHARACTER AT POSITION 173:', fullSQL.charAt(172)); // Position 173 is index 172
+    console.log('🔍 CHARACTERS AROUND POSITION 173:', fullSQL.substring(165, 180));
+    
     try {
       const result = await db.execute(
         sql`INSERT INTO user_esm_recordings (user_esm_id, audio_url, duration, file_size, audio_quality_score, transcribed_text, created_by)
@@ -1365,12 +1374,8 @@ export class DatabaseStorage implements IStorage {
       );
       return result.rows[0];
     } catch (sqlError) {
-      console.error('🚨 SQL Error Details:', {
-        message: sqlError.message,
-        position: sqlError.position,
-        query: `INSERT INTO user_esm_recordings VALUES(${recording.user_esm_id}, '${recording.audio_url}', ${recording.duration}, ${recording.file_size}, ${audioQualityScore}, ${transcribedText === null ? 'NULL' : `'${transcribedText}'`}, '${recording.created_by}')`,
-        values: [recording.user_esm_id, recording.audio_url, recording.duration, recording.file_size, audioQualityScore, transcribedText, recording.created_by]
-      });
+      console.error('🚨 SQL ERROR at position', sqlError.position);
+      console.error('🚨 Full error:', sqlError.message);
       throw sqlError;
     }
   }
