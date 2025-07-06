@@ -4175,9 +4175,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Extract emotion from file path since emotion field is undefined
           if (recording.audio_url) {
             const fileName = recording.audio_url.split('/').pop() || '';
-            const emotionFromPath = fileName.split('_')[0]; // e.g., "emotions-frustration" from "emotions-frustration_1751647642196.mp3"
             
-            // Check if this matches what we're looking for
+            // Handle new path format: /voice-samples/1/resolution.mp3
+            if (recording.audio_url.includes('/voice-samples/')) {
+              const fileNameWithoutExt = fileName.split('.')[0]; // e.g., "resolution"
+              return fileNameWithoutExt.toLowerCase() === itemName.toLowerCase();
+            }
+            
+            // Handle old path format: emotions-frustration_1751647642196.mp3
+            const emotionFromPath = fileName.split('_')[0]; // e.g., "emotions-frustration"
             const expectedFormat = `${categoryPrefix}-${itemName.toLowerCase()}`;
             return emotionFromPath === expectedFormat || 
                    emotionFromPath === itemName.toLowerCase() ||
