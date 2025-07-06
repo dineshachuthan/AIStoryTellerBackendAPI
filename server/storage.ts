@@ -1801,17 +1801,6 @@ export class DatabaseStorage implements IStorage {
     return result.rows[0] || null;
   }
 
-  async createUserEsm(data: any): Promise<any> {
-    const result = await db.execute(
-      sql`INSERT INTO user_esm (user_id, esm_ref_id, sample_count, created_by, created_date)
-          VALUES (${data.user_id}, ${data.esm_ref_id}, ${data.sample_count || 1}, ${data.created_by}, NOW())
-          RETURNING *`
-    );
-    return result.rows[0];
-  }
-
-
-
   async getUserEsmByRef(userId: string, esmRefId: number): Promise<any | null> {
     const result = await db.execute(
       sql`SELECT * FROM user_esm WHERE user_id = ${userId} AND esm_ref_id = ${esmRefId} LIMIT 1`
@@ -1821,8 +1810,8 @@ export class DatabaseStorage implements IStorage {
 
   async createUserEsm(data: any): Promise<any> {
     const result = await db.execute(
-      sql`INSERT INTO user_esm (user_id, esm_ref_id, sample_count, quality_tier, voice_cloning_status, created_by, created_date)
-          VALUES (${data.user_id}, ${data.esm_ref_id}, ${data.sample_count || 0}, ${data.quality_tier || 1}, ${data.voice_cloning_status || 'inactive'}, ${data.created_by || data.user_id}, NOW())
+      sql`INSERT INTO user_esm (user_id, esm_ref_id, sample_count, quality_tier, voice_cloning_status, created_by)
+          VALUES (${data.user_id}, ${data.esm_ref_id}, ${data.sample_count || 0}, ${data.quality_tier || 1}, ${data.voice_cloning_status || 'inactive'}, ${data.created_by || data.user_id})
           RETURNING *`
     );
     return result.rows[0];
