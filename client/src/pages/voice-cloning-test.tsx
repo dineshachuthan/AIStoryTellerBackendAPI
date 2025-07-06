@@ -21,7 +21,9 @@ export default function VoiceCloningTest() {
     queryKey: ["/api/voice-cloning/validation", storyId, "emotions"],
     queryFn: async () => {
       if (!storyId) return null;
-      return await apiRequest(`/api/voice-cloning/validation/${storyId}/emotions`);
+      const result = await apiRequest(`/api/voice-cloning/validation/${storyId}/emotions`);
+      console.log('🔍 EMOTIONS API RESPONSE:', result);
+      return result;
     },
     enabled: !!storyId
   });
