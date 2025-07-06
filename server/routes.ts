@@ -5526,19 +5526,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`🔍 VALIDATION REQUEST: story=${storyId}, category=${category}, user=${userId}`);
       
       if (!userId) {
+        console.log('❌ User not authenticated in validation');
         return res.status(401).json({ message: 'User not authenticated' });
       }
 
       // Get story analysis to determine required samples
+      console.log(`📖 Getting story ${storyId}...`);
       const story = await storage.getStory(parseInt(storyId));
       if (!story) {
+        console.log(`❌ Story ${storyId} not found`);
         return res.status(404).json({ message: 'Story not found' });
       }
+      console.log(`✅ Story ${storyId} found: ${story.title}`);
 
+      console.log(`📊 Getting analysis for story ${storyId}...`);
       const analysis = await storage.getStoryAnalysis(parseInt(storyId), 'narrative');
       if (!analysis) {
+        console.log(`❌ Analysis for story ${storyId} not found`);
         return res.status(404).json({ message: 'Story analysis not found' });
       }
+      console.log(`✅ Analysis found for story ${storyId}`);
+
+      console.log(`🎤 Getting ESM recordings for user ${userId}...`);
+      const userEsmRecordings = await storage.getUserEsmRecordings(userId);
+      console.log(`✅ Found ${userEsmRecordings.length} ESM recordings for user ${userId}`);
+      console.log(`📋 ESM recordings:`, userEsmRecordings.map(r => `${r.name} (cat:${r.category})`).join(', '));
 
       let analysisData: any;
       try {
@@ -5552,9 +5564,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error('Failed to parse analysis data:', parseError);
         return res.status(500).json({ message: 'Invalid story analysis data' });
       }
-      
-      // Get user's ESM recordings using consistent ESM architecture
-      const userEsmRecordings = await storage.getUserEsmRecordings(userId);
       
       // Extract all available items from story analysis with proper null checks
       const availableEmotions = (analysisData.emotions || []).map((e: any) => e.emotion).filter(Boolean);
