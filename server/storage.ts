@@ -1197,9 +1197,9 @@ export class DatabaseStorage implements IStorage {
     created_by: string;
   }): Promise<any> {
     const result = await db.execute(
-      sql`INSERT INTO esm_ref (category, name, display_name, sample_text, intensity, description, ai_variations, created_by)
+      sql`INSERT INTO esm_ref (category, name, display_name, sample_text, intensity, description, ai_variations, created_by, created_date)
           VALUES (${esmRef.category}, ${esmRef.name}, ${esmRef.display_name}, ${esmRef.sample_text}, 
-                  ${esmRef.intensity || 5}, ${esmRef.description || null}, ${JSON.stringify(esmRef.ai_variations) || null}, ${esmRef.created_by})
+                  ${esmRef.intensity || 5}, ${esmRef.description || null}, ${JSON.stringify(esmRef.ai_variations) || null}, ${esmRef.created_by}, NOW())
           RETURNING *`
     );
     return result.rows[0];
@@ -1274,8 +1274,8 @@ export class DatabaseStorage implements IStorage {
     created_by: string;
   }): Promise<any> {
     const result = await db.execute(
-      sql`INSERT INTO user_esm (user_id, esm_ref_id, created_by)
-          VALUES (${userEsm.user_id}, ${userEsm.esm_ref_id}, ${userEsm.created_by})
+      sql`INSERT INTO user_esm (user_id, esm_ref_id, created_by, created_date)
+          VALUES (${userEsm.user_id}, ${userEsm.esm_ref_id}, ${userEsm.created_by}, NOW())
           RETURNING *`
     );
     return result.rows[0];
@@ -1818,8 +1818,8 @@ export class DatabaseStorage implements IStorage {
 
   async createUserEsm(data: any): Promise<any> {
     const result = await db.execute(
-      sql`INSERT INTO user_esm (user_id, esm_ref_id, sample_count, quality_tier, voice_cloning_status, created_date)
-          VALUES (${data.user_id}, ${data.esm_ref_id}, ${data.sample_count || 0}, ${data.quality_tier || 1}, ${data.voice_cloning_status || 'inactive'}, NOW())
+      sql`INSERT INTO user_esm (user_id, esm_ref_id, sample_count, quality_tier, voice_cloning_status, created_by, created_date)
+          VALUES (${data.user_id}, ${data.esm_ref_id}, ${data.sample_count || 0}, ${data.quality_tier || 1}, ${data.voice_cloning_status || 'inactive'}, ${data.created_by || data.user_id}, NOW())
           RETURNING *`
     );
     return result.rows[0];
