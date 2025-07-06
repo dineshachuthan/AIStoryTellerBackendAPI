@@ -4380,7 +4380,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Get or create user_esm record
-      let userEsm = await storage.getUserEsmByRef(userId, esmRef.esm_ref_id);
+      let userEsm = await storage.getUserEsm(userId, esmRef.esm_ref_id);
       if (!userEsm) {
         userEsm = await storage.createUserEsm({
           user_id: userId,
@@ -4649,7 +4649,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // 2. Check if user already has this ESM entry
-      let userEsm = await storage.getUserEsmByRef(userId, esmRef.esm_ref_id);
+      let userEsm = await storage.getUserEsm(userId, esmRef.esm_ref_id);
       
       if (!userEsm) {
         console.log(`ESM: Creating user ESM entry for ${emotionName}`);
