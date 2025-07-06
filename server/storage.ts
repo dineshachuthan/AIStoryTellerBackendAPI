@@ -1319,6 +1319,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   // User ESM Recordings Implementation
+  /**
+   * Create new ESM recording for user voice sample
+   * @param recording - Recording data with user_esm_id, audio_url, duration, etc.
+   * @returns Created recording record with ID
+   */
   async createUserEsmRecording(recording: {
     user_esm_id: number;
     audio_url: string;
@@ -1340,8 +1345,7 @@ export class DatabaseStorage implements IStorage {
     
     const result = await db.execute(
       sql`INSERT INTO user_esm_recordings (user_esm_id, audio_url, duration, file_size, audio_quality_score, transcribed_text, created_by)
-          VALUES (${recording.user_esm_id}, ${recording.audio_url}, ${recording.duration}, ${recording.file_size},
-                  ${recording.audio_quality_score || null}, ${recording.transcribed_text || null}, ${recording.created_by})
+          VALUES (${recording.user_esm_id}, ${recording.audio_url}, ${recording.duration}, ${recording.file_size}, ${recording.audio_quality_score}, ${recording.transcribed_text}, ${recording.created_by})
           RETURNING *`
     );
     return result.rows[0];
