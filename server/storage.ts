@@ -1181,9 +1181,11 @@ export class DatabaseStorage implements IStorage {
 
   // ESM Reference Data Implementation
   async getEsmRef(category: number, name: string): Promise<any | null> {
+    console.log('🔍 getEsmRef called with:', { category, name });
     const result = await db.execute(
       sql`SELECT * FROM esm_ref WHERE category = ${category} AND name = ${name} LIMIT 1`
     );
+    console.log('🔍 getEsmRef result:', result.rows[0] ? 'FOUND' : 'NOT FOUND');
     return result.rows[0] || null;
   }
 
@@ -1197,6 +1199,8 @@ export class DatabaseStorage implements IStorage {
     ai_variations?: any;
     created_by: string;
   }): Promise<any> {
+    console.log('🚨 createEsmRef called - THIS SHOULD NOT HAPPEN during voice recording!');
+    console.log('🚨 createEsmRef data:', esmRef);
     const result = await db.execute(
       sql`INSERT INTO esm_ref (category, name, display_name, sample_text, intensity, description, ai_variations, created_by, created_date)
           VALUES (${esmRef.category}, ${esmRef.name}, ${esmRef.display_name}, ${esmRef.sample_text}, 
@@ -1281,9 +1285,11 @@ export class DatabaseStorage implements IStorage {
    * @returns User ESM record with progress data or null if not found
    */
   async getUserEsmByRef(userId: string, esmRefId: number): Promise<any | null> {
+    console.log('🔍 getUserEsmByRef called with:', { userId, esmRefId });
     const result = await db.execute(
       sql`SELECT * FROM user_esm WHERE user_id = ${userId} AND esm_ref_id = ${esmRefId} LIMIT 1`
     );
+    console.log('🔍 getUserEsmByRef result:', result.rows[0] ? 'FOUND' : 'NOT FOUND');
     return result.rows[0] || null;
   }
 
@@ -1292,6 +1298,7 @@ export class DatabaseStorage implements IStorage {
     esm_ref_id: number;
     created_by: string;
   }): Promise<any> {
+    console.log('🔍 createUserEsm called with:', userEsm);
     const result = await db.execute(
       sql`INSERT INTO user_esm (user_id, esm_ref_id, created_by, created_date)
           VALUES (${userEsm.user_id}, ${userEsm.esm_ref_id}, ${userEsm.created_by}, NOW())
