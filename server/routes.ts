@@ -5610,19 +5610,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .map(recording => recording.name)
         .filter(Boolean);
       
-      // Find which story items the user has actually recorded (case-insensitive matching)
-      const completedFromStory = allAvailableItems.filter(item => 
-        allUserSamples.some(userSample => 
+      // Find which story items the user has actually recorded for THIS category (case-insensitive matching)
+      const completedFromStory = categoryItems.filter(item => 
+        completedSamples.some(userSample => 
           userSample.toLowerCase() === item.toLowerCase()
         )
       );
       
-      // Simplified story-level validation logic:
-      // Require minimum 5 samples, maximum 8 samples from ANY category combination
-      const minRequired = Math.max(5, Math.min(allAvailableItems.length, 8));
-      const completedCount = completedFromStory.length;
-      const missingCount = Math.max(0, minRequired - completedCount);
-      const isReady = completedCount >= minRequired;
+      // For MVP1: Show category-specific counts but use total ESM count for readiness
+      const totalEsmCount = userEsmRecordings.length;
+      const categoryCompletedCount = completedFromStory.length;
+      
+      // MVP1 validation: Ready if user has 5+ total ESM samples (any category)
+      const minRequired = 5;
+      const isReady = totalEsmCount >= minRequired;
+      const missingCount = Math.max(0, minRequired - totalEsmCount);
       
       // Debug logging for story 75
       if (parseInt(storyId) === 75) {
@@ -5641,27 +5643,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('Completed samples for category:', completedSamples);
       }
 
-      // For display purposes, show category-specific items
-      const categoryCompletedCount = completedSamples.filter(sample => categoryItems.includes(sample)).length;
-
       const response = {
         category,
         storyId: parseInt(storyId),
-        // Story-level data (for combined validation)
-        allAvailableItems,
-        completedFromStory,
-        totalAvailableInStory: allAvailableItems.length,
-        totalCompletedFromStory: completedCount,
-        minRequired,
-        missingCount,
-        isReady,
-        // Category-specific data (for display)
-        categoryItems,
-        categoryCompleted: completedSamples.filter(sample => categoryItems.includes(sample)),
-        categoryCompletedCount,
+        // MVP1: Return category-specific counts for display
+        totalCompletedFromStory: categoryCompletedCount,  // Count for THIS category
+        completedFromStory: completedFromStory,           // Items completed for THIS category
+        allAvailableItems: categoryItems,                 // Items available for THIS category
+        // MVP1: Overall ESM validation
+        totalEsmCount: totalEsmCount,                     // Total ESM samples across all categories
+        minRequired: minRequired,                         // Minimum required (5)
+        missingCount: missingCount,                       // How many more needed
+        isReady: isReady,                                 // Ready if 5+ total ESM samples
+        // Category-specific data
+        categoryItems: categoryItems,
+        categoryCompleted: completedFromStory,
+        categoryCompletedCount: categoryCompletedCount,
         categoryCompletionPercentage: categoryItems.length > 0 ? Math.round((categoryCompletedCount / categoryItems.length) * 100) : 0,
-        // Overall progress
-        overallCompletionPercentage: minRequired > 0 ? Math.round((completedCount / minRequired) * 100) : 0
+        // Overall progress based on total ESM count
+        overallCompletionPercentage: Math.round((totalEsmCount / minRequired) * 100)
       };
       
       console.log(`🔍 VALIDATION RESPONSE for story ${storyId}:`, JSON.stringify(response, null, 2));
