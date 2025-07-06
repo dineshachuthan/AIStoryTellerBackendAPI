@@ -17,7 +17,7 @@ export function createApiExclusionPlugin() {
           // Strategic exclusion: Skip Vite's internal routing for API calls
           // This allows Express routes registered in registerRoutes() to handle them
           console.log(`🎯 API route excluded from Vite processing: ${req.url}`);
-          return next('route'); // Skip to next router (Express)
+          return; // Don't call next() at all - let Express handle it
         }
         next(); // Continue with Vite's normal processing for non-API routes
       });
