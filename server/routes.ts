@@ -5525,45 +5525,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Validation endpoint - Check if story has required samples for cloning
   app.get('/api/voice-cloning/validation/:storyId/:category', requireAuth, async (req, res) => {
-    console.log(`=== VALIDATION ENDPOINT HIT: ${req.params.storyId}/${req.params.category} ===`);
-    console.log(`USER ID: ${req.user?.id}`);
-    
 
-    
-
-    
     try {
       const { storyId, category } = req.params;
       const userId = (req.user as any)?.id;
       
-      console.log(`🔍 VALIDATION REQUEST: story=${storyId}, category=${category}, user=${userId}`);
       
       if (!userId) {
-        console.log('❌ User not authenticated in validation');
         return res.status(401).json({ message: 'User not authenticated' });
       }
 
-      // Get story analysis to determine required samples
-      console.log(`📖 Getting story ${storyId}...`);
       const story = await storage.getStory(parseInt(storyId));
       if (!story) {
-        console.log(`❌ Story ${storyId} not found`);
         return res.status(404).json({ message: 'Story not found' });
       }
-      console.log(`✅ Story ${storyId} found: ${story.title}`);
 
-      console.log(`📊 Getting analysis for story ${storyId}...`);
       const analysis = await storage.getStoryAnalysis(parseInt(storyId), 'narrative');
       if (!analysis) {
-        console.log(`❌ Analysis for story ${storyId} not found`);
         return res.status(404).json({ message: 'Story analysis not found' });
       }
-      console.log(`✅ Analysis found for story ${storyId}`);
 
-      console.log(`🎤 Getting ESM recordings for user ${userId}...`);
       const userEsmRecordings = await storage.getUserEsmRecordings(userId);
-      console.log(`✅ Found ${userEsmRecordings.length} ESM recordings for user ${userId}`);
-      console.log(`📋 ESM recordings:`, userEsmRecordings.map(r => `${r.name} (cat:${r.category})`).join(', '));
 
 
       let analysisData: any;
@@ -5575,11 +5557,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           analysisData = analysis.analysisData;
         }
       } catch (parseError) {
-        console.error('Failed to parse analysis data:', parseError);
         return res.status(500).json({ message: 'Invalid story analysis data' });
       }
       
-      // Extract all available items from story analysis with proper null checks
       const availableEmotions = (analysisData.emotions || []).map((e: any) => e.emotion).filter(Boolean);
       const availableSounds = (analysisData.soundEffects || []).map((s: any) => s.sound).filter(Boolean);
       const availableModulations = [
@@ -5587,14 +5567,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...(analysisData.genre ? [analysisData.genre] : []),
         ...(analysisData.subGenre ? [analysisData.subGenre] : [])
       ].filter(Boolean);
-      
-      console.log(`🔍 DEBUG - Story Analysis Data:`, {
-        availableEmotions,
-        availableSounds,
-        availableModulations
-      });
-      
-      console.log(`🔍 DEBUG - Analysis Data Raw:`, analysisData?.emotions);
       
       // Combine all available items for the story
       const allAvailableItems = [
@@ -5626,12 +5598,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .map(recording => recording.name)
           .filter(Boolean);
       }
-      
-      console.log(`🔍 DEBUG - User Recordings for ${category}:`, {
-        userEsmRecordings: userEsmRecordings.map(r => ({name: r.name, category: r.category})),
-        categoryItems,
-        completedSamples
-      });
+
       
       // Get all user's voice samples (any category) using ESM architecture
       const allUserSamples = userEsmRecordings
@@ -5653,14 +5620,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const minRequired = 5;
       const isReady = totalEsmCount >= minRequired;
       const missingCount = Math.max(0, minRequired - totalEsmCount);
-      
-      // Debug logging for all stories
-      console.log(`🔍 Debug Story ${storyId} Validation (${category}):`);
-      console.log('Available emotions:', availableEmotions);
-      console.log('Category items:', categoryItems);
-      console.log('Completed samples for category:', completedSamples);
-      console.log('Completed from story:', completedFromStory);
-      console.log('Category completed count:', categoryCompletedCount);
+
 
       const response = {
         category,
