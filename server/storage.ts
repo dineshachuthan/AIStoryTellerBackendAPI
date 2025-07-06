@@ -1309,6 +1309,16 @@ export class DatabaseStorage implements IStorage {
     transcribed_text?: string;
     created_by: string;
   }): Promise<any> {
+    console.log('🎯 Creating ESM recording with data:', {
+      user_esm_id: recording.user_esm_id,
+      audio_url: recording.audio_url,
+      duration: recording.duration,
+      file_size: recording.file_size,
+      audio_quality_score: recording.audio_quality_score,
+      transcribed_text: recording.transcribed_text,
+      created_by: recording.created_by
+    });
+    
     const result = await db.execute(
       sql`INSERT INTO user_esm_recordings (user_esm_id, audio_url, duration, file_size, audio_quality_score, transcribed_text, created_by)
           VALUES (${recording.user_esm_id}, ${recording.audio_url}, ${recording.duration}, ${recording.file_size},
