@@ -5528,18 +5528,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log(`🔄 VALIDATION ENDPOINT HIT: ${req.params.storyId}/${req.params.category}`);
     console.log(`🔄 REQ USER:`, req.user);
     
-    // Immediate test response to verify endpoint is working
-    if (req.params.storyId === '75' && req.params.category === 'emotions') {
-      console.log(`🧪 TEST: Returning test data for emotions`);
-      return res.json({
-        category: 'emotions',
-        totalCompletedFromStory: 3,
-        completedFromStory: ['frustration', 'surprise', 'resolution'],
-        totalEsmCount: 8,
-        isReady: true,
-        testMode: true
-      });
-    }
+
     
     try {
       const { storyId, category } = req.params;
