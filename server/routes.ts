@@ -4393,13 +4393,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Create the actual recording
-      await storage.createUserEsmRecording({
+      const recordingData = {
         user_esm_id: userEsm.user_esm_id,
         audio_url: `/cache/user-voice-modulations/${userId}/${audioPath}`,
         duration: duration,
         file_size: audioBuffer.length,
         created_by: userId
-      });
+      };
+      
+      console.log('🔍 ROUTE LEVEL - About to call createUserEsmRecording with data:', recordingData);
+      console.log('🔍 ROUTE LEVEL - userEsm.user_esm_id type:', typeof userEsm.user_esm_id);
+      console.log('🔍 ROUTE LEVEL - duration type:', typeof duration);
+      console.log('🔍 ROUTE LEVEL - audioBuffer.length type:', typeof audioBuffer.length);
+      
+      await storage.createUserEsmRecording(recordingData);
 
       res.json({ 
         success: true, 
