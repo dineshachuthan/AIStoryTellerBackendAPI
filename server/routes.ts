@@ -5525,8 +5525,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Validation endpoint - Check if story has required samples for cloning
   app.get('/api/voice-cloning/validation/:storyId/:category', requireAuth, async (req, res) => {
-    console.log(`🔄 VALIDATION ENDPOINT HIT: ${req.params.storyId}/${req.params.category}`);
-    console.log(`🔄 REQ USER:`, req.user);
+    console.log(`🚨 VALIDATION ENDPOINT HIT: ${req.params.storyId}/${req.params.category}`);
+    console.log(`🚨 REQ USER:`, req.user);
     
 
     
@@ -5588,6 +5588,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...(analysisData.subGenre ? [analysisData.subGenre] : [])
       ].filter(Boolean);
       
+      console.log(`🔍 DEBUG - Story Analysis Data:`, {
+        availableEmotions,
+        availableSounds,
+        availableModulations
+      });
+      
+      console.log(`🔍 DEBUG - Analysis Data Raw:`, analysisData?.emotions);
+      
       // Combine all available items for the story
       const allAvailableItems = [
         ...availableEmotions,
@@ -5618,6 +5626,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .map(recording => recording.name)
           .filter(Boolean);
       }
+      
+      console.log(`🔍 DEBUG - User Recordings for ${category}:`, {
+        userEsmRecordings: userEsmRecordings.map(r => ({name: r.name, category: r.category})),
+        categoryItems,
+        completedSamples
+      });
       
       // Get all user's voice samples (any category) using ESM architecture
       const allUserSamples = userEsmRecordings
