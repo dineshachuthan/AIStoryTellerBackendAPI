@@ -5517,6 +5517,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // MANUAL VOICE CLONING REST ENDPOINTS  
   // =============================================================================
 
+  // Test endpoint to verify routing
+  app.get('/api/voice-cloning/test', (req, res) => {
+    console.log('🧪 TEST ENDPOINT HIT');
+    res.json({ test: true, timestamp: Date.now() });
+  });
+
   // Validation endpoint - Check if story has required samples for cloning
   app.get('/api/voice-cloning/validation/:storyId/:category', requireAuth, async (req, res) => {
     console.log(`🔄 VALIDATION ENDPOINT HIT: ${req.params.storyId}/${req.params.category}`);
