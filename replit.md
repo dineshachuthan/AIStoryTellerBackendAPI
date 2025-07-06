@@ -37,6 +37,14 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - VIOLATION OF THIS RULE CREATES SQL SYNTAX ERRORS AND CODE BLOAT
 - Pattern: Fix existing code → Test → Remove old code if commenting was needed
 
+### Mandatory Method Documentation Policy
+**ALL METHODS MUST HAVE JSDOC COMMENTS EXPLAINING PURPOSE AND PARAMETERS**
+- Add JSDoc comments above every async method with @param and @returns
+- Explain what the method does, not just repeat the method name
+- Include parameter types and return value descriptions
+- Example: `/** Get user ESM progress by ID @param userId @returns ESM record or null */`
+- This prevents confusion about method purposes and reduces duplicate creation
+
 ### Zero Tolerance Hardcoding Policy
 **ABSOLUTELY NO HARDCODED TEXT, LABELS, BUTTONS, TITLES, TOOLTIPS, OR MESSAGES ANYWHERE IN THE CODEBASE**
 - ALL user-facing text MUST use UIMessages internationalization system from shared/i18n-config.ts

@@ -61,7 +61,7 @@ export interface IStorage {
   
   // User ESM Data
   getUserEsm(userId: string, esmRefId: number): Promise<any | null>;
-  getUserEsmByRef(userId: string, esmRefId: number): Promise<any | null>;
+  // getUserEsmByRef(userId: string, esmRefId: number): Promise<any | null>; // DUPLICATE - use getUserEsm instead
   createUserEsm(userEsm: {
     user_id: string;
     esm_ref_id: number;
@@ -1262,6 +1262,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   // User ESM Data Implementation
+  /**
+   * Get user's ESM progress record by user ID and ESM reference ID
+   * @param userId - User identifier
+   * @param esmRefId - ESM reference table ID (emotion/sound/modulation)
+   * @returns User ESM record with progress data or null if not found
+   */
   async getUserEsm(userId: string, esmRefId: number): Promise<any | null> {
     const result = await db.execute(
       sql`SELECT * FROM user_esm WHERE user_id = ${userId} AND esm_ref_id = ${esmRefId} LIMIT 1`
@@ -1804,12 +1810,13 @@ export class DatabaseStorage implements IStorage {
   //   return result.rows[0] || null;
   // }
 
-  async getUserEsmByRef(userId: string, esmRefId: number): Promise<any | null> {
-    const result = await db.execute(
-      sql`SELECT * FROM user_esm WHERE user_id = ${userId} AND esm_ref_id = ${esmRefId} LIMIT 1`
-    );
-    return result.rows[0] || null;
-  }
+  // DUPLICATE METHOD - Commented out (identical to getUserEsm above)
+  // async getUserEsmByRef(userId: string, esmRefId: number): Promise<any | null> {
+  //   const result = await db.execute(
+  //     sql`SELECT * FROM user_esm WHERE user_id = ${userId} AND esm_ref_id = ${esmRefId} LIMIT 1`
+  //   );
+  //   return result.rows[0] || null;
+  // }
 
   async createUserEsm(data: any): Promise<any> {
     const result = await db.execute(
