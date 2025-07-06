@@ -4,7 +4,7 @@ import { StorySearchPanel } from "@/components/story-search-panel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLocation } from "wouter";
-import { Upload, Mic, Users, FileText, AudioLines, PenTool, Loader2 } from "lucide-react";
+import { Upload, Mic, Users, FileText, AudioLines, PenTool, Loader2, LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { BottomNavigation } from "@/components/bottom-navigation";
@@ -14,7 +14,7 @@ import { defaultStoryConfig } from "@shared/storyConfig";
 
 export default function Home() {
   const [, setLocation] = useLocation();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { toast } = useToast();
   const [isSearchPanelCollapsed, setIsSearchPanelCollapsed] = useState(false);
   const [isCreatingStory, setIsCreatingStory] = useState(false);
@@ -155,20 +155,36 @@ export default function Home() {
                 </Button>
                 
                 <Button
-                  onClick={() => setLocation("/profile")}
-                  variant="ghost"
+                  onClick={async () => {
+                    try {
+                      await logout();
+                      setLocation('/');
+                    } catch (error) {
+                      console.error('Logout failed:', error);
+                    }
+                  }}
+                  variant="outline"
                   size="sm"
-                  className="relative h-8 w-8 rounded-full p-0"
+                  className="border-red-500 text-red-500 hover:bg-red-500/20 hidden sm:flex"
                 >
-                  <Avatar className="h-6 w-6 sm:h-8 sm:w-8">
-                    <AvatarImage 
-                      src={user?.profileImageUrl || undefined} 
-                      alt={user?.displayName || user?.email || 'User'} 
-                    />
-                    <AvatarFallback className="bg-tiktok-red text-white text-xs">
-                      {getUserInitials()}
-                    </AvatarFallback>
-                  </Avatar>
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Logout
+                </Button>
+                
+                <Button
+                  onClick={async () => {
+                    try {
+                      await logout();
+                      setLocation('/');
+                    } catch (error) {
+                      console.error('Logout failed:', error);
+                    }
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="border-red-500 text-red-500 hover:bg-red-500/20 sm:hidden p-2"
+                >
+                  <LogOut className="w-4 h-4" />
                 </Button>
               </div>
             </div>
