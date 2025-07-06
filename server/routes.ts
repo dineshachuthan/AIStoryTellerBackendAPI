@@ -5525,8 +5525,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Validation endpoint - Check if story has required samples for cloning
   app.get('/api/voice-cloning/validation/:storyId/:category', requireAuth, async (req, res) => {
-    console.log(`🚨 VALIDATION ENDPOINT HIT: ${req.params.storyId}/${req.params.category}`);
-    console.log(`🚨 REQ USER:`, req.user);
+    console.log(`=== VALIDATION ENDPOINT HIT: ${req.params.storyId}/${req.params.category} ===`);
+    console.log(`USER ID: ${req.user?.id}`);
     
 
     
@@ -5654,22 +5654,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const isReady = totalEsmCount >= minRequired;
       const missingCount = Math.max(0, minRequired - totalEsmCount);
       
-      // Debug logging for story 75
-      if (parseInt(storyId) === 75) {
-        console.log('🔍 Debug Story 75 Validation:');
-        console.log('Available emotions:', availableEmotions);
-        console.log('Available sounds:', availableSounds);
-        console.log('Available modulations:', availableModulations);
-        console.log('All available items:', allAvailableItems);
-        console.log('User ESM recordings raw:', userEsmRecordings.length, 'records');
-        console.log('User samples (cleaned):', allUserSamples);
-        console.log('Completed from story:', completedFromStory);
-        console.log('Min required:', minRequired);
-        console.log('Completed count:', categoryCompletedCount);
-        console.log('Category filter:', category);
-        console.log('Category items:', categoryItems);
-        console.log('Completed samples for category:', completedSamples);
-      }
+      // Debug logging for all stories
+      console.log(`🔍 Debug Story ${storyId} Validation (${category}):`);
+      console.log('Available emotions:', availableEmotions);
+      console.log('Category items:', categoryItems);
+      console.log('Completed samples for category:', completedSamples);
+      console.log('Completed from story:', completedFromStory);
+      console.log('Category completed count:', categoryCompletedCount);
 
       const response = {
         category,
@@ -5693,6 +5684,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       
       console.log(`🔍 VALIDATION RESPONSE for story ${storyId}:`, JSON.stringify(response, null, 2));
+      console.log(`🚨 FINAL RESPONSE BEING SENT:`, response);
       
       res.json(response);
 
