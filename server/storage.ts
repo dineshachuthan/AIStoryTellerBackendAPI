@@ -1828,10 +1828,20 @@ export class DatabaseStorage implements IStorage {
 
 
 
+  /**
+   * Create new user ESM entry
+   * @param data - User ESM data with user_id, esm_ref_id, created_by
+   * @returns Created user ESM record
+   */
   async createUserEsm(data: any): Promise<any> {
+    const sampleCount = data.sample_count ?? 0;
+    const qualityTier = data.quality_tier ?? 1;
+    const voiceCloningStatus = data.voice_cloning_status ?? 'inactive';
+    const createdBy = data.created_by ?? data.user_id;
+    
     const result = await db.execute(
       sql`INSERT INTO user_esm (user_id, esm_ref_id, sample_count, quality_tier, voice_cloning_status, created_by)
-          VALUES (${data.user_id}, ${data.esm_ref_id}, ${data.sample_count || 0}, ${data.quality_tier || 1}, ${data.voice_cloning_status || 'inactive'}, ${data.created_by || data.user_id})
+          VALUES (${data.user_id}, ${data.esm_ref_id}, ${sampleCount}, ${qualityTier}, ${voiceCloningStatus}, ${createdBy})
           RETURNING *`
     );
     return result.rows[0];
