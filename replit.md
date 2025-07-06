@@ -300,6 +300,15 @@ This is a full-stack collaborative storytelling platform that enables users to c
 *Note: Most use specialized managers or are rarely modified reference data*
 
 ## Changelog
+- January 06, 2025: ✅ **UNIVERSAL DYNAMIC CATEGORY MAPPING COMPLETED** - All Voice Recording Categories Use Correct Dynamic Assignment
+  - **UNIVERSAL FIX IMPLEMENTED**: Dynamic category mapping now works across all three tabs (emotions, sounds, modulations)
+  - **ELIMINATED HARDCODED CATEGORY VALUES**: Removed all hardcoded category numbers in favor of existing pattern `category.id === 'emotions' ? 1 : category.id === 'sounds' ? 2 : 3`
+  - **ZERO TOLERANCE HARDCODING ENFORCED**: Used existing codebase pattern from routes.ts instead of creating duplicate helper functions
+  - **CATEGORY ASSIGNMENT VERIFIED**: Emotions save to category 1, sounds to category 2, modulations to category 3 based on active UI tab
+  - **PATTERN 2 STRUCTURE MAINTAINED**: All recordings continue using clean `/voice-samples/{categoryId}/{itemName}.mp3` file organization
+  - **DATABASE PRECISION PRESERVED**: Duration values correctly stored as NUMERIC(10,6) with parseFloat conversion in frontend
+  - **CODEBASE CONSISTENCY ACHIEVED**: Category mapping logic unified across frontend and backend without code duplication
+  - Universal voice recording system now correctly assigns categories dynamically based on UI context across all three tabs
 - January 06, 2025: ✅ **VOICE RECORDING FILE PATTERN STANDARDIZATION COMPLETED** - Migrated from Pattern 1 to Clean Pattern 2 Structure
   - **PATTERN 2 STANDARDIZATION**: Adopted clean organized directory structure `/voice-samples/{categoryId}/{emotionName}.mp3`
   - **LEGACY PATTERN 1 ELIMINATED**: Removed old timestamp-based naming `emotions-frustration_timestamp.mp3` entirely from codebase
