@@ -1343,9 +1343,13 @@ export class DatabaseStorage implements IStorage {
       created_by: recording.created_by
     });
     
+    // Handle nullable values outside SQL template
+    const audioQualityScore = recording.audio_quality_score ?? null;
+    const transcribedText = recording.transcribed_text ?? null;
+    
     const result = await db.execute(
       sql`INSERT INTO user_esm_recordings (user_esm_id, audio_url, duration, file_size, audio_quality_score, transcribed_text, created_by)
-          VALUES (${recording.user_esm_id}, ${recording.audio_url}, ${recording.duration}, ${recording.file_size}, ${recording.audio_quality_score}, ${recording.transcribed_text}, ${recording.created_by})
+          VALUES (${recording.user_esm_id}, ${recording.audio_url}, ${recording.duration}, ${recording.file_size}, ${audioQualityScore}, ${transcribedText}, ${recording.created_by})
           RETURNING *`
     );
     return result.rows[0];
