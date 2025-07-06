@@ -4393,7 +4393,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const recordingData = {
         user_esm_id: userEsm.user_esm_id,
         audio_url: `/cache/user-voice-modulations/${userId}/${audioPath}`,
-        duration: Math.round(duration), // Convert to integer seconds
+        duration: duration, // Keep as float for precision
         file_size: audioBuffer.length,
         created_by: userId
       };
