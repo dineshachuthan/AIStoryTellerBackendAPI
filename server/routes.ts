@@ -226,7 +226,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         category,
         categoryId,
         totalCount: recordings.length,
-        recordings: recordings.map(r => r.emotion || r.sound || r.modulation),
+        recordings: recordings.map(r => r.name || r.display_name),
         isReady: recordings.length >= 5
       });
     } catch (error) {

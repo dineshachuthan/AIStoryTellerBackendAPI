@@ -18,13 +18,14 @@ export default function VoiceCloningTest() {
 
   // Get validation status for all categories
   const { data: emotionsData, refetch: refetchEmotions } = useQuery({
-    queryKey: ["/api/voice-samples/count", "emotions"],
+    queryKey: ["/api/voice-cloning/validation", storyId, "emotions"],
     queryFn: async () => {
-      const result = await apiRequest('/api/voice-samples/count/google_117487073695002443567/emotions');
+      if (!storyId) return null;
+      const result = await apiRequest(`/api/voice-cloning/validation/${storyId}/emotions`);
       console.log('🔍 EMOTIONS API RESPONSE:', result);
       return result;
     },
-    enabled: true
+    enabled: !!storyId
   });
 
   const { data: soundsData, refetch: refetchSounds } = useQuery({

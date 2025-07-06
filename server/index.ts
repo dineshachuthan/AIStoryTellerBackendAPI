@@ -1,6 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
+import { setupVite, serveStatic, log } from "./vite-enhanced";
 import { archetypeService } from "./character-archetype-service";
 import { collaborativeRoutes } from "./routes-collaborative";
 import videoRoutes from "./routes-video";
@@ -9,6 +9,7 @@ import { VoiceProviderRegistry } from "./voice-providers/provider-manager";
 import { getVoiceConfig } from "./voice-config";
 import referenceDataRoutes from "./routes-reference-data";
 import { stateManager } from "../shared/state-manager";
+import { createApiExclusionPlugin } from "./vite-api-exclusion-plugin";
 
 const app = express();
 app.use(express.json());
