@@ -4355,9 +4355,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Generate emotion key for ESM storage
-      const emotionKey = `${category}-${itemName.toLowerCase()}`;
-
       // Save to user voice storage
       const audioPath = `user-data/${userId}/voice-samples/${category}/${itemName.toLowerCase()}.mp3`;
       
@@ -4368,25 +4365,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Save audio file
       await fs.writeFile(audioPath, audioBuffer);
       
-      // Save using ESM system - need to find or create user_esm record first
-      const emotionName = emotionKey;
+      // Save using ESM system - emotion name should match story analysis
+      const emotionName = itemName.toLowerCase();
       
-      // Get or create ESM reference
-      let esmRef = await storage.getEsmRef(1, emotionName); // category 1 = emotions
+      // Get ESM reference (should exist from story analysis)
+      const esmRef = await storage.getEsmRef(parseInt(category), emotionName);
       if (!esmRef) {
-        // Create new ESM reference if doesn't exist
-        esmRef = await storage.createEsmRef({
-          category: 1,
-          name: emotionName,
-          display_name: emotionName.charAt(0).toUpperCase() + emotionName.slice(1),
-          sample_text: `Sample text for ${emotionName}`,
-          intensity: 5,
-          created_by: userId
+        return res.status(400).json({ 
+          message: `Emotion "${emotionName}" not found in story analysis. Please analyze the story first.` 
         });
       }
       
       // Get or create user_esm record
-      let userEsm = await storage.getUserEsm(userId, esmRef.esm_ref_id);
+      let userEsm = await storage.getUserEsmByRef(userId, esmRef.esm_ref_id);
       if (!userEsm) {
         userEsm = await storage.createUserEsm({
           user_id: userId,
