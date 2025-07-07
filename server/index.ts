@@ -20,8 +20,15 @@ import jwt from 'jsonwebtoken';
 import path from 'path';
 import fs from 'fs/promises';
 
-// Serve voice samples as static files
-app.use('/voice-samples', express.static(path.join(process.cwd(), 'voice-samples')));
+// Serve voice samples as static files with proper configuration
+app.use('/voice-samples', express.static(path.join(process.cwd(), 'voice-samples'), {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.mp3')) {
+      res.setHeader('Content-Type', 'audio/mpeg');
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+    }
+  }
+}));
 
 /**
  * TEMPORARY: Serve voice sample files directly without JWT authentication
@@ -56,8 +63,7 @@ app.get('/api/voice-samples/:category/:filename', async (req, res) => {
  * Serve audio files with JWT token authentication
  * Used by external APIs (ElevenLabs) to access audio files securely
  */
-// Serve voice samples as static files for testing (will add JWT later)
-app.use('/voice-samples', express.static(path.join(process.cwd(), 'voice-samples')));
+
 
 app.get('/api/audio/serve/:token', async (req, res) => {
   console.log('[JWT] Audio serve route hit with token:', req.params.token?.substring(0, 50) + '...');
