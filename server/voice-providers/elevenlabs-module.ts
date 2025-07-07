@@ -82,12 +82,16 @@ export class ElevenLabsModule extends BaseVoiceProvider {
       const { storage } = await import('../storage');
       
       // Log all samples being processed for debugging
-      console.log(`[ElevenLabs] 📋 All samples to process:`, request.samples.map(s => ({
+      console.log(`[ElevenLabs] 📋 All samples to process (${request.samples.length} total):`, request.samples.map(s => ({
         emotion: s.emotion,
         audioUrl: s.audioUrl,
         duration: (s as any).duration || 'unknown',
         recordingId: (s as any).recordingId || 'unknown'
       })));
+      
+      // Track successful vs failed samples
+      const processedEmotions: string[] = [];
+      const skippedEmotions: string[] = [];
       
       for (let index = 0; index < request.samples.length; index++) {
         const sample = request.samples[index];
@@ -158,6 +162,7 @@ export class ElevenLabsModule extends BaseVoiceProvider {
             emotion: sample.emotion // Track emotion for successful samples
           };
           audioFiles.push(audioFile);
+          processedEmotions.push(sample.emotion);
           
           this.log('info', `✅ Successfully processed ${sample.emotion} sample (${audioBuffer.length} bytes)`);
         } catch (error) {
@@ -176,6 +181,7 @@ export class ElevenLabsModule extends BaseVoiceProvider {
             failedSample.recordingId = (sample as any).recordingId;
           }
           failedSamples.push(failedSample);
+          skippedEmotions.push(sample.emotion);
           
           // Delete corrupted recording from database
           try {
@@ -230,8 +236,17 @@ export class ElevenLabsModule extends BaseVoiceProvider {
         }
       }
       
-      // Log summary of processing
+      // Log comprehensive summary
+      console.log(`[ElevenLabs] 📊 PROCESSING SUMMARY:`);
+      console.log(`[ElevenLabs] Total samples provided: ${request.samples.length}`);
+      console.log(`[ElevenLabs] ✅ Successfully processed: ${processedEmotions.length} samples - [${processedEmotions.join(', ')}]`);
+      console.log(`[ElevenLabs] ❌ Failed/Skipped: ${skippedEmotions.length} samples - [${skippedEmotions.join(', ')}]`);
+      
       if (failedSamples.length > 0) {
+        console.log(`[ElevenLabs] Failed sample details:`, failedSamples.map(s => ({
+          emotion: s.emotion,
+          error: s.error
+        })));
         this.log('warn', `${failedSamples.length} samples failed and were deleted: ${failedSamples.map(s => s.emotion).join(', ')}`);
       }
       
