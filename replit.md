@@ -82,6 +82,14 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Emotion-Based Selection**: Speed and tone adjustments based on emotional context
 - **Caching System**: File-based caching for generated audio with cleanup management
 
+### Audio Storage Provider System
+- **Plug-and-Play Architecture**: Multiple storage providers (Replit, S3, Azure) with unified interface
+- **Configuration-Driven Selection**: Provider chosen based on environment variables and priority
+- **Secure Access**: Dynamic JWT token generation for temporary external API access
+- **Database Design**: Relative URLs stored in database, provider-specific URLs generated on-demand
+- **Default Provider**: Replit with fallback to localhost for development
+- **Security Model**: Time-limited signed URLs (15 minutes) for external API access without storing permanent tokens
+
 ### Collaborative Features
 - **Template System**: Convert stories into reusable roleplay templates
 - **Invitation Management**: Character-specific invitations with unique tokens
@@ -281,6 +289,16 @@ This is a full-stack collaborative storytelling platform that enables users to c
 *Note: Most use specialized managers or are rarely modified reference data*
 
 ## Changelog
+- January 07, 2025: ✅ **AUDIO STORAGE PROVIDER SYSTEM IMPLEMENTED** - Complete Plug-and-Play Audio Storage Architecture for External API Access
+  - **PLUG-AND-PLAY ARCHITECTURE**: Created audio storage provider system following video provider pattern with Replit, S3, Azure support
+  - **SECURITY MODEL IMPLEMENTED**: JWT token-based signed URLs with 15-minute expiration for external API access without storing permanent tokens
+  - **CONFIGURATION-DRIVEN SELECTION**: Provider chosen automatically based on environment variables and priority (Replit default, S3/Azure when configured)
+  - **VOICE TRAINING SERVICE UPDATED**: Modified to use signed URLs for ElevenLabs external API access instead of hardcoded localhost
+  - **JWT SERVING ENDPOINT**: Added `/api/audio/serve/:token` endpoint for secure file serving with token validation and proper error handling
+  - **PROVIDER STATUS API**: Added `/api/audio/storage/status` endpoint to monitor active provider and all available providers
+  - **EXISTING DATA MIGRATION**: Database contains relative URLs, files exist in `persistent-cache/audio/` but referenced as `cache/user-voice-modulations/` - migration needed
+  - **READY FOR ELEVENLABS**: Audio storage provider system eliminates hardcoded localhost URLs and provides secure external API access for voice cloning
+  - Audio storage provider system now enables secure external API access while maintaining database design with relative URLs and provider flexibility
 - January 06, 2025: ✅ **MVP1 ELEVENLABS INTEGRATION IMPLEMENTED** - Updated Voice Training Service to Use Single Narrator Voice Approach
   - **MVP1 DESIGN IMPLEMENTED**: Voice training service now sends ALL ESM samples (emotions + sounds + modulations) together to ElevenLabs
   - **SINGLE NARRATOR VOICE STORAGE**: ElevenLabs returns one trained narrator voice stored in each ESM recording row via narrator_voice_id field

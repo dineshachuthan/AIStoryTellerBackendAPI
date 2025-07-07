@@ -119,14 +119,29 @@ export class VoiceTrainingService {
           });
         }
 
-        // Prepare all ESM samples for ElevenLabs (emotions, sounds, modulations combined)
+        // Generate signed URLs for external API access using audio storage provider
+        const { audioStorageFactory } = await import('./audio-storage-providers');
+        const audioStorageProvider = audioStorageFactory.getActiveProvider();
+        
+        console.log(`[MVP1] Using audio storage provider: ${audioStorageProvider.name}`);
+        
+        // Prepare all ESM samples with signed URLs for ElevenLabs
         const mvp1Samples = [];
         const samplesToUpdate = []; // Track ESM recordings to update with narrator voice ID
         
         for (const esmRecording of allEsmRecordings) {
+          // Generate signed URL for external API access (15 minutes duration)
+          const signedUrl = await audioStorageProvider.generateSignedUrl(esmRecording.audioUrl, {
+            expiresIn: '15m',
+            purpose: 'voice_training',
+            userId: userId
+          });
+          
+          console.log(`[MVP1] Generated signed URL for ${esmRecording.name}: ${signedUrl}`);
+          
           mvp1Samples.push({
             emotion: esmRecording.name, // Use the ESM name (e.g. "frustration", "footsteps", "drama")
-            audioUrl: esmRecording.audioUrl,
+            audioUrl: signedUrl, // Use signed URL for external access
             isLocked: false
           });
           samplesToUpdate.push(esmRecording.id); // Track ESM recording ID for narrator voice storage

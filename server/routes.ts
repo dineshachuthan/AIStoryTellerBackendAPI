@@ -27,6 +27,8 @@ import { grandmaVoiceNarrator } from "./voice-narrator";
 import { getEnvironment, getBaseUrl, getOAuthConfig } from "./oauth-config";
 import { videoGenerationService } from "./video-generation-service";
 import { setupVideoWebhooks } from "./video-webhook-handler";
+import { audioStorageFactory } from "./audio-storage-providers";
+import jwt from 'jsonwebtoken';
 
 import multer from "multer";
 import path from "path";
@@ -4443,6 +4445,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error('Error saving voice sample:', error);
       res.status(500).json({ message: 'Failed to save voice sample' });
+    }
+  });
+
+  // =============================================================================
+  // AUDIO STORAGE PROVIDER ENDPOINTS
+  // =============================================================================
+
+  /**
+   * Serve audio files with JWT token authentication
+   * Used by external APIs (ElevenLabs) to access audio files securely
+   */
+  app.get('/api/audio/serve/:token', async (req, res) => {
+    try {
+      const { token } = req.params;
+      
+      // Verify JWT token
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default-secret') as any;
+      
+      // Validate token structure
+      if (!decoded.filePath || !decoded.userId || !decoded.purpose) {
+        return res.status(401).json({ error: 'Invalid token structure' });
+      }
+      
+      // Check if token is expired (already handled by jwt.verify but adding explicit check)
+      if (decoded.exp && decoded.exp * 1000 < Date.now()) {
+        return res.status(401).json({ error: 'Token expired' });
+      }
+      
+      // Validate purpose (only voice training allowed currently)
+      if (decoded.purpose !== 'voice_training') {
+        return res.status(403).json({ error: 'Invalid token purpose' });
+      }
+      
+      // Get absolute file path
+      const fullPath = path.join(process.cwd(), decoded.filePath);
+      
+      // Check if file exists
+      const fileExists = await fs.access(fullPath).then(() => true).catch(() => false);
+      if (!fileExists) {
+        return res.status(404).json({ error: 'Audio file not found' });
+      }
+      
+      // Set appropriate headers
+      res.setHeader('Content-Type', 'audio/mpeg');
+      res.setHeader('Cache-Control', 'no-cache');
+      
+      // Serve the file
+      res.sendFile(fullPath);
+      
+    } catch (error: any) {
+      console.error('Error serving audio file:', error);
+      
+      if (error.name === 'JsonWebTokenError') {
+        return res.status(401).json({ error: 'Invalid token' });
+      }
+      if (error.name === 'TokenExpiredError') {
+        return res.status(401).json({ error: 'Token expired' });
+      }
+      
+      res.status(500).json({ error: 'Failed to serve audio file' });
+    }
+  });
+
+  /**
+   * Audio storage provider status endpoint
+   */
+  app.get('/api/audio/storage/status', requireAuth, async (req, res) => {
+    try {
+      const activeProvider = audioStorageFactory.getActiveProvider();
+      const status = await activeProvider.getStatus();
+      
+      res.json({
+        activeProvider: status,
+        allProviders: await Promise.all(
+          audioStorageFactory.getAllProviders().map(p => p.getStatus())
+        )
+      });
+    } catch (error: any) {
+      console.error('Error getting audio storage status:', error);
+      res.status(500).json({ error: 'Failed to get storage status' });
     }
   });
 
