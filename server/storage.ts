@@ -511,7 +511,6 @@ export class DatabaseStorage implements IStorage {
             user_recordings.transcribed_text as "transcribedText",
             ue.sample_count as "sampleCount",
             ue.quality_tier as "qualityTier",
-            ue.voice_cloning_status as "voiceCloningStatus",
             ue.is_locked as "isLocked",
             er.category,
             er.name,
@@ -554,7 +553,6 @@ export class DatabaseStorage implements IStorage {
             user_recordings.transcribed_text as "transcribedText",
             ue.sample_count as "sampleCount",
             ue.quality_tier as "qualityTier",
-            ue.voice_cloning_status as "voiceCloningStatus",
             er.category,
             er.name,
             er.display_name as "displayName",
@@ -1838,7 +1836,6 @@ export class DatabaseStorage implements IStorage {
             uer.created_date,
             ue.narrator_voice_id,
             ue.kling_voice_id,
-            ue.voice_cloning_status,
             er.name,
             er.display_name,
             er.category
