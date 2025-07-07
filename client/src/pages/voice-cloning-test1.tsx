@@ -84,8 +84,8 @@ export default function VoiceCloningTest1() {
     },
     onSuccess: (data) => {
       toast({
-        title: "ElevenLabs cloning started",
-        description: `Job ${data.jobId} initiated. Processing all voice samples...`,
+        title: "Voice cloning started",
+        description: `Successfully started voice cloning process`,
       });
     },
     onError: (error: any) => {

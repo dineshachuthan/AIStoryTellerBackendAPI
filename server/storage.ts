@@ -1234,7 +1234,7 @@ export class DatabaseStorage implements IStorage {
               duration = COALESCE(${updates.duration || null}, duration),
               updated_date = COALESCE(${updates.updated_date?.toISOString() || null}, updated_date),
               narrator_voice_id = COALESCE(${updates.narrator_voice_id || null}, narrator_voice_id)
-          WHERE id = ${id}
+          WHERE user_esm_recordings_id = ${id}
           RETURNING *`
     );
     return result.rows[0];
