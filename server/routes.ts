@@ -4346,7 +4346,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`🎯 Story ${storyId} emotions:`, analysis.analysisData.emotions.map(e => e.emotion));
         for (const emotion of analysis.analysisData.emotions) {
           // Check if emotion exists in ESM reference data
-          const esmRef = await storage.getEsmRef(1, emotion.emotion.toLowerCase());
+          const esmRef = await storage.getEsmRef(1, emotion.emotion);
           if (!esmRef) {
             console.log(`⚠️ Skipping emotion "${emotion.emotion}" - not in ESM reference data`);
             continue;
@@ -4357,7 +4357,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const esmText = esmRef.sample_text;
           
           response.emotions.push({
-            name: emotion.emotion.toLowerCase(),
+            name: emotion.emotion,
             displayName: emotion.emotion,
             intensity: emotion.intensity,
             context: emotion.context,
@@ -4379,7 +4379,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (analysis.analysisData.soundEffects) {
         for (const sound of analysis.analysisData.soundEffects) {
           // Check if sound exists in ESM reference data
-          const esmRef = await storage.getEsmRef(2, sound.sound.toLowerCase());
+          const esmRef = await storage.getEsmRef(2, sound.sound);
           if (!esmRef) {
             console.log(`⚠️ Skipping sound "${sound.sound}" - not in ESM reference data`);
             continue;
@@ -4389,7 +4389,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const esmText = esmRef.sample_text;
           
           response.sounds.push({
-            name: sound.sound.toLowerCase(),
+            name: sound.sound,
             displayName: sound.sound,
             intensity: sound.intensity,
             context: sound.context,
