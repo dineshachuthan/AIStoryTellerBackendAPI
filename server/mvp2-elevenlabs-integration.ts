@@ -171,7 +171,24 @@ export class MVP2ElevenLabsIntegration {
         metadata: apiCall.metadata
       };
       
-      // Use existing ElevenLabs integration
+      // Check if user already has a narrator voice for this type
+      const existingVoiceId = await this.getUserExistingNarratorVoice(userId, apiCall.type);
+      
+      if (existingVoiceId) {
+        console.log(`[MVP2ElevenLabs] Found existing voice ${existingVoiceId}, updating instead of creating new`);
+        
+        // Use updateVoice method to replace existing voice
+        const updateResult = await (voiceProvider as any).updateVoice(existingVoiceId, voiceTrainingRequest);
+        
+        if (updateResult.success) {
+          return {
+            success: true,
+            voiceId: updateResult.voiceId
+          };
+        }
+      }
+      
+      // Create new voice if no existing voice or update failed
       const result = await voiceProvider.trainVoice(voiceTrainingRequest);
       
       if (result.success) {
@@ -192,6 +209,29 @@ export class MVP2ElevenLabsIntegration {
         success: false,
         error: error instanceof Error ? error.message : String(error)
       };
+    }
+  }
+
+  /**
+   * Get user's existing narrator voice ID if available
+   */
+  private async getUserExistingNarratorVoice(userId: string, voiceType: string): Promise<string | null> {
+    try {
+      // For MVP1/category voices, check if user already has a narrator voice
+      const userEsmRecords = await storage.getUserEsmRecordings(userId);
+      
+      // Find any existing narrator voice ID
+      const existingVoice = userEsmRecords.find(record => record.narrator_voice_id);
+      
+      if (existingVoice?.narrator_voice_id) {
+        console.log(`[MVP2ElevenLabs] Found existing narrator voice for user: ${existingVoice.narrator_voice_id}`);
+        return existingVoice.narrator_voice_id;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error(`[MVP2ElevenLabs] Error checking existing narrator voice:`, error);
+      return null;
     }
   }
 

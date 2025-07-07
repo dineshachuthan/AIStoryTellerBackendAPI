@@ -251,6 +251,14 @@ This is a full-stack collaborative storytelling platform that enables users to c
 
 ### ElevenLabs Voice Cloning Integration - CRITICAL LOCKING LOGIC
 
+**VOICE MANAGEMENT STRATEGY - Account Limit Handling**:
+- **UPDATE EXISTING VOICES**: System now checks for existing narrator voice before creating new ones
+- **AUTOMATIC VOICE REPLACEMENT**: When regenerating voices, old voice is deleted and replaced with new one
+- **PREVENTS ACCOUNT LIMITS**: Ensures users don't hit ElevenLabs voice count restrictions
+- **VOICE ID PERSISTENCE**: Same voice ID slot is reused when updating voices
+- **IMPLEMENTATION**: `updateVoice()` method in ElevenLabsModule handles delete + recreate workflow
+- **DATABASE CONSISTENCY**: All references to old voice ID remain valid after update
+
 **CORE OBJECTIVE**: Create unique narrator voices for each emotion/sound to bring stories to life with segment-specific narration (angry segments use angry voice, sad segments use sad voice, etc.)
 
 **GRADUAL VOICE COLLECTION STRATEGY**:
@@ -405,6 +413,15 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Voice Quality Enhancement**: Updated recording requirements to 15-25 seconds (from 5-10 seconds) with 45-60 word sample texts for optimal voice cloning quality
 
 ## Changelog
+
+### **ELEVENLABS VOICE MANAGEMENT IMPLEMENTED - January 08, 2025**
+**Account Limit Protection**: System now updates existing voices instead of creating new ones
+- **VOICE UPDATE LOGIC**: Checks for existing narrator voice before creating new voice clones
+- **DELETE AND REPLACE**: Old voices are deleted and replaced to stay within ElevenLabs account limits
+- **METHODS ADDED**: `deleteVoice()` and `updateVoice()` methods in ElevenLabsModule
+- **MVP2 INTEGRATION**: `getUserExistingNarratorVoice()` checks for existing voices before cloning
+- **SQL SYNTAX FIX**: Fixed parameter placeholder issue in `updateUserEsm()` method (? → $1, $2, etc.)
+- **USER BENEFIT**: Prevents hitting ElevenLabs voice count restrictions while maintaining voice quality
 
 ### **VOICE RECORDING DURATION CONFIGURATION UPDATED - January 08, 2025**
 **Enhanced Voice Quality Requirements**: Implemented centralized configuration for optimal ElevenLabs voice cloning quality
