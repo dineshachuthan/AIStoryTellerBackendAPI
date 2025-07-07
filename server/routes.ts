@@ -6120,58 +6120,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Cost estimation endpoint
-  app.get('/api/voice-cloning/cost-estimate/:storyId/:category', requireAuth, async (req, res) => {
-    try {
-      const { storyId, category } = req.params;
-      const userId = (req.user as any)?.id;
-      
-      console.log(`💰 COST ESTIMATE ENDPOINT HIT: story=${storyId}, category=${category}, userId=${userId}`);
-      
-      // First, get validation data to ensure we have the required samples
-      const validationResponse = await fetch(`${req.protocol}://${req.get('host')}/api/voice-cloning/validation/${storyId}/${category}`, {
-        headers: {
-          'cookie': req.headers.cookie || ''
-        }
-      });
-      
-      if (!validationResponse.ok) {
-        return res.status(400).json({ 
-          message: 'Cannot estimate cost - validation failed',
-          validationStatus: validationResponse.status 
-        });
-      }
-      
-      const validationData = await validationResponse.json();
-      
-      if (!validationData.isReady) {
-        return res.status(400).json({ 
-          message: 'Cannot estimate cost - insufficient samples',
-          required: validationData.threshold,
-          current: validationData.totalCompletedFromStory
-        });
-      }
 
-      // Provide basic cost estimate for MVP
-      const costEstimate = {
-        estimatedCost: "$3.00", // ElevenLabs standard rate
-        samplesCount: validationData.totalCompletedFromStory,
-        currency: "USD",
-        provider: "ElevenLabs",
-        note: "Estimate based on current voice cloning rates"
-      };
-      
-      console.log(`💰 COST ESTIMATE SUCCESS: ${JSON.stringify(costEstimate, null, 2)}`);
-      res.json(costEstimate);
-      
-    } catch (error: any) {
-      console.error('Cost estimation error:', error);
-      res.status(500).json({ 
-        message: 'Cost estimation failed', 
-        error: error?.message || 'Unknown error'
-      });
-    }
-  });
 
   // Manual voice cloning trigger endpoint
   app.post('/api/voice-cloning/:category/:storyId', requireAuth, async (req, res) => {
@@ -6212,30 +6161,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Voice cloning job status endpoint
-  app.get('/api/voice-cloning/status/:jobId', requireAuth, async (req, res) => {
-    try {
-      const { jobId } = req.params;
-      const userId = (req.user as any)?.id;
-      
-      console.log(`📊 VOICE CLONING STATUS CHECK: jobId=${jobId}, userId=${userId}`);
-      
-      // Use voice training service to get job status
-      const { VoiceTrainingService } = await import("./voice-training-service");
-      const voiceTrainingService = new VoiceTrainingService();
-      const status = await voiceTrainingService.getJobStatus(jobId, userId);
-      
-      console.log(`📊 STATUS CHECK RESULT: ${JSON.stringify(status, null, 2)}`);
-      res.json(status);
-      
-    } catch (error: any) {
-      console.error('Voice cloning status check error:', error);
-      res.status(500).json({ 
-        message: 'Status check failed', 
-        error: error?.message || 'Unknown error'
-      });
-    }
-  });
+
 
   // Serve static files from persistent cache directories
   app.use('/persistent-cache', express.static(path.join(process.cwd(), 'persistent-cache')));
