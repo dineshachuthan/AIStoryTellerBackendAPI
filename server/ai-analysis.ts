@@ -142,7 +142,8 @@ export async function analyzeStoryContent(content: string, userId?: string): Pro
     - Examples: "The Last Dance", "Shadows of Tomorrow", "A Mother's Choice", "The Secret Garden"
     - Extract all significant characters (minimum 1, maximum 8)
     - EXTRACT ALL EMOTIONS: Identify every emotion present in the story, no matter how subtle
-    - Use specific emotion names (grief, sympathy, empathy, melancholy, despair, hope, relief, guilt, shame, regret, acceptance, compassion, betrayal, vulnerability, longing, nostalgia, contentment, etc.)
+    - Use specific emotion names with proper casing (Grief, Sympathy, Empathy, Melancholy, Despair, Hope, Relief, Guilt, Shame, Regret, Acceptance, Compassion, Betrayal, Vulnerability, Longing, Nostalgia, Contentment, etc.)
+    - ALWAYS capitalize the first letter of each emotion name (e.g., "Frustration" not "frustration")
     - DO NOT limit emotions to basic categories - be comprehensive and nuanced
     - For stories involving death, loss, or tragedy: MUST include grief, sympathy, empathy, melancholy
     - For stories of relationships: include love, betrayal, trust, vulnerability, longing

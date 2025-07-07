@@ -202,6 +202,14 @@ export class OpenAICachedProvider extends BaseCachedProvider {
           "quote": "Relevant quote from the story if available"
         }
       ],
+      "soundEffects": [
+        {
+          "sound": "Environmental or audio effect (e.g., Rain, Footsteps, Thunder)",
+          "intensity": 7,
+          "context": "Context where this sound appears",
+          "quote": "Relevant quote mentioning the sound"
+        }
+      ],
       "summary": "2-3 sentence summary of the story",
       "category": "Category like Romance, Adventure, Mystery, Fantasy, Sci-Fi, Drama, Comedy, Horror, Thriller",
       "genre": "Primary genre (Drama, Fantasy, Mystery, Romance, etc.)",
@@ -213,7 +221,24 @@ export class OpenAICachedProvider extends BaseCachedProvider {
       "ageRating": "general|teen|mature",
       "readingTime": 5,
       "isAdultContent": false
-    }`;
+    }
+    
+    Guidelines:
+    - CREATE COMPELLING TITLE: Generate a creative, engaging title that captures the essence of the story (3-8 words)
+    - Title should be descriptive but not spoil the plot
+    - Extract all significant characters (minimum 1, maximum 8)
+    - EXTRACT ALL EMOTIONS: Identify every emotion present in the story, no matter how subtle
+    - Use specific emotion names with proper casing (Grief, Sympathy, Empathy, Melancholy, Despair, Hope, Relief, Guilt, Shame, Regret, Acceptance, Compassion, Betrayal, Vulnerability, Longing, Nostalgia, Contentment, etc.)
+    - ALWAYS capitalize the first letter of each emotion name (e.g., "Frustration" not "frustration")
+    - DO NOT limit emotions to basic categories - be comprehensive and nuanced
+    - EXTRACT SOUND EFFECTS: Identify all environmental sounds and audio effects mentioned in the story
+    - Use proper casing for sounds (e.g., "Rain", "Footsteps", "Thunder", "Wind", "Laughter", "Crying", "Music", "Birdsong", etc.)
+    - ALWAYS capitalize the first letter of each sound effect (e.g., "Footsteps" not "footsteps")
+    - Include any sounds that would enhance the story's atmosphere: nature sounds, human sounds, mechanical sounds, etc.
+    - Provide accurate intensity ratings (1-10 scale) based on story context
+    - Each emotion and sound should have a specific quote and context from the story
+    - Determine appropriate category and themes
+    - Flag adult content if it contains explicit material, violence, or mature themes`;
 
     const response = await this.openai.chat.completions.create({
       model: "gpt-4o",
