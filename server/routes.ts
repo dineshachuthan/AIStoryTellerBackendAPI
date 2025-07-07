@@ -4794,7 +4794,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Save temporary file and check duration before conversion
       await fs.writeFile(tempFilePath, audioFile.buffer);
       
+      // Log audio file details for debugging
+      console.log(`📊 Audio file details:
+        - Original MIME type: ${audioFile.mimetype}
+        - Original size: ${audioFile.size} bytes
+        - Temp file: ${tempFileName}
+        - Target MP3: ${fileName}
+      `);
+      
       try {
+        // First, verify the uploaded file is valid audio
+        const { stdout: probeOutput, stderr: probeError } = await execAsync(`ffprobe -v error -show_format -show_streams "${tempFilePath}" 2>&1`);
+        
+        if (probeError || !probeOutput.includes('codec_type=audio')) {
+          console.error(`❌ Invalid audio file detected:
+            - Probe output: ${probeOutput}
+            - Probe error: ${probeError}
+          `);
+          await fs.unlink(tempFilePath).catch(() => {});
+          return res.status(400).json({ 
+            message: 'Uploaded file is not a valid audio file or is corrupted.' 
+          });
+        }
+        
         // Check audio duration before processing  
         const { stdout: durationOutput } = await execAsync(`ffprobe -v quiet -show_entries format=duration -of csv=p=0 "${tempFilePath}"`);
         const audioDuration = parseFloat(durationOutput.trim());

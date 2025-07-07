@@ -189,10 +189,21 @@ export function EnhancedVoiceRecorder({
     mediaRecorderRef.current.ondataavailable = (event) => {
       if (event.data.size > 0) {
         audioChunksRef.current.push(event.data);
+        console.log(`🎙️ Audio chunk received: ${event.data.size} bytes (total chunks: ${audioChunksRef.current.length})`);
+      } else {
+        console.warn('⚠️ Empty audio chunk received!');
       }
     };
 
     mediaRecorderRef.current.onstop = async () => {
+      // Log debugging info for corruption investigation
+      console.log(`🎤 Recording stopped:
+        - Chunks collected: ${audioChunksRef.current.length}
+        - Total size: ${audioChunksRef.current.reduce((sum, chunk) => sum + chunk.size, 0)} bytes
+        - MIME type: ${mediaRecorderRef.current?.mimeType || 'audio/webm'}
+        - MediaRecorder state: ${mediaRecorderRef.current?.state}
+      `);
+      
       const audioBlob = new Blob(audioChunksRef.current, { 
         type: mediaRecorderRef.current?.mimeType || 'audio/webm' 
       });
@@ -383,6 +394,14 @@ export function EnhancedVoiceRecorder({
     setSaveError(null);
 
     try {
+      // Log save details for corruption investigation
+      console.log(`💾 Saving voice sample:
+        - Blob size: ${tempRecording.blob.size} bytes
+        - Blob type: ${tempRecording.blob.type}
+        - Duration: ${audioDuration.toFixed(1)}s
+        - Endpoint: ${saveConfig.endpoint}
+      `);
+      
       // Prepare form data
       const formData = new FormData();
       formData.append('audio', tempRecording.blob, 'voice-sample.mp3');
