@@ -1310,9 +1310,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUserEsm(userEsmId: number, updates: any): Promise<void> {
-    const setParts = Object.keys(updates).map(key => `${key} = ${updates[key]}`).join(', ');
+    const setClause = Object.entries(updates).map(([key, value]) => {
+      if (typeof value === 'string') {
+        return `${key} = '${value.replace(/'/g, "''")}'`; // Escape single quotes
+      }
+      return `${key} = ${value}`;
+    }).join(', ');
+    
     await db.execute(
-      sql`UPDATE user_esm SET ${sql.raw(setParts)} WHERE user_esm_id = ${userEsmId}`
+      sql.raw(`UPDATE user_esm SET ${setClause} WHERE user_esm_id = ${userEsmId}`)
     );
   }
 
@@ -1824,7 +1830,7 @@ export class DatabaseStorage implements IStorage {
             uer.audio_url,
             uer.duration,
             uer.created_date,
-            ue.elevenlabs_voice_id,
+            ue.narrator_voice_id,
             ue.kling_voice_id,
             ue.voice_cloning_status,
             er.name,
@@ -1843,13 +1849,13 @@ export class DatabaseStorage implements IStorage {
 
   async getUserNarratorVoice(userId: string): Promise<string | null> {
     const result = await db.execute(
-      sql`SELECT elevenlabs_voice_id 
+      sql`SELECT narrator_voice_id 
           FROM user_esm 
           WHERE user_id = ${userId} 
-          AND elevenlabs_voice_id IS NOT NULL 
+          AND narrator_voice_id IS NOT NULL 
           LIMIT 1`
     );
-    return result.rows[0]?.elevenlabs_voice_id || null;
+    return result.rows[0]?.narrator_voice_id || null;
   }
 
   // DUPLICATE METHOD - Commented out (was causing SQL conflicts)

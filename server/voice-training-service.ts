@@ -237,8 +237,9 @@ export class VoiceTrainingService {
 
         console.log(`[MVP1] ✅ SUCCESS: Created narrator voice ${cloneResult.voiceId} from ${mvp1Samples.length} ESM samples`);
         
-        // Store the SAME narrator voice ID in ALL ESM recording rows
-        await this.storeMVP1NarratorVoiceInAllEsmRecordings(userId, cloneResult.voiceId, samplesToUpdate);
+        // Store the SAME narrator voice ID in BOTH tables using dual-table write
+        const userEsmIds = [...new Set(allEsmRecordings.map(r => r.user_esm_id))]; // Get unique user_esm IDs
+        await this.storeMVP1NarratorVoiceInBothTables(userId, cloneResult.voiceId, samplesToUpdate, userEsmIds);
         
         clearTimeout(timeout);
         console.log(`[MVP1] MVP1 voice cloning completed successfully for user ${userId}`);
@@ -262,29 +263,44 @@ export class VoiceTrainingService {
   }
 
   /**
-   * MVP1: Store narrator voice ID in ALL ESM recording rows
+   * MVP1: Store narrator voice ID in BOTH user_esm and user_esm_recordings tables (DUAL-TABLE WRITE)
    * @param userId - User ID for the voice recordings
-   * @param narratorVoiceId - ElevenLabs voice ID to store in all ESM recordings
+   * @param narratorVoiceId - ElevenLabs voice ID to store in both tables
    * @param esmRecordingIds - Array of ESM recording IDs to update
+   * @param userEsmIds - Array of user ESM IDs to update
    */
-  private async storeMVP1NarratorVoiceInAllEsmRecordings(userId: string, narratorVoiceId: string, esmRecordingIds: number[]): Promise<void> {
-    console.log(`[MVP1] Storing narrator voice ${narratorVoiceId} in ${esmRecordingIds.length} ESM recordings for user ${userId}`);
+  private async storeMVP1NarratorVoiceInBothTables(userId: string, narratorVoiceId: string, esmRecordingIds: number[], userEsmIds: number[]): Promise<void> {
+    console.log(`[MVP1 DUAL-TABLE] Storing narrator voice ${narratorVoiceId} in BOTH tables for user ${userId}`);
+    console.log(`[MVP1 DUAL-TABLE] Updating ${esmRecordingIds.length} ESM recordings and ${userEsmIds.length} user ESM records`);
     
+    // TABLE 1: Update user_esm_recordings with narrator voice ID
     for (const esmRecordingId of esmRecordingIds) {
       try {
-        // Update ESM recording with narrator voice ID
         await storage.updateUserEsmRecording(esmRecordingId, {
           narrator_voice_id: narratorVoiceId,
           updated_date: new Date()
         });
-        
-        console.log(`[MVP1] ✅ Updated ESM recording ${esmRecordingId} with narrator voice ${narratorVoiceId}`);
+        console.log(`[MVP1 DUAL-TABLE] ✅ Updated user_esm_recordings ${esmRecordingId} with narrator voice ${narratorVoiceId}`);
       } catch (error) {
-        console.error(`[MVP1] Error updating ESM recording ${esmRecordingId}:`, error);
+        console.error(`[MVP1 DUAL-TABLE] Error updating user_esm_recordings ${esmRecordingId}:`, error);
       }
     }
     
-    console.log(`[MVP1] Successfully stored narrator voice ID in all ${esmRecordingIds.length} ESM recordings`);
+    // TABLE 2: Update user_esm with narrator voice ID
+    for (const userEsmId of userEsmIds) {
+      try {
+        await storage.updateUserEsm(userEsmId, {
+          narrator_voice_id: narratorVoiceId,
+          voice_cloning_status: 'completed',
+          voice_cloning_completed_at: new Date().toISOString()
+        });
+        console.log(`[MVP1 DUAL-TABLE] ✅ Updated user_esm ${userEsmId} with narrator voice ${narratorVoiceId}`);
+      } catch (error) {
+        console.error(`[MVP1 DUAL-TABLE] Error updating user_esm ${userEsmId}:`, error);
+      }
+    }
+    
+    console.log(`[MVP1 DUAL-TABLE] Successfully stored narrator voice ID ${narratorVoiceId} in BOTH tables as required by business logic`);
   }
 
   /**

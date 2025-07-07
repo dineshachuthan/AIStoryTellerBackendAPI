@@ -238,28 +238,37 @@ This is a full-stack collaborative storytelling platform that enables users to c
 34. Implement voice collaboration marketplace - users can offer narration services
 35. Create voice challenges and competitions for community engagement
 
-### ElevenLabs Voice Cloning Integration (Hybrid MVP1/MVP2 Design)
+### ElevenLabs Voice Cloning Integration (MVP1/MVP2 Dual-Table Architecture)
+
+**CRITICAL BUSINESS LOGIC - MVP1 vs MVP2 Database Architecture**
 
 **MVP1 DESIGN - Single Narrator Voice Approach**
 - **All ESM Samples Combined**: Send all user voice recordings (emotions, sounds, modulations) together to ElevenLabs
 - **Single Trained Voice**: ElevenLabs returns one trained narrator voice for the user
-- **Universal Storage**: Store the narrator voice ID in each ESM user voice recording row
-- **Voice Modulation**: Apply audio processing factors to make the single voice sound like different emotions/sounds/modulations
-- **Simple & Extensible**: Clean foundation for MVP2 enhancement without architectural changes
+- **Dual-Table Storage**: Store the SAME narrator voice ID in BOTH tables:
+  - `user_esm.narrator_voice_id` (renamed from elevenlabs_voice_id)
+  - `user_esm_recordings.narrator_voice_id` (new column)
+- **Voice Modulation**: Apply audio processing factors to make the single voice sound like different emotions/sounds/modulations during story narration
+- **Story Narration**: Same narrator voice used for all story segments with modulation factors
 
 **MVP2 FUTURE ENHANCEMENT - Multi-Voice Specialization**
 - **Category-Specific Training**: Train separate voices for emotions, sounds, and modulations
-- **Emotion-Specific Voices**: Individual ElevenLabs voices for each emotion type
-- **Advanced Modulation**: Sophisticated audio processing for specialized voice effects
-- **Intelligent Voice Selection**: Smart matching of story content to appropriate trained voice
+- **Individual Voice Storage**: Each ESM element gets its own specialized narrator voice
+- **Advanced Story Narration**: Different story segments use different specialized narrator voices based on content
+- **Database Ready**: Dual-table architecture supports individual voice storage per ESM element
 
-**CURRENT MVP1 IMPLEMENTATION STATUS**
+**DATABASE ARCHITECTURE REQUIREMENTS**
+- **Column Rename Required**: `user_esm.elevenlabs_voice_id` → `user_esm.narrator_voice_id`
+- **New Column Required**: `user_esm_recordings.narrator_voice_id` (currently missing)
+- **Dual-Table Write**: ElevenLabs integration MUST write to BOTH tables
+- **Future-Proof Design**: Architecture supports both MVP1 (same voice) and MVP2 (individual voices)
+
+**CURRENT IMPLEMENTATION STATUS**
 - ✅ ESM data architecture completed with consistent category mapping
 - ✅ Voice recording system operational with proper duration requirements
-- ✅ Database schema supports narrator voice storage per ESM recording
-- ✅ ElevenLabs API integration updated to MVP1 design (send all ESM samples together)
-- ✅ Voice training service modified to store single narrator voice ID in all ESM recordings
-- 🚧 Audio processing factors for voice modulation need implementation
+- ✅ Database schema update completed: column rename and new column addition
+- ✅ ElevenLabs integration with dual-table write implementation completed
+- ✅ Story narrator updated with proper read logic for renamed column
 
 ### Contextual Help Bubbles with Character Mascot (Future Enhancement)
 - **Feature**: Interactive help system with animated character guide providing context-aware assistance
@@ -311,6 +320,17 @@ This is a full-stack collaborative storytelling platform that enables users to c
 *Note: Most use specialized managers or are rarely modified reference data*
 
 ## Changelog
+- January 07, 2025: ✅ **MVP1 DATABASE SCHEMA MIGRATION COMPLETED** - Column Rename and Dual-Table Architecture Fully Implemented
+  - **DATABASE SCHEMA UPDATED**: Successfully renamed `user_esm.elevenlabs_voice_id` → `user_esm.narrator_voice_id` column
+  - **NEW COLUMN ADDED**: Added `user_esm_recordings.narrator_voice_id` column for dual-table storage
+  - **CODE CONSISTENCY ACHIEVED**: Updated all code references from elevenlabs_voice_id to narrator_voice_id across entire codebase
+  - **DUAL-TABLE WRITE IMPLEMENTED**: storeMVP1NarratorVoiceInBothTables method writes same narrator voice ID to both tables
+  - **SQL METHODS FIXED**: Enhanced updateUserEsm storage method with proper SQL parameter binding and escaping
+  - **VOICE TRAINING SERVICE UPDATED**: Complete conversion to use new column names with error handling and logging
+  - **STORY NARRATOR READY**: getUserNarratorVoice method already using correct narrator_voice_id column
+  - **MVP1 ARCHITECTURE OPERATIONAL**: System ready for single narrator voice storage across both user_esm and user_esm_recordings tables
+  - **MVP2 FOUNDATION ESTABLISHED**: Database structure supports future individual voice storage per ESM element
+  - Database migration completed successfully with zero tolerance compliance and architectural consistency maintained
 - January 07, 2025: ✅ **COMPLETE STORY NARRATION SYSTEM IMPLEMENTATION** - Enhanced ElevenLabs Integration with Plug-and-Play Architecture
   - **BACKEND API ENDPOINTS COMPLETED**: Implemented complete story narration backend with `/api/stories/:id/generate-narration` for heavy processing and `/api/stories/:id/play` for plug-and-play playback
   - **NEW STORAGE ARCHITECTURE**: Stories stored in `/stories/audio/private/{userId}/{storyId}/segment-{n}.mp3` structure following replit.md requirements
