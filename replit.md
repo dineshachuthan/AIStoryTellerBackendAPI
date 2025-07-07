@@ -247,18 +247,47 @@ This is a full-stack collaborative storytelling platform that enables users to c
 34. Implement voice collaboration marketplace - users can offer narration services
 35. Create voice challenges and competitions for community engagement
 
-### ElevenLabs Voice Cloning Integration (MVP1/MVP2 Dual-Table Architecture)
+### ElevenLabs Voice Cloning Integration - CRITICAL LOCKING LOGIC
 
-**CRITICAL BUSINESS LOGIC - MVP1 vs MVP2 Database Architecture**
+**CORE OBJECTIVE**: Create unique narrator voices for each emotion/sound to bring stories to life with segment-specific narration (angry segments use angry voice, sad segments use sad voice, etc.)
 
-**MVP1 DESIGN - Single Narrator Voice Approach**
-- **All ESM Samples Combined**: Send all user voice recordings (emotions, sounds, modulations) together to ElevenLabs
-- **Single Trained Voice**: ElevenLabs returns one trained narrator voice for the user
-- **Dual-Table Storage**: Store the SAME narrator voice ID in BOTH tables:
-  - `user_esm.narrator_voice_id` (renamed from elevenlabs_voice_id)
-  - `user_esm_recordings.narrator_voice_id` (new column)
-- **Voice Modulation**: Apply audio processing factors to make the single voice sound like different emotions/sounds/modulations during story narration
-- **Story Narration**: Same narrator voice used for all story segments with modulation factors
+**GRADUAL VOICE COLLECTION STRATEGY**:
+- Users add stories slowly (1 per week) - we collect voice samples over time across multiple stories
+- Each story may contain different emotions/sounds (2 stories with happy, 5 with sad, etc.)
+- By 100 stories, we should have 5+ samples for each emotion/sound
+
+**VOICE LOCKING ALGORITHM - MUST FOLLOW THIS EXACT LOGIC**:
+
+1. **LOCKING THRESHOLD**: Each emotion/sound needs exactly 5 unlocked samples to create its own permanent voice
+   - Example: "happy" emotion with 5 samples → Create unique "happy" voice → Lock those 5 samples forever
+   - Example: "footsteps" sound with 5 samples → Create unique "footsteps" voice → Lock forever
+
+2. **WHEN CALLING ELEVENLABS - PRIORITY ORDER**:
+   ```
+   Step 1: Check for lockable emotions/sounds
+   - Group all recordings by emotion/sound name
+   - Find any with 5+ UNLOCKED samples
+   - Process these INDIVIDUALLY to create unique voices
+   - Lock these samples forever with their unique voice IDs
+   
+   Step 2: Create general narrator voice
+   - Use ALL unlocked samples first
+   - Only add locked samples if unlocked < 5 (minimum threshold)
+   - This general voice is temporary until all emotions get locked
+   ```
+
+3. **LOCKING RULES**:
+   - Samples are locked ONLY when used to create emotion-specific voices (5+ samples)
+   - Locked samples have `is_locked=true` and `narrator_voice_id` set
+   - Once locked, samples are NEVER unlocked (permanent quality voice)
+   - Locked samples are only used for general voice if absolutely necessary
+
+4. **FAILURE HANDLING**:
+   - If ElevenLabs fails, reset the recording (null audio_url, clear status)
+   - User can then re-record that emotion/sound
+   - NEVER retry application exceptions - only network errors
+
+**END STATE**: All emotions/sounds have their own unique locked voices, no more general narrator voice needed
 
 **FAULT-TOLERANT AUDIO VALIDATION SYSTEM - Comprehensive Format Validation**
 - **Validation at Save Time**: When user uploads voice recording, perform audio format detection and validation
@@ -348,6 +377,15 @@ This is a full-stack collaborative storytelling platform that enables users to c
 *Note: Most use specialized managers or are rarely modified reference data*
 
 ## Changelog
+
+### **VOICE LOCKING LOGIC FIXED - January 07, 2025**
+**Fixed Duplicate Implementation**: Removed buggy duplicate locking logic in voice-training-service.ts
+- **ISSUE IDENTIFIED**: Voice training service had duplicate/incomplete implementation of emotion/sound locking logic
+- **FIX APPLIED**: Now properly calls MVP2 ElevenLabs integration which handles all intelligent locking
+- **MVP2 HANDLES**: Individual emotion/sound voice creation when 5+ samples available
+- **DOCUMENTED**: Added comprehensive voice locking algorithm documentation to prevent future confusion
+- **FAULT TOLERANCE**: Added recordingId to sample data for proper database cleanup on failures
+- **OPTIMIZATION**: Smart selection only sends unlocked samples unless locked needed for minimum threshold
 
 ### **NARRATOR VOICE GENERATION LOGIC UPDATED - January 07, 2025**
 **Frontend Logic Enhancement**: Generate Narrator Voice button now enables based on story-level completion

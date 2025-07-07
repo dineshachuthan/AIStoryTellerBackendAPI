@@ -108,35 +108,67 @@ export class VoiceTrainingService {
         
         console.log(`[MVP1] User has recorded ${allEsmRecordings.length} total ESM samples across all categories`);
         
-        // SMART LOGIC: Separate locked and unlocked recordings to optimize ElevenLabs API calls
-        const unlockedRecordings = allEsmRecordings.filter(r => !r.is_locked);
-        const lockedRecordings = allEsmRecordings.filter(r => r.is_locked && r.narrator_voice_id);
+        // SMART LOGIC: Check which emotions/sounds can be locked forever (5+ samples each)
+        const emotionSoundGroups = {};
         
-        console.log(`[MVP1] 🎯 Smart selection: ${unlockedRecordings.length} unlocked, ${lockedRecordings.length} locked recordings`);
+        // Group recordings by emotion/sound name
+        allEsmRecordings.forEach(recording => {
+          const key = recording.name; // e.g., "happy", "sad", "footsteps"
+          if (!emotionSoundGroups[key]) {
+            emotionSoundGroups[key] = [];
+          }
+          emotionSoundGroups[key].push(recording);
+        });
         
-        // Determine which recordings to use based on smart logic
-        let recordingsToProcess = [];
+        console.log(`[MVP1] 🎯 Emotion/Sound grouping:`, Object.keys(emotionSoundGroups).map(key => 
+          `${key}: ${emotionSoundGroups[key].length} samples`
+        ));
         
-        if (unlockedRecordings.length >= this.TRAINING_THRESHOLD) {
-          // We have enough unlocked recordings - no need to include locked ones
-          recordingsToProcess = unlockedRecordings;
-          console.log(`[MVP1] ✅ Using only ${unlockedRecordings.length} unlocked recordings (meets minimum threshold)`);
+        // Identify emotions/sounds ready for permanent locking (5+ unlocked samples)
+        const emotionsToLock = [];
+        const recordingsToProcess = [];
+        
+        Object.entries(emotionSoundGroups).forEach(([emotion, recordings]) => {
+          const unlockedForThisEmotion = recordings.filter(r => !r.is_locked);
+          
+          if (unlockedForThisEmotion.length >= 5) {
+            // This emotion/sound has enough samples to create its own unique voice!
+            console.log(`[MVP1] 🔒 ${emotion} ready for permanent locking with ${unlockedForThisEmotion.length} samples`);
+            emotionsToLock.push({
+              emotion,
+              recordings: unlockedForThisEmotion.slice(0, 5) // Use exactly 5 samples
+            });
+          }
+        });
+        
+        // If MVP2 system is available, use it for intelligent voice generation
+        console.log(`[MVP1] Switching to MVP2 system for intelligent voice generation...`);
+        
+        // Use MVP2 ElevenLabs integration which handles individual emotion/sound locking properly
+        const { mvp2ElevenLabsIntegration } = await import('./mvp2-elevenlabs-integration');
+        const mvp2Result = await mvp2ElevenLabsIntegration.generateSpecializedNarratorVoices(userId);
+        
+        clearTimeout(timeout);
+        
+        if (mvp2Result.success) {
+          console.log(`[MVP1→MVP2] ✅ Successfully created ${mvp2Result.voicesCreated.length} specialized voices`);
+          return resolve({
+            success: true,
+            voiceId: mvp2Result.voicesCreated[0]?.voiceId,
+            samplesProcessed: mvp2Result.voicesCreated.reduce((sum, voice) => sum + voice.items.length, 0),
+            mvp2Result
+          });
         } else {
-          // Need to include some locked recordings to meet minimum threshold
-          const lockedNeeded = Math.min(this.TRAINING_THRESHOLD - unlockedRecordings.length, lockedRecordings.length);
-          recordingsToProcess = [...unlockedRecordings, ...lockedRecordings.slice(0, lockedNeeded)];
-          console.log(`[MVP1] ⚠️ Including ${lockedNeeded} locked recordings to meet minimum threshold of ${this.TRAINING_THRESHOLD}`);
-        }
-        
-        if (recordingsToProcess.length < this.TRAINING_THRESHOLD) {
-          clearTimeout(timeout);
-          console.log(`[MVP1] ❌ Insufficient ESM samples for voice cloning: ${recordingsToProcess.length}/${this.TRAINING_THRESHOLD} required`);
+          console.error(`[MVP1→MVP2] ❌ MVP2 voice generation failed:`, mvp2Result.error);
           return resolve({
             success: false,
-            error: `Need ${this.TRAINING_THRESHOLD} ESM samples for voice cloning. Currently have: ${recordingsToProcess.length} usable`,
+            error: mvp2Result.error || 'MVP2 voice generation failed',
             samplesProcessed: 0
           });
         }
+        
+        // The code below is kept for fallback if MVP2 is not available or fails
+        // This should rarely be used as MVP2 handles all the intelligent locking logic
 
         // Generate signed URLs for external API access using audio storage provider
         const { audioStorageFactory } = await import('./audio-storage-providers');
