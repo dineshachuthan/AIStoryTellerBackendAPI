@@ -24,6 +24,35 @@ import fs from 'fs/promises';
 app.use('/voice-samples', express.static(path.join(process.cwd(), 'voice-samples')));
 
 /**
+ * TEMPORARY: Serve voice sample files directly without JWT authentication
+ * This is a temporary solution to fix ElevenLabs integration issues
+ * TODO: Re-enable JWT authentication once ElevenLabs is working properly
+ */
+app.get('/api/voice-samples/:category/:filename', async (req, res) => {
+  try {
+    const { category, filename } = req.params;
+    const filePath = path.join(process.cwd(), 'voice-samples', category, filename);
+    
+    // Check if file exists
+    const fileExists = await fs.access(filePath).then(() => true).catch(() => false);
+    if (!fileExists) {
+      return res.status(404).json({ error: 'Voice sample not found' });
+    }
+    
+    // Set appropriate headers
+    res.setHeader('Content-Type', 'audio/mpeg');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.setHeader('Access-Control-Allow-Origin', '*'); // Allow external APIs like ElevenLabs
+    
+    // Serve the file
+    res.sendFile(filePath);
+  } catch (error) {
+    console.error('Error serving voice sample:', error);
+    res.status(500).json({ error: 'Failed to serve voice sample' });
+  }
+});
+
+/**
  * Serve audio files with JWT token authentication
  * Used by external APIs (ElevenLabs) to access audio files securely
  */

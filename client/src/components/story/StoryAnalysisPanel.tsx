@@ -11,7 +11,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { CharacterAvatar } from "./CharacterAvatar";
 import { EmotionBadge } from "./EmotionBadge";
 import StoryVoiceSamples from "./story-voice-samples";
-import { Clock, BookOpen, Users, Tag, Mic, Loader2 } from "lucide-react";
+import { Clock, BookOpen, Users, Tag, Mic, Loader2, FlaskConical } from "lucide-react";
 
 interface StoryAnalysisData {
   characters: Array<{

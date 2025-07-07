@@ -41,13 +41,30 @@ export class ReplitAudioStorageProvider extends BaseAudioStorageProvider {
   }
 
   async generateSignedUrl(relativePath: string, options: SignedUrlOptions): Promise<string> {
-    console.log(`[JWTSecure] generateSignedUrl called with relativePath:`, relativePath, 'options:', options);
+    console.log(`[AudioStorage] generateSignedUrl called with relativePath:`, relativePath, 'options:', options);
     
     // Check if relativePath is valid
     if (!relativePath) {
       throw new Error('relativePath is required for generating signed URL');
     }
     
+    // TEMPORARY: Return direct URLs for voice samples to fix ElevenLabs integration
+    // Check if this is a voice sample path
+    if (relativePath.includes('voice-samples/')) {
+      // Extract category and filename from path
+      const parts = relativePath.split('/');
+      const categoryIndex = parts.indexOf('voice-samples') + 1;
+      if (categoryIndex < parts.length - 1) {
+        const category = parts[categoryIndex];
+        const filename = parts[parts.length - 1];
+        // Return direct URL without JWT
+        const directUrl = `${this.config.baseUrl}/api/voice-samples/${category}/${filename}`;
+        console.log(`[AudioStorage] TEMPORARY: Returning direct URL for voice sample:`, directUrl);
+        return directUrl;
+      }
+    }
+    
+    // For non-voice-sample files, still use JWT (keeping infrastructure for future)
     // Get external ID for privacy
     const { externalIdService } = await import('./external-id-service');
     const externalId = await externalIdService.getOrCreateExternalId(options.userId);
@@ -67,7 +84,7 @@ export class ReplitAudioStorageProvider extends BaseAudioStorageProvider {
     
     // Return signed URL using the JWT endpoint
     const signedUrl = `${this.config.baseUrl}/api/audio/serve/${token}`;
-    console.log(`[JWTSecure] Generated signed URL for ${relativePath} with JWT token`);
+    console.log(`[AudioStorage] Generated JWT signed URL for non-voice-sample file`);
     
     return signedUrl;
   }

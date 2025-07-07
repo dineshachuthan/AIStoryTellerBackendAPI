@@ -5783,6 +5783,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test endpoint to force send all samples
+  app.post('/api/voice-cloning/test-all-samples/:storyId', requireAuth, async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.storyId);
+      const userId = (req.user as User).id;
+      
+      console.log(`[TEST] Force sending all samples for user ${userId}, story ${storyId}`);
+      
+      // Get ALL ESM recordings for user
+      const allEsmRecordings = await storage.getUserEsmRecordings(userId);
+      console.log(`[TEST] Found ${allEsmRecordings.length} total ESM recordings`);
+      
+      // Get voice provider
+      const { voiceProviderRegistry } = await import('./voice-provider-registry');
+      const voiceProvider = voiceProviderRegistry.getProvider('elevenlabs');
+      
+      if (!voiceProvider) {
+        return res.status(500).json({ message: 'Voice provider not available' });
+      }
+      
+      // Generate signed URLs for all recordings
+      const { audioStorageFactory } = await import('./audio-storage-providers');
+      const audioStorageProvider = audioStorageFactory.getActiveProvider();
+      
+      const samples = [];
+      for (const recording of allEsmRecordings) {
+        if (recording.audio_url) {
+          const signedUrl = await audioStorageProvider.generateSignedUrl(recording.audio_url, {
+            expiresIn: '30m',
+            purpose: 'external_api_access',
+            userId: userId
+          });
+          
+          samples.push({
+            emotion: recording.name,
+            audioUrl: signedUrl,
+            isLocked: recording.is_locked || false,
+            category: recording.category,
+            duration: recording.duration
+          });
+        }
+      }
+      
+      console.log(`[TEST] Prepared ${samples.length} samples for testing`);
+      
+      // Create test request with all samples
+      const testRequest = {
+        userId: userId,
+        samples: samples,
+        metadata: {
+          test: true,
+          forceSendAll: true
+        }
+      };
+      
+      // Call voice provider directly to test
+      const result = await voiceProvider.trainVoice(testRequest);
+      
+      res.json({
+        totalSamples: samples.length,
+        samplesDetails: samples.map(s => ({
+          name: s.emotion,
+          category: s.category,
+          duration: s.duration,
+          hasUrl: !!s.audioUrl
+        })),
+        result: result
+      });
+      
+    } catch (error) {
+      console.error('[TEST] Error in test endpoint:', error);
+      res.status(500).json({ 
+        message: error instanceof Error ? error.message : 'Test failed',
+        error: error instanceof Error ? error.stack : String(error)
+      });
+    }
+  });
+
   // =============================================================================
   // MANUAL VOICE CLONING REST ENDPOINTS  
   // =============================================================================
