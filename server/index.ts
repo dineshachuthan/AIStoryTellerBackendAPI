@@ -25,14 +25,22 @@ import fs from 'fs/promises';
  * Used by external APIs (ElevenLabs) to access audio files securely
  */
 app.get('/api/audio/serve/:token', async (req, res) => {
+  console.log('[JWT] Audio serve route hit with token:', req.params.token?.substring(0, 50) + '...');
   try {
     const { token } = req.params;
     
     // Verify JWT token
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default-secret') as any;
     
+    console.log('[JWT] Decoded token payload:', JSON.stringify(decoded, null, 2));
+    
     // Validate token structure (JWT payload uses 'relativePath')
     if (!decoded.relativePath || !decoded.userId || !decoded.purpose) {
+      console.log('[JWT] Token validation failed - missing fields:', {
+        hasRelativePath: !!decoded.relativePath,
+        hasUserId: !!decoded.userId,
+        hasPurpose: !!decoded.purpose
+      });
       return res.status(401).json({ error: 'Invalid token structure' });
     }
     
