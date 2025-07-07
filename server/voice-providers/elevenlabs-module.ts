@@ -159,20 +159,50 @@ export class ElevenLabsModule extends BaseVoiceProvider {
           
           // Delete corrupted recording from database
           try {
-            // Parse the audio URL to extract the emotion name
-            const urlParts = sample.audioUrl.split('/');
-            const emotionFile = urlParts[urlParts.length - 1].replace('.mp3', '');
-            const category = parseInt(urlParts[urlParts.length - 2]) || 1; // Get category from path
+            this.log('info', `🗑️ Attempting to delete corrupted recording for ${sample.emotion}`);
             
-            const existingRecording = await storage.getUserEsmRecordingByEmotionAndCategory(
-              request.userId, 
-              emotionFile, 
-              category
-            );
+            // Try multiple approaches to find and delete the corrupted recording
             
-            if (existingRecording) {
-              this.log('warn', `Deleting corrupted recording ${existingRecording.user_esm_recordings_id} for ${sample.emotion}`);
-              await storage.deleteUserEsmRecording(existingRecording.user_esm_recordings_id);
+            // Method 1: If we have a recordingId directly
+            if ((sample as any).recordingId) {
+              this.log('info', `Deleting by recordingId: ${(sample as any).recordingId}`);
+              await storage.deleteUserEsmRecording((sample as any).recordingId);
+              this.log('info', `✅ Successfully deleted recording ${(sample as any).recordingId}`);
+            } else {
+              // Method 2: Find by emotion name and category
+              const urlParts = sample.audioUrl.split('/');
+              const emotionFile = urlParts[urlParts.length - 1].replace('.mp3', '');
+              const category = parseInt(urlParts[urlParts.length - 2]) || 1;
+              
+              this.log('info', `Looking for recording: emotion=${emotionFile}, category=${category}, userId=${request.userId}`);
+              
+              const existingRecording = await storage.getUserEsmRecordingByEmotionAndCategory(
+                request.userId, 
+                emotionFile, 
+                category
+              );
+              
+              if (existingRecording) {
+                this.log('warn', `🗑️ Deleting corrupted recording ${existingRecording.user_esm_recordings_id} for ${sample.emotion}`);
+                await storage.deleteUserEsmRecording(existingRecording.user_esm_recordings_id);
+                this.log('info', `✅ Successfully deleted corrupted recording for ${sample.emotion}`);
+              } else {
+                this.log('warn', `⚠️ No database record found for ${sample.emotion} to delete`);
+              }
+            }
+            
+            // Also try to delete the physical file if it exists and is corrupted
+            if (sample.audioUrl.startsWith('./') || sample.audioUrl.startsWith('/')) {
+              const filePath = sample.audioUrl.startsWith('./') 
+                ? path.join(process.cwd(), sample.audioUrl.slice(2))
+                : path.join(process.cwd(), sample.audioUrl.slice(1));
+              
+              try {
+                await fs.unlink(filePath);
+                this.log('info', `🗑️ Deleted corrupted file: ${filePath}`);
+              } catch (fileError) {
+                this.log('info', `File doesn't exist or already deleted: ${filePath}`);
+              }
             }
           } catch (dbError) {
             this.log('error', `Failed to delete corrupted recording for ${sample.emotion}:`, dbError);

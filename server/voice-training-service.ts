@@ -204,7 +204,8 @@ export class VoiceTrainingService {
           mvp1Samples.push({
             emotion: esmRecording.name, // Use the ESM name (e.g. "frustration", "footsteps", "drama")
             audioUrl: signedUrl, // Use signed URL for external access
-            isLocked: false
+            isLocked: false,
+            recordingId: esmRecording.id // Include recording ID for fault-tolerant deletion
           });
           samplesToUpdate.push(esmRecording.id); // Track ESM recording ID for narrator voice storage
         }
