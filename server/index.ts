@@ -51,10 +51,26 @@ app.get('/api/audio/list', async (req, res) => {
       console.log('Voice samples directory not found or empty');
     }
     
+    // Generate JWT signed URLs for each file
+    const baseUrl = process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}` : 'http://localhost:5000';
+    const signedUrls = files.map(file => {
+      const payload = {
+        relativePath: file.relativePath,
+        userId: 'google_117487073695002443567',
+        purpose: 'external_api_access'
+      };
+      const token = jwt.sign(payload, process.env.JWT_SECRET || 'default-secret', { expiresIn: '30m' });
+      return {
+        ...file,
+        signedUrl: `${baseUrl}/api/audio/serve/${token}`
+      };
+    });
+    
     res.json({
-      files,
+      files: signedUrls,
       totalFiles: files.length,
-      baseUrl: process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}` : 'http://localhost:5000'
+      baseUrl,
+      note: 'Each file includes a signedUrl that can be used to access the audio file with JWT authentication'
     });
   } catch (error) {
     console.error('Error listing audio files:', error);
