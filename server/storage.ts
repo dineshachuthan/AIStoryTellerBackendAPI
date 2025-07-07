@@ -1897,12 +1897,11 @@ export class DatabaseStorage implements IStorage {
   async createUserEsm(data: any): Promise<any> {
     const sampleCount = data.sample_count ?? 0;
     const qualityTier = data.quality_tier ?? 'none';
-    const voiceCloningStatus = data.voice_cloning_status ?? 'not_started';
     const createdBy = data.created_by ?? data.user_id;
     
     const result = await db.execute(
-      sql`INSERT INTO user_esm (user_id, esm_ref_id, sample_count, quality_tier, voice_cloning_status, created_by)
-          VALUES (${data.user_id}, ${data.esm_ref_id}, ${sampleCount}, ${qualityTier}, ${voiceCloningStatus}, ${createdBy})
+      sql`INSERT INTO user_esm (user_id, esm_ref_id, sample_count, quality_tier, created_by)
+          VALUES (${data.user_id}, ${data.esm_ref_id}, ${sampleCount}, ${qualityTier}, ${createdBy})
           RETURNING *`
     );
     return result.rows[0];

@@ -99,7 +99,6 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
   const voiceSamplesData = voiceSamplesQuery.data || {};
   const storyEmotions = voiceSamplesData.emotions || [];
   const storySounds = voiceSamplesData.sounds || [];
-  const storyModulations = voiceSamplesData.modulations || [];
 
   // Track recording state per emotion for individual card feedback
   const [recordingStates, setRecordingStates] = useState<Record<string, {
@@ -260,12 +259,6 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
       name: "Sounds", 
       count: storySounds.length,
       icon: <Volume2 className="w-4 h-4" />
-    },
-    { 
-      id: "modulations", 
-      name: "Modulations", 
-      count: storyModulations.length,
-      icon: <Users className="w-4 h-4" />
     }
   ];
 
@@ -275,7 +268,6 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
     switch (selectedCategory) {
       case "emotions": data = storyEmotions; break;
       case "sounds": data = storySounds; break;
-      case "modulations": data = storyModulations; break;
       default: data = [];
     }
     
@@ -294,12 +286,12 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
   }
 
   // Check if there's any data across all categories
-  const hasAnyData = storyEmotions.length > 0 || storySounds.length > 0 || storyModulations.length > 0;
+  const hasAnyData = storyEmotions.length > 0 || storySounds.length > 0;
   
   if (!analysisData || !hasAnyData) {
     return (
       <div className="text-center p-8">
-        <p className="text-gray-500">No emotions, sounds, or modulations found in this story.</p>
+        <p className="text-gray-500">No emotions or sounds found in this story.</p>
       </div>
     );
   }
@@ -309,13 +301,13 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
       <div className="text-center space-y-2">
         <h2 className="text-2xl font-bold">Story Voice Samples</h2>
         <p className="text-gray-600">
-          Record your voice for emotions, sounds, and modulations found in this story
+          Record your voice for emotions and sounds found in this story
         </p>
       </div>
 
       {/* Category Tabs */}
       <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           {categories.map((category) => (
             <TabsTrigger 
               key={category.id} 
@@ -464,7 +456,7 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
 
       <div className="text-center text-sm text-gray-500 mt-8">
         <p>Voice samples are stored globally and can be used across all your stories.</p>
-        <p>Only emotions, sounds, and modulations from this specific story are shown here.</p>
+        <p>Only emotions and sounds from this specific story are shown here.</p>
       </div>
     </div>
   );

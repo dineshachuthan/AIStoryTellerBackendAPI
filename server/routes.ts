@@ -4338,17 +4338,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         storyId,
         storyTitle: story.title,
         emotions: [],
-        sounds: [],
-        modulations: []
+        sounds: []
       };
 
-      // Process emotions from story analysis
+      // Process emotions from story analysis - only show items in ESM reference data
       if (analysis.analysisData.emotions) {
         console.log(`🎯 Story ${storyId} emotions:`, analysis.analysisData.emotions.map(e => e.emotion));
         for (const emotion of analysis.analysisData.emotions) {
+          // Check if emotion exists in ESM reference data
+          const esmRef = await storage.getEsmRef(1, emotion.emotion.toLowerCase());
+          if (!esmRef) {
+            console.log(`⚠️ Skipping emotion "${emotion.emotion}" - not in ESM reference data`);
+            continue;
+          }
+          
           const userRecording = findUserRecording(emotion.emotion, 'emotions');
           console.log(`🔍 Looking for recording: ${emotion.emotion} -> found: ${!!userRecording}`);
-          const esmText = await getEsmSampleText(emotion.emotion, 1);
+          const esmText = esmRef.sample_text;
           
           response.emotions.push({
             name: emotion.emotion.toLowerCase(),
@@ -4369,11 +4375,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Process sounds from story analysis
+      // Process sounds from story analysis - only show items in ESM reference data
       if (analysis.analysisData.soundEffects) {
         for (const sound of analysis.analysisData.soundEffects) {
+          // Check if sound exists in ESM reference data
+          const esmRef = await storage.getEsmRef(2, sound.sound.toLowerCase());
+          if (!esmRef) {
+            console.log(`⚠️ Skipping sound "${sound.sound}" - not in ESM reference data`);
+            continue;
+          }
+          
           const userRecording = findUserRecording(sound.sound, 'sounds');
-          const esmText = await getEsmSampleText(sound.sound, 2);
+          const esmText = esmRef.sample_text;
           
           response.sounds.push({
             name: sound.sound.toLowerCase(),
@@ -4394,42 +4407,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Process modulations from story analysis
-      const modulations: string[] = [];
-      if (analysis.analysisData.moodCategory) modulations.push(analysis.analysisData.moodCategory);
-      if (analysis.analysisData.genre) modulations.push(analysis.analysisData.genre);
-      if (analysis.analysisData.subGenre) modulations.push(analysis.analysisData.subGenre);
-      if (analysis.analysisData.emotionalTags) modulations.push(...analysis.analysisData.emotionalTags);
-
-      for (const modulation of modulations) {
-        if (modulation) {
-          // Check if modulation exists in ESM reference data
-          const esmRef = await storage.getEsmRef(3, modulation.toLowerCase());
-          if (!esmRef) {
-            console.log(`⚠️ Skipping modulation "${modulation}" - not in ESM reference data`);
-            continue;
-          }
-          
-          const userRecording = findUserRecording(modulation, 'modulations');
-          const esmText = await getEsmSampleText(modulation, 3);
-          
-          response.modulations.push({
-            name: modulation.toLowerCase(),
-            displayName: modulation,
-            intensity: 5, // Default for modulations
-            context: `${modulation} modulation for this story`,
-            sampleText: esmText || `Express the modulation of ${modulation}`,
-            userRecording: userRecording ? {
-              audioUrl: userRecording.audio_url,
-              recordedAt: userRecording.created_date,
-              duration: userRecording.duration,
-              isLocked: userRecording.is_locked || false
-            } : null,
-            isRecorded: !!userRecording,
-            isLocked: userRecording?.is_locked || false
-          });
-        }
-      }
+      // Modulations removed - system now only displays emotions and sounds from ESM reference data
 
       res.json(response);
     } catch (error: any) {

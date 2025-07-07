@@ -321,6 +321,16 @@ This is a full-stack collaborative storytelling platform that enables users to c
 
 ## Changelog
 
+### **MODULATIONS CATEGORY REMOVED - January 07, 2025**
+**Project Simplification**: Removed modulations (category 3) entirely from system architecture
+- **SIMPLIFIED TO TWO CATEGORIES**: System now only handles emotions (category 1) and sounds (category 2)
+- **BACKEND CLEANUP**: Removed all modulation processing from voice samples endpoint
+- **FRONTEND UPDATES**: Changed grid layout from 3 columns to 2 columns for emotions and sounds only
+- **DATABASE CONSISTENCY**: Fixed createUserEsm method to remove voice_cloning_status column reference
+- **UI IMPROVEMENTS**: Updated all text and descriptions to reflect two-category system
+- **RATIONALE**: Modulations were meant for voice pitch variations but added unnecessary complexity
+- **DATA-DRIVEN APPROACH**: System remains purely database-driven - only displays items from ESM reference data
+
 ### **MVP2 IMPLEMENTATION COMPLETED - January 07, 2025**
 **Project Goal**: Enhanced story narration system with intelligent category-specific narrator voice generation using three-level ElevenLabs analysis approach
 
