@@ -1850,10 +1850,13 @@ export class DatabaseStorage implements IStorage {
   async getUserEsmRecordings(userId: string): Promise<any[]> {
     const result = await db.execute(
       sql`SELECT 
-            uer.user_esm_recordings_id,
+            uer.user_esm_recordings_id as id,
             uer.audio_url,
             uer.duration,
             uer.created_date,
+            uer.is_locked,
+            uer.locked_at,
+            uer.narrator_voice_id as recording_narrator_voice_id,
             ue.narrator_voice_id,
             ue.kling_voice_id,
             er.name,

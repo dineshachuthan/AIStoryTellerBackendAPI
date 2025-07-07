@@ -108,12 +108,32 @@ export class VoiceTrainingService {
         
         console.log(`[MVP1] User has recorded ${allEsmRecordings.length} total ESM samples across all categories`);
         
-        if (allEsmRecordings.length < this.TRAINING_THRESHOLD) {
+        // SMART LOGIC: Separate locked and unlocked recordings to optimize ElevenLabs API calls
+        const unlockedRecordings = allEsmRecordings.filter(r => !r.is_locked);
+        const lockedRecordings = allEsmRecordings.filter(r => r.is_locked && r.narrator_voice_id);
+        
+        console.log(`[MVP1] 🎯 Smart selection: ${unlockedRecordings.length} unlocked, ${lockedRecordings.length} locked recordings`);
+        
+        // Determine which recordings to use based on smart logic
+        let recordingsToProcess = [];
+        
+        if (unlockedRecordings.length >= this.TRAINING_THRESHOLD) {
+          // We have enough unlocked recordings - no need to include locked ones
+          recordingsToProcess = unlockedRecordings;
+          console.log(`[MVP1] ✅ Using only ${unlockedRecordings.length} unlocked recordings (meets minimum threshold)`);
+        } else {
+          // Need to include some locked recordings to meet minimum threshold
+          const lockedNeeded = Math.min(this.TRAINING_THRESHOLD - unlockedRecordings.length, lockedRecordings.length);
+          recordingsToProcess = [...unlockedRecordings, ...lockedRecordings.slice(0, lockedNeeded)];
+          console.log(`[MVP1] ⚠️ Including ${lockedNeeded} locked recordings to meet minimum threshold of ${this.TRAINING_THRESHOLD}`);
+        }
+        
+        if (recordingsToProcess.length < this.TRAINING_THRESHOLD) {
           clearTimeout(timeout);
-          console.log(`[MVP1] ❌ Insufficient ESM samples for voice cloning: ${allEsmRecordings.length}/${this.TRAINING_THRESHOLD} required`);
+          console.log(`[MVP1] ❌ Insufficient ESM samples for voice cloning: ${recordingsToProcess.length}/${this.TRAINING_THRESHOLD} required`);
           return resolve({
             success: false,
-            error: `Need ${this.TRAINING_THRESHOLD} ESM samples for voice cloning. Currently have: ${allEsmRecordings.length}`,
+            error: `Need ${this.TRAINING_THRESHOLD} ESM samples for voice cloning. Currently have: ${recordingsToProcess.length} usable`,
             samplesProcessed: 0
           });
         }
@@ -124,11 +144,11 @@ export class VoiceTrainingService {
         
         console.log(`[MVP1] Using audio storage provider: ${audioStorageProvider.name}`);
         
-        // Prepare all ESM samples with signed URLs for ElevenLabs
+        // Prepare only the selected ESM samples with signed URLs for ElevenLabs
         const mvp1Samples = [];
         const samplesToUpdate = []; // Track ESM recordings to update with narrator voice ID
         
-        for (const esmRecording of allEsmRecordings) {
+        for (const esmRecording of recordingsToProcess) {
           console.log(`[MVP1] Processing ESM recording:`, {
             name: esmRecording.name,
             audioUrl: esmRecording.audio_url, // Note: database field is audio_url (snake_case)
