@@ -542,7 +542,7 @@ export function EnhancedVoiceRecorder({
           {/* Title and Instructions */}
           {sampleText && (
             <div className="text-blue-300 text-xs font-medium mb-2 text-left tracking-wide">
-              📖 {emotionName ? `Read this text with ${emotionName.toLowerCase()} emotion` : 'Read this text aloud'}
+              📖 {emotionName ? `Talk anything with ${emotionName.toLowerCase()} tone for ${VOICE_RECORDING_CONFIG.MAX_DURATION} seconds or use the helper text to record your tone` : 'Talk anything for 25 seconds or use the helper text below'}
             </div>
           )}
           
