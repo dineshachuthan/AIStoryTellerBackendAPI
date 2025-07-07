@@ -4510,11 +4510,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Save to user voice storage using Pattern 2: /voice-samples/{categoryId}/{emotionName}.mp3
       const audioPath = `voice-samples/${category}/${itemName.toLowerCase()}.mp3`;
-      const relativePath = `/cache/user-voice-modulations/${userId}/${audioPath}`;
       
       // Use audio storage provider to save the file
       const audioStorageProvider = audioStorageFactory.getActiveProvider();
-      await audioStorageProvider.uploadAudio(audioBuffer, relativePath);
+      await audioStorageProvider.uploadAudio(audioBuffer, audioPath);
       
       // Save using ESM system - emotion name should match story analysis
       const emotionName = itemName.toLowerCase();
@@ -4542,7 +4541,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create the actual recording
       const recordingData = {
         user_esm_id: userEsm.user_esm_id,
-        audio_url: relativePath, // Use the same relative path format
+        audio_url: audioPath, // Store clean path without prefixes
         duration: duration, // Keep as float for precision
         file_size: audioBuffer.length,
         created_by: userId

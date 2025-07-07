@@ -31,6 +31,40 @@ export interface SegmentationMetadata {
 export class VoiceCloningSegmentationService {
   private readonly MIN_SAMPLES_INDIVIDUAL = 10;
   private readonly MIN_SAMPLES_CATEGORY = 3;
+  
+  /**
+   * Convert database URL to full URL for ElevenLabs access
+   * Database format: voice-samples/1/frustration.mp3
+   * Full format: https://domain/api/voice-samples/1/frustration.mp3
+   */
+  private convertToFullUrl(dbUrl: string): string {
+    // Get base URL from environment or construct from Replit environment
+    const baseUrl = process.env.REPLIT_DEV_DOMAIN || 
+                   `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co` || 
+                   'http://localhost:5000';
+    
+    // Return full URL using the JWT bypass route
+    return `${baseUrl}/api/${dbUrl}`;
+  }
+  
+  // ORPHANED METHOD - Commented out after strategic fix to store clean URLs
+  // /**
+  //  * Convert database URL to JWT bypass URL for ElevenLabs access
+  //  * Database format: ./voice-samples/1/frustration.mp3
+  //  * Bypass format: https://domain/api/voice-samples/1/frustration.mp3
+  //  */
+  // private convertToBypassUrl(dbUrl: string): string {
+  //   // Remove "./" prefix if present
+  //   const cleanPath = dbUrl.startsWith('./') ? dbUrl.substring(2) : dbUrl;
+  //   
+  //   // Get base URL
+  //   const baseUrl = process.env.REPLIT_DEV_DOMAIN || 
+  //                  `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co` || 
+  //                  'http://localhost:5000';
+  //   
+  //   // Return JWT bypass URL
+  //   return `${baseUrl}/api/${cleanPath}`;
+  // }
 
   /**
    * Smart three-level ElevenLabs segmentation analysis
@@ -246,18 +280,15 @@ export class VoiceCloningSegmentationService {
         const item = categoryData.find(i => i.name === itemName);
         
         if (item && item.audioUrls) {
-          // Generate signed URLs for external API access
+          // Generate JWT bypass URLs for external API access
           const signedUrls = [];
           for (const audioUrl of item.audioUrls) {
             try {
-              const signedUrl = await audioStorageProvider.generateSignedUrl(audioUrl, {
-                expiresIn: '30m',
-                purpose: 'external_api_access',
-                userId: userId
-              });
-              signedUrls.push(signedUrl);
+              const fullUrl = this.convertToFullUrl(audioUrl);
+              console.log(`[MVP2Segmentation] Using full URL for ${item.name}: ${fullUrl}`);
+              signedUrls.push(fullUrl);
             } catch (error) {
-              console.error(`[MVP2Segmentation] Failed to generate signed URL for ${audioUrl}:`, error);
+              console.error(`[MVP2Segmentation] Failed to generate bypass URL for ${audioUrl}:`, error);
             }
           }
 
@@ -290,14 +321,11 @@ export class VoiceCloningSegmentationService {
             }
             for (const audioUrl of item.audioUrls) {
               try {
-                const signedUrl = await audioStorageProvider.generateSignedUrl(audioUrl, {
-                  expiresIn: '30m',
-                  purpose: 'external_api_access',
-                  userId: userId
-                });
-                allUrls.push(signedUrl);
+                const fullUrl = this.convertToFullUrl(audioUrl);
+                console.log(`[MVP2Segmentation] Using full URL for ${item.name}: ${fullUrl}`);
+                allUrls.push(fullUrl);
               } catch (error) {
-                console.error(`[MVP2Segmentation] Failed to generate signed URL for ${audioUrl}:`, error);
+                console.error(`[MVP2Segmentation] Failed to generate bypass URL for ${audioUrl}:`, error);
               }
             }
           }
@@ -331,14 +359,11 @@ export class VoiceCloningSegmentationService {
             }
             for (const audioUrl of item.audioUrls) {
               try {
-                const signedUrl = await audioStorageProvider.generateSignedUrl(audioUrl, {
-                  expiresIn: '30m',
-                  purpose: 'external_api_access',
-                  userId: userId
-                });
-                allUrls.push(signedUrl);
+                const fullUrl = this.convertToFullUrl(audioUrl);
+                console.log(`[MVP2Segmentation] Using full URL: ${fullUrl}`);
+                allUrls.push(fullUrl);
               } catch (error) {
-                console.error(`[MVP2Segmentation] Failed to generate signed URL for ${audioUrl}:`, error);
+                console.error(`[MVP2Segmentation] Failed to generate bypass URL for ${audioUrl}:`, error);
               }
             }
           }
