@@ -214,7 +214,7 @@ export class MVP2ElevenLabsIntegration {
           try {
             await storage.updateUserEsm(recording.user_esm_id, {
               narrator_voice_id: narratorVoiceId,
-              voice_cloning_status: 'completed',
+              voice_cloning_status: 'not_started', // Reset status after successful completion
               voice_cloning_provider: 'elevenlabs',
               voice_cloning_completed_at: new Date().toISOString()
             });

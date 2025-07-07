@@ -5059,47 +5059,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userId) {
         return res.status(401).json({ message: 'User not authenticated' });
       }
-
-      const { getVoiceSamplesByType } = await import('./voice-samples');
-      const { voiceTrainingService } = await import('./voice-training-service');
       
-      // Get user's voice recordings by category - handle gracefully if none exist
-      let userEmotionVoices = [];
-      let trainingStatus = { status: 'none' };
+      // Use ESM system for MVP2 architecture instead of old emotion voices system
+      let userEsmRecordings = [];
       
       try {
-        userEmotionVoices = await storage.getUserEmotionVoices(userId) || [];
-        trainingStatus = await voiceTrainingService.getTrainingStatus(userId);
+        userEsmRecordings = await storage.getUserEsmRecordings(userId) || [];
       } catch (error) {
-        console.log(`📭 No voice samples found for user ${userId} - returning empty progress`);
+        console.log(`📭 No ESM recordings found for user ${userId} - returning empty progress`);
         // If user has no voice samples yet, return empty progress (this is normal for new users)
       }
       
-      const emotionCount = userEmotionVoices.length;
-      const soundCount = 0; // Sound samples not implemented yet
-      const modulationCount = 0; // Modulation samples not implemented yet
+      // Calculate counts and status by ESM category
+      const emotionRecordings = userEsmRecordings.filter(r => r.category === 1);
+      const soundRecordings = userEsmRecordings.filter(r => r.category === 2);
+      const modulationRecordings = userEsmRecordings.filter(r => r.category === 3);
+      
+      // Get voice cloning status from ESM system
+      const getUserEsmStatus = async (recordings: any[]) => {
+        if (recordings.length === 0) return 'none';
+        
+        // Check if any recordings have completed voice cloning status
+        const hasCompleted = recordings.some(r => r.voice_cloning_status === 'completed');
+        if (hasCompleted) return 'completed';
+        
+        const hasTraining = recordings.some(r => r.voice_cloning_status === 'training');
+        if (hasTraining) return 'training';
+        
+        const hasFailed = recordings.some(r => r.voice_cloning_status === 'failed');
+        if (hasFailed) return 'failed';
+        
+        return 'not_started';
+      };
+      
+      const emotionStatus = await getUserEsmStatus(emotionRecordings);
+      const soundStatus = await getUserEsmStatus(soundRecordings);
+      const modulationStatus = await getUserEsmStatus(modulationRecordings);
       
       const progress = {
         emotions: {
-          count: emotionCount,
-          threshold: 5,
-          canTrigger: emotionCount >= 5,
-          isTraining: trainingStatus.status === 'training',
-          status: trainingStatus.status
+          count: emotionRecordings.length,
+          threshold: 3, // MVP2 threshold for emotions
+          canTrigger: emotionRecordings.length >= 3,
+          isTraining: emotionStatus === 'training',
+          status: emotionStatus
         },
         sounds: {
-          count: soundCount,
-          threshold: 5,
-          canTrigger: soundCount >= 5,
-          isTraining: false, // Sounds not implemented yet
-          status: 'none'
+          count: soundRecordings.length,
+          threshold: 1, // MVP2 threshold for sounds
+          canTrigger: soundRecordings.length >= 1,
+          isTraining: soundStatus === 'training',
+          status: soundStatus
         },
         modulations: {
-          count: modulationCount,
-          threshold: 5,
-          canTrigger: modulationCount >= 5,
-          isTraining: false, // Modulations not implemented yet
-          status: 'none'
+          count: modulationRecordings.length,
+          threshold: 5, // MVP2 threshold for modulations
+          canTrigger: modulationRecordings.length >= 5,
+          isTraining: modulationStatus === 'training',
+          status: modulationStatus
         }
       };
       
