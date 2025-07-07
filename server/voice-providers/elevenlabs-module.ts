@@ -264,9 +264,10 @@ export class ElevenLabsModule extends BaseVoiceProvider {
     
     this.log('info', `Audio format detection for ${fileName}: detected=${format}, bufferSize=${audioBuffer.length}, firstBytes=${audioBuffer.slice(0, 8).toString('hex')}`);
     
-    // Skip conversion if already MP3
-    if (format === 'mp3') {
-      this.log('info', `${fileName} is already MP3 format, skipping conversion`);
+    // Skip conversion if already MP3 OR if fileName suggests MP3
+    const isMP3File = format === 'mp3' || fileName.toLowerCase().endsWith('.mp3');
+    if (isMP3File) {
+      this.log('info', `${fileName} is already MP3 format (detected=${format}, filename check=${fileName.toLowerCase().endsWith('.mp3')}), skipping conversion`);
       return audioBuffer;
     }
     
