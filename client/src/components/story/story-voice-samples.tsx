@@ -191,19 +191,27 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
 
   // Handle recording completion (just store the recording, don't save yet)
   const handleRecordingComplete = (emotion: string) => (audioBlob: Blob, audioUrl: string) => {
+    console.log(`🎤 Recording complete for: ${emotion}`);
     getAudioDuration(audioBlob).then(duration => {
-      setRecordingStates(prev => ({
-        ...prev,
-        [emotion]: {
-          ...prev[emotion],
-          duration,
-          audioBlob,
-          audioUrl,
-          errorMessage: '',
-          isSaving: false,
-          isRecorded: false
-        }
-      }));
+      console.log(`📏 Duration for ${emotion}: ${duration}s`);
+      setRecordingStates(prev => {
+        console.log(`📝 Updating state for ${emotion}`, {
+          currentStates: Object.keys(prev),
+          emotionState: prev[emotion]
+        });
+        return {
+          ...prev,
+          [emotion]: {
+            ...prev[emotion],
+            duration,
+            audioBlob,
+            audioUrl,
+            errorMessage: '',
+            isSaving: false,
+            isRecorded: false
+          }
+        };
+      });
     });
   };
 
@@ -261,7 +269,7 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
     }
   ];
 
-  // Get current category data with proper sorting
+  // Get current category data without sorting to maintain consistent order
   const getCurrentCategoryData = () => {
     let data;
     switch (selectedCategory) {
@@ -271,29 +279,8 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
       default: data = [];
     }
     
-    // Sort data: unrecorded first, recorded unlocked next, recorded locked last
-    return data.sort((a, b) => {
-      const aName = a.emotion || a.sound || a.name || 'unknown';
-      const bName = b.emotion || b.sound || b.name || 'unknown';
-      
-      const aState = recordingStates[aName];
-      const bState = recordingStates[bName];
-      
-      const aRecorded = aState?.isRecorded || hasRecording(a);
-      const bRecorded = bState?.isRecorded || hasRecording(b);
-      const aLocked = a.isLocked || false;
-      const bLocked = b.isLocked || false;
-      
-      // Determine sort priority: 0=unrecorded, 1=recorded+unlocked, 2=recorded+locked
-      const aPriority = !aRecorded ? 0 : (aLocked ? 2 : 1);
-      const bPriority = !bRecorded ? 0 : (bLocked ? 2 : 1);
-      
-      // Sort by priority, then by name alphabetically
-      if (aPriority !== bPriority) {
-        return aPriority - bPriority;
-      }
-      return aName.localeCompare(bName);
-    });
+    // Return data in original order from API to prevent UI position shifts after recording
+    return data;
   };
 
   const currentCategoryData = getCurrentCategoryData();
