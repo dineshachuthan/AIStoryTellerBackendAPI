@@ -262,6 +262,8 @@ export class ElevenLabsModule extends BaseVoiceProvider {
   private async convertToMp3(audioBuffer: Buffer, fileName: string): Promise<Buffer> {
     const format = detectAudioFormat(audioBuffer);
     
+    this.log('info', `Audio format detection for ${fileName}: detected=${format}, bufferSize=${audioBuffer.length}, firstBytes=${audioBuffer.slice(0, 8).toString('hex')}`);
+    
     // Skip conversion if already MP3
     if (format === 'mp3') {
       this.log('info', `${fileName} is already MP3 format, skipping conversion`);
@@ -273,8 +275,12 @@ export class ElevenLabsModule extends BaseVoiceProvider {
       
       // Create temporary directory and files
       const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'elevenlabs-'));
-      const inputPath = path.join(tempDir, `input_${Date.now()}.${format}`);
+      // Use the original file extension from fileName if available, otherwise use detected format
+      const originalExt = path.extname(fileName).slice(1) || format;
+      const inputPath = path.join(tempDir, `input_${Date.now()}.${originalExt}`);
       const outputPath = path.join(tempDir, `output_${Date.now()}.mp3`);
+      
+      this.log('info', `Writing audio file: ${inputPath} (extension: ${originalExt})`);
       
       // Write input file
       await fs.writeFile(inputPath, audioBuffer);
