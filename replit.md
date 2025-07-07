@@ -260,9 +260,10 @@ This is a full-stack collaborative storytelling platform that enables users to c
 
 **VOICE LOCKING ALGORITHM - MUST FOLLOW THIS EXACT LOGIC**:
 
-1. **LOCKING THRESHOLD**: Each emotion/sound needs exactly 5 unlocked samples to create its own permanent voice
-   - Example: "happy" emotion with 5 samples → Create unique "happy" voice → Lock those 5 samples forever
-   - Example: "footsteps" sound with 5 samples → Create unique "footsteps" voice → Lock forever
+1. **LOCKING THRESHOLD**: Each emotion/sound needs exactly 6 unlocked samples ACROSS ALL STORIES to create its own permanent voice
+   - Example: "happy" emotion with 6 total samples (2 from story A + 2 from story B + 2 from story C) → Create unique "happy" voice → Lock those 6 samples forever
+   - Example: "footsteps" sound with 6 total samples across multiple stories → Create unique "footsteps" voice → Lock forever
+   - CRITICAL: Counting is across ALL user stories, not per individual story
 
 2. **WHEN CALLING ELEVENLABS - PRIORITY ORDER**:
    ```

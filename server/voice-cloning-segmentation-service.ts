@@ -29,7 +29,7 @@ export interface SegmentationMetadata {
 }
 
 export class VoiceCloningSegmentationService {
-  private readonly MIN_SAMPLES_INDIVIDUAL = 10;
+  private readonly MIN_SAMPLES_INDIVIDUAL = 6;  // Changed from 10 to 6 per user requirement
   private readonly MIN_SAMPLES_CATEGORY = 3;
   
   /**
@@ -400,19 +400,22 @@ export class VoiceCloningSegmentationService {
 
   /**
    * Generate ESM item-level locking plan for automatic locking after voice generation
+   * CRITICAL: Only lock samples when specific emotion has 6+ samples across all stories
    */
   private generateLockingPlan(segmentationStrategy: any, categoryBreakdown: any) {
     const esmItemsToLock = [];
 
     if (segmentationStrategy.type === 'individual') {
       // Lock specific emotions/sounds/modulations that get individual voice clones
+      // ONLY if they have 6+ samples (individual threshold)
       for (const targetItem of segmentationStrategy.targetItems) {
         const [category, itemName] = targetItem.split(':');
         const categoryNum = category === 'emotion' ? 1 : category === 'sound' ? 2 : 3;
         const categoryKey = category === 'emotion' ? 'emotions' : category === 'sound' ? 'sounds' : 'modulations';
         const item = categoryBreakdown[categoryKey].find(i => i.name === itemName);
         
-        if (item) {
+        // Only lock if this specific emotion has 6+ samples
+        if (item && item.sampleCount >= this.MIN_SAMPLES_INDIVIDUAL) {
           esmItemsToLock.push({
             category: categoryNum,
             itemName: itemName,
@@ -421,40 +424,22 @@ export class VoiceCloningSegmentationService {
         }
       }
     } else if (segmentationStrategy.type === 'category') {
-      // Lock all items in categories that get category-specific voice clones
-      for (const categoryName of segmentationStrategy.targetItems) {
-        const categoryNum = categoryName === 'emotions' ? 1 : categoryName === 'sounds' ? 2 : 3;
-        const categoryData = categoryBreakdown[categoryName];
-        
-        for (const item of categoryData) {
-          if (!item.locked) {
-            esmItemsToLock.push({
-              category: categoryNum,
-              itemName: item.name,
-              esmRefId: item.esmRefId
-            });
-          }
-        }
-      }
+      // For category-level clones, we don't lock individual items
+      // These use combined samples from multiple emotions
+      console.log(`[MVP2Segmentation] Category-level clone - no individual locking applied`);
     } else {
-      // Combined: Lock all unlocked ESM items across all categories
-      const allCategories = [
-        { name: 'emotions', num: 1, data: categoryBreakdown.emotions },
-        { name: 'sounds', num: 2, data: categoryBreakdown.sounds },
-        { name: 'modulations', num: 3, data: categoryBreakdown.modulations }
-      ];
+      // Combined: We don't lock individual items for combined voice
+      // This uses all samples together
+      console.log(`[MVP2Segmentation] Combined clone - no individual locking applied`);
+    }
 
-      for (const category of allCategories) {
-        for (const item of category.data) {
-          if (!item.locked) {
-            esmItemsToLock.push({
-              category: category.num,
-              itemName: item.name,
-              esmRefId: item.esmRefId
-            });
-          }
-        }
-      }
+    // Log locking decisions
+    if (esmItemsToLock.length > 0) {
+      console.log(`[MVP2Segmentation] Will lock ${esmItemsToLock.length} items that have 6+ samples:`, 
+        esmItemsToLock.map(item => `${item.itemName} (category ${item.category})`).join(', ')
+      );
+    } else {
+      console.log(`[MVP2Segmentation] No items meet the 6+ sample threshold for locking`);
     }
 
     return { esmItemsToLock };

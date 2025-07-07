@@ -624,14 +624,14 @@ export function EnhancedVoiceRecorder({
                         onMouseLeave={handleMouseUp}
                         onTouchStart={handleTouchStart}
                         onTouchEnd={handleTouchEnd}
-                        disabled={disabled}
+                        disabled={disabled || isLocked}
                         className="w-16 h-16 rounded-full bg-red-500 hover:bg-red-600 disabled:bg-gray-600 flex items-center justify-center text-white transition-all duration-200 select-none touch-manipulation shadow-lg hover:shadow-red-500/25"
                       >
                         <Mic className="w-6 h-6" />
                       </button>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>Hold to record voice sample</p>
+                      <p>{isLocked ? 'Voice is locked and cannot be re-recorded' : 'Hold to record voice sample'}</p>
                     </TooltipContent>
                   </Tooltip>
                 )}
@@ -662,14 +662,14 @@ export function EnhancedVoiceRecorder({
                         onMouseLeave={handleMouseUp}
                         onTouchStart={handleTouchStart}
                         onTouchEnd={handleTouchEnd}
-                        disabled={disabled}
+                        disabled={disabled || isLocked}
                         className="w-16 h-16 rounded-full bg-red-500 hover:bg-red-600 disabled:bg-gray-600 flex items-center justify-center text-white transition-all duration-200 select-none touch-manipulation shadow-lg hover:shadow-red-500/25"
                       >
                         <Mic className="w-6 h-6" />
                       </button>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>Hold to re-record voice sample</p>
+                      <p>{isLocked ? 'Voice is locked and cannot be re-recorded' : 'Hold to re-record voice sample'}</p>
                     </TooltipContent>
                   </Tooltip>
                 )}
