@@ -70,11 +70,26 @@ export class StoryNarrator {
   }
 
   /**
-   * Select narrator voice based on priority: user narrator -> emotion voices -> AI voice
+   * Select narrator voice based on priority: ElevenLabs narrator voice -> user samples -> AI voice
    */
   private async selectNarratorVoice(userId: string, story: any): Promise<{ voice: string; type: 'ai' | 'user' }> {
     
-    // Check if user has any voice samples (narrator or emotion)
+    // PRIORITY 1: Check for ElevenLabs trained narrator voice from ESM recordings
+    try {
+      const esmRecordings = await storage.getUserEsmRecordings(userId);
+      if (esmRecordings && esmRecordings.length > 0) {
+        // Find any ESM recording with narrator_voice_id (MVP1 design stores same ID in all recordings)
+        const recordingWithNarratorVoice = esmRecordings.find(r => r.narrator_voice_id);
+        if (recordingWithNarratorVoice && recordingWithNarratorVoice.narrator_voice_id) {
+          console.log(`[StoryNarrator] Using ElevenLabs narrator voice: ${recordingWithNarratorVoice.narrator_voice_id}`);
+          return { voice: recordingWithNarratorVoice.narrator_voice_id, type: 'user' };
+        }
+      }
+    } catch (error) {
+      console.log('[StoryNarrator] No ElevenLabs narrator voice found, checking user voice samples');
+    }
+
+    // PRIORITY 2: Check if user has any voice samples (narrator or emotion)
     try {
       const userVoices = await storage.getUserVoiceSamples(userId);
       if (userVoices && userVoices.length > 0) {
@@ -93,11 +108,12 @@ export class StoryNarrator {
         }
       }
     } catch (error) {
-      console.log('No user voices found, using AI voice');
+      console.log('[StoryNarrator] No user voice samples found, using AI voice');
     }
 
-    // Final fallback to analysis-based AI voice (from story's existing analysis)
+    // PRIORITY 3: Final fallback to analysis-based AI voice (from story's existing analysis)
     const analysisVoice = this.getAnalysisVoice(story);
+    console.log(`[StoryNarrator] Using AI voice fallback: ${analysisVoice}`);
     return { voice: analysisVoice, type: 'ai' };
   }
 
