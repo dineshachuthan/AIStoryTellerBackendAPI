@@ -413,6 +413,7 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **BACKEND VALIDATION UPDATED**: Server routes now use VOICE_RECORDING_CONFIG.MIN_DURATION for validation
 - **FRONTEND CONSISTENCY**: All UI components updated to display new duration requirements dynamically
 - **AI TEXT GENERATION ENHANCED**: OpenAI prompts now generate longer sample texts matching new duration requirements
+- **SAMPLE TEXT HIERARCHY RESTORED**: System now prioritizes story quotes → story context → OpenAI generation for authentic voice samples
 - **USER BENEFIT**: Longer voice samples provide significantly better voice cloning quality with ElevenLabs API
 
 ### **VOICE ID RECOVERY ENDPOINT CREATED - January 08, 2025**

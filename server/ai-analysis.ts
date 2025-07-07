@@ -479,22 +479,45 @@ async function populateEsmReferenceData(analysis: StoryAnalysis, userId: string)
         if (!existingEmotion) {
           console.log(`➕ Adding new emotion to ESM reference: ${emotionName}`);
           
-          // Generate professional voice sample text using OpenAI cached provider
+          // Try to extract sample text from story first, then fall back to OpenAI generation
           let sampleText: string;
-          try {
-            const result = await openaiProvider.generateCompletionWithCache({
-              messages: [{ 
-                role: 'user', 
-                content: `Generate a voice recording sample text for the emotion "${emotion.emotion}". Be exactly ${VOICE_RECORDING_CONFIG.MIN_WORDS}-${VOICE_RECORDING_CONFIG.MAX_WORDS} words for a ${VOICE_RECORDING_CONFIG.MIN_DURATION}-${VOICE_RECORDING_CONFIG.MAX_DURATION} second recording, natural conversational language, first person perspective that clearly expresses ${emotion.emotion}. No character names or story references. Just the emotional sample text.`
-              }],
-              maxTokens: 100,
-              temperature: 0.7
-            });
-            sampleText = result.content.trim().replace(/^["']|["']$/g, '');
-            console.log(`✅ Generated professional sample text for ${emotionName}: "${sampleText.substring(0, 50)}..."`);
-          } catch (error) {
-            console.error(`⚠️ Failed to generate sample text for ${emotionName}, using fallback: ${error.message}`);
-            sampleText = `Express the emotion of ${emotion.emotion}`;
+          
+          // Helper function to check if text is suitable length
+          const isTextSuitable = (text: string | undefined): boolean => {
+            if (!text) return false;
+            const wordCount = text.trim().split(/\s+/).length;
+            return wordCount >= VOICE_RECORDING_CONFIG.MIN_WORDS && 
+                   wordCount <= VOICE_RECORDING_CONFIG.MAX_WORDS;
+          };
+          
+          // Priority 1: Try emotion quote from story if suitable length
+          if (emotion.quote && isTextSuitable(emotion.quote)) {
+            sampleText = emotion.quote;
+            console.log(`✅ Using story quote for ${emotionName}: "${sampleText.substring(0, 50)}..."`);
+          }
+          // Priority 2: Try emotion context from story if suitable length
+          else if (emotion.context && isTextSuitable(emotion.context)) {
+            sampleText = emotion.context;
+            console.log(`✅ Using story context for ${emotionName}: "${sampleText.substring(0, 50)}..."`);
+          }
+          // Priority 3: Generate professional text using OpenAI
+          else {
+            try {
+              console.log(`🤖 Generating professional sample text for ${emotionName} (quote/context too short or missing)`);
+              const result = await openaiProvider.generateCompletionWithCache({
+                messages: [{ 
+                  role: 'user', 
+                  content: `Generate a voice recording sample text for the emotion "${emotion.emotion}". Be exactly ${VOICE_RECORDING_CONFIG.MIN_WORDS}-${VOICE_RECORDING_CONFIG.MAX_WORDS} words for a ${VOICE_RECORDING_CONFIG.MIN_DURATION}-${VOICE_RECORDING_CONFIG.MAX_DURATION} second recording, natural conversational language, first person perspective that clearly expresses ${emotion.emotion}. No character names or story references. Just the emotional sample text.`
+                }],
+                maxTokens: 100,
+                temperature: 0.7
+              });
+              sampleText = result.content.trim().replace(/^["']|["']$/g, '');
+              console.log(`✅ Generated professional sample text for ${emotionName}: "${sampleText.substring(0, 50)}..."`);
+            } catch (error) {
+              console.error(`⚠️ Failed to generate sample text for ${emotionName}, using fallback: ${error.message}`);
+              sampleText = `Express the emotion of ${emotion.emotion}`;
+            }
           }
           
           // Create new ESM reference entry for emotion
@@ -533,11 +556,52 @@ async function populateEsmReferenceData(analysis: StoryAnalysis, userId: string)
         if (!existingSound) {
           console.log(`➕ Adding new sound effect to ESM reference: ${soundName}`);
           
+          // Try to extract sample text from story first, then fall back to OpenAI generation
+          let sampleText: string;
+          
+          // Helper function to check if text is suitable length
+          const isTextSuitable = (text: string | undefined): boolean => {
+            if (!text) return false;
+            const wordCount = text.trim().split(/\s+/).length;
+            return wordCount >= VOICE_RECORDING_CONFIG.MIN_WORDS && 
+                   wordCount <= VOICE_RECORDING_CONFIG.MAX_WORDS;
+          };
+          
+          // Priority 1: Try sound quote from story if suitable length
+          if (soundEffect.quote && isTextSuitable(soundEffect.quote)) {
+            sampleText = soundEffect.quote;
+            console.log(`✅ Using story quote for ${soundName}: "${sampleText.substring(0, 50)}..."`);
+          }
+          // Priority 2: Try sound context from story if suitable length
+          else if (soundEffect.context && isTextSuitable(soundEffect.context)) {
+            sampleText = soundEffect.context;
+            console.log(`✅ Using story context for ${soundName}: "${sampleText.substring(0, 50)}..."`);
+          }
+          // Priority 3: Generate professional text using OpenAI
+          else {
+            try {
+              console.log(`🤖 Generating professional sample text for sound ${soundName} (quote/context too short or missing)`);
+              const result = await openaiProvider.generateCompletionWithCache({
+                messages: [{ 
+                  role: 'user', 
+                  content: `Generate a voice recording sample text for the environmental sound "${soundEffect.sound}". Be exactly ${VOICE_RECORDING_CONFIG.MIN_WORDS}-${VOICE_RECORDING_CONFIG.MAX_WORDS} words for a ${VOICE_RECORDING_CONFIG.MIN_DURATION}-${VOICE_RECORDING_CONFIG.MAX_DURATION} second recording. Create a narrative scene that naturally includes this sound effect. First person perspective, natural conversational language. No character names.`
+                }],
+                maxTokens: 100,
+                temperature: 0.7
+              });
+              sampleText = result.content.trim().replace(/^["']|["']$/g, '');
+              console.log(`✅ Generated professional sample text for ${soundName}: "${sampleText.substring(0, 50)}..."`);
+            } catch (error) {
+              console.error(`⚠️ Failed to generate sample text for ${soundName}, using fallback: ${error.message}`);
+              sampleText = `Audio effect: ${soundEffect.sound}`;
+            }
+          }
+          
           await storage.createEsmRef({
             category: 2, // Sounds/Environmental Effects
             name: soundName,
             display_name: soundEffect.sound,
-            sample_text: soundEffect.quote || `Audio effect: ${soundEffect.sound}`,
+            sample_text: sampleText,
             intensity: soundEffect.intensity,
             description: soundEffect.context,
             ai_variations: {

@@ -5,6 +5,7 @@
 
 import OpenAI from 'openai';
 import { storage } from './storage';
+import { VOICE_RECORDING_CONFIG } from '@shared/voice-recording-config';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -75,12 +76,12 @@ export class VoiceSampleTextGenerator {
   private async generateBatchTexts(emotions: any[]): Promise<GeneratedSampleText[]> {
     const emotionList = emotions.map(e => `${e.name} (${e.display_name})`).join(', ');
     
-    const prompt = `You are creating voice recording sample texts for emotion voice cloning. Each text must be exactly 25-35 words long to take approximately 6-8 seconds to read aloud at normal speaking speed.
+    const prompt = `You are creating voice recording sample texts for emotion voice cloning. Each text must be exactly ${VOICE_RECORDING_CONFIG.MIN_WORDS}-${VOICE_RECORDING_CONFIG.MAX_WORDS} words long to take approximately ${VOICE_RECORDING_CONFIG.MIN_DURATION}-${VOICE_RECORDING_CONFIG.MAX_DURATION} seconds to read aloud at normal speaking speed.
 
 Create engaging, emotionally expressive sample texts for these emotions: ${emotionList}
 
 Requirements:
-- Each text must be 25-35 words (for ~6-8 second reading time)
+- Each text must be ${VOICE_RECORDING_CONFIG.MIN_WORDS}-${VOICE_RECORDING_CONFIG.MAX_WORDS} words (for ~${VOICE_RECORDING_CONFIG.MIN_DURATION}-${VOICE_RECORDING_CONFIG.MAX_DURATION} second reading time)
 - Must clearly express the specific emotion
 - Should be natural dialogue or narrative that someone would enjoy reading
 - Avoid character names or complex scenarios
@@ -93,8 +94,8 @@ Respond with JSON in this format:
     {
       "emotion": "emotion_name",
       "displayName": "Display Name", 
-      "sampleText": "Your 25-35 word sample text here...",
-      "wordCount": 28
+      "sampleText": "Your ${VOICE_RECORDING_CONFIG.MIN_WORDS}-${VOICE_RECORDING_CONFIG.MAX_WORDS} word sample text here...",
+      "wordCount": 50
     }
   ]
 }`;
