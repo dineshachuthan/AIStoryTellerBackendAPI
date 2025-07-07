@@ -1,14 +1,17 @@
 import { useState } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 // EmotionVoiceRecorder has been deprecated and replaced with enhanced voice sample system
 import { CharacterAvatar } from "./CharacterAvatar";
 import { EmotionBadge } from "./EmotionBadge";
 import StoryVoiceSamples from "./story-voice-samples";
-import { Clock, BookOpen, Users, Tag } from "lucide-react";
+import { Clock, BookOpen, Users, Tag, Mic, Loader2 } from "lucide-react";
 
 interface StoryAnalysisData {
   characters: Array<{
@@ -61,6 +64,44 @@ export function StoryAnalysisPanel({
   className
 }: StoryAnalysisPanelProps) {
   const { toast } = useToast();
+
+  // Query to get voice samples count
+  const { data: voiceSamplesData } = useQuery({
+    queryKey: ['/api/stories', storyId, 'voice-samples'],
+    enabled: !!storyId,
+  });
+
+  // Calculate total recordings count
+  const totalRecordings = voiceSamplesData ? 
+    ((voiceSamplesData as any).emotions?.filter((e: any) => e.isRecorded).length || 0) +
+    ((voiceSamplesData as any).sounds?.filter((s: any) => s.isRecorded).length || 0) +
+    ((voiceSamplesData as any).modulations?.filter((m: any) => m.isRecorded).length || 0) : 0;
+
+  // Voice cloning mutation
+  const voiceCloningMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest(`/api/voice-cloning/emotions/${storyId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include'
+      });
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Voice Cloning Started",
+        description: `Successfully started creating your narrator voice with ${totalRecordings} samples.`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Voice Cloning Failed",
+        description: error.message || "Failed to start voice cloning process",
+        variant: "destructive",
+      });
+    }
+  });
   
 
 
@@ -119,10 +160,30 @@ export function StoryAnalysisPanel({
     <div className={`space-y-6 ${className}`}>
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BookOpen className="h-5 w-5" />
-            Story Analysis
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <BookOpen className="h-5 w-5" />
+              Story Analysis
+            </CardTitle>
+            {storyId > 0 && (
+              <Button
+                onClick={() => voiceCloningMutation.mutate()}
+                disabled={totalRecordings < 6 || voiceCloningMutation.isPending}
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                {voiceCloningMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Mic className="h-4 w-4" />
+                )}
+                {voiceCloningMutation.isPending 
+                  ? "Creating Voice..." 
+                  : `Train Narrator Voice (${totalRecordings}/6)`
+                }
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
