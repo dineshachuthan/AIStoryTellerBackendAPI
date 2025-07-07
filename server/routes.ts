@@ -4337,42 +4337,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Story analysis not found' });
       }
 
-      // Get user's ESM recordings for this story's emotions/sounds/modulations
-      const userRecordings = await storage.getUserEsmRecordings(userId);
+      // Get user's ESM recordings filtered by story ID
+      const allUserRecordings = await storage.getUserEsmRecordings(userId);
+      const userRecordings = allUserRecordings.filter(r => r.story_id === storyId);
       
-      // Debug log to see what recordings we have
-      console.log(`🔍 User recordings for user ${userId}:`, userRecordings.map(r => ({
-        audio_url: r.audio_url,
-        name: r.name,
-        category: r.category,
-        story_id: r.story_id
-      })));
+      // Debug log to see what recordings we have for this story
+      console.log(`📊 Found ${userRecordings.length} recordings for story ${storyId}`);
       
       // Helper function to find user recording for an item
       const findUserRecording = (itemName: string, category: string) => {
-        // Pattern 2: Clean organized structure /voice-samples/{categoryId}/{storyId}_{emotionName}.mp3
         // Categories: 1=emotions, 2=sounds, 3=modulations
-        const categoryId = category === 'emotions' ? '1' : category === 'sounds' ? '2' : '3';
+        const categoryId = category === 'emotions' ? 1 : category === 'sounds' ? 2 : 3;
         
-        const found = userRecordings.find(recording => {
-          if (recording.audio_url && recording.audio_url.includes('voice-samples/')) {
-            const fileName = recording.audio_url.split('/').pop() || '';
-            const fileNameWithoutExt = fileName.split('.')[0]; // e.g., "75_frustration"
-            const pathCategoryId = recording.audio_url.split('voice-samples/')[1]?.split('/')[0]; // Extract category from path
-            
-            // Extract the emotion name after storyId_ prefix
-            const parts = fileNameWithoutExt.split('_');
-            if (parts.length >= 2) {
-              const emotionPart = parts.slice(1).join('_'); // Handle emotions with underscores
-              const foundMatch = pathCategoryId === categoryId && 
-                               emotionPart.toLowerCase() === itemName.toLowerCase() &&
-                               parts[0] === storyId.toString();
-              return foundMatch;
-            }
-            return false;
-          }
-          return false;
-        });
+        // Simply match by name and category since recordings are already filtered by story_id
+        const found = userRecordings.find(recording => 
+          recording.name.toLowerCase() === itemName.toLowerCase() && 
+          recording.category === categoryId
+        );
         
         console.log(`🔍 Looking for recording: ${itemName} -> found: ${!!found}`);
         return found;
