@@ -491,6 +491,28 @@ export class AudioService {
     
     console.log(`Generating modulated audio: voice=${selectedVoice}, emotion=${options.emotion}, intensity=${options.intensity}, speed=${emotionSpeed}`);
     
+    // Check if this is an ElevenLabs voice ID (20 characters long)
+    if (selectedVoice && selectedVoice.length === 20) {
+      console.log(`[AudioService] Detected ElevenLabs voice ID, using ElevenLabs provider`);
+      try {
+        const { VoiceProviderFactory } = await import('./voice-providers/voice-provider-factory');
+        const arrayBuffer = await VoiceProviderFactory.generateSpeech(emotionText, selectedVoice, options.emotion);
+        return Buffer.from(arrayBuffer);
+      } catch (error) {
+        console.error(`[AudioService] ElevenLabs generation failed, falling back to default voice:`, error);
+        // Fall back to a default OpenAI voice if ElevenLabs fails
+        const fallbackVoice = 'nova';
+        const response = await this.openai.audio.speech.create({
+          model: "tts-1",
+          voice: fallbackVoice as any,
+          input: emotionText,
+          speed: emotionSpeed,
+        });
+        return Buffer.from(await response.arrayBuffer());
+      }
+    }
+    
+    // Use OpenAI TTS for regular voices
     const response = await this.openai.audio.speech.create({
       model: "tts-1",
       voice: selectedVoice as any,
