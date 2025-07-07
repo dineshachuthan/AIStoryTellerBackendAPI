@@ -67,19 +67,32 @@ export function StoryAnalysisPanel({
 
   // Query to get voice samples count
   const { data: voiceSamplesData } = useQuery({
-    queryKey: ['/api/stories', storyId, 'voice-samples'],
+    queryKey: [`/api/stories/${storyId}/voice-samples`],
     enabled: !!storyId,
   });
 
-  // Calculate total recordings count
-  const totalRecordings = voiceSamplesData ? 
-    ((voiceSamplesData as any).emotions?.filter((e: any) => e.isRecorded).length || 0) +
-    ((voiceSamplesData as any).sounds?.filter((s: any) => s.isRecorded).length || 0) +
-    ((voiceSamplesData as any).modulations?.filter((m: any) => m.isRecorded).length || 0) : 0;
+  // Calculate total recordings count (including both locked and unlocked)
+  const emotionCount = voiceSamplesData ? ((voiceSamplesData as any).emotions?.filter((e: any) => e.isRecorded).length || 0) : 0;
+  const soundCount = voiceSamplesData ? ((voiceSamplesData as any).sounds?.filter((s: any) => s.isRecorded).length || 0) : 0;
+  const modulationCount = voiceSamplesData ? ((voiceSamplesData as any).modulations?.filter((m: any) => m.isRecorded).length || 0) : 0;
+  const totalRecordings = emotionCount + soundCount + modulationCount;
 
-  // Debug logging
-  console.log('Voice samples data:', voiceSamplesData);
-  console.log('Total recordings calculated:', totalRecordings);
+  // Debug: Count locked vs unlocked separately
+  const emotionLocked = voiceSamplesData ? ((voiceSamplesData as any).emotions?.filter((e: any) => e.isRecorded && e.isLocked).length || 0) : 0;
+  const soundLocked = voiceSamplesData ? ((voiceSamplesData as any).sounds?.filter((s: any) => s.isRecorded && s.isLocked).length || 0) : 0;
+  const modulationLocked = voiceSamplesData ? ((voiceSamplesData as any).modulations?.filter((m: any) => m.isRecorded && m.isLocked).length || 0) : 0;
+  const totalLocked = emotionLocked + soundLocked + modulationLocked;
+
+  console.log('Voice samples detailed breakdown:', {
+    emotions: { total: emotionCount, locked: emotionLocked, unlocked: emotionCount - emotionLocked },
+    sounds: { total: soundCount, locked: soundLocked, unlocked: soundCount - soundLocked },
+    modulations: { total: modulationCount, locked: modulationLocked, unlocked: modulationCount - modulationLocked },
+    totals: { 
+      allRecordings: totalRecordings, 
+      locked: totalLocked, 
+      unlocked: totalRecordings - totalLocked 
+    }
+  });
 
   // Voice cloning mutation
   const voiceCloningMutation = useMutation({
