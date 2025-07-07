@@ -230,7 +230,7 @@ export class StoryNarrator {
 
   /**
    * Generate audio for narration segment using narrator voice
-   * CRITICAL: Downloads and stores audio locally to prevent OpenAI URL expiration
+   * PRIORITY: ElevenLabs narrator voice → User samples → AI voice
    */
   private async generateNarrationAudio(
     text: string,
@@ -241,51 +241,84 @@ export class StoryNarrator {
     segmentIndex: number
   ): Promise<{ audioUrl: string; duration?: number }> {
     
-    // Use audio service to get the audio buffer directly (not URL)
-    const { buffer, voice } = await audioService.getAudioBuffer({
-      text,
-      emotion: 'neutral',
-      intensity: 5,
-      voice: narratorVoice,
-      userId,
-      storyId
-    });
+    let audioBuffer: Buffer;
     
-    // Store audio locally with narration-specific naming
-    const localAudioUrl = await this.storeNarrationAudio(buffer, storyId, segmentIndex, voice, userId);
+    if (narratorVoiceType === 'user' && narratorVoice.length === 20) {
+      // ElevenLabs voice ID is exactly 20 characters - use ElevenLabs directly
+      console.log(`[StoryNarrator] Generating narration segment ${segmentIndex} using ElevenLabs voice: ${narratorVoice}`);
+      
+      try {
+        const { VoiceProviderFactory } = await import('./voice-providers/voice-provider-factory');
+        const arrayBuffer = await VoiceProviderFactory.generateSpeech(text, narratorVoice, 'neutral');
+        audioBuffer = Buffer.from(arrayBuffer);
+        
+        console.log(`[StoryNarrator] ElevenLabs narration generated: ${audioBuffer.length} bytes`);
+        
+      } catch (error) {
+        console.error(`[StoryNarrator] ElevenLabs generation failed, falling back to audio service:`, error);
+        // Fallback to audio service if ElevenLabs fails
+        const { buffer } = await audioService.getAudioBuffer({
+          text,
+          emotion: 'neutral',
+          intensity: 5,
+          voice: narratorVoice,
+          userId,
+          storyId
+        });
+        audioBuffer = buffer;
+      }
+    } else {
+      // Use audio service for user samples or AI voices
+      const { buffer } = await audioService.getAudioBuffer({
+        text,
+        emotion: 'neutral',
+        intensity: 5,
+        voice: narratorVoice,
+        userId,
+        storyId
+      });
+      audioBuffer = buffer;
+    }
+    
+    // Store audio in story-specific directory structure
+    const localAudioUrl = await this.storeNarrationAudio(audioBuffer, storyId, segmentIndex, userId);
     
     return {
       audioUrl: localAudioUrl,
-      duration: 3000 // Estimate based on text length, could be improved
+      duration: Math.ceil(text.length * 60) // Rough estimate: 60ms per character
     };
   }
 
   /**
-   * Store narration audio buffer using hierarchical user storage
+   * Store narration audio buffer using new story audio directory structure
    * Returns local URL for serving
    */
   private async storeNarrationAudio(
     buffer: Buffer, 
     storyId: number, 
     segmentIndex: number, 
-    voice: string,
     userId: string
   ): Promise<string> {
     
-    // Use hierarchical storage: user-data/{userId}/audio/stories/{storyId}/segment-{n}.mp3
-    const identifier = `story-${storyId}`;
-    const storedContent = await userContentStorage.storeAudioContent(
-      userId,
-      'stories',
-      identifier,
-      buffer,
-      'audio/mpeg'
-    );
+    const fs = await import('fs/promises');
+    const path = await import('path');
     
-    console.log(`Stored narration audio hierarchically: ${storedContent.url} (${buffer.length} bytes)`);
+    // Create directory structure: /stories/audio/private/{userId}/{storyId}/
+    const storyAudioDir = path.join('./stories/audio/private', userId, storyId.toString());
+    await fs.mkdir(storyAudioDir, { recursive: true });
     
-    // Return hierarchical serving URL
-    return storedContent.url;
+    // Store segment file: segment-{index}.mp3
+    const fileName = `segment-${segmentIndex}.mp3`;
+    const filePath = path.join(storyAudioDir, fileName);
+    
+    await fs.writeFile(filePath, buffer);
+    
+    // Return URL for serving: /api/stories/audio/private/{userId}/{storyId}/segment-{index}.mp3
+    const publicUrl = `/api/stories/audio/private/${userId}/${storyId}/${fileName}`;
+    
+    console.log(`[StoryNarrator] Stored narration segment: ${filePath} (${buffer.length} bytes)`);
+    
+    return publicUrl;
   }
 
   /**

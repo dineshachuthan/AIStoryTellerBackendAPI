@@ -167,15 +167,34 @@ This is a full-stack collaborative storytelling platform that enables users to c
 
 ## Future Roadmap
 
-### Enhanced Story Narration with Collaborative Voice Testing (New Priority)
-**Complete Multi-User Voice Narration System with State-Driven Workflow**
+### Enhanced Story Narration with ElevenLabs Integration (Current Priority)
+**Complete Story Narration System with ElevenLabs Voice Cloning**
 
-**Phase 1: Private Testing State Implementation**
-1. Implement story state transitions from "analyzed" to "private_testing"
-2. Create voice sample management interface for private testing phase
-3. Build narrator voice generation system using user's voice samples
-4. Add story playback controls with multiple voice options
-5. Implement iterative refinement workflow (testing → analysis → testing loop)
+**Architecture Requirements:**
+- **Voice Priority**: ElevenLabs narrator voice takes precedence over default OpenAI voices
+- **Plug-and-Play Playback**: Play button accepts only storyId → backend API returns audio URL
+- **Heavy Logic During Generation**: All processing (ElevenLabs TTS, audio creation, file storage) happens during narration generation, not playback
+- **Storage Structure**: `/stories/audio/private/{userId}/{storyId}/` (moves to `/stories/audio/public/` when story becomes public)
+- **Segment-Based Auto-Advance**: Keep segment approach with continuous auto-advance playback (no single merged file)
+
+**User Workflow:**
+1. User clicks "Generate Story Narration" → system generates full story narration using ElevenLabs narrator voice
+2. Audio files stored as segments for future individual sharing, reels, etc.
+3. User previews narration → if unhappy, can add more voice samples → regenerate narrator voice → regenerate story narration
+4. Once satisfied → click "Save" → story complete
+
+**Voice Sample Management:**
+- **Locked Voice Behavior**: Once voice samples locked (used in narrator voice generation), they remain locked permanently
+- **Unlocking**: Only happens if ElevenLabs integration fails
+- **Global Voice Samples**: Available from all stories, uses same sharable component with recording/lock/unlock/background color behavior
+- **Narrator Voice Generation**: Available at both story level AND global voice samples page
+- **Minimum Threshold**: Requires 5+ unlocked recorded samples to regenerate narrator voice
+- **Reference Data Tapering**: As users add more stories, emotions/sounds/modulations recordings taper down as reference data is shared across stories
+
+**Technical Implementation:**
+- **Same Audio File**: Preview and final use same audio file unless user generates new narrator voice
+- **Dual Generation Locations**: "Generate Narrator Voice" button appears at story level and global voice samples level
+- **Failure Recovery**: Voice samples unlock only if ElevenLabs integration fails, allowing re-recording and regeneration
 
 **Phase 2: Collaborative Review Infrastructure**
 6. Create story invitation system for friends and family
