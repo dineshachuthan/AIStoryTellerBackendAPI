@@ -1337,17 +1337,19 @@ export class DatabaseStorage implements IStorage {
     // Build safe SQL query with proper parameter binding
     const updateFields = [];
     const values = [];
+    let paramCount = 1;
     
     for (const [key, value] of Object.entries(updates)) {
-      updateFields.push(`${key} = ?`);
+      updateFields.push(`${key} = $${paramCount}`);
       values.push(value);
+      paramCount++;
     }
     
     if (updateFields.length === 0) return;
     
     values.push(userEsmId); // Add WHERE clause parameter
     
-    const query = `UPDATE user_esm SET ${updateFields.join(', ')} WHERE user_esm_id = ?`;
+    const query = `UPDATE user_esm SET ${updateFields.join(', ')} WHERE user_esm_id = $${paramCount}`;
     
     await db.execute(sql.raw(query, values));
   }
