@@ -267,9 +267,9 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Database Ready**: Dual-table architecture supports individual voice storage per ESM element
 
 **DATABASE ARCHITECTURE REQUIREMENTS**
-- **Column Rename Required**: `user_esm.elevenlabs_voice_id` → `user_esm.narrator_voice_id`
-- **New Column Required**: `user_esm_recordings.narrator_voice_id` (currently missing)
-- **Dual-Table Write**: ElevenLabs integration MUST write to BOTH tables
+- **Column Rename Completed**: `user_esm.elevenlabs_voice_id` → `user_esm.narrator_voice_id` ✅
+- **New Column Added**: `user_esm_recordings.narrator_voice_id` ✅
+- **Dual-Table Write**: ElevenLabs integration writes to BOTH tables ✅
 - **Future-Proof Design**: Architecture supports both MVP1 (same voice) and MVP2 (individual voices)
 
 **CURRENT IMPLEMENTATION STATUS**

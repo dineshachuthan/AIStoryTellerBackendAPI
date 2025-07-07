@@ -289,9 +289,7 @@ export class VoiceTrainingService {
     for (const userEsmId of userEsmIds) {
       try {
         await storage.updateUserEsm(userEsmId, {
-          narrator_voice_id: narratorVoiceId,
-          voice_cloning_status: 'completed',
-          voice_cloning_completed_at: new Date().toISOString()
+          narrator_voice_id: narratorVoiceId
         });
         console.log(`[MVP1 DUAL-TABLE] ✅ Updated user_esm ${userEsmId} with narrator voice ${narratorVoiceId}`);
       } catch (error) {

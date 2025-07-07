@@ -4505,7 +4505,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           esm_ref_id: esmRef.esm_ref_id,
           sample_count: 0,
           quality_tier: 1,
-          voice_cloning_status: 'inactive',
           created_by: userId
         });
       }
