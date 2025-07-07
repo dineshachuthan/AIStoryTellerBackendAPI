@@ -1489,7 +1489,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Serve generated story audio files
+  // Serve generated story audio files (legacy route)
   app.get("/api/story-audio/:fileName", async (req, res) => {
     try {
       const { fileName } = req.params;
@@ -1510,6 +1510,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Story audio serve error:", error);
       res.status(500).json({ message: "Failed to serve story audio" });
+    }
+  });
+
+  // Serve story narration audio files from new directory structure
+  app.get("/api/stories/audio/private/:userId/:storyId/:fileName", async (req, res) => {
+    try {
+      const { userId, storyId, fileName } = req.params;
+      const filePath = path.join(process.cwd(), 'stories', 'audio', 'private', userId, storyId, fileName);
+      
+      // Check if file exists
+      try {
+        await fs.access(filePath);
+      } catch {
+        return res.status(404).json({ message: "Story narration audio file not found" });
+      }
+      
+      res.setHeader('Content-Type', 'audio/mpeg');
+      res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+      res.setHeader('Accept-Ranges', 'bytes'); // Enable partial content for audio players
+      res.sendFile(path.resolve(filePath));
+    } catch (error) {
+      console.error("Story narration audio serve error:", error);
+      res.status(500).json({ message: "Failed to serve story narration audio" });
     }
   });
 
@@ -2362,6 +2385,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error generating story narration:", error);
       res.status(500).json({ message: "Failed to generate story narration" });
+    }
+  });
+
+  // Generate Story Narration - Heavy logic endpoint called by "Generate Story Narration" button
+  app.post("/api/stories/:id/generate-narration", requireAuth, async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.id);
+      const userId = (req.user as any)?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "User authentication required" });
+      }
+      
+      console.log(`[GenerateNarration] Starting story narration generation for story ${storyId}, user ${userId}`);
+      
+      // Generate narration with ElevenLabs integration - heavy logic happens here
+      const narrationResult = await storyNarrator.generateStoryNarration(storyId, userId);
+      
+      console.log(`[GenerateNarration] Completed story narration: ${narrationResult.segments.length} segments, ${narrationResult.totalDuration}ms total`);
+      
+      res.json({
+        success: true,
+        storyId: narrationResult.storyId,
+        segmentCount: narrationResult.segments.length,
+        totalDuration: narrationResult.totalDuration,
+        narratorVoice: narrationResult.narratorVoice,
+        narratorVoiceType: narrationResult.narratorVoiceType,
+        message: "Story narration generated successfully"
+      });
+    } catch (error) {
+      console.error("[GenerateNarration] Error generating story narration:", error);
+      res.status(500).json({ 
+        success: false,
+        message: "Failed to generate story narration",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Play Story - Plug-and-play endpoint that accepts only storyId and returns audio URLs
+  app.get("/api/stories/:id/play", requireAuth, async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.id);
+      const userId = (req.user as any)?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "User authentication required" });
+      }
+      
+      console.log(`[PlayStory] Plug-and-play request for story ${storyId}, user ${userId}`);
+      
+      // Check if narration already exists in database
+      const savedNarration = await storage.getSavedNarration(storyId, userId);
+      
+      if (savedNarration && savedNarration.segments && savedNarration.segments.length > 0) {
+        console.log(`[PlayStory] Found existing narration with ${savedNarration.segments.length} segments`);
+        return res.json({
+          available: true,
+          storyId: storyId,
+          segments: savedNarration.segments,
+          totalDuration: savedNarration.totalDuration,
+          narratorVoice: savedNarration.narratorVoice,
+          narratorVoiceType: savedNarration.narratorVoiceType
+        });
+      }
+      
+      // No narration available yet
+      console.log(`[PlayStory] No narration found for story ${storyId}`);
+      res.json({
+        available: false,
+        storyId: storyId,
+        message: "Story narration not generated yet. Click 'Generate Story Narration' first."
+      });
+      
+    } catch (error) {
+      console.error("[PlayStory] Error checking story playback:", error);
+      res.status(500).json({ 
+        available: false,
+        message: "Failed to check story playback availability"
+      });
     }
   });
 
