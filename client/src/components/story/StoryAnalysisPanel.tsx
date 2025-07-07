@@ -71,28 +71,23 @@ export function StoryAnalysisPanel({
     enabled: !!storyId,
   });
 
-  // Calculate total recordings count (including both locked and unlocked)
+  // Calculate total recordings count
   const emotionCount = voiceSamplesData ? ((voiceSamplesData as any).emotions?.filter((e: any) => e.isRecorded).length || 0) : 0;
   const soundCount = voiceSamplesData ? ((voiceSamplesData as any).sounds?.filter((s: any) => s.isRecorded).length || 0) : 0;
   const modulationCount = voiceSamplesData ? ((voiceSamplesData as any).modulations?.filter((m: any) => m.isRecorded).length || 0) : 0;
   const totalRecordings = emotionCount + soundCount + modulationCount;
 
-  // Debug: Count locked vs unlocked separately
-  const emotionLocked = voiceSamplesData ? ((voiceSamplesData as any).emotions?.filter((e: any) => e.isRecorded && e.isLocked).length || 0) : 0;
-  const soundLocked = voiceSamplesData ? ((voiceSamplesData as any).sounds?.filter((s: any) => s.isRecorded && s.isLocked).length || 0) : 0;
-  const modulationLocked = voiceSamplesData ? ((voiceSamplesData as any).modulations?.filter((m: any) => m.isRecorded && m.isLocked).length || 0) : 0;
-  const totalLocked = emotionLocked + soundLocked + modulationLocked;
-
-  console.log('Voice samples detailed breakdown:', {
-    emotions: { total: emotionCount, locked: emotionLocked, unlocked: emotionCount - emotionLocked },
-    sounds: { total: soundCount, locked: soundLocked, unlocked: soundCount - soundLocked },
-    modulations: { total: modulationCount, locked: modulationLocked, unlocked: modulationCount - modulationLocked },
-    totals: { 
-      allRecordings: totalRecordings, 
-      locked: totalLocked, 
-      unlocked: totalRecordings - totalLocked 
-    }
-  });
+  // Temporary debug to match UI observation
+  if (voiceSamplesData) {
+    console.log('API data structure check:', {
+      totalEmotions: (voiceSamplesData as any).emotions?.length || 0,
+      recordedEmotions: emotionCount,
+      totalModulations: (voiceSamplesData as any).modulations?.length || 0,
+      recordedModulations: modulationCount,
+      expectedTotal: '7 (3 emotions total, 2 recorded + 5 modulations, all recorded)',
+      actualTotal: totalRecordings
+    });
+  }
 
   // Voice cloning mutation
   const voiceCloningMutation = useMutation({
