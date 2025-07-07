@@ -3,6 +3,7 @@ import { Play, Pause, VolumeX, Volume2, Loader2, Headphones, Mic } from "lucide-
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
+import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
@@ -48,6 +49,7 @@ export function StoryPlayButton({
   const [audioVisualData, setAudioVisualData] = useState<number[]>(new Array(40).fill(0));
   const [narrationStatus, setNarrationStatus] = useState<NarrationStatus | null>(null);
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
+  const [volume, setVolume] = useState(0.85); // Default to 85% volume for better audio quality
   
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -78,6 +80,13 @@ export function StoryPlayButton({
       }
     };
   }, []);
+
+  // Apply volume when it changes
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = volume;
+    }
+  }, [volume]);
 
   const checkNarrationStatus = async () => {
     if (!user) return;
@@ -184,6 +193,7 @@ export function StoryPlayButton({
         console.log('Playing segment with audioUrl:', segment.audioUrl);
         audioRef.current.src = segment.audioUrl;
         audioRef.current.muted = isMuted;
+        audioRef.current.volume = volume; // Apply volume setting
         
         setupAudioVisualizer(audioRef.current);
         
@@ -365,15 +375,36 @@ export function StoryPlayButton({
                 </p>
               )}
             </div>
-            <div className="flex items-center space-x-2">
-              <Button
-                onClick={toggleMute}
-                variant="ghost"
-                size="sm"
-                className="text-gray-400 hover:text-white"
-              >
-                {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-              </Button>
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <Button
+                  onClick={toggleMute}
+                  variant="ghost"
+                  size="sm"
+                  className="text-gray-400 hover:text-white"
+                >
+                  {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                </Button>
+                <div className="flex items-center space-x-2">
+                  <Slider
+                    value={[volume * 100]}
+                    onValueChange={(value) => {
+                      const newVolume = value[0] / 100;
+                      setVolume(newVolume);
+                      if (audioRef.current) {
+                        audioRef.current.volume = newVolume;
+                      }
+                    }}
+                    max={100}
+                    step={5}
+                    className="w-24"
+                    aria-label="Volume"
+                  />
+                  <span className="text-xs text-gray-400 w-10">
+                    {Math.round(volume * 100)}%
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
 
