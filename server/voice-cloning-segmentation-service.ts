@@ -46,6 +46,14 @@ export class VoiceCloningSegmentationService {
       // Get all ESM recordings for the user
       const esmRecordings = await storage.getUserEsmRecordings(userId);
       console.log(`[MVP2Segmentation] Retrieved ${esmRecordings.length} total ESM recordings for analysis`);
+      console.log(`[MVP2Segmentation] Recording details:`, esmRecordings.map(r => ({
+        id: r.id,
+        name: r.name,
+        category: r.category,
+        audio_url: r.audio_url,
+        is_locked: r.is_locked,
+        duration: r.duration
+      })));
 
       // Organize by category and analyze sample counts
       const categoryBreakdown = this.organizeByCategory(esmRecordings);
@@ -337,6 +345,18 @@ export class VoiceCloningSegmentationService {
         }
       }
 
+      // Log detailed sample information before creating the call
+      console.log(`[MVP2Segmentation] Combined voice clone samples:`, {
+        totalItems: allItems.length,
+        items: allItems,
+        totalUrls: allUrls.length,
+        urls: allUrls.map((url, idx) => ({
+          index: idx,
+          item: allItems[idx] || 'unknown',
+          url: url.substring(0, 100) + '...' // Log first 100 chars
+        }))
+      });
+      
       calls.push({
         type: 'combined',
         items: allItems,
