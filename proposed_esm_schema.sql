@@ -1,6 +1,13 @@
--- ESM Reference Data Architecture Schema - MVP1 Implementation
+-- ESM Reference Data Architecture Schema - MVP2 ASYNC IMPLEMENTATION
 -- Single Sample + AI Enhancement + Progressive Quality Approach
 -- Replaces current voice_modulation_templates and improves user_emotion_voices
+--
+-- UPDATED: January 07, 2025 - Removed voice cloning status tracking for async architecture
+-- - Removed voice_cloning_status, voice_cloning_provider, voice_cloning_triggered_at, voice_cloning_completed_at columns
+-- - Renamed elevenlabs_voice_id to narrator_voice_id for MVP1/MVP2 compatibility
+-- - Added narrator_voice_id to user_esm_recordings table for dual-table storage
+-- - Updated views to remove status tracking dependencies
+-- - System now supports 4-10 async ElevenLabs calls without status coordination
 
 -- 1. ESM_Ref Table - Master reference data for emotions, sounds, modulations
 CREATE TABLE esm_ref (
@@ -29,7 +36,7 @@ CREATE TABLE esm_ref (
 CREATE INDEX idx_esm_ref_category ON esm_ref(category);
 CREATE INDEX idx_esm_ref_created_date ON esm_ref(created_date DESC);
 
--- 2. User_ESM Table - User-specific ESM recordings and voice cloning status
+-- 2. User_ESM Table - User-specific ESM recordings (ASYNC ARCHITECTURE - NO STATUS TRACKING)
 CREATE TABLE user_esm (
     user_esm_id SERIAL PRIMARY KEY,
     user_id VARCHAR(255) NOT NULL,
@@ -44,12 +51,9 @@ CREATE TABLE user_esm (
     last_quality_assessment TIMESTAMP NULL,
     auto_retrain_needed BOOLEAN DEFAULT FALSE, -- flag for when user adds more samples
     
-    -- Voice cloning status and results (supports ElevenLabs, Kling, future providers)
-    voice_cloning_status VARCHAR(50) DEFAULT 'not_started', -- not_started, training, completed, failed
-    voice_cloning_provider VARCHAR(50) NULL, -- elevenlabs, kling, future providers
-    voice_cloning_triggered_at TIMESTAMP NULL,
-    voice_cloning_completed_at TIMESTAMP NULL,
-    elevenlabs_voice_id VARCHAR(255) NULL,
+    -- Voice cloning results (supports ElevenLabs, Kling, future providers)
+    -- NOTE: Removed status tracking columns to support async MVP2 architecture
+    narrator_voice_id VARCHAR(255) NULL, -- renamed from elevenlabs_voice_id for MVP1/MVP2
     kling_voice_id VARCHAR(255) NULL, -- for future Kling support
     quality_score NUMERIC(3,2) NULL, -- 0.00 to 1.00 quality score from provider
     
@@ -76,7 +80,6 @@ CREATE TABLE user_esm (
 
 -- Indexes for performance
 CREATE INDEX idx_user_esm_user_id ON user_esm(user_id);
-CREATE INDEX idx_user_esm_status ON user_esm(voice_cloning_status);
 CREATE INDEX idx_user_esm_quality_tier ON user_esm(quality_tier);
 CREATE INDEX idx_user_esm_sample_count ON user_esm(sample_count DESC);
 CREATE INDEX idx_user_esm_locked ON user_esm(is_locked);
@@ -84,18 +87,26 @@ CREATE INDEX idx_user_esm_retrain_needed ON user_esm(auto_retrain_needed);
 
 -- 3. User_ESM_Recordings Table - Individual recording files
 CREATE TABLE user_esm_recordings (
-    id SERIAL PRIMARY KEY,
+    user_esm_recordings_id SERIAL PRIMARY KEY,
     user_esm_id INTEGER NOT NULL,
     audio_url VARCHAR(500) NOT NULL, -- path to audio file
-    duration INTEGER NOT NULL, -- duration in seconds
+    duration NUMERIC(10,6) NOT NULL, -- duration in seconds (supports decimal precision)
     file_size INTEGER NOT NULL, -- file size in bytes
-    recording_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
     -- Quality metrics
     audio_quality_score NUMERIC(3,2) NULL, -- 0.00 to 1.00
     transcribed_text TEXT NULL, -- what the audio actually says
     
-    FOREIGN KEY (user_esm_id) REFERENCES user_esm(id) ON DELETE CASCADE,
+    -- Voice cloning results (MVP2 dual-table architecture)
+    is_locked BOOLEAN DEFAULT FALSE, -- locked when used in voice cloning
+    locked_at TIMESTAMP NULL,
+    narrator_voice_id VARCHAR(255) NULL, -- ElevenLabs voice ID for this specific recording
+    
+    -- Standard metadata
+    created_by VARCHAR(255) NOT NULL, -- user_id or 'system'
+    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (user_esm_id) REFERENCES user_esm(user_esm_id) ON DELETE CASCADE,
     CHECK (duration > 0),
     CHECK (file_size > 0)
 );
@@ -172,7 +183,7 @@ CREATE TRIGGER trigger_update_user_esm_stats
 -- Category 2: Sounds  
 -- Category 3: Modulations
 
--- Views for easier querying
+-- Views for easier querying (UPDATED FOR ASYNC ARCHITECTURE)
 CREATE VIEW v_user_esm_summary AS
 SELECT 
     u.user_id,
@@ -183,10 +194,8 @@ SELECT
     u.sample_count,
     u.total_duration,
     u.quality_tier,
-    u.voice_cloning_status,
-    u.voice_cloning_provider,
     u.is_locked,
-    u.elevenlabs_voice_id,
+    u.narrator_voice_id,
     u.kling_voice_id,
     u.quality_score,
     u.auto_retrain_needed,
@@ -207,7 +216,7 @@ FROM esm_ref e
 LEFT JOIN user_esm u ON e.esm_ref_id = u.esm_ref_id
 GROUP BY e.esm_ref_id;
 
--- Quality summary view for users
+-- Quality summary view for users (UPDATED FOR ASYNC ARCHITECTURE)
 CREATE VIEW v_user_quality_summary AS
 SELECT 
     user_id,
@@ -215,7 +224,6 @@ SELECT
     COUNT(CASE WHEN quality_tier = 'excellent' THEN 1 END) as excellent_count,
     COUNT(CASE WHEN quality_tier = 'good' THEN 1 END) as good_count,
     COUNT(CASE WHEN quality_tier = 'basic' THEN 1 END) as basic_count,
-    COUNT(CASE WHEN voice_cloning_status = 'completed' THEN 1 END) as completed_voice_clones,
     SUM(ai_enhanced_samples_generated) as total_ai_enhancements
 FROM user_esm
 GROUP BY user_id;

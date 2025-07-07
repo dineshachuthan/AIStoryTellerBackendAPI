@@ -5070,53 +5070,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // If user has no voice samples yet, return empty progress (this is normal for new users)
       }
       
-      // Calculate counts and status by ESM category
+      // Calculate counts by ESM category (removed status tracking)
       const emotionRecordings = userEsmRecordings.filter(r => r.category === 1);
       const soundRecordings = userEsmRecordings.filter(r => r.category === 2);
       const modulationRecordings = userEsmRecordings.filter(r => r.category === 3);
-      
-      // Get voice cloning status from ESM system
-      const getUserEsmStatus = async (recordings: any[]) => {
-        if (recordings.length === 0) return 'none';
-        
-        // Check if any recordings have completed voice cloning status
-        const hasCompleted = recordings.some(r => r.voice_cloning_status === 'completed');
-        if (hasCompleted) return 'completed';
-        
-        const hasTraining = recordings.some(r => r.voice_cloning_status === 'training');
-        if (hasTraining) return 'training';
-        
-        const hasFailed = recordings.some(r => r.voice_cloning_status === 'failed');
-        if (hasFailed) return 'failed';
-        
-        return 'not_started';
-      };
-      
-      const emotionStatus = await getUserEsmStatus(emotionRecordings);
-      const soundStatus = await getUserEsmStatus(soundRecordings);
-      const modulationStatus = await getUserEsmStatus(modulationRecordings);
       
       const progress = {
         emotions: {
           count: emotionRecordings.length,
           threshold: 3, // MVP2 threshold for emotions
-          canTrigger: emotionRecordings.length >= 3,
-          isTraining: emotionStatus === 'training',
-          status: emotionStatus
+          canTrigger: emotionRecordings.length >= 3
         },
         sounds: {
           count: soundRecordings.length,
           threshold: 1, // MVP2 threshold for sounds
-          canTrigger: soundRecordings.length >= 1,
-          isTraining: soundStatus === 'training',
-          status: soundStatus
+          canTrigger: soundRecordings.length >= 1
         },
         modulations: {
           count: modulationRecordings.length,
           threshold: 5, // MVP2 threshold for modulations
-          canTrigger: modulationRecordings.length >= 5,
-          isTraining: modulationStatus === 'training',
-          status: modulationStatus
+          canTrigger: modulationRecordings.length >= 5
         }
       };
       
