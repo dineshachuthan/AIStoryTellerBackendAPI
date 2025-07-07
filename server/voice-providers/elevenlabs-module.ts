@@ -82,6 +82,7 @@ export class ElevenLabsModule extends BaseVoiceProvider {
         
         try {
           this.log('info', `Processing sample ${index + 1}/${request.samples.length}: ${sample.emotion}`);
+          this.log('info', `🔍 FAULT-TOLERANT VALIDATION ENABLED - Checking audio before ElevenLabs`);
           
           // Log the original audio URL received
           this.log('info', `Original audioUrl received: ${sample.audioUrl}`);
