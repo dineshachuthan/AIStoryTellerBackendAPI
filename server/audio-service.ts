@@ -595,7 +595,7 @@ export class AudioService {
     const selectedVoice = options.voice || this.selectEmotionVoice(options.emotion, options.intensity, options.characters);
 
     // Check cache first
-    const cachedAudio = getCachedAudio(options.text, selectedVoice, options.emotion, options.intensity);
+    const cachedAudio = await getCachedAudio(options.text, { voice: selectedVoice, emotion: options.emotion, intensity: options.intensity });
     if (cachedAudio) {
       const filePath = path.join(process.cwd(), 'persistent-cache', 'audio', path.basename(cachedAudio));
       const buffer = await fs.readFile(filePath);
