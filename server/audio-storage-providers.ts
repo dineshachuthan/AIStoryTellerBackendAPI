@@ -3,7 +3,7 @@
  * Plug-and-play architecture for different storage backends
  */
 
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import path from 'path';
 import fs from 'fs';
 import { SignedUrlOptions, AUDIO_STORAGE_PROVIDERS, AudioStorageProviderConfig } from './audio-storage-config';
@@ -49,7 +49,7 @@ export class ReplitAudioStorageProvider extends BaseAudioStorageProvider {
     };
 
     const token = jwt.sign(payload, process.env.JWT_SECRET || 'default-secret', {
-      expiresIn: options.expiresIn
+      expiresIn: '15m' // Fixed 15-minute expiration for external API access
     });
 
     return `${this.config.baseUrl}/api/audio/serve/${token}`;

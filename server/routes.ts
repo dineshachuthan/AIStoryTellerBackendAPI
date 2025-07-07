@@ -4387,13 +4387,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Save to user voice storage using Pattern 2: /voice-samples/{categoryId}/{emotionName}.mp3
       const audioPath = `voice-samples/${category}/${itemName.toLowerCase()}.mp3`;
+      const relativePath = `/cache/user-voice-modulations/${userId}/${audioPath}`;
       
-      // Ensure directory exists
-      const dirPath = path.dirname(audioPath);
-      await fs.mkdir(dirPath, { recursive: true });
-      
-      // Save audio file
-      await fs.writeFile(audioPath, audioBuffer);
+      // Use audio storage provider to save the file
+      const audioStorageProvider = audioStorageFactory.getActiveProvider();
+      await audioStorageProvider.uploadAudio(audioBuffer, relativePath);
       
       // Save using ESM system - emotion name should match story analysis
       const emotionName = itemName.toLowerCase();
@@ -4422,7 +4420,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create the actual recording
       const recordingData = {
         user_esm_id: userEsm.user_esm_id,
-        audio_url: `/cache/user-voice-modulations/${userId}/${audioPath}`,
+        audio_url: relativePath, // Use the same relative path format
         duration: duration, // Keep as float for precision
         file_size: audioBuffer.length,
         created_by: userId
@@ -4525,6 +4523,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error('Error getting audio storage status:', error);
       res.status(500).json({ error: 'Failed to get storage status' });
+    }
+  });
+
+  /**
+   * Test audio storage provider system
+   */
+  app.get('/api/audio/storage/test', requireAuth, async (req, res) => {
+    try {
+      const audioStorageProvider = audioStorageFactory.getActiveProvider();
+      const testPath = '/cache/user-voice-modulations/test/voice-samples/1/test.mp3';
+      
+      // Test signed URL generation
+      const signedUrl = await audioStorageProvider.generateSignedUrl(testPath, {
+        expiresIn: '15m',
+        purpose: 'external_api_access',
+        userId: req.user!.userId || req.user!.id || 'test-user'
+      });
+      
+      // Get provider status
+      const providerStatus = await audioStorageProvider.getStatus();
+      
+      res.json({
+        success: true,
+        activeProvider: audioStorageProvider.name,
+        providerStatus,
+        testSignedUrl: signedUrl,
+        message: 'Audio storage provider system operational'
+      });
+      
+    } catch (error: any) {
+      console.error('Audio storage provider test error:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: error.message,
+        message: 'Audio storage provider system test failed'
+      });
     }
   });
 

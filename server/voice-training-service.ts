@@ -250,7 +250,7 @@ export class VoiceTrainingService {
         // Update ESM recording with narrator voice ID
         await storage.updateUserEsmRecording(esmRecordingId, {
           narrator_voice_id: narratorVoiceId,
-          updated_at: new Date()
+          updated_date: new Date()
         });
         
         console.log(`[MVP1] ✅ Updated ESM recording ${esmRecordingId} with narrator voice ${narratorVoiceId}`);
