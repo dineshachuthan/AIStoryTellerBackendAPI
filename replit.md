@@ -54,6 +54,15 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - When adding ANY text, immediately create corresponding i18n template with proper variables
 - Pattern: `{UIMessages.getTitle('MESSAGE_CODE')}` or `{getDynamicMessage('CODE', variables).message}`
 
+### Zero Tolerance Test Data Policy
+**DO NOT ADD ANY TEST DATA INTO DATABASE WITHOUT PRIOR APPROVAL**
+- NEVER insert test records, mock data, or fallback values into any database table
+- NEVER use placeholder AI voices (nova, shimmer, etc.) for testing
+- NEVER create synthetic narration records for development
+- ALL data must come from actual user interactions and real integrations
+- If testing requires data, ask user for approval and design first
+- VIOLATION OF THIS RULE UNDERMINES SYSTEM INTEGRITY
+
 ### Mandatory Architectural Patterns (ALWAYS FOLLOW)
 - **BaseCachedProvider**: All external API integrations MUST use cached provider pattern
 - **UIMessages I18N**: All text MUST use internationalization system with proper template interpolation
