@@ -337,12 +337,14 @@ export class ElevenLabsModule extends BaseVoiceProvider {
     console.log(`[ElevenLabs] Generating speech using ElevenLabs SDK for voice ID: ${voiceId}, text length: ${text.length} characters, emotion: ${emotion || 'neutral'}`);
     
     try {
-      // Use SDK for TTS as recommended in your first snippet
-      const audioStream = await this.client.textToSpeech.convert({
-        voiceId: voiceId,
-        text: text,
-        modelId: 'eleven_multilingual_v2'
-      });
+      // Use SDK for TTS with all required parameters
+      const audioStream = await this.client.textToSpeech.convert(
+        voiceId,
+        {
+          text: text,
+          model_id: 'eleven_multilingual_v2'
+        }
+      );
       
       // Convert stream to ArrayBuffer
       const chunks: Uint8Array[] = [];

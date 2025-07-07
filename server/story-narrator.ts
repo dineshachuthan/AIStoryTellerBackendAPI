@@ -77,11 +77,13 @@ export class StoryNarrator {
     // PRIORITY 1: Check for ElevenLabs trained narrator voice (USER IS THE NARRATOR)
     try {
       const narratorVoiceId = await storage.getUserNarratorVoice(userId);
+      console.log(`[StoryNarrator] getUserNarratorVoice returned: ${narratorVoiceId}`);
       if (narratorVoiceId) {
         console.log(`[StoryNarrator] Using USER'S ElevenLabs narrator voice: ${narratorVoiceId}`);
         return { voice: narratorVoiceId, type: 'user' };
       }
     } catch (error) {
+      console.log('[StoryNarrator] Error getting narrator voice:', error);
       console.log('[StoryNarrator] No ElevenLabs narrator voice found, checking user voice samples');
     }
 
