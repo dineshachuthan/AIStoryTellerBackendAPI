@@ -19,6 +19,7 @@ app.use(express.urlencoded({ extended: false }));
 import jwt from 'jsonwebtoken';
 import path from 'path';
 import fs from 'fs/promises';
+import { requireAuth } from './auth';
 
 /**
  * List available audio files for testing
@@ -75,6 +76,33 @@ app.get('/api/audio/list', async (req, res) => {
   } catch (error) {
     console.error('Error listing audio files:', error);
     res.status(500).json({ error: 'Failed to list audio files' });
+  }
+});
+
+/**
+ * Serve audio files for authenticated users (session-based)
+ */
+app.get('/api/audio/file/*', requireAuth, async (req, res) => {
+  try {
+    const filePath = req.params[0]; // Gets everything after /api/audio/file/
+    const fullPath = path.join(process.cwd(), 'voice-samples', filePath);
+    
+    // Check if file exists
+    const fileExists = await fs.access(fullPath).then(() => true).catch(() => false);
+    if (!fileExists) {
+      return res.status(404).json({ error: 'Audio file not found' });
+    }
+    
+    // Set appropriate headers
+    res.setHeader('Content-Type', 'audio/mpeg');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    
+    // Serve the file
+    res.sendFile(fullPath);
+    
+  } catch (error: any) {
+    console.error('Error serving audio file:', error);
+    res.status(500).json({ error: 'Failed to serve audio file' });
   }
 });
 
