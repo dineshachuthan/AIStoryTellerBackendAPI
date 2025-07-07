@@ -120,7 +120,7 @@ export default function SimplifiedVoiceSamples() {
                         <p className="font-medium">{recording.name}</p>
                         <p className="text-sm text-muted-foreground">
                           Story: {recording.storyTitle || `Story #${recording.storyId}`} • 
-                          {recording.duration.toFixed(1)}s • 
+                          {parseFloat(recording.duration.toString()).toFixed(1)}s • 
                           {new Date(recording.createdDate).toLocaleDateString()}
                         </p>
                       </div>
