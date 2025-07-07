@@ -1092,7 +1092,7 @@ export const voiceCloningCosts = pgTable("voice_cloning_costs", {
   storyId: integer("story_id").references(() => stories.id),
   operation: varchar("operation").notNull(), // 'voice_clone', 'audio_generation'
   provider: varchar("provider").default("elevenlabs"),
-  costCents: integer("cost_cents").notNull(), // Cost in cents
+  costCents: integer("cost_cents"), // Cost in cents - nullable
   apiCallsCount: integer("api_calls_count").default(1),
   samplesProcessed: integer("samples_processed").default(0),
   audioSecondsGenerated: integer("audio_seconds_generated").default(0),
