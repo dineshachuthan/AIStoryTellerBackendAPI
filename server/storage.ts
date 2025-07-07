@@ -1824,6 +1824,9 @@ export class DatabaseStorage implements IStorage {
             uer.audio_url,
             uer.duration,
             uer.created_date,
+            ue.elevenlabs_voice_id,
+            ue.kling_voice_id,
+            ue.voice_cloning_status,
             er.name,
             er.display_name,
             er.category
@@ -1836,6 +1839,17 @@ export class DatabaseStorage implements IStorage {
     
     console.log(`📊 Found ${result.rows.length} ESM recordings for user ${userId}`);
     return result.rows;
+  }
+
+  async getUserNarratorVoice(userId: string): Promise<string | null> {
+    const result = await db.execute(
+      sql`SELECT elevenlabs_voice_id 
+          FROM user_esm 
+          WHERE user_id = ${userId} 
+          AND elevenlabs_voice_id IS NOT NULL 
+          LIMIT 1`
+    );
+    return result.rows[0]?.elevenlabs_voice_id || null;
   }
 
   // DUPLICATE METHOD - Commented out (was causing SQL conflicts)

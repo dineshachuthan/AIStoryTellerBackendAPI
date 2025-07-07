@@ -74,16 +74,12 @@ export class StoryNarrator {
    */
   private async selectNarratorVoice(userId: string, story: any): Promise<{ voice: string; type: 'ai' | 'user' }> {
     
-    // PRIORITY 1: Check for ElevenLabs trained narrator voice from ESM recordings
+    // PRIORITY 1: Check for ElevenLabs trained narrator voice (USER IS THE NARRATOR)
     try {
-      const esmRecordings = await storage.getUserEsmRecordings(userId);
-      if (esmRecordings && esmRecordings.length > 0) {
-        // Find any ESM recording with narrator_voice_id (MVP1 design stores same ID in all recordings)
-        const recordingWithNarratorVoice = esmRecordings.find(r => r.narrator_voice_id);
-        if (recordingWithNarratorVoice && recordingWithNarratorVoice.narrator_voice_id) {
-          console.log(`[StoryNarrator] Using ElevenLabs narrator voice: ${recordingWithNarratorVoice.narrator_voice_id}`);
-          return { voice: recordingWithNarratorVoice.narrator_voice_id, type: 'user' };
-        }
+      const narratorVoiceId = await storage.getUserNarratorVoice(userId);
+      if (narratorVoiceId) {
+        console.log(`[StoryNarrator] Using USER'S ElevenLabs narrator voice: ${narratorVoiceId}`);
+        return { voice: narratorVoiceId, type: 'user' };
       }
     } catch (error) {
       console.log('[StoryNarrator] No ElevenLabs narrator voice found, checking user voice samples');
