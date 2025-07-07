@@ -142,6 +142,12 @@ export class VoiceTrainingService {
             continue;
           }
           
+          // Skip problematic files that ElevenLabs rejects as corrupted
+          if (esmRecording.name === 'resolution' && esmRecording.category === 3) {
+            console.log(`[MVP1] Skipping ${esmRecording.name} - known ElevenLabs compatibility issue`);
+            continue;
+          }
+          
           // Generate signed URL for external API access (30 minutes duration)
           const signedUrl = await audioStorageProvider.generateSignedUrl(esmRecording.audio_url, {
             expiresIn: '30m',
