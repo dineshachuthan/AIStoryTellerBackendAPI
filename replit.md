@@ -292,6 +292,16 @@ This is a full-stack collaborative storytelling platform that enables users to c
 *Note: Most use specialized managers or are rarely modified reference data*
 
 ## Changelog
+- January 07, 2025: 🚧 **JWT AUTHENTICATION ISSUE PARTIALLY RESOLVED** - Voice Files Accessible but ElevenLabs Still Getting 401 Errors
+  - **JWT ROUTE REPOSITIONED**: Moved JWT audio serving route before session authentication middleware in server/index.ts
+  - **DIRECT ACCESS CONFIRMED**: curl tests with fresh JWT tokens return HTTP 200 and serve audio files correctly
+  - **DATABASE PATHS CORRECTED**: Updated all database audio URLs from `/cache/user-voice-modulations/` to `./voice-samples/` to match actual file locations
+  - **REMAINING ISSUE**: ElevenLabs integration still receives HTTP 401 errors when fetching "suspenseful" audio file during voice training
+  - **SIGNED URL GENERATION**: Audio storage provider correctly generates JWT-signed URLs but ElevenLabs module may be processing them incorrectly
+  - **ENHANCED LOGGING**: Added detailed URL logging to ElevenLabs module to debug original vs final audioUrl processing
+  - **AUTHENTICATION WORKFLOW**: JWT tokens properly generated with 30-minute expiration and external_api_access purpose
+  - **TROUBLESHOOTING STATUS**: Direct curl tests show HTTP 200 success, but ElevenLabs API calls receive 401 errors for specific files
+  - Voice cloning fails at audio fetch stage despite JWT authentication infrastructure being functional for direct access
 - January 07, 2025: ✅ **VOICE RECORDING AUDIO STORAGE INTEGRATION COMPLETED** - Voice Recording System Now Uses Audio Storage Provider Architecture
   - **VOICE RECORDING INTEGRATION**: Updated voice recording route to use audio storage provider for file uploads instead of direct file system operations
   - **SEAMLESS REPLIT PROVIDER OPERATION**: Voice recordings work with existing file locations transparently using Replit provider - no migration required

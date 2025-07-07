@@ -48,11 +48,15 @@ export class ReplitAudioStorageProvider extends BaseAudioStorageProvider {
       iat: Math.floor(Date.now() / 1000)
     };
 
+    const expirationTime = options.expiresIn || '15m';
     const token = jwt.sign(payload, process.env.JWT_SECRET || 'default-secret', {
-      expiresIn: '15m' // Fixed 15-minute expiration for external API access
+      expiresIn: expirationTime
     });
 
-    return `${this.config.baseUrl}/api/audio/serve/${token}`;
+    const signedUrl = `${this.config.baseUrl}/api/audio/serve/${token}`;
+    console.log(`[JWT] Generated signed URL for ${relativePath} with ${options.expiresIn || '15m'} expiration: ${signedUrl.substring(0, 80)}...`);
+    
+    return signedUrl;
   }
 
   async uploadAudio(buffer: Buffer, relativePath: string): Promise<string> {

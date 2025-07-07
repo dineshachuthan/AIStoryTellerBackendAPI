@@ -130,9 +130,9 @@ export class VoiceTrainingService {
         const samplesToUpdate = []; // Track ESM recordings to update with narrator voice ID
         
         for (const esmRecording of allEsmRecordings) {
-          // Generate signed URL for external API access (15 minutes duration)
+          // Generate signed URL for external API access (30 minutes duration)
           const signedUrl = await audioStorageProvider.generateSignedUrl(esmRecording.audioUrl, {
-            expiresIn: '15m',
+            expiresIn: '30m',
             purpose: 'external_api_access',
             userId: userId
           });
