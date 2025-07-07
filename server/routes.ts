@@ -4241,7 +4241,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log(`- User emotions available: ${userEmotions.join(', ')}`);
             
             const hasMatchingEmotions = uniqueEmotions.some(emotion => 
-              userEmotions.map(e => e.toLowerCase()).includes(emotion.toLowerCase())
+              userEmotions.includes(emotion)
             );
             
             if (hasMatchingEmotions) {
@@ -4316,7 +4316,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const fileNameWithoutExt = fileName.split('.')[0]; // e.g., "resolution"
             const pathCategoryId = recording.audio_url.split('/voice-samples/')[1]?.split('/')[0]; // Extract category from path
             
-            console.log(`🔎 Comparing: path=${pathCategoryId} vs ${categoryId}, file=${fileNameWithoutExt.toLowerCase()} vs ${itemName.toLowerCase()}`);
+            console.log(`🔎 Comparing: path=${pathCategoryId} vs ${categoryId}, file=${fileNameWithoutExt} vs ${itemName}`);
+            // Compare case-insensitively since filenames are lowercase but items preserve original casing
             return pathCategoryId === categoryId && 
                    fileNameWithoutExt.toLowerCase() === itemName.toLowerCase();
           }
@@ -4327,7 +4328,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Helper function to get ESM reference text
       const getEsmSampleText = async (itemName: string, category: number) => {
         try {
-          const esmRef = await storage.getEsmRef(category, itemName.toLowerCase());
+          const esmRef = await storage.getEsmRef(category, itemName);
           return esmRef?.sample_text || null;
         } catch (error) {
           return null;
@@ -4516,7 +4517,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await audioStorageProvider.uploadAudio(audioBuffer, audioPath);
       
       // Save using ESM system - emotion name should match story analysis
-      const emotionName = itemName.toLowerCase();
+      const emotionName = itemName;
       
       // Get ESM reference (should exist from story analysis)
       const esmRef = await storage.getEsmRef(parseInt(category), emotionName);
@@ -5976,10 +5977,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .map(recording => recording.name)
         .filter(Boolean);
       
-      // Find which story items the user has actually recorded for THIS category (case-insensitive matching)
+      // Find which story items the user has actually recorded for THIS category
       const completedFromStory = categoryItems.filter(item => 
         completedSamples.some(userSample => 
-          userSample.toLowerCase() === item.toLowerCase()
+          userSample === item
         )
       );
       
@@ -6127,10 +6128,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .map(recording => recording.name)
         .filter(Boolean);
       
-      // Check case-insensitive matching
+      // Check matching
       const completedFromStory = allAvailableItems.filter(item => 
         allUserSamples.some(userSample => 
-          userSample.toLowerCase() === item.toLowerCase()
+          userSample === item
         )
       );
       
