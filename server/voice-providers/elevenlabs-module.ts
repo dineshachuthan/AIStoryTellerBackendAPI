@@ -383,11 +383,24 @@ export class ElevenLabsModule extends BaseVoiceProvider {
   /**
    * Delete a voice from ElevenLabs
    * @param voiceId The voice ID to delete
+   * @param userId User ID for audit trail
    * @returns Success status
    */
-  async deleteVoice(voiceId: string): Promise<boolean> {
+  async deleteVoice(voiceId: string, userId?: string): Promise<boolean> {
     try {
       this.log('info', `Deleting voice ${voiceId} from ElevenLabs`);
+      
+      // Track deletion attempt in audit table if userId provided
+      let cleanupId: number | undefined;
+      if (userId) {
+        const { storage } = await import('../storage');
+        const cleanup = await storage.trackVoiceIdDeletion({
+          userId,
+          integrationPartner: 'ElevenLabs',
+          partnerVoiceId: voiceId
+        });
+        cleanupId = cleanup.id;
+      }
       
       const response = await axios.delete(
         `${this.config.baseUrl}/voices/${voiceId}`,
@@ -399,9 +412,43 @@ export class ElevenLabsModule extends BaseVoiceProvider {
       );
       
       this.log('info', `Successfully deleted voice ${voiceId}`);
+      
+      // Update audit status to confirmed with response data
+      if (cleanupId) {
+        const { storage } = await import('../storage');
+        await storage.updateVoiceIdCleanupStatus(cleanupId, 'confirmed', undefined, {
+          statusCode: response.status,
+          statusText: response.statusText,
+          headers: response.headers,
+          voiceId: voiceId,
+          deletedAt: new Date().toISOString(),
+          partner: 'ElevenLabs'
+        });
+      }
+      
       return true;
     } catch (error: any) {
       this.log('error', `Failed to delete voice ${voiceId}`, error);
+      
+      // Update audit status to failed
+      if (userId) {
+        try {
+          const { storage } = await import('../storage');
+          // Find the cleanup record we just created
+          const cleanups = await storage.getVoiceCleanupHistory(userId, 1);
+          const cleanup = cleanups.find(c => c.partnerVoiceId === voiceId);
+          if (cleanup) {
+            await storage.updateVoiceIdCleanupStatus(
+              cleanup.id, 
+              'failed', 
+              error.response?.data?.detail?.message || error.message
+            );
+          }
+        } catch (auditError) {
+          this.log('error', `Failed to update audit trail for voice deletion`, auditError);
+        }
+      }
+      
       throw new Error(`Failed to delete voice: ${error.response?.data?.detail?.message || error.message}`);
     }
   }
@@ -416,8 +463,8 @@ export class ElevenLabsModule extends BaseVoiceProvider {
     this.log('info', `Updating voice ${voiceId} with ${request.samples.length} new samples`);
     
     try {
-      // First, delete the old voice
-      await this.deleteVoice(voiceId);
+      // First, delete the old voice (pass userId for audit trail)
+      await this.deleteVoice(voiceId, request.userId);
       
       // Then create a new voice with the same approach
       // This is necessary because ElevenLabs doesn't support adding samples to existing voices

@@ -1086,6 +1086,20 @@ export type InsertUserRoleplaySegment = typeof userRoleplaySegments.$inferInsert
 // MANUAL VOICE CLONING SCHEMAS
 // =============================================================================
 
+// Voice ID cleanup tracking for deleted voice IDs
+export const voiceIdCleanup = pgTable('voice_id_cleanup', {
+  id: serial('id').primaryKey(),
+  userId: varchar('user_id', { length: 255 }).notNull(),
+  integrationPartner: varchar('integration_partner', { length: 50 }).notNull(), // e.g., "ElevenLabs"
+  partnerVoiceId: varchar('partner_voice_id', { length: 255 }).notNull(), // The voice ID from partner
+  deletedAt: timestamp('deleted_at').notNull().defaultNow(),
+  deleteStatus: varchar('delete_status', { length: 50 }).notNull().default('pending'), // pending, confirmed, failed
+  deleteAttempts: integer('delete_attempts').notNull().default(1),
+  lastAttemptAt: timestamp('last_attempt_at'),
+  errorMessage: text('error_message'),
+  responseData: jsonb('response_data'), // Store API response details, confirmation IDs, etc.
+});
+
 // Cost tracking for ElevenLabs API usage
 export const voiceCloningCosts = pgTable("voice_cloning_costs", {
   id: serial("id").primaryKey(),
@@ -1121,6 +1135,13 @@ export const voiceCloningJobs = pgTable("voice_cloning_jobs", {
 });
 
 // Voice cloning schemas
+export const insertVoiceIdCleanupSchema = createInsertSchema(voiceIdCleanup).omit({
+  id: true,
+  deletedAt: true,
+  deleteStatus: true,
+  deleteAttempts: true,
+});
+
 export const insertVoiceCloningCostSchema = createInsertSchema(voiceCloningCosts).omit({
   id: true,
   createdAt: true,
@@ -1131,6 +1152,8 @@ export const insertVoiceCloningJobSchema = createInsertSchema(voiceCloningJobs).
   createdAt: true,
 });
 
+export type VoiceIdCleanup = typeof voiceIdCleanup.$inferSelect;
+export type InsertVoiceIdCleanup = z.infer<typeof insertVoiceIdCleanupSchema>;
 export type VoiceCloningCost = typeof voiceCloningCosts.$inferSelect;
 export type InsertVoiceCloningCost = z.infer<typeof insertVoiceCloningCostSchema>;
 export type VoiceCloningJob = typeof voiceCloningJobs.$inferSelect;

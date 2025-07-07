@@ -1,4 +1,4 @@
-import { users, localUsers, userProviders, stories, storyCharacters, storyEmotions, characters, conversations, messages, storyCollaborations, storyGroups, storyGroupMembers, characterVoiceAssignments, storyPlaybacks, storyAnalyses, storyNarrations, audioFiles, videoGenerations, type User, type InsertUser, type UpsertUser, type UserProvider, type InsertUserProvider, type LocalUser, type InsertLocalUser, type Story, type InsertStory, type StoryCharacter, type InsertStoryCharacter, type StoryEmotion, type InsertStoryEmotion, type Character, type InsertCharacter, type Conversation, type InsertConversation, type Message, type InsertMessage, type StoryCollaboration, type InsertStoryCollaboration, type StoryGroup, type InsertStoryGroup, type StoryGroupMember, type InsertStoryGroupMember, type CharacterVoiceAssignment, type InsertCharacterVoiceAssignment, type StoryPlayback, type InsertStoryPlayback, type StoryAnalysis, type InsertStoryAnalysis, type StoryNarration, type InsertStoryNarration, type AudioFile, type InsertAudioFile } from "@shared/schema";
+import { users, localUsers, userProviders, stories, storyCharacters, storyEmotions, characters, conversations, messages, storyCollaborations, storyGroups, storyGroupMembers, characterVoiceAssignments, storyPlaybacks, storyAnalyses, storyNarrations, audioFiles, videoGenerations, voiceIdCleanup, type User, type InsertUser, type UpsertUser, type UserProvider, type InsertUserProvider, type LocalUser, type InsertLocalUser, type Story, type InsertStory, type StoryCharacter, type InsertStoryCharacter, type StoryEmotion, type InsertStoryEmotion, type Character, type InsertCharacter, type Conversation, type InsertConversation, type Message, type InsertMessage, type StoryCollaboration, type InsertStoryCollaboration, type StoryGroup, type InsertStoryGroup, type StoryGroupMember, type InsertStoryGroupMember, type CharacterVoiceAssignment, type InsertCharacterVoiceAssignment, type StoryPlayback, type InsertStoryPlayback, type StoryAnalysis, type InsertStoryAnalysis, type StoryNarration, type InsertStoryNarration, type AudioFile, type InsertAudioFile, type VoiceIdCleanup, type InsertVoiceIdCleanup } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, like, lt, sql } from "drizzle-orm";
 // Content hash functionality moved to unified cache architecture
@@ -1995,6 +1995,47 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Voice cloning cost tracking removed - functionality integrated into ESM voice cloning jobs table
+
+  // Voice ID cleanup tracking methods for audit trail
+  async trackVoiceIdDeletion(data: InsertVoiceIdCleanup): Promise<VoiceIdCleanup> {
+    const [record] = await db.insert(voiceIdCleanup).values(data).returning();
+    return record;
+  }
+
+  async updateVoiceIdCleanupStatus(id: number, status: string, errorMessage?: string, responseData?: any): Promise<void> {
+    await db.update(voiceIdCleanup)
+      .set({ 
+        deleteStatus: status, 
+        lastAttemptAt: new Date(),
+        deleteAttempts: sql`${voiceIdCleanup.deleteAttempts} + 1`,
+        errorMessage: errorMessage || null,
+        responseData: responseData || null
+      })
+      .where(eq(voiceIdCleanup.id, id));
+  }
+
+  async getPendingVoiceCleanups(partner?: string): Promise<VoiceIdCleanup[]> {
+    let query = db.select().from(voiceIdCleanup);
+    
+    if (partner) {
+      query = query.where(and(
+        eq(voiceIdCleanup.deleteStatus, 'pending'),
+        eq(voiceIdCleanup.integrationPartner, partner)
+      ));
+    } else {
+      query = query.where(eq(voiceIdCleanup.deleteStatus, 'pending'));
+    }
+    
+    return query;
+  }
+
+  async getVoiceCleanupHistory(userId: string, limit: number = 50): Promise<VoiceIdCleanup[]> {
+    return db.select()
+      .from(voiceIdCleanup)
+      .where(eq(voiceIdCleanup.userId, userId))
+      .orderBy(desc(voiceIdCleanup.deletedAt))
+      .limit(limit);
+  }
 
   // Add missing database access method for reference data service
   getDb() {
