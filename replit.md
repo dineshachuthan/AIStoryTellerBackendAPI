@@ -322,12 +322,24 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Dual-Table Write**: ElevenLabs integration writes to BOTH tables ✅
 - **Future-Proof Design**: Architecture supports both MVP1 (same voice) and MVP2 (individual voices)
 
+**ELEVENLABS TESTING STATUS**
+- **Public Static URLs**: Voice samples served via `/voice-samples/` for initial testing
+- **JWT Authentication**: Temporarily disabled for ElevenLabs testing phase
+- **Next Step**: JWT authentication to be re-enabled after successful ElevenLabs integration
+
 **CURRENT IMPLEMENTATION STATUS**
 - ✅ ESM data architecture completed with consistent category mapping
 - ✅ Voice recording system operational with proper duration requirements
 - ✅ Database schema update completed: column rename and new column addition
 - ✅ ElevenLabs integration with dual-table write implementation completed
 - ✅ Story narrator updated with proper read logic for renamed column
+
+**CRITICAL FIX - VOICE RECORDING DELETION BUG**
+- **ISSUE**: Voice recordings were being automatically deleted during ElevenLabs integration errors
+- **ROOT CAUSE**: ElevenLabs module was deleting recordings for ANY error, not just corrupted files
+- **FIX APPLIED**: Modified deletion logic to only delete when files are actually corrupted (404, missing, unreadable)
+- **PRESERVATION**: API errors from ElevenLabs now preserve recordings for retry instead of deleting them
+- **USER IMPACT**: Prevents loss of user voice recordings during failed voice cloning attempts
 
 ### Contextual Help Bubbles with Character Mascot (Future Enhancement)
 - **Feature**: Interactive help system with animated character guide providing context-aware assistance
@@ -419,6 +431,17 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **DOCUMENTED**: Added comprehensive voice locking algorithm documentation to prevent future confusion
 - **FAULT TOLERANCE**: Added recordingId to sample data for proper database cleanup on failures
 - **OPTIMIZATION**: Smart selection only sends unlocked samples unless locked needed for minimum threshold
+
+### **SOFT DELETE FUNCTIONALITY IMPLEMENTED - January 08, 2025**
+**Data Integrity Enhancement**: All ESM tables now use soft delete instead of hard delete
+- **DATABASE SCHEMA UPDATED**: Added `is_active` column to esm_ref, user_esm, and user_esm_recordings tables with default TRUE
+- **STORAGE QUERIES UPDATED**: All ESM queries now filter inactive records with `WHERE is_active = true` conditions
+- **SOFT DELETE METHOD**: deleteUserEsmRecording now sets `is_active = false` instead of permanently deleting records
+- **SMART CORRUPTION DETECTION**: ElevenLabs module only soft deletes for actual file corruption (404, tiny files, invalid format)
+- **API ERROR HANDLING**: Network errors and API failures preserve recordings for retry - no deletion on HTTP 500 or API issues
+- **DATA INTEGRITY PRESERVED**: No permanent data loss - all records maintained for audit trails while hidden from active queries
+- **PERFORMANCE OPTIMIZED**: Added indexes on is_active columns for efficient filtering of active records
+- **USER REQUEST FULFILLED**: System now maintains complete data history with soft delete across all ESM tables
 
 ### **NARRATOR VOICE GENERATION LOGIC UPDATED - January 07, 2025**
 **Frontend Logic Enhancement**: Generate Narrator Voice button now enables based on story-level completion

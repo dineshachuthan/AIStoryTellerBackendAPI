@@ -56,6 +56,9 @@ app.get('/api/voice-samples/:category/:filename', async (req, res) => {
  * Serve audio files with JWT token authentication
  * Used by external APIs (ElevenLabs) to access audio files securely
  */
+// Serve voice samples as static files for testing (will add JWT later)
+app.use('/voice-samples', express.static(path.join(process.cwd(), 'voice-samples')));
+
 app.get('/api/audio/serve/:token', async (req, res) => {
   console.log('[JWT] Audio serve route hit with token:', req.params.token?.substring(0, 50) + '...');
   try {

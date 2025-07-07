@@ -43,8 +43,8 @@ export class VoiceCloningSegmentationService {
       ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}` 
       : 'http://localhost:5000';
     
-    // Return full URL using the JWT bypass route
-    return `${baseUrl}/api/${dbUrl}`;
+    // Return full URL using public static route
+    return `${baseUrl}/${dbUrl}`;
   }
   
   // ORPHANED METHOD - Commented out after strategic fix to store clean URLs

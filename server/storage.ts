@@ -1229,14 +1229,20 @@ export class DatabaseStorage implements IStorage {
           WHERE ue.user_id = ${userId} 
           AND er.name = ${emotion}
           AND er.category = ${category}
+          AND uer.is_active = true
+          AND ue.is_active = true
+          AND er.is_active = true
           LIMIT 1`
     );
     return result.rows[0] || null;
   }
 
   async deleteUserEsmRecording(recordingId: number): Promise<void> {
+    // Soft delete - set is_active to false instead of hard delete
     await db.execute(
-      sql`DELETE FROM user_esm_recordings WHERE user_esm_recordings_id = ${recordingId}`
+      sql`UPDATE user_esm_recordings 
+          SET is_active = false 
+          WHERE user_esm_recordings_id = ${recordingId}`
     );
   }
 
@@ -1872,6 +1878,9 @@ export class DatabaseStorage implements IStorage {
           INNER JOIN user_esm ue ON uer.user_esm_id = ue.user_esm_id
           INNER JOIN esm_ref er ON ue.esm_ref_id = er.esm_ref_id
           WHERE ue.user_id = ${userId}
+          AND uer.is_active = true
+          AND ue.is_active = true
+          AND er.is_active = true
           ORDER BY uer.created_date DESC`
     );
     
