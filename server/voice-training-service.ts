@@ -132,18 +132,18 @@ export class VoiceTrainingService {
         for (const esmRecording of allEsmRecordings) {
           console.log(`[MVP1] Processing ESM recording:`, {
             name: esmRecording.name,
-            audioUrl: esmRecording.audioUrl,
+            audioUrl: esmRecording.audio_url, // Note: database field is audio_url (snake_case)
             category: esmRecording.category
           });
           
-          // Check if audioUrl exists
-          if (!esmRecording.audioUrl) {
-            console.log(`[MVP1] Skipping ${esmRecording.name} - no audioUrl found`);
+          // Check if audio_url exists (database field is snake_case)
+          if (!esmRecording.audio_url) {
+            console.log(`[MVP1] Skipping ${esmRecording.name} - no audio_url found`);
             continue;
           }
           
           // Generate signed URL for external API access (30 minutes duration)
-          const signedUrl = await audioStorageProvider.generateSignedUrl(esmRecording.audioUrl, {
+          const signedUrl = await audioStorageProvider.generateSignedUrl(esmRecording.audio_url, {
             expiresIn: '30m',
             purpose: 'external_api_access',
             userId: userId
