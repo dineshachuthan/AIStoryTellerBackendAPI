@@ -4340,6 +4340,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get user's ESM recordings for this story's emotions/sounds/modulations
       const userRecordings = await storage.getUserEsmRecordings(userId);
       
+      // Debug log to see what recordings we have
+      console.log(`🔍 User recordings for user ${userId}:`, userRecordings.map(r => ({
+        audio_url: r.audio_url,
+        name: r.name,
+        category: r.category,
+        story_id: r.story_id
+      })));
+      
       // Helper function to find user recording for an item
       const findUserRecording = (itemName: string, category: string) => {
         // Pattern 2: Clean organized structure /voice-samples/{categoryId}/{storyId}_{emotionName}.mp3
@@ -4582,22 +4590,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Create the actual recording
-      const recordingData = {
-        user_esm_id: userEsm.user_esm_id,
-        audio_url: audioPath, // Store clean path without prefixes
-        duration: duration, // Keep as float for precision
-        file_size: audioBuffer.length,
-        created_by: userId,
-        story_id: storyId // Include story ID for story-specific recordings
-      };
+      // Check if user already has a recording for this emotion and story
+      const existingRecordings = await storage.getUserEsmRecordings(userId);
+      const existingRecording = existingRecordings.find(rec => 
+        rec.story_id === storyId && 
+        rec.name.toLowerCase() === emotionName.toLowerCase() &&
+        rec.category === parseInt(category)
+      );
       
-      console.log('🔍 ROUTE LEVEL - About to call createUserEsmRecording with data:', recordingData);
-      console.log('🔍 ROUTE LEVEL - userEsm.user_esm_id type:', typeof userEsm.user_esm_id);
-      console.log('🔍 ROUTE LEVEL - duration type:', typeof duration);
-      console.log('🔍 ROUTE LEVEL - audioBuffer.length type:', typeof audioBuffer.length);
-      
-      await storage.createUserEsmRecording(recordingData);
+      if (existingRecording) {
+        // Update existing recording
+        console.log(`🔄 Updating existing recording for ${emotionName} on story ${storyId}`);
+        await storage.updateUserEsmRecording(existingRecording.id, {
+          audio_url: audioPath,
+          duration: duration,
+          file_size: audioBuffer.length,
+          updated_date: new Date()
+        });
+      } else {
+        // Create new recording
+        const recordingData = {
+          user_esm_id: userEsm.user_esm_id,
+          audio_url: audioPath, // Store clean path without prefixes
+          duration: duration, // Keep as float for precision
+          file_size: audioBuffer.length,
+          created_by: userId,
+          story_id: storyId // Include story ID for story-specific recordings
+        };
+        
+        console.log('🔍 ROUTE LEVEL - About to call createUserEsmRecording with data:', recordingData);
+        console.log('🔍 ROUTE LEVEL - userEsm.user_esm_id type:', typeof userEsm.user_esm_id);
+        console.log('🔍 ROUTE LEVEL - duration type:', typeof duration);
+        console.log('🔍 ROUTE LEVEL - audioBuffer.length type:', typeof audioBuffer.length);
+        
+        await storage.createUserEsmRecording(recordingData);
+      }
 
       res.json({ 
         success: true, 
