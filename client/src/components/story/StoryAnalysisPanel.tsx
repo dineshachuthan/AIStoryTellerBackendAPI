@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { useToast } from "@/hooks/use-toast";
+
 import { apiRequest } from "@/lib/queryClient";
 // EmotionVoiceRecorder has been deprecated and replaced with enhanced voice sample system
 import { CharacterAvatar } from "./CharacterAvatar";
@@ -63,7 +63,7 @@ export function StoryAnalysisPanel({
   isPlayingUserRecording,
   className
 }: StoryAnalysisPanelProps) {
-  const { toast } = useToast();
+  const [statusMessage, setStatusMessage] = useState<{text: string, type: 'success' | 'error' | 'info'} | null>(null);
 
   // Query to get voice samples count
   const { data: voiceSamplesData } = useQuery({
@@ -101,17 +101,14 @@ export function StoryAnalysisPanel({
       });
     },
     onSuccess: (data) => {
-      toast({
-        title: "Voice Cloning Started",
-        description: `Successfully started creating your narrator voice with ${totalRecordings} samples.`,
-      });
+      setStatusMessage({ text: "Voice generation in progress...", type: 'info' });
+      // Clear message after 3 seconds
+      setTimeout(() => setStatusMessage(null), 3000);
     },
     onError: (error: any) => {
-      toast({
-        title: "Voice Cloning Failed",
-        description: error.message || "Failed to start voice cloning process",
-        variant: "destructive",
-      });
+      setStatusMessage({ text: error.message || "Voice generation failed", type: 'error' });
+      // Clear message after 5 seconds
+      setTimeout(() => setStatusMessage(null), 5000);
     }
   });
   
@@ -146,21 +143,16 @@ export function StoryAnalysisPanel({
       });
 
       if (response.ok) {
-        toast({
-          title: "Voice Recorded",
-          description: `Your ${emotion} voice has been saved to your emotion repository.`,
-        });
+        setStatusMessage({ text: `Voice saved for ${emotion}`, type: 'success' });
+        setTimeout(() => setStatusMessage(null), 2000);
         onEmotionRecorded?.(emotion, audioBlob);
       } else {
         throw new Error('Failed to save recording');
       }
     } catch (error) {
       console.error('Error saving emotion recording:', error);
-      toast({
-        title: "Recording Error",
-        description: "Failed to save your voice recording.",
-        variant: "destructive",
-      });
+      setStatusMessage({ text: "Failed to save recording", type: 'error' });
+      setTimeout(() => setStatusMessage(null), 3000);
     }
   };
 
@@ -170,6 +162,17 @@ export function StoryAnalysisPanel({
 
   return (
     <div className={`space-y-6 ${className}`}>
+      {/* Status Message Display */}
+      {statusMessage && (
+        <div className={`p-3 rounded-md text-sm ${
+          statusMessage.type === 'success' ? 'bg-green-50 text-green-800 dark:bg-green-900/20 dark:text-green-400' :
+          statusMessage.type === 'error' ? 'bg-red-50 text-red-800 dark:bg-red-900/20 dark:text-red-400' :
+          'bg-blue-50 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400'
+        }`}>
+          {statusMessage.text}
+        </div>
+      )}
+      
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
