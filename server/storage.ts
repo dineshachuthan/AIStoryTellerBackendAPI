@@ -1310,16 +1310,22 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUserEsm(userEsmId: number, updates: any): Promise<void> {
-    const setClause = Object.entries(updates).map(([key, value]) => {
-      if (typeof value === 'string') {
-        return `${key} = '${value.replace(/'/g, "''")}'`; // Escape single quotes
-      }
-      return `${key} = ${value}`;
-    }).join(', ');
+    // Build safe SQL query with proper parameter binding
+    const updateFields = [];
+    const values = [];
     
-    await db.execute(
-      sql.raw(`UPDATE user_esm SET ${setClause} WHERE user_esm_id = ${userEsmId}`)
-    );
+    for (const [key, value] of Object.entries(updates)) {
+      updateFields.push(`${key} = ?`);
+      values.push(value);
+    }
+    
+    if (updateFields.length === 0) return;
+    
+    values.push(userEsmId); // Add WHERE clause parameter
+    
+    const query = `UPDATE user_esm SET ${updateFields.join(', ')} WHERE user_esm_id = ?`;
+    
+    await db.execute(sql.raw(query, values));
   }
 
   async getUserEsmByUser(userId: string): Promise<any[]> {
