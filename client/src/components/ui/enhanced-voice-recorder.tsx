@@ -279,14 +279,27 @@ export function EnhancedVoiceRecorder({
       setIsPlayingExisting(false);
     }
 
-    audioRef.current = new Audio(recordedSample.audioUrl);
+    // Ensure URL has leading slash for proper static file access
+    const audioUrl = recordedSample.audioUrl.startsWith('/') 
+      ? recordedSample.audioUrl 
+      : `/${recordedSample.audioUrl}`;
+    
+    console.log('🎵 Playing audio from:', audioUrl);
+    
+    audioRef.current = new Audio(audioUrl);
     audioRef.current.onended = () => setIsPlayingExisting(false);
-    audioRef.current.onerror = () => setIsPlayingExisting(false);
-    audioRef.current.play().catch(() => setIsPlayingExisting(false));
+    audioRef.current.onerror = (error) => {
+      console.error('❌ Audio playback error:', error);
+      setIsPlayingExisting(false);
+    };
+    audioRef.current.play().catch((error) => {
+      console.error('❌ Audio play failed:', error);
+      setIsPlayingExisting(false);
+    });
     setIsPlayingExisting(true);
     
     if (onPlaySample) {
-      onPlaySample(recordedSample.audioUrl);
+      onPlaySample(audioUrl);
     }
   };
 

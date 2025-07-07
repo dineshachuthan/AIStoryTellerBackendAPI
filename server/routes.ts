@@ -4354,7 +4354,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Categories: 1=emotions, 2=sounds, 3=modulations
         const categoryId = category === 'emotions' ? '1' : category === 'sounds' ? '2' : '3';
         
-        return userRecordings.find(recording => {
+        const found = userRecordings.find(recording => {
           if (recording.audio_url && recording.audio_url.includes('voice-samples/')) {
             const fileName = recording.audio_url.split('/').pop() || '';
             const fileNameWithoutExt = fileName.split('.')[0]; // e.g., "75_frustration"
@@ -4367,13 +4367,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
               const foundMatch = pathCategoryId === categoryId && 
                                emotionPart.toLowerCase() === itemName.toLowerCase() &&
                                parts[0] === storyId.toString();
-              console.log(`🔍 Looking for recording: ${itemName} -> found: ${foundMatch}`);
               return foundMatch;
             }
             return false;
           }
           return false;
         });
+        
+        console.log(`🔍 Looking for recording: ${itemName} -> found: ${!!found}`);
+        return found;
       };
 
       // Helper function to get ESM reference text
@@ -4405,7 +4407,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
           
           const userRecording = findUserRecording(emotion.emotion, 'emotions');
-          console.log(`🔍 Looking for recording: ${emotion.emotion} -> found: ${!!userRecording}`);
           const esmText = esmRef.sample_text;
           
           response.emotions.push({
