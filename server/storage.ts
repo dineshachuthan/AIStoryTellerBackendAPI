@@ -1371,6 +1371,7 @@ export class DatabaseStorage implements IStorage {
     audio_quality_score?: number;
     transcribed_text?: string;
     created_by: string;
+    story_id?: number;
   }): Promise<any> {
     console.log('🎯 Creating ESM recording with data:', {
       user_esm_id: recording.user_esm_id,
@@ -1379,12 +1380,14 @@ export class DatabaseStorage implements IStorage {
       file_size: recording.file_size,
       audio_quality_score: recording.audio_quality_score,
       transcribed_text: recording.transcribed_text,
-      created_by: recording.created_by
+      created_by: recording.created_by,
+      story_id: recording.story_id
     });
     
     // Handle nullable values outside SQL template
     const audioQualityScore = recording.audio_quality_score ?? null;
     const transcribedText = recording.transcribed_text ?? null;
+    const storyId = recording.story_id ?? null;
     
     console.log('🔍 SQL Debug - Values:', {
       user_esm_id: recording.user_esm_id,
@@ -1397,7 +1400,7 @@ export class DatabaseStorage implements IStorage {
     });
     
     // Build the exact SQL that will be executed
-    const fullSQL = `INSERT INTO user_esm_recordings (user_esm_id, audio_url, duration, file_size, audio_quality_score, transcribed_text, created_by) VALUES (${recording.user_esm_id}, '${recording.audio_url}', ${recording.duration}, ${recording.file_size}, ${audioQualityScore}, ${transcribedText === null ? 'NULL' : `'${transcribedText}'`}, '${recording.created_by}') RETURNING *`;
+    const fullSQL = `INSERT INTO user_esm_recordings (user_esm_id, audio_url, duration, file_size, audio_quality_score, transcribed_text, created_by, story_id) VALUES (${recording.user_esm_id}, '${recording.audio_url}', ${recording.duration}, ${recording.file_size}, ${audioQualityScore}, ${transcribedText === null ? 'NULL' : `'${transcribedText}'`}, '${recording.created_by}', ${storyId === null ? 'NULL' : storyId}) RETURNING *`;
     
     console.log('🔍 FULL SQL STATEMENT:');
     console.log(fullSQL);
@@ -1407,8 +1410,8 @@ export class DatabaseStorage implements IStorage {
     
     try {
       const result = await db.execute(
-        sql`INSERT INTO user_esm_recordings (user_esm_id, audio_url, duration, file_size, audio_quality_score, transcribed_text, created_by)
-            VALUES (${recording.user_esm_id}, ${recording.audio_url}, ${recording.duration}, ${recording.file_size}, ${audioQualityScore}, ${transcribedText}, ${recording.created_by})
+        sql`INSERT INTO user_esm_recordings (user_esm_id, audio_url, duration, file_size, audio_quality_score, transcribed_text, created_by, story_id)
+            VALUES (${recording.user_esm_id}, ${recording.audio_url}, ${recording.duration}, ${recording.file_size}, ${audioQualityScore}, ${transcribedText}, ${recording.created_by}, ${storyId})
             RETURNING *`
       );
       return result.rows[0];
@@ -1857,6 +1860,7 @@ export class DatabaseStorage implements IStorage {
             uer.is_locked,
             uer.locked_at,
             uer.narrator_voice_id as recording_narrator_voice_id,
+            uer.story_id,
             ue.narrator_voice_id,
             ue.kling_voice_id,
             er.name,

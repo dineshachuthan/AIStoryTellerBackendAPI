@@ -4306,20 +4306,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Helper function to find user recording for an item
       const findUserRecording = (itemName: string, category: string) => {
-        // Pattern 2: Clean organized structure /voice-samples/{categoryId}/{emotionName}.mp3
+        // Pattern 2: Clean organized structure /voice-samples/{categoryId}/{storyId}_{emotionName}.mp3
         // Categories: 1=emotions, 2=sounds, 3=modulations
         const categoryId = category === 'emotions' ? '1' : category === 'sounds' ? '2' : '3';
         
         return userRecordings.find(recording => {
           if (recording.audio_url && recording.audio_url.includes('voice-samples/')) {
             const fileName = recording.audio_url.split('/').pop() || '';
-            const fileNameWithoutExt = fileName.split('.')[0]; // e.g., "resolution"
+            const fileNameWithoutExt = fileName.split('.')[0]; // e.g., "75_frustration"
             const pathCategoryId = recording.audio_url.split('voice-samples/')[1]?.split('/')[0]; // Extract category from path
             
-            console.log(`🔍 Looking for recording: ${itemName} -> found: ${pathCategoryId === categoryId && fileNameWithoutExt.toLowerCase() === itemName.toLowerCase()}`);
-            // Compare case-insensitively since filenames are lowercase but items preserve original casing
-            return pathCategoryId === categoryId && 
-                   fileNameWithoutExt.toLowerCase() === itemName.toLowerCase();
+            // Extract the emotion name after storyId_ prefix
+            const parts = fileNameWithoutExt.split('_');
+            if (parts.length >= 2) {
+              const emotionPart = parts.slice(1).join('_'); // Handle emotions with underscores
+              const foundMatch = pathCategoryId === categoryId && 
+                               emotionPart.toLowerCase() === itemName.toLowerCase() &&
+                               parts[0] === storyId.toString();
+              console.log(`🔍 Looking for recording: ${itemName} -> found: ${foundMatch}`);
+              return foundMatch;
+            }
+            return false;
           }
           return false;
         });
@@ -4509,8 +4516,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Save to user voice storage using Pattern 2: /voice-samples/{categoryId}/{emotionName}.mp3
-      const audioPath = `voice-samples/${category}/${itemName.toLowerCase()}.mp3`;
+      // Save to user voice storage using Pattern 2: /voice-samples/{categoryId}/{storyId}_{emotionName}.mp3
+      const audioPath = `voice-samples/${category}/${storyId}_${itemName.toLowerCase()}.mp3`;
       
       // Use audio storage provider to save the file
       const audioStorageProvider = audioStorageFactory.getActiveProvider();
@@ -4545,7 +4552,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         audio_url: audioPath, // Store clean path without prefixes
         duration: duration, // Keep as float for precision
         file_size: audioBuffer.length,
-        created_by: userId
+        created_by: userId,
+        story_id: storyId // Include story ID for story-specific recordings
       };
       
       console.log('🔍 ROUTE LEVEL - About to call createUserEsmRecording with data:', recordingData);
