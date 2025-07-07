@@ -6029,6 +6029,209 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // =============================================================================
+  // VOICE CLONING ROUTES
+  // =============================================================================
+
+  // Test endpoint to verify routing
+  app.get('/api/voice-cloning/test', (req, res) => {
+    console.log('🧪 TEST ENDPOINT HIT');
+    res.json({ test: true, timestamp: Date.now() });
+  });
+
+  // Simple validation test without middleware
+  app.get('/api/voice-cloning/validation-simple/:storyId/:category', async (req, res) => {
+    console.log('🔥 SIMPLE VALIDATION ENDPOINT HIT');
+    const { storyId, category } = req.params;
+    
+    try {
+      // Return simple response to test if route works
+      res.json({
+        storyId: parseInt(storyId),
+        category,
+        test: true,
+        totalCompletedFromStory: 8,
+        completedFromStory: ['frustration', 'surprise', 'resolution'],
+        totalEsmCount: 8,
+        isReady: true
+      });
+    } catch (error) {
+      console.error('Simple validation error:', error);
+      res.status(500).json({ error: 'Simple validation failed' });
+    }
+  });
+
+  // Validation endpoint - Check if story has required samples for cloning
+  app.get('/api/voice-cloning/validation/:storyId/:category', requireAuth, async (req, res) => {
+
+    try {
+      const { storyId, category } = req.params;
+      const userId = (req.user as any)?.id;
+      
+      console.log(`🚀 VALIDATION ENDPOINT HIT: story=${storyId}, category=${category}, userId=${userId}`);
+      
+      if (!userId) {
+        console.log(`❌ VALIDATION FAILED: No userId found`);
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
+
+      const story = await storage.getStory(parseInt(storyId));
+      if (!story) {
+        return res.status(404).json({ message: 'Story not found' });
+      }
+
+      const analysis = await storage.getStoryAnalysis(parseInt(storyId), 'narrative');
+      if (!analysis) {
+        return res.status(404).json({ message: 'Story analysis not found' });
+      }
+
+      // Use the enhanced voice cloning session manager to get count information
+      const { VoiceCloningSessionManager } = await import("./collaborative-roleplay-service");
+      const sessionManager = new VoiceCloningSessionManager();
+      const esmData = await sessionManager.getEsmDataForValidation(userId, parseInt(storyId), category);
+      
+      const response = {
+        storyId: parseInt(storyId),
+        category,
+        totalCompletedFromStory: esmData.totalCompletedFromStory,
+        completedFromStory: esmData.completedFromStory,
+        totalEsmCount: esmData.totalEsmCount,
+        isReady: esmData.isReady,
+        threshold: esmData.threshold,
+        userRecordingCounts: esmData.userRecordingCounts,
+        metadata: {
+          analysisFound: true,
+          userId,
+          timestamp: Date.now()
+        }
+      };
+
+      console.log(`✅ VALIDATION SUCCESS: ${JSON.stringify(response, null, 2)}`);
+      res.json(response);
+      
+    } catch (error: any) {
+      console.error('Voice cloning validation error:', error);
+      res.status(500).json({ 
+        message: 'Validation failed', 
+        error: error?.message || 'Unknown error',
+        storyId: req.params.storyId,
+        category: req.params.category
+      });
+    }
+  });
+
+  // Cost estimation endpoint
+  app.get('/api/voice-cloning/cost-estimate/:storyId/:category', requireAuth, async (req, res) => {
+    try {
+      const { storyId, category } = req.params;
+      const userId = (req.user as any)?.id;
+      
+      console.log(`💰 COST ESTIMATE ENDPOINT HIT: story=${storyId}, category=${category}, userId=${userId}`);
+      
+      // First, get validation data to ensure we have the required samples
+      const validationResponse = await fetch(`${req.protocol}://${req.get('host')}/api/voice-cloning/validation/${storyId}/${category}`, {
+        headers: {
+          'cookie': req.headers.cookie || ''
+        }
+      });
+      
+      if (!validationResponse.ok) {
+        return res.status(400).json({ 
+          message: 'Cannot estimate cost - validation failed',
+          validationStatus: validationResponse.status 
+        });
+      }
+      
+      const validationData = await validationResponse.json();
+      
+      if (!validationData.isReady) {
+        return res.status(400).json({ 
+          message: 'Cannot estimate cost - insufficient samples',
+          required: validationData.threshold,
+          current: validationData.totalCompletedFromStory
+        });
+      }
+
+      // Use voice training service to get cost estimate
+      const { VoiceTrainingService } = await import("./voice-training-service");
+      const voiceTrainingService = new VoiceTrainingService();
+      const costEstimate = await voiceTrainingService.getCostEstimate(userId, parseInt(storyId), category);
+      
+      console.log(`💰 COST ESTIMATE SUCCESS: ${JSON.stringify(costEstimate, null, 2)}`);
+      res.json(costEstimate);
+      
+    } catch (error: any) {
+      console.error('Cost estimation error:', error);
+      res.status(500).json({ 
+        message: 'Cost estimation failed', 
+        error: error?.message || 'Unknown error'
+      });
+    }
+  });
+
+  // Manual voice cloning trigger endpoint
+  app.post('/api/voice-cloning/:category/:storyId', requireAuth, async (req, res) => {
+    try {
+      const { category, storyId } = req.params;
+      const userId = (req.user as any)?.id;
+      
+      console.log(`🎙️ MANUAL VOICE CLONING TRIGGER: category=${category}, story=${storyId}, userId=${userId}`);
+      
+      if (!userId) {
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
+
+      // Use voice training service for manual trigger
+      const { VoiceTrainingService } = await import("./voice-training-service");
+      const voiceTrainingService = new VoiceTrainingService();
+      
+      // Start the voice cloning process
+      const result = await voiceTrainingService.triggerVoiceCloning(userId, parseInt(storyId), category);
+      
+      console.log(`🎙️ MANUAL VOICE CLONING STARTED: ${JSON.stringify(result, null, 2)}`);
+      res.json({
+        message: 'Voice cloning started successfully',
+        jobId: result.jobId,
+        category,
+        storyId: parseInt(storyId),
+        status: 'in_progress',
+        startedAt: new Date().toISOString()
+      });
+      
+    } catch (error: any) {
+      console.error('Manual voice cloning trigger error:', error);
+      res.status(500).json({ 
+        message: 'Voice cloning trigger failed', 
+        error: error?.message || 'Unknown error'
+      });
+    }
+  });
+
+  // Voice cloning job status endpoint
+  app.get('/api/voice-cloning/status/:jobId', requireAuth, async (req, res) => {
+    try {
+      const { jobId } = req.params;
+      const userId = (req.user as any)?.id;
+      
+      console.log(`📊 VOICE CLONING STATUS CHECK: jobId=${jobId}, userId=${userId}`);
+      
+      // Use voice training service to get job status
+      const { VoiceTrainingService } = await import("./voice-training-service");
+      const voiceTrainingService = new VoiceTrainingService();
+      const status = await voiceTrainingService.getJobStatus(jobId, userId);
+      
+      console.log(`📊 STATUS CHECK RESULT: ${JSON.stringify(status, null, 2)}`);
+      res.json(status);
+      
+    } catch (error: any) {
+      console.error('Voice cloning status check error:', error);
+      res.status(500).json({ 
+        message: 'Status check failed', 
+        error: error?.message || 'Unknown error'
+      });
+    }
+  });
+
   // Serve static files from persistent cache directories
   app.use('/persistent-cache', express.static(path.join(process.cwd(), 'persistent-cache')));
 
