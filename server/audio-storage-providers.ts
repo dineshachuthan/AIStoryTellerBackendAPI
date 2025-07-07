@@ -41,22 +41,13 @@ export class ReplitAudioStorageProvider extends BaseAudioStorageProvider {
   }
 
   async generateSignedUrl(relativePath: string, options: SignedUrlOptions): Promise<string> {
-    const payload = {
-      filePath: relativePath,
-      userId: options.userId,
-      purpose: options.purpose,
-      iat: Math.floor(Date.now() / 1000)
-    };
-
-    const expirationTime = options.expiresIn || '15m';
-    const token = jwt.sign(payload, process.env.JWT_SECRET || 'default-secret', {
-      expiresIn: expirationTime
-    });
-
-    const signedUrl = `${this.config.baseUrl}/api/audio/serve/${token}`;
-    console.log(`[JWT] Generated signed URL for ${relativePath} with ${options.expiresIn || '15m'} expiration: ${signedUrl.substring(0, 80)}...`);
+    // For now, use public static file serving instead of JWT
+    // Convert relativePath like "./voice-samples/3/suspenseful.mp3" to "/voice-samples/3/suspenseful.mp3"
+    const publicPath = relativePath.replace(/^\.\//, '/');
+    const publicUrl = `${this.config.baseUrl}${publicPath}`;
+    console.log(`[PublicAccess] Generated public URL for ${relativePath}: ${publicUrl}`);
     
-    return signedUrl;
+    return publicUrl;
   }
 
   async uploadAudio(buffer: Buffer, relativePath: string): Promise<string> {

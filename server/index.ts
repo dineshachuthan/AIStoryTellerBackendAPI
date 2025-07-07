@@ -15,10 +15,13 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// JWT Audio Serving Route (MUST be before authentication setup)
+// Public audio file serving (for testing)
 import jwt from 'jsonwebtoken';
 import path from 'path';
 import fs from 'fs/promises';
+
+// Serve voice samples as static files
+app.use('/voice-samples', express.static(path.join(process.cwd(), 'voice-samples')));
 
 /**
  * Serve audio files with JWT token authentication
