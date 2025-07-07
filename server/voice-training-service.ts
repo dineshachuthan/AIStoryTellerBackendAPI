@@ -151,6 +151,19 @@ export class VoiceTrainingService {
           
           console.log(`[MVP1] Generated signed URL for ${esmRecording.name}: ${signedUrl}`);
           
+          // Quick validation - test if the URL is accessible
+          try {
+            const testResponse = await fetch(signedUrl, { method: 'HEAD' });
+            if (!testResponse.ok) {
+              console.log(`[MVP1] Skipping ${esmRecording.name} - URL not accessible (${testResponse.status})`);
+              continue;
+            }
+            console.log(`[MVP1] URL validation passed for ${esmRecording.name}`);
+          } catch (error) {
+            console.log(`[MVP1] Skipping ${esmRecording.name} - URL validation failed:`, error.message);
+            continue;
+          }
+          
           mvp1Samples.push({
             emotion: esmRecording.name, // Use the ESM name (e.g. "frustration", "footsteps", "drama")
             audioUrl: signedUrl, // Use signed URL for external access
