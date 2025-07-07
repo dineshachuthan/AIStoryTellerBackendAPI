@@ -239,13 +239,13 @@ export class MVP2ElevenLabsIntegration {
         
         for (const recording of matchingRecordings) {
           try {
-            await storage.updateUserEsmRecording(recording.user_esm_recordings_id, {
+            await storage.updateUserEsmRecording(recording.id, {
               narrator_voice_id: narratorVoiceId
             });
             
-            console.log(`[MVP2ElevenLabs] Updated user_esm_recordings record ${recording.user_esm_recordings_id} with narrator voice ${narratorVoiceId}`);
+            console.log(`[MVP2ElevenLabs] Updated user_esm_recordings record ${recording.id} with narrator voice ${narratorVoiceId}`);
           } catch (error) {
-            console.error(`[MVP2ElevenLabs] Failed to update user_esm_recordings record ${recording.user_esm_recordings_id}:`, error);
+            console.error(`[MVP2ElevenLabs] Failed to update user_esm_recordings record ${recording.id}:`, error);
           }
         }
       }
