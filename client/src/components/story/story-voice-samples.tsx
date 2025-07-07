@@ -13,6 +13,7 @@ import { Progress } from "@/components/ui/progress";
 import { EnhancedVoiceRecorder } from "@/components/ui/enhanced-voice-recorder";
 import { AUDIO_PROCESSING_CONFIG } from "@shared/audio-config";
 import { VoiceMessageService } from "@shared/i18n-config";
+import { VOICE_RECORDING_CONFIG } from "@shared/voice-recording-config";
 
 // Helper function to get audio duration from blob
 const getAudioDuration = (audioBlob: Blob): Promise<number> => {
@@ -430,7 +431,7 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
                                 storyId: storyId,
                                 intensity: intensity
                               },
-                              minDuration: 5,
+                              minDuration: VOICE_RECORDING_CONFIG.MIN_DURATION,
                               onSaveSuccess: (data) => {
                                 // Invalidate queries to refresh data without page reload
                                 queryClient.invalidateQueries({ queryKey: [`/api/stories/${storyId}/voice-samples`] });

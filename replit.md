@@ -401,9 +401,19 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - ✅ Soft delete functionality across all ESM tables
 - ✅ Complete MVP2 architecture with intelligent voice generation
 - **Voice ID**: Successfully using narrator voice `cuxbYT1nu3MZbK8JwgAZ`
-- **Next Goal**: Improve voice quality by adding more voice samples
+- **Voice Quality Enhancement**: Updated recording requirements to 15-25 seconds (from 5-10 seconds) with 45-60 word sample texts for optimal voice cloning quality
 
 ## Changelog
+
+### **VOICE RECORDING DURATION CONFIGURATION UPDATED - January 08, 2025**
+**Enhanced Voice Quality Requirements**: Implemented centralized configuration for optimal ElevenLabs voice cloning quality
+- **CREATED CONFIGURATION FILE**: Added shared/voice-recording-config.ts with centralized duration and text generation settings
+- **INCREASED MINIMUM DURATION**: Updated from 5 seconds to 15 seconds minimum for better voice quality (15-25 second range)
+- **ENHANCED SAMPLE TEXTS**: Increased word count from 35-45 words to 45-60 words for natural speech pacing
+- **BACKEND VALIDATION UPDATED**: Server routes now use VOICE_RECORDING_CONFIG.MIN_DURATION for validation
+- **FRONTEND CONSISTENCY**: All UI components updated to display new duration requirements dynamically
+- **AI TEXT GENERATION ENHANCED**: OpenAI prompts now generate longer sample texts matching new duration requirements
+- **USER BENEFIT**: Longer voice samples provide significantly better voice cloning quality with ElevenLabs API
 
 ### **VOICE ID RECOVERY ENDPOINT CREATED - January 08, 2025**
 **Critical Data Loss Issue Resolved**: Created recovery mechanism for lost ElevenLabs voice IDs

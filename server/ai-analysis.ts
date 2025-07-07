@@ -1,5 +1,6 @@
 import { getOpenAICachedProvider } from './cache/openai-cached-provider';
 import { AUDIO_FORMAT_CONFIG, AUDIO_PROCESSING_CONFIG } from '@shared/audio-config';
+import { VOICE_RECORDING_CONFIG } from '@shared/voice-recording-config';
 import { storage } from "./storage";
 import { createHash } from 'crypto';
 
@@ -484,7 +485,7 @@ async function populateEsmReferenceData(analysis: StoryAnalysis, userId: string)
             const result = await openaiProvider.generateCompletionWithCache({
               messages: [{ 
                 role: 'user', 
-                content: `Generate a 6-second voice recording sample text for the emotion "${emotion.emotion}". Be exactly 35-45 words, natural conversational language, first person perspective that clearly expresses ${emotion.emotion}. No character names or story references. Just the emotional sample text.`
+                content: `Generate a voice recording sample text for the emotion "${emotion.emotion}". Be exactly ${VOICE_RECORDING_CONFIG.MIN_WORDS}-${VOICE_RECORDING_CONFIG.MAX_WORDS} words for a ${VOICE_RECORDING_CONFIG.MIN_DURATION}-${VOICE_RECORDING_CONFIG.MAX_DURATION} second recording, natural conversational language, first person perspective that clearly expresses ${emotion.emotion}. No character names or story references. Just the emotional sample text.`
               }],
               maxTokens: 100,
               temperature: 0.7
@@ -588,7 +589,7 @@ async function populateEsmReferenceData(analysis: StoryAnalysis, userId: string)
             const result = await openaiProvider.generateCompletionWithCache({
               messages: [{ 
                 role: 'user', 
-                content: `Generate a 6-second voice recording sample text for the narrative modulation "${modulation}". Be exactly 35-45 words, natural conversational language that demonstrates how to speak with ${modulation} tone/mood/style. No character names or story references. Focus on vocal delivery instructions.`
+                content: `Generate a voice recording sample text for the narrative modulation "${modulation}". Be exactly ${VOICE_RECORDING_CONFIG.MIN_WORDS}-${VOICE_RECORDING_CONFIG.MAX_WORDS} words for a ${VOICE_RECORDING_CONFIG.MIN_DURATION}-${VOICE_RECORDING_CONFIG.MAX_DURATION} second recording, natural conversational language that demonstrates how to speak with ${modulation} tone/mood/style. No character names or story references. Focus on vocal delivery instructions.`
               }],
               maxTokens: 100,
               temperature: 0.7

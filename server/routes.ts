@@ -3,6 +3,7 @@ import express from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertCharacterSchema, insertConversationSchema, insertMessageSchema, insertStorySchema, insertUserVoiceSampleSchema, insertStoryCollaborationSchema, insertStoryGroupSchema, insertCharacterVoiceAssignmentSchema } from "@shared/schema";
+import { VOICE_RECORDING_CONFIG } from "@shared/voice-recording-config";
 import { generateAIResponse } from "./openai";
 import { setupAuth, requireAuth, requireAdmin, hashPassword } from "./auth";
 import passport from 'passport';
@@ -4536,9 +4537,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Audio file is corrupted or unreadable. Please record again.' });
       }
 
-      if (duration < 5) {
+      if (duration < VOICE_RECORDING_CONFIG.MIN_DURATION) {
         return res.status(400).json({ 
-          message: `Recording too short: ${duration.toFixed(1)}s. Need at least 5 seconds for voice cloning.` 
+          message: `Recording too short: ${duration.toFixed(1)}s. Need at least ${VOICE_RECORDING_CONFIG.MIN_DURATION} seconds for optimal voice cloning quality.` 
         });
       }
 

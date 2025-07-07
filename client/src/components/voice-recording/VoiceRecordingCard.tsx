@@ -5,6 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Mic, Play, Pause, CheckCircle, RotateCcw, Volume2, Save, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { VOICE_RECORDING_CONFIG } from '@shared/voice-recording-config';
 // Toast removed - using in-card status messages
 
 export interface VoiceTemplate {
@@ -128,8 +129,8 @@ export function VoiceRecordingCard({
           const audioBlob = new Blob(audioChunksRef.current, { type: mediaRecorder.mimeType });
           const url = URL.createObjectURL(audioBlob);
           
-          // Only proceed if recording is at least 5 seconds (ElevenLabs requirement) AND actually started recording
-          if (recordingTime >= 5 && audioBlob.size > 0 && isRecording) {
+          // Only proceed if recording meets minimum duration (ElevenLabs requirement) AND actually started recording
+          if (recordingTime >= VOICE_RECORDING_CONFIG.MIN_DURATION && audioBlob.size > 0 && isRecording) {
             // Store temporary recording for user verification
             setTempRecording({
               blob: audioBlob,
@@ -141,8 +142,8 @@ export function VoiceRecordingCard({
           } else {
             // Recording too short or invalid - show error message
             setRecordingState('idle');
-            if (recordingTime < 5) {
-              setMicError(`Recording too short (${recordingTime}s). Please record at least 5 seconds for voice cloning.`);
+            if (recordingTime < VOICE_RECORDING_CONFIG.MIN_DURATION) {
+              setMicError(`Recording too short (${recordingTime}s). Please record at least ${VOICE_RECORDING_CONFIG.MIN_DURATION} seconds for voice cloning.`);
             }
             URL.revokeObjectURL(url);
           }
@@ -375,7 +376,7 @@ export function VoiceRecordingCard({
               Hold to Record Your Voice
             </Button>
             <p className="text-xs text-center text-muted-foreground">
-              Press and hold for at least 5 seconds to record
+              Press and hold for at least {VOICE_RECORDING_CONFIG.MIN_DURATION} seconds to record
             </p>
           </div>
         )}
@@ -393,7 +394,7 @@ export function VoiceRecordingCard({
               Release to Stop Recording
             </Button>
             <p className="text-xs text-center text-muted-foreground">
-              Keep recording for at least 5 seconds (required for voice cloning)
+              Keep recording for at least {VOICE_RECORDING_CONFIG.MIN_DURATION} seconds (required for voice cloning)
             </p>
           </div>
         )}
