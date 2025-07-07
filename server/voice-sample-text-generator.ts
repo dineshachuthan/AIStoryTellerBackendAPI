@@ -128,10 +128,10 @@ Respond with JSON in this format:
   async generateSingleEmotionText(emotion: string, displayName: string, esmRefId: number): Promise<GeneratedSampleText> {
     const prompt = `Create a voice recording sample text for the emotion "${displayName}" (${emotion}). 
 
-The text must be exactly 25-35 words long to take approximately 6-8 seconds to read aloud at normal speaking speed.
+The text must be exactly ${VOICE_RECORDING_CONFIG.MIN_WORDS}-${VOICE_RECORDING_CONFIG.MAX_WORDS} words long to take approximately ${VOICE_RECORDING_CONFIG.MIN_DURATION}-${VOICE_RECORDING_CONFIG.MAX_DURATION} seconds to read aloud at normal speaking speed.
 
 Requirements:
-- Must be 25-35 words (for ~6-8 second reading time)
+- Must be ${VOICE_RECORDING_CONFIG.MIN_WORDS}-${VOICE_RECORDING_CONFIG.MAX_WORDS} words (for ~${VOICE_RECORDING_CONFIG.MIN_DURATION}-${VOICE_RECORDING_CONFIG.MAX_DURATION} second reading time)
 - Must clearly express ${displayName} emotion
 - Should be natural dialogue or narrative
 - Emotionally engaging so the speaker naturally expresses the emotion
@@ -142,7 +142,7 @@ Respond with JSON:
   "emotion": "${emotion}",
   "displayName": "${displayName}",
   "sampleText": "Your sample text here...",
-  "wordCount": 28
+  "wordCount": 50
 }`;
 
     const response = await openai.chat.completions.create({
