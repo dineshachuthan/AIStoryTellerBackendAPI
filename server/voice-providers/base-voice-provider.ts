@@ -78,7 +78,40 @@ export abstract class BaseVoiceProvider implements VoiceModule {
   }
 
   /**
+   * Check if error is a network-related error that warrants retry
+   */
+  protected isNetworkError(error: unknown): boolean {
+    if (!(error instanceof Error)) return false;
+    
+    const networkErrorPatterns = [
+      'ECONNRESET',
+      'ENOTFOUND',
+      'ECONNREFUSED',
+      'ETIMEDOUT',
+      'ESOCKETTIMEDOUT',
+      'EHOSTUNREACH',
+      'EPIPE',
+      'EAI_AGAIN',
+      'NetworkError',
+      'FetchError',
+      'RequestTimeout',
+      'socket hang up',
+      'connect ETIMEDOUT',
+      'getaddrinfo ENOTFOUND'
+    ];
+    
+    const errorString = error.toString().toLowerCase();
+    const messageString = error.message?.toLowerCase() || '';
+    
+    return networkErrorPatterns.some(pattern => 
+      errorString.includes(pattern.toLowerCase()) || 
+      messageString.includes(pattern.toLowerCase())
+    );
+  }
+
+  /**
    * Common retry logic for provider operations
+   * Only retries on network errors, not application errors
    */
   protected async withRetry<T>(
     operation: () => Promise<T>,
@@ -86,16 +119,25 @@ export abstract class BaseVoiceProvider implements VoiceModule {
     operationName: string = 'operation'
   ): Promise<T> {
     let lastError: Error;
+    const totalAttempts = maxRetries + 1;
     
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    for (let attempt = 1; attempt <= totalAttempts; attempt++) {
       try {
-        this.log('info', `${operationName} attempt ${attempt}/${maxRetries}`);
+        this.log('info', `${operationName} attempt ${attempt}/${totalAttempts}`);
         return await operation();
       } catch (error) {
         lastError = error as Error;
         this.log('warn', `${operationName} attempt ${attempt} failed: ${lastError.message}`);
         
-        if (attempt < maxRetries) {
+        // Only retry on network errors, not application errors
+        const isNetworkError = this.isNetworkError(error);
+        
+        if (!isNetworkError) {
+          this.log('error', `Application error detected - not retrying: ${lastError.message}`);
+          throw error;
+        }
+        
+        if (attempt < totalAttempts) {
           // Exponential backoff: 1s, 2s, 4s delays
           const delayMs = Math.pow(2, attempt - 1) * 1000;
           this.log('info', `Retrying in ${delayMs}ms...`);

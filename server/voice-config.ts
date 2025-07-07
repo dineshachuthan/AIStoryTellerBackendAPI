@@ -39,7 +39,7 @@ export const defaultVoiceConfig: VoiceProviderConfiguration = {
         maxSampleDurationMs: 60000, // 60 seconds
         maxClonesPerUser: 10,
         timeout: 120000, // 2 minutes timeout for voice cloning
-        retryCount: 2
+        retryCount: 3 // Retry up to 3 times for network errors only
       },
       priority: 1
     },
@@ -54,7 +54,7 @@ export const defaultVoiceConfig: VoiceProviderConfiguration = {
         maxSampleDurationMs: 30000, // 30 seconds
         maxClonesPerUser: 5,
         timeout: 120000, // 2 minutes timeout
-        retryCount: 2
+        retryCount: 3 // Retry up to 3 times for network errors only
       },
       priority: 2
     }
