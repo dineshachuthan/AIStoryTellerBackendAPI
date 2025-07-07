@@ -35,9 +35,18 @@ interface VoiceSampleCardProps {
   className?: string;
   
   // Callbacks
-  onRecordingComplete: (audioBlob: Blob) => void;
+  onRecordingComplete?: (audioBlob: Blob) => void;
   onPlaySample?: (audioUrl: string) => void;
   onDeleteSample?: () => void;
+  
+  // Save configuration for direct API integration
+  saveConfig?: {
+    endpoint: string;
+    payload: Record<string, any>;
+    minDuration: number;
+    onSaveSuccess?: (data: any) => void;
+    onSaveError?: (error: string) => void;
+  };
 }
 
 export function VoiceSampleCard({
@@ -56,7 +65,8 @@ export function VoiceSampleCard({
   className,
   onRecordingComplete,
   onPlaySample,
-  onDeleteSample
+  onDeleteSample,
+  saveConfig
 }: VoiceSampleCardProps) {
   const [isPlaying, setIsPlaying] = useState(false);
 
@@ -145,7 +155,7 @@ export function VoiceSampleCard({
       
       <CardContent className="p-0">
         <EnhancedVoiceRecorder
-          onRecordingComplete={handleRecordingComplete}
+          onRecordingComplete={saveConfig ? undefined : handleRecordingComplete}
           maxRecordingTime={15}
           disabled={disabled || isLocked}
           sampleText={sampleText}
@@ -164,6 +174,7 @@ export function VoiceSampleCard({
             recording: "Recording...",
             instructions: "Press and hold to record"
           }}
+          saveConfig={saveConfig}
         />
       </CardContent>
     </Card>

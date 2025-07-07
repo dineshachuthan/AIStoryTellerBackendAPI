@@ -129,58 +129,7 @@ export default function VoiceSamples() {
     }
   });
 
-  // Save voice modulation mutation
-  const saveVoiceModulation = useMutation({
-    mutationFn: async ({ emotion, audioBlob }: { emotion: string; audioBlob: Blob }) => {
-      const formData = new FormData();
-      formData.append("modulationKey", emotion);
-      formData.append("audio", audioBlob, `${emotion}_sample.${AUDIO_PROCESSING_CONFIG.recording.defaultFormat}`);
-      formData.append("duration", AUDIO_PROCESSING_CONFIG.recording.defaultDuration.toString());
-      formData.append("modulationType", selectedCategory); // Use current selected category
-
-      const response = await fetch(AUDIO_PROCESSING_CONFIG.endpoints.voiceModulations, {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorMsg = VoiceMessageService.voiceSaveFailed(emotion, selectedCategory);
-        throw new Error(errorMsg.message);
-      }
-
-      return response.json();
-    },
-    onSuccess: (data, variables) => {
-      // Immediately update recordedSamples state for real-time visual updates
-      // Use the actual emotion name from backend response, not the variable
-      const actualEmotion = data.emotion || data.modulationKey || variables.emotion;
-      const newSample = {
-        emotion: actualEmotion,
-        audioUrl: data.audioUrl,
-        isLocked: data.isLocked || false
-      };
-      
-      setRecordedSamples(prev => {
-        // Filter out any invalid entries with wrong emotion names
-        const validPrev = prev.filter(s => s.emotion !== 'emotion' && s.emotion !== 'sound' && s.emotion !== 'modulation');
-        
-        const existing = validPrev.find(s => s.emotion === actualEmotion);
-        if (existing) {
-          // Update existing sample
-          return validPrev.map(s => s.emotion === actualEmotion ? newSample : s);
-        } else {
-          // Add new sample
-          return [...validPrev, newSample];
-        }
-      });
-      
-      // Use setTimeout to delay query invalidation to prevent flickering
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ["/api/voice-modulations/progress"] });
-        queryClient.invalidateQueries({ queryKey: ["/api/voice-modulations/templates"] });
-      }, 100);
-    },
-  });
+  // Note: saveVoiceModulation mutation removed - using saveConfig directly in VoiceSampleCard
 
   // Delete voice modulation mutation
   const deleteVoiceModulation = useMutation({
@@ -295,13 +244,7 @@ export default function VoiceSamples() {
     return recordedSamples.find((sample: any) => sample.emotion === modulationKey);
   };
 
-  // Handler for recording new voice modulations
-  const handleRecord = async (template: any, audioBlob: Blob): Promise<void> => {
-    await saveVoiceModulation.mutateAsync({
-      emotion: template.emotion,
-      audioBlob
-    });
-  };
+  // Note: handleRecord removed - using saveConfig directly in VoiceSampleCard
 
   // Get user voice samples data - fix progress data structure
   const userVoiceSamples: any[] = (progress as any)?.recordedSamples?.map((sample: any) => ({
@@ -512,22 +455,51 @@ export default function VoiceSamples() {
                         recordedAt: new Date(recordedSample.recordedAt),
                         duration: recordedSample.duration
                       } : undefined}
-                      disabled={saveVoiceModulation.isPending || isLocked || isAnyVoiceCloningInProgress()}
-                      isLoading={saveVoiceModulation.isPending}
-                      onRecordingComplete={(audioBlob) => {
-                        if (!isLocked && !isAnyVoiceCloningInProgress()) {
-                          saveVoiceModulation.mutate({
-                            emotion: template.emotion,
-                            audioBlob
-                          });
-                        }
-                      }}
+                      disabled={isLocked || isAnyVoiceCloningInProgress()}
+                      isLoading={false}
                       onPlaySample={(audioUrl) => {
                         playAudioSample(audioUrl, template.emotion);
                       }}
                       onDeleteSample={() => {
                         if (!isLocked && !isAnyVoiceCloningInProgress()) {
                           deleteVoiceModulation.mutate(template.emotion);
+                        }
+                      }}
+                      saveConfig={{
+                        endpoint: AUDIO_PROCESSING_CONFIG.endpoints.voiceModulations,
+                        payload: {
+                          modulationKey: template.emotion,
+                          modulationType: selectedCategory,
+                          duration: AUDIO_PROCESSING_CONFIG.recording.defaultDuration
+                        },
+                        minDuration: 5,
+                        onSaveSuccess: (data) => {
+                          // Update recorded samples state
+                          const actualEmotion = data.emotion || data.modulationKey || template.emotion;
+                          const newSample = {
+                            emotion: actualEmotion,
+                            audioUrl: data.audioUrl,
+                            isLocked: data.isLocked || false
+                          };
+                          
+                          setRecordedSamples(prev => {
+                            const validPrev = prev.filter(s => s.emotion !== 'emotion' && s.emotion !== 'sound' && s.emotion !== 'modulation');
+                            const existing = validPrev.find(s => s.emotion === actualEmotion);
+                            if (existing) {
+                              return validPrev.map(s => s.emotion === actualEmotion ? newSample : s);
+                            } else {
+                              return [...validPrev, newSample];
+                            }
+                          });
+                          
+                          // Invalidate queries
+                          setTimeout(() => {
+                            queryClient.invalidateQueries({ queryKey: ["/api/voice-modulations/progress"] });
+                            queryClient.invalidateQueries({ queryKey: ["/api/voice-modulations/templates"] });
+                          }, 100);
+                        },
+                        onSaveError: (error) => {
+                          console.error('Failed to save voice sample:', error);
                         }
                       }}
                     />

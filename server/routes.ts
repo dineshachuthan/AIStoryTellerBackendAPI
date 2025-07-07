@@ -4784,8 +4784,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // ENFORCE MP3-ONLY: Convert all audio to MP3 format
       const timestamp = Date.now();
       const tempFileName = `temp_${modulationKey}_${timestamp}.${audioFile.mimetype.includes('webm') ? 'webm' : 'mp4'}`;
-      const fileName = `${modulationKey}_${timestamp}.mp3`;
-      const cacheDir = path.join(process.cwd(), 'persistent-cache', 'user-voice-modulations', userId);
+      
+      // Parse emotion name from modulationKey (e.g., "emotions-frustration" -> "frustration")
+      const emotionName = modulationKey.split('-').slice(1).join('-');
+      
+      // Use the same category mapping logic
+      let esmCategory: number;
+      if (modulationType === 'emotions') {
+        esmCategory = 1; // Emotions
+      } else if (modulationType === 'sounds') {
+        esmCategory = 2; // Sounds/Voice Traits
+      } else if (modulationType === 'modulations') {
+        esmCategory = 3; // Modulations/Descriptions
+      } else {
+        esmCategory = 1; // Default to emotions if unknown
+      }
+      
+      // Use correct path format: /voice-samples/{categoryId}/{emotionName}.mp3
+      const fileName = `${emotionName}.mp3`;
+      const cacheDir = path.join(process.cwd(), 'voice-samples', esmCategory.toString());
       await fs.mkdir(cacheDir, { recursive: true });
       
       const tempFilePath = path.join(cacheDir, tempFileName);
@@ -4845,22 +4862,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await fs.unlink(tempFilePath).catch(() => {});
         throw new Error('Audio conversion to MP3 failed. Only MP3 format is supported.');
       }
-      const audioUrl = `/cache/user-voice-modulations/${userId}/${fileName}`;
-
-      // Parse emotion name from modulationKey (e.g., "emotions-frustration" -> "frustration")
-      const emotionName = modulationKey.split('-').slice(1).join('-');
-      
-      // Use the same category mapping logic as voice-samples service
-      let esmCategory: number;
-      if (modulationType === 'emotions') {
-        esmCategory = 1; // Emotions
-      } else if (modulationType === 'sounds') {
-        esmCategory = 2; // Sounds/Voice Traits
-      } else if (modulationType === 'modulations') {
-        esmCategory = 3; // Modulations/Descriptions
-      } else {
-        esmCategory = 1; // Default to emotions if unknown
-      }
+      const audioUrl = `./voice-samples/${esmCategory}/${fileName}`;
       
       console.log(`ESM Category mapping: ${modulationType} -> ${esmCategory}`);
       
