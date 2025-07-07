@@ -337,39 +337,33 @@ export class ElevenLabsModule extends BaseVoiceProvider {
     console.log(`[ElevenLabs] Generating speech using ElevenLabs SDK for voice ID: ${voiceId}, text length: ${text.length} characters, emotion: ${emotion || 'neutral'}`);
     
     try {
-      // Use SDK for TTS with all required parameters
-      const audioStream = await this.client.textToSpeech.convert(
-        voiceId,
+      // Use direct API call instead of SDK which has issues
+      const response = await axios.post(
+        `${this.config.baseUrl}/text-to-speech/${voiceId}`,
         {
           text: text,
-          model_id: 'eleven_multilingual_v2'
+          model_id: 'eleven_multilingual_v2',
+          voice_settings: {
+            stability: 0.5,
+            similarity_boost: 0.5
+          }
+        },
+        {
+          headers: {
+            'Accept': 'audio/mpeg',
+            'Content-Type': 'application/json',
+            'xi-api-key': this.config.apiKey
+          },
+          responseType: 'arraybuffer'
         }
       );
       
-      // Convert stream to ArrayBuffer
-      const chunks: Uint8Array[] = [];
-      const reader = audioStream.getReader();
+      this.log('info', `Speech generation successful for voice ${voiceId}, audio size: ${response.data.length} bytes`);
+      return response.data;
       
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        chunks.push(value);
-      }
-      
-      const totalLength = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
-      const result = new Uint8Array(totalLength);
-      let offset = 0;
-      
-      for (const chunk of chunks) {
-        result.set(chunk, offset);
-        offset += chunk.length;
-      }
-      
-      return result.buffer;
-      
-    } catch (error) {
+    } catch (error: any) {
       this.log('error', `Speech generation failed for voice ${voiceId}`, error);
-      throw error;
+      throw new Error(`ElevenLabs TTS failed: ${error.response?.status || 'Unknown error'} - ${error.message}`);
     }
   }
 
