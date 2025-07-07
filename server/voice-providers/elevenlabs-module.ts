@@ -105,9 +105,16 @@ export class ElevenLabsModule extends BaseVoiceProvider {
           this.log('info', `Original audioUrl received: ${sample.audioUrl}`);
           
           // Convert relative path to absolute URL for fetch
-          const audioUrl = sample.audioUrl.startsWith('http') 
-            ? sample.audioUrl 
-            : `http://localhost:5000${sample.audioUrl}`;
+          // Handle different path formats
+          let audioUrl: string;
+          if (sample.audioUrl.startsWith('http')) {
+            audioUrl = sample.audioUrl;
+          } else if (sample.audioUrl.startsWith('/cache/')) {
+            // Handle legacy /cache/ paths - these files don't exist
+            throw new Error(`Legacy cache path detected: ${sample.audioUrl}. File needs to be re-recorded.`);
+          } else {
+            audioUrl = `http://localhost:5000${sample.audioUrl}`;
+          }
           
           this.log('info', `Final audioUrl for fetch: ${audioUrl}`);
           const audioResponse = await fetch(audioUrl);
