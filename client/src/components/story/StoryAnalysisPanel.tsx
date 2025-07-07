@@ -77,18 +77,6 @@ export function StoryAnalysisPanel({
   const modulationCount = voiceSamplesData ? ((voiceSamplesData as any).modulations?.filter((m: any) => m.isRecorded).length || 0) : 0;
   const totalRecordings = emotionCount + soundCount + modulationCount;
 
-  // Temporary debug to match UI observation
-  if (voiceSamplesData) {
-    console.log('API data structure check:', {
-      totalEmotions: (voiceSamplesData as any).emotions?.length || 0,
-      recordedEmotions: emotionCount,
-      totalModulations: (voiceSamplesData as any).modulations?.length || 0,
-      recordedModulations: modulationCount,
-      expectedTotal: '7 (3 emotions total, 2 recorded + 5 modulations, all recorded)',
-      actualTotal: totalRecordings
-    });
-  }
-
   // Voice cloning mutation
   const voiceCloningMutation = useMutation({
     mutationFn: async () => {
