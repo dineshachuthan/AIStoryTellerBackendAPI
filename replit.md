@@ -342,6 +342,15 @@ This is a full-stack collaborative storytelling platform that enables users to c
 
 ## Changelog
 
+### **NARRATOR VOICE GENERATION LOGIC UPDATED - January 07, 2025**
+**Frontend Logic Enhancement**: Generate Narrator Voice button now enables based on story-level completion
+- **REMOVED HARDCODED THRESHOLD**: Eliminated rigid 6-recording requirement that prevented stories with fewer emotions from generating narrator voices
+- **DYNAMIC ENABLEMENT LOGIC**: Button enables when ALL story-level recordings complete OR minimum 5 recordings reached
+- **STORY-SPECIFIC PROGRESS**: Button shows progress as "X/Y" where Y is total story items (emotions + sounds + modulations)
+- **HELPFUL TOOLTIPS**: Added contextual tooltips explaining requirements based on current recording state
+- **BACKEND COMPATIBILITY**: Frontend change aligns with robust backend logic that combines all unlocked samples
+- **USER REQUEST FULFILLED**: Stories with 2-3 emotions can now generate narrator voices once all items recorded
+
 ### **STORY LIBRARY FILTERED TO NARRATION-COMPLETE STORIES ONLY - January 07, 2025**
 **UI Consistency Update**: Bottom navigation stories menu now only displays narration-complete stories
 - **FILTERING LOGIC IMPLEMENTED**: Added filter to show only stories with narratorVoice or narratorVoiceType fields populated

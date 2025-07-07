@@ -76,6 +76,18 @@ export function StoryAnalysisPanel({
   const soundCount = voiceSamplesData ? ((voiceSamplesData as any).sounds?.filter((s: any) => s.isRecorded).length || 0) : 0;
   const modulationCount = voiceSamplesData ? ((voiceSamplesData as any).modulations?.filter((m: any) => m.isRecorded).length || 0) : 0;
   const totalRecordings = emotionCount + soundCount + modulationCount;
+  
+  // Calculate if all story-level recordings are complete
+  const totalStoryEmotions = voiceSamplesData ? ((voiceSamplesData as any).emotions?.length || 0) : 0;
+  const totalStorySounds = voiceSamplesData ? ((voiceSamplesData as any).sounds?.length || 0) : 0;
+  const totalStoryModulations = voiceSamplesData ? ((voiceSamplesData as any).modulations?.length || 0) : 0;
+  const totalStoryItems = totalStoryEmotions + totalStorySounds + totalStoryModulations;
+  
+  // Enable button when all story-level recordings are complete OR we have at least 5 recordings
+  const canGenerateNarratorVoice = totalStoryItems > 0 && (
+    totalRecordings === totalStoryItems || // All story items recorded
+    totalRecordings >= 5 // Minimum threshold for voice cloning
+  );
 
   // Voice cloning mutation
   const voiceCloningMutation = useMutation({
@@ -168,9 +180,20 @@ export function StoryAnalysisPanel({
             {storyId > 0 && (
               <Button
                 onClick={() => voiceCloningMutation.mutate()}
-                disabled={totalRecordings < 6 || voiceCloningMutation.isPending}
+                disabled={!canGenerateNarratorVoice || voiceCloningMutation.isPending}
                 size="sm"
                 className="flex items-center gap-2"
+                title={
+                  !canGenerateNarratorVoice 
+                    ? totalStoryItems === 0
+                      ? "Loading story voice samples..."
+                      : totalRecordings === 0
+                        ? "Record at least one voice sample to start"
+                        : totalRecordings < 5 && totalRecordings < totalStoryItems
+                          ? `Record all story items (${totalRecordings}/${totalStoryItems}) or at least 5 samples`
+                          : "Complete recording requirements to generate narrator voice"
+                    : "Click to generate your narrator voice"
+                }
               >
                 {voiceCloningMutation.isPending ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -179,7 +202,7 @@ export function StoryAnalysisPanel({
                 )}
                 {voiceCloningMutation.isPending 
                   ? "Creating Voice..." 
-                  : `Generate Narrator Voice (${totalRecordings}/6)`
+                  : `Generate Narrator Voice (${totalRecordings}/${totalStoryItems > 0 ? totalStoryItems : '?'})`
                 }
               </Button>
             )}
