@@ -435,7 +435,10 @@ This is a full-stack collaborative storytelling platform that enables users to c
 ### **SOFT DELETE FUNCTIONALITY IMPLEMENTED - January 08, 2025**
 **Data Integrity Enhancement**: All ESM tables now use soft delete instead of hard delete
 - **DATABASE SCHEMA UPDATED**: Added `is_active` column to esm_ref, user_esm, and user_esm_recordings tables with default TRUE
-- **STORAGE QUERIES UPDATED**: All ESM queries now filter inactive records with `WHERE is_active = true` conditions
+- **ALL GET METHODS UPDATED**: Every ESM GET method now filters inactive records:
+  - `getEsmRef`, `getUserEsm`, `getUserEsmByRef` - Single table filtering
+  - `getUserEsmByUser`, `getUserEsmRecordings` - Multi-table join filtering  
+  - `getAllEsmRefs`, `getEsmRefsByCategory` - Collection queries filtering
 - **SOFT DELETE METHOD**: deleteUserEsmRecording now sets `is_active = false` instead of permanently deleting records
 - **SMART CORRUPTION DETECTION**: ElevenLabs module only soft deletes for actual file corruption (404, tiny files, invalid format)
 - **API ERROR HANDLING**: Network errors and API failures preserve recordings for retry - no deletion on HTTP 500 or API issues

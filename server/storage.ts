@@ -1181,7 +1181,7 @@ export class DatabaseStorage implements IStorage {
   async getEsmRef(category: number, name: string): Promise<any | null> {
     console.log('🔍 getEsmRef called with:', { category, name });
     const result = await db.execute(
-      sql`SELECT * FROM esm_ref WHERE category = ${category} AND name = ${name} LIMIT 1`
+      sql`SELECT * FROM esm_ref WHERE category = ${category} AND name = ${name} AND is_active = true LIMIT 1`
     );
     console.log('🔍 getEsmRef result:', result.rows[0] ? 'FOUND' : 'NOT FOUND');
     return result.rows[0] || null;
@@ -1209,7 +1209,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllEsmRefs(): Promise<any[]> {
-    const result = await db.execute(sql`SELECT * FROM esm_ref ORDER BY category, name`);
+    const result = await db.execute(sql`SELECT * FROM esm_ref WHERE is_active = true ORDER BY category, name`);
     return result.rows;
   }
 
@@ -1268,7 +1268,7 @@ export class DatabaseStorage implements IStorage {
 
   async getEsmRefsByCategory(category: number): Promise<any[]> {
     const result = await db.execute(
-      sql`SELECT * FROM esm_ref WHERE category = ${category} ORDER BY name`
+      sql`SELECT * FROM esm_ref WHERE category = ${category} AND is_active = true ORDER BY name`
     );
     return result.rows;
   }
@@ -1301,7 +1301,7 @@ export class DatabaseStorage implements IStorage {
    */
   async getUserEsm(userId: string): Promise<any[]> {
     const result = await db.execute(
-      sql`SELECT * FROM user_esm WHERE user_id = ${userId}`
+      sql`SELECT * FROM user_esm WHERE user_id = ${userId} AND is_active = true`
     );
     return result.rows;
   }
@@ -1315,7 +1315,7 @@ export class DatabaseStorage implements IStorage {
   async getUserEsmByRef(userId: string, esmRefId: number): Promise<any | null> {
     console.log('🔍 getUserEsmByRef called with:', { userId, esmRefId });
     const result = await db.execute(
-      sql`SELECT * FROM user_esm WHERE user_id = ${userId} AND esm_ref_id = ${esmRefId} LIMIT 1`
+      sql`SELECT * FROM user_esm WHERE user_id = ${userId} AND esm_ref_id = ${esmRefId} AND is_active = true LIMIT 1`
     );
     console.log('🔍 getUserEsmByRef result:', result.rows[0] ? 'FOUND' : 'NOT FOUND');
     return result.rows[0] || null;
@@ -1360,6 +1360,8 @@ export class DatabaseStorage implements IStorage {
           FROM user_esm ue
           JOIN esm_ref er ON ue.esm_ref_id = er.esm_ref_id
           WHERE ue.user_id = ${userId}
+          AND ue.is_active = true
+          AND er.is_active = true
           ORDER BY er.category, er.name`
     );
     return result.rows;
