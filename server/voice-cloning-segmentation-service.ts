@@ -38,10 +38,10 @@ export class VoiceCloningSegmentationService {
    * Full format: https://domain/api/voice-samples/1/frustration.mp3
    */
   private convertToFullUrl(dbUrl: string): string {
-    // Get base URL from environment or construct from Replit environment
-    const baseUrl = process.env.REPLIT_DEV_DOMAIN || 
-                   `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co` || 
-                   'http://localhost:5000';
+    // Get base URL from REPLIT_DOMAINS environment variable (same as audio storage config)
+    const baseUrl = process.env.REPLIT_DOMAINS 
+      ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}` 
+      : 'http://localhost:5000';
     
     // Return full URL using the JWT bypass route
     return `${baseUrl}/api/${dbUrl}`;
