@@ -133,7 +133,7 @@ export class VoiceTrainingService {
           // Generate signed URL for external API access (15 minutes duration)
           const signedUrl = await audioStorageProvider.generateSignedUrl(esmRecording.audioUrl, {
             expiresIn: '15m',
-            purpose: 'voice_training',
+            purpose: 'external_api_access',
             userId: userId
           });
           

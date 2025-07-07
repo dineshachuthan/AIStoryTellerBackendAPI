@@ -4461,8 +4461,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Verify JWT token
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default-secret') as any;
       
-      // Validate token structure
-      if (!decoded.filePath || !decoded.userId || !decoded.purpose) {
+      // Validate token structure (JWT payload uses 'path', not 'filePath')
+      if (!decoded.path || !decoded.userId || !decoded.purpose) {
         return res.status(401).json({ error: 'Invalid token structure' });
       }
       
@@ -4471,13 +4471,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: 'Token expired' });
       }
       
-      // Validate purpose (only voice training allowed currently)
-      if (decoded.purpose !== 'voice_training') {
+      // Validate purpose (allow external_api_access for ElevenLabs)
+      if (decoded.purpose !== 'external_api_access' && decoded.purpose !== 'voice_training') {
         return res.status(403).json({ error: 'Invalid token purpose' });
       }
       
       // Get absolute file path
-      const fullPath = path.join(process.cwd(), decoded.filePath);
+      const fullPath = path.join(process.cwd(), decoded.path);
       
       // Check if file exists
       const fileExists = await fs.access(fullPath).then(() => true).catch(() => false);
