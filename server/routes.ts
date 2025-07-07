@@ -4403,6 +4403,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       for (const modulation of modulations) {
         if (modulation) {
+          // Check if modulation exists in ESM reference data
+          const esmRef = await storage.getEsmRef(3, modulation.toLowerCase());
+          if (!esmRef) {
+            console.log(`⚠️ Skipping modulation "${modulation}" - not in ESM reference data`);
+            continue;
+          }
+          
           const userRecording = findUserRecording(modulation, 'modulations');
           const esmText = await getEsmSampleText(modulation, 3);
           
