@@ -265,6 +265,13 @@ This is a full-stack collaborative storytelling platform that enables users to c
   - Supported formats: MP3, WAV, WebM, M4A
   - Minimum duration: 5 seconds for ElevenLabs compatibility
   - If validation fails: Delete existing database record to allow immediate re-recording
+- **Pre-ElevenLabs Validation**: CRITICAL - Validate EVERY audio file BEFORE sending to ElevenLabs API
+  - Download and validate audio buffer content
+  - Check format using detectAudioFormat()
+  - Verify file size > 1KB (corrupted files are smaller)
+  - Confirm duration >= 5 seconds
+  - Skip corrupted files to prevent entire batch failure
+  - Auto-delete corrupted files from database
 - **Validation During ElevenLabs Integration**: Process each sample individually with fault tolerance
   - Failed samples are automatically deleted from database
   - Processing continues with valid samples if minimum threshold met (5+ samples)

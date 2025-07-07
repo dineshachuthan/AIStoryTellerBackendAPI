@@ -150,16 +150,54 @@ export class VoiceTrainingService {
           
           console.log(`[MVP1] Generated signed URL for ${esmRecording.name}: ${signedUrl}`);
           
-          // Quick validation - test if the URL is accessible
+          // Comprehensive audio validation BEFORE sending to ElevenLabs
           try {
+            // Step 1: Check URL accessibility
             const testResponse = await fetch(signedUrl, { method: 'HEAD' });
             if (!testResponse.ok) {
-              console.log(`[MVP1] Skipping ${esmRecording.name} - URL not accessible (${testResponse.status})`);
+              console.log(`[MVP1] ❌ Skipping ${esmRecording.name} - URL not accessible (${testResponse.status})`);
               continue;
             }
-            console.log(`[MVP1] URL validation passed for ${esmRecording.name}`);
+            
+            // Step 2: Download and validate audio content
+            console.log(`[MVP1] 🔍 Validating audio content for ${esmRecording.name}...`);
+            const audioResponse = await fetch(signedUrl);
+            const audioBuffer = Buffer.from(await audioResponse.arrayBuffer());
+            
+            // Step 3: Detect audio format
+            const { detectAudioFormat } = await import('./ai-analysis');
+            const detectedFormat = detectAudioFormat(audioBuffer);
+            console.log(`[MVP1] Detected format for ${esmRecording.name}: ${detectedFormat}`);
+            
+            // Step 4: Validate format is supported by ElevenLabs
+            const supportedFormats = ['mp3', 'wav', 'webm', 'm4a'];
+            if (!supportedFormats.includes(detectedFormat)) {
+              console.log(`[MVP1] ❌ Skipping ${esmRecording.name} - Unsupported format: ${detectedFormat}`);
+              continue;
+            }
+            
+            // Step 5: Basic integrity check - minimum file size
+            if (audioBuffer.length < 1000) { // Less than 1KB is likely corrupted
+              console.log(`[MVP1] ❌ Skipping ${esmRecording.name} - File too small (${audioBuffer.length} bytes)`);
+              continue;
+            }
+            
+            // Step 6: Check duration from database
+            if (!esmRecording.duration || parseFloat(esmRecording.duration) < 5.0) {
+              console.log(`[MVP1] ❌ Skipping ${esmRecording.name} - Duration too short (${esmRecording.duration}s < 5s)`);
+              continue;
+            }
+            
+            console.log(`[MVP1] ✅ Audio validation passed for ${esmRecording.name} - ${detectedFormat} format, ${audioBuffer.length} bytes, ${esmRecording.duration}s`);
           } catch (error) {
-            console.log(`[MVP1] Skipping ${esmRecording.name} - URL validation failed:`, error.message);
+            console.log(`[MVP1] ❌ Skipping ${esmRecording.name} - Validation failed:`, error.message);
+            // Delete corrupted recording from database to allow re-recording
+            try {
+              await storage.deleteUserEsmRecording(esmRecording.id);
+              console.log(`[MVP1] 🗑️ Deleted corrupted recording ${esmRecording.name} from database`);
+            } catch (deleteError) {
+              console.error(`[MVP1] Failed to delete corrupted recording:`, deleteError);
+            }
             continue;
           }
           
