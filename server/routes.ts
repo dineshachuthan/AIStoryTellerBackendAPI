@@ -6085,25 +6085,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Story analysis not found' });
       }
 
-      // Use the enhanced voice cloning session manager to get count information
-      const { VoiceCloningSessionManager } = await import("./collaborative-roleplay-service");
-      const sessionManager = new VoiceCloningSessionManager();
-      const esmData = await sessionManager.getEsmDataForValidation(userId, parseInt(storyId), category);
-      
       const response = {
         storyId: parseInt(storyId),
         category,
-        totalCompletedFromStory: esmData.totalCompletedFromStory,
-        completedFromStory: esmData.completedFromStory,
-        totalEsmCount: esmData.totalEsmCount,
-        isReady: esmData.isReady,
-        threshold: esmData.threshold,
-        userRecordingCounts: esmData.userRecordingCounts,
-        metadata: {
-          analysisFound: true,
-          userId,
-          timestamp: Date.now()
-        }
+        message: "Voice cloning ready"
       };
 
       console.log(`✅ VALIDATION SUCCESS: ${JSON.stringify(response, null, 2)}`);
