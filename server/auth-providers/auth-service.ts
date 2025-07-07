@@ -64,14 +64,19 @@ export class AuthService {
         return user;
       }
 
-      // Create new user
+      // Generate anonymous external ID
+      const { externalIdService } = await import('../external-id-service');
+      const externalId = externalIdService.generateExternalId();
+
+      // Create new user with external ID
       const newUser = await storage.createUser({
         id: `${authInfo.provider}_${authInfo.providerId}`,
         email: authInfo.email,
         firstName: authInfo.firstName || '',
         lastName: authInfo.lastName || '',
         displayName: authInfo.displayName || authInfo.email,
-        profileImageUrl: authInfo.avatarUrl || null
+        profileImageUrl: authInfo.avatarUrl || null,
+        externalId: externalId
       });
 
       // Link provider to new user

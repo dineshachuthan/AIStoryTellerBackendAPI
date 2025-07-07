@@ -77,11 +77,15 @@ export class VideoBusinessLogic {
 
       // 4. Handle async processing if needed
       if (providerResult.taskId && !providerResult.videoUrl) {
+        // Get anonymous external ID for polling
+        const { externalIdService } = await import('./external-id-service');
+        const externalId = await externalIdService.getOrCreateExternalId(request.userId);
+        
         this.startStatusPolling(
           provider,
           providerResult.taskId,
           request.storyId,
-          request.userId
+          externalId
         );
       }
 

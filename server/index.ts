@@ -47,6 +47,11 @@ app.get('/api/audio/serve/:token', async (req, res) => {
       return res.status(401).json({ error: 'Invalid token structure' });
     }
     
+    // Log external ID if present (for privacy tracking)
+    if (decoded.externalId) {
+      console.log('[JWT] Request from external ID:', decoded.externalId);
+    }
+    
     // Check if token is expired (already handled by jwt.verify but adding explicit check)
     if (decoded.exp && decoded.exp * 1000 < Date.now()) {
       return res.status(401).json({ error: 'Token expired' });

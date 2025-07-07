@@ -171,8 +171,13 @@ export class KlingVideoProvider implements IVideoProvider {
       // Reset state using centralized service
       try {
         const { externalIntegrationStateReset } = await import('../external-integration-state-reset');
+        const { externalIdService } = await import('../external-id-service');
+        const externalId = request.metadata?.userId ? 
+          await externalIdService.getOrCreateExternalId(request.metadata.userId) : 
+          'unknown';
+        
         await externalIntegrationStateReset.resetIntegrationState({
-          userId: request.metadata?.userId || 'unknown',
+          userId: externalId,
           provider: 'kling',
           operationType: 'video_generation',
           operationId: request.metadata?.storyId,

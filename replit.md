@@ -97,10 +97,12 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Secure Access**: Dynamic JWT token generation for temporary external API access
 - **Database Design**: Relative URLs stored in database, provider-specific URLs generated on-demand
 - **Default Provider**: Replit with fallback to localhost for development
-- **Security Model**: Time-limited signed URLs (15 minutes) for external API access without storing permanent tokens
+- **Security Model**: Time-limited signed URLs (30 minutes) for external API access without storing permanent tokens
 - **Zero Migration Required**: Replit provider works with existing file locations transparently - no data migration needed
 - **Voice Recording Integration**: New recordings continue using same file paths, audio storage provider handles serving through signed URLs
 - **External API Compatibility**: ElevenLabs and other external APIs receive accessible signed URLs without knowing internal storage architecture
+- **JWT Audio Serving**: Fixed JWT implementation - audio files now properly secured with expiring tokens instead of public access
+- **Privacy Protection**: Anonymous external IDs (e.g., anon_r3uo1bdh72) replace real user IDs for all external service integrations
 
 ### Collaborative Features
 - **Template System**: Convert stories into reusable roleplay templates
@@ -377,6 +379,17 @@ This is a full-stack collaborative storytelling platform that enables users to c
 *Note: Most use specialized managers or are rarely modified reference data*
 
 ## Changelog
+
+### **PRIVACY PROTECTION AND JWT SECURITY IMPLEMENTED - January 07, 2025**
+**External ID System**: Implemented anonymous external IDs to protect user privacy across all external services
+- **ANONYMOUS IDS CREATED**: Each user gets a unique anonymous ID (e.g., anon_r3uo1bdh72) instead of exposing real IDs like google_117487073695002443567
+- **OAUTH INTEGRATION UPDATED**: New users automatically receive external IDs during account creation
+- **ELEVENLABS PRIVACY**: Voice cloning now uses anonymous IDs in voice names (User_anon_xyz_Voice_timestamp)
+- **VIDEO GENERATION PRIVACY**: Kling and RunwayML integrations updated to use external IDs
+- **JWT AUDIO SECURITY FIXED**: Audio files now properly secured with JWT tokens (30-minute expiry) instead of public access
+- **EXTERNAL SERVICE CONSISTENCY**: Same anonymous ID used across all services (ElevenLabs, Kling, RunwayML, OpenAI)
+- **DATABASE MIGRATION**: Added external_id column to users table for permanent anonymous ID storage
+- **ZERO USER DATA EXPOSURE**: External services never see real user IDs, emails, or identifiable information
 
 ### **VOICE LOCKING LOGIC FIXED - January 07, 2025**
 **Fixed Duplicate Implementation**: Removed buggy duplicate locking logic in voice-training-service.ts

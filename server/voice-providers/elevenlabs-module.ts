@@ -67,7 +67,11 @@ export class ElevenLabsModule extends BaseVoiceProvider {
     this.log('info', `Sample details: ${JSON.stringify(request.samples.map(s => ({ emotion: s.emotion, audioUrl: s.audioUrl })))}`);
     
     try {
-      const voiceName = `User_${request.userId}_Voice_${Date.now()}`;
+      // Get anonymous external ID for the user
+      const { externalIdService } = await import('../external-id-service');
+      const externalId = await externalIdService.getOrCreateExternalId(request.userId);
+      
+      const voiceName = `User_${externalId}_Voice_${Date.now()}`;
       this.log('info', `Generated voice name: ${voiceName}`);
       
       // Process audio files using base class utilities
@@ -76,6 +80,14 @@ export class ElevenLabsModule extends BaseVoiceProvider {
       
       // Import storage for database operations
       const { storage } = await import('../storage');
+      
+      // Log all samples being processed for debugging
+      console.log(`[ElevenLabs] 📋 All samples to process:`, request.samples.map(s => ({
+        emotion: s.emotion,
+        audioUrl: s.audioUrl,
+        duration: (s as any).duration || 'unknown',
+        recordingId: (s as any).recordingId || 'unknown'
+      })));
       
       for (let index = 0; index < request.samples.length; index++) {
         const sample = request.samples[index];
@@ -145,9 +157,15 @@ export class ElevenLabsModule extends BaseVoiceProvider {
           };
           audioFiles.push(audioFile);
           
-          this.log('info', `Successfully processed ${sample.emotion} sample (${audioBuffer.length} bytes)`);
+          this.log('info', `✅ Successfully processed ${sample.emotion} sample (${audioBuffer.length} bytes)`);
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : String(error);
+          console.log(`[ElevenLabs] ❌ SAMPLE FAILED: ${sample.emotion}`, {
+            error: errorMessage,
+            audioUrl: sample.audioUrl,
+            duration: (sample as any).duration || 'unknown',
+            recordingId: (sample as any).recordingId || 'unknown'
+          });
           this.log('warn', `Skipping failed sample ${sample.emotion}: ${errorMessage}`);
           
           // Add sample metadata if available (for database cleanup)

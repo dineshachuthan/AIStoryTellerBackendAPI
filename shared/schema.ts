@@ -53,6 +53,7 @@ export const users = pgTable("users", {
   lastName: varchar("last_name"),
   displayName: varchar("display_name"),
   profileImageUrl: varchar("profile_image_url"),
+  externalId: varchar("external_id", { length: 20 }).unique(), // Anonymous ID for external services (e.g., "anon_1234567890")
   isEmailVerified: boolean("is_email_verified").default(false),
   isAdmin: boolean("is_admin").default(false),
   isActive: boolean("is_active").default(true),

@@ -41,20 +41,35 @@ export class ReplitAudioStorageProvider extends BaseAudioStorageProvider {
   }
 
   async generateSignedUrl(relativePath: string, options: SignedUrlOptions): Promise<string> {
-    console.log(`[PublicAccess] generateSignedUrl called with relativePath:`, relativePath, 'options:', options);
+    console.log(`[JWTSecure] generateSignedUrl called with relativePath:`, relativePath, 'options:', options);
     
     // Check if relativePath is valid
     if (!relativePath) {
       throw new Error('relativePath is required for generating signed URL');
     }
     
-    // For now, use public static file serving instead of JWT
-    // Convert relativePath like "./voice-samples/3/suspenseful.mp3" to "/voice-samples/3/suspenseful.mp3"
-    const publicPath = relativePath.replace(/^\.\//, '/');
-    const publicUrl = `${this.config.baseUrl}${publicPath}`;
-    console.log(`[PublicAccess] Generated public URL for ${relativePath}: ${publicUrl}`);
+    // Get external ID for privacy
+    const { externalIdService } = await import('./external-id-service');
+    const externalId = await externalIdService.getOrCreateExternalId(options.userId);
     
-    return publicUrl;
+    // Create JWT token payload with correct field names
+    const payload = {
+      relativePath: relativePath, // JWT endpoint expects 'relativePath'
+      userId: options.userId,
+      externalId: externalId, // Anonymous ID for external service logging
+      purpose: 'external_api_access', // Valid purpose for ElevenLabs
+      exp: Math.floor(Date.now() / 1000) + (30 * 60), // 30 minutes expiry
+    };
+    
+    // Sign the token
+    const JWT_SECRET = process.env.JWT_SECRET || 'default-secret';
+    const token = jwt.sign(payload, JWT_SECRET);
+    
+    // Return signed URL using the JWT endpoint
+    const signedUrl = `${this.config.baseUrl}/api/audio/serve/${token}`;
+    console.log(`[JWTSecure] Generated signed URL for ${relativePath} with JWT token`);
+    
+    return signedUrl;
   }
 
   async uploadAudio(buffer: Buffer, relativePath: string): Promise<string> {

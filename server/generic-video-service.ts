@@ -64,9 +64,13 @@ export class GenericVideoService {
       // Save to database using business logic
       await VideoBusinessLogic.saveVideoRecord(request.storyId, request.userId, result);
 
+      // Get anonymous external ID for polling
+      const { externalIdService } = await import('./external-id-service');
+      const externalId = await externalIdService.getOrCreateExternalId(request.userId);
+
       // Start status polling if needed
       if (response.taskId && !response.videoUrl) {
-        this.startStatusPolling(response.taskId, request.storyId, request.userId, provider.name);
+        this.startStatusPolling(response.taskId, request.storyId, externalId, provider.name);
       }
 
       return result;
