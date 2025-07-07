@@ -90,8 +90,19 @@ export class ReplitAudioStorageProvider extends BaseAudioStorageProvider {
   }
 
   async uploadAudio(buffer: Buffer, relativePath: string): Promise<string> {
-    // For Replit, files are already stored locally
-    // This method would be used for cloud providers
+    // For Replit, we need to save the file to disk
+    const fullPath = path.join(process.cwd(), relativePath);
+    const dir = path.dirname(fullPath);
+    
+    // Create directory if it doesn't exist
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    
+    // Write the buffer to file
+    fs.writeFileSync(fullPath, buffer);
+    console.log(`[AudioStorage] Saved audio file to: ${fullPath}`);
+    
     return relativePath;
   }
 
