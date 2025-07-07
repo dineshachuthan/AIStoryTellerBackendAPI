@@ -77,6 +77,10 @@ export function StoryAnalysisPanel({
     ((voiceSamplesData as any).sounds?.filter((s: any) => s.isRecorded).length || 0) +
     ((voiceSamplesData as any).modulations?.filter((m: any) => m.isRecorded).length || 0) : 0;
 
+  // Debug logging
+  console.log('Voice samples data:', voiceSamplesData);
+  console.log('Total recordings calculated:', totalRecordings);
+
   // Voice cloning mutation
   const voiceCloningMutation = useMutation({
     mutationFn: async () => {
@@ -179,7 +183,7 @@ export function StoryAnalysisPanel({
                 )}
                 {voiceCloningMutation.isPending 
                   ? "Creating Voice..." 
-                  : `Train Narrator Voice (${totalRecordings}/6)`
+                  : `Generate Narrator Voice (${totalRecordings}/6)`
                 }
               </Button>
             )}
