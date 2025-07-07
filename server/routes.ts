@@ -6152,10 +6152,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Use voice training service to get cost estimate
-      const { VoiceTrainingService } = await import("./voice-training-service");
-      const voiceTrainingService = new VoiceTrainingService();
-      const costEstimate = await voiceTrainingService.getCostEstimate(userId, parseInt(storyId), category);
+      // Provide basic cost estimate for MVP
+      const costEstimate = {
+        estimatedCost: "$3.00", // ElevenLabs standard rate
+        samplesCount: validationData.totalCompletedFromStory,
+        currency: "USD",
+        provider: "ElevenLabs",
+        note: "Estimate based on current voice cloning rates"
+      };
       
       console.log(`💰 COST ESTIMATE SUCCESS: ${JSON.stringify(costEstimate, null, 2)}`);
       res.json(costEstimate);
@@ -6186,15 +6190,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const voiceTrainingService = new VoiceTrainingService();
       
       // Start the voice cloning process
-      const result = await voiceTrainingService.triggerVoiceCloning(userId, parseInt(storyId), category);
+      const result = await voiceTrainingService.triggerHybridEmotionCloning(userId);
       
       console.log(`🎙️ MANUAL VOICE CLONING STARTED: ${JSON.stringify(result, null, 2)}`);
       res.json({
         message: 'Voice cloning started successfully',
-        jobId: result.jobId,
+        success: result.success,
+        voiceId: result.voiceId,
         category,
         storyId: parseInt(storyId),
-        status: 'in_progress',
+        status: result.success ? 'completed' : 'failed',
         startedAt: new Date().toISOString()
       });
       
