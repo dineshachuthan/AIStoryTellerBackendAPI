@@ -321,6 +321,15 @@ This is a full-stack collaborative storytelling platform that enables users to c
 
 ## Changelog
 
+### **STORY LIBRARY FILTERED TO NARRATION-COMPLETE STORIES ONLY - January 07, 2025**
+**UI Consistency Update**: Bottom navigation stories menu now only displays narration-complete stories
+- **FILTERING LOGIC IMPLEMENTED**: Added filter to show only stories with narratorVoice or narratorVoiceType fields populated
+- **UI TEXT UPDATED**: Changed "Story Library" to "Narrated Stories" across mobile and desktop views
+- **EMPTY STATE MESSAGES**: Updated to indicate page shows only narrated stories, not drafts
+- **COUNT DISPLAY FIXED**: Shows "X of Y narrated stories" instead of total story count
+- **HOME PAGE VS BOTTOM NAV**: Home page shows draft stories (no narrator), bottom nav shows completed narrations
+- **USER REQUEST FULFILLED**: Bottom navigation stories menu now consistent with intended purpose
+
 ### **MODULATIONS CATEGORY REMOVED - January 07, 2025**
 **Project Simplification**: Removed modulations (category 3) entirely from system architecture
 - **SIMPLIFIED TO TWO CATEGORIES**: System now only handles emotions (category 1) and sounds (category 2)

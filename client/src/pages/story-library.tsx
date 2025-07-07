@@ -52,6 +52,8 @@ interface Story {
   summary?: string;
   collaborators?: number;
   createdAt?: string;
+  narratorVoice?: string;
+  narratorVoiceType?: string;
 }
 
 export default function StoryLibrary() {
@@ -179,8 +181,13 @@ export default function StoryLibrary() {
     enabled: !!user?.id,
   });
 
+  // Filter for narration-complete stories (have narratorVoice or narratorVoiceType)
+  const narrationCompleteStories = stories.filter(story => 
+    story.narratorVoice || story.narratorVoiceType
+  );
+
   // Filter stories based on search query and get most recent 10
-  const filteredStories = stories.filter(story => 
+  const filteredStories = narrationCompleteStories.filter(story => 
     story.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     story.content?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     story.category?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -217,7 +224,7 @@ export default function StoryLibrary() {
         <div className="p-4 pb-24 space-y-4">
           <div className="flex items-center space-x-2">
             <Book className="w-5 h-5 text-tiktok-red" />
-            <h1 className="text-lg font-bold text-white">Story Library</h1>
+            <h1 className="text-lg font-bold text-white">Narrated Stories</h1>
           </div>
           
           <div className="relative">
@@ -255,12 +262,12 @@ export default function StoryLibrary() {
             <div className="text-center py-12">
               <Book className="w-16 h-16 mx-auto text-gray-600 mb-4" />
               <h2 className="text-xl font-semibold text-white mb-2">
-                {searchQuery ? 'No Stories Found' : 'No Stories Yet'}
+                {searchQuery ? 'No Narrated Stories Found' : 'No Narrated Stories Yet'}
               </h2>
               <p className="text-gray-400 mb-6">
                 {searchQuery 
-                  ? 'Try adjusting your search terms to find more stories'
-                  : 'Create your first interactive story and bring it to life with voices'
+                  ? 'Try adjusting your search terms to find more narrated stories'
+                  : 'Complete narration for your stories to see them here'
                 }
               </p>
             </div>
@@ -449,7 +456,7 @@ export default function StoryLibrary() {
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
               <Book className="w-6 h-6 text-tiktok-red" />
-              <h1 className="text-xl font-bold text-white">Story Library</h1>
+              <h1 className="text-xl font-bold text-white">Narrated Stories</h1>
             </div>
             
             <div className="relative">
@@ -464,7 +471,7 @@ export default function StoryLibrary() {
             </div>
 
             <div className="text-sm text-gray-400">
-              {filteredStories.length} of {stories.length} stories
+              {filteredStories.length} of {narrationCompleteStories.length} narrated stories
             </div>
 
             <Button
@@ -490,12 +497,12 @@ export default function StoryLibrary() {
             <div className="text-center py-12">
               <Book className="w-16 h-16 mx-auto text-gray-600 mb-4" />
               <h2 className="text-xl font-semibold text-white mb-2">
-                {searchQuery ? 'No Stories Found' : 'No Stories Yet'}
+                {searchQuery ? 'No Narrated Stories Found' : 'No Narrated Stories Yet'}
               </h2>
               <p className="text-gray-400 mb-6">
                 {searchQuery 
-                  ? 'Try adjusting your search terms to find more stories'
-                  : 'Create your first interactive story and bring it to life with voices'
+                  ? 'Try adjusting your search terms to find more narrated stories'
+                  : 'Complete narration for your stories to see them here'
                 }
               </p>
               {!searchQuery && (
