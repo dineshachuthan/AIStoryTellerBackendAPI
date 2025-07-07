@@ -21,6 +21,48 @@ import path from 'path';
 import fs from 'fs/promises';
 
 /**
+ * List available audio files for testing
+ */
+app.get('/api/audio/list', async (req, res) => {
+  try {
+    const voiceSamplesDir = path.join(process.cwd(), 'voice-samples');
+    const files = [];
+    
+    // Check if voice-samples directory exists
+    try {
+      const categories = await fs.readdir(voiceSamplesDir);
+      for (const category of categories) {
+        const categoryPath = path.join(voiceSamplesDir, category);
+        const stat = await fs.stat(categoryPath);
+        if (stat.isDirectory()) {
+          const categoryFiles = await fs.readdir(categoryPath);
+          for (const file of categoryFiles) {
+            if (file.endsWith('.mp3') || file.endsWith('.wav') || file.endsWith('.webm')) {
+              files.push({
+                category,
+                file,
+                relativePath: `./voice-samples/${category}/${file}`
+              });
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.log('Voice samples directory not found or empty');
+    }
+    
+    res.json({
+      files,
+      totalFiles: files.length,
+      baseUrl: process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}` : 'http://localhost:5000'
+    });
+  } catch (error) {
+    console.error('Error listing audio files:', error);
+    res.status(500).json({ error: 'Failed to list audio files' });
+  }
+});
+
+/**
  * Serve audio files with JWT token authentication
  * Used by external APIs (ElevenLabs) to access audio files securely
  */
