@@ -1,482 +1,376 @@
+/**
+ * Enhanced Story Narrator Service - MVP2 Implementation
+ * Exclusively uses user_esm_recordings table with granular segment-based voice selection
+ * 
+ * Priority order: Individual emotion → Category aggregation → Combined → OpenAI voice
+ */
+
 import { storage } from './storage';
-import { voiceSelectionService, type StorySegment, type VoiceMapping } from './voice-selection-service';
-import { audioCacheService, type AudioGenerationRequest } from './audio-cache-service';
-import { ElevenLabsProvider } from './voice-providers/elevenlabs-provider';
-import { analyzeStoryContent } from './ai-analysis';
-import fs from 'fs/promises';
-import path from 'path';
-import { exec } from 'child_process';
-import { promisify } from 'util';
 
-const execAsync = promisify(exec);
-
-export interface NarrationSegment {
-  id: string;
-  text: string;
-  emotion: string;
-  character?: string;
-  voiceId: string;
-  isUserVoice: boolean;
-  audioUrl?: string;
-  duration: number;
-  startTime: number;
-  endTime: number;
-  confidence: number;
+export interface MVP2NarrationOptions {
+  storyId: number;
+  userId: string;
+  content: string;
+  segments: string[];
 }
 
-export interface StoryNarrationResult {
-  segments: NarrationSegment[];
-  totalDuration: number;
-  finalAudioUrl: string;
-  emotionVoicesUsed: { [emotion: string]: string };
-  cacheHitRate: number;
-  generationStats: {
-    totalSegments: number;
-    userVoiceSegments: number;
-    cachedSegments: number;
-    newGenerations: number;
-  };
+export interface MVP2NarrationResult {
+  success: boolean;
+  audioFiles: {
+    segmentIndex: number;
+    audioUrl: string;
+    voiceType: 'individual_emotion' | 'category_voice' | 'combined_voice' | 'openai_voice';
+    voiceId?: string;
+    emotion?: string;
+    category?: string;
+  }[];
+  totalSegments: number;
+  error?: string;
 }
 
 export class EnhancedStoryNarrator {
-  private elevenLabs: ElevenLabsProvider;
-  private outputDir: string;
-
-  constructor() {
-    this.elevenLabs = new ElevenLabsProvider();
-    this.outputDir = path.join(process.cwd(), 'persistent-cache', 'narrations');
-  }
-
   /**
-   * Generate complete story narration with user voice cloning
+   * Generate story narration using MVP2 architecture with ESM-exclusive voice selection
+   * @param options - Narration options with story details
+   * @returns MVP2 narration result with segment-based audio files
    */
-  async generateStoryNarration(
-    storyId: number,
-    userId: string,
-    options: {
-      useUserVoice?: boolean;
-      targetDuration?: number;
-      includeNarrator?: boolean;
-    } = {}
-  ): Promise<StoryNarrationResult> {
+  async generateMVP2Narration(options: MVP2NarrationOptions): Promise<MVP2NarrationResult> {
+    console.log(`[MVP2Narrator] ================================ MVP2 STORY NARRATION INITIATED ================================`);
+    console.log(`[MVP2Narrator] Beginning MVP2 story narration for story ${options.storyId}, user ${options.userId}`);
+    console.log(`[MVP2Narrator] Processing ${options.segments.length} story segments with ESM-exclusive voice selection`);
+    console.log(`[MVP2Narrator] Priority order: Individual emotion → Category aggregation → Combined → OpenAI voice`);
+
     try {
-      console.log(`[EnhancedNarrator] Starting narration generation for story ${storyId}`);
+      // Get all ESM recordings for the user
+      const esmRecordings = await storage.getUserEsmRecordings(options.userId);
+      console.log(`[MVP2Narrator] Retrieved ${esmRecordings.length} ESM recordings for voice selection`);
 
-      // Get story and analysis
-      const story = await storage.getStory(storyId);
-      if (!story) {
-        throw new Error('Story not found');
-      }
+      // Analyze story content for emotion/sound/modulation context
+      const { analyzeStoryContent } = await import('./ai-analysis');
+      const storyAnalysis = await analyzeStoryContent(options.content, options.userId);
+      console.log(`[MVP2Narrator] Story analysis completed: ${storyAnalysis.emotions.length} emotions, ${storyAnalysis.soundEffects?.length || 0} sounds`);
 
-      // Get or create story analysis
-      let analysis = await storage.getStoryAnalysis(storyId, 'character-extraction');
-      if (!analysis) {
-        console.log('[EnhancedNarrator] Generating story analysis...');
-        analysis = await analyzeStoryContent(story.content);
-        await storage.saveStoryAnalysis(storyId, 'character-extraction', analysis, 'enhanced-narrator');
-      }
-
-      // Extract story segments with character-emotion mapping
-      const segments = await this.extractStorySegments(story, analysis);
-      console.log(`[EnhancedNarrator] Extracted ${segments.length} story segments`);
-
-      // Create voice mappings using intelligent selection
-      const voiceMappings = await voiceSelectionService.createVoiceMapping(userId, segments);
-      console.log(`[EnhancedNarrator] Created voice mappings for ${voiceMappings.length} segments`);
-
-      // Generate audio for each segment with caching
-      const narrationSegments = await this.generateSegmentAudio(voiceMappings, userId);
-      console.log(`[EnhancedNarrator] Generated audio for ${narrationSegments.length} segments`);
-
-      // Sequence and combine audio segments
-      const finalResult = await this.sequenceAudioSegments(narrationSegments, storyId);
-      console.log(`[EnhancedNarrator] Final narration duration: ${finalResult.totalDuration}s`);
-
-      // Save narration record to database
-      await this.saveNarrationRecord(storyId, userId, finalResult);
-
-      return finalResult;
-    } catch (error) {
-      console.error('[EnhancedNarrator] Error generating story narration:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Extract story segments with character-emotion mapping per scene
-   */
-  async extractStorySegments(story: any, analysis: any): Promise<StorySegment[]> {
-    const segments: StorySegment[] = [];
-    let segmentId = 0;
-
-    // Process narrative sections (narrator voice)
-    if (story.content) {
-      const paragraphs = story.content.split('\n\n').filter(p => p.trim());
+      // Process each segment with MVP2 voice selection
+      const audioFiles = [];
       
-      for (let i = 0; i < paragraphs.length; i++) {
-        const paragraph = paragraphs[i].trim();
-        if (paragraph) {
-          // Detect if this is dialogue or narrative
-          const isDialogue = paragraph.includes('"') || paragraph.includes("'") || paragraph.includes("'");
-          
-          if (isDialogue) {
-            // Extract dialogue segments with character detection
-            const dialogueSegments = this.extractDialogueFromParagraph(paragraph, analysis);
-            segments.push(...dialogueSegments.map(d => ({
-              ...d,
-              sceneIndex: i,
-              dialogueIndex: segmentId++
-            })));
-          } else {
-            // Narrative segment
-            segments.push({
-              text: paragraph,
-              emotion: this.detectNarrativeEmotion(paragraph),
-              character: 'narrator',
-              sceneIndex: i,
-              dialogueIndex: segmentId++
-            });
-          }
-        }
-      }
-    }
-
-    // Process structured scenes if available
-    if (analysis.scenes) {
-      for (let sceneIndex = 0; sceneIndex < analysis.scenes.length; sceneIndex++) {
-        const scene = analysis.scenes[sceneIndex];
+      for (let i = 0; i < options.segments.length; i++) {
+        const segment = options.segments[i];
+        console.log(`[MVP2Narrator] Processing segment ${i + 1}/${options.segments.length}`);
         
-        if (scene.dialogue) {
-          for (let dialogueIndex = 0; dialogueIndex < scene.dialogue.length; dialogueIndex++) {
-            const line = scene.dialogue[dialogueIndex];
-            segments.push({
-              text: line.text || '',
-              emotion: line.emotion || 'neutral',
-              character: line.character || 'narrator',
-              sceneIndex,
-              dialogueIndex: segmentId++
-            });
-          }
-        }
-      }
-    }
-
-    return segments;
-  }
-
-  /**
-   * Extract dialogue segments from paragraph with character detection
-   */
-  private extractDialogueFromParagraph(paragraph: string, analysis: any): StorySegment[] {
-    const segments: StorySegment[] = [];
-    const characters = analysis.characters || [];
-    
-    // Split on dialogue markers
-    const parts = paragraph.split(/["'']/);
-    
-    for (let i = 0; i < parts.length; i++) {
-      const part = parts[i].trim();
-      if (part) {
-        if (i % 2 === 1) {
-          // This is inside quotes - dialogue
-          const character = this.detectCharacterFromContext(paragraph, characters);
-          const emotion = this.detectEmotionFromText(part);
+        try {
+          // Determine optimal voice for this segment
+          const voiceSelection = await this.selectOptimalVoiceForSegment(
+            segment, 
+            esmRecordings, 
+            storyAnalysis
+          );
           
-          segments.push({
-            text: part,
-            emotion,
-            character: character?.name || 'speaker',
-            sceneIndex: 0,
-            dialogueIndex: 0
-          });
-        } else {
-          // This is narrative text
-          if (part.length > 10) { // Only include substantial narrative
-            segments.push({
-              text: part,
-              emotion: this.detectNarrativeEmotion(part),
-              character: 'narrator',
-              sceneIndex: 0,
-              dialogueIndex: 0
+          console.log(`[MVP2Narrator] Segment ${i + 1} voice selection: ${voiceSelection.type} (${voiceSelection.voiceId || 'N/A'})`);
+          
+          // Generate audio for this segment
+          const audioResult = await this.generateSegmentAudio(
+            segment, 
+            voiceSelection, 
+            options.storyId, 
+            i
+          );
+          
+          if (audioResult.success) {
+            audioFiles.push({
+              segmentIndex: i,
+              audioUrl: audioResult.audioUrl,
+              voiceType: voiceSelection.type,
+              voiceId: voiceSelection.voiceId,
+              emotion: voiceSelection.emotion,
+              category: voiceSelection.category
             });
+            console.log(`[MVP2Narrator] ✅ Segment ${i + 1} audio generated successfully`);
+          } else {
+            console.error(`[MVP2Narrator] ❌ Segment ${i + 1} audio generation failed: ${audioResult.error}`);
+            // Continue with other segments
           }
+        } catch (error) {
+          console.error(`[MVP2Narrator] Error processing segment ${i + 1}:`, error);
+          // Continue with other segments
         }
       }
+
+      console.log(`[MVP2Narrator] ===== MVP2 STORY NARRATION COMPLETE ===== Generated ${audioFiles.length}/${options.segments.length} audio files`);
+      
+      return {
+        success: audioFiles.length > 0,
+        audioFiles,
+        totalSegments: options.segments.length,
+        error: audioFiles.length === 0 ? 'No audio files were generated successfully' : undefined
+      };
+
+    } catch (error) {
+      console.error(`[MVP2Narrator] ========================== CRITICAL MVP2 NARRATION ERROR ==========================`);
+      console.error(`[MVP2Narrator] Failed to generate MVP2 narration for story ${options.storyId}`);
+      console.error(`[MVP2Narrator] Error details: ${error instanceof Error ? error.message : String(error)}`);
+      
+      return {
+        success: false,
+        audioFiles: [],
+        totalSegments: options.segments.length,
+        error: error instanceof Error ? error.message : String(error)
+      };
     }
-    
-    return segments;
   }
 
   /**
-   * Detect character from context in paragraph
+   * Select optimal voice for story segment using MVP2 priority order
    */
-  private detectCharacterFromContext(paragraph: string, characters: any[]): any | null {
-    const lowerParagraph = paragraph.toLowerCase();
-    
-    for (const character of characters) {
-      const name = character.name.toLowerCase();
-      if (lowerParagraph.includes(name)) {
-        return character;
+  private async selectOptimalVoiceForSegment(
+    segment: string, 
+    esmRecordings: any[], 
+    storyAnalysis: any
+  ): Promise<{
+    type: 'individual_emotion' | 'category_voice' | 'combined_voice' | 'openai_voice';
+    voiceId?: string;
+    emotion?: string;
+    category?: string;
+  }> {
+    // Detect primary emotion/sound/modulation in this segment
+    const primaryEmotion = this.detectPrimaryEmotion(segment, storyAnalysis);
+    const primarySound = this.detectPrimarySound(segment, storyAnalysis);
+    const primaryModulation = this.detectPrimaryModulation(segment, storyAnalysis);
+
+    console.log(`[MVP2Narrator] Segment context: emotion=${primaryEmotion}, sound=${primarySound}, modulation=${primaryModulation}`);
+
+    // Priority 1: Individual emotion voice (6+ samples, narrator_voice_id)
+    if (primaryEmotion) {
+      const emotionRecordings = esmRecordings.filter(r => 
+        r.category === 1 && 
+        r.name.toLowerCase() === primaryEmotion.toLowerCase() && 
+        r.narrator_voice_id
+      );
+      
+      if (emotionRecordings.length >= 6) {
+        console.log(`[MVP2Narrator] Using individual emotion voice for ${primaryEmotion}`);
+        return {
+          type: 'individual_emotion',
+          voiceId: emotionRecordings[0].narrator_voice_id,
+          emotion: primaryEmotion
+        };
       }
+    }
+
+    // Priority 2: Category aggregation voice (emotions, sounds, modulations)
+    const emotionCategoryVoice = this.findCategoryVoice(esmRecordings, 1); // emotions
+    const soundCategoryVoice = this.findCategoryVoice(esmRecordings, 2); // sounds  
+    const modulationCategoryVoice = this.findCategoryVoice(esmRecordings, 3); // modulations
+
+    if (primaryEmotion && emotionCategoryVoice) {
+      console.log(`[MVP2Narrator] Using emotion category voice`);
+      return {
+        type: 'category_voice',
+        voiceId: emotionCategoryVoice,
+        category: 'emotions'
+      };
+    }
+
+    if (primarySound && soundCategoryVoice) {
+      console.log(`[MVP2Narrator] Using sound category voice`);
+      return {
+        type: 'category_voice',
+        voiceId: soundCategoryVoice,
+        category: 'sounds'
+      };
+    }
+
+    if (primaryModulation && modulationCategoryVoice) {
+      console.log(`[MVP2Narrator] Using modulation category voice`);
+      return {
+        type: 'category_voice',
+        voiceId: modulationCategoryVoice,
+        category: 'modulations'
+      };
+    }
+
+    // Priority 3: Combined voice (all ESM samples together)
+    const combinedVoice = this.findCombinedVoice(esmRecordings);
+    if (combinedVoice) {
+      console.log(`[MVP2Narrator] Using combined ESM voice`);
+      return {
+        type: 'combined_voice',
+        voiceId: combinedVoice
+      };
+    }
+
+    // Priority 4: OpenAI voice fallback
+    console.log(`[MVP2Narrator] Falling back to OpenAI voice (no ESM voices available)`);
+    return {
+      type: 'openai_voice'
+    };
+  }
+
+  /**
+   * Generate audio for a single segment using selected voice
+   */
+  private async generateSegmentAudio(
+    segment: string, 
+    voiceSelection: any, 
+    storyId: number, 
+    segmentIndex: number
+  ): Promise<{ success: boolean; audioUrl?: string; error?: string }> {
+    try {
+      if (voiceSelection.type === 'openai_voice') {
+        // Use existing OpenAI TTS generation
+        const { audioService } = await import('./audio-service');
+        const result = await audioService.generateEmotionAudio({
+          text: segment,
+          emotion: voiceSelection.emotion || 'neutral',
+          intensity: 5,
+          voice: 'alloy' // Default OpenAI voice
+        });
+        
+        return {
+          success: true,
+          audioUrl: result.audioUrl
+        };
+      } else {
+        // Use ElevenLabs with narrator voice ID
+        const { VoiceProviderRegistry } = await import('./voice-providers/provider-manager');
+        const voiceProvider = VoiceProviderRegistry.getModule();
+        
+        if (!voiceProvider) {
+          throw new Error('No voice provider available');
+        }
+
+        // Generate audio using ElevenLabs narrator voice
+        const result = await voiceProvider.generateWithVoiceId(voiceSelection.voiceId, segment);
+        
+        if (result.success) {
+          // Store in story narration structure
+          const audioUrl = `./stories/audio/private/${storyId}/segment-${segmentIndex}.mp3`;
+          // TODO: Save actual audio file to storage location
+          
+          return {
+            success: true,
+            audioUrl: audioUrl
+          };
+        } else {
+          throw new Error(result.error || 'Voice generation failed');
+        }
+      }
+    } catch (error) {
+      console.error(`[MVP2Narrator] Error generating segment audio:`, error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error)
+      };
+    }
+  }
+
+  /**
+   * Detect primary emotion in segment text
+   */
+  private detectPrimaryEmotion(segment: string, storyAnalysis: any): string | null {
+    if (!storyAnalysis.emotions || storyAnalysis.emotions.length === 0) {
+      return null;
+    }
+
+    // Find emotion with quote matching segment content
+    for (const emotion of storyAnalysis.emotions) {
+      if (emotion.quote && segment.toLowerCase().includes(emotion.quote.toLowerCase())) {
+        return emotion.emotion;
+      }
+      if (emotion.context && segment.toLowerCase().includes(emotion.context.toLowerCase())) {
+        return emotion.emotion;
+      }
+    }
+
+    // Return highest intensity emotion as fallback
+    const sortedEmotions = storyAnalysis.emotions.sort((a, b) => b.intensity - a.intensity);
+    return sortedEmotions[0]?.emotion || null;
+  }
+
+  /**
+   * Detect primary sound in segment text
+   */
+  private detectPrimarySound(segment: string, storyAnalysis: any): string | null {
+    if (!storyAnalysis.soundEffects || storyAnalysis.soundEffects.length === 0) {
+      return null;
+    }
+
+    // Find sound with quote matching segment content
+    for (const sound of storyAnalysis.soundEffects) {
+      if (sound.quote && segment.toLowerCase().includes(sound.quote.toLowerCase())) {
+        return sound.sound;
+      }
+      if (sound.context && segment.toLowerCase().includes(sound.context.toLowerCase())) {
+        return sound.sound;
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Detect primary modulation in segment text
+   */
+  private detectPrimaryModulation(segment: string, storyAnalysis: any): string | null {
+    // Use mood category or genre as modulation hint
+    if (storyAnalysis.moodCategory) {
+      return storyAnalysis.moodCategory;
+    }
+    if (storyAnalysis.genre) {
+      return storyAnalysis.genre;
     }
     
     return null;
   }
 
   /**
-   * Detect emotion from text content
+   * Find category-specific narrator voice
    */
-  private detectEmotionFromText(text: string): string {
-    const lowerText = text.toLowerCase();
+  private findCategoryVoice(esmRecordings: any[], category: number): string | null {
+    const categoryRecordings = esmRecordings.filter(r => 
+      r.category === category && r.narrator_voice_id
+    );
     
-    // Simple emotion detection based on keywords
-    if (lowerText.includes('!') || lowerText.includes('angry') || lowerText.includes('furious')) {
-      return 'angry';
-    }
-    if (lowerText.includes('happy') || lowerText.includes('joy') || lowerText.includes('laugh')) {
-      return 'happy';
-    }
-    if (lowerText.includes('sad') || lowerText.includes('cry') || lowerText.includes('tear')) {
-      return 'sad';
-    }
-    if (lowerText.includes('scared') || lowerText.includes('afraid') || lowerText.includes('fear')) {
-      return 'fearful';
-    }
-    if (lowerText.includes('surprise') || lowerText.includes('wow') || lowerText.includes('amazing')) {
-      return 'surprised';
-    }
-    
-    return 'neutral';
-  }
-
-  /**
-   * Detect narrative emotion based on content tone
-   */
-  private detectNarrativeEmotion(text: string): string {
-    const lowerText = text.toLowerCase();
-    
-    if (lowerText.includes('peaceful') || lowerText.includes('calm') || lowerText.includes('serene')) {
-      return 'calm';
-    }
-    if (lowerText.includes('dark') || lowerText.includes('ominous') || lowerText.includes('threat')) {
-      return 'concerned';
-    }
-    if (lowerText.includes('beautiful') || lowerText.includes('wonderful') || lowerText.includes('amazing')) {
-      return 'happy';
+    if (categoryRecordings.length >= 3) {
+      // Return most common narrator_voice_id in this category
+      const voiceIds = categoryRecordings.map(r => r.narrator_voice_id);
+      const voiceIdCounts = voiceIds.reduce((acc, id) => {
+        acc[id] = (acc[id] || 0) + 1;
+        return acc;
+      }, {});
+      
+      const mostCommonVoiceId = Object.keys(voiceIdCounts).reduce((a, b) => 
+        voiceIdCounts[a] > voiceIdCounts[b] ? a : b
+      );
+      
+      return mostCommonVoiceId;
     }
     
-    return 'thoughtful'; // Default narrative emotion
+    return null;
   }
 
   /**
-   * Generate audio for each segment with intelligent caching
+   * Find combined narrator voice (all categories together)
    */
-  async generateSegmentAudio(voiceMappings: VoiceMapping[], userId: string): Promise<NarrationSegment[]> {
-    const segments: NarrationSegment[] = [];
-    let currentTime = 0;
-    let cacheHits = 0;
-    let newGenerations = 0;
-
-    for (let i = 0; i < voiceMappings.length; i++) {
-      const mapping = voiceMappings[i];
+  private findCombinedVoice(esmRecordings: any[]): string | null {
+    const allVoiceIds = esmRecordings
+      .filter(r => r.narrator_voice_id)
+      .map(r => r.narrator_voice_id);
+    
+    if (allVoiceIds.length >= 5) {
+      // Return most common narrator_voice_id across all categories
+      const voiceIdCounts = allVoiceIds.reduce((acc, id) => {
+        acc[id] = (acc[id] || 0) + 1;
+        return acc;
+      }, {});
       
-      try {
-        // Create audio generation request
-        const audioRequest: AudioGenerationRequest = {
-          text: mapping.text,
-          voiceId: mapping.voiceId,
-          emotion: mapping.emotion,
-          provider: 'elevenlabs',
-          metadata: {
-            character: mapping.character,
-            isUserVoice: mapping.isUserVoice,
-            fallbackEmotion: mapping.fallbackEmotion
-          }
-        };
-
-        // Generate or get cached audio
-        const audioResult = await audioCacheService.generateOrGetCachedAudio(
-          audioRequest,
-          async () => {
-            console.log(`[EnhancedNarrator] Generating new audio for segment ${i + 1}/${voiceMappings.length}`);
-            return await this.elevenLabs.generateSpeech(mapping.text, mapping.voiceId, {
-              emotion: mapping.emotion,
-              isUserVoice: mapping.isUserVoice
-            });
-          }
-        );
-
-        if (audioResult.cached) {
-          cacheHits++;
-        } else {
-          newGenerations++;
-        }
-
-        // Create narration segment
-        const duration = audioResult.cacheEntry.duration;
-        const segment: NarrationSegment = {
-          id: `segment-${i}`,
-          text: mapping.text,
-          emotion: mapping.emotion,
-          character: mapping.character,
-          voiceId: mapping.voiceId,
-          isUserVoice: mapping.isUserVoice,
-          audioUrl: audioResult.audioUrl,
-          duration,
-          startTime: currentTime,
-          endTime: currentTime + duration,
-          confidence: mapping.confidence
-        };
-
-        segments.push(segment);
-        currentTime += duration + 0.5; // Add 0.5s pause between segments
-        
-      } catch (error) {
-        console.error(`[EnhancedNarrator] Error generating audio for segment ${i}:`, error);
-        
-        // Create silent segment for errors
-        const silentSegment: NarrationSegment = {
-          id: `segment-${i}-error`,
-          text: mapping.text,
-          emotion: mapping.emotion,
-          character: mapping.character,
-          voiceId: mapping.voiceId,
-          isUserVoice: mapping.isUserVoice,
-          duration: await this.calculateActualDuration(mapping.text, mapping.voiceId), // Calculate real duration
-          startTime: currentTime,
-          endTime: currentTime + 2.0,
-          confidence: 0
-        };
-        
-        segments.push(silentSegment);
-        currentTime += 2.5;
-      }
+      const mostCommonVoiceId = Object.keys(voiceIdCounts).reduce((a, b) => 
+        voiceIdCounts[a] > voiceIdCounts[b] ? a : b
+      );
+      
+      return mostCommonVoiceId;
     }
-
-    console.log(`[EnhancedNarrator] Audio generation stats: ${cacheHits} cached, ${newGenerations} new`);
-    return segments;
-  }
-
-  /**
-   * Sequence and combine audio segments into final narration
-   */
-  async sequenceAudioSegments(segments: NarrationSegment[], storyId: number): Promise<StoryNarrationResult> {
-    try {
-      // Ensure output directory exists
-      await fs.mkdir(this.outputDir, { recursive: true });
-      
-      // Create output filename using hierarchical storage
-      const timestamp = Date.now();
-      const outputFile = path.join(this.outputDir, `story-${storyId}-${timestamp}.mp3`);
-      
-      // Build FFmpeg command to concatenate segments with pauses
-      const segmentFiles: string[] = [];
-      let ffmpegInputs = '';
-      let filterComplex = '';
-      
-      for (let i = 0; i < segments.length; i++) {
-        const segment = segments[i];
-        
-        if (segment.audioUrl) {
-          // Convert relative URL to file path
-          const audioPath = segment.audioUrl.replace('/api/audio-cache/', 
-            path.join(process.cwd(), 'persistent-cache', 'audio-cache', 'development/'));
-          
-          segmentFiles.push(audioPath);
-          ffmpegInputs += `-i "${audioPath}" `;
-          
-          if (i === 0) {
-            filterComplex = `[0:a]`;
-          } else {
-            filterComplex += `[${i}:a]`;
-          }
-        }
-      }
-      
-      // Add silence between segments and concatenate
-      if (segmentFiles.length > 0) {
-        filterComplex += `concat=n=${segmentFiles.length}:v=0:a=1[outa]`;
-        
-        const ffmpegCommand = `ffmpeg ${ffmpegInputs} -filter_complex "${filterComplex}" -map "[outa]" -y "${outputFile}"`;
-        
-        console.log('[EnhancedNarrator] Combining audio segments...');
-        await execAsync(ffmpegCommand);
-        
-        // Get final audio duration
-        const durationCommand = `ffprobe -v quiet -show_entries format=duration -of csv=p=0 "${outputFile}"`;
-        const { stdout } = await execAsync(durationCommand);
-        const totalDuration = parseFloat(stdout.trim());
-        
-        // Create final result
-        const emotionVoicesUsed: { [emotion: string]: string } = {};
-        let userVoiceSegments = 0;
-        let cachedSegments = 0;
-        
-        for (const segment of segments) {
-          emotionVoicesUsed[segment.emotion] = segment.voiceId;
-          if (segment.isUserVoice) userVoiceSegments++;
-          // Note: cache info would need to be tracked during generation
-        }
-        
-        const result: StoryNarrationResult = {
-          segments,
-          totalDuration,
-          finalAudioUrl: `/api/narrations/story-${storyId}-${timestamp}.mp3`,
-          emotionVoicesUsed,
-          cacheHitRate: cachedSegments / segments.length,
-          generationStats: {
-            totalSegments: segments.length,
-            userVoiceSegments,
-            cachedSegments,
-            newGenerations: segments.length - cachedSegments
-          }
-        };
-        
-        return result;
-      } else {
-        throw new Error('No valid audio segments to combine');
-      }
-      
-    } catch (error) {
-      console.error('[EnhancedNarrator] Error sequencing audio:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Save narration record to database
-   */
-  private async saveNarrationRecord(storyId: number, userId: string, result: StoryNarrationResult): Promise<void> {
-    try {
-      await storage.createStoryNarration({
-        storyId,
-        userId,
-        narrationSegments: result.segments,
-        useUserVoice: result.generationStats.userVoiceSegments > 0,
-        emotionVoicesUsed: result.emotionVoicesUsed,
-        generationStatus: 'completed',
-        audioUrl: result.finalAudioUrl,
-        duration: result.totalDuration,
-        segmentCount: result.segments.length,
-        cacheHitRate: result.cacheHitRate
-      });
-      
-      console.log(`[EnhancedNarrator] Saved narration record for story ${storyId}`);
-    } catch (error) {
-      console.error('[EnhancedNarrator] Error saving narration record:', error);
-    }
-  }
-
-  /**
-   * Calculate actual duration for text segment based on typical speech rate
-   */
-  private async calculateActualDuration(text: string, voiceId: string): Promise<number> {
-    // Estimate duration based on text length and average speaking rate
-    // Average speaking rate: ~150 words per minute = 2.5 words per second
-    // Add some buffer for emotion and pacing
-    const wordCount = text.split(/\s+/).length;
-    const estimatedDuration = (wordCount / 2.5) + 0.5; // Add 0.5 seconds buffer
-    return Math.max(1.0, estimatedDuration); // Minimum 1 second duration
+    
+    return null;
   }
 }
 

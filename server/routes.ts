@@ -5222,26 +5222,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { voiceTrainingService } = await import('./voice-training-service');
       
-      // Check if training should be triggered
+      // Check if MVP2 training should be triggered
       const shouldTrigger = await voiceTrainingService.shouldTriggerTraining(userId);
       
       if (!shouldTrigger) {
         return res.json({ 
           triggered: false, 
-          message: 'Training threshold not reached'
+          message: 'MVP2 training threshold not reached'
         });
       }
 
-      // Trigger automatic training
+      // Trigger MVP2 automatic training
       const result = await voiceTrainingService.triggerAutomaticTraining(userId);
       
       res.json({ 
         triggered: true, 
-        result 
+        result,
+        architecture: 'mvp2'
       });
     } catch (error: any) {
-      console.error('Error triggering voice training:', error);
-      res.status(500).json({ message: 'Failed to trigger training' });
+      console.error('Error triggering MVP2 voice training:', error);
+      res.status(500).json({ message: 'Failed to trigger MVP2 training' });
+    }
+  });
+
+  // MVP2 Story Narration API
+  app.post('/api/stories/:storyId/generate-mvp2-narration', requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any)?.id;
+      const storyId = parseInt(req.params.storyId);
+      
+      if (!userId) {
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
+
+      const { content, segments } = req.body;
+      
+      if (!content || !segments || !Array.isArray(segments)) {
+        return res.status(400).json({ message: 'Content and segments array required' });
+      }
+
+      const { enhancedStoryNarrator } = await import('./enhanced-story-narrator');
+      
+      console.log(`[API] Starting MVP2 narration generation for story ${storyId}, user ${userId}`);
+      
+      const result = await enhancedStoryNarrator.generateMVP2Narration({
+        storyId,
+        userId,
+        content,
+        segments
+      });
+      
+      console.log(`[API] MVP2 narration completed: ${result.success ? 'SUCCESS' : 'FAILED'} - ${result.audioFiles.length}/${result.totalSegments} segments`);
+      
+      res.json({
+        success: result.success,
+        audioFiles: result.audioFiles,
+        totalSegments: result.totalSegments,
+        architecture: 'mvp2',
+        error: result.error
+      });
+      
+    } catch (error: any) {
+      console.error('Error generating MVP2 story narration:', error);
+      res.status(500).json({ message: 'Failed to generate MVP2 narration' });
     }
   });
 

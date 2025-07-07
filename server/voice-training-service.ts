@@ -29,34 +29,33 @@ export class VoiceTrainingService {
    * Check if voice training should be triggered based on unlocked samples count
    */
   async shouldTriggerTraining(userId: string): Promise<boolean> {
-    console.log(`[VoiceTrainingService] ================================ TRAINING TRIGGER ASSESSMENT INITIATED ================================`);
-    console.log(`[VoiceTrainingService] Beginning comprehensive assessment to determine if voice training should be triggered for user: ${userId}`);
-    console.log(`[VoiceTrainingService] Training threshold configuration: ${this.TRAINING_THRESHOLD} unlocked samples required before triggering ElevenLabs voice cloning`);
-    console.log(`[VoiceTrainingService] Assessment purpose: Prevent premature voice training and ensure sufficient sample variety for high-quality voice synthesis`);
-    console.log(`[VoiceTrainingService] Querying database for current unlocked sample count for user ${userId}...`);
+    console.log(`[VoiceTrainingService] ================================ MVP2 TRAINING TRIGGER ASSESSMENT INITIATED ================================`);
+    console.log(`[VoiceTrainingService] Beginning MVP2 assessment to determine if voice training should be triggered for user: ${userId}`);
+    console.log(`[VoiceTrainingService] MVP2 Architecture: ESM-based three-level analysis (Individual → Category → Combined)`);
+    console.log(`[VoiceTrainingService] No sample-level locking - continuous voice sample recording enabled`);
     
     try {
-      const unlockedCount = await storage.getUserUnlockedSamplesCount(userId);
+      // Use MVP2 ElevenLabs integration for trigger assessment
+      const { mvp2ElevenLabsIntegration } = await import('./mvp2-elevenlabs-integration');
+      const shouldTrigger = await mvp2ElevenLabsIntegration.shouldTriggerMVP2Training(userId);
       
-      console.log(`[VoiceTrainingService] Database query completed successfully. Results: User ${userId} currently has ${unlockedCount} unlocked voice samples`);
-      console.log(`[VoiceTrainingService] Threshold comparison: ${unlockedCount} current samples vs ${this.TRAINING_THRESHOLD} required samples = ${unlockedCount >= this.TRAINING_THRESHOLD ? 'TRIGGER TRAINING' : 'WAIT FOR MORE SAMPLES'}`);
+      console.log(`[VoiceTrainingService] MVP2 trigger assessment completed: ${shouldTrigger ? 'TRIGGER TRAINING' : 'INSUFFICIENT SAMPLES'}`);
       
-      if (unlockedCount >= this.TRAINING_THRESHOLD) {
-        console.log(`[VoiceTrainingService] ===== TRAINING TRIGGER CONDITION MET ===== User ${userId} has sufficient samples (${unlockedCount}) to proceed with ElevenLabs voice cloning`);
-        console.log(`[VoiceTrainingService] Next operation: Voice training will be initiated to create personalized voice model using all available samples`);
+      if (shouldTrigger) {
+        console.log(`[VoiceTrainingService] ===== MVP2 TRAINING TRIGGER CONDITION MET ===== User ${userId} has sufficient ESM samples for specialized voice generation`);
+        console.log(`[VoiceTrainingService] Next operation: MVP2 voice training will create category-specific narrator voices using intelligent segmentation`);
       } else {
-        console.log(`[VoiceTrainingService] ===== TRAINING TRIGGER CONDITION NOT MET ===== User ${userId} needs ${this.TRAINING_THRESHOLD - unlockedCount} more samples before voice training can begin`);
-        console.log(`[VoiceTrainingService] User must continue recording voice samples to reach minimum threshold for quality voice synthesis`);
+        console.log(`[VoiceTrainingService] ===== MVP2 TRAINING TRIGGER CONDITION NOT MET ===== User ${userId} needs more ESM samples for quality voice synthesis`);
+        console.log(`[VoiceTrainingService] User must continue recording emotions/sounds/modulations to reach MVP2 thresholds`);
       }
       
-      return unlockedCount >= this.TRAINING_THRESHOLD;
+      return shouldTrigger;
     } catch (error) {
-      console.error(`[VoiceTrainingService] ========================== CRITICAL DATABASE ERROR ==========================`);
-      console.error(`[VoiceTrainingService] Failed to retrieve unlocked sample count for user ${userId} from database`);
+      console.error(`[VoiceTrainingService] ========================== CRITICAL MVP2 ASSESSMENT ERROR ==========================`);
+      console.error(`[VoiceTrainingService] Failed to assess MVP2 training trigger for user ${userId}`);
       console.error(`[VoiceTrainingService] Error details: ${error instanceof Error ? error.message : String(error)}`);
       console.error(`[VoiceTrainingService] Error stack trace: ${error instanceof Error ? error.stack : 'No stack trace available'}`);
-      console.error(`[VoiceTrainingService] Database error prevents training trigger assessment. Defaulting to FALSE to prevent accidental voice training.`);
-      console.error(`[VoiceTrainingService] Manual intervention required to resolve database connectivity or query execution issues.`);
+      console.error(`[VoiceTrainingService] MVP2 assessment error prevents training trigger. Defaulting to FALSE to prevent accidental voice training.`);
       return false;
     }
   }
@@ -384,106 +383,59 @@ export class VoiceTrainingService {
    */
   async triggerAutomaticTraining(userId: string): Promise<VoiceTrainingResult> {
     return new Promise(async (resolve) => {
-      // Set 2-minute timeout
+      // Set 5-minute timeout for MVP2 operations
       const timeout = setTimeout(() => {
-        console.error(`[VoiceTraining] Training timed out after 2 minutes for user ${userId}`);
+        console.error(`[MVP2Training] Training timed out after 5 minutes for user ${userId}`);
         resolve({
           success: false,
-          error: 'Voice training timed out after 2 minutes',
+          error: 'MVP2 voice training timed out after 5 minutes',
           samplesProcessed: 0
         });
-      }, 120000); // 2 minutes
+      }, 300000); // 5 minutes for MVP2
 
       try {
-        console.log(`[VoiceTraining] Checking automatic training trigger for user ${userId}`);
+        console.log(`[MVP2Training] Starting MVP2 automatic training for user ${userId}`);
         
         if (!(await this.shouldTriggerTraining(userId))) {
           clearTimeout(timeout);
           resolve({
             success: false,
-            error: 'Training threshold not met',
+            error: 'MVP2 training threshold not met',
             samplesProcessed: 0
           });
           return;
         }
 
-      // Get or create voice profile
-      let voiceProfile = await storage.getUserVoiceProfile(userId);
-      if (!voiceProfile) {
-        voiceProfile = await storage.createUserVoiceProfile({
-          userId,
-          profileName: `Voice_Profile_${userId}`, // Required field
-          baseVoice: 'alloy', // Required field  
-          status: 'training',
-          elevenLabsVoiceId: null,
-          totalSamples: 0,
-          trainingStartedAt: new Date(),
-          trainingCompletedAt: null,
-          lastTrainingAt: new Date()
-        });
-      }
-
-      // Update profile to training status
-      await storage.updateUserVoiceProfile(voiceProfile.id, {
-        status: 'training',
-        trainingStartedAt: new Date(),
-        lastTrainingAt: new Date()
-      });
-
-      // Get all samples for training
-      const allSamples = await this.getAllUserSamples(userId);
-      
-      if (allSamples.length === 0) {
-        return {
-          success: false,
-          error: 'No samples found for training',
-          samplesProcessed: 0
-        };
-      }
-
-      // Train voice with active provider (ElevenLabs or future providers like Kling)
-      const { VoiceProviderFactory } = await import('./voice-providers/voice-provider-factory');
-      const trainingResult = await VoiceProviderFactory.trainVoice({
-        userId,
-        voiceProfileId: voiceProfile.id,
-        samples: allSamples
-      });
-
-      if (!trainingResult.success) {
-        // Update profile to failed status
-        await storage.updateUserVoiceProfile(voiceProfile.id, {
-          status: 'failed',
-          trainingCompletedAt: new Date()
-        });
-
+        // Use MVP2 ElevenLabs integration for specialized voice generation
+        const { mvp2ElevenLabsIntegration } = await import('./mvp2-elevenlabs-integration');
+        const result = await mvp2ElevenLabsIntegration.generateSpecializedNarratorVoices(userId);
+        
         clearTimeout(timeout);
-        resolve({
-          success: false,
-          error: trainingResult.error,
-          samplesProcessed: allSamples.length
+        
+        console.log(`[MVP2Training] Voice generation completed:`, {
+          success: result.success,
+          voicesCreated: result.voicesCreated.length,
+          segmentationType: result.segmentationUsed,
+          lockingApplied: result.lockingApplied
         });
-        return;
-      }
-
-      // Update profile with successful training
-      await storage.updateUserVoiceProfile(voiceProfile.id, {
-        status: 'completed',
-        elevenLabsVoiceId: trainingResult.voiceId,
-        totalSamples: allSamples.length,
-        trainingCompletedAt: new Date()
-      });
-
-      // Lock all samples used in training
-      await this.lockAllSamples(userId);
-
-        console.log(`[VoiceTraining] Successfully trained voice for user ${userId} with ${allSamples.length} samples`);
-
-        clearTimeout(timeout);
-        resolve({
-          success: true,
-          voiceId: trainingResult.voiceId,
-          samplesProcessed: allSamples.length
-        });
+        
+        if (result.success) {
+          console.log(`[MVP2Training] ===== MVP2 AUTOMATIC TRAINING SUCCESSFUL ===== Created ${result.voicesCreated.length} specialized voices`);
+          resolve({
+            success: true,
+            voiceId: result.voicesCreated[0]?.voiceId,
+            samplesProcessed: result.voicesCreated.reduce((sum, voice) => sum + voice.items.length, 0),
+            mvp2Result: result
+          });
+        } else {
+          console.error(`[MVP2Training] ===== MVP2 AUTOMATIC TRAINING FAILED =====`);
+          console.error(`[MVP2Training] Error: ${result.error}`);
+          resolve({
+            success: false,
+            error: result.error,
+            samplesProcessed: 0
+          });
+        }
 
       } catch (error) {
         clearTimeout(timeout);
