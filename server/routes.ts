@@ -4316,6 +4316,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const fileNameWithoutExt = fileName.split('.')[0]; // e.g., "resolution"
             const pathCategoryId = recording.audio_url.split('/voice-samples/')[1]?.split('/')[0]; // Extract category from path
             
+            console.log(`🔎 Comparing: path=${pathCategoryId} vs ${categoryId}, file=${fileNameWithoutExt.toLowerCase()} vs ${itemName.toLowerCase()}`);
             return pathCategoryId === categoryId && 
                    fileNameWithoutExt.toLowerCase() === itemName.toLowerCase();
           }
@@ -4343,8 +4344,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Process emotions from story analysis
       if (analysis.analysisData.emotions) {
+        console.log(`🎯 Story ${storyId} emotions:`, analysis.analysisData.emotions.map(e => e.emotion));
         for (const emotion of analysis.analysisData.emotions) {
           const userRecording = findUserRecording(emotion.emotion, 'emotions');
+          console.log(`🔍 Looking for recording: ${emotion.emotion} -> found: ${!!userRecording}`);
           const esmText = await getEsmSampleText(emotion.emotion, 1);
           
           response.emotions.push({
