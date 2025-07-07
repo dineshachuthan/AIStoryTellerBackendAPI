@@ -4447,7 +4447,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Story not found' });
       }
 
-      // Validate audio duration using FFmpeg
+      // Import detectAudioFormat for comprehensive validation
+      const { detectAudioFormat } = await import('./ai-analysis');
+      
+      // Comprehensive audio validation
       const audioBuffer = req.file.buffer;
       const fs = await import('fs').then(m => m.promises);
       const path = await import('path');
@@ -4455,10 +4458,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { promisify } = await import('util');
       const execAsync = promisify(exec);
       
-      // Create temporary file for duration check
+      // Step 1: Detect and validate audio format
+      let detectedFormat: string;
+      try {
+        detectedFormat = detectAudioFormat(audioBuffer);
+        console.log(`🎵 Detected audio format: ${detectedFormat}`);
+        
+        // Check if format is supported
+        const supportedFormats = ['mp3', 'wav', 'webm', 'm4a'];
+        if (!supportedFormats.includes(detectedFormat)) {
+          return res.status(400).json({ 
+            message: `Unsupported audio format: ${detectedFormat}. Supported formats: ${supportedFormats.join(', ')}` 
+          });
+        }
+      } catch (error) {
+        console.error('Audio format detection failed:', error);
+        return res.status(400).json({ message: 'Invalid or corrupted audio file' });
+      }
+      
+      // Step 2: Validate duration using FFmpeg
       const tempDir = path.join(process.cwd(), 'temp');
       await fs.mkdir(tempDir, { recursive: true });
-      const tempFile = path.join(tempDir, `duration_check_${Date.now()}.${req.file.mimetype.includes('webm') ? 'webm' : 'mp4'}`);
+      const tempFile = path.join(tempDir, `duration_check_${Date.now()}.${detectedFormat}`);
       await fs.writeFile(tempFile, audioBuffer);
       
       let duration = 0;
@@ -4469,12 +4490,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (error) {
         await fs.unlink(tempFile).catch(() => {}); // Cleanup on error
         console.error('Duration validation failed:', error);
-        return res.status(400).json({ message: 'Invalid audio file format' });
+        
+        // If existing recording exists, delete it so user can re-record
+        const emotionName = itemName.toLowerCase();
+        const existingRecording = await storage.getUserEsmRecordingByEmotionAndCategory(userId, emotionName, parseInt(category));
+        if (existingRecording) {
+          console.log(`🗑️ Deleting corrupted recording for ${emotionName}`);
+          await storage.deleteUserEsmRecording(existingRecording.user_esm_recordings_id);
+        }
+        
+        return res.status(400).json({ message: 'Audio file is corrupted or unreadable. Please record again.' });
       }
 
       if (duration < 5) {
         return res.status(400).json({ 
-          message: `Recording too short: ${duration}s. Need at least 5 seconds for voice cloning.` 
+          message: `Recording too short: ${duration.toFixed(1)}s. Need at least 5 seconds for voice cloning.` 
         });
       }
 

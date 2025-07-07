@@ -260,6 +260,18 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Voice Modulation**: Apply audio processing factors to make the single voice sound like different emotions/sounds/modulations during story narration
 - **Story Narration**: Same narrator voice used for all story segments with modulation factors
 
+**FAULT-TOLERANT AUDIO VALIDATION SYSTEM - Comprehensive Format Validation**
+- **Validation at Save Time**: When user uploads voice recording, perform audio format detection and validation
+  - Supported formats: MP3, WAV, WebM, M4A
+  - Minimum duration: 5 seconds for ElevenLabs compatibility
+  - If validation fails: Delete existing database record to allow immediate re-recording
+- **Validation During ElevenLabs Integration**: Process each sample individually with fault tolerance
+  - Failed samples are automatically deleted from database
+  - Processing continues with valid samples if minimum threshold met (5+ samples)
+  - Failed samples information included in result metadata
+  - Clear error messages guide users to re-record corrupted samples
+- **Database Reset Mechanism**: Corrupted recordings automatically cleaned up for seamless user experience
+
 **MVP2 FUTURE ENHANCEMENT - Multi-Voice Specialization**
 - **Category-Specific Training**: Train separate voices for emotions, sounds, and modulations
 - **Individual Voice Storage**: Each ESM element gets its own specialized narrator voice

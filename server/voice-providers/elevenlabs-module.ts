@@ -72,6 +72,10 @@ export class ElevenLabsModule extends BaseVoiceProvider {
       
       // Process audio files using base class utilities
       const audioFiles: Array<{buffer: Buffer, filename: string, contentType: string}> = [];
+      const failedSamples: Array<{ emotion: string; error: string; recordingId?: number }> = [];
+      
+      // Import storage for database operations
+      const { storage } = await import('../storage');
       
       for (let index = 0; index < request.samples.length; index++) {
         const sample = request.samples[index];
@@ -111,15 +115,55 @@ export class ElevenLabsModule extends BaseVoiceProvider {
           const audioFile = {
             buffer: convertedAudioBuffer,
             filename: fileName,
-            contentType: 'audio/mpeg'
+            contentType: 'audio/mpeg',
+            emotion: sample.emotion // Track emotion for successful samples
           };
           audioFiles.push(audioFile);
           
           this.log('info', `Successfully processed ${sample.emotion} sample (${audioBuffer.length} bytes)`);
         } catch (error) {
-          this.log('error', `Failed to process sample ${sample.emotion}`, error);
-          throw error;
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          this.log('warn', `Skipping failed sample ${sample.emotion}: ${errorMessage}`);
+          
+          // Add sample metadata if available (for database cleanup)
+          const failedSample: any = { emotion: sample.emotion, error: errorMessage };
+          if ((sample as any).recordingId) {
+            failedSample.recordingId = (sample as any).recordingId;
+          }
+          failedSamples.push(failedSample);
+          
+          // Delete corrupted recording from database
+          try {
+            // Parse the audio URL to extract the emotion name
+            const urlParts = sample.audioUrl.split('/');
+            const emotionFile = urlParts[urlParts.length - 1].replace('.mp3', '');
+            const category = parseInt(urlParts[urlParts.length - 2]) || 1; // Get category from path
+            
+            const existingRecording = await storage.getUserEsmRecordingByEmotionAndCategory(
+              request.userId, 
+              emotionFile, 
+              category
+            );
+            
+            if (existingRecording) {
+              this.log('warn', `Deleting corrupted recording ${existingRecording.user_esm_recordings_id} for ${sample.emotion}`);
+              await storage.deleteUserEsmRecording(existingRecording.user_esm_recordings_id);
+            }
+          } catch (dbError) {
+            this.log('error', `Failed to delete corrupted recording for ${sample.emotion}:`, dbError);
+          }
         }
+      }
+      
+      // Log summary of processing
+      if (failedSamples.length > 0) {
+        this.log('warn', `${failedSamples.length} samples failed and were deleted: ${failedSamples.map(s => s.emotion).join(', ')}`);
+      }
+      
+      // Ensure we have minimum required samples after filtering
+      if (audioFiles.length < 5) {
+        const failedList = failedSamples.map(s => `${s.emotion} (${s.error})`).join(', ');
+        throw new Error(`Only ${audioFiles.length} valid samples available (minimum 5 required). Failed samples: ${failedList}. Please re-record the failed samples.`);
       }
       
       this.log('info', `All ${audioFiles.length} audio files processed. Starting ElevenLabs voice creation...`);
@@ -170,10 +214,13 @@ export class ElevenLabsModule extends BaseVoiceProvider {
       
       this.log('info', `Voice created successfully with ID: ${voiceResult.voice_id}`);
       
-      return this.createSuccessResult(voiceResult.voice_id, request.samples.length, {
+      return this.createSuccessResult(voiceResult.voice_id, audioFiles.length, {
         elevenlabsVoiceId: voiceResult.voice_id,
         voiceName: voiceResult.name,
-        emotionsProcessed: request.samples.map(s => s.emotion)
+        emotionsProcessed: audioFiles.map(file => (file as any).emotion),
+        failedSamples: failedSamples,
+        totalSamplesProvided: request.samples.length,
+        validSamplesProcessed: audioFiles.length
       });
       
     } catch (error: any) {

@@ -1220,6 +1220,26 @@ export class DatabaseStorage implements IStorage {
     return result.rows[0] || null;
   }
 
+  async getUserEsmRecordingByEmotionAndCategory(userId: string, emotion: string, category: number): Promise<any | null> {
+    const result = await db.execute(
+      sql`SELECT uer.* 
+          FROM user_esm_recordings uer
+          JOIN user_esm ue ON uer.user_esm_id = ue.user_esm_id
+          JOIN esm_ref er ON ue.esm_ref_id = er.esm_ref_id
+          WHERE ue.user_id = ${userId} 
+          AND er.name = ${emotion}
+          AND er.category = ${category}
+          LIMIT 1`
+    );
+    return result.rows[0] || null;
+  }
+
+  async deleteUserEsmRecording(recordingId: number): Promise<void> {
+    await db.execute(
+      sql`DELETE FROM user_esm_recordings WHERE user_esm_recordings_id = ${recordingId}`
+    );
+  }
+
   async updateUserEsmRecording(id: number, updates: {
     audio_url?: string;
     duration?: number;
