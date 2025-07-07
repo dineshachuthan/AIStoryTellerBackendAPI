@@ -44,18 +44,15 @@ export default function VoiceCloningTest1() {
   // Fetch validation data for a story
   const fetchValidationMutation = useMutation({
     mutationFn: async (id: string) => {
-      const [emotions, sounds, modulations] = await Promise.all([
-        apiRequest(`/api/voice-cloning/validation/${id}/emotions`),
-        apiRequest(`/api/voice-cloning/validation/${id}/sounds`),
-        apiRequest(`/api/voice-cloning/validation/${id}/modulations`)
-      ]);
+      // Use the single endpoint that returns all ESM data for the story
+      const voiceSamples = await apiRequest(`/api/stories/${id}/voice-samples`);
       
       return {
         storyId: parseInt(id),
-        storyTitle: emotions.storyTitle,
-        emotions: emotions.emotions || [],
-        sounds: sounds.sounds || [],
-        modulations: modulations.modulations || []
+        storyTitle: voiceSamples.storyTitle || `Story ${id}`,
+        emotions: voiceSamples.emotions || [],
+        sounds: voiceSamples.sounds || [],
+        modulations: voiceSamples.modulations || []
       };
     },
     onSuccess: (data) => {
