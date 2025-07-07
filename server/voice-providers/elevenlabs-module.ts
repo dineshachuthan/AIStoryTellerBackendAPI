@@ -125,25 +125,20 @@ export class ElevenLabsModule extends BaseVoiceProvider {
           const arrayBuffer = await audioResponse.arrayBuffer();
           const audioBuffer = Buffer.from(arrayBuffer);
           
-          // PRE-ELEVENLABS VALIDATION - Check audio before processing
-          // Step 1: Basic file size check
-          if (audioBuffer.length < 1000) { // Less than 1KB is likely corrupted
-            throw new Error(`Audio file too small (${audioBuffer.length} bytes) - likely corrupted`);
-          }
+          // PRE-ELEVENLABS VALIDATION - Log audio details
+          // Step 1: Log file size but don't reject based on it
+          this.log('info', `Audio file size: ${audioBuffer.length} bytes`);
           
           // Step 2: Detect actual audio format
           const detectedFormat = detectAudioFormat(audioBuffer);
           this.log('info', `Audio format detection for ${sample.emotion}_sample_${index + 1}.mp3: detected=${detectedFormat}, bufferSize=${audioBuffer.length}, firstBytes=${audioBuffer.slice(0, 8).toString('hex')}`);
           
-          // Step 3: Check if format is valid
-          const validFormats = ['mp3', 'wav', 'webm', 'm4a', 'ogg'];
-          if (!validFormats.includes(detectedFormat)) {
-            throw new Error(`Invalid audio format detected: ${detectedFormat}. File may be corrupted.`);
-          }
+          // Step 3: Log detected format but don't reject - let ElevenLabs validate
+          this.log('info', `Detected format: ${detectedFormat} - proceeding to ElevenLabs for validation`);
           
-          // Step 4: Check duration if available from sample metadata
-          if ((sample as any).duration && parseFloat((sample as any).duration) < 5.0) {
-            throw new Error(`Audio duration too short: ${(sample as any).duration}s (minimum 5s required)`);
+          // Step 4: Log duration but don't reject based on it - let ElevenLabs validate
+          if ((sample as any).duration) {
+            this.log('info', `Sample duration: ${(sample as any).duration}s`);
           }
           
           const fileName = `${sample.emotion}_sample_${index + 1}.mp3`;
