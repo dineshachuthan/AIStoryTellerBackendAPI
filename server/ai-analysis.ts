@@ -469,7 +469,7 @@ async function populateEsmReferenceData(analysis: StoryAnalysis, userId: string)
       console.log(`📊 Processing ${analysis.emotions.length} emotions from story analysis`);
       
       for (const emotion of analysis.emotions) {
-        const emotionName = emotion.emotion.toLowerCase().trim();
+        const emotionName = emotion.emotion.trim();
         
         // Check if emotion already exists in ESM reference
         const existingEmotion = await storage.getEsmRef(1, emotionName);
@@ -523,7 +523,7 @@ async function populateEsmReferenceData(analysis: StoryAnalysis, userId: string)
       console.log(`🔊 Processing ${analysis.soundEffects.length} sound effects from story analysis`);
       
       for (const soundEffect of analysis.soundEffects) {
-        const soundName = soundEffect.sound.toLowerCase().trim();
+        const soundName = soundEffect.sound.trim();
         
         // Check if sound effect already exists in ESM reference
         const existingSound = await storage.getEsmRef(2, soundName);

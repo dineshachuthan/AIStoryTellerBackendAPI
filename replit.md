@@ -380,6 +380,15 @@ This is a full-stack collaborative storytelling platform that enables users to c
 
 ## Changelog
 
+### **CASE SENSITIVITY BUG FIXED - January 07, 2025**
+**Fixed ESM Reference Data Case Handling**: Removed lowercase conversion to preserve AI analysis casing
+- **ROOT CAUSE IDENTIFIED**: populateEsmReferenceData was converting emotions/sounds to lowercase (e.g., "Frustration" → "frustration")
+- **FRONTEND-BACKEND MISMATCH**: Frontend sent original casing from AI analysis while backend stored lowercase versions
+- **FIX APPLIED**: Removed toLowerCase() calls in populateEsmReferenceData for both emotions and sounds
+- **CASE PRESERVATION**: ESM now stores exact casing from AI analysis (e.g., "Frustration" stays "Frustration")
+- **STRATEGIC SOLUTION**: Follows user requirement that all case handling must occur at analysis stage only
+- **VOICE RECORDING FIXED**: Voice samples now properly match and save with correct emotion/sound names
+
 ### **PRIVACY PROTECTION AND JWT SECURITY IMPLEMENTED - January 07, 2025**
 **External ID System**: Implemented anonymous external IDs to protect user privacy across all external services
 - **ANONYMOUS IDS CREATED**: Each user gets a unique anonymous ID (e.g., anon_r3uo1bdh72) instead of exposing real IDs like google_117487073695002443567
