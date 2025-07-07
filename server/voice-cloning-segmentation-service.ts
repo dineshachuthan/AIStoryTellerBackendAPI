@@ -99,7 +99,8 @@ export class VoiceCloningSegmentationService {
         locked: recording.emotion_locked || false,
         esmRefId: recording.esm_ref_id,
         audioUrl: recording.audio_url,
-        userEsmId: recording.user_esm_id
+        userEsmId: recording.user_esm_id,
+        recordingId: recording.id // Include recordingId for fault tolerance
       }));
 
     const sounds = esmRecordings
@@ -110,7 +111,8 @@ export class VoiceCloningSegmentationService {
         locked: recording.emotion_locked || false,
         esmRefId: recording.esm_ref_id,
         audioUrl: recording.audio_url,
-        userEsmId: recording.user_esm_id
+        userEsmId: recording.user_esm_id,
+        recordingId: recording.id // Include recordingId for fault tolerance
       }));
 
     const modulations = esmRecordings
@@ -121,7 +123,8 @@ export class VoiceCloningSegmentationService {
         locked: recording.emotion_locked || false,
         esmRefId: recording.esm_ref_id,
         audioUrl: recording.audio_url,
-        userEsmId: recording.user_esm_id
+        userEsmId: recording.user_esm_id,
+        recordingId: recording.id // Include recordingId for fault tolerance
       }));
 
     // Group by emotion/sound/modulation name and count samples
@@ -132,10 +135,13 @@ export class VoiceCloningSegmentationService {
           existing.sampleCount += 1;
           existing.audioUrls = existing.audioUrls || [];
           existing.audioUrls.push(item.audioUrl);
+          existing.recordingIds = existing.recordingIds || [];
+          existing.recordingIds.push(item.recordingId);
         } else {
           acc.push({
             ...item,
-            audioUrls: [item.audioUrl]
+            audioUrls: [item.audioUrl],
+            recordingIds: [item.recordingId]
           });
         }
         return acc;
@@ -251,6 +257,7 @@ export class VoiceCloningSegmentationService {
             type: 'individual',
             items: [itemName],
             audioUrls: signedUrls,
+            recordingIds: item.recordingIds || [],
             metadata: {
               category: category,
               sampleCount: item.sampleCount,
@@ -265,10 +272,14 @@ export class VoiceCloningSegmentationService {
         const categoryData = categoryBreakdown[categoryName];
         const allUrls = [];
         const itemNames = [];
+        const allRecordingIds = [];
 
         for (const item of categoryData) {
           if (!item.locked && item.audioUrls) {
             itemNames.push(item.name);
+            if (item.recordingIds) {
+              allRecordingIds.push(...item.recordingIds);
+            }
             for (const audioUrl of item.audioUrls) {
               try {
                 const signedUrl = await audioStorageProvider.generateSignedUrl(audioUrl, {
@@ -288,6 +299,7 @@ export class VoiceCloningSegmentationService {
           type: 'category',
           items: itemNames,
           audioUrls: allUrls,
+          recordingIds: allRecordingIds,
           metadata: {
             category: categoryName,
             totalSamples: allUrls.length,
@@ -299,12 +311,16 @@ export class VoiceCloningSegmentationService {
       // Combined voice clone using all samples
       const allUrls = [];
       const allItems = [];
+      const allRecordingIds = [];
 
       for (const categoryName of ['emotions', 'sounds', 'modulations']) {
         const categoryData = categoryBreakdown[categoryName];
         for (const item of categoryData) {
           if (!item.locked && item.audioUrls) {
             allItems.push(`${categoryName}:${item.name}`);
+            if (item.recordingIds) {
+              allRecordingIds.push(...item.recordingIds);
+            }
             for (const audioUrl of item.audioUrls) {
               try {
                 const signedUrl = await audioStorageProvider.generateSignedUrl(audioUrl, {
@@ -325,6 +341,7 @@ export class VoiceCloningSegmentationService {
         type: 'combined',
         items: allItems,
         audioUrls: allUrls,
+        recordingIds: allRecordingIds,
         metadata: {
           category: 'all',
           totalSamples: allUrls.length,

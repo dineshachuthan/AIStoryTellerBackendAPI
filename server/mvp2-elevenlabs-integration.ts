@@ -158,13 +158,21 @@ export class MVP2ElevenLabsIntegration {
       const voiceSamples = apiCall.audioUrls.map((url: string, index: number) => ({
         emotion: apiCall.items[index] || `${apiCall.type}_sample_${index}`,
         audioUrl: url,
-        isLocked: false
+        isLocked: false,
+        recordingId: apiCall.recordingIds?.[index] // Include recordingId for cleanup on failure
       }));
 
       console.log(`[MVP2ElevenLabs] Creating ${apiCall.type} voice with ${voiceSamples.length} samples`);
       
+      // Create proper VoiceTrainingRequest object
+      const voiceTrainingRequest = {
+        userId: userId,
+        samples: voiceSamples,
+        metadata: apiCall.metadata
+      };
+      
       // Use existing ElevenLabs integration
-      const result = await voiceProvider.trainVoice(userId, voiceSamples);
+      const result = await voiceProvider.trainVoice(voiceTrainingRequest);
       
       if (result.success) {
         return {
