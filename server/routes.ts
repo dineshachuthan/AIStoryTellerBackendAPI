@@ -4311,12 +4311,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const categoryId = category === 'emotions' ? '1' : category === 'sounds' ? '2' : '3';
         
         return userRecordings.find(recording => {
-          if (recording.audio_url && recording.audio_url.includes('/voice-samples/')) {
+          if (recording.audio_url && recording.audio_url.includes('voice-samples/')) {
             const fileName = recording.audio_url.split('/').pop() || '';
             const fileNameWithoutExt = fileName.split('.')[0]; // e.g., "resolution"
-            const pathCategoryId = recording.audio_url.split('/voice-samples/')[1]?.split('/')[0]; // Extract category from path
+            const pathCategoryId = recording.audio_url.split('voice-samples/')[1]?.split('/')[0]; // Extract category from path
             
-            console.log(`🔎 Comparing: path=${pathCategoryId} vs ${categoryId}, file=${fileNameWithoutExt} vs ${itemName}`);
+            console.log(`🔍 Looking for recording: ${itemName} -> found: ${pathCategoryId === categoryId && fileNameWithoutExt.toLowerCase() === itemName.toLowerCase()}`);
             // Compare case-insensitively since filenames are lowercase but items preserve original casing
             return pathCategoryId === categoryId && 
                    fileNameWithoutExt.toLowerCase() === itemName.toLowerCase();
