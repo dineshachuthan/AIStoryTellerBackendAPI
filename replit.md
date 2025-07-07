@@ -380,6 +380,17 @@ This is a full-stack collaborative storytelling platform that enables users to c
 
 ## Changelog
 
+### **GLOBAL VOICE SAMPLES SIMPLIFIED - January 07, 2025**
+**Replaced Complex Voice Samples Page with Simple Grid View**
+- **REMOVED COMPLEX LOGIC**: Eliminated all voice modulation templates, progress tracking, and voice cloning triggers from global voice samples page
+- **SIMPLIFIED DISPLAY**: Created simple grid showing user's recorded voices with story associations, lock status, and narrator voice indicators
+- **ADDED API ENDPOINT**: Created `/api/user/esm-recordings` to fetch all user recordings with story information
+- **FUTURE PLACEHOLDER**: Added "Coming Soon" section explaining features to be implemented after ElevenLabs integration
+- **CLEAN GRID LAYOUT**: Shows emotion name, associated story, duration, creation date, and lock/unlock status with visual indicators
+- **REMOVED OLD FUNCTIONALITY**: Deleted original voice-samples.tsx with complex category tabs and recording interfaces
+- **USER REQUEST FULFILLED**: Simplified interface as requested to focus on core data display without complex interactions
+- **DEFERRED FEATURES**: Voice cloning management, narrator voice generation, and cross-story aggregation postponed for later implementation
+
 ### **CASE SENSITIVITY BUG FIXED - January 07, 2025**
 **Fixed ESM Reference Data Case Handling**: Removed lowercase conversion to preserve AI analysis casing
 - **ROOT CAUSE IDENTIFIED**: populateEsmReferenceData was converting emotions/sounds to lowercase (e.g., "Frustration" → "frustration")

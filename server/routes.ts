@@ -2359,6 +2359,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
 
+  // Get user's ESM recordings with story information
+  app.get('/api/user/esm-recordings', requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      
+      // Get all recordings for this user
+      const recordings = await storage.getUserEsmRecordings(userId);
+      
+      // Get story titles for the recordings
+      const storyIds = [...new Set(recordings.filter(r => r.story_id).map(r => r.story_id))];
+      const stories = await Promise.all(
+        storyIds.map(id => storage.getStory(id))
+      );
+      const storyMap = new Map(stories.map(s => [s?.id, s?.title || `Story #${s?.id}`]));
+      
+      // Format the response
+      const formattedRecordings = recordings.map(rec => ({
+        id: rec.id,
+        name: rec.display_name || rec.name,
+        storyId: rec.story_id,
+        storyTitle: rec.story_id ? storyMap.get(rec.story_id) : undefined,
+        audioUrl: rec.audio_url,
+        duration: rec.duration,
+        isLocked: rec.is_locked || false,
+        narratorVoiceId: rec.narrator_voice_id || rec.recording_narrator_voice_id,
+        category: rec.category,
+        createdDate: rec.created_date
+      }));
+      
+      res.json(formattedRecordings);
+    } catch (error) {
+      console.error('Error fetching user ESM recordings:', error);
+      res.status(500).json({ error: 'Failed to fetch voice recordings' });
+    }
+  });
+
   // Story Narration routes - POST to generate narration following user requirements
   app.post("/api/stories/:id/narration", requireAuth, async (req, res) => {
     try {
