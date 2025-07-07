@@ -29,7 +29,7 @@ export interface SegmentationMetadata {
 }
 
 export class VoiceCloningSegmentationService {
-  private readonly MIN_SAMPLES_INDIVIDUAL = 6;
+  private readonly MIN_SAMPLES_INDIVIDUAL = 10;
   private readonly MIN_SAMPLES_CATEGORY = 3;
 
   /**
