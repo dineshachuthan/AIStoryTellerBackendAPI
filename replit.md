@@ -432,6 +432,14 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **FAULT TOLERANCE**: Added recordingId to sample data for proper database cleanup on failures
 - **OPTIMIZATION**: Smart selection only sends unlocked samples unless locked needed for minimum threshold
 
+### **AUDIO FORMAT DETECTION FIX - January 08, 2025**
+**Fixed MP3 Detection**: Resolved issue where MP3 files were incorrectly detected as WAV format
+- **ENHANCED MP3 SIGNATURES**: Added common MP3 frame sync patterns (0xFF 0xFB, 0xFF 0xFA) to detection
+- **DEFAULT FORMAT UPDATED**: Changed defaultFormat from 'wav' to 'mp3' since voice recordings are MP3
+- **DETECTION LOGIC**: MP3 files without ID3 tags now properly detected using frame sync patterns
+- **LOGGING IMPROVEMENT**: ElevenLabs module now correctly logs "format: mp3" instead of "format: wav"
+- **USER REQUEST FULFILLED**: Fixed confusing logs showing wrong audio format during voice cloning
+
 ### **SOFT DELETE FUNCTIONALITY IMPLEMENTED - January 08, 2025**
 **Data Integrity Enhancement**: All ESM tables now use soft delete instead of hard delete
 - **DATABASE SCHEMA UPDATED**: Added `is_active` column to esm_ref, user_esm, and user_esm_recordings tables with default TRUE

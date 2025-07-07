@@ -37,6 +37,16 @@ export const AUDIO_FORMAT_CONFIG: AudioFormatSignature[] = [
       },
       {
         offset: 0,
+        pattern: new Uint8Array([0xFF, 0xFB]),
+        description: 'MP3 frame sync (common)'
+      },
+      {
+        offset: 0,
+        pattern: new Uint8Array([0xFF, 0xFA]),
+        description: 'MP3 frame sync (variant)'
+      },
+      {
+        offset: 0,
         pattern: new Uint8Array([0xFF, 0xE0]),
         description: 'MP3 frame sync (partial)'
       }
@@ -90,7 +100,7 @@ export const AUDIO_FORMAT_CONFIG: AudioFormatSignature[] = [
 
 export const AUDIO_PROCESSING_CONFIG = {
   // Default format when detection fails
-  defaultFormat: 'wav',
+  defaultFormat: 'mp3',
   
   // Supported formats by OpenAI Whisper
   supportedFormats: ['flac', 'm4a', 'mp3', 'mp4', 'mpeg', 'mpga', 'oga', 'ogg', 'wav', 'webm'],
