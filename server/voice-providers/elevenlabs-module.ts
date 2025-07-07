@@ -84,6 +84,11 @@ export class ElevenLabsModule extends BaseVoiceProvider {
           this.log('info', `Processing sample ${index + 1}/${request.samples.length}: ${sample.emotion}`);
           this.log('info', `🔍 FAULT-TOLERANT VALIDATION ENABLED - Checking audio before ElevenLabs`);
           
+          // Special logging for optimism to debug the issue
+          if (sample.emotion === 'optimism' || sample.emotion.includes('optimism')) {
+            this.log('warn', `⚠️ DETECTED OPTIMISM SAMPLE: ${JSON.stringify(sample)}`);
+          }
+          
           // Log the original audio URL received
           this.log('info', `Original audioUrl received: ${sample.audioUrl}`);
           
