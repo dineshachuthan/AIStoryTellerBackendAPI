@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { AUDIO_PROCESSING_CONFIG } from "../../../../shared/audio-config";
 import { apiRequest } from "@/lib/queryClient";
 import { UIMessages } from "@shared/i18n-config";
+import { VOICE_RECORDING_CONFIG } from "@shared/voice-recording-config";
 
 interface EnhancedVoiceRecorderProps {
   onRecordingComplete?: (audioBlob: Blob, audioUrl: string) => void;
@@ -48,7 +49,7 @@ interface EnhancedVoiceRecorderProps {
 
 export function EnhancedVoiceRecorder({
   onRecordingComplete,
-  maxRecordingTime = 10,
+  maxRecordingTime = VOICE_RECORDING_CONFIG.MAX_DURATION,
   disabled = false,
   className = "",
   buttonText = {
