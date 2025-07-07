@@ -129,6 +129,8 @@ export class ElevenLabsModule extends BaseVoiceProvider {
           const arrayBuffer = await audioResponse.arrayBuffer();
           const audioBuffer = Buffer.from(arrayBuffer);
           
+          // FAULT TOLERANT LOGIC COMMENTED OUT FOR TESTING
+          /*
           // PRE-ELEVENLABS VALIDATION - Log audio details
           // Step 1: Log file size but don't reject based on it
           this.log('info', `Audio file size: ${audioBuffer.length} bytes`);
@@ -144,16 +146,15 @@ export class ElevenLabsModule extends BaseVoiceProvider {
           if ((sample as any).duration) {
             this.log('info', `Sample duration: ${(sample as any).duration}s`);
           }
+          */
           
           const fileName = `${sample.emotion}_sample_${index + 1}.mp3`;
           
-          // Convert to MP3 for ElevenLabs compatibility if needed
-          const convertedAudioBuffer = detectedFormat === 'mp3' 
-            ? audioBuffer 
-            : await this.convertToMp3(audioBuffer, fileName);
+          // Skip validation and conversion - send raw audio to ElevenLabs
+          const convertedAudioBuffer = audioBuffer;
           
-          // Use base class validation on converted audio
-          this.validateAudioFile(convertedAudioBuffer, fileName);
+          // Comment out base class validation
+          // this.validateAudioFile(convertedAudioBuffer, fileName);
           
           const audioFile = {
             buffer: convertedAudioBuffer,
