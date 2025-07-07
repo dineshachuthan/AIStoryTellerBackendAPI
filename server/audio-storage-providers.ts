@@ -41,6 +41,13 @@ export class ReplitAudioStorageProvider extends BaseAudioStorageProvider {
   }
 
   async generateSignedUrl(relativePath: string, options: SignedUrlOptions): Promise<string> {
+    console.log(`[PublicAccess] generateSignedUrl called with relativePath:`, relativePath, 'options:', options);
+    
+    // Check if relativePath is valid
+    if (!relativePath) {
+      throw new Error('relativePath is required for generating signed URL');
+    }
+    
     // For now, use public static file serving instead of JWT
     // Convert relativePath like "./voice-samples/3/suspenseful.mp3" to "/voice-samples/3/suspenseful.mp3"
     const publicPath = relativePath.replace(/^\.\//, '/');

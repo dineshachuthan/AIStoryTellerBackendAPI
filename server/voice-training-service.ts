@@ -130,6 +130,18 @@ export class VoiceTrainingService {
         const samplesToUpdate = []; // Track ESM recordings to update with narrator voice ID
         
         for (const esmRecording of allEsmRecordings) {
+          console.log(`[MVP1] Processing ESM recording:`, {
+            name: esmRecording.name,
+            audioUrl: esmRecording.audioUrl,
+            category: esmRecording.category
+          });
+          
+          // Check if audioUrl exists
+          if (!esmRecording.audioUrl) {
+            console.log(`[MVP1] Skipping ${esmRecording.name} - no audioUrl found`);
+            continue;
+          }
+          
           // Generate signed URL for external API access (30 minutes duration)
           const signedUrl = await audioStorageProvider.generateSignedUrl(esmRecording.audioUrl, {
             expiresIn: '30m',
