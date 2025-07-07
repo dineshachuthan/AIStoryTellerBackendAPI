@@ -1249,7 +1249,6 @@ export class DatabaseStorage implements IStorage {
   async updateUserEsmRecording(id: number, updates: {
     audio_url?: string;
     duration?: number;
-    updated_date?: Date;
     narrator_voice_id?: string;
     file_size?: number;
   }): Promise<any> {
@@ -1257,7 +1256,6 @@ export class DatabaseStorage implements IStorage {
       sql`UPDATE user_esm_recordings 
           SET audio_url = COALESCE(${updates.audio_url || null}, audio_url),
               duration = COALESCE(${updates.duration || null}, duration),
-              updated_date = COALESCE(${updates.updated_date?.toISOString() || null}, updated_date),
               narrator_voice_id = COALESCE(${updates.narrator_voice_id || null}, narrator_voice_id),
               file_size = COALESCE(${updates.file_size || null}, file_size)
           WHERE user_esm_recordings_id = ${id}

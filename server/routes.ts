@@ -4586,8 +4586,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.updateUserEsmRecording(existingRecording.id, {
           audio_url: audioPath,
           duration: duration,
-          file_size: audioBuffer.length,
-          updated_date: new Date()
+          file_size: audioBuffer.length
         });
       } else {
         // Create new recording
