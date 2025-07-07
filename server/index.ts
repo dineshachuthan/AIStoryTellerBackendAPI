@@ -15,6 +15,67 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// JWT Audio Serving Route (MUST be before authentication setup)
+import jwt from 'jsonwebtoken';
+import path from 'path';
+import fs from 'fs/promises';
+
+/**
+ * Serve audio files with JWT token authentication
+ * Used by external APIs (ElevenLabs) to access audio files securely
+ */
+app.get('/api/audio/serve/:token', async (req, res) => {
+  try {
+    const { token } = req.params;
+    
+    // Verify JWT token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default-secret') as any;
+    
+    // Validate token structure (JWT payload uses 'path', not 'filePath')
+    if (!decoded.path || !decoded.userId || !decoded.purpose) {
+      return res.status(401).json({ error: 'Invalid token structure' });
+    }
+    
+    // Check if token is expired (already handled by jwt.verify but adding explicit check)
+    if (decoded.exp && decoded.exp * 1000 < Date.now()) {
+      return res.status(401).json({ error: 'Token expired' });
+    }
+    
+    // Validate purpose (allow external_api_access for ElevenLabs)
+    if (decoded.purpose !== 'external_api_access' && decoded.purpose !== 'voice_training') {
+      return res.status(403).json({ error: 'Invalid token purpose' });
+    }
+    
+    // Get absolute file path
+    const fullPath = path.join(process.cwd(), decoded.path);
+    
+    // Check if file exists
+    const fileExists = await fs.access(fullPath).then(() => true).catch(() => false);
+    if (!fileExists) {
+      return res.status(404).json({ error: 'Audio file not found' });
+    }
+    
+    // Set appropriate headers
+    res.setHeader('Content-Type', 'audio/mpeg');
+    res.setHeader('Cache-Control', 'no-cache');
+    
+    // Serve the file
+    res.sendFile(fullPath);
+    
+  } catch (error: any) {
+    console.error('Error serving audio file:', error);
+    
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ error: 'Token expired' });
+    }
+    
+    res.status(500).json({ error: 'Failed to serve audio file' });
+  }
+});
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
