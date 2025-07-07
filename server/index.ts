@@ -31,8 +31,8 @@ app.get('/api/audio/serve/:token', async (req, res) => {
     // Verify JWT token
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default-secret') as any;
     
-    // Validate token structure (JWT payload uses 'path', not 'filePath')
-    if (!decoded.path || !decoded.userId || !decoded.purpose) {
+    // Validate token structure (JWT payload uses 'relativePath')
+    if (!decoded.relativePath || !decoded.userId || !decoded.purpose) {
       return res.status(401).json({ error: 'Invalid token structure' });
     }
     
@@ -47,7 +47,7 @@ app.get('/api/audio/serve/:token', async (req, res) => {
     }
     
     // Get absolute file path
-    const fullPath = path.join(process.cwd(), decoded.path);
+    const fullPath = path.join(process.cwd(), decoded.relativePath);
     
     // Check if file exists
     const fileExists = await fs.access(fullPath).then(() => true).catch(() => false);

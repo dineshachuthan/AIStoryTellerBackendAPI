@@ -192,6 +192,7 @@ export class AudioStorageFactory {
 
   private initializeProviders(): void {
     // Initialize Replit provider
+    console.log(`[AudioStorage] Initializing Replit provider with baseUrl: ${AUDIO_STORAGE_PROVIDERS.replit.baseUrl}`);
     this.providers.set('replit', new ReplitAudioStorageProvider(AUDIO_STORAGE_PROVIDERS.replit));
 
     // Initialize S3 provider (if configured)
