@@ -5261,6 +5261,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Voice ID Recovery endpoint for lost ElevenLabs voice references
+  app.post('/api/voice-cloning/recovery', requireAuth, async (req, res) => {
+    try {
+      const { voiceId, category } = req.body;
+      const userId = (req.user as any)?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+      
+      if (!voiceId) {
+        return res.status(400).json({ 
+          error: 'Missing required field: voiceId' 
+        });
+      }
+      
+      console.log(`[VoiceRecovery] Starting recovery for voice ${voiceId}, user ${userId}, category ${category}`);
+      
+      // Get all user ESM records
+      const userEsmRecords = await storage.getUserEsmByUser(userId);
+      let updatedEsm = 0;
+      let updatedRecordings = 0;
+      
+      for (const record of userEsmRecords) {
+        // If category specified (1=emotions, 2=sounds, 3=modulations), only update that category
+        if (category && record.category !== category) continue;
+        
+        console.log(`[VoiceRecovery] Updating ESM record ${record.id}`);
+        
+        // Update the user_esm narrator_voice_id
+        await storage.updateUserEsm(record.id, {
+          narrator_voice_id: voiceId,
+          is_locked: true,
+          locked_at: new Date().toISOString()
+        });
+        updatedEsm++;
+        
+        // Also update all recordings for this ESM
+        const recordings = await storage.getUserEsmRecordings(record.id);
+        for (const recording of recordings) {
+          await storage.updateUserEsmRecording(recording.id, {
+            narrator_voice_id: voiceId,
+            is_locked: true,
+            locked_at: new Date().toISOString()
+          });
+          updatedRecordings++;
+        }
+      }
+      
+      console.log(`[VoiceRecovery] Recovery complete: ${updatedEsm} ESM items, ${updatedRecordings} recordings updated`);
+      
+      res.json({
+        success: true,
+        message: `Successfully recovered voice ID for ${updatedEsm} ESM items and ${updatedRecordings} recordings`,
+        voiceId,
+        updatedEsm,
+        updatedRecordings
+      });
+      
+    } catch (error) {
+      console.error('[VoiceRecovery] Error:', error);
+      res.status(500).json({ 
+        error: 'Failed to recover voice ID',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // Setup video webhook handlers for callback-based notifications
   setupVideoWebhooks(app);
 

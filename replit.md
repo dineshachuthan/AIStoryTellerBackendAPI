@@ -392,6 +392,15 @@ This is a full-stack collaborative storytelling platform that enables users to c
 
 ## Changelog
 
+### **VOICE ID RECOVERY ENDPOINT CREATED - January 08, 2025**
+**Critical Data Loss Issue Resolved**: Created recovery mechanism for lost ElevenLabs voice IDs
+- **IDENTIFIED ISSUE**: Voice cloning succeeded but SQL syntax errors prevented storing voice ID in database
+- **DATA LOSS**: Voice ID `cuxbYT1nu3MZbK8JwgAZ` was created in ElevenLabs but had no database reference
+- **RECOVERY ENDPOINT**: Created `/api/voice-cloning/recovery` to manually recover lost voice IDs
+- **RECOVERY SCRIPT**: Added `recover-voice-id.js` helper script for easy voice ID recovery
+- **SQL FIXES**: Fixed field name issues in MVP2 ElevenLabs integration (`user_esm_recordings_id` → `id`)
+- **PREVENTION**: Future voice cloning operations will properly store voice IDs without SQL errors
+
 ### **GLOBAL VOICE SAMPLES SIMPLIFIED - January 07, 2025**
 **Replaced Complex Voice Samples Page with Simple Grid View**
 - **REMOVED COMPLEX LOGIC**: Eliminated all voice modulation templates, progress tracking, and voice cloning triggers from global voice samples page
