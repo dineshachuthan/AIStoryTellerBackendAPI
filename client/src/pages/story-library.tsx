@@ -244,20 +244,7 @@ export default function StoryLibrary() {
             {filteredStories.length} stories
           </div>
 
-          <Button
-            onClick={() => createStoryAndNavigate("text", "/upload-story")}
-            disabled={isCreatingStory}
-            className="w-full bg-tiktok-red hover:bg-tiktok-red/80"
-          >
-            {isCreatingStory ? (
-              <>
-                <div className="w-4 h-4 animate-spin border-2 border-white border-t-transparent rounded-full mr-2" />
-                Creating...
-              </>
-            ) : (
-              "Create New Story"
-            )}
-          </Button>
+
 
           {/* Mobile Story Grid */}
           {filteredStories.length === 0 ? (
@@ -476,20 +463,7 @@ export default function StoryLibrary() {
               {filteredStories.length} of {narrationCompleteStories.length} narrated stories
             </div>
 
-            <Button
-              onClick={() => createStoryAndNavigate("text", "/upload-story")}
-              disabled={isCreatingStory}
-              className="w-full bg-tiktok-red hover:bg-tiktok-red/80"
-            >
-              {isCreatingStory ? (
-                <>
-                  <div className="w-4 h-4 animate-spin border-2 border-white border-t-transparent rounded-full mr-2" />
-                  Creating...
-                </>
-              ) : (
-                "Create New Story"
-              )}
-            </Button>
+
           </div>
         </div>
 
