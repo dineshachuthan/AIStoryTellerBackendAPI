@@ -1734,6 +1734,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Clear all narrations when new voice is generated
+  app.post('/api/user/clear-narrations', requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any)?.id;
+      
+      // Clear all stored narrator voices from stories
+      const userStories = await storage.getUserStories(userId);
+      for (const story of userStories) {
+        if (story.narratorVoice || story.narratorVoiceType) {
+          await storage.updateStory(story.id, {
+            narratorVoice: null,
+            narratorVoiceType: null
+          });
+        }
+      }
+      
+      // Delete all narrations from database and filesystem
+      await storage.deleteAllUserNarrations(userId);
+      
+      res.json({ 
+        success: true, 
+        message: 'All narrations cleared successfully',
+        storiesCleared: userStories.filter(s => s.narratorVoice).length
+      });
+    } catch (error) {
+      console.error('Error clearing narrations:', error);
+      res.status(500).json({ message: 'Failed to clear narrations' });
+    }
+  });
+
   // User-specific stories routes (private by default)
   app.get("/api/users/:userId/stories", requireAuth, async (req, res) => {
     try {

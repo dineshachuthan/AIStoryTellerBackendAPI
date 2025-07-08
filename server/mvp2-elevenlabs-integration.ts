@@ -308,7 +308,7 @@ export class MVP2ElevenLabsIntegration {
       const userStories = await storage.getUserStories(userId);
       
       for (const story of userStories) {
-        if (story.narratorVoice) {
+        if (story.narratorVoice || story.narratorVoiceType) {
           await storage.updateStory(story.id, {
             narratorVoice: null,
             narratorVoiceType: null
@@ -317,8 +317,22 @@ export class MVP2ElevenLabsIntegration {
         }
       }
       
-      // Delete all saved narrations from database
+      // Delete all saved narrations from database - this includes story_narrations table
       await storage.deleteAllUserNarrations(userId);
+      console.log(`[MVP2ElevenLabs] Deleted all narrations from database for user ${userId}`);
+      
+      // Also delete audio files to ensure complete cleanup
+      const fs = await import('fs/promises');
+      const path = await import('path');
+      
+      const userAudioDir = path.join(process.cwd(), 'stories', 'audio', 'private', userId);
+      try {
+        await fs.rm(userAudioDir, { recursive: true, force: true });
+        console.log(`[MVP2ElevenLabs] Deleted audio directory for user ${userId}`);
+      } catch (error) {
+        // Directory might not exist, that's fine
+        console.log(`[MVP2ElevenLabs] Audio directory not found for user ${userId} - skipping`);
+      }
       
     } catch (error) {
       console.error(`[MVP2ElevenLabs] Error clearing story narrations:`, error);
