@@ -190,18 +190,28 @@ export default function StoryNarratorControls({
 
   const playNarration = () => {
     const activeNarration = tempNarration || savedNarration;
-    if (!activeNarration) return;
+    console.log('Play clicked - activeNarration:', activeNarration);
+    console.log('Current segment:', currentSegment);
+    console.log('Is paused:', isPaused);
+    console.log('Audio element exists:', !!audioRef.current);
+    
+    if (!activeNarration) {
+      console.error('No narration available');
+      return;
+    }
 
     setIsPlaying(true);
     
     // If resuming from pause, just play
     if (isPaused && audioRef.current && audioRef.current.paused) {
+      console.log('Resuming from pause');
       audioRef.current.play().catch(err => {
         console.error('Resume error:', err);
         setIsPlaying(false);
       });
       setIsPaused(false);
     } else {
+      console.log('Starting fresh playback');
       // Fresh start - play current segment
       playCurrentSegment();
     }
