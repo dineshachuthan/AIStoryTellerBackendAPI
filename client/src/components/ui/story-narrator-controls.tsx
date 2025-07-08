@@ -172,7 +172,7 @@ export default function StoryNarratorControls({
     }
   };
 
-  // 2. Play Narration (from memory - no cost)
+  // 2. Play Narration segment
   const playCurrentSegment = () => {
     const activeNarration = tempNarration || savedNarration;
     if (!activeNarration || !audioRef.current) return;
@@ -180,26 +180,57 @@ export default function StoryNarratorControls({
     const segment = activeNarration.segments[currentSegment];
     if (!segment?.audioUrl) return;
 
-    // Only set source if it's different (to avoid resetting during pause/resume)
-    if (audioRef.current.src !== window.location.origin + segment.audioUrl) {
-      audioRef.current.src = segment.audioUrl;
-    }
-    audioRef.current.play();
+    console.log('Playing segment:', currentSegment, 'URL:', segment.audioUrl);
+    audioRef.current.src = segment.audioUrl;
+    setIsPaused(false);
+    
+    // Add load event to ensure audio is loaded before playing
+    audioRef.current.load();
+    
+    audioRef.current.play().then(() => {
+      console.log('Audio playing successfully');
+    }).catch(err => {
+      console.error('Error playing segment:', err);
+      console.error('Error details:', err.message, err.name);
+      setIsPlaying(false);
+    });
   };
 
   const playNarration = () => {
     const activeNarration = tempNarration || savedNarration;
-    if (!activeNarration) return;
+    console.log('playNarration called - activeNarration:', activeNarration);
+    console.log('audioRef.current:', audioRef.current);
+    
+    if (!activeNarration || !audioRef.current) {
+      console.error('Missing narration or audio element');
+      return;
+    }
 
     setIsPlaying(true);
     
-    // If we're resuming from pause, just play without resetting
-    if (isPaused && audioRef.current && audioRef.current.src) {
-      audioRef.current.play();
+    // If audio is paused at current position, just resume
+    if (audioRef.current.paused && audioRef.current.src && isPaused) {
+      audioRef.current.play().catch(err => {
+        console.error('Error resuming audio:', err);
+        setIsPlaying(false);
+      });
       setIsPaused(false);
     } else {
-      // Fresh start - load and play current segment
-      playCurrentSegment();
+      // Load and play current segment
+      const segment = activeNarration.segments[currentSegment];
+      if (segment?.audioUrl) {
+        console.log('Playing from button click - segment:', currentSegment, 'URL:', segment.audioUrl);
+        audioRef.current.src = segment.audioUrl;
+        audioRef.current.load();
+        audioRef.current.play().then(() => {
+          console.log('Started playing from button click');
+        }).catch(err => {
+          console.error('Error playing audio from button:', err);
+          console.error('Error details:', err.message, err.name);
+          setIsPlaying(false);
+        });
+        setIsPaused(false);
+      }
     }
   };
 
@@ -287,12 +318,20 @@ export default function StoryNarratorControls({
         </div>
       </div>
 
-      {/* Progress visualization - only show when actually playing */}
-      {hasAnyNarration && isPlaying && (
-        <div className="mb-6 p-4 bg-white/5 rounded-lg border border-purple-400/20">
-          <div className="flex justify-between text-sm text-purple-200 mb-2">
-            <span>Segment {currentSegment + 1} of {activeNarration?.segments.length || 0}</span>
-            <span>{Math.round(progress)}% complete</span>
+      {/* Progress visualization - always show to prevent UI jumping */}
+      {hasAnyNarration && (
+        <div className={`mb-6 p-4 rounded-lg border transition-all duration-200 ${
+          isPlaying 
+            ? 'bg-white/5 border-purple-400/20' 
+            : 'bg-black/20 border-gray-600/20'
+        }`}>
+          <div className="flex justify-between text-sm mb-2">
+            <span className={isPlaying ? 'text-purple-200' : 'text-gray-400'}>
+              Segment {currentSegment + 1} of {activeNarration?.segments.length || 0}
+            </span>
+            <span className={isPlaying ? 'text-purple-200' : 'text-gray-400'}>
+              {Math.round(progress)}% complete
+            </span>
           </div>
           <div className="w-full bg-gray-700 rounded-full h-3 overflow-hidden">
             <div 

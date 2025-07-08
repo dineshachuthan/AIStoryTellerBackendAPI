@@ -417,16 +417,18 @@ This is a full-stack collaborative storytelling platform that enables users to c
 ### **AUDIO PLAYBACK FIXES - January 08, 2025**
 **Fixed Multiple Audio Playback Issues**: Resolved pause/resume and segment advancement problems
 - **PAUSE/RESUME ISSUE**: Fixed audio restarting from beginning when resuming from pause
-  - Changed button logic to always check isPlaying state first
-  - playStory() now only resets position when not resuming from pause
-  - Added isPaused state tracking for proper resume behavior
+  - Simplified playback logic to check audio.paused state directly
+  - Removed problematic URL comparison that was preventing playback
+  - Added proper error handling for play() promises
 - **SEGMENT ADVANCEMENT FIX**: Fixed segments not auto-advancing due to stale closure
   - Added dependencies to audio event handler useEffect to fix stale state
   - onended event now properly reads current state values
 - **PROGRESS BAR FIX**: Fixed progress showing only single segment progress
   - Implemented overall progress calculation across all segments
   - Progress now shows true completion percentage of entire narration
-- **DISPLAY IMPROVEMENTS**: Segment counter and progress now accurately reflect playback state
+- **UI FLICKER FIX**: Progress bar now always visible to prevent layout jumping
+  - Changed from show/hide to style changes (dimmed when paused)
+  - Prevents play/pause button from moving up and down
 
 ### **STORY NARRATION AUTO-SAVE FIX - January 08, 2025**
 **Fixed Narration Save Error**: Resolved duplicate save attempt issue with story narrations
