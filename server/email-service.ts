@@ -1,12 +1,14 @@
-import { MailService } from '@sendgrid/mail';
+import { emailProviderRegistry } from './email-providers/email-provider-registry';
+import { EmailMessage } from './email-providers/email-provider-interface';
 
-if (!process.env.SENDGRID_API_KEY) {
-  console.warn("SENDGRID_API_KEY not configured - email invitations will not work");
-}
+// Initialize email provider registry
+const emailRegistry = emailProviderRegistry;
 
-const mailService = new MailService();
-if (process.env.SENDGRID_API_KEY) {
-  mailService.setApiKey(process.env.SENDGRID_API_KEY);
+// Check if any email provider is configured
+const emailProvider = emailRegistry.getActiveProvider();
+if (!emailProvider) {
+  console.warn("Email provider not configured - missing API key or from email");
+  console.warn("Configure either MAILGUN_API_KEY + MAILGUN_DOMAIN or SENDGRID_API_KEY");
 }
 
 export interface InvitationEmailData {
@@ -19,8 +21,9 @@ export interface InvitationEmailData {
 }
 
 export async function sendRoleplayInvitation(data: InvitationEmailData): Promise<boolean> {
-  if (!process.env.SENDGRID_API_KEY) {
-    console.log(`Email invitation to ${data.recipientEmail} for character ${data.characterName} - SendGrid not configured`);
+  const emailProvider = emailRegistry.getActiveProvider();
+  if (!emailProvider) {
+    console.log(`Email invitation to ${data.recipientEmail} for character ${data.characterName} - No email provider configured`);
     return false;
   }
   
@@ -82,25 +85,50 @@ ${data.invitationLink}
 Thank you for participating in our storytelling community!
     `;
 
-    await mailService.send({
+    const emailMessage: EmailMessage = {
       to: data.recipientEmail,
-      from: process.env.SENDGRID_FROM_EMAIL || 'test@example.com', // Use verified sender email
+      from: emailProvider.config.fromEmail || 'noreply@example.com',
       subject: `Roleplay Invitation: Play ${data.characterName} in "${data.storyTitle}"`,
       text: textContent,
       html: htmlContent,
-    });
+    };
 
-    console.log(`Roleplay invitation sent to ${data.recipientEmail} for character ${data.characterName}`);
-    return true;
+    const result = await emailProvider.sendEmail(emailMessage);
+    
+    if (result.success) {
+      console.log(`Roleplay invitation sent to ${data.recipientEmail} for character ${data.characterName}`);
+      return true;
+    } else {
+      console.error('Email send error:', result.error);
+      return false;
+    }
   } catch (error) {
-    console.error('SendGrid email error:', error);
+    console.error('Email service error:', error);
     return false;
   }
 }
 
 export async function sendSMSInvitation(phoneNumber: string, data: Omit<InvitationEmailData, 'recipientEmail'>): Promise<boolean> {
-  // SMS functionality would require a service like Twilio
-  // For now, we'll log that SMS is not implemented
-  console.log(`SMS invitation to ${phoneNumber} for character ${data.characterName} - SMS service not configured`);
-  return false;
+  const smsProvider = emailRegistry.getSMSProvider();
+  if (!smsProvider || !smsProvider.sendSMS) {
+    console.log(`SMS invitation to ${phoneNumber} for character ${data.characterName} - SMS service not configured`);
+    return false;
+  }
+
+  try {
+    const message = `Hi! ${data.senderName} invited you to play ${data.characterName} in "${data.storyTitle}". Join the roleplay: ${data.invitationLink}`;
+    
+    const result = await smsProvider.sendSMS(phoneNumber, message);
+    
+    if (result.success) {
+      console.log(`SMS invitation sent to ${phoneNumber} for character ${data.characterName}`);
+      return true;
+    } else {
+      console.error('SMS send error:', result.error);
+      return false;
+    }
+  } catch (error) {
+    console.error('SMS service error:', error);
+    return false;
+  }
 }
