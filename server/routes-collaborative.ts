@@ -49,19 +49,19 @@ router.post("/api/stories/:id/invitations", requireAuth, async (req, res) => {
         // Create invitation token and link
         const invitationToken = `inv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         const baseUrl = getBaseUrl();
-        const invitationLink = `${baseUrl}/roleplay-invitation/${invitationToken}`;
+        const invitationLink = `${baseUrl}/invite/${invitationToken}`;
         
         console.log(`Created invitation for ${characterName} in story ${storyId}: ${invitationToken}`);
         
         // Store invitation in database
         const invitationData = {
-          invitationToken,
+          token: invitationToken,
           storyId,
           inviterId: userId,
           inviteeEmail: contactMethod === 'email' ? contactValue : null,
           inviteePhone: contactMethod === 'phone' ? contactValue : null,
           status: 'pending',
-          message: `You've been invited to collaborate on a story as ${characterName}`,
+          characterName: characterName || 'a character',
           characterId: characterId || null,
           expiresAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000) // 5 days
         };
@@ -69,21 +69,24 @@ router.post("/api/stories/:id/invitations", requireAuth, async (req, res) => {
         const [savedInvitation] = await db.insert(storyInvitations).values(invitationData).returning();
         
         // Send notification
-        const message = {
-          to: contactValue,
-          subject: `You're invited to roleplay as ${characterName}`,
-          text: `${sender.firstName || 'Someone'} has invited you to participate in "${story.title}" as ${characterName}. Click here to view: ${invitationLink}`,
-          html: `<p>${sender.firstName || 'Someone'} has invited you to participate in "<strong>${story.title}</strong>" as <strong>${characterName}</strong>.</p>
-                 <p><a href="${invitationLink}">Click here to view the invitation</a></p>`
-        };
-        
         let notificationResult;
         if (contactMethod === 'email') {
-          notificationResult = await notificationService.sendEmail(message);
+          notificationResult = await notificationService.sendInvitation('email', {
+            recipientContact: contactValue,
+            recipientName: invitation.recipientName || '',
+            characterName: characterName || 'a character',
+            storyTitle: story.title,
+            invitationLink: invitationLink,
+            senderName: sender.firstName || sender.email || 'Someone'
+          });
         } else if (contactMethod === 'phone') {
-          notificationResult = await notificationService.sendSms({
-            to: contactValue,
-            body: message.text
+          notificationResult = await notificationService.sendInvitation('sms', {
+            recipientContact: contactValue,
+            recipientName: invitation.recipientName || '',
+            characterName: characterName || 'a character',
+            storyTitle: story.title,
+            invitationLink: invitationLink,
+            senderName: sender.firstName || 'Someone'
           });
         }
         

@@ -1248,6 +1248,328 @@ export const MESSAGES = {
           ko: '찾을 수 없음'
         }
       }
+    },
+    toast: {
+      invitations: {
+        sent: {
+          type: 'success' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Invitations sent!',
+            es: 'Invitaciones enviadas!',
+            fr: 'Invitations envoyées!',
+            de: 'Einladungen gesendet!',
+            ja: '招待状が送信されました！',
+            zh: '邀请已发送！',
+            ko: '초대장이 전송되었습니다!'
+          }
+        },
+        sent_count: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          variables: ['count'],
+          templates: {
+            en: 'Successfully sent {count} invitation{count, plural, one {} other {s}}',
+            es: 'Se enviaron {count} invitación{count, plural, one {} other {es}} correctamente',
+            fr: '{count} invitation{count, plural, one {} other {s}} envoyée{count, plural, one {} other {s}} avec succès',
+            de: '{count} Einladung{count, plural, one {} other {en}} erfolgreich gesendet',
+            ja: '{count}件の招待状を正常に送信しました',
+            zh: '成功发送{count}个邀请',
+            ko: '{count}개의 초대장을 성공적으로 전송했습니다'
+          }
+        },
+        failed: {
+          type: 'error' as MessageType,
+          severity: 'medium' as MessageSeverity,
+          templates: {
+            en: 'Failed to send invitations',
+            es: 'Error al enviar invitaciones',
+            fr: 'Échec de l\'envoi des invitations',
+            de: 'Fehler beim Senden der Einladungen',
+            ja: '招待状の送信に失敗しました',
+            zh: '发送邀请失败',
+            ko: '초대장 전송 실패'
+          }
+        }
+      },
+      save: {
+        success: {
+          type: 'success' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Saved successfully',
+            es: 'Guardado correctamente',
+            fr: 'Enregistré avec succès',
+            de: 'Erfolgreich gespeichert',
+            ja: '正常に保存されました',
+            zh: '保存成功',
+            ko: '성공적으로 저장되었습니다'
+          }
+        },
+        success_item: {
+          type: 'success' as MessageType,
+          severity: 'low' as MessageSeverity,
+          variables: ['item'],
+          templates: {
+            en: '{item} has been saved',
+            es: '{item} ha sido guardado',
+            fr: '{item} a été enregistré',
+            de: '{item} wurde gespeichert',
+            ja: '{item}が保存されました',
+            zh: '{item}已保存',
+            ko: '{item}이(가) 저장되었습니다'
+          }
+        },
+        failed: {
+          type: 'error' as MessageType,
+          severity: 'medium' as MessageSeverity,
+          templates: {
+            en: 'Save failed',
+            es: 'Error al guardar',
+            fr: 'Échec de l\'enregistrement',
+            de: 'Speichern fehlgeschlagen',
+            ja: '保存に失敗しました',
+            zh: '保存失败',
+            ko: '저장 실패'
+          }
+        }
+      },
+      delete: {
+        success: {
+          type: 'success' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Deleted successfully',
+            es: 'Eliminado correctamente',
+            fr: 'Supprimé avec succès',
+            de: 'Erfolgreich gelöscht',
+            ja: '正常に削除されました',
+            zh: '删除成功',
+            ko: '성공적으로 삭제되었습니다'
+          }
+        },
+        success_item: {
+          type: 'success' as MessageType,
+          severity: 'low' as MessageSeverity,
+          variables: ['item'],
+          templates: {
+            en: '{item} has been deleted',
+            es: '{item} ha sido eliminado',
+            fr: '{item} a été supprimé',
+            de: '{item} wurde gelöscht',
+            ja: '{item}が削除されました',
+            zh: '{item}已删除',
+            ko: '{item}이(가) 삭제되었습니다'
+          }
+        },
+        failed: {
+          type: 'error' as MessageType,
+          severity: 'medium' as MessageSeverity,
+          templates: {
+            en: 'Delete failed',
+            es: 'Error al eliminar',
+            fr: 'Échec de la suppression',
+            de: 'Löschen fehlgeschlagen',
+            ja: '削除に失敗しました',
+            zh: '删除失败',
+            ko: '삭제 실패'
+          }
+        }
+      },
+      recording: {
+        started: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Recording started',
+            es: 'Grabación iniciada',
+            fr: 'Enregistrement démarré',
+            de: 'Aufnahme gestartet',
+            ja: '録音を開始しました',
+            zh: '开始录音',
+            ko: '녹음이 시작되었습니다'
+          }
+        },
+        saved: {
+          type: 'success' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Recording saved',
+            es: 'Grabación guardada',
+            fr: 'Enregistrement sauvegardé',
+            de: 'Aufnahme gespeichert',
+            ja: '録音が保存されました',
+            zh: '录音已保存',
+            ko: '녹음이 저장되었습니다'
+          }
+        },
+        failed: {
+          type: 'error' as MessageType,
+          severity: 'medium' as MessageSeverity,
+          templates: {
+            en: 'Recording failed',
+            es: 'Error en la grabación',
+            fr: 'Échec de l\'enregistrement',
+            de: 'Aufnahme fehlgeschlagen',
+            ja: '録音に失敗しました',
+            zh: '录音失败',
+            ko: '녹음 실패'
+          }
+        }
+      },
+      video: {
+        generation_started: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Video generation started',
+            es: 'Generación de vídeo iniciada',
+            fr: 'Génération de vidéo démarrée',
+            de: 'Videogenerierung gestartet',
+            ja: 'ビデオ生成を開始しました',
+            zh: '视频生成已开始',
+            ko: '비디오 생성이 시작되었습니다'
+          }
+        },
+        generation_complete: {
+          type: 'success' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Video ready!',
+            es: '¡Vídeo listo!',
+            fr: 'Vidéo prête!',
+            de: 'Video fertig!',
+            ja: 'ビデオの準備ができました！',
+            zh: '视频已就绪！',
+            ko: '비디오 준비 완료!'
+          }
+        },
+        generation_failed: {
+          type: 'error' as MessageType,
+          severity: 'medium' as MessageSeverity,
+          templates: {
+            en: 'Video generation failed',
+            es: 'Error en la generación de vídeo',
+            fr: 'Échec de la génération de vidéo',
+            de: 'Videogenerierung fehlgeschlagen',
+            ja: 'ビデオ生成に失敗しました',
+            zh: '视频生成失败',
+            ko: '비디오 생성 실패'
+          }
+        }
+      },
+      narration: {
+        generating: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Generating narration',
+            es: 'Generando narración',
+            fr: 'Génération de la narration',
+            de: 'Erzählung wird generiert',
+            ja: 'ナレーションを生成中',
+            zh: '正在生成旁白',
+            ko: '나레이션 생성 중'
+          }
+        },
+        complete: {
+          type: 'success' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Narration ready!',
+            es: '¡Narración lista!',
+            fr: 'Narration prête!',
+            de: 'Erzählung fertig!',
+            ja: 'ナレーションの準備ができました！',
+            zh: '旁白已就绪！',
+            ko: '나레이션 준비 완료!'
+          }
+        },
+        failed: {
+          type: 'error' as MessageType,
+          severity: 'medium' as MessageSeverity,
+          templates: {
+            en: 'Narration failed',
+            es: 'Error en la narración',
+            fr: 'Échec de la narration',
+            de: 'Erzählung fehlgeschlagen',
+            ja: 'ナレーションに失敗しました',
+            zh: '旁白失败',
+            ko: '나레이션 실패'
+          }
+        }
+      },
+      upload: {
+        complete: {
+          type: 'success' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Upload complete',
+            es: 'Carga completa',
+            fr: 'Téléchargement terminé',
+            de: 'Upload abgeschlossen',
+            ja: 'アップロード完了',
+            zh: '上传完成',
+            ko: '업로드 완료'
+          }
+        },
+        failed: {
+          type: 'error' as MessageType,
+          severity: 'medium' as MessageSeverity,
+          templates: {
+            en: 'Upload failed',
+            es: 'Error en la carga',
+            fr: 'Échec du téléchargement',
+            de: 'Upload fehlgeschlagen',
+            ja: 'アップロードに失敗しました',
+            zh: '上传失败',
+            ko: '업로드 실패'
+          }
+        }
+      },
+      auth: {
+        login_required: {
+          type: 'warning' as MessageType,
+          severity: 'medium' as MessageSeverity,
+          templates: {
+            en: 'Login required',
+            es: 'Inicio de sesión requerido',
+            fr: 'Connexion requise',
+            de: 'Anmeldung erforderlich',
+            ja: 'ログインが必要です',
+            zh: '需要登录',
+            ko: '로그인 필요'
+          }
+        },
+        permission_denied: {
+          type: 'error' as MessageType,
+          severity: 'high' as MessageSeverity,
+          templates: {
+            en: 'Permission denied',
+            es: 'Permiso denegado',
+            fr: 'Permission refusée',
+            de: 'Zugriff verweigert',
+            ja: 'アクセスが拒否されました',
+            zh: '权限被拒绝',
+            ko: '권한이 거부되었습니다'
+          }
+        }
+      },
+      network: {
+        error: {
+          type: 'error' as MessageType,
+          severity: 'high' as MessageSeverity,
+          templates: {
+            en: 'Network error',
+            es: 'Error de red',
+            fr: 'Erreur réseau',
+            de: 'Netzwerkfehler',
+            ja: 'ネットワークエラー',
+            zh: '网络错误',
+            ko: '네트워크 오류'
+          }
+        }
+      }
     }
   }
 } as const;

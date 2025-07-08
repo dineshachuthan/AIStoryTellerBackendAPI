@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
+import { toast, toastMessages } from "@/lib/toast-utils";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
 import { Mail, Phone, Send, Plus, X } from "lucide-react";
@@ -55,6 +55,7 @@ export function InviteCollaboratorsDialog({
       toast({
         title: "Invitations sent!",
         description: `Successfully sent ${invites.filter(i => i.value).length} invitation(s)`,
+        duration: 5000, // Auto dismiss after 5 seconds
       });
       queryClient.invalidateQueries({ queryKey: ['/api/stories', story.id, 'invitations'] });
       onOpenChange(false);
@@ -67,6 +68,7 @@ export function InviteCollaboratorsDialog({
         title: "Failed to send invitations",
         description: error.message,
         variant: "destructive",
+        duration: 5000, // Auto dismiss after 5 seconds
       });
     },
   });

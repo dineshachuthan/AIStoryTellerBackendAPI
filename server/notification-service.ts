@@ -192,7 +192,15 @@ Thank you for participating in our storytelling community!
     }
 
     try {
-      const result = await this.mailService.send({
+      const provider = this.emailRegistry.getActiveProvider();
+      if (!provider) {
+        return {
+          success: false,
+          error: 'No active email provider'
+        };
+      }
+
+      const result = await provider.sendEmail({
         to: recipient,
         from: this.fromEmail,
         subject: 'Notification from Storytelling Platform',
