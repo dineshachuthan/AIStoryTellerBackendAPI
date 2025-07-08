@@ -156,7 +156,7 @@ export default function Home() {
 
         {/* Main Content Area */}
         <div className="flex-1 relative overflow-auto p-4 lg:p-6">
-          <div className="max-w-7xl mx-auto space-y-6">
+          <div className="max-w-full xl:max-w-[1400px] 2xl:max-w-[1600px] mx-auto space-y-6">
             
             {/* Welcome Section */}
             <div className="text-center mb-8">
@@ -231,9 +231,9 @@ export default function Home() {
             </div>
 
             {/* Main Actions Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
               {/* Create New Story Section */}
-              <div className="space-y-6">
+              <div className="xl:col-span-2 space-y-6">
                 {/* Create New Story */}
                 <Card className="bg-dark-card border-gray-800">
                 <CardHeader>
@@ -364,11 +364,16 @@ export default function Home() {
                 </Card>
               </div>
 
-              {/* Empty div for grid balance */}
-              <div></div>
+              {/* Character Feed - right column on xl screens */}
+              <div className="hidden xl:block">
+                <CharacterFeed />
+              </div>
             </div>
 
-            <CharacterFeed />
+            {/* Character Feed - bottom on smaller screens */}
+            <div className="xl:hidden">
+              <CharacterFeed />
+            </div>
           </div>
         </div>
       </div>

@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { AudioLines, LogOut, User, Loader2, Home, BookOpen, Globe } from "lucide-react";
+import { LogOut, User, Home, BookOpen, Globe } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useLanguage } from "@/contexts/language-context";
 import { LANGUAGE_CONFIG } from "@shared/language-config";
@@ -120,27 +120,7 @@ export function AppTopNavigation() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Button
-            onClick={() => {
-              // Users can freely navigate even during cloning
-              setLocation("/voice-samples");
-            }}
-            variant="outline"
-            size="sm"
-            className={`${
-              voiceCloningStatus?.isAnyCloning 
-                ? "border-orange-500 text-orange-500 hover:bg-orange-500/20" 
-                : "border-tiktok-cyan text-tiktok-cyan hover:bg-tiktok-cyan/20"
-            } hidden sm:flex`}
-            title={voiceCloningStatus?.isAnyCloning ? "ElevenLabs voice cloning in progress (you can still navigate)" : "Record voice samples for personalized narration"}
-          >
-            {voiceCloningStatus?.isAnyCloning ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
-              <AudioLines className="w-4 h-4 mr-2" />
-            )}
-            <span className="hidden lg:inline">{voiceCloningStatus?.navigationButtonLabel || "Voice Samples"}</span>
-          </Button>
+
 
           <Button
             onClick={async () => {

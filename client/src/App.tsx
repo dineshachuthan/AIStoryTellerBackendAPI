@@ -83,7 +83,6 @@ function AppContent() {
               <Route path="/story-analysis" component={StoryAnalysis} />
               <Route path="/analysis/:storyId" component={StoryAnalysis} />
               <Route path="/voice-setup" component={SimplifiedVoiceSamples} />
-              <Route path="/voice-samples" component={SimplifiedVoiceSamples} />
               <Route path="/story/:storyId" component={StoryPlayer} />
               <Route path="/story/:storyId/play" component={StoryPlayer} />
               <Route path="/story/:storyId/collaborate" component={StoryCollaboration} />
