@@ -25,7 +25,7 @@ import {
   EyeOff,
   Star,
   MessageSquare,
-  Eye,
+  Edit2,
   Loader2,
   Trash2,
   AlertTriangle,
@@ -54,6 +54,8 @@ interface Story {
   createdAt?: string;
   narratorVoice?: string;
   narratorVoiceType?: string;
+  emotions?: string[];
+  emotionalTags?: string[];
 }
 
 export default function StoryLibrary() {
@@ -274,14 +276,65 @@ export default function StoryLibrary() {
                     {genreStories.map((story: Story) => (
                       <Card key={story.id} className="bg-dark-card border-gray-800 hover:border-gray-700 transition-colors">
                         <CardHeader className="pb-2">
-                          <CardTitle className="text-white text-base leading-tight line-clamp-2">
-                            {story.title}
-                          </CardTitle>
-                          {story.category && (
-                            <Badge variant="secondary" className="bg-gray-700 text-gray-300 text-xs w-fit">
-                              {story.category}
-                            </Badge>
-                          )}
+                          <div className="space-y-1">
+                            <CardTitle className="text-white text-base leading-tight flex items-center justify-between">
+                              <span className="flex items-start flex-1 mr-2">
+                                {!story.isPublic && (
+                                  <EyeOff className="w-4 h-4 text-gray-400 mr-2 mt-0.5 flex-shrink-0" />
+                                )}
+                                <span className="line-clamp-2">{story.title}</span>
+                              </span>
+                              <div className="flex items-center space-x-1 flex-shrink-0">
+                                <button
+                                  onClick={() => setLocation(`/${story.id}/upload-story`)}
+                                  className="p-1 hover:bg-gray-700 rounded transition-colors"
+                                  title="Edit"
+                                >
+                                  <Edit2 className="w-3 h-3 text-gray-400 hover:text-white" />
+                                </button>
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <button
+                                      className="p-1 hover:bg-gray-700 rounded transition-colors"
+                                      disabled={deletingStories.has(story.id)}
+                                      title="Delete"
+                                    >
+                                      {deletingStories.has(story.id) ? (
+                                        <Loader2 className="w-3 h-3 text-gray-400 animate-spin" />
+                                      ) : (
+                                        <Trash2 className="w-3 h-3 text-gray-400 hover:text-red-400" />
+                                      )}
+                                    </button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent className="bg-dark-card border-gray-800">
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle className="text-white flex items-center">
+                                        <AlertTriangle className="w-5 h-5 text-yellow-500 mr-2" />
+                                        Delete Story
+                                      </AlertDialogTitle>
+                                      <AlertDialogDescription className="text-gray-400">
+                                        Are you sure you want to delete "{story.title}"? This action cannot be undone.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel className="bg-gray-800 text-white hover:bg-gray-700">Cancel</AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={() => deleteStory(story.id)}
+                                        className="bg-red-600 text-white hover:bg-red-700"
+                                      >
+                                        Delete
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </div>
+                            </CardTitle>
+                            {story.category && (
+                              <Badge variant="secondary" className="bg-gray-700 text-gray-300 text-xs w-fit">
+                                {story.category}
+                              </Badge>
+                            )}
+                          </div>
                         </CardHeader>
                         <CardContent className="pt-0 space-y-3">
                           {story.summary && (
@@ -308,86 +361,42 @@ export default function StoryLibrary() {
                           </div>
 
                           <div className="space-y-2">
-                            <div className="flex space-x-2">
-                              <Button
-                                size="sm"
-                                onClick={() => setLocation(`/analysis/${story.id}`)}
-                                className="flex-1 bg-orange-600 hover:bg-orange-700 text-white text-xs"
-                              >
-                                <Mic className="w-3 h-3 mr-1" />
-                                Record Voice Samples
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => setLocation(`/${story.id}/upload-story`)}
-                                className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-800 text-xs"
-                              >
-                                <Eye className="w-3 h-3 mr-1" />
-                                Edit
-                              </Button>
-                            </div>
-                            
-                            <div className="flex space-x-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => convertToCollaborative(story.id)}
-                                disabled={convertingStories.has(story.id)}
-                                className="flex-1 border-purple-600 text-purple-400 hover:bg-purple-900/20 text-xs"
-                              >
-                                {convertingStories.has(story.id) ? (
-                                  <>
-                                    <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                                    Converting...
-                                  </>
-                                ) : (
-                                  <>
-                                    <Users className="w-3 h-3 mr-1" />
-                                    Collaborate
-                                  </>
+                            {/* Display emotion tags if available */}
+                            {(story.emotions || story.emotionalTags || []).length > 0 && (
+                              <div className="flex flex-wrap gap-1 mb-2">
+                                {(story.emotions || story.emotionalTags || []).slice(0, 4).map((emotion, idx) => (
+                                  <Badge key={idx} variant="secondary" className="text-xs bg-gray-800/80 text-gray-300">
+                                    {emotion}
+                                  </Badge>
+                                ))}
+                                {(story.emotions || story.emotionalTags || []).length > 4 && (
+                                  <Badge variant="secondary" className="text-xs bg-gray-800/80 text-gray-400">
+                                    +{(story.emotions || story.emotionalTags || []).length - 4}
+                                  </Badge>
                                 )}
-                              </Button>
-                              
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    disabled={deletingStories.has(story.id)}
-                                    className="border-red-600 text-red-400 hover:bg-red-900/20 px-3"
-                                  >
-                                    {deletingStories.has(story.id) ? (
-                                      <Loader2 className="w-3 h-3 animate-spin" />
-                                    ) : (
-                                      <Trash2 className="w-3 h-3" />
-                                    )}
-                                  </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent className="bg-dark-card border-gray-800">
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle className="text-white flex items-center">
-                                      <AlertTriangle className="w-5 h-5 mr-2 text-red-400" />
-                                      Delete Story
-                                    </AlertDialogTitle>
-                                    <AlertDialogDescription className="text-gray-400">
-                                      Are you sure you want to delete "{story.title}"? This will move the story to your archive.
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel className="bg-gray-700 text-gray-300 hover:bg-gray-600">
-                                      Cancel
-                                    </AlertDialogCancel>
-                                    <AlertDialogAction
-                                      onClick={() => deleteStory(story.id)}
-                                      className="bg-red-600 text-white hover:bg-red-700"
-                                    >
-                                      Delete
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
-                            </div>
+                              </div>
+                            )}
+                            
+
+                            
+                            <Button
+                              size="sm"
+                              onClick={() => convertToCollaborative(story.id)}
+                              disabled={convertingStories.has(story.id)}
+                              className="w-full border-purple-600 text-purple-400 hover:bg-purple-900/20 text-xs"
+                            >
+                              {convertingStories.has(story.id) ? (
+                                <>
+                                  <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                  Converting...
+                                </>
+                              ) : (
+                                <>
+                                  <Users className="w-3 h-3 mr-1" />
+                                  Collaborate
+                                </>
+                              )}
+                            </Button>
                           </div>
 
                           {story.isPublic ? (
@@ -550,15 +559,23 @@ export default function StoryLibrary() {
                           </div>
 
                           <div className="space-y-2">
+                            {/* Display emotion tags if available */}
+                            {(story.emotions || story.emotionalTags || []).length > 0 && (
+                              <div className="flex flex-wrap gap-1 mb-2">
+                                {(story.emotions || story.emotionalTags || []).slice(0, 5).map((emotion, idx) => (
+                                  <Badge key={idx} variant="secondary" className="text-xs bg-gray-800/80 text-gray-300">
+                                    {emotion}
+                                  </Badge>
+                                ))}
+                                {(story.emotions || story.emotionalTags || []).length > 5 && (
+                                  <Badge variant="secondary" className="text-xs bg-gray-800/80 text-gray-400">
+                                    +{(story.emotions || story.emotionalTags || []).length - 5}
+                                  </Badge>
+                                )}
+                              </div>
+                            )}
+                            
                             <div className="flex space-x-2">
-                              <Button
-                                size="sm"
-                                onClick={() => setLocation(`/analysis/${story.id}`)}
-                                className="flex-1 bg-orange-600 hover:bg-orange-700 text-white"
-                              >
-                                <Mic className="w-4 h-4 mr-1" />
-                                Record Voice Samples
-                              </Button>
                               <Button
                                 size="sm"
                                 variant="outline"

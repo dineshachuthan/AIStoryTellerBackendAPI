@@ -8,7 +8,7 @@ import { Upload, Mic, Users, FileText, AudioLines, PenTool, Loader2, LogOut } fr
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AppTopNavigation } from "@/components/app-top-navigation";
-
+import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { defaultStoryConfig } from "@shared/storyConfig";
@@ -17,12 +17,29 @@ export default function Home() {
   const [, setLocation] = useLocation();
   const { user, logout } = useAuth();
   const { toast } = useToast();
-  const [isSearchPanelCollapsed, setIsSearchPanelCollapsed] = useState(false);
+  const [isSearchPanelCollapsed, setIsSearchPanelCollapsed] = useState(true); // Default to collapsed
   const [isCreatingStory, setIsCreatingStory] = useState(false);
   const [windowDimensions, setWindowDimensions] = useState({
     width: typeof window !== 'undefined' ? window.innerWidth : 1024,
     height: typeof window !== 'undefined' ? window.innerHeight : 768
   });
+
+  // Fetch stories to check for drafts
+  const { data: stories = [] } = useQuery<any[]>({
+    queryKey: ["/api/stories", user?.id],
+    enabled: !!user?.id,
+  });
+
+  // Check if there are draft stories (stories without narrator voice)
+  const draftStories = stories.filter(story => !story.narratorVoice && !story.narratorVoiceType);
+
+  // Set initial collapsed state based on draft stories
+  useEffect(() => {
+    // Only expand if there are draft stories AND screen is large enough
+    if (draftStories.length > 0 && windowDimensions.width >= 1024) {
+      setIsSearchPanelCollapsed(false);
+    }
+  }, [draftStories.length, windowDimensions.width]);
 
   // Dynamic screen size detection
   useEffect(() => {
@@ -35,7 +52,8 @@ export default function Home() {
       // Auto-collapse sidebar on smaller screens
       if (window.innerWidth < 768) {
         setIsSearchPanelCollapsed(true);
-      } else if (window.innerWidth >= 1024) {
+      } else if (window.innerWidth >= 1024 && draftStories.length > 0) {
+        // Only expand on large screens if there are draft stories
         setIsSearchPanelCollapsed(false);
       }
     };
@@ -44,7 +62,7 @@ export default function Home() {
     handleResize(); // Call on initial load
 
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [draftStories.length]);
 
   const getUserInitials = () => {
     if (!user) return 'U';
