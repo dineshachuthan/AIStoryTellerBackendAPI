@@ -104,14 +104,7 @@ export function CharacterFeed() {
   }
 
   if (characters.length === 0) {
-    return (
-      <div className="w-full h-full flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-dark-text mb-4">No characters available</p>
-          <p className="text-gray-text text-sm">Write a story to automatically extract characters!</p>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   return (

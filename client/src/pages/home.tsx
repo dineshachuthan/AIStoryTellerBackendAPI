@@ -123,7 +123,7 @@ export default function Home() {
          style={{ minHeight: windowDimensions.height }}>
       <AppTopNavigation />
       
-      <div className="flex min-h-screen pt-16">
+      <div className="flex pt-16">
         {/* Collapsible Search Panel */}
         <StorySearchPanel
           isCollapsed={isSearchPanelCollapsed}
@@ -133,7 +133,7 @@ export default function Home() {
         />
 
         {/* Main Content Area */}
-        <div className="flex-1 relative overflow-hidden pb-16 sm:pb-20">
+        <div className="flex-1 relative overflow-hidden">
 
           {/* Quick Actions Overlay */}
           <div className={`absolute ${styles.cardTopOffset} left-0 right-0 z-40 ${styles.containerPadding}`}>
@@ -153,7 +153,7 @@ export default function Home() {
                     onClick={() => createStoryAndNavigate("text", "/upload-story")}
                     disabled={isCreatingStory}
                     variant="outline"
-                    className="border-blue-500 text-blue-500 hover:bg-blue-500/20 w-full h-12 flex items-center justify-start px-4 gap-3"
+                    className="border-blue-500 text-blue-500 hover:bg-blue-500/20 w-full h-16 flex items-center justify-start px-4 gap-3"
                     size="sm"
                   >
                     {isCreatingStory ? 
@@ -166,7 +166,7 @@ export default function Home() {
                     onClick={() => createStoryAndNavigate("voice", "/voice-record")}
                     disabled={isCreatingStory}
                     variant="outline"
-                    className="border-green-500 text-green-500 hover:bg-green-500/20 w-full h-12 flex items-center justify-start px-4 gap-3"
+                    className="border-green-500 text-green-500 hover:bg-green-500/20 w-full h-16 flex items-center justify-start px-4 gap-3"
                     size="sm"
                   >
                     {isCreatingStory ? 
@@ -180,7 +180,7 @@ export default function Home() {
                   <Button
                     onClick={() => createStoryAndNavigate("audio", "/upload-audio")}
                     disabled={isCreatingStory}
-                    className="bg-tiktok-red hover:bg-tiktok-red/80 w-full h-12 flex items-center justify-start px-4 gap-3"
+                    className="bg-tiktok-red hover:bg-tiktok-red/80 w-full h-16 flex items-center justify-start px-4 gap-3"
                     size="sm"
                   >
                     {isCreatingStory ? 
