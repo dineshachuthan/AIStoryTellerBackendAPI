@@ -427,23 +427,26 @@ export default function StoryNarratorControls({
             {/* TV Screen */}
             <div className="bg-black rounded-2xl overflow-hidden relative">
               {/* Screen Content */}
-              <div className={`p-8 min-h-[300px] flex flex-col justify-center ${!isPlaying && 'opacity-50'}`}>
-                {/* Audio Visualizer */}
-                <div className="flex items-center justify-center gap-2 mb-6 h-24">
-                  {[...Array(20)].map((_, i) => (
-                    <div
-                      key={i}
-                      className={`w-2 bg-gradient-to-t from-green-500 via-yellow-500 to-red-500 rounded-full transition-all ${
-                        isPlaying ? 'animate-audio-wave' : ''
-                      }`}
-                      style={{
-                        height: isPlaying ? '100%' : '10%',
-                        animationDelay: `${i * 0.05}s`,
-                        animationDuration: `${0.6 + Math.random() * 0.4}s`,
-                        opacity: isPlaying ? 1 : 0.3
-                      }}
-                    />
-                  ))}
+              <div className={`p-8 min-h-[300px] flex flex-col justify-center relative ${!isPlaying && 'opacity-50'}`}>
+                {/* Audio Visualizer - Small Corner Indicator */}
+                <div className="absolute top-4 left-4 flex items-center gap-1 h-8">
+                  {isPlaying && (
+                    <>
+                      {[...Array(5)].map((_, i) => (
+                        <div
+                          key={i}
+                          className="w-1 bg-green-400 rounded-full"
+                          style={{
+                            height: '100%',
+                            animation: `audio-wave ${0.8 + i * 0.1}s ease-in-out infinite`,
+                            animationDelay: `${i * 0.1}s`,
+                            opacity: 0.7
+                          }}
+                        />
+                      ))}
+                      <span className="text-green-400 text-xs ml-2 font-mono">LIVE</span>
+                    </>
+                  )}
                 </div>
                 
                 {/* Current Text Display */}
@@ -466,12 +469,11 @@ export default function StoryNarratorControls({
                 </div>
               </div>
               
-              {/* TV Status Indicator and Segment Info */}
-              <div className="absolute top-4 right-4 flex items-center gap-3">
+              {/* Segment Info */}
+              <div className="absolute top-4 right-4">
                 <span className="text-gray-400 text-sm font-mono">
                   SEGMENT {currentSegment + 1}/{activeNarration?.segments.length || 0}
                 </span>
-                <div className={`w-3 h-3 rounded-full ${isPlaying ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
               </div>
               
               {/* Progress Info at Bottom */}
@@ -539,6 +541,7 @@ export default function StoryNarratorControls({
                     }
                   }}
                   disabled={currentSegment === 0}
+                  title={getMessage('upload_story.narration.tooltips.previous_segment')}
                 >
                   <SkipBack className="w-5 h-5" />
                 </Button>
@@ -554,6 +557,7 @@ export default function StoryNarratorControls({
                   }}
                   size="icon"
                   className="w-14 h-14 rounded-full bg-green-600 hover:bg-green-700 text-white"
+                  title={isPlaying ? getMessage('upload_story.narration.tooltips.pause_narration') : getMessage('upload_story.narration.tooltips.play_narration')}
                 >
                   {isPlaying ? (
                     <Pause className="w-6 h-6" />
@@ -575,12 +579,13 @@ export default function StoryNarratorControls({
                     }
                   }}
                   disabled={!activeNarration || currentSegment >= activeNarration.segments.length - 1}
+                  title={getMessage('upload_story.narration.tooltips.next_segment')}
                 >
                   <SkipForward className="w-5 h-5" />
                 </Button>
                 
                 {/* Volume Control */}
-                <div className="flex items-center gap-2 ml-4">
+                <div className="flex items-center gap-2 ml-4" title={getMessage('upload_story.narration.tooltips.volume_control')}>
                   <Volume2 className="w-5 h-5 text-gray-400" />
                   <input
                     type="range"

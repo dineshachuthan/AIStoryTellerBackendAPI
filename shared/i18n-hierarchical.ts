@@ -680,6 +680,84 @@ export const MESSAGES = {
             zh: '生成故事旁白',
             ko: '스토리 나레이션 생성'
           }
+        },
+        play_narration: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Play narration',
+            es: 'Reproducir narración',
+            fr: 'Lire la narration',
+            de: 'Erzählung abspielen',
+            ja: 'ナレーションを再生',
+            zh: '播放旁白',
+            ko: '나레이션 재생'
+          }
+        },
+        pause_narration: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Pause narration',
+            es: 'Pausar narración',
+            fr: 'Mettre en pause la narration',
+            de: 'Erzählung pausieren',
+            ja: 'ナレーションを一時停止',
+            zh: '暂停旁白',
+            ko: '나레이션 일시정지'
+          }
+        },
+        previous_segment: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Previous segment',
+            es: 'Segmento anterior',
+            fr: 'Segment précédent',
+            de: 'Vorheriges Segment',
+            ja: '前のセグメント',
+            zh: '上一段',
+            ko: '이전 구간'
+          }
+        },
+        next_segment: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Next segment',
+            es: 'Siguiente segmento',
+            fr: 'Segment suivant',
+            de: 'Nächstes Segment',
+            ja: '次のセグメント',
+            zh: '下一段',
+            ko: '다음 구간'
+          }
+        },
+        volume_control: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Volume control',
+            es: 'Control de volumen',
+            fr: 'Contrôle du volume',
+            de: 'Lautstärkeregelung',
+            ja: '音量調整',
+            zh: '音量控制',
+            ko: '볼륨 조절'
+          }
+        },
+        playing_status: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Playing status (Green = Playing, Red = Stopped)',
+            es: 'Estado de reproducción (Verde = Reproduciendo, Rojo = Detenido)',
+            fr: 'État de lecture (Vert = Lecture, Rouge = Arrêté)',
+            de: 'Wiedergabestatus (Grün = Wiedergabe, Rot = Gestoppt)',
+            ja: '再生状態（緑 = 再生中、赤 = 停止）',
+            zh: '播放状态（绿色 = 播放中，红色 = 停止）',
+            ko: '재생 상태 (녹색 = 재생 중, 빨간색 = 정지)'
+          }
         }
       }
     },
