@@ -180,57 +180,24 @@ export default function StoryNarratorControls({
     const segment = activeNarration.segments[currentSegment];
     if (!segment?.audioUrl) return;
 
-    console.log('Playing segment:', currentSegment, 'URL:', segment.audioUrl);
     audioRef.current.src = segment.audioUrl;
+    audioRef.current.play();
     setIsPaused(false);
-    
-    // Add load event to ensure audio is loaded before playing
-    audioRef.current.load();
-    
-    audioRef.current.play().then(() => {
-      console.log('Audio playing successfully');
-    }).catch(err => {
-      console.error('Error playing segment:', err);
-      console.error('Error details:', err.message, err.name);
-      setIsPlaying(false);
-    });
   };
 
   const playNarration = () => {
     const activeNarration = tempNarration || savedNarration;
-    console.log('playNarration called - activeNarration:', activeNarration);
-    console.log('audioRef.current:', audioRef.current);
-    
-    if (!activeNarration || !audioRef.current) {
-      console.error('Missing narration or audio element');
-      return;
-    }
+    if (!activeNarration) return;
 
     setIsPlaying(true);
     
-    // If audio is paused at current position, just resume
-    if (audioRef.current.paused && audioRef.current.src && isPaused) {
-      audioRef.current.play().catch(err => {
-        console.error('Error resuming audio:', err);
-        setIsPlaying(false);
-      });
+    // If resuming from pause, just play
+    if (isPaused && audioRef.current && audioRef.current.paused) {
+      audioRef.current.play();
       setIsPaused(false);
     } else {
-      // Load and play current segment
-      const segment = activeNarration.segments[currentSegment];
-      if (segment?.audioUrl) {
-        console.log('Playing from button click - segment:', currentSegment, 'URL:', segment.audioUrl);
-        audioRef.current.src = segment.audioUrl;
-        audioRef.current.load();
-        audioRef.current.play().then(() => {
-          console.log('Started playing from button click');
-        }).catch(err => {
-          console.error('Error playing audio from button:', err);
-          console.error('Error details:', err.message, err.name);
-          setIsPlaying(false);
-        });
-        setIsPaused(false);
-      }
+      // Fresh start - play current segment
+      playCurrentSegment();
     }
   };
 
