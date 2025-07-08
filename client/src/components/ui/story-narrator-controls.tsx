@@ -590,14 +590,14 @@ export default function StoryNarratorControls({
                 </Button>
                 
                 {/* Volume Control */}
-                <div className="flex items-center gap-2 ml-4" title={getMessage('upload_story.narration.tooltips.volume_control')}>
+                <div className="flex items-center gap-2 ml-4 bg-gray-800 rounded-full px-3 py-2" title={getMessage('upload_story.narration.tooltips.volume_control')}>
                   <Volume2 className="w-5 h-5 text-gray-400" />
                   <input
                     type="range"
                     min="0"
                     max="100"
                     defaultValue="70"
-                    className="w-24 h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer"
+                    className="w-24 h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-green-500 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer"
                     onChange={(e) => {
                       if (audioRef.current) {
                         audioRef.current.volume = parseInt(e.target.value) / 100;
