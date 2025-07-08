@@ -85,9 +85,12 @@ export default function StoryNarratorControls({
     };
 
     return () => {
-      audio.pause();
+      // Only pause on unmount, not on every re-render
+      if (!isPlaying) {
+        audio.pause();
+      }
     };
-  }, [isPlaying, tempNarration, savedNarration, currentSegment]);
+  }, [tempNarration, savedNarration, currentSegment]); // Remove isPlaying from dependencies
 
   // Auto-play when segment changes
   useEffect(() => {
@@ -201,13 +204,25 @@ export default function StoryNarratorControls({
       if (segment?.audioUrl) {
         // Always set the source to ensure proper loading
         audioRef.current.src = segment.audioUrl;
-        audioRef.current.play().catch(err => {
-          console.error('Playback error:', err);
-          console.error('Error message:', err.message);
-          console.error('Audio src:', audioRef.current.src);
-          console.error('Audio readyState:', audioRef.current.readyState);
-          setIsPlaying(false);
-        });
+        
+        // Wait for audio to be ready before playing
+        const playAudio = () => {
+          audioRef.current.play().catch(err => {
+            console.error('Playback error:', err);
+            console.error('Error message:', err.message);
+            console.error('Audio src:', audioRef.current.src);
+            console.error('Audio readyState:', audioRef.current.readyState);
+            setIsPlaying(false);
+          });
+        };
+        
+        // If audio is already loaded, play immediately
+        if (audioRef.current.readyState >= 3) {
+          playAudio();
+        } else {
+          // Otherwise wait for it to load
+          audioRef.current.addEventListener('canplay', playAudio, { once: true });
+        }
       }
     }
   };
