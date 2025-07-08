@@ -49,7 +49,7 @@ export class EmailProvider implements NotificationProvider {
   }
 
   private async initialize(config?: NotificationConfig['email']): Promise<void> {
-    this.fromEmail = config?.fromEmail || process.env.SENDGRID_FROM_EMAIL || 'noreply@storytelling.app';
+    this.fromEmail = config?.fromEmail || process.env.MAILGUN_FROM_EMAIL || process.env.SENDGRID_FROM_EMAIL || 'noreply@storytelling.app';
 
     try {
       // The registry is already initialized on app startup
