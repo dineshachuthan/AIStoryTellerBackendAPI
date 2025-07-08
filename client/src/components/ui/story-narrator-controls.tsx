@@ -450,22 +450,27 @@ export default function StoryNarratorControls({
                 </div>
                 
                 {/* Current Text Display */}
-                <div className="text-center px-4">
-                  {isPlaying && activeNarration ? (
-                    <div>
-                      <p className="text-green-400 text-sm mb-2 font-mono">
-                        NOW PLAYING - SEGMENT {currentSegment + 1}/{activeNarration.segments.length}
-                      </p>
-                      <p className="text-white text-xl leading-relaxed font-medium">
-                        "{activeNarration.segments[currentSegment]?.text || 'Loading...'}"
-                      </p>
-                    </div>
-                  ) : (
-                    <div>
-                      <p className="text-gray-500 text-lg">Press play to start narration</p>
-                      <p className="text-gray-600 text-sm mt-2">{activeNarration?.segments.length || 0} segments ready</p>
-                    </div>
-                  )}
+                <div className="text-center px-4 min-h-[120px] flex flex-col justify-center">
+                  <div className="space-y-2">
+                    <p className={`text-sm font-mono transition-all duration-300 ${
+                      isPlaying && activeNarration 
+                        ? 'text-green-400 opacity-100' 
+                        : 'text-gray-600 opacity-60'
+                    }`}>
+                      {isPlaying && activeNarration 
+                        ? `NOW PLAYING - SEGMENT ${currentSegment + 1}/${activeNarration.segments.length}`
+                        : `${activeNarration?.segments.length || 0} segments ready`}
+                    </p>
+                    <p className={`text-xl leading-relaxed font-medium transition-all duration-300 ${
+                      isPlaying && activeNarration 
+                        ? 'text-white opacity-100' 
+                        : 'text-gray-500 opacity-60'
+                    }`}>
+                      {isPlaying && activeNarration 
+                        ? `"${activeNarration.segments[currentSegment]?.text || 'Loading...'}"` 
+                        : 'Press play to start narration'}
+                    </p>
+                  </div>
                 </div>
               </div>
               
