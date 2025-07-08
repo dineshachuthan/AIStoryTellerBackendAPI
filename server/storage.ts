@@ -1127,6 +1127,39 @@ export class DatabaseStorage implements IStorage {
     await db.delete(storyNarrations).where(eq(storyNarrations.id, id));
   }
 
+  /**
+   * Delete all story narrations for a user
+   * Used when new narrator voice is generated to ensure fresh narrations
+   * @param userId - User ID whose narrations to delete
+   */
+  async deleteAllUserNarrations(userId: string): Promise<void> {
+    try {
+      // Delete all narration records from database
+      const deleted = await db
+        .delete(storyNarrations)
+        .where(eq(storyNarrations.userId, userId))
+        .returning();
+      
+      console.log(`[Storage] Deleted ${deleted.length} narrations for user ${userId}`);
+      
+      // Also delete audio files from disk
+      const fs = await import('fs/promises');
+      const path = await import('path');
+      
+      const userAudioDir = path.join(process.cwd(), 'stories', 'audio', 'private', userId);
+      try {
+        await fs.rmdir(userAudioDir, { recursive: true });
+        console.log(`[Storage] Deleted audio directory for user ${userId}`);
+      } catch (error) {
+        // Directory might not exist, that's fine
+        console.log(`[Storage] Audio directory not found for user ${userId}`);
+      }
+    } catch (error) {
+      console.error('[Storage] Error deleting user narrations:', error);
+      throw error;
+    }
+  }
+
   // Audio Files - Database-based storage implementation
   async saveAudioFile(audioData: InsertAudioFile): Promise<AudioFile> {
     const [audioFile] = await db.insert(audioFiles).values(audioData).returning();

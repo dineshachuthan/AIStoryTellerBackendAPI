@@ -501,6 +501,15 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **SQL SYNTAX FIX**: Fixed parameter placeholder issue in `updateUserEsm()` method (? → $1, $2, etc.)
 - **USER BENEFIT**: Prevents hitting ElevenLabs voice count restrictions while maintaining voice quality
 
+### **AUTOMATIC NARRATION CACHE CLEARING - January 14, 2025**
+**Story Narration Auto-Refresh**: When new narrator voice is generated, all cached narrations are automatically cleared
+- **CACHE CLEARING LOGIC**: MVP2 ElevenLabs integration now calls `clearUserStoryNarrations()` after successful voice generation
+- **STORY VOICE RESET**: Clears `narratorVoice` and `narratorVoiceType` from all user stories in database
+- **NARRATION DELETION**: Deletes all saved narrations from `storyNarrations` table for the user
+- **AUDIO FILE CLEANUP**: Removes all generated audio files from disk to ensure fresh generation
+- **GENERATE BUTTON STATE**: UI disables Generate button when narration is cached, enables when cache cleared
+- **USER BENEFIT**: Stories automatically use new ElevenLabs voice without manual intervention
+
 ### **VOICE RECORDING DURATION CONFIGURATION UPDATED - January 08, 2025**
 **Enhanced Voice Quality Requirements**: Implemented centralized configuration for optimal ElevenLabs voice cloning quality
 - **CREATED CONFIGURATION FILE**: Added shared/voice-recording-config.ts with centralized duration and text generation settings

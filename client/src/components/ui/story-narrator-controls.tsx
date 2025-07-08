@@ -368,20 +368,21 @@ export default function StoryNarratorControls({
           {/* Generate - Left */}
           <Button
             onClick={generateNarration}
-            disabled={isGenerating || !canNarrate}
+            disabled={isGenerating || !canNarrate || !!savedNarration}
             variant="outline"
             className={`
               h-12 text-sm border-orange-400/50 bg-orange-900/20 text-orange-200 
               hover:bg-orange-900/40 hover:border-orange-400 transition-all duration-200
               ${isGenerating ? 'animate-pulse' : 'hover:scale-105'}
             `}
+            title={savedNarration ? "Narration already generated" : (!canNarrate ? "Need narrator voice first" : "Generate story narration")}
           >
             {isGenerating ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
               <>
                 <Download className="w-4 h-4 mr-2" />
-                Generate
+                {savedNarration ? 'Generated' : 'Generate'}
               </>
             )}
           </Button>

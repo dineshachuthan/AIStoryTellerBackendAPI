@@ -283,8 +283,45 @@ export class MVP2ElevenLabsIntegration {
 
       console.log(`[MVP2ElevenLabs] Dual-table storage completed for ${voiceType} voice`);
       
+      // Clear all existing story narrations when new narrator voice is generated
+      try {
+        console.log(`[MVP2ElevenLabs] Clearing all story narrations for user to use new voice...`);
+        await this.clearUserStoryNarrations(userId);
+        console.log(`[MVP2ElevenLabs] Successfully cleared story narrations - stories will use new voice`);
+      } catch (error) {
+        console.error(`[MVP2ElevenLabs] Failed to clear story narrations:`, error);
+        // Don't throw - voice generation succeeded, cache clearing is secondary
+      }
+      
     } catch (error) {
       console.error(`[MVP2ElevenLabs] Failed to store MVP2 narrator voice in dual-table storage:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Clear all story narrations for a user when new voice is generated
+   */
+  private async clearUserStoryNarrations(userId: string): Promise<void> {
+    try {
+      // Clear narrator_voice from all user's stories
+      const userStories = await storage.getStories(userId);
+      
+      for (const story of userStories) {
+        if (story.narratorVoice) {
+          await storage.updateStory(story.id, {
+            narratorVoice: null,
+            narratorVoiceType: null
+          });
+          console.log(`[MVP2ElevenLabs] Cleared narrator voice from story ${story.id}: "${story.title}"`);
+        }
+      }
+      
+      // Delete all saved narrations from database
+      await storage.deleteAllUserNarrations(userId);
+      
+    } catch (error) {
+      console.error(`[MVP2ElevenLabs] Error clearing story narrations:`, error);
       throw error;
     }
   }
