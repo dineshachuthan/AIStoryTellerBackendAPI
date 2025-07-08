@@ -333,8 +333,15 @@ export class ElevenLabsModule extends BaseVoiceProvider {
 
 
 
-  async generateSpeech(text: string, voiceId: string, emotion?: string): Promise<ArrayBuffer> {
+  async generateSpeech(text: string, voiceId: string, emotion?: string, narratorProfile?: any): Promise<ArrayBuffer> {
     console.log(`[ElevenLabs] Generating speech using ElevenLabs SDK for voice ID: ${voiceId}, text length: ${text.length} characters, emotion: ${emotion || 'neutral'}`);
+    if (narratorProfile) {
+      console.log(`[ElevenLabs] Narrator profile provided:`, {
+        language: narratorProfile.language,
+        locale: narratorProfile.locale,
+        nativeLanguage: narratorProfile.nativeLanguage
+      });
+    }
     
     try {
       // Use direct API call instead of SDK which has issues
@@ -343,10 +350,7 @@ export class ElevenLabsModule extends BaseVoiceProvider {
         {
           text: text,
           model_id: 'eleven_multilingual_v2',
-          voice_settings: {
-            stability: 0.5,
-            similarity_boost: 0.5
-          }
+          voice_settings: this.getEmotionSettings(emotion)
         },
         {
           headers: {
@@ -358,7 +362,7 @@ export class ElevenLabsModule extends BaseVoiceProvider {
         }
       );
       
-      this.log('info', `Speech generation successful for voice ${voiceId}, audio size: ${response.data.length} bytes`);
+      this.log('info', `Speech generation successful for voice ${voiceId}, audio size: ${response.data.length} bytes, emotion: ${emotion || 'neutral'}`);
       return response.data;
       
     } catch (error: any) {

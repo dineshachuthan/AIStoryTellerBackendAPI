@@ -59,12 +59,13 @@ export class VoiceProviderFactory {
     text: string, 
     voiceId: string, 
     emotion?: string,
-    provider?: string
+    provider?: string,
+    narratorProfile?: any
   ): Promise<ArrayBuffer> {
     const activeProvider = provider || await this.getActiveProvider();
     const module = await this.getModule(activeProvider);
     
-    return await module.generateSpeech(text, voiceId, emotion);
+    return await module.generateSpeech(text, voiceId, emotion, narratorProfile);
   }
 
   /**

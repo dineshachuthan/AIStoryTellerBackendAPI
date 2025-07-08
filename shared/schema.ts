@@ -54,6 +54,9 @@ export const users = pgTable("users", {
   displayName: varchar("display_name"),
   profileImageUrl: varchar("profile_image_url"),
   externalId: varchar("external_id", { length: 20 }).unique(), // Anonymous ID for external services (e.g., "anon_1234567890")
+  language: varchar("language", { length: 10 }).default('en'), // User's preferred UI language
+  locale: varchar("locale", { length: 20 }), // Full locale from OAuth (en-US, hi-IN, ta-IN)
+  nativeLanguage: varchar("native_language", { length: 10 }), // Mother tongue (ta, hi, te, etc.)
   isEmailVerified: boolean("is_email_verified").default(false),
   isAdmin: boolean("is_admin").default(false),
   isActive: boolean("is_active").default(true),

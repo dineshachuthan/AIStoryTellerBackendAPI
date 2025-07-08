@@ -5,12 +5,9 @@ import { getCachedAudio, cacheAudio } from './cache/cache-service';
 import { pool } from './db';
 
 export interface NarratorProfile {
-  language: string; // Primary language (en, ta, hi)
-  dialect?: string; // Speaking style like 'indian-english', 'american-hindi'
-  accent?: string; // Regional accent
-  slangLevel?: 'none' | 'light' | 'moderate' | 'heavy'; // How much slang to use
-  codeSwitch?: boolean; // Mix languages naturally
-  formalityLevel?: 'casual' | 'neutral' | 'formal'; // Speaking formality
+  language: string; // Language for narration (en, ta, hi)
+  locale?: string; // Where you live (en-US, en-IN, etc)
+  nativeLanguage?: string; // Your mother tongue that influences accent (ta, hi, etc)
 }
 
 export interface AudioGenerationOptions {
@@ -421,33 +418,43 @@ export class AudioService {
     
     const instructions: string[] = [];
     
-    // Dialect-specific narrator styles
-    if (profile.dialect === 'indian-english') {
-      instructions.push('Speak as an Indian English narrator who naturally uses Hindi/Tamil expressions.');
-      if (profile.slangLevel === 'moderate' || profile.slangLevel === 'heavy') {
-        instructions.push('Add natural Indian expressions like "na", "yaar", "acha" where appropriate.');
-        instructions.push('Use phrases like "isn\'t it" or "only" in typical Indian English style.');
+    // Handle native language influence on narration
+    if (profile.nativeLanguage && profile.language !== profile.nativeLanguage) {
+      // User is narrating in a non-native language
+      if (profile.nativeLanguage === 'ta' && profile.language === 'en') {
+        instructions.push('Speak English with a natural Tamil-influenced accent, allowing Indian expressions and intonation patterns to come through authentically.');
+      } else if (profile.nativeLanguage === 'hi' && profile.language === 'en') {
+        instructions.push('Speak English with a natural Hindi-influenced accent, incorporating Indian expressions naturally.');
+      } else if (profile.nativeLanguage && profile.language === 'en') {
+        instructions.push(`Speak English with a natural ${profile.nativeLanguage}-influenced accent and expressions.`);
       }
-    } else if (profile.dialect === 'american-hindi') {
-      instructions.push('Speak Hindi with an American accent, mixing in English words naturally.');
-      instructions.push('Use English technical terms and modern concepts as Americans speaking Hindi would.');
-    } else if (profile.dialect === 'tamil-english') {
-      instructions.push('Speak as a Tamil narrator using English with occasional Tamil expressions.');
-      if (profile.codeSwitch) {
-        instructions.push('Mix Tamil words like "anna", "akka", "seri" naturally in conversation.');
+      
+      // Add location context if available
+      if (profile.locale === 'en-US' && (profile.nativeLanguage === 'ta' || profile.nativeLanguage === 'hi')) {
+        instructions.push('Mix American vocabulary with Indian expressions as someone living in the US would.');
       }
-    }
-    
-    // Formality level
-    if (profile.formalityLevel === 'casual') {
-      instructions.push('Use a casual, conversational tone as if telling the story to a friend.');
-    } else if (profile.formalityLevel === 'formal') {
-      instructions.push('Maintain a formal, professional narration style.');
-    }
-    
-    // Accent instructions
-    if (profile.accent) {
-      instructions.push(`Use a ${profile.accent} accent while narrating.`);
+    } else {
+      // Native speaker or same language
+      switch (profile.locale) {
+        case 'en-IN':
+          instructions.push('Speak as an Indian English narrator with natural Indian expressions and intonation.');
+          break;
+        case 'en-US':
+          instructions.push('Speak as an American English narrator with standard American pronunciation.');
+          break;
+        case 'en-GB':
+          instructions.push('Speak as a British English narrator with British pronunciation and expressions.');
+          break;
+        case 'hi-IN':
+          instructions.push('Speak Hindi with authentic Indian accent and natural expressions.');
+          break;
+        case 'ta-IN':
+          instructions.push('Speak Tamil with authentic Tamil pronunciation and expressions.');
+          break;
+        default:
+          // For other locales, use the language naturally
+          instructions.push(`Speak ${profile.language} naturally with appropriate regional accent.`);
+      }
     }
     
     return instructions.join(' ');
@@ -455,20 +462,9 @@ export class AudioService {
   
   // Enhance text with narrator personality (without changing story content)
   private enhanceNarratorVoice(text: string, profile?: NarratorProfile): string {
-    if (!profile || profile.slangLevel === 'none') return text;
-    
-    // Add narrator-specific interjections based on profile
-    let enhancedText = text;
-    
-    if (profile.dialect === 'indian-english' && profile.slangLevel !== 'none') {
-      // Add natural pauses or expressions a narrator might use
-      if (text.endsWith('.') && Math.random() > 0.7) {
-        const endings = [' Na?', ' You know.', ' Hai na.'];
-        enhancedText = text.slice(0, -1) + endings[Math.floor(Math.random() * endings.length)];
-      }
-    }
-    
-    return enhancedText;
+    // For now, return text as-is since we're letting the TTS model handle accent/style
+    // based on the narrator instructions
+    return text;
   }
 
   // Get emotion-appropriate speech speed with dynamic modulation

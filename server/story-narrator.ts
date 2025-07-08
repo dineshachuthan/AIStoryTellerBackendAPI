@@ -1,4 +1,5 @@
 import { audioService } from './audio-service';
+import type { NarratorProfile } from './audio-service';
 import { storage } from './storage';
 import { userContentStorage } from './user-content-storage';
 
@@ -19,7 +20,7 @@ export interface StoryNarrationResult {
 
 export class StoryNarrator {
   /**
-   * Get user's language preference from database
+   * Get user's language preference and narrator profile from database
    */
   private async getUserLanguage(userId: string): Promise<string> {
     try {
@@ -28,6 +29,23 @@ export class StoryNarrator {
     } catch (error) {
       console.error('Error fetching user language:', error);
       return 'en';
+    }
+  }
+
+  /**
+   * Get user's narrator profile with language, locale, and native language
+   */
+  private async getUserNarratorProfile(userId: string): Promise<NarratorProfile> {
+    try {
+      const languageData = await storage.getUserLanguage(userId);
+      return {
+        language: languageData?.language || 'en',
+        locale: languageData?.locale,
+        nativeLanguage: languageData?.nativeLanguage
+      };
+    } catch (error) {
+      console.error('Error fetching user narrator profile:', error);
+      return { language: 'en' };
     }
   }
   /**
@@ -67,6 +85,9 @@ export class StoryNarrator {
     // Extract emotions from story analysis
     const extractedEmotions = story.extractedEmotions || [];
     
+    // Get user's narrator profile for voice generation
+    const narratorProfile = await this.getUserNarratorProfile(userId);
+    
     // 4. Narrate story content with the determined narrator voice
     const segments = await this.createNarrationSegments(
       story.content, 
@@ -75,7 +96,8 @@ export class StoryNarrator {
       userId, 
       storyId,
       extractedEmotions,
-      userLanguage
+      userLanguage,
+      narratorProfile
     );
     
     const totalDuration = segments.reduce((sum, segment) => sum + (segment.duration || 0), 0);
@@ -187,7 +209,8 @@ export class StoryNarrator {
     userId: string,
     storyId: number,
     extractedEmotions: any[],
-    userLanguage: string
+    userLanguage: string,
+    narratorProfile: NarratorProfile
   ): Promise<NarrationSegment[]> {
     
     // Split content into manageable chunks for narration
@@ -210,7 +233,8 @@ export class StoryNarrator {
           storyId, 
           i,
           chunkEmotion,
-          userLanguage
+          userLanguage,
+          narratorProfile
         );
 
         segments.push({
@@ -301,7 +325,8 @@ export class StoryNarrator {
     storyId: number,
     segmentIndex: number,
     chunkEmotion: { emotion: string; intensity: number },
-    userLanguage: string
+    userLanguage: string,
+    narratorProfile: NarratorProfile
   ): Promise<{ audioUrl: string; duration?: number }> {
     
     let audioBuffer: Buffer;
@@ -312,7 +337,7 @@ export class StoryNarrator {
       
       try {
         const { VoiceProviderFactory } = await import('./voice-providers/voice-provider-factory');
-        const arrayBuffer = await VoiceProviderFactory.generateSpeech(text, narratorVoice, chunkEmotion.emotion);
+        const arrayBuffer = await VoiceProviderFactory.generateSpeech(text, narratorVoice, chunkEmotion.emotion, undefined, narratorProfile);
         audioBuffer = Buffer.from(arrayBuffer);
         
         console.log(`[StoryNarrator] ElevenLabs narration generated: ${audioBuffer.length} bytes with ${chunkEmotion.emotion} emotion`);
@@ -327,7 +352,7 @@ export class StoryNarrator {
           voice: narratorVoice,
           userId,
           storyId,
-          narratorProfile: { language: userLanguage }
+          narratorProfile
         });
         audioBuffer = buffer;
       }
@@ -342,7 +367,7 @@ export class StoryNarrator {
         voice: narratorVoice,
         userId,
         storyId,
-        narratorProfile: { language: userLanguage }
+        narratorProfile
       });
       audioBuffer = buffer;
     }

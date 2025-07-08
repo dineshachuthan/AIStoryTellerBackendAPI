@@ -368,6 +368,26 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async getUserLanguage(userId: string): Promise<{ language: string; locale?: string; nativeLanguage?: string } | undefined> {
+    const [user] = await db.select({
+      language: users.language,
+      locale: users.locale,
+      nativeLanguage: users.nativeLanguage
+    }).from(users).where(eq(users.id, userId));
+    return user || undefined;
+  }
+
+  async updateUserLanguage(userId: string, language: string, locale?: string, nativeLanguage?: string): Promise<void> {
+    await db.update(users)
+      .set({ 
+        language, 
+        locale,
+        nativeLanguage,
+        updatedAt: new Date() 
+      })
+      .where(eq(users.id, userId));
+  }
+
   // Story Analysis operations
   async getStoryAnalysis(storyId: number, analysisType: 'narrative' | 'roleplay'): Promise<StoryAnalysis | undefined> {
     const [analysis] = await db
