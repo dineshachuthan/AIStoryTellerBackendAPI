@@ -307,6 +307,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/auth/login", passport.authenticate('local'), async (req, res) => {
     const redirectUrl = req.body.redirectUrl || '/';
+    const user = req.user as any;
+    
+    // Publish login event
+    if (user) {
+      await authAdapterIntegration.handleUserUpdate(user.id, { lastLoginAt: new Date() });
+      if (process.env.ENABLE_MICROSERVICES === 'true') {
+        await authAdapterIntegration.getEventBus().publish({
+          type: 'user.login',
+          serviceName: 'monolith',
+          timestamp: new Date().toISOString(),
+          payload: {
+            userId: user.id,
+            provider: 'local'
+          }
+        });
+      }
+    }
+    
     res.json({ 
       user: req.user, 
       message: "Login successful",

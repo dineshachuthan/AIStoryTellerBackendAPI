@@ -203,6 +203,33 @@ app.use((req, res, next) => {
     console.error('Failed to initialize auth adapter:', error);
   }
   
+  // Initialize subscription service adapter for microservices migration
+  try {
+    const { subscriptionServiceAdapter } = await import('./microservices/subscription-service-adapter');
+    await subscriptionServiceAdapter.initialize();
+    console.log('Subscription service adapter initialized successfully');
+  } catch (error) {
+    console.error('Failed to initialize subscription adapter:', error);
+  }
+  
+  // Initialize story service adapter for microservices migration
+  try {
+    const { storyServiceAdapter } = await import('./microservices/story-service-adapter');
+    await storyServiceAdapter.initialize();
+    console.log('Story service adapter initialized successfully');
+  } catch (error) {
+    console.error('Failed to initialize story adapter:', error);
+  }
+  
+  // Initialize collaboration service adapter for microservices migration
+  try {
+    const { collaborationServiceAdapter } = await import('./microservices/collaboration-service-adapter');
+    await collaborationServiceAdapter.initialize();
+    console.log('Collaboration service adapter initialized successfully');
+  } catch (error) {
+    console.error('Failed to initialize collaboration adapter:', error);
+  }
+  
   // Initialize character archetypes after server starts (optional, with delay)
   setTimeout(() => {
     archetypeService.initializeDefaultArchetypes().catch((error) => {

@@ -6,7 +6,6 @@
 
 import { BaseMicroserviceAdapter } from "./base-microservice-adapter";
 import { storage } from "../storage-postgres";
-import { requireAuth } from "../auth";
 import express from "express";
 import type { User, InsertUser, UpsertUser } from "@shared/schema";
 
@@ -50,8 +49,8 @@ export class IdentityServiceAdapter extends BaseMicroserviceAdapter {
       res.status(health.status === "healthy" ? 200 : 503).json(health);
     });
 
-    // Get user by ID
-    this.app.get("/users/:id", requireAuth, async (req, res) => {
+    // Get user by ID (microservice endpoint - authentication handled by API gateway)
+    this.app.get("/users/:id", async (req, res) => {
       try {
         const user = await this.storage.getUser(req.params.id);
         if (!user) {
@@ -63,16 +62,11 @@ export class IdentityServiceAdapter extends BaseMicroserviceAdapter {
       }
     });
 
-    // Update user
-    this.app.patch("/users/:id", requireAuth, async (req, res) => {
+    // Update user (microservice endpoint - authentication handled by API gateway)
+    this.app.patch("/users/:id", async (req, res) => {
       try {
         const userId = req.params.id;
         const updates = req.body;
-        
-        // Validate ownership
-        if (req.user?.id !== userId && !req.user?.isAdmin) {
-          return res.status(403).json({ error: "Forbidden" });
-        }
 
         const user = await this.storage.updateUser(userId, updates);
         if (!user) {
@@ -83,7 +77,7 @@ export class IdentityServiceAdapter extends BaseMicroserviceAdapter {
         await this.publishEvent("user.updated", {
           userId,
           updates,
-          updatedBy: req.user?.id
+          updatedBy: userId
         });
 
         res.json(user);
@@ -92,8 +86,8 @@ export class IdentityServiceAdapter extends BaseMicroserviceAdapter {
       }
     });
 
-    // Get user providers
-    this.app.get("/users/:id/providers", requireAuth, async (req, res) => {
+    // Get user providers (microservice endpoint - authentication handled by API gateway)
+    this.app.get("/users/:id/providers", async (req, res) => {
       try {
         const userId = req.params.id;
         

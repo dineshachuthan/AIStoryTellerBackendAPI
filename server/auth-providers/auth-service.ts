@@ -3,6 +3,7 @@ import passport from 'passport';
 import { authRegistry } from './auth-registry';
 import { AuthProviderInfo } from './auth-provider-interface';
 import { storage } from '../storage';
+import { authAdapterIntegration } from '../microservices/auth-adapter-integration';
 
 export class AuthService {
   
@@ -47,7 +48,16 @@ export class AuthService {
       let user = await storage.getUserByProvider(authInfo.provider, authInfo.providerId);
 
       if (user) {
-        // User exists, return existing user
+        // User exists, return existing user and publish login event
+        await storage.updateUser(user.id, { lastLoginAt: new Date() });
+        
+        // Use auth adapter to publish login event
+        await authAdapterIntegration.handleOAuthCallback(
+          authInfo.provider,
+          authInfo.providerId,
+          authInfo
+        );
+        
         return user;
       }
 
@@ -68,24 +78,24 @@ export class AuthService {
       const { externalIdService } = await import('../external-id-service');
       const externalId = externalIdService.generateExternalId();
 
-      // Create new user with external ID and language
-      const newUser = await storage.createUser({
-        id: `${authInfo.provider}_${authInfo.providerId}`,
-        email: authInfo.email,
-        firstName: authInfo.firstName || '',
-        lastName: authInfo.lastName || '',
-        displayName: authInfo.displayName || authInfo.email,
-        profileImageUrl: authInfo.avatarUrl || null,
-        externalId: externalId,
-        language: authInfo.language || 'en' // Store language from OAuth or default to English
-      });
-
-      // Link provider to new user
-      await storage.createUserProvider({
-        userId: newUser.id,
-        provider: authInfo.provider,
-        providerId: authInfo.providerId
-      });
+      // Use auth adapter to handle OAuth callback and publish events
+      const result = await authAdapterIntegration.handleOAuthCallback(
+        authInfo.provider,
+        authInfo.providerId,
+        {
+          ...authInfo,
+          email: authInfo.email,
+          displayName: authInfo.displayName || authInfo.email,
+          firstName: authInfo.firstName || '',
+          lastName: authInfo.lastName || '',
+          profileImageUrl: authInfo.avatarUrl || null,
+          locale: authInfo.locale,
+          language: authInfo.language || 'en',
+          externalId: externalId
+        }
+      );
+      
+      const newUser = result.user;
 
       return newUser;
     } catch (error) {

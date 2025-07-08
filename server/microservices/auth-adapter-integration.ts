@@ -86,18 +86,48 @@ class AuthAdapterIntegration {
       return { user: existingUser, isNew: false };
     }
     
-    // Create new user using existing upsert logic
-    const userData = {
-      email: profile.email,
-      displayName: profile.displayName,
-      firstName: profile.firstName,
-      lastName: profile.lastName,
-      profileImageUrl: profile.profileImageUrl,
-      locale: profile.locale,
-      language: profile.language?.substring(0, 2) || 'en'
-    };
+    // Check if user exists by email
+    let user = await storage.getUserByEmail(profile.email);
     
-    const user = await storage.upsertUser(userData);
+    if (user) {
+      // User exists with same email, link accounts
+      await storage.createUserProvider({
+        userId: user.id,
+        provider,
+        providerId,
+        providerData: profile
+      });
+      
+      // Publish event if microservices enabled
+      if (this.enabled) {
+        await this.eventBus.publish({
+          type: 'user.oauth.linked',
+          serviceName: 'monolith',
+          timestamp: new Date().toISOString(),
+          payload: {
+            userId: user.id,
+            provider
+          }
+        });
+      }
+      
+      return { user, isNew: false };
+    }
+    
+    // Create new user
+    const userId = `${provider}_${providerId}`;
+    user = await storage.createUser({
+      id: userId,
+      email: profile.email,
+      displayName: profile.displayName || profile.email,
+      firstName: profile.firstName || '',
+      lastName: profile.lastName || '',
+      profileImageUrl: profile.profileImageUrl || null,
+      externalId: profile.externalId,
+      language: profile.language || 'en',
+      isEmailVerified: true,
+      lastLoginAt: new Date()
+    });
     
     // Create provider link
     await storage.createUserProvider({
@@ -162,6 +192,13 @@ class AuthAdapterIntegration {
    */
   getEventLog() {
     return this.eventBus.getEventLog();
+  }
+  
+  /**
+   * Get event bus instance
+   */
+  getEventBus() {
+    return this.eventBus;
   }
 }
 
