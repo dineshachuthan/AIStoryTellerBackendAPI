@@ -20,6 +20,7 @@ import { eq, desc, and } from "drizzle-orm";
 import { videoGenerations } from "@shared/schema";
 import { audioService } from "./audio-service";
 // ELIMINATED LEGACY VOICE CONFIG - Voice cloning config now hardcoded where needed
+import { authAdapterIntegration } from "./microservices/auth-adapter-integration";
 import { userContentStorage } from "./user-content-storage";
 import { getCachedCharacterImage, cacheCharacterImage, getAllCacheStats, cleanOldCacheFiles, getCachedAudio } from "./cache/cache-service";
 
@@ -261,9 +262,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "User with this email already exists" });
       }
 
-      // Create user
+      // Create user using auth adapter (which handles events)
       const userId = `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      const user = await storage.createUser({
+      const userData = {
         id: userId,
         email,
         firstName: firstName || null,
@@ -271,7 +272,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         displayName: displayName || null,
         isEmailVerified: false,
         lastLoginAt: new Date(),
-      });
+      };
+      
+      // Use auth adapter to create user (publishes events if enabled)
+      const user = await authAdapterIntegration.handleUserRegistration(userData);
 
       // Create local user with hashed password
       const hashedPassword = await hashPassword(password);
@@ -339,6 +343,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Session extension error:', error);
       res.status(500).json({ message: 'Failed to extend session' });
     }
+  });
+  
+  // Debug endpoint for event log (admin only)
+  app.get("/api/auth/events", requireAdmin, (req, res) => {
+    const events = authAdapterIntegration.getEventLog();
+    res.json({
+      microservicesEnabled: process.env.ENABLE_MICROSERVICES === 'true',
+      eventCount: events.length,
+      events: events.slice(-20) // Last 20 events
+    });
   });
 
   app.get("/api/auth/user", (req, res) => {

@@ -194,6 +194,15 @@ app.use((req, res, next) => {
     console.error('Failed to initialize voice providers:', error);
   }
   
+  // Initialize auth adapter integration for microservices migration
+  try {
+    const { authAdapterIntegration } = await import('./microservices/auth-adapter-integration');
+    await authAdapterIntegration.initialize();
+    console.log('Auth adapter integration initialized successfully');
+  } catch (error) {
+    console.error('Failed to initialize auth adapter:', error);
+  }
+  
   // Initialize character archetypes after server starts (optional, with delay)
   setTimeout(() => {
     archetypeService.initializeDefaultArchetypes().catch((error) => {

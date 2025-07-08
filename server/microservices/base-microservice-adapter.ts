@@ -4,7 +4,7 @@
  * Uses existing database tables with logical partitioning
  */
 
-import { storage } from "../storage-postgres";
+import { storage } from "../storage";
 import { db } from "../db";
 import type { IStorage } from "../storage";
 import { EventBus } from "./event-bus";

@@ -7,7 +7,7 @@
 import { Express } from "express";
 import { IdentityServiceAdapter } from "./identity-service-adapter";
 import { getGlobalEventBus } from "./event-bus";
-import { storage } from "../storage-postgres";
+import { storage } from "../storage";
 
 class AuthAdapterIntegration {
   private identityAdapter: IdentityServiceAdapter;

@@ -137,12 +137,16 @@ export class EventBus {
   }
 }
 
-// Singleton event bus for the monolith during migration
+// Global event bus instance for the monolith
 let globalEventBus: EventBus | null = null;
 
+/**
+ * Get or create global event bus instance
+ */
 export function getGlobalEventBus(): EventBus {
   if (!globalEventBus) {
     globalEventBus = new EventBus('monolith');
+    globalEventBus.initialize();
   }
   return globalEventBus;
 }
