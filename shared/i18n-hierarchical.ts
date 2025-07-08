@@ -137,12 +137,7 @@ export const MESSAGES = {
         severity: 'low' as MessageSeverity,
         templates: {
           en: '(5 min)',
-          es: '(5 min)',
-          fr: '(5 min)',
-          de: '(5 Min)',
-          ja: '(5分)',
-          zh: '(5分钟)',
-          ko: '(5분)'
+          ta: '(5 நிமிடம்)'
         }
       }
     },

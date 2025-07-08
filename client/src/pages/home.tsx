@@ -13,11 +13,13 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { defaultStoryConfig } from "@shared/storyConfig";
 import { getMessage } from "@shared/i18n-hierarchical";
+import { useLanguage } from "@/contexts/language-context";
 
 export default function Home() {
   const [, setLocation] = useLocation();
   const { user, logout } = useAuth();
   const { toast } = useToast();
+  const { language } = useLanguage();
   const [isSearchPanelCollapsed, setIsSearchPanelCollapsed] = useState(true); // Default to collapsed
   const [isCreatingStory, setIsCreatingStory] = useState(false);
   const [windowDimensions, setWindowDimensions] = useState({
@@ -79,8 +81,8 @@ export default function Home() {
   const createStoryAndNavigate = async (storyType: string, targetPath: string) => {
     if (!user?.id) {
       toast({
-        title: getMessage('home.errors.auth_required_title'),
-        description: getMessage('home.errors.auth_required_description'),
+        title: getMessage('home.errors.auth_required_title', {}, language),
+        description: getMessage('home.errors.auth_required_description', {}, language),
         variant: "destructive",
       });
       return;
@@ -98,7 +100,7 @@ export default function Home() {
       const story = await apiRequest('/api/stories/draft', {
         method: 'POST',
         body: JSON.stringify({
-          title: getMessage('home.story_defaults.untitled_story'),
+          title: getMessage('home.story_defaults.untitled_story', {}, language),
           storyType
         }),
       });
@@ -112,8 +114,8 @@ export default function Home() {
       console.error("Story creation error:", error);
       console.error("Error details:", error.message);
       toast({
-        title: getMessage('home.errors.creation_failed_title'),
-        description: getMessage('home.errors.creation_failed_description', { error: error.message }),
+        title: getMessage('home.errors.creation_failed_title', {}, language),
+        description: getMessage('home.errors.creation_failed_description', { error: error.message }, language),
         variant: "destructive",
       });
     } finally {
@@ -160,10 +162,10 @@ export default function Home() {
               <CardHeader className={`pb-2 ${styles.containerPadding}`}>
                 <CardTitle className={`text-white flex items-center ${windowDimensions.width < 640 ? 'text-sm' : windowDimensions.width < 1024 ? 'text-base' : 'text-lg'}`}>
                   <Users className={`${windowDimensions.width < 640 ? 'w-3 h-3' : windowDimensions.width < 1024 ? 'w-4 h-4' : 'w-5 h-5'} mr-2 text-tiktok-pink`} />
-                  {getMessage('home.title.collaborative_storytelling')}
+                  {getMessage('home.title.collaborative_storytelling', {}, language)}
                 </CardTitle>
                 <CardDescription className={`text-gray-text ${windowDimensions.width < 640 ? 'text-xs' : 'text-sm'}`}>
-                  {getMessage('home.title.collaborative_description')}
+                  {getMessage('home.title.collaborative_description', {}, language)}
                 </CardDescription>
               </CardHeader>
               <CardContent className={`pt-0 ${styles.containerPadding}`}>
@@ -179,7 +181,7 @@ export default function Home() {
                       <Loader2 className={`${windowDimensions.width < 640 ? 'w-3 h-3' : windowDimensions.width < 1024 ? 'w-4 h-4' : 'w-5 h-5'} animate-spin`} /> : 
                       <PenTool className={`${windowDimensions.width < 640 ? 'w-3 h-3' : windowDimensions.width < 1024 ? 'w-4 h-4' : 'w-5 h-5'}`} />
                     }
-                    <span className={`${styles.textSize}`}>{getMessage('home.actions.write_story')}</span>
+                    <span className={`${styles.textSize}`}>{getMessage('home.actions.write_story', {}, language)}</span>
                   </Button>
                   <Button
                     onClick={() => createStoryAndNavigate("voice", "/voice-record")}
@@ -192,8 +194,8 @@ export default function Home() {
                       <Loader2 className={`${windowDimensions.width < 640 ? 'w-3 h-3' : windowDimensions.width < 1024 ? 'w-4 h-4' : 'w-5 h-5'} animate-spin`} /> : 
                       <Mic className={`${windowDimensions.width < 640 ? 'w-3 h-3' : windowDimensions.width < 1024 ? 'w-4 h-4' : 'w-5 h-5'}`} />
                     }
-                    <span className={`${styles.textSize}`}>{getMessage('home.actions.voice_record')}</span>
-                    {windowDimensions.width >= 640 && <span className="text-xs opacity-70 leading-tight">{getMessage('home.actions.five_min_duration')}</span>}
+                    <span className={`${styles.textSize}`}>{getMessage('home.actions.voice_record', {}, language)}</span>
+                    {windowDimensions.width >= 640 && <span className="text-xs opacity-70 leading-tight">{getMessage('home.actions.five_min_duration', {}, language)}</span>}
                   </Button>
 
                   <Button
@@ -206,7 +208,7 @@ export default function Home() {
                       <Loader2 className={`${windowDimensions.width < 640 ? 'w-3 h-3' : windowDimensions.width < 1024 ? 'w-4 h-4' : 'w-5 h-5'} animate-spin`} /> : 
                       <AudioLines className={`${windowDimensions.width < 640 ? 'w-3 h-3' : windowDimensions.width < 1024 ? 'w-4 h-4' : 'w-5 h-5'}`} />
                     }
-                    <span className={`${styles.textSize}`}>{getMessage('home.actions.upload_audio')}</span>
+                    <span className={`${styles.textSize}`}>{getMessage('home.actions.upload_audio', {}, language)}</span>
                   </Button>
                 </div>
               </CardContent>
