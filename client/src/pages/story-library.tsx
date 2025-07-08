@@ -240,9 +240,7 @@ export default function StoryLibrary() {
             />
           </div>
 
-          <div className="text-sm text-gray-400">
-            {filteredStories.length} stories
-          </div>
+
 
 
 
@@ -421,21 +419,15 @@ export default function StoryLibrary() {
               <h1 className="text-3xl font-bold text-white">My Stories</h1>
             </div>
             
-            <div className="flex items-center space-x-4">
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <Input
-                  type="text"
-                  placeholder="Search stories..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 bg-gray-800 border-gray-700 text-white placeholder-gray-400 focus:border-tiktok-red h-12 text-lg"
-                />
-              </div>
-              
-              <div className="text-gray-400">
-                {filteredStories.length} of {narrationCompleteStories.length} stories
-              </div>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <Input
+                type="text"
+                placeholder="Search stories..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 bg-gray-800 border-gray-700 text-white placeholder-gray-400 focus:border-tiktok-red h-12 text-lg"
+              />
             </div>
           </div>
 
