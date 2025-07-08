@@ -39,12 +39,7 @@ export const MESSAGES = {
         severity: 'low' as MessageSeverity,
         templates: {
           en: 'My Stories',
-          es: 'Mis Historias',
-          fr: 'Mes Histoires',
-          de: 'Meine Geschichten',
-          ja: '私のストーリー',
-          zh: '我的故事',
-          ko: '내 스토리'
+          ta: 'என் கதைகள்'
         }
       },
       voice_samples: {
@@ -52,12 +47,7 @@ export const MESSAGES = {
         severity: 'low' as MessageSeverity,
         templates: {
           en: 'Voice Samples',
-          es: 'Muestras de Voz',
-          fr: 'Échantillons Vocaux',
-          de: 'Sprachproben',
-          ja: '音声サンプル',
-          zh: '语音样本',
-          ko: '음성 샘플'
+          ta: 'குரல் மாதிரிகள்'
         }
       },
       library: {
@@ -97,12 +87,7 @@ export const MESSAGES = {
         severity: 'low' as MessageSeverity,
         templates: {
           en: 'Create Your Story',
-          es: 'Crea Tu Historia',
-          fr: 'Créez Votre Histoire',
-          de: 'Erstelle Deine Geschichte',
-          ja: 'あなたのストーリーを作成',
-          zh: '创建您的故事',
-          ko: '당신의 이야기를 만드세요'
+          ta: 'உங்கள் கதையை உருவாக்குங்கள்'
         }
       },
       collaborative_storytelling: {
@@ -110,12 +95,7 @@ export const MESSAGES = {
         severity: 'low' as MessageSeverity,
         templates: {
           en: 'Collaborative Storytelling',
-          es: 'Narración Colaborativa',
-          fr: 'Narration Collaborative',
-          de: 'Gemeinsames Geschichtenerzählen',
-          ja: '協力的なストーリーテリング',
-          zh: '协作讲故事',
-          ko: '협업 스토리텔링'
+          ta: 'கூட்டு கதை சொல்லல்'
         }
       },
       collaborative_description: {
@@ -123,12 +103,7 @@ export const MESSAGES = {
         severity: 'low' as MessageSeverity,
         templates: {
           en: 'Create stories with friends where each person voices a unique character',
-          es: 'Crea historias con amigos donde cada persona da voz a un personaje único',
-          fr: 'Créez des histoires avec des amis où chaque personne incarne un personnage unique',
-          de: 'Erstelle Geschichten mit Freunden, in denen jede Person einen einzigartigen Charakter spricht',
-          ja: '友達と一緒に、それぞれが独自のキャラクターを演じるストーリーを作成',
-          zh: '与朋友一起创作故事，每个人为独特的角色配音',
-          ko: '친구들과 함께 각자 독특한 캐릭터의 목소리를 내는 이야기 만들기'
+          ta: 'நண்பர்களுடன் கதைகளை உருவாக்குங்கள், ஒவ்வொருவரும் தனித்துவமான கதாபாத்திரத்திற்கு குரல் கொடுக்கிறார்கள்'
         }
       }
     },
@@ -138,12 +113,7 @@ export const MESSAGES = {
         severity: 'low' as MessageSeverity,
         templates: {
           en: 'Write Story',
-          es: 'Escribir Historia',
-          fr: 'Écrire une Histoire',
-          de: 'Geschichte Schreiben',
-          ja: 'ストーリーを書く',
-          zh: '写故事',
-          ko: '이야기 쓰기'
+          ta: 'கதை எழுதுக'
         }
       },
       voice_record: {
@@ -151,12 +121,7 @@ export const MESSAGES = {
         severity: 'low' as MessageSeverity,
         templates: {
           en: 'Voice Record',
-          es: 'Grabación de Voz',
-          fr: 'Enregistrement Vocal',
-          de: 'Sprachaufnahme',
-          ja: '音声録音',
-          zh: '语音录制',
-          ko: '음성 녹음'
+          ta: 'குரல் பதிவு'
         }
       },
       upload_audio: {
@@ -164,12 +129,7 @@ export const MESSAGES = {
         severity: 'low' as MessageSeverity,
         templates: {
           en: 'Upload Audio',
-          es: 'Subir Audio',
-          fr: 'Télécharger Audio',
-          de: 'Audio Hochladen',
-          ja: 'オーディオをアップロード',
-          zh: '上传音频',
-          ko: '오디오 업로드'
+          ta: 'ஆடியோ பதிவேற்றம்'
         }
       },
       five_min_duration: {
