@@ -455,10 +455,10 @@ This is a full-stack collaborative storytelling platform that enables users to c
    - Frontend LanguageProvider now syncs with database language preference
    - Language updates are persisted when user changes language in UI
 
-4. **OpenAI Narrator Voice Enhancement**:
-   - **Pass Language to OpenAI**: Currently not sending user's selected language to OpenAI for TTS generation
-   - **Pass Emotions to OpenAI**: Logs show emotions array is empty when calling OpenAI - need to fix emotion extraction
-   - **Advanced Voice Improvements**: Enhance narrator voice quality with emotion-aware TTS parameters
+4. **ElevenLabs Narrator Enhancement** (Clarification: System uses ElevenLabs voices, not OpenAI):
+   - **Language Support**: Consider adding multi-language support to ElevenLabs voice cloning
+   - **Emotion Passthrough**: Ensure emotions from story analysis are properly passed to ElevenLabs API
+   - **Voice Quality**: System already uses 15-25 second samples for optimal voice cloning quality
 
 ## Changelog
 
