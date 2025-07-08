@@ -13,6 +13,7 @@ Comprehensive REST API endpoint testing suite that validates all endpoints again
 
 ## Quick Start
 
+### Using npm scripts (requires package.json update)
 ```bash
 # Run all API tests
 npm run test:api
@@ -25,6 +26,62 @@ npm run test:api narration
 # Show help
 npm run test:api help
 ```
+
+### Direct execution (no npm scripts needed)
+```bash
+# Run all tests
+tsx test-suites/api-tests/run-tests.ts
+
+# Run category tests
+tsx test-suites/api-tests/run-tests.ts auth
+tsx test-suites/api-tests/run-tests.ts stories
+
+# Interactive test runner
+tsx test-suites/api-tests/interactive-runner.ts
+
+# Ad-hoc endpoint tester
+tsx test-suites/api-tests/endpoint-tester.ts
+```
+
+## Ad-hoc Testing Tools
+
+### Interactive Test Runner
+The interactive test runner provides a menu-driven interface for running specific tests:
+
+```bash
+tsx test-suites/api-tests/interactive-runner.ts
+```
+
+Features:
+- Run all tests or filter by category
+- Execute individual endpoint tests
+- Run single test cases
+- View all available endpoints
+- See detailed test results
+
+### Endpoint Tester
+The endpoint tester allows you to test any API endpoint with custom data:
+
+```bash
+tsx test-suites/api-tests/endpoint-tester.ts
+```
+
+Features:
+- Test any HTTP method (GET, POST, PUT, PATCH, DELETE)
+- Add path and query parameters
+- Build request body interactively
+- Add custom headers
+- Automatic authentication
+- View formatted responses
+- Access to test data
+
+Example workflow:
+1. Choose "Test an endpoint"
+2. Enter method: POST
+3. Enter path: /api/stories
+4. Has body: y
+5. Enter JSON or build interactively
+6. View response with status, headers, and body
 
 ## Test Categories
 

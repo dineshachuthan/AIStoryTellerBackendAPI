@@ -276,6 +276,120 @@ class ApiTestRunner {
   }
   
   /**
+   * Run a single endpoint's tests
+   */
+  async runEndpoint(endpoint: TestEndpoint): Promise<TestResult[]> {
+    const results: TestResult[] = [];
+    
+    console.log(`\n${colors.cyan}📋 Testing: ${endpoint.name}${colors.reset}`);
+    console.log(`   ${endpoint.method} ${endpoint.path}\n`);
+    
+    for (const testCase of endpoint.tests) {
+      const result = await this.runTest(endpoint, testCase);
+      results.push(result);
+    }
+    
+    return results;
+  }
+
+  /**
+   * Run a single test case
+   */
+  async runSingleTest(endpoint: TestEndpoint, testCase: TestCase): Promise<TestResult> {
+    console.log(`\n${colors.cyan}🧪 Running: ${testCase.name}${colors.reset}`);
+    console.log(`   ${testCase.description}\n`);
+    
+    return await this.runTest(endpoint, testCase);
+  }
+
+  /**
+   * Run a test and return result
+   */
+  private async runTest(endpoint: TestEndpoint, testCase: TestCase): Promise<TestResult> {
+    const startTime = Date.now();
+    
+    try {
+      // Build URL
+      let url = `${this.baseUrl}${endpoint.path}`;
+      
+      // Replace path parameters
+      if (testCase.params) {
+        for (const [key, value] of Object.entries(testCase.params)) {
+          url = url.replace(`:${key}`, value);
+        }
+      }
+      
+      // Add query parameters
+      if (testCase.query) {
+        const queryParams = new URLSearchParams(testCase.query);
+        url += `?${queryParams.toString()}`;
+      }
+      
+      // Prepare request options
+      const options: RequestInit = {
+        method: endpoint.method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          ...testCase.headers,
+        },
+      };
+      
+      // Add authentication
+      if (testCase.auth !== false) {
+        const authCookie = await this.getAuthCookie();
+        if (authCookie) {
+          options.headers!['Cookie'] = authCookie;
+        }
+      }
+      
+      // Add body for non-GET requests
+      if (testCase.body && endpoint.method !== 'GET') {
+        options.body = JSON.stringify(testCase.body);
+      }
+      
+      // Make request
+      const response = await fetch(url, options);
+      const responseData = await response.json().catch(() => null);
+      const duration = Date.now() - startTime;
+      
+      // Validate response
+      const expectedStatus = testCase.expectedStatus || 200;
+      const statusMatch = response.status === expectedStatus;
+      const responseValid = testCase.validateResponse 
+        ? testCase.validateResponse(responseData)
+        : true;
+      
+      const success = statusMatch && responseValid;
+      
+      // Return result
+      return {
+        endpoint: endpoint.name,
+        method: endpoint.method,
+        testCase: testCase.name,
+        success,
+        status: response.status,
+        message: success ? 'Passed' : `Expected status ${expectedStatus}, got ${response.status}`,
+        duration,
+        response: responseData,
+      };
+      
+    } catch (error: any) {
+      const duration = Date.now() - startTime;
+      
+      return {
+        endpoint: endpoint.name,
+        method: endpoint.method,
+        testCase: testCase.name,
+        success: false,
+        status: 0,
+        message: `Request failed: ${error.message}`,
+        duration,
+      };
+    }
+  }
+
+  /**
    * Print test summary
    */
   private printSummary(summary: TestSummary): void {
