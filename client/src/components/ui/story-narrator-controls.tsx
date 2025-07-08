@@ -203,6 +203,9 @@ export default function StoryNarratorControls({
         audioRef.current.src = segment.audioUrl;
         audioRef.current.play().catch(err => {
           console.error('Playback error:', err);
+          console.error('Error message:', err.message);
+          console.error('Audio src:', audioRef.current.src);
+          console.error('Audio readyState:', audioRef.current.readyState);
           setIsPlaying(false);
         });
       }
