@@ -6726,6 +6726,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Missing required fields: to, subject, content' });
       }
 
+      console.log('📧 Test email request:', { to, subject });
+
       // For testing, allow any email address
       const result = await sendEmail({
         to,
@@ -6744,15 +6746,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         text: content
       });
 
+      console.log('📧 Email result:', {
+        success: result.success,
+        provider: result.provider,
+        error: result.error,
+        details: result
+      });
+
       res.json({ 
         success: result.success,
         message: result.success ? 'Test email sent successfully' : 'Failed to send test email',
         provider: result.provider,
-        error: result.error
+        error: result.error,
+        details: result
       });
     } catch (error) {
       console.error('Test email error:', error);
-      res.status(500).json({ error: 'Failed to send test email' });
+      res.status(500).json({ 
+        error: 'Failed to send test email',
+        details: error.message 
+      });
     }
   });
 
