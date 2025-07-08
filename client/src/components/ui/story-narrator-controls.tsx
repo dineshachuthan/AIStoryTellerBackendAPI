@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Headphones, Play, Pause, Save, Download, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -34,13 +35,9 @@ export default function StoryNarratorControls({
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [isLoadingSaved, setIsLoadingSaved] = useState(false);
   
   // Temporary narration (in memory until saved)
   const [tempNarration, setTempNarration] = useState<NarrationData | null>(null);
-  
-  // Saved narration (from database)
-  const [savedNarration, setSavedNarration] = useState<NarrationData | null>(null);
   
   // Audio playback
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -99,30 +96,24 @@ export default function StoryNarratorControls({
     }
   }, [currentSegment, isPlaying]);
 
-  // Load saved narration on mount
-  useEffect(() => {
-    checkForSavedNarration();
-  }, [storyId, user]);
-
-  const checkForSavedNarration = async () => {
-    if (!user) return;
-    
-    setIsLoadingSaved(true);
-    try {
-      const response = await apiRequest(`/api/stories/${storyId}/narration/saved`, {
-        method: 'GET'
-      });
-      
-      if (response && response.segments) {
-        setSavedNarration(response);
+  // Use React Query to fetch saved narration - this will respond to cache invalidations
+  const { data: savedNarration, isLoading: isLoadingSaved } = useQuery({
+    queryKey: [`/api/stories/${storyId}/narration/saved`],
+    queryFn: async () => {
+      if (!user) return null;
+      try {
+        const response = await apiRequest(`/api/stories/${storyId}/narration/saved`, {
+          method: 'GET'
+        });
+        return response || null;
+      } catch (error) {
+        // No saved narration found - this is normal
+        console.log('No saved narration found');
+        return null;
       }
-    } catch (error) {
-      // No saved narration found - this is normal
-      console.log('No saved narration found');
-    } finally {
-      setIsLoadingSaved(false);
-    }
-  };
+    },
+    enabled: !!user && !!storyId,
+  });
 
   // 1. Generate Narration (costs money)
   const generateNarration = async () => {
@@ -151,7 +142,7 @@ export default function StoryNarratorControls({
 
       if (response.segments) {
         // Narration is automatically saved in backend during generation
-        setSavedNarration(response);
+        // React Query will automatically refresh the saved narration data
         setTempNarration(null); // Clear any temp narration
         setCurrentSegment(0);
         setProgress(0);

@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 // EmotionVoiceRecorder has been deprecated and replaced with enhanced voice sample system
 import { CharacterAvatar } from "./CharacterAvatar";
 import { EmotionBadge } from "./EmotionBadge";
@@ -102,6 +102,13 @@ export function StoryAnalysisPanel({
     },
     onSuccess: (data) => {
       setStatusMessage({ text: "Voice generation in progress...", type: 'info' });
+      
+      // Invalidate all story-related queries to force refresh
+      queryClient.invalidateQueries({ queryKey: [`/api/stories/${storyId}/narration/saved`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/stories/${storyId}`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/stories`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/narrator/status`] });
+      
       // Clear message after 3 seconds
       setTimeout(() => setStatusMessage(null), 3000);
     },
