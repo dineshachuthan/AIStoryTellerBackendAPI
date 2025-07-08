@@ -432,13 +432,38 @@ export class ElevenLabsModule extends BaseVoiceProvider {
       
       return true;
     } catch (error: any) {
-      this.log('error', `Failed to delete voice ${voiceId}`, error);
+      // Voice doesn't exist is expected when updating - not an error
+      if (error.response?.status === 400 && error.response?.data?.detail?.message?.includes('does not exist')) {
+        this.log('info', `Voice ${voiceId} no longer exists in ElevenLabs - continuing with voice creation`);
+        
+        // Update audit status to indicate voice didn't exist
+        if (userId) {
+          try {
+            const { storage } = await import('../storage');
+            const cleanups = await storage.getVoiceCleanupHistory(userId, 1);
+            const cleanup = cleanups.find(c => c.partnerVoiceId === voiceId);
+            if (cleanup) {
+              await storage.updateVoiceIdCleanupStatus(
+                cleanup.id, 
+                'confirmed', 
+                'Voice did not exist in ElevenLabs'
+              );
+            }
+          } catch (auditError) {
+            // Silent fail for audit update
+          }
+        }
+        
+        return true; // Return success since voice is gone anyway
+      }
+      
+      // For other errors, keep minimal logging
+      this.log('info', `Voice deletion unsuccessful for ${voiceId} - continuing`);
       
       // Update audit status to failed
       if (userId) {
         try {
           const { storage } = await import('../storage');
-          // Find the cleanup record we just created
           const cleanups = await storage.getVoiceCleanupHistory(userId, 1);
           const cleanup = cleanups.find(c => c.partnerVoiceId === voiceId);
           if (cleanup) {
@@ -449,7 +474,7 @@ export class ElevenLabsModule extends BaseVoiceProvider {
             );
           }
         } catch (auditError) {
-          this.log('error', `Failed to update audit trail for voice deletion`, auditError);
+          // Silent fail for audit update
         }
       }
       

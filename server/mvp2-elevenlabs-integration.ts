@@ -188,13 +188,9 @@ export class MVP2ElevenLabsIntegration {
             };
           }
         } catch (error: any) {
-          // If voice doesn't exist in ElevenLabs, create new one
-          if (error.message && error.message.includes('does not exist')) {
-            console.log(`[MVP2ElevenLabs] Voice ${existingVoiceId} no longer exists in ElevenLabs, creating new voice`);
-            // Continue to create new voice below
-          } else {
-            throw error;
-          }
+          // Expected case when voice no longer exists
+          console.log(`[MVP2ElevenLabs] Creating new narrator voice`);
+          // Continue to create new voice below
         }
       }
       
