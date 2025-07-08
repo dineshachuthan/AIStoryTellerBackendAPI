@@ -1960,22 +1960,24 @@ export class DatabaseStorage implements IStorage {
 
   async getUserNarratorVoice(userId: string): Promise<string | null> {
     try {
-      const { userEsm } = await import('@shared/schema');
-      // Get the most recent narrator voice by ordering by created_date DESC
-      const result = await db.select({ 
-        narrator_voice_id: userEsm.narrator_voice_id,
-        created_date: userEsm.created_date 
-      })
-        .from(userEsm)
-        .where(and(
-          eq(userEsm.userId, userId),
-          isNotNull(userEsm.narrator_voice_id)
-        ))
-        .orderBy(desc(userEsm.created_date))
-        .limit(1);
+      // Get the most recent narrator voice from user_esm table
+      const result = await db.execute(
+        sql`SELECT narrator_voice_id 
+            FROM user_esm 
+            WHERE user_id = ${userId} 
+            AND narrator_voice_id IS NOT NULL 
+            AND is_active = true 
+            ORDER BY created_date DESC 
+            LIMIT 1`
+      );
       
-      console.log(`[Storage] getUserNarratorVoice for ${userId}:`, result[0]?.narrator_voice_id || null);
-      return result[0]?.narrator_voice_id || null;
+      if (!result || !result.rows || result.rows.length === 0) {
+        console.log(`[Storage] No narrator voice found for user ${userId}`);
+        return null;
+      }
+      
+      console.log(`[Storage] getUserNarratorVoice for ${userId}:`, result.rows[0].narrator_voice_id);
+      return result.rows[0].narrator_voice_id;
     } catch (error) {
       console.error('[Storage] Error getting user narrator voice:', error);
       return null;

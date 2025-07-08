@@ -2461,8 +2461,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       res.json(narration);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error generating story narration:", error);
+      // Handle specific error for missing ElevenLabs voice
+      if (error.message && error.message.includes('No ElevenLabs narrator voice found')) {
+        return res.status(400).json({ 
+          message: "Please generate your narrator voice first before creating story narrations.",
+          error: "NO_NARRATOR_VOICE" 
+        });
+      }
       res.status(500).json({ message: "Failed to generate story narration" });
     }
   });

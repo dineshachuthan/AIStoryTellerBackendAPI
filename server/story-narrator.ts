@@ -71,6 +71,12 @@ export class StoryNarrator {
     // STRATEGIC FIX: Always fetch current narrator voice from ESM tables
     // ESM tables are the single source of truth - no caching at story level
     const voiceSelection = await this.selectNarratorVoice(userId, story);
+    
+    // If no ElevenLabs voice exists, cannot generate narration
+    if (!voiceSelection) {
+      throw new Error('No ElevenLabs narrator voice found. Please generate your narrator voice first.');
+    }
+    
     const narratorVoice = voiceSelection.voice;
     const narratorVoiceType = voiceSelection.type;
     
@@ -149,13 +155,12 @@ export class StoryNarrator {
         }
       }
     } catch (error) {
-      console.log('[StoryNarrator] No user voice samples found, using AI voice');
+      console.log('[StoryNarrator] No user voice samples found');
     }
 
-    // PRIORITY 3: Final fallback to analysis-based AI voice (from story's existing analysis)
-    const analysisVoice = this.getAnalysisVoice(story);
-    console.log(`[StoryNarrator] Using AI voice fallback: ${analysisVoice}`);
-    return { voice: analysisVoice, type: 'ai' };
+    // NO FALLBACK - If no ElevenLabs voice exists, return null
+    console.log(`[StoryNarrator] No ElevenLabs narrator voice found - narration cannot be generated`);
+    return null;
   }
 
   /**
