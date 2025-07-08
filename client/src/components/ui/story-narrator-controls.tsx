@@ -181,7 +181,10 @@ export default function StoryNarratorControls({
     if (!segment?.audioUrl) return;
 
     audioRef.current.src = segment.audioUrl;
-    audioRef.current.play();
+    audioRef.current.play().catch(err => {
+      console.error('Playback error:', err);
+      setIsPlaying(false);
+    });
     setIsPaused(false);
   };
 
@@ -193,7 +196,10 @@ export default function StoryNarratorControls({
     
     // If resuming from pause, just play
     if (isPaused && audioRef.current && audioRef.current.paused) {
-      audioRef.current.play();
+      audioRef.current.play().catch(err => {
+        console.error('Resume error:', err);
+        setIsPlaying(false);
+      });
       setIsPaused(false);
     } else {
       // Fresh start - play current segment
@@ -314,7 +320,13 @@ export default function StoryNarratorControls({
         {/* Prominent Play Button */}
         <div className="flex justify-center">
           <Button
-            onClick={isPlaying ? pauseNarration : (savedNarration ? playStory : playNarration)}
+            onClick={() => {
+              if (isPlaying) {
+                pauseNarration();
+              } else {
+                playNarration();
+              }
+            }}
             disabled={!hasAnyNarration}
             className={`
               h-16 px-8 text-lg font-semibold shadow-2xl transform transition-all duration-200 
