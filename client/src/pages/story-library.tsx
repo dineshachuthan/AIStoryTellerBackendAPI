@@ -276,14 +276,14 @@ export default function StoryLibrary() {
                         <CardHeader className="pb-2">
                           <div className="space-y-1">
                             <CardTitle className="text-white text-base leading-tight flex items-center justify-between">
-                              <span className="flex-1 mr-2">
-                                <span className="line-clamp-2">
+                              <div className="flex-1 mr-2">
+                                <div className="line-clamp-2">
                                   {story.title}
-                                  {!story.isPublic && (
-                                    <span className="text-gray-400 text-sm ml-2">({UIMessages.getLabel('STORY_PRIVATE_LABEL')})</span>
-                                  )}
-                                </span>
-                              </span>
+                                </div>
+                                {!story.isPublic && (
+                                  <div className="text-gray-400 text-sm mt-1">({UIMessages.getLabel('STORY_PRIVATE_LABEL')})</div>
+                                )}
+                              </div>
                               <div className="flex items-center space-x-1 flex-shrink-0">
                                 <button
                                   onClick={() => setLocation(`/${story.id}/upload-story`)}
@@ -482,18 +482,18 @@ export default function StoryLibrary() {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {genreStories.map((story: Story) => (
-                      <Card key={story.id} className="bg-dark-card border-gray-800 hover:border-gray-700 transition-colors">
-                        <CardHeader className="pb-3">
+                      <Card key={story.id} className="bg-dark-card border-gray-800 hover:border-gray-700 transition-colors h-full flex flex-col">
+                        <CardHeader className="pb-3 flex-shrink-0">
                           <div className="space-y-1">
                             <CardTitle className="text-white text-lg leading-tight flex items-center justify-between">
-                              <span className="flex-1 mr-2">
-                                <span className="line-clamp-2">
+                              <div className="flex-1 mr-2">
+                                <div className="line-clamp-2">
                                   {story.title}
-                                  {!story.isPublic && (
-                                    <span className="text-gray-400 text-sm ml-2">({UIMessages.getLabel('STORY_PRIVATE_LABEL')})</span>
-                                  )}
-                                </span>
-                              </span>
+                                </div>
+                                {!story.isPublic && (
+                                  <div className="text-gray-400 text-sm mt-1">({UIMessages.getLabel('STORY_PRIVATE_LABEL')})</div>
+                                )}
+                              </div>
                               <div className="flex items-center space-x-1 flex-shrink-0">
                                 <button
                                   onClick={() => setLocation(`/${story.id}/upload-story`)}
@@ -546,7 +546,7 @@ export default function StoryLibrary() {
                             )}
                           </div>
                         </CardHeader>
-                        <CardContent className="pt-0 space-y-3">
+                        <CardContent className="pt-0 space-y-3 flex-1 flex flex-col">
                           {story.summary && (
                             <p className="text-gray-400 text-sm line-clamp-3">
                               {story.summary}
@@ -570,10 +570,10 @@ export default function StoryLibrary() {
                             </div>
                           </div>
 
-                          <div className="space-y-2">
+                          <div className="flex-1 space-y-2">
                             {/* Display emotion tags if available */}
                             {(story.emotions || story.emotionalTags || []).length > 0 && (
-                              <div className="flex flex-wrap gap-1 mb-2">
+                              <div className="flex flex-wrap gap-1">
                                 {(story.emotions || story.emotionalTags || []).slice(0, 5).map((emotion, idx) => (
                                   <Badge key={idx} variant="secondary" className="text-xs bg-gray-800/80 text-gray-300">
                                     {emotion}
@@ -586,7 +586,9 @@ export default function StoryLibrary() {
                                 )}
                               </div>
                             )}
-                            
+                          </div>
+                          
+                          <div className="mt-auto">
                             <div className="flex space-x-2">
                               <Button
                                 size="sm"
