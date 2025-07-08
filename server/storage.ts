@@ -1884,6 +1884,7 @@ export class DatabaseStorage implements IStorage {
     const result = await db.execute(
       sql`SELECT 
             uer.user_esm_recordings_id as id,
+            uer.user_esm_id,
             uer.audio_url,
             uer.duration,
             uer.created_date,
