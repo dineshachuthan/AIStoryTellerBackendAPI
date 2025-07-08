@@ -158,17 +158,7 @@ export function AppTopNavigation() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56 bg-dark-card border-gray-700">
-              {/* Mobile-only menu items */}
-              <div className="sm:hidden">
-                <DropdownMenuItem
-                  onClick={() => setLocation("/voice-samples")}
-                  className="text-gray-300 hover:text-white hover:bg-gray-700"
-                >
-                  <AudioLines className="w-4 h-4 mr-2" />
-                  Voice Samples
-                </DropdownMenuItem>
-              </div>
-              
+
               <DropdownMenuItem 
                 onClick={() => window.location.href = '/api/auth/logout'}
                 className="text-red-400 hover:bg-gray-700 focus:bg-gray-700"
