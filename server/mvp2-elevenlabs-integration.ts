@@ -177,14 +177,24 @@ export class MVP2ElevenLabsIntegration {
       if (existingVoiceId) {
         console.log(`[MVP2ElevenLabs] Found existing voice ${existingVoiceId}, updating instead of creating new`);
         
-        // Use updateVoice method to replace existing voice
-        const updateResult = await (voiceProvider as any).updateVoice(existingVoiceId, voiceTrainingRequest);
-        
-        if (updateResult.success) {
-          return {
-            success: true,
-            voiceId: updateResult.voiceId
-          };
+        try {
+          // Use updateVoice method to replace existing voice
+          const updateResult = await (voiceProvider as any).updateVoice(existingVoiceId, voiceTrainingRequest);
+          
+          if (updateResult.success) {
+            return {
+              success: true,
+              voiceId: updateResult.voiceId
+            };
+          }
+        } catch (error: any) {
+          // If voice doesn't exist in ElevenLabs, create new one
+          if (error.message && error.message.includes('does not exist')) {
+            console.log(`[MVP2ElevenLabs] Voice ${existingVoiceId} no longer exists in ElevenLabs, creating new voice`);
+            // Continue to create new voice below
+          } else {
+            throw error;
+          }
         }
       }
       
