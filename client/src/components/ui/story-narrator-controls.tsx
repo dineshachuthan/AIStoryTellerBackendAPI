@@ -402,29 +402,7 @@ export default function StoryNarratorControls({
         </div>
       </div>
 
-      {/* Progress visualization - always show to prevent UI jumping */}
-      {hasAnyNarration && (
-        <div className={`mb-6 p-4 rounded-lg border transition-all duration-200 ${
-          isPlaying 
-            ? 'bg-white/5 border-purple-400/20' 
-            : 'bg-black/20 border-gray-600/20'
-        }`}>
-          <div className="flex justify-between text-sm mb-2">
-            <span className={isPlaying ? 'text-purple-200' : 'text-gray-400'}>
-              Segment {currentSegment + 1} of {activeNarration?.segments.length || 0}
-            </span>
-            <span className={isPlaying ? 'text-purple-200' : 'text-gray-400'}>
-              {Math.round(progress)}% complete
-            </span>
-          </div>
-          <div className="w-full bg-gray-700 rounded-full h-3 overflow-hidden">
-            <div 
-              className="bg-gradient-to-r from-purple-500 to-blue-500 h-3 rounded-full transition-all duration-500 ease-out shadow-lg"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-        </div>
-      )}
+
 
       {/* TV-Style Media Player */}
       {hasAnyNarration && (
@@ -473,9 +451,20 @@ export default function StoryNarratorControls({
                 </div>
               </div>
               
-              {/* TV Status Indicator */}
-              <div className="absolute top-4 right-4">
+              {/* TV Status Indicator and Segment Info */}
+              <div className="absolute top-4 right-4 flex items-center gap-3">
+                <span className="text-gray-400 text-sm font-mono">
+                  SEGMENT {currentSegment + 1}/{activeNarration?.segments.length || 0}
+                </span>
                 <div className={`w-3 h-3 rounded-full ${isPlaying ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
+              </div>
+              
+              {/* Progress Info at Bottom */}
+              <div className="absolute bottom-4 left-4 right-4">
+                <div className="flex justify-between text-xs text-gray-500 font-mono">
+                  <span>{Math.round(progress)}% COMPLETE</span>
+                  <span>ELEVENLABS VOICE</span>
+                </div>
               </div>
             </div>
             
