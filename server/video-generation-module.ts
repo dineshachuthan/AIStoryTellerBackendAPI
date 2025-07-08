@@ -1,6 +1,7 @@
 import { VideoBusinessLogic, VideoGenerationRequest, VideoGenerationResult } from './video-business-logic';
 import { KlingPromptTemplate, KlingPromptData } from './video-providers/kling-prompt-template';
-import { videoProviderManager } from './video-generation-service';
+import { VideoProviderRegistry } from './video-providers/provider-registry';
+import { storage } from './storage';
 
 /**
  * Kling-specific video generation module
@@ -54,7 +55,7 @@ export class VideoGenerationModule {
     videoUrl?: string;
     thumbnailUrl?: string;
   }> {
-    const provider = videoProviderManager.getProvider('kling');
+    const provider = VideoProviderRegistry.getInstance().getProvider('kling');
     if (!provider) {
       throw new Error('Kling provider not available');
     }
@@ -112,7 +113,7 @@ export class VideoGenerationModule {
       attempts++;
       
       try {
-        const provider = videoProviderManager.getProvider('kling');
+        const provider = VideoProviderRegistry.getInstance().getProvider('kling');
         if (!provider) {
           clearInterval(pollInterval);
           return;

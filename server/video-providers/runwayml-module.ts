@@ -1,5 +1,5 @@
 import { VideoBusinessLogic, VideoGenerationRequest, VideoGenerationResult } from '../video-business-logic';
-import { videoProviderManager } from '../video-generation-service';
+import { VideoProviderRegistry } from './provider-registry';
 
 /**
  * RunwayML-specific video generation module
@@ -66,7 +66,7 @@ export class RunwayMLVideoModule {
 
   // RunwayML-specific implementation methods
   private static async callRunwayMLAPI(data: any): Promise<any> {
-    const provider = videoProviderManager.getProvider('runwayml');
+    const provider = VideoProviderRegistry.getInstance().getProvider('runwayml');
     if (!provider) {
       throw new Error('RunwayML provider not available');
     }
