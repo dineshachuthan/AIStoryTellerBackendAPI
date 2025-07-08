@@ -30,6 +30,7 @@ import Login from "@/pages/login";
 import Register from "@/pages/register";
 import NotFound from "@/pages/not-found";
 import OAuthTest from "@/pages/oauth-test";
+import StoryNarration from "@/pages/StoryNarration";
 
 
 
@@ -85,6 +86,7 @@ function AppContent() {
               <Route path="/story/:storyId" component={StoryPlayer} />
               <Route path="/story/:storyId/play" component={StoryPlayer} />
               <Route path="/story/:storyId/collaborate" component={StoryCollaboration} />
+              <Route path="/stories/:id/narration" component={StoryNarration} />
               <Route path="/collaborative-roleplay" component={CollaborativeRoleplay} />
               <Route path="/invite/:token" component={Invitation} />
               <Route path="/roleplay/:token" component={RoleplayRecording} />

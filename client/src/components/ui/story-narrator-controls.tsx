@@ -386,69 +386,11 @@ export default function StoryNarratorControls({
             )}
           </Button>
 
-          {/* Save - Center */}
-          <Button
-            onClick={saveNarration}
-            disabled={!tempNarration || isSaving}
-            variant="outline"
-            className={`
-              h-12 text-sm border-green-400/50 bg-green-900/20 text-green-200 
-              hover:bg-green-900/40 hover:border-green-400 transition-all duration-200
-              ${isSaving ? 'animate-pulse' : 'hover:scale-105'}
-              ${tempNarration ? 'ring-2 ring-green-400/30' : ''}
-            `}
-          >
-            {isSaving ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <>
-                <Save className="w-4 h-4 mr-2" />
-                {tempNarration ? 'Save' : 'Saved'}
-              </>
-            )}
-          </Button>
 
-          {/* Status indicator - Right */}
-          <div className={`
-            h-12 flex items-center justify-center text-sm rounded-md border transition-all duration-200
-            ${savedNarration 
-              ? 'border-emerald-400/50 bg-emerald-900/20 text-emerald-200' 
-              : tempNarration 
-                ? 'border-yellow-400/50 bg-yellow-900/20 text-yellow-200'
-                : 'border-gray-500/50 bg-gray-900/20 text-gray-400'
-            }
-          `}>
-            <div className="text-center">
-              <div className="font-medium">
-                {savedNarration ? '✓ Auto-Saved' : tempNarration ? '⚡ Preview' : '○ Empty'}
-              </div>
-            </div>
-          </div>
+
+
         </div>
 
-        {/* Cost notice */}
-        <div className="text-xs text-center text-gray-400 mt-4 bg-gray-900/30 p-3 rounded-lg">
-          💡 Generate creates AI narration (~$0.30) • Save stores permanently • Play uses your saved version
-        </div>
-      </div>
-
-      {/* Status indicators */}
-      <div className="flex justify-between text-xs text-gray-400">
-        <div className="space-x-4">
-          <span className={tempNarration ? "text-yellow-400" : "text-gray-500"}>
-            • Temp: {tempNarration ? "Ready" : "None"}
-          </span>
-          <span className={savedNarration ? "text-green-400" : "text-gray-500"}>
-            • Saved: {savedNarration ? "Available" : "None"}
-          </span>
-        </div>
-        <div>
-          {activeNarration && (
-            <span className="text-gray-300">
-              Duration: {Math.round((activeNarration.totalDuration || 0) / 1000)}s
-            </span>
-          )}
-        </div>
       </div>
     </div>
   );
