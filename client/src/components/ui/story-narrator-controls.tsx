@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { Headphones, Play, Pause, Save, Download, Loader2, RefreshCw, SkipBack, SkipForward, Volume2 } from 'lucide-react';
+import { Headphones, Play, Pause, Save, Download, Loader2, RefreshCw, SkipBack, SkipForward, Volume2, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 
