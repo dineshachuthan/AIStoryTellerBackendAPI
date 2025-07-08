@@ -19,6 +19,18 @@ export interface StoryNarrationResult {
 
 export class StoryNarrator {
   /**
+   * Get user's language preference from database
+   */
+  private async getUserLanguage(userId: string): Promise<string> {
+    try {
+      const user = await storage.getUser(userId);
+      return user?.language || 'en';
+    } catch (error) {
+      console.error('Error fetching user language:', error);
+      return 'en';
+    }
+  }
+  /**
    * Generate complete story narration using stored narrator voice
    * REQUIREMENTS:
    * 1. Pull story metadata from database
@@ -34,6 +46,9 @@ export class StoryNarrator {
     if (!story) {
       throw new Error(`Story with ID ${storyId} not found`);
     }
+    
+    // Get user language preference
+    const userLanguage = await this.getUserLanguage(userId);
 
     // 2. Check if narrator voice is already stored at story level
     let narratorVoice = story.narratorVoice;
@@ -49,8 +64,19 @@ export class StoryNarrator {
       await this.storeNarratorVoice(storyId, narratorVoice, narratorVoiceType);
     }
 
+    // Extract emotions from story analysis
+    const extractedEmotions = story.extractedEmotions || [];
+    
     // 4. Narrate story content with the determined narrator voice
-    const segments = await this.createNarrationSegments(story.content, narratorVoice, narratorVoiceType, userId, storyId);
+    const segments = await this.createNarrationSegments(
+      story.content, 
+      narratorVoice, 
+      narratorVoiceType, 
+      userId, 
+      storyId,
+      extractedEmotions,
+      userLanguage
+    );
     
     const totalDuration = segments.reduce((sum, segment) => sum + (segment.duration || 0), 0);
 
@@ -159,7 +185,9 @@ export class StoryNarrator {
     narratorVoice: string,
     narratorVoiceType: 'ai' | 'user',
     userId: string,
-    storyId: number
+    storyId: number,
+    extractedEmotions: any[],
+    userLanguage: string
   ): Promise<NarrationSegment[]> {
     
     // Split content into manageable chunks for narration
@@ -170,6 +198,9 @@ export class StoryNarrator {
       const chunk = chunks[i];
       
       try {
+        // Detect emotion for this chunk
+        const chunkEmotion = this.detectChunkEmotion(chunk, extractedEmotions);
+        
         // Generate audio using the determined narrator voice
         const audioResult = await this.generateNarrationAudio(
           chunk, 
@@ -177,7 +208,9 @@ export class StoryNarrator {
           narratorVoiceType, 
           userId, 
           storyId, 
-          i
+          i,
+          chunkEmotion,
+          userLanguage
         );
 
         segments.push({
@@ -227,6 +260,36 @@ export class StoryNarrator {
   }
 
   /**
+   * Detect emotion for a text chunk based on story analysis
+   */
+  private detectChunkEmotion(chunk: string, extractedEmotions: any[]): { emotion: string; intensity: number } {
+    if (!extractedEmotions || extractedEmotions.length === 0) {
+      return { emotion: 'neutral', intensity: 5 };
+    }
+    
+    // Find the most relevant emotion for this chunk based on context/quotes
+    const chunkLower = chunk.toLowerCase();
+    
+    for (const emotionData of extractedEmotions) {
+      if (emotionData.quote && chunkLower.includes(emotionData.quote.toLowerCase())) {
+        return { 
+          emotion: emotionData.emotion || 'neutral', 
+          intensity: emotionData.intensity || 5 
+        };
+      }
+      if (emotionData.context && chunkLower.includes(emotionData.context.toLowerCase())) {
+        return { 
+          emotion: emotionData.emotion || 'neutral', 
+          intensity: emotionData.intensity || 5 
+        };
+      }
+    }
+    
+    // Default to neutral if no specific emotion found
+    return { emotion: 'neutral', intensity: 5 };
+  }
+
+  /**
    * Generate audio for narration segment using narrator voice
    * PRIORITY: ElevenLabs narrator voice → User samples → AI voice
    */
@@ -236,44 +299,50 @@ export class StoryNarrator {
     narratorVoiceType: 'ai' | 'user',
     userId: string,
     storyId: number,
-    segmentIndex: number
+    segmentIndex: number,
+    chunkEmotion: { emotion: string; intensity: number },
+    userLanguage: string
   ): Promise<{ audioUrl: string; duration?: number }> {
     
     let audioBuffer: Buffer;
     
     if (narratorVoiceType === 'user' && narratorVoice.length === 20) {
-      // ElevenLabs voice ID is exactly 20 characters - use ElevenLabs directly
-      console.log(`[StoryNarrator] Generating narration segment ${segmentIndex} using ElevenLabs voice: ${narratorVoice}`);
+      // ElevenLabs voice trained on all emotions - pass actual emotion for modulation
+      console.log(`[StoryNarrator] Generating narration segment ${segmentIndex} using ElevenLabs voice: ${narratorVoice} with emotion: ${chunkEmotion.emotion}, intensity: ${chunkEmotion.intensity}`);
       
       try {
         const { VoiceProviderFactory } = await import('./voice-providers/voice-provider-factory');
-        const arrayBuffer = await VoiceProviderFactory.generateSpeech(text, narratorVoice, 'neutral');
+        const arrayBuffer = await VoiceProviderFactory.generateSpeech(text, narratorVoice, chunkEmotion.emotion);
         audioBuffer = Buffer.from(arrayBuffer);
         
-        console.log(`[StoryNarrator] ElevenLabs narration generated: ${audioBuffer.length} bytes`);
+        console.log(`[StoryNarrator] ElevenLabs narration generated: ${audioBuffer.length} bytes with ${chunkEmotion.emotion} emotion`);
         
       } catch (error) {
         console.error(`[StoryNarrator] ElevenLabs generation failed, falling back to audio service:`, error);
-        // Fallback to audio service if ElevenLabs fails
+        // Fallback to audio service if ElevenLabs fails - pass emotion here too
         const { buffer } = await audioService.getAudioBuffer({
           text,
-          emotion: 'neutral',
-          intensity: 5,
+          emotion: chunkEmotion.emotion, // Pass actual emotion for fallback
+          intensity: chunkEmotion.intensity,
           voice: narratorVoice,
           userId,
-          storyId
+          storyId,
+          narratorProfile: { language: userLanguage }
         });
         audioBuffer = buffer;
       }
     } else {
-      // Use audio service for user samples or AI voices
+      // Use audio service for AI voices - pass actual emotions for OpenAI modulation
+      console.log(`[StoryNarrator] Generating narration with OpenAI voice, emotion: ${chunkEmotion.emotion}, intensity: ${chunkEmotion.intensity}, language: ${userLanguage}`);
+      
       const { buffer } = await audioService.getAudioBuffer({
         text,
-        emotion: 'neutral',
-        intensity: 5,
+        emotion: chunkEmotion.emotion, // Use detected emotion for OpenAI voices
+        intensity: chunkEmotion.intensity,
         voice: narratorVoice,
         userId,
-        storyId
+        storyId,
+        narratorProfile: { language: userLanguage }
       });
       audioBuffer = buffer;
     }

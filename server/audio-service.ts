@@ -4,6 +4,15 @@ import path from 'path';
 import { getCachedAudio, cacheAudio } from './cache/cache-service';
 import { pool } from './db';
 
+export interface NarratorProfile {
+  language: string; // Primary language (en, ta, hi)
+  dialect?: string; // Speaking style like 'indian-english', 'american-hindi'
+  accent?: string; // Regional accent
+  slangLevel?: 'none' | 'light' | 'moderate' | 'heavy'; // How much slang to use
+  codeSwitch?: boolean; // Mix languages naturally
+  formalityLevel?: 'casual' | 'neutral' | 'formal'; // Speaking formality
+}
+
 export interface AudioGenerationOptions {
   text: string;
   emotion: string;
@@ -12,6 +21,7 @@ export interface AudioGenerationOptions {
   userId?: string;
   storyId?: number;
   characters?: any[];
+  narratorProfile?: NarratorProfile; // Complete narrator personality
 }
 
 export interface AudioResult {
@@ -45,6 +55,24 @@ export class AudioService {
     } catch (error) {
       console.error('Error checking user voice emotions:', error);
       return false;
+    }
+  }
+
+  // Get user's language preference from database
+  private async getUserLanguage(userId: string): Promise<string> {
+    if (!userId) return 'en';
+    
+    try {
+      const result = await pool.query(`
+        SELECT language 
+        FROM users 
+        WHERE id = $1
+      `, [userId]);
+      
+      return result.rows[0]?.language || 'en';
+    } catch (error) {
+      console.error('Error fetching user language:', error);
+      return 'en';
     }
   }
 
@@ -344,32 +372,103 @@ export class AudioService {
   }
 
   // Create emotion-appropriate text
-  private createEmotionText(originalText: string, emotion: string, intensity: number): string {
+  private createEmotionText(originalText: string, emotion: string, intensity: number, language?: string): string {
     // For very short texts, return as-is to avoid over-processing
     if (originalText.length < 50) {
       return originalText;
     }
     
-    // Add subtle emotional context without being too heavy-handed
-    const emotionPrefixes: { [key: string]: string[] } = {
-      joy: ['With a sense of joy,', 'Happily,', 'With delight,'],
-      sadness: ['With a heavy heart,', 'Sadly,', 'With sorrow,'],
-      anger: ['With frustration,', 'Angrily,', 'With irritation,'],
-      fear: ['With trepidation,', 'Fearfully,', 'With anxiety,'],
-      surprise: ['Suddenly,', 'Unexpectedly,', 'With surprise,'],
-      disgust: ['With distaste,', 'Reluctantly,', 'With aversion,'],
-      anticipation: ['With anticipation,', 'Eagerly,', 'With expectation,'],
-      trust: ['With confidence,', 'Trustingly,', 'With assurance,']
+    // Language-aware emotion prefixes
+    const emotionPrefixesByLanguage: { [lang: string]: { [key: string]: string[] } } = {
+      en: {
+        joy: ['With a sense of joy,', 'Happily,', 'With delight,'],
+        sadness: ['With a heavy heart,', 'Sadly,', 'With sorrow,'],
+        anger: ['With frustration,', 'Angrily,', 'With irritation,'],
+        fear: ['With trepidation,', 'Fearfully,', 'With anxiety,'],
+        surprise: ['Suddenly,', 'Unexpectedly,', 'With surprise,'],
+        disgust: ['With distaste,', 'Reluctantly,', 'With aversion,'],
+        anticipation: ['With anticipation,', 'Eagerly,', 'With expectation,'],
+        trust: ['With confidence,', 'Trustingly,', 'With assurance,']
+      },
+      ta: {
+        joy: ['மகிழ்ச்சியுடன்,', 'சந்தோஷமாக,', 'உவகையுடன்,'],
+        sadness: ['வருத்தத்துடன்,', 'சோகமாக,', 'துக்கத்துடன்,'],
+        anger: ['கோபத்துடன்,', 'எரிச்சலுடன்,', 'சினத்துடன்,'],
+        fear: ['பயத்துடன்,', 'அச்சத்துடன்,', 'கவலையுடன்,'],
+        surprise: ['திடீரென,', 'எதிர்பாராமல்,', 'ஆச்சரியத்துடன்,'],
+        disgust: ['வெறுப்புடன்,', 'தயக்கத்துடன்,', 'அருவருப்புடன்,'],
+        anticipation: ['எதிர்பார்ப்புடன்,', 'ஆர்வத்துடன்,', 'நம்பிக்கையுடன்,'],
+        trust: ['நம்பிக்கையுடன்,', 'உறுதியுடன்,', 'தைரியத்துடன்,']
+      }
     };
     
+    // Get language-specific prefixes or fallback to English
+    const langPrefixes = emotionPrefixesByLanguage[language || 'en'] || emotionPrefixesByLanguage['en'];
+    const emotionPrefixes = langPrefixes[emotion.toLowerCase()];
+    
     // Only add prefix for higher intensity emotions
-    if (intensity >= 7 && emotionPrefixes[emotion.toLowerCase()]) {
-      const prefixes = emotionPrefixes[emotion.toLowerCase()];
-      const randomPrefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+    if (intensity >= 7 && emotionPrefixes) {
+      const randomPrefix = emotionPrefixes[Math.floor(Math.random() * emotionPrefixes.length)];
       return `${randomPrefix} ${originalText}`;
     }
     
     return originalText;
+  }
+
+  // Build narrator voice instructions based on profile
+  private buildNarratorInstructions(profile?: NarratorProfile): string {
+    if (!profile) return '';
+    
+    const instructions: string[] = [];
+    
+    // Dialect-specific narrator styles
+    if (profile.dialect === 'indian-english') {
+      instructions.push('Speak as an Indian English narrator who naturally uses Hindi/Tamil expressions.');
+      if (profile.slangLevel === 'moderate' || profile.slangLevel === 'heavy') {
+        instructions.push('Add natural Indian expressions like "na", "yaar", "acha" where appropriate.');
+        instructions.push('Use phrases like "isn\'t it" or "only" in typical Indian English style.');
+      }
+    } else if (profile.dialect === 'american-hindi') {
+      instructions.push('Speak Hindi with an American accent, mixing in English words naturally.');
+      instructions.push('Use English technical terms and modern concepts as Americans speaking Hindi would.');
+    } else if (profile.dialect === 'tamil-english') {
+      instructions.push('Speak as a Tamil narrator using English with occasional Tamil expressions.');
+      if (profile.codeSwitch) {
+        instructions.push('Mix Tamil words like "anna", "akka", "seri" naturally in conversation.');
+      }
+    }
+    
+    // Formality level
+    if (profile.formalityLevel === 'casual') {
+      instructions.push('Use a casual, conversational tone as if telling the story to a friend.');
+    } else if (profile.formalityLevel === 'formal') {
+      instructions.push('Maintain a formal, professional narration style.');
+    }
+    
+    // Accent instructions
+    if (profile.accent) {
+      instructions.push(`Use a ${profile.accent} accent while narrating.`);
+    }
+    
+    return instructions.join(' ');
+  }
+  
+  // Enhance text with narrator personality (without changing story content)
+  private enhanceNarratorVoice(text: string, profile?: NarratorProfile): string {
+    if (!profile || profile.slangLevel === 'none') return text;
+    
+    // Add narrator-specific interjections based on profile
+    let enhancedText = text;
+    
+    if (profile.dialect === 'indian-english' && profile.slangLevel !== 'none') {
+      // Add natural pauses or expressions a narrator might use
+      if (text.endsWith('.') && Math.random() > 0.7) {
+        const endings = [' Na?', ' You know.', ' Hai na.'];
+        enhancedText = text.slice(0, -1) + endings[Math.floor(Math.random() * endings.length)];
+      }
+    }
+    
+    return enhancedText;
   }
 
   // Get emotion-appropriate speech speed with dynamic modulation
@@ -486,17 +585,34 @@ export class AudioService {
   // Generate AI audio with dynamic emotion modulation
   private async generateAIAudio(options: AudioGenerationOptions): Promise<Buffer> {
     const selectedVoice = options.voice || this.selectCharacterVoice(options.characters);
-    const emotionText = this.createEmotionText(options.text, options.emotion, options.intensity);
+    
+    // Create narrator profile if not provided
+    const narratorProfile = options.narratorProfile || {
+      language: options.userId ? await this.getUserLanguage(options.userId) : 'en'
+    };
+    
+    // Create emotion text with language awareness
+    const emotionText = this.createEmotionText(options.text, options.emotion, options.intensity, narratorProfile.language);
+    
+    // Enhance with narrator personality
+    const narratorText = this.enhanceNarratorVoice(emotionText, narratorProfile);
+    
+    // Build narrator instructions for OpenAI
+    const narratorInstructions = this.buildNarratorInstructions(narratorProfile);
+    
+    // Combine text with narrator instructions
+    const finalText = narratorInstructions ? `${narratorInstructions} "${narratorText}"` : narratorText;
+    
     const emotionSpeed = this.getEmotionSpeed(options.emotion, options.intensity);
     
-    console.log(`Generating modulated audio: voice=${selectedVoice}, emotion=${options.emotion}, intensity=${options.intensity}, speed=${emotionSpeed}`);
+    console.log(`Generating modulated audio: voice=${selectedVoice}, emotion=${options.emotion}, intensity=${options.intensity}, speed=${emotionSpeed}, language=${narratorProfile.language}, dialect=${narratorProfile.dialect || 'none'}`);
     
     // Check if this is an ElevenLabs voice ID (20 characters long)
     if (selectedVoice && selectedVoice.length === 20) {
       console.log(`[AudioService] Detected ElevenLabs voice ID, using ElevenLabs provider`);
       try {
         const { VoiceProviderFactory } = await import('./voice-providers/voice-provider-factory');
-        const arrayBuffer = await VoiceProviderFactory.generateSpeech(emotionText, selectedVoice, options.emotion);
+        const arrayBuffer = await VoiceProviderFactory.generateSpeech(finalText, selectedVoice, options.emotion);
         return Buffer.from(arrayBuffer);
       } catch (error) {
         console.error(`[AudioService] ElevenLabs generation failed, falling back to default voice:`, error);
@@ -505,7 +621,7 @@ export class AudioService {
         const response = await this.openai.audio.speech.create({
           model: "tts-1",
           voice: fallbackVoice as any,
-          input: emotionText,
+          input: finalText,
           speed: emotionSpeed,
         });
         return Buffer.from(await response.arrayBuffer());
@@ -516,7 +632,7 @@ export class AudioService {
     const response = await this.openai.audio.speech.create({
       model: "tts-1",
       voice: selectedVoice as any,
-      input: emotionText,
+      input: finalText,
       speed: emotionSpeed,
     });
 

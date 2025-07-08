@@ -412,6 +412,18 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Voice ID**: Successfully using narrator voice `cuxbYT1nu3MZbK8JwgAZ`
 - **Voice Quality Enhancement**: Updated recording requirements to 15-25 seconds (from 5-10 seconds) with 45-60 word sample texts for optimal voice cloning quality
 
+## TODO List - January 13, 2025
+
+### High Priority Tasks
+1. **SSO Language Capture**: Need to capture user's preferred language during OAuth/SSO sign-in and store it in the database
+   - Currently language preference is only stored in localStorage, not persisted with user account
+   - Need to add language field to users table and OAuth provider integration
+
+2. **OpenAI Narrator Voice Enhancement**:
+   - **Pass Language to OpenAI**: Currently not sending user's selected language to OpenAI for TTS generation
+   - **Pass Emotions to OpenAI**: Logs show emotions array is empty when calling OpenAI - need to fix emotion extraction
+   - **Advanced Voice Improvements**: Enhance narrator voice quality with emotion-aware TTS parameters
+
 ## Changelog
 
 ### **I18N CONVERSION PROGRESS - January 13, 2025**
@@ -422,6 +434,17 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **REMAINING PAGES**: 20+ pages still require conversion including story-library, voice-record, login, register, etc.
 - **CRITICAL COMPONENTS**: Enhanced-voice-recorder and invitation pages contain extensive hardcoded strings
 - **IMPORT PATTERN**: Using `import { getMessage } from "@shared/i18n-hierarchical"` for hierarchical messages
+
+### **NARRATOR PROFILE SYSTEM IMPLEMENTED - January 13, 2025**
+**Enhanced Story Narration with Language and Emotion Support**: Comprehensive narrator voice improvements
+- **NARRATOR PROFILE INTERFACE**: Created NarratorProfile with language, dialect, accent, slang level, and formality settings
+- **DIALECT SUPPORT**: Added support for Indian English, American Hindi, Tamil English with natural code-switching
+- **EMOTION PASS-THROUGH**: Both ElevenLabs and OpenAI voices now receive actual story emotions instead of hardcoded 'neutral'
+- **EMOTION DETECTION**: Implemented chunk-based emotion detection matching story analysis quotes/context to text segments
+- **ELEVENLABS EMOTION SUPPORT**: ElevenLabs trained voices accept emotion parameters for voice modulation
+- **OPENAI NARRATOR INSTRUCTIONS**: Build dynamic narrator instructions based on profile for authentic voice personality
+- **LANGUAGE AWARENESS**: System properly passes user language preference to TTS generation
+- **USER PREFERENCE STORAGE**: Added getUserLanguage method to fetch language from database (future SSO integration needed)
 
 ### **AUDIO PLAYBACK FIXES - January 08, 2025**
 **Fixed Multiple Audio Playback Issues**: Resolved pause/resume and segment advancement problems
