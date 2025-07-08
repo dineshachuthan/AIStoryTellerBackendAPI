@@ -118,13 +118,13 @@ export function DraftStoriesPanel({
   }
 
   return (
-    <div className={`bg-dark-bg border-r border-gray-800 transition-all duration-300 ${
+    <div className={`bg-dark-bg transition-all duration-300 ${
       isCollapsed ? 'w-12 sm:w-16' : 'w-64 sm:w-72 md:w-80 lg:w-96'
     } ${className} hidden sm:block h-full`}>
       <div className="h-full flex flex-col">
         {/* Toggle Button */}
         {showToggle && (
-          <div className="p-1 sm:p-2 border-b border-gray-800">
+          <div className="p-1 sm:p-2">
             <Button
               onClick={onToggleCollapse}
               variant="ghost"
@@ -177,7 +177,7 @@ export function DraftStoriesPanel({
                     </div>
                     <div className="space-y-2">
                       {genreStories.slice(0, 3).map((story: Story) => (
-                        <Card key={story.id} className="bg-gray-800/50 border-gray-700 hover:border-gray-600 transition-colors cursor-pointer">
+                        <Card key={story.id} className="bg-gray-800/30 border-transparent hover:bg-gray-800/50 transition-colors cursor-pointer">
                           <CardContent className="p-3">
                             <div className="space-y-2">
                               <h4 className="text-sm font-medium text-white line-clamp-1">
