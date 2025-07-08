@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast, toastMessages } from "@/lib/toast-utils";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
-import { Mail, Phone, Send, Plus, X } from "lucide-react";
+import { Mail, Phone, Send, Plus, X, Copy, CheckCircle } from "lucide-react";
 import type { Story, StoryCharacter } from "@shared/schema";
 
 interface InviteCollaboratorsDialogProps {
@@ -32,6 +32,8 @@ export function InviteCollaboratorsDialog({
   const queryClient = useQueryClient();
   const [invites, setInvites] = useState<InviteData[]>([{ type: 'email', value: '' }]);
   const [message, setMessage] = useState('');
+  const [createdInvitations, setCreatedInvitations] = useState<any[]>([]);
+  const [copiedTokens, setCopiedTokens] = useState<Set<string>>(new Set());
 
   const sendInvitationsMutation = useMutation({
     mutationFn: async () => {
@@ -50,11 +52,17 @@ export function InviteCollaboratorsDialog({
         message: message.trim() || undefined,
       });
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       const count = invites.filter(i => i.value).length;
       toast.success(toastMessages.invitationsSent(count));
       queryClient.invalidateQueries({ queryKey: ['/api/stories', story.id, 'invitations'] });
-      onOpenChange(false);
+      
+      // Store created invitations for display
+      if (data && data.invitations) {
+        setCreatedInvitations(data.invitations);
+      }
+      
+      // Don't close dialog, let user see the links
       // Reset form
       setInvites([{ type: 'email', value: '' }]);
       setMessage('');
@@ -80,6 +88,27 @@ export function InviteCollaboratorsDialog({
     setInvites(newInvites);
   };
 
+  const copyToClipboard = async (text: string, token: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedTokens(new Set([...copiedTokens, token]));
+      toast.success('Link copied to clipboard!');
+      setTimeout(() => {
+        setCopiedTokens(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(token);
+          return newSet;
+        });
+      }, 2000);
+    } catch (error) {
+      toast.error('Failed to copy link');
+    }
+  };
+
+  const getInvitationUrl = (token: string) => {
+    return `${window.location.origin}/invite/${token}`;
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
@@ -91,6 +120,59 @@ export function InviteCollaboratorsDialog({
         </DialogHeader>
 
         <div className="space-y-4">
+          {/* Created Invitations Display */}
+          {createdInvitations.length > 0 && (
+            <div className="space-y-3 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+                <h3 className="font-semibold text-green-900 dark:text-green-100">
+                  Invitations Created Successfully!
+                </h3>
+              </div>
+              <p className="text-sm text-green-700 dark:text-green-300 mb-3">
+                Share these links with your collaborators (email will be sent if MailGun is configured):
+              </p>
+              <div className="space-y-2">
+                {createdInvitations.map((invitation) => {
+                  const url = getInvitationUrl(invitation.invitationToken);
+                  const isEmail = invitation.inviteeEmail;
+                  return (
+                    <div key={invitation.id} className="flex items-center space-x-2 p-2 bg-white dark:bg-gray-800 rounded border border-green-300 dark:border-green-700">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center space-x-2">
+                          {isEmail ? <Mail className="h-4 w-4 text-gray-500" /> : <Phone className="h-4 w-4 text-gray-500" />}
+                          <span className="text-sm font-medium truncate">
+                            {invitation.inviteeEmail || invitation.inviteePhone}
+                          </span>
+                          {invitation.characterId && (
+                            <span className="text-xs text-gray-500">
+                              (Character: {characters.find(c => c.id === invitation.characterId)?.name})
+                            </span>
+                          )}
+                        </div>
+                        <div className="mt-1">
+                          <code className="text-xs text-gray-600 dark:text-gray-400 break-all">{url}</code>
+                        </div>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => copyToClipboard(url, invitation.invitationToken)}
+                        className="shrink-0"
+                      >
+                        {copiedTokens.has(invitation.invitationToken) ? (
+                          <CheckCircle className="h-4 w-4 text-green-600" />
+                        ) : (
+                          <Copy className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Invitations List */}
           <div className="space-y-3">
             <Label>Invitations</Label>

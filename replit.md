@@ -425,7 +425,16 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - ✅ Created invitation landing page at `/invite/{token}` accessible to both authenticated and anonymous users
 - ✅ Backend endpoint `/api/invitations/{token}` fetches invitation with story and inviter details
 - ✅ Updated App.tsx routing to place invitation route outside authentication check for public access
+- ✅ MailGun email provider fully integrated and working (sandbox restrictions require authorized recipients)
+- **Pending MailGun Custom Domain Setup (deeevee.com)**:
+  1. Add domain in MailGun Dashboard → Sending → Domains → Add New Domain
+  2. Enter `deeevee.com` or `mg.deeevee.com` (subdomain recommended)
+  3. Add DNS records from MailGun (SPF, DKIM, optional MX/CNAME)
+  4. Verify domain in MailGun dashboard
+  5. Update environment variables: MAILGUN_DOMAIN=deeevee.com, MAILGUN_FROM_EMAIL=noreply@deeevee.com
+  6. Benefits: No sandbox restrictions, better deliverability, professional appearance
 - **Next Steps**:
+  - Display invitation links in dialog for manual testing
   - Implement voice recording functionality in invitation landing page
   - Create accept invitation flow to update status
   - Add roleplay submission for guest users
