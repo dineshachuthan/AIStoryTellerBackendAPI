@@ -148,46 +148,46 @@ export default function Home() {
                 </CardDescription>
               </CardHeader>
               <CardContent className={`pt-0 ${styles.containerPadding}`}>
-                <div className={`grid ${styles.gridCols} gap-2 ${windowDimensions.width >= 768 ? 'sm:gap-3' : ''}`}>
+                <div className="flex flex-col gap-2">
                   <Button
                     onClick={() => createStoryAndNavigate("text", "/upload-story")}
                     disabled={isCreatingStory}
                     variant="outline"
-                    className={`border-blue-500 text-blue-500 hover:bg-blue-500/20 ${styles.buttonSize} p-2 flex flex-col items-center justify-center space-y-1`}
+                    className="border-blue-500 text-blue-500 hover:bg-blue-500/20 w-full h-12 flex items-center justify-start px-4 gap-3"
                     size="sm"
                   >
                     {isCreatingStory ? 
                       <Loader2 className={`${windowDimensions.width < 640 ? 'w-3 h-3' : windowDimensions.width < 1024 ? 'w-4 h-4' : 'w-5 h-5'} animate-spin`} /> : 
                       <PenTool className={`${windowDimensions.width < 640 ? 'w-3 h-3' : windowDimensions.width < 1024 ? 'w-4 h-4' : 'w-5 h-5'}`} />
                     }
-                    <span className={`${styles.textSize} text-center leading-tight break-words`}>Write Story</span>
+                    <span className={`${styles.textSize}`}>Write Story</span>
                   </Button>
                   <Button
                     onClick={() => createStoryAndNavigate("voice", "/voice-record")}
                     disabled={isCreatingStory}
                     variant="outline"
-                    className={`border-green-500 text-green-500 hover:bg-green-500/20 ${styles.buttonSize} p-2 flex flex-col items-center justify-center space-y-1`}
+                    className="border-green-500 text-green-500 hover:bg-green-500/20 w-full h-12 flex items-center justify-start px-4 gap-3"
                     size="sm"
                   >
                     {isCreatingStory ? 
                       <Loader2 className={`${windowDimensions.width < 640 ? 'w-3 h-3' : windowDimensions.width < 1024 ? 'w-4 h-4' : 'w-5 h-5'} animate-spin`} /> : 
                       <Mic className={`${windowDimensions.width < 640 ? 'w-3 h-3' : windowDimensions.width < 1024 ? 'w-4 h-4' : 'w-5 h-5'}`} />
                     }
-                    <span className={`${styles.textSize} text-center leading-tight break-words`}>Voice Record</span>
+                    <span className={`${styles.textSize}`}>Voice Record</span>
                     {windowDimensions.width >= 640 && <span className="text-xs opacity-70 leading-tight">(5 min)</span>}
                   </Button>
 
                   <Button
                     onClick={() => createStoryAndNavigate("audio", "/upload-audio")}
                     disabled={isCreatingStory}
-                    className={`bg-tiktok-red hover:bg-tiktok-red/80 ${styles.buttonSize} p-2 flex flex-col items-center justify-center space-y-1`}
+                    className="bg-tiktok-red hover:bg-tiktok-red/80 w-full h-12 flex items-center justify-start px-4 gap-3"
                     size="sm"
                   >
                     {isCreatingStory ? 
                       <Loader2 className={`${windowDimensions.width < 640 ? 'w-3 h-3' : windowDimensions.width < 1024 ? 'w-4 h-4' : 'w-5 h-5'} animate-spin`} /> : 
                       <AudioLines className={`${windowDimensions.width < 640 ? 'w-3 h-3' : windowDimensions.width < 1024 ? 'w-4 h-4' : 'w-5 h-5'}`} />
                     }
-                    <span className={`${styles.textSize} text-center leading-tight break-words`}>Upload Audio</span>
+                    <span className={`${styles.textSize}`}>Upload Audio</span>
                   </Button>
                 </div>
               </CardContent>
