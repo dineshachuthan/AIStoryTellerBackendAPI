@@ -1722,6 +1722,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get current narrator voice ID for user
+  app.get('/api/user/narrator-voice', requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any)?.id;
+      const narratorVoiceId = await storage.getUserNarratorVoice(userId);
+      res.json({ narratorVoiceId });
+    } catch (error) {
+      console.error('Error getting narrator voice:', error);
+      res.status(500).json({ message: 'Failed to get narrator voice' });
+    }
+  });
+
   // User-specific stories routes (private by default)
   app.get("/api/users/:userId/stories", requireAuth, async (req, res) => {
     try {

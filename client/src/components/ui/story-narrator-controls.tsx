@@ -47,15 +47,41 @@ export default function StoryNarratorControls({
   
   const { toast } = useToast();
 
+  // Get current narrator voice ID in real-time
+  const { data: narratorVoiceData } = useQuery({
+    queryKey: ['/api/user/narrator-voice'],
+    queryFn: async () => {
+      if (!user) return null;
+      try {
+        const response = await apiRequest('/api/user/narrator-voice', {
+          method: 'GET'
+        });
+        return response;
+      } catch (error) {
+        console.error('Error fetching narrator voice:', error);
+        return null;
+      }
+    },
+    enabled: !!user
+  });
+
   // Use React Query to fetch saved narration - this will respond to cache invalidations
   const { data: savedNarration, isLoading: isLoadingSaved } = useQuery({
-    queryKey: [`/api/stories/${storyId}/narration/saved`],
+    queryKey: [`/api/stories/${storyId}/narration/saved`, narratorVoiceData?.narratorVoiceId],
     queryFn: async () => {
       if (!user) return null;
       try {
         const response = await apiRequest(`/api/stories/${storyId}/narration/saved`, {
           method: 'GET'
         });
+        
+        // Check if narration matches current voice ID
+        if (response && narratorVoiceData?.narratorVoiceId && 
+            response.narratorVoice !== narratorVoiceData.narratorVoiceId) {
+          console.log('Narration voice mismatch, cache invalid');
+          return null;
+        }
+        
         return response || null;
       } catch (error) {
         // No saved narration found - this is normal
@@ -119,6 +145,16 @@ export default function StoryNarratorControls({
   const generateNarration = async () => {
     if (!user || !canNarrate) return;
 
+    // Check if we already have a narration with current voice ID
+    if (savedNarration && narratorVoiceData?.narratorVoiceId && 
+        savedNarration.narratorVoice === narratorVoiceData.narratorVoiceId) {
+      toast({
+        title: "Already Generated",
+        description: "Story narration already exists with current voice",
+      });
+      return;
+    }
+
     setIsGenerating(true);
     try {
       // Get story content and narrative analysis
@@ -142,7 +178,10 @@ export default function StoryNarratorControls({
 
       if (response.segments) {
         // Narration is automatically saved in backend during generation
-        // React Query will automatically refresh the saved narration data
+        // Invalidate and refetch the saved narration query
+        await queryClient.invalidateQueries({ queryKey: [`/api/stories/${storyId}/narration/saved`] });
+        await queryClient.refetchQueries({ queryKey: [`/api/stories/${storyId}/narration/saved`] });
+        
         setTempNarration(null); // Clear any temp narration
         setCurrentSegment(0);
         setProgress(0);
@@ -189,9 +228,16 @@ export default function StoryNarratorControls({
   };
 
   // Simple play function
-  const playNarration = () => {
+  const playNarration = async () => {
     const activeNarration = tempNarration || savedNarration;
-    if (!activeNarration || !audioRef.current) return;
+    
+    // If no narration exists, generate it first
+    if (!activeNarration || !activeNarration.segments.length) {
+      await generateNarration();
+      return;
+    }
+    
+    if (!audioRef.current) return;
     
     if (isPlaying) {
       // Pause
