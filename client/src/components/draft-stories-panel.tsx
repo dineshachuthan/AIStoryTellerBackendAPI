@@ -124,7 +124,7 @@ export function DraftStoriesPanel({
 
   return (
     <div className={`bg-dark-bg transition-all duration-300 ${
-      isCollapsed ? 'w-12 sm:w-16' : 'w-72 sm:w-80 md:w-96 lg:w-[28rem]'
+      isCollapsed ? 'w-12 sm:w-16' : 'w-64 sm:w-72 md:w-80 lg:w-96'
     } ${className} hidden sm:block h-full`}>
       <div className="h-full flex flex-col">
         {/* Toggle Button */}

@@ -232,8 +232,10 @@ export default function Home() {
 
             {/* Main Actions Section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Create New Story */}
-              <Card className="bg-dark-card border-gray-800">
+              {/* Create New Story Section */}
+              <div className="space-y-6">
+                {/* Create New Story */}
+                <Card className="bg-dark-card border-gray-800">
                 <CardHeader>
                   <CardTitle className="text-white flex items-center">
                     <Target className="w-5 h-5 mr-2 text-tiktok-pink" />
@@ -249,20 +251,20 @@ export default function Home() {
                       onClick={() => createStoryAndNavigate("text", "/upload-story")}
                       disabled={isCreatingStory}
                       variant="outline"
-                      className="border-blue-500 text-blue-500 hover:bg-blue-500/20 w-full h-20 flex items-center justify-between px-6 group"
+                      className="border-blue-500 text-blue-500 hover:bg-blue-500/20 w-full min-h-[4rem] md:min-h-[5rem] py-3 md:py-4 flex items-center justify-between px-3 md:px-6 group"
                     >
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
                         {isCreatingStory ? 
-                          <Loader2 className="w-6 h-6 animate-spin" /> : 
-                          <PenTool className="w-6 h-6" />
+                          <Loader2 className="w-5 h-5 md:w-6 md:h-6 animate-spin flex-shrink-0" /> : 
+                          <PenTool className="w-5 h-5 md:w-6 md:h-6 flex-shrink-0" />
                         }
-                        <div className="text-left">
-                          <span className="block font-medium">Write Your Story</span>
-                          <span className="text-xs opacity-70">Type or paste your narrative</span>
+                        <div className="text-left min-w-0">
+                          <span className="block font-medium text-sm md:text-base truncate">Write Your Story</span>
+                          <span className="hidden sm:block text-xs opacity-70">Type or paste your narrative</span>
                         </div>
                       </div>
-                      <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
-                        <PenTool className="w-5 h-5" />
+                      <div className="hidden lg:flex w-10 h-10 md:w-12 md:h-12 rounded-full bg-blue-500/10 items-center justify-center group-hover:bg-blue-500/20 transition-colors flex-shrink-0 ml-2">
+                        <PenTool className="w-4 h-4 md:w-5 md:h-5" />
                       </div>
                     </Button>
                     
@@ -270,100 +272,100 @@ export default function Home() {
                       onClick={() => createStoryAndNavigate("voice", "/voice-record")}
                       disabled={isCreatingStory}
                       variant="outline"
-                      className="border-green-500 text-green-500 hover:bg-green-500/20 w-full h-20 flex items-center justify-between px-6 group"
+                      className="border-green-500 text-green-500 hover:bg-green-500/20 w-full min-h-[4rem] md:min-h-[5rem] py-3 md:py-4 flex items-center justify-between px-3 md:px-6 group"
                     >
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
                         {isCreatingStory ? 
-                          <Loader2 className="w-6 h-6 animate-spin" /> : 
-                          <Mic className="w-6 h-6" />
+                          <Loader2 className="w-5 h-5 md:w-6 md:h-6 animate-spin flex-shrink-0" /> : 
+                          <Mic className="w-5 h-5 md:w-6 md:h-6 flex-shrink-0" />
                         }
-                        <div className="text-left">
-                          <span className="block font-medium">Record Your Voice</span>
-                          <span className="text-xs opacity-70">Speak your story (up to 5 minutes)</span>
+                        <div className="text-left min-w-0">
+                          <span className="block font-medium text-sm md:text-base truncate">Record Your Voice</span>
+                          <span className="hidden sm:block text-xs opacity-70">Speak your story (up to 5 minutes)</span>
                         </div>
                       </div>
-                      <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center group-hover:bg-green-500/20 transition-colors">
-                        <Mic className="w-5 h-5" />
+                      <div className="hidden lg:flex w-10 h-10 md:w-12 md:h-12 rounded-full bg-green-500/10 items-center justify-center group-hover:bg-green-500/20 transition-colors flex-shrink-0 ml-2">
+                        <Mic className="w-4 h-4 md:w-5 md:h-5" />
                       </div>
                     </Button>
 
                     <Button
                       onClick={() => createStoryAndNavigate("audio", "/upload-audio")}
                       disabled={isCreatingStory}
-                      className="bg-gradient-to-r from-tiktok-red to-purple-600 hover:from-tiktok-red/80 hover:to-purple-600/80 w-full h-20 flex items-center justify-between px-6 group text-white"
+                      className="bg-gradient-to-r from-tiktok-red to-purple-600 hover:from-tiktok-red/80 hover:to-purple-600/80 w-full min-h-[4rem] md:min-h-[5rem] py-3 md:py-4 flex items-center justify-between px-3 md:px-6 group text-white"
                     >
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
                         {isCreatingStory ? 
-                          <Loader2 className="w-6 h-6 animate-spin" /> : 
-                          <AudioLines className="w-6 h-6" />
+                          <Loader2 className="w-5 h-5 md:w-6 md:h-6 animate-spin flex-shrink-0" /> : 
+                          <AudioLines className="w-5 h-5 md:w-6 md:h-6 flex-shrink-0" />
                         }
-                        <div className="text-left">
-                          <span className="block font-medium">Upload Audio</span>
-                          <span className="text-xs opacity-90">Import existing recordings</span>
+                        <div className="text-left min-w-0">
+                          <span className="block font-medium text-sm md:text-base truncate">Upload Audio</span>
+                          <span className="hidden sm:block text-xs opacity-90">Import existing recordings</span>
                         </div>
                       </div>
-                      <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition-colors">
-                        <Upload className="w-5 h-5" />
+                      <div className="hidden lg:flex w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/10 items-center justify-center group-hover:bg-white/20 transition-colors flex-shrink-0 ml-2">
+                        <Upload className="w-4 h-4 md:w-5 md:h-5" />
                       </div>
                     </Button>
                   </div>
                 </CardContent>
-              </Card>
+                </Card>
 
-              {/* Recent Activity */}
-              <Card className="bg-dark-card border-gray-800">
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center">
-                    <Sparkles className="w-5 h-5 mr-2 text-purple-500" />
-                    Your Journey
-                  </CardTitle>
-                  <CardDescription className="text-gray-400">
-                    Recent storytelling milestones
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {stories && stories.length > 0 ? (
-                      <>
-                        <div className="p-4 rounded-lg bg-gray-800/50 border border-gray-700">
-                          <p className="text-sm text-gray-400 mb-1">Latest Story</p>
-                          <p className="font-medium text-white">{stories[0]?.title}</p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            {formatDistanceToNow(new Date(stories[0]?.createdAt), { addSuffix: true })}
-                          </p>
-                        </div>
-                        
-                        {stories.filter(s => s.narratorVoice || s.narratorVoiceType).length > 0 && (
-                          <div className="p-4 rounded-lg bg-purple-900/20 border border-purple-700/50">
-                            <p className="text-sm text-purple-400 mb-1">Recent Narration</p>
-                            <p className="font-medium text-white">
-                              {stories.find(s => s.narratorVoice || s.narratorVoiceType)?.title}
+                {/* Your Journey */}
+                <Card className="bg-dark-card border-gray-800">
+                  <CardHeader>
+                    <CardTitle className="text-white flex items-center">
+                      <Sparkles className="w-5 h-5 mr-2 text-purple-500" />
+                      Your Journey
+                    </CardTitle>
+                    <CardDescription className="text-gray-400">
+                      Recent storytelling milestones
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {stories && stories.length > 0 ? (
+                        <>
+                          <div className="p-3 rounded-lg bg-gray-800/50 border border-gray-700">
+                            <p className="text-xs text-gray-400">Latest</p>
+                            <p className="text-sm font-medium text-white truncate">{stories[0]?.title}</p>
+                            <p className="text-xs text-gray-500">
+                              {formatDistanceToNow(new Date(stories[0]?.createdAt), { addSuffix: true })}
                             </p>
-                            <p className="text-xs text-purple-300 mt-1">With ElevenLabs voice</p>
                           </div>
-                        )}
-                        
-                        <div className="text-center pt-4">
-                          <p className="text-gray-400 text-sm mb-3">
-                            You've created {stories.length} amazing {stories.length === 1 ? 'story' : 'stories'}!
-                          </p>
-                          <div className="flex items-center justify-center gap-1">
-                            {[...Array(Math.min(5, stories.length))].map((_, i) => (
-                              <div key={i} className="w-2 h-2 rounded-full bg-gradient-to-r from-blue-500 to-purple-500" />
-                            ))}
+                          
+                          {stories.filter(s => s.narratorVoice || s.narratorVoiceType).length > 0 && (
+                            <div className="p-3 rounded-lg bg-purple-900/20 border border-purple-700/50">
+                              <p className="text-xs text-purple-400">Narrated</p>
+                              <p className="text-sm font-medium text-white truncate">
+                                {stories.find(s => s.narratorVoice || s.narratorVoiceType)?.title}
+                              </p>
+                            </div>
+                          )}
+                          
+                          <div className="text-center pt-2">
+                            <p className="text-sm font-medium text-white">{stories.length} {stories.length === 1 ? 'story' : 'stories'} created</p>
+                            <div className="flex items-center justify-center gap-1 mt-2">
+                              {[...Array(Math.min(5, stories.length))].map((_, i) => (
+                                <div key={i} className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-blue-500 to-purple-500" />
+                              ))}
+                            </div>
                           </div>
+                        </>
+                      ) : (
+                        <div className="text-center py-6">
+                          <Sparkles className="w-10 h-10 text-gray-600 mx-auto mb-2" />
+                          <p className="text-sm text-gray-400">Start your journey!</p>
                         </div>
-                      </>
-                    ) : (
-                      <div className="text-center py-8">
-                        <Sparkles className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-                        <p className="text-gray-400">Start your storytelling journey!</p>
-                        <p className="text-gray-500 text-sm mt-1">Create your first story above</p>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Empty div for grid balance */}
+              <div></div>
             </div>
 
             <CharacterFeed />
