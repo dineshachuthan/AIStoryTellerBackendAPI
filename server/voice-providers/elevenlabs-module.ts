@@ -492,26 +492,15 @@ export class ElevenLabsModule extends BaseVoiceProvider {
     this.log('info', `Updating voice ${voiceId} with ${request.samples.length} new samples`);
     
     try {
-      // First, delete the old voice (pass userId for audit trail)
+      // First, try to delete the old voice (pass userId for audit trail)
       await this.deleteVoice(voiceId, request.userId);
-      
-      // Then create a new voice with the same approach
-      // This is necessary because ElevenLabs doesn't support adding samples to existing voices
-      return await this.performVoiceTraining(request);
-      
     } catch (error: any) {
-      this.log('error', `Failed to update voice ${voiceId}`, error);
-      
-      // If delete succeeded but create failed, we've lost the voice
-      // In this case, just create a new one
-      if (error.message.includes('delete voice')) {
-        throw error;
-      }
-      
-      // Try to create a new voice anyway
-      this.log('info', `Attempting to create new voice after update failure`);
-      return await this.performVoiceTraining(request);
+      // If voice doesn't exist, that's fine - we'll create a new one
+      this.log('info', `Voice ${voiceId} not found, will create new voice`);
     }
+    
+    // Create a new voice
+    return await this.performVoiceTraining(request);
   }
 
   private async convertToMp3(audioBuffer: Buffer, fileName: string): Promise<Buffer> {

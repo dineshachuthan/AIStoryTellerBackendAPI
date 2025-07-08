@@ -138,7 +138,7 @@ export class VoiceCloningSegmentationService {
       .map(recording => ({
         name: recording.name,
         sampleCount: 1, // Each recording represents one sample
-        locked: recording.emotion_locked || false,
+        locked: recording.is_locked || false,
         esmRefId: recording.esm_ref_id,
         audioUrl: recording.audio_url,
         userEsmId: recording.user_esm_id,
@@ -150,7 +150,7 @@ export class VoiceCloningSegmentationService {
       .map(recording => ({
         name: recording.name,
         sampleCount: 1,
-        locked: recording.emotion_locked || false,
+        locked: recording.is_locked || false,
         esmRefId: recording.esm_ref_id,
         audioUrl: recording.audio_url,
         userEsmId: recording.user_esm_id,
@@ -162,7 +162,7 @@ export class VoiceCloningSegmentationService {
       .map(recording => ({
         name: recording.name,
         sampleCount: 1,
-        locked: recording.emotion_locked || false,
+        locked: recording.is_locked || false,
         esmRefId: recording.esm_ref_id,
         audioUrl: recording.audio_url,
         userEsmId: recording.user_esm_id,
