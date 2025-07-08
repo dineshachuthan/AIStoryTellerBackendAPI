@@ -144,9 +144,9 @@ export class VoiceTrainingService {
         // If MVP2 system is available, use it for intelligent voice generation
         console.log(`[MVP1] Switching to MVP2 system for intelligent voice generation...`);
         
-        // Use MVP2 ElevenLabs integration which handles individual emotion/sound locking properly
-        const { mvp2ElevenLabsIntegration } = await import('./mvp2-elevenlabs-integration');
-        const mvp2Result = await mvp2ElevenLabsIntegration.generateSpecializedNarratorVoices(userId);
+        // Use ElevenLabs voice cloning which handles individual emotion/sound locking properly
+        const { elevenLabsVoiceCloning } = await import('./elevenlabs-voice-cloning');
+        const mvp2Result = await elevenLabsVoiceCloning.generateSpecializedNarratorVoices(userId);
         
         clearTimeout(timeout);
         
@@ -495,9 +495,9 @@ export class VoiceTrainingService {
           return;
         }
 
-        // Use MVP2 ElevenLabs integration for specialized voice generation
-        const { mvp2ElevenLabsIntegration } = await import('./mvp2-elevenlabs-integration');
-        const result = await mvp2ElevenLabsIntegration.generateSpecializedNarratorVoices(userId);
+        // Use ElevenLabs voice cloning for specialized voice generation
+        const { elevenLabsVoiceCloning } = await import('./elevenlabs-voice-cloning');
+        const result = await elevenLabsVoiceCloning.generateSpecializedNarratorVoices(userId);
         
         clearTimeout(timeout);
         

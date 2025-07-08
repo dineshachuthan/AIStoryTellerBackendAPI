@@ -446,6 +446,16 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **LANGUAGE AWARENESS**: System properly passes user language preference to TTS generation
 - **USER PREFERENCE STORAGE**: Added getUserLanguage method to fetch language from database (future SSO integration needed)
 
+### **PROPER ARCHITECTURE NAMING CONVENTIONS - January 14, 2025**
+**Fixed Version-Based Naming**: Removed version numbers from filenames for better architecture
+- **RENAMED FILE**: Changed mvp2-elevenlabs-integration.ts to elevenlabs-voice-cloning.ts
+- **ARCHITECTURE PRINCIPLE**: Files should have descriptive, version-agnostic names
+- **CLASS RENAMED**: MVP2ElevenLabsIntegration → ElevenLabsVoiceCloning
+- **EXPORT UPDATED**: mvp2ElevenLabsIntegration → elevenLabsVoiceCloning
+- **IMPORTS FIXED**: Updated all imports in voice-training-service.ts
+- **RATIONALE**: MVP terminology is for requirements, not file/class names
+- **USER BENEFIT**: Clean architecture that doesn't require renaming files for each iteration
+
 ### **AUDIO PLAYBACK FIXES - January 08, 2025**
 **Fixed Multiple Audio Playback Issues**: Resolved pause/resume and segment advancement problems
 - **PAUSE/RESUME ISSUE**: Fixed audio restarting from beginning when resuming from pause

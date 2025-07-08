@@ -21,7 +21,7 @@ export interface MVP2VoiceGenerationResult {
   error?: string;
 }
 
-export class MVP2ElevenLabsIntegration {
+export class ElevenLabsVoiceCloning {
   private readonly TIMEOUT_DURATION = 300000; // 5 minutes for MVP2 operations
 
   /**
@@ -356,4 +356,4 @@ export class MVP2ElevenLabsIntegration {
   }
 }
 
-export const mvp2ElevenLabsIntegration = new MVP2ElevenLabsIntegration();
+export const elevenLabsVoiceCloning = new ElevenLabsVoiceCloning();
