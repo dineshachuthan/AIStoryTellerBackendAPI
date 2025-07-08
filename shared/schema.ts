@@ -1416,3 +1416,102 @@ export const insertStoryModulationRequirementSchema = createInsertSchema(storyMo
 
 export type StoryModulationRequirement = typeof storyModulationRequirements.$inferSelect;
 export type InsertStoryModulationRequirement = z.infer<typeof insertStoryModulationRequirementSchema>;
+
+// =============================================================================
+// COLLABORATIVE STORYTELLING SCHEMAS
+// =============================================================================
+
+// Story invitations table
+export const storyInvitations = pgTable("story_invitations", {
+  id: serial("id").primaryKey(),
+  storyId: integer("story_id").references(() => stories.id).notNull(),
+  inviterId: varchar("inviter_id").references(() => users.id).notNull(),
+  inviteeEmail: varchar("invitee_email"),
+  inviteePhone: varchar("invitee_phone"),
+  invitationToken: varchar("invitation_token").unique().notNull(),
+  status: varchar("status").default('pending').notNull(), // pending, accepted, completed
+  message: text("message"), // Optional personalized message
+  characterId: integer("character_id").references(() => storyCharacters.id), // Optional character assignment
+  createdAt: timestamp("created_at").defaultNow(),
+  acceptedAt: timestamp("accepted_at"),
+  completedAt: timestamp("completed_at"),
+  expiresAt: timestamp("expires_at").notNull(), // 120 hours from creation
+}, (table) => [
+  index("idx_story_invitations_story").on(table.storyId),
+  index("idx_story_invitations_token").on(table.invitationToken),
+]);
+
+// Participant narrations table
+export const participantNarrations = pgTable("participant_narrations", {
+  id: serial("id").primaryKey(),
+  invitationId: integer("invitation_id").references(() => storyInvitations.id).notNull(),
+  participantName: varchar("participant_name").notNull(),
+  participantId: varchar("participant_id").references(() => users.id), // NULL for guests
+  narratorVoiceId: varchar("narrator_voice_id"), // ElevenLabs voice ID
+  narrationData: jsonb("narration_data"), // Cached narration segments
+  isPublic: boolean("is_public").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_participant_narrations_invitation").on(table.invitationId),
+]);
+
+// Standard voice samples reference table
+export const standardVoiceSamples = pgTable("standard_voice_samples", {
+  id: serial("id").primaryKey(),
+  name: varchar("name").notNull(),
+  category: varchar("category").notNull(), // emotion, sound, character
+  sampleText: text("sample_text"),
+  displayOrder: integer("display_order").default(0),
+  isRequired: boolean("is_required").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Participant voice samples table (for guest users)
+export const participantVoiceSamples = pgTable("participant_voice_samples", {
+  id: serial("id").primaryKey(),
+  invitationId: integer("invitation_id").references(() => storyInvitations.id).notNull(),
+  standardSampleId: integer("standard_sample_id").references(() => standardVoiceSamples.id).notNull(),
+  audioUrl: text("audio_url").notNull(),
+  duration: integer("duration"), // in seconds
+  isLocked: boolean("is_locked").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_participant_voice_samples_invitation").on(table.invitationId),
+]);
+
+// Create insert schemas and types
+export const insertStoryInvitationSchema = createInsertSchema(storyInvitations).omit({
+  id: true,
+  createdAt: true,
+  acceptedAt: true,
+  completedAt: true,
+});
+
+export const insertParticipantNarrationSchema = createInsertSchema(participantNarrations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertStandardVoiceSampleSchema = createInsertSchema(standardVoiceSamples).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertParticipantVoiceSampleSchema = createInsertSchema(participantVoiceSamples).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type StoryInvitation = typeof storyInvitations.$inferSelect;
+export type InsertStoryInvitation = z.infer<typeof insertStoryInvitationSchema>;
+
+export type ParticipantNarration = typeof participantNarrations.$inferSelect;
+export type InsertParticipantNarration = z.infer<typeof insertParticipantNarrationSchema>;
+
+export type StandardVoiceSample = typeof standardVoiceSamples.$inferSelect;
+export type InsertStandardVoiceSample = z.infer<typeof insertStandardVoiceSampleSchema>;
+
+export type ParticipantVoiceSample = typeof participantVoiceSamples.$inferSelect;
+export type InsertParticipantVoiceSample = z.infer<typeof insertParticipantVoiceSampleSchema>;

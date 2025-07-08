@@ -29,7 +29,8 @@ import {
   Loader2,
   Trash2,
   AlertTriangle,
-  Mic
+  Mic,
+  UserPlus
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useLocation } from "wouter";
@@ -38,6 +39,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AppTopNavigation } from "@/components/app-top-navigation";
 import { apiRequest } from "@/lib/queryClient";
 import { UIMessages, getDynamicMessage } from "@shared/i18n-config";
+import { InviteCollaboratorsDialog } from "@/components/invite-collaborators-dialog";
 import { apiClient } from "@/lib/api-client";
 import { useStories } from "@/hooks/use-api";
 
@@ -69,6 +71,8 @@ export default function StoryLibrary() {
   const [isCreatingStory, setIsCreatingStory] = useState(false);
   const [convertingStories, setConvertingStories] = useState<Set<number>>(new Set());
   const [deletingStories, setDeletingStories] = useState<Set<number>>(new Set());
+  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+  const [selectedStoryForInvite, setSelectedStoryForInvite] = useState<Story | null>(null);
 
   // Create story and navigate to upload page
   const createStoryAndNavigate = async (storyType: string, targetPath: string) => {
@@ -372,21 +376,14 @@ export default function StoryLibrary() {
                             
                             <Button
                               size="sm"
-                              onClick={() => convertToCollaborative(story.id)}
-                              disabled={convertingStories.has(story.id)}
+                              onClick={() => {
+                                setSelectedStoryForInvite(story);
+                                setInviteDialogOpen(true);
+                              }}
                               className="w-full border-purple-600 text-purple-400 hover:bg-purple-900/20 text-xs"
                             >
-                              {convertingStories.has(story.id) ? (
-                                <>
-                                  <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-                                  Converting...
-                                </>
-                              ) : (
-                                <>
-                                  <Users className="w-4 h-4 mr-1" />
-                                  Collaborate
-                                </>
-                              )}
+                              <UserPlus className="w-4 h-4 mr-1" />
+                              Invite Collaborators
                             </Button>
                           </div>
 
@@ -578,21 +575,14 @@ export default function StoryLibrary() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => convertToCollaborative(story.id)}
-                                disabled={convertingStories.has(story.id)}
+                                onClick={() => {
+                                  setSelectedStoryForInvite(story);
+                                  setInviteDialogOpen(true);
+                                }}
                                 className="flex-1 border-purple-600 text-purple-400 hover:bg-purple-900/20 text-xs"
                               >
-                                {convertingStories.has(story.id) ? (
-                                  <>
-                                    <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-                                    Converting...
-                                  </>
-                                ) : (
-                                  <>
-                                    <Users className="w-4 h-4 mr-1" />
-                                    Collaborate
-                                  </>
-                                )}
+                                <UserPlus className="w-4 h-4 mr-1" />
+                                Invite Collaborators
                               </Button>
                               
                               <AlertDialog>
@@ -649,6 +639,18 @@ export default function StoryLibrary() {
         </div>
       </div>
 
+      {/* Invite Collaborators Dialog */}
+      {selectedStoryForInvite && (
+        <InviteCollaboratorsDialog
+          isOpen={inviteDialogOpen}
+          onClose={() => {
+            setInviteDialogOpen(false);
+            setSelectedStoryForInvite(null);
+          }}
+          storyId={selectedStoryForInvite.id}
+          storyTitle={selectedStoryForInvite.title}
+        />
+      )}
     </div>
   );
 }

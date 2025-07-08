@@ -414,6 +414,18 @@ This is a full-stack collaborative storytelling platform that enables users to c
 
 ## TODO List - January 20, 2025
 
+### Current Task - Collaborative Invitation System  
+**Progress**: Frontend dialog and backend API endpoint now fully operational
+- ✅ InviteCollaboratorsDialog component integrated in story library
+- ✅ "Invite Collaborators" button added to all story cards
+- ✅ Backend API endpoint `/api/stories/{id}/invitations` created using direct database operations
+- ✅ Database insert using storyInvitations table with proper field mapping
+- **Next Steps**:
+  - Test invitation creation flow end-to-end
+  - Implement invitation landing page for invitees
+  - Add email/SMS notification sending
+  - Create voice recording flow for invitees
+
 ### High Priority Tasks
 1. **Microservices Migration** - PHASE 0-4 COMPLETED - Using Adapter Pattern for Replit Environment
    - **Phase 0**: ✅ Foundation setup - Created base adapters and in-memory event bus

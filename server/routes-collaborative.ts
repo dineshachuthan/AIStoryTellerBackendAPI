@@ -4,8 +4,114 @@ import { requireAuth } from "./auth";
 import { getBaseUrl } from "./oauth-config";
 import { notificationService } from "./notification-service";
 import { storage } from "./storage";
+import { db } from "./db";
+import { storyInvitations } from "@shared/schema";
+import { db } from "./db";
+import { storyInvitations } from "@shared/schema";
 
 const router = Router();
+
+// Send story invitations (new endpoint for invite collaborators dialog)
+router.post("/api/stories/:id/invitations", requireAuth, async (req, res) => {
+  try {
+    const userId = (req.user as any)?.id;
+    const storyId = parseInt(req.params.id);
+    const { invitations } = req.body;
+    
+    if (!invitations || !Array.isArray(invitations)) {
+      return res.status(400).json({ message: "Invitations array is required" });
+    }
+
+    // Get story details
+    const story = await storage.getStory(storyId);
+    if (!story) {
+      return res.status(404).json({ message: "Story not found" });
+    }
+
+    // Verify user owns the story
+    if (story.authorId !== userId) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    // Get sender details
+    const sender = await storage.getUser(userId);
+    if (!sender) {
+      return res.status(404).json({ message: "Sender not found" });
+    }
+
+    const results = [];
+    const errors = [];
+
+    for (const invitation of invitations) {
+      try {
+        const { contactMethod, contactValue, characterName, invitationName } = invitation;
+        
+        // Create invitation token and link
+        const invitationToken = `inv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const baseUrl = getBaseUrl();
+        const invitationLink = `${baseUrl}/roleplay-invitation/${invitationToken}`;
+        
+        console.log(`Created invitation for ${characterName} in story ${storyId}: ${invitationToken}`);
+        
+        // Store invitation in database
+        const invitationData = {
+          invitationToken,
+          storyId,
+          inviterId: userId,
+          inviteeEmail: contactMethod === 'email' ? contactValue : null,
+          inviteePhone: contactMethod === 'phone' ? contactValue : null,
+          status: 'pending',
+          message: `You've been invited to collaborate on a story as ${characterName}`,
+          characterId: characterId || null,
+          expiresAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000) // 5 days
+        };
+        
+        const [savedInvitation] = await db.insert(storyInvitations).values(invitationData).returning();
+        
+        // Send notification
+        const message = {
+          to: contactValue,
+          subject: `You're invited to roleplay as ${characterName}`,
+          text: `${sender.firstName || 'Someone'} has invited you to participate in "${story.title}" as ${characterName}. Click here to view: ${invitationLink}`,
+          html: `<p>${sender.firstName || 'Someone'} has invited you to participate in "<strong>${story.title}</strong>" as <strong>${characterName}</strong>.</p>
+                 <p><a href="${invitationLink}">Click here to view the invitation</a></p>`
+        };
+        
+        let notificationResult;
+        if (contactMethod === 'email') {
+          notificationResult = await notificationService.sendEmail(message);
+        } else if (contactMethod === 'phone') {
+          notificationResult = await notificationService.sendSms({
+            to: contactValue,
+            body: message.text
+          });
+        }
+        
+        results.push({
+          invitation: savedInvitation,
+          sent: notificationResult?.success || false
+        });
+        
+      } catch (invError) {
+        console.error(`Failed to send invitation:`, invError);
+        errors.push({
+          invitation,
+          error: invError.message
+        });
+      }
+    }
+
+    res.json({
+      success: results.length > 0,
+      results,
+      errors
+    });
+    
+  } catch (error) {
+    console.error("Failed to send invitations:", error);
+    res.status(500).json({ message: "Failed to send invitations" });
+  }
+});
 
 // Get notification service status
 router.get("/api/collaborative/notification-status", requireAuth, async (req, res) => {

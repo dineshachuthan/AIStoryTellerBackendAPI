@@ -207,6 +207,17 @@ export class ApiClient {
     getSystemStats: () => this.request<any>('GET', '/api/admin/stats'),
   };
   
+  // Collaboration endpoints
+  sendStoryInvitations = (data: {
+    storyId: number;
+    invitations: Array<{
+      email?: string;
+      phone?: string;
+      characterId?: number;
+    }>;
+    message?: string;
+  }) => this.request<any>('POST', `/api/stories/${data.storyId}/invitations`, data);
+  
   // Helper method to invalidate queries
   invalidateQueries(keys: string[]) {
     keys.forEach(key => queryClient.invalidateQueries({ queryKey: [key] }));
