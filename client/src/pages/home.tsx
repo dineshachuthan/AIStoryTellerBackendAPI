@@ -136,7 +136,7 @@ export default function Home() {
         <div className="flex-1 relative overflow-hidden">
 
           {/* Quick Actions Overlay */}
-          <div className={`absolute ${styles.cardTopOffset} left-0 right-0 z-40 ${styles.containerPadding}`}>
+          <div className={`relative ${styles.containerPadding} pt-4`}>
             <Card className="bg-dark-card/90 backdrop-blur-lg border-gray-800">
               <CardHeader className={`pb-2 ${styles.containerPadding}`}>
                 <CardTitle className={`text-white flex items-center ${windowDimensions.width < 640 ? 'text-sm' : windowDimensions.width < 1024 ? 'text-base' : 'text-lg'}`}>
