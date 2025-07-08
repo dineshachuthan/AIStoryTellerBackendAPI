@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLocation } from "wouter";
 import { Search, Play, Heart, Clock, Users, Filter } from "lucide-react";
-import { BottomNavigation } from "@/components/bottom-navigation";
 import { AppTopNavigation } from "@/components/app-top-navigation";
 import { formatDistanceToNow } from "date-fns";
 import type { Story } from "@shared/schema";
@@ -82,7 +81,7 @@ export default function PublicStories() {
       <AppTopNavigation />
       
       {/* Page Header */}
-      <div className="p-4 border-b border-gray-800">
+      <div className="p-4 pt-20 border-b border-gray-800">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <Users className="w-6 h-6 text-tiktok-pink" />
@@ -309,7 +308,6 @@ export default function PublicStories() {
         )}
       </div>
 
-      <BottomNavigation />
     </div>
   );
 }

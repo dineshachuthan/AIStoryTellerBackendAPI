@@ -7,7 +7,8 @@ import { useLocation } from "wouter";
 import { Upload, Mic, Users, FileText, AudioLines, PenTool, Loader2, LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { BottomNavigation } from "@/components/bottom-navigation";
+import { AppTopNavigation } from "@/components/app-top-navigation";
+
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { defaultStoryConfig } from "@shared/storyConfig";
@@ -111,7 +112,7 @@ export default function Home() {
       buttonSize: width < 640 ? 'h-14' : width < 768 ? 'h-16' : width < 1024 ? 'h-18' : 'h-20',
       textSize: width < 640 ? 'text-xs' : width < 768 ? 'text-sm' : 'text-base',
       gridCols: width < 640 ? 'grid-cols-1' : width < 768 ? 'grid-cols-2' : width < 1024 ? 'grid-cols-2' : 'grid-cols-4',
-      cardTopOffset: width < 640 ? 'top-14' : width < 1024 ? 'top-16' : 'top-20'
+      cardTopOffset: width < 640 ? 'top-2' : width < 1024 ? 'top-4' : 'top-6'
     };
   };
 
@@ -120,7 +121,9 @@ export default function Home() {
   return (
     <div className="relative w-full min-h-screen bg-dark-bg text-dark-text overflow-hidden" 
          style={{ minHeight: windowDimensions.height }}>
-      <div className="flex min-h-screen">
+      <AppTopNavigation />
+      
+      <div className="flex min-h-screen pt-16">
         {/* Collapsible Search Panel */}
         <StorySearchPanel
           isCollapsed={isSearchPanelCollapsed}
@@ -131,64 +134,6 @@ export default function Home() {
 
         {/* Main Content Area */}
         <div className="flex-1 relative overflow-hidden pb-16 sm:pb-20">
-          {/* Header */}
-          <div className={`absolute top-0 left-0 right-0 z-50 bg-dark-bg/80 backdrop-blur-lg border-b border-gray-800 ${styles.containerPadding}`}>
-            <div className="flex items-center justify-between">
-              <h1 className={`${windowDimensions.width < 640 ? 'text-lg' : windowDimensions.width < 1024 ? 'text-xl' : 'text-2xl'} font-bold text-white`}>DeeVee</h1>
-              <div className="flex items-center space-x-2 sm:space-x-3">
-                <Button
-                  onClick={() => setLocation("/voice-samples")}
-                  variant="outline"
-                  size="sm"
-                  className="border-tiktok-cyan text-tiktok-cyan hover:bg-tiktok-cyan/20 hidden sm:flex"
-                >
-                  <AudioLines className="w-4 h-4 mr-2" />
-                  Voice Samples
-                </Button>
-                <Button
-                  onClick={() => setLocation("/voice-samples")}
-                  variant="outline"
-                  size="sm"
-                  className="border-tiktok-cyan text-tiktok-cyan hover:bg-tiktok-cyan/20 sm:hidden p-2"
-                >
-                  <AudioLines className="w-4 h-4" />
-                </Button>
-                
-                <Button
-                  onClick={async () => {
-                    try {
-                      await logout();
-                      setLocation('/');
-                    } catch (error) {
-                      console.error('Logout failed:', error);
-                    }
-                  }}
-                  variant="outline"
-                  size="sm"
-                  className="border-red-500 text-red-500 hover:bg-red-500/20 hidden sm:flex"
-                >
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Logout
-                </Button>
-                
-                <Button
-                  onClick={async () => {
-                    try {
-                      await logout();
-                      setLocation('/');
-                    } catch (error) {
-                      console.error('Logout failed:', error);
-                    }
-                  }}
-                  variant="outline"
-                  size="sm"
-                  className="border-red-500 text-red-500 hover:bg-red-500/20 sm:hidden p-2"
-                >
-                  <LogOut className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
 
           {/* Quick Actions Overlay */}
           <div className={`absolute ${styles.cardTopOffset} left-0 right-0 z-40 ${styles.containerPadding}`}>
@@ -253,7 +198,6 @@ export default function Home() {
         </div>
       </div>
       
-      <BottomNavigation />
     </div>
   );
 }

@@ -35,7 +35,7 @@ import { formatDistanceToNow } from "date-fns";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { BottomNavigation } from "@/components/bottom-navigation";
+import { AppTopNavigation } from "@/components/app-top-navigation";
 import { apiRequest } from "@/lib/queryClient";
 import { UIMessages } from "@shared/i18n-config";
 
@@ -219,9 +219,11 @@ export default function StoryLibrary() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-dark-bg via-gray-900 to-black">
+      <AppTopNavigation />
+      
       {/* Mobile Layout */}
       <div className="block lg:hidden">
-        <div className="p-4 pb-24 space-y-4">
+        <div className="p-4 pt-20 pb-8 space-y-4">
           <div className="flex items-center space-x-2">
             <Book className="w-5 h-5 text-tiktok-red" />
             <h1 className="text-lg font-bold text-white">Narrated Stories</h1>
@@ -450,7 +452,7 @@ export default function StoryLibrary() {
       </div>
 
       {/* Desktop Layout */}
-      <div className="hidden lg:flex h-screen">
+      <div className="hidden lg:flex h-screen pt-16">
         {/* Left Sidebar - Search */}
         <div className="w-80 bg-gray-900/50 border-r border-gray-800 p-4">
           <div className="space-y-4">
@@ -706,7 +708,6 @@ export default function StoryLibrary() {
         </div>
       </div>
 
-      <BottomNavigation />
     </div>
   );
 }

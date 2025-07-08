@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label";
 
 import { ArrowLeft, RefreshCw, Loader2, FileText, Upload, Plus } from "lucide-react";
 import { AppTopNavigation } from "@/components/app-top-navigation";
-import { BottomNavigation } from "@/components/bottom-navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -411,7 +410,6 @@ export default function UploadStory() {
         </div>
       </div>
       
-      <BottomNavigation />
     </div>
   );
 }
