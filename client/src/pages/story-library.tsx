@@ -411,37 +411,36 @@ export default function StoryLibrary() {
         </div>
       </div>
 
-      {/* Desktop Layout */}
-      <div className="hidden lg:flex h-screen pt-16">
-        {/* Left Sidebar - Search */}
-        <div className="w-80 bg-gray-900/50 border-r border-gray-800 p-4">
+      {/* Desktop Layout - Single Column */}
+      <div className="hidden lg:block min-h-screen">
+        <div className="max-w-7xl mx-auto p-6 pt-20 pb-24 space-y-6">
+          {/* Header Section */}
           <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <Book className="w-6 h-6 text-tiktok-red" />
-              <h1 className="text-xl font-bold text-white">My Stories</h1>
+            <div className="flex items-center space-x-3">
+              <Book className="w-8 h-8 text-tiktok-red" />
+              <h1 className="text-3xl font-bold text-white">My Stories</h1>
             </div>
             
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                type="text"
-                placeholder="Search stories..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-gray-800 border-gray-700 text-white placeholder-gray-400 focus:border-tiktok-red"
-              />
+            <div className="flex items-center space-x-4">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <Input
+                  type="text"
+                  placeholder="Search stories..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 bg-gray-800 border-gray-700 text-white placeholder-gray-400 focus:border-tiktok-red h-12 text-lg"
+                />
+              </div>
+              
+              <div className="text-gray-400">
+                {filteredStories.length} of {narrationCompleteStories.length} stories
+              </div>
             </div>
-
-            <div className="text-sm text-gray-400">
-              {filteredStories.length} of {narrationCompleteStories.length} stories
-            </div>
-
-
           </div>
-        </div>
 
-        {/* Desktop Content Area */}
-        <div className="flex-1 p-4 pb-24 overflow-y-auto">
+          {/* Content Area */}
+          <div>
           {filteredStories.length === 0 ? (
             <div className="text-center py-12">
               <Book className="w-16 h-16 mx-auto text-gray-600 mb-4" />
@@ -659,6 +658,7 @@ export default function StoryLibrary() {
               ))}
             </div>
           )}
+          </div>
         </div>
       </div>
 
