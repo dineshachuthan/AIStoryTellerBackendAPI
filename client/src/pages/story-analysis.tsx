@@ -344,13 +344,8 @@ export default function StoryAnalysis() {
     errorMessage: storyError?.message
   });
   
-  // Override storyData with query result if available
-  useEffect(() => {
-    if (storyDataFromQuery && !storyData) {
-      console.log('Setting story data from query:', storyDataFromQuery);
-      setStoryData(storyDataFromQuery);
-    }
-  }, [storyDataFromQuery]);
+  // Use story data from query
+  const storyData = storyDataFromQuery;
 
   // Generate both narrative and roleplay analyses automatically
   const generateComprehensiveAnalysis = async (story: any) => {

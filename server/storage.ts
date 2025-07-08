@@ -1128,6 +1128,27 @@ export class DatabaseStorage implements IStorage {
   }
 
   /**
+   * Get all narrations for a user
+   * @param userId - User ID to get narrations for
+   * @returns Array of story narrations
+   */
+  async getUserNarrations(userId: string): Promise<StoryNarration[]> {
+    return await db
+      .select()
+      .from(storyNarrations)
+      .where(eq(storyNarrations.userId, userId))
+      .orderBy(desc(storyNarrations.createdAt));
+  }
+
+  /**
+   * Delete all narrations for a user (used when voice is regenerated)
+   * @param userId - User ID to delete narrations for
+   */
+  async deleteAllUserNarrations(userId: string): Promise<void> {
+    await db.delete(storyNarrations).where(eq(storyNarrations.userId, userId));
+  }
+
+  /**
    * Delete all story narrations for a user
    * Used when new narrator voice is generated to ensure fresh narrations
    * @param userId - User ID whose narrations to delete
