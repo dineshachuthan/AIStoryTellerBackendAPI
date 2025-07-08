@@ -44,7 +44,7 @@ router.post("/api/stories/:id/invitations", requireAuth, async (req, res) => {
 
     for (const invitation of invitations) {
       try {
-        const { contactMethod, contactValue, characterName, invitationName } = invitation;
+        const { contactMethod, contactValue, characterName, characterId, invitationName } = invitation;
         
         // Create invitation token and link
         const invitationToken = `inv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
