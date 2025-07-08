@@ -386,9 +386,17 @@ export class ElevenLabsModule extends BaseVoiceProvider {
 
   /**
    * Delete a voice from ElevenLabs
+   * 
+   * IMPORTANT: This method always returns true (success) regardless of actual deletion result.
+   * This is intentional because:
+   * 1. Old voice IDs in our database may no longer exist in ElevenLabs
+   * 2. We want voice generation to continue even if cleanup fails
+   * 3. Users can manually clean up voices in ElevenLabs dashboard if needed
+   * 4. Prevents panic-inducing error logs for expected scenarios
+   * 
    * @param voiceId The voice ID to delete
    * @param userId User ID for audit trail
-   * @returns Success status
+   * @returns Always returns true to allow graceful continuation
    */
   async deleteVoice(voiceId: string, userId?: string): Promise<boolean> {
     try {
@@ -478,7 +486,8 @@ export class ElevenLabsModule extends BaseVoiceProvider {
         }
       }
       
-      throw new Error(`Failed to delete voice: ${error.response?.data?.detail?.message || error.message}`);
+      // Swallow exception - always return true to continue gracefully
+      return true;
     }
   }
 

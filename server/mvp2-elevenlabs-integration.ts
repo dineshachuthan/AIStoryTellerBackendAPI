@@ -171,30 +171,15 @@ export class MVP2ElevenLabsIntegration {
         metadata: apiCall.metadata
       };
       
-      // Check if user already has a narrator voice for this type
-      const existingVoiceId = await this.getUserExistingNarratorVoice(userId, apiCall.type);
+      // IMPORTANT: We always create new narrator voices without checking existing ones
+      // This is intentional because:
+      // 1. Database may have stale voice IDs that no longer exist in ElevenLabs
+      // 2. User wants fresh voice generation every time to capture latest recordings
+      // 3. Simplifies error handling - no need to handle missing voice scenarios
+      // 4. User can manage voice cleanup manually in ElevenLabs dashboard
+      console.log(`[MVP2ElevenLabs] Creating new narrator voice for ${apiCall.type}`);
       
-      if (existingVoiceId) {
-        console.log(`[MVP2ElevenLabs] Found existing voice ${existingVoiceId}, updating instead of creating new`);
-        
-        try {
-          // Use updateVoice method to replace existing voice
-          const updateResult = await (voiceProvider as any).updateVoice(existingVoiceId, voiceTrainingRequest);
-          
-          if (updateResult.success) {
-            return {
-              success: true,
-              voiceId: updateResult.voiceId
-            };
-          }
-        } catch (error: any) {
-          // Expected case when voice no longer exists
-          console.log(`[MVP2ElevenLabs] Creating new narrator voice`);
-          // Continue to create new voice below
-        }
-      }
-      
-      // Create new voice if no existing voice or update failed
+      // Create new voice
       const result = await voiceProvider.trainVoice(voiceTrainingRequest);
       
       if (result.success) {
