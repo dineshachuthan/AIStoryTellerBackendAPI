@@ -177,48 +177,28 @@ export function DraftStoriesPanel({
                     </div>
                     <div className="space-y-2">
                       {genreStories.slice(0, 3).map((story: Story) => (
-                        <Card key={story.id} className="bg-gray-800/30 border-transparent hover:bg-gray-800/50 transition-colors cursor-pointer">
+                        <Card key={story.id} className="bg-dark-card border-gray-800 hover:border-gray-700 transition-colors cursor-pointer">
                           <CardContent className="p-3">
                             <div className="space-y-2">
-                              <h4 className="text-sm font-medium text-white line-clamp-1">
-                                {story.title}
-                              </h4>
+                              <div>
+                                <h4 className="text-sm font-medium text-white truncate">
+                                  {story.title}
+                                </h4>
+                                {!story.isPublished && (
+                                  <div className="text-gray-400 text-xs mt-0.5">(private)</div>
+                                )}
+                              </div>
                               {story.category && (
                                 <Badge variant="secondary" className="bg-gray-700 text-gray-300 text-xs">
                                   {story.category}
                                 </Badge>
                               )}
-                              <div className="flex items-center justify-between text-xs text-gray-500">
-                                <div className="flex items-center space-x-2">
-                                  {story.readingTime && (
-                                    <div className="flex items-center">
-                                      <Clock className="w-3 h-3 mr-1" />
-                                      {story.readingTime}m
-                                    </div>
-                                  )}
-                                  <TooltipProvider>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <div>
-                                          {story.isPublished ? (
-                                            <Globe className="w-3 h-3 text-green-400" />
-                                          ) : (
-                                            <EyeOff className="w-3 h-3 text-gray-400" />
-                                          )}
-                                        </div>
-                                      </TooltipTrigger>
-                                      <TooltipContent>
-                                        <p>
-                                          {story.isPublished 
-                                            ? UIMessages.getTooltip('STORY_PUBLIC_TOOLTIP')
-                                            : UIMessages.getTooltip('STORY_PRIVATE_TOOLTIP')
-                                          }
-                                        </p>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </TooltipProvider>
+                              {story.readingTime && (
+                                <div className="flex items-center text-xs text-gray-500">
+                                  <Clock className="w-3 h-3 mr-1" />
+                                  {story.readingTime}m
                                 </div>
-                              </div>
+                              )}
                               <div className="flex space-x-1">
                                 {story.authorId === user?.id ? (
                                   // User's own story - show analysis and play options
