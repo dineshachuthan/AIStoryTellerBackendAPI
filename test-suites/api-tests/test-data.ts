@@ -7,6 +7,9 @@
 import { TestData } from './test-config';
 
 export const testData: TestData = {
+  auth: {
+    validSessionCookie: 'session=test-session-cookie',
+  },
   users: {
     validUserId: 'google_117487073695002443567',
     invalidUserId: 'invalid_user_12345',

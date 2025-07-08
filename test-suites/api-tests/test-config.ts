@@ -24,6 +24,9 @@ export interface TestCase {
 }
 
 export interface TestData {
+  auth: {
+    validSessionCookie: string;
+  };
   users: {
     validUserId: string;
     invalidUserId: string;
