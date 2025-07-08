@@ -175,7 +175,7 @@ router.get('/api/invitations/:token', async (req, res) => {
     const { token } = req.params;
     
     // Get invitation with story details
-    const [invitation] = await db
+    const result = await db
       .select({
         id: storyInvitations.id,
         storyId: storyInvitations.storyId,
@@ -187,31 +187,53 @@ router.get('/api/invitations/:token', async (req, res) => {
         inviteePhone: storyInvitations.inviteePhone,
         expiresAt: storyInvitations.expiresAt,
         status: storyInvitations.status,
-        story: {
-          title: stories.title,
-          summary: stories.summary
-        },
-        inviter: {
-          firstName: users.firstName,
-          lastName: users.lastName,
-          email: users.email
-        }
+        storyTitle: stories.title,
+        storySummary: stories.summary,
+        inviterFirstName: users.firstName,
+        inviterLastName: users.lastName,
+        inviterEmail: users.email
       })
       .from(storyInvitations)
       .leftJoin(stories, eq(storyInvitations.storyId, stories.id))
       .leftJoin(users, eq(storyInvitations.inviterId, users.id))
-      .where(eq(storyInvitations.invitationToken, token));
+      .where(eq(storyInvitations.invitationToken, token))
+      .limit(1);
       
-    if (!invitation) {
+    if (result.length === 0) {
       return res.status(404).json({ error: 'Invitation not found' });
     }
+    
+    const invitation = result[0];
     
     // Check if expired
     if (new Date(invitation.expiresAt) < new Date()) {
       return res.status(410).json({ error: 'Invitation expired' });
     }
     
-    res.json(invitation);
+    // Restructure data to match expected format
+    const formattedInvitation = {
+      id: invitation.id,
+      storyId: invitation.storyId,
+      inviterId: invitation.inviterId,
+      token: invitation.token,
+      characterId: invitation.characterId,
+      characterName: invitation.characterName,
+      inviteeEmail: invitation.inviteeEmail,
+      inviteePhone: invitation.inviteePhone,
+      expiresAt: invitation.expiresAt,
+      status: invitation.status,
+      story: invitation.storyTitle ? {
+        title: invitation.storyTitle,
+        summary: invitation.storySummary
+      } : undefined,
+      inviter: invitation.inviterEmail ? {
+        firstName: invitation.inviterFirstName,
+        lastName: invitation.inviterLastName,
+        email: invitation.inviterEmail
+      } : undefined
+    };
+    
+    res.json(formattedInvitation);
   } catch (error) {
     console.error('Error getting invitation:', error);
     res.status(500).json({ error: 'Failed to get invitation' });

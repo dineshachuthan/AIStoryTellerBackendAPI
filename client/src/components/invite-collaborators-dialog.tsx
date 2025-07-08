@@ -151,7 +151,14 @@ export function InviteCollaboratorsDialog({
                           )}
                         </div>
                         <div className="mt-1">
-                          <code className="text-xs text-gray-600 dark:text-gray-400 break-all">{url}</code>
+                          <a 
+                            href={url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-xs text-blue-600 dark:text-blue-400 hover:underline break-all"
+                          >
+                            {url}
+                          </a>
                         </div>
                       </div>
                       <Button
