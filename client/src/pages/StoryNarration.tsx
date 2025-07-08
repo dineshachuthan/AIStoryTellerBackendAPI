@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import StoryNarratorControls from "@/components/ui/story-narrator-controls";
 import { useAuth } from "@/hooks/useAuth";
+import { AppTopNavigation } from "@/components/app-top-navigation";
 
 export default function StoryNarration() {
   const { id } = useParams<{ id: string }>();
@@ -47,34 +48,36 @@ export default function StoryNarration() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <Button
-            variant="ghost"
-            onClick={() => navigate(`/stories/${storyId}`)}
-            className="mb-4"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Story
-          </Button>
-          
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-            {story.title}
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Story Narration
-          </p>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+      <AppTopNavigation />
+      
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-6xl mx-auto">
+          {/* Header */}
+          <div className="mb-8">
+            <Button
+              variant="ghost"
+              onClick={() => navigate(`/stories/${storyId}`)}
+              className="mb-4 text-white hover:bg-white/10"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Story
+            </Button>
+            
+            <h1 className="text-4xl font-bold text-white mb-2">
+              {story.title}
+            </h1>
+            <p className="text-white/70">
+              Story Narration
+            </p>
+          </div>
 
-        {/* Narration Controls - Clean UI without save text */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+          {/* Narration Controls - Clean UI without save text */}
           <StoryNarratorControls
             storyId={storyId}
             user={user}
             canNarrate={true}
-            className="p-0"
+            className=""
           />
         </div>
       </div>
