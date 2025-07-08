@@ -46,7 +46,7 @@ export default function StoryNarratorControls({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [currentSegment, setCurrentSegment] = useState(0);
   const [progress, setProgress] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
+
   
   const { toast } = useToast();
 
@@ -76,10 +76,8 @@ export default function StoryNarratorControls({
         const activeNarration = tempNarration || savedNarration;
         if (activeNarration && currentSegment < activeNarration.segments.length - 1) {
           setCurrentSegment(prev => prev + 1);
-          setIsPaused(false); // Reset pause state when moving to next segment
         } else {
           setIsPlaying(false);
-          setIsPaused(false); // Reset pause state when narration ends
           setCurrentSegment(0);
           setProgress(0);
         }
@@ -185,35 +183,29 @@ export default function StoryNarratorControls({
       console.error('Playback error:', err);
       setIsPlaying(false);
     });
-    setIsPaused(false);
   };
 
+  // Simple play function
   const playNarration = () => {
     const activeNarration = tempNarration || savedNarration;
-    console.log('Play clicked - activeNarration:', activeNarration);
-    console.log('Current segment:', currentSegment);
-    console.log('Is paused:', isPaused);
-    console.log('Audio element exists:', !!audioRef.current);
+    if (!activeNarration || !audioRef.current) return;
     
-    if (!activeNarration) {
-      console.error('No narration available');
-      return;
-    }
-
-    setIsPlaying(true);
-    
-    // If resuming from pause, just play
-    if (isPaused && audioRef.current && audioRef.current.paused) {
-      console.log('Resuming from pause');
-      audioRef.current.play().catch(err => {
-        console.error('Resume error:', err);
-        setIsPlaying(false);
-      });
-      setIsPaused(false);
+    if (isPlaying) {
+      // Pause
+      audioRef.current.pause();
+      setIsPlaying(false);
     } else {
-      console.log('Starting fresh playback');
-      // Fresh start - play current segment
-      playCurrentSegment();
+      // Play
+      setIsPlaying(true);
+      const segment = activeNarration.segments[currentSegment];
+      if (segment?.audioUrl) {
+        // Always set the source to ensure proper loading
+        audioRef.current.src = segment.audioUrl;
+        audioRef.current.play().catch(err => {
+          console.error('Playback error:', err);
+          setIsPlaying(false);
+        });
+      }
     }
   };
 
@@ -221,7 +213,6 @@ export default function StoryNarratorControls({
     if (audioRef.current) {
       audioRef.current.pause();
       setIsPlaying(false);
-      setIsPaused(true);
     }
   };
 
@@ -265,22 +256,7 @@ export default function StoryNarratorControls({
   };
 
   // 4. Play Story (from saved database - no generation cost)
-  const playStory = () => {
-    if (savedNarration) {
-      // Only reset if we're not resuming from pause
-      if (!isPaused) {
-        setCurrentSegment(0);
-        setProgress(0);
-      }
-      playNarration();
-    } else {
-      toast({
-        title: "No Saved Narration",
-        description: "Generate and save a narration first to play the story.",
-        variant: "destructive"
-      });
-    }
-  };
+
 
   // Don't render if no user
   if (!user) return null;
