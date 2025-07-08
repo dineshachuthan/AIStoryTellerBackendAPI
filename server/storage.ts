@@ -1,6 +1,6 @@
 import { users, localUsers, userProviders, stories, storyCharacters, storyEmotions, characters, conversations, messages, storyCollaborations, storyGroups, storyGroupMembers, characterVoiceAssignments, storyPlaybacks, storyAnalyses, storyNarrations, audioFiles, videoGenerations, voiceIdCleanup, type User, type InsertUser, type UpsertUser, type UserProvider, type InsertUserProvider, type LocalUser, type InsertLocalUser, type Story, type InsertStory, type StoryCharacter, type InsertStoryCharacter, type StoryEmotion, type InsertStoryEmotion, type Character, type InsertCharacter, type Conversation, type InsertConversation, type Message, type InsertMessage, type StoryCollaboration, type InsertStoryCollaboration, type StoryGroup, type InsertStoryGroup, type StoryGroupMember, type InsertStoryGroupMember, type CharacterVoiceAssignment, type InsertCharacterVoiceAssignment, type StoryPlayback, type InsertStoryPlayback, type StoryAnalysis, type InsertStoryAnalysis, type StoryNarration, type InsertStoryNarration, type AudioFile, type InsertAudioFile, type VoiceIdCleanup, type InsertVoiceIdCleanup } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, like, lt, sql } from "drizzle-orm";
+import { eq, and, desc, like, lt, sql, isNotNull } from "drizzle-orm";
 // Content hash functionality moved to unified cache architecture
 
 export interface IStorage {
@@ -1891,14 +1891,22 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserNarratorVoice(userId: string): Promise<string | null> {
-    const result = await db.execute(
-      sql`SELECT narrator_voice_id 
-          FROM user_esm 
-          WHERE user_id = ${userId} 
-          AND narrator_voice_id IS NOT NULL 
-          LIMIT 1`
-    );
-    return result.rows[0]?.narrator_voice_id || null;
+    try {
+      const { userEsm } = await import('@shared/schema');
+      const result = await db.select({ narrator_voice_id: userEsm.narrator_voice_id })
+        .from(userEsm)
+        .where(and(
+          eq(userEsm.userId, userId),
+          isNotNull(userEsm.narrator_voice_id)
+        ))
+        .limit(1);
+      
+      console.log(`[Storage] getUserNarratorVoice for ${userId}:`, result[0]?.narrator_voice_id || null);
+      return result[0]?.narrator_voice_id || null;
+    } catch (error) {
+      console.error('[Storage] Error getting user narrator voice:', error);
+      return null;
+    }
   }
 
   // DUPLICATE METHOD - Commented out (was causing SQL conflicts)
