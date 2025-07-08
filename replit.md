@@ -460,6 +460,18 @@ This is a full-stack collaborative storytelling platform that enables users to c
 
 ## Changelog
 
+### **COMPREHENSIVE REST API TEST SUITE - February 07, 2025**
+**Testing Infrastructure**: Created complete API endpoint testing framework validating against api-client.ts
+- **TEST SUITE CREATED**: Comprehensive testing framework at `test-suites/api-tests/` with 60+ test cases
+- **ENDPOINT COVERAGE**: Tests for auth, stories, narration, roleplay, video, subscription, notification, and reference data
+- **SUCCESS & FAILURE TESTING**: Each endpoint tested for both success conditions and error handling
+- **TEST DATA MANAGEMENT**: Hardcoded test data in `test-data.ts` with database refresh capability via `test-data-generator.ts`
+- **CATEGORY-BASED EXECUTION**: Run all tests or filter by category (auth, stories, narration, etc.)
+- **INTERFACE VALIDATION**: All tests validate responses match `api-client.ts` expected structures
+- **DETAILED REPORTING**: Color-coded terminal output with pass/fail statistics and category breakdown
+- **TEST RUNNER**: Main execution engine with authentication, request handling, and summary generation
+- **BENEFITS**: Ensures frontend-backend compatibility, catches API regressions, validates business rules
+
 ### **CENTRALIZED API CLIENT IMPLEMENTATION - February 07, 2025**
 **Frontend Architecture Enhancement**: Created centralized API client to abstract all backend communication
 - **API CLIENT CREATED**: Single source of truth for all API endpoints at `client/src/lib/api-client.ts`
