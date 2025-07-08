@@ -163,9 +163,10 @@ export class ApiClient {
   
   // Collaborative roleplay endpoints
   roleplay = {
-    getTemplates: () => this.request<any[]>('GET', '/api/roleplay/templates'),
-    createTemplate: (storyId: number) => this.request<any>('POST', `/api/roleplay/templates/${storyId}`),
-    getTemplate: (id: number) => this.request<any>('GET', `/api/roleplay/templates/${id}`),
+    getTemplates: () => this.request<any[]>('GET', '/api/roleplay-templates'),
+    createTemplate: (storyId: number, makePublic: boolean = true) => 
+      this.request<any>('POST', `/api/stories/${storyId}/convert-to-template`, { makePublic }),
+    getTemplate: (id: number) => this.request<any>('GET', `/api/roleplay-templates/${id}`),
     createInvitation: (templateId: number, data: any) =>
       this.request<any>('POST', `/api/roleplay/templates/${templateId}/invitations`, data),
     submitRecording: (invitationId: string, data: FormData) =>

@@ -117,20 +117,20 @@ export default function StoryLibrary() {
     setConvertingStories(prev => new Set(prev).add(storyId));
     
     try {
-      const response = await apiClient.roleplay.createTemplate(storyId);
+      const template = await apiClient.roleplay.createTemplate(storyId);
       
       toast({
         title: "Success",
-        description: "Story converted to collaborative template! Generating invitation links...",
+        description: "Story converted to collaborative template! You can now invite participants.",
       });
       
       // Navigate to collaborative roleplay page to view the template
       setLocation("/collaborative-roleplay");
       
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to convert story to collaborative template",
+        description: error.message || "Failed to convert story to collaborative template",
         variant: "destructive",
       });
     } finally {
