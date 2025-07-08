@@ -181,9 +181,17 @@ export function DraftStoriesPanel({
                           <CardContent className="p-3">
                             <div className="space-y-2">
                               <div>
-                                <h4 className="text-sm font-medium text-white truncate">
-                                  {story.title}
-                                </h4>
+                                <div className="flex items-center justify-between">
+                                  <h4 className="text-sm font-medium text-white truncate flex-1">
+                                    {story.title}
+                                  </h4>
+                                  {story.readingTime && (
+                                    <div className="flex items-center text-xs text-gray-500 ml-2">
+                                      <Clock className="w-3 h-3 mr-1" />
+                                      {story.readingTime}m
+                                    </div>
+                                  )}
+                                </div>
                                 {!story.isPublished && (
                                   <div className="text-gray-400 text-xs mt-0.5">(private)</div>
                                 )}
@@ -192,12 +200,6 @@ export function DraftStoriesPanel({
                                 <Badge variant="secondary" className="bg-gray-700 text-gray-300 text-xs">
                                   {story.category}
                                 </Badge>
-                              )}
-                              {story.readingTime && (
-                                <div className="flex items-center text-xs text-gray-500">
-                                  <Clock className="w-3 h-3 mr-1" />
-                                  {story.readingTime}m
-                                </div>
                               )}
                               <div className="flex space-x-1">
                                 {story.authorId === user?.id ? (
