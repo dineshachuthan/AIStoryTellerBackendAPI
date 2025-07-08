@@ -4,7 +4,7 @@ import { DraftStoriesPanel } from "@/components/draft-stories-panel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLocation } from "wouter";
-import { Upload, Mic, Users, FileText, AudioLines, PenTool, Loader2, LogOut } from "lucide-react";
+import { Upload, Mic, Users, FileText, AudioLines, PenTool, Loader2, LogOut, TrendingUp, BookOpen, Sparkles, Target } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AppTopNavigation } from "@/components/app-top-navigation";
@@ -154,68 +154,219 @@ export default function Home() {
         />
 
         {/* Main Content Area */}
-        <div className="flex-1 relative overflow-hidden">
+        <div className="flex-1 relative overflow-auto p-4 lg:p-6">
+          <div className="max-w-7xl mx-auto space-y-6">
+            
+            {/* Welcome Section */}
+            <div className="text-center mb-8">
+              <h1 className="text-3xl lg:text-4xl font-bold text-white mb-2">
+                {user?.displayName ? `Welcome back, ${user.displayName}!` : 'Welcome to Storytelling Platform'}
+              </h1>
+              <p className="text-gray-400 text-lg">
+                Transform your ideas into immersive stories with AI-powered narration
+              </p>
+            </div>
 
-          {/* Quick Actions Overlay */}
-          <div className={`relative ${styles.containerPadding} pt-4`}>
-            <Card className="bg-dark-card/90 backdrop-blur-lg border-gray-800">
-              <CardHeader className={`pb-2 ${styles.containerPadding}`}>
-                <CardTitle className={`text-white flex items-center ${windowDimensions.width < 640 ? 'text-sm' : windowDimensions.width < 1024 ? 'text-base' : 'text-lg'}`}>
-                  <Users className={`${windowDimensions.width < 640 ? 'w-3 h-3' : windowDimensions.width < 1024 ? 'w-4 h-4' : 'w-5 h-5'} mr-2 text-tiktok-pink`} />
-                  {getMessage('home.title.collaborative_storytelling', {}, language)}
-                </CardTitle>
-                <CardDescription className={`text-gray-text ${windowDimensions.width < 640 ? 'text-xs' : 'text-sm'}`}>
-                  {getMessage('home.title.collaborative_description', {}, language)}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className={`pt-0 ${styles.containerPadding}`}>
-                <div className="flex flex-col gap-2">
-                  <Button
-                    onClick={() => createStoryAndNavigate("text", "/upload-story")}
-                    disabled={isCreatingStory}
-                    variant="outline"
-                    className="border-blue-500 text-blue-500 hover:bg-blue-500/20 w-full h-16 flex items-center justify-start px-4 gap-3"
-                    size="sm"
-                  >
-                    {isCreatingStory ? 
-                      <Loader2 className={`${windowDimensions.width < 640 ? 'w-3 h-3' : windowDimensions.width < 1024 ? 'w-4 h-4' : 'w-5 h-5'} animate-spin`} /> : 
-                      <PenTool className={`${windowDimensions.width < 640 ? 'w-3 h-3' : windowDimensions.width < 1024 ? 'w-4 h-4' : 'w-5 h-5'}`} />
-                    }
-                    <span className={`${styles.textSize}`}>{getMessage('home.actions.write_story', {}, language)}</span>
-                  </Button>
-                  <Button
-                    onClick={() => createStoryAndNavigate("voice", "/voice-record")}
-                    disabled={isCreatingStory}
-                    variant="outline"
-                    className="border-green-500 text-green-500 hover:bg-green-500/20 w-full h-16 flex items-center justify-start px-4 gap-3"
-                    size="sm"
-                  >
-                    {isCreatingStory ? 
-                      <Loader2 className={`${windowDimensions.width < 640 ? 'w-3 h-3' : windowDimensions.width < 1024 ? 'w-4 h-4' : 'w-5 h-5'} animate-spin`} /> : 
-                      <Mic className={`${windowDimensions.width < 640 ? 'w-3 h-3' : windowDimensions.width < 1024 ? 'w-4 h-4' : 'w-5 h-5'}`} />
-                    }
-                    <span className={`${styles.textSize}`}>{getMessage('home.actions.voice_record', {}, language)}</span>
-                    {windowDimensions.width >= 640 && <span className="text-xs opacity-70 leading-tight">{getMessage('home.actions.five_min_duration', {}, language)}</span>}
-                  </Button>
+            {/* Stats Dashboard */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <Card className="bg-dark-card border-gray-800">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-gray-400 text-sm">Total Stories</p>
+                      <p className="text-2xl font-bold text-white">{storiesData?.length || 0}</p>
+                    </div>
+                    <BookOpen className="w-8 h-8 text-blue-500 opacity-50" />
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card className="bg-dark-card border-gray-800">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-gray-400 text-sm">Voice Recordings</p>
+                      <p className="text-2xl font-bold text-white">
+                        {storiesData?.filter(s => s.captureMethod === 'voice').length || 0}
+                      </p>
+                    </div>
+                    <Mic className="w-8 h-8 text-green-500 opacity-50" />
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card className="bg-dark-card border-gray-800">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-gray-400 text-sm">Narrated Stories</p>
+                      <p className="text-2xl font-bold text-white">
+                        {storiesData?.filter(s => s.narratorVoice || s.narratorVoiceType).length || 0}
+                      </p>
+                    </div>
+                    <Sparkles className="w-8 h-8 text-purple-500 opacity-50" />
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card className="bg-dark-card border-gray-800">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-gray-400 text-sm">This Week</p>
+                      <p className="text-2xl font-bold text-white">
+                        {storiesData?.filter(s => {
+                          const created = new Date(s.createdAt);
+                          const weekAgo = new Date();
+                          weekAgo.setDate(weekAgo.getDate() - 7);
+                          return created > weekAgo;
+                        }).length || 0}
+                      </p>
+                    </div>
+                    <TrendingUp className="w-8 h-8 text-tiktok-pink opacity-50" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
 
-                  <Button
-                    onClick={() => createStoryAndNavigate("audio", "/upload-audio")}
-                    disabled={isCreatingStory}
-                    className="bg-tiktok-red hover:bg-tiktok-red/80 w-full h-16 flex items-center justify-start px-4 gap-3"
-                    size="sm"
-                  >
-                    {isCreatingStory ? 
-                      <Loader2 className={`${windowDimensions.width < 640 ? 'w-3 h-3' : windowDimensions.width < 1024 ? 'w-4 h-4' : 'w-5 h-5'} animate-spin`} /> : 
-                      <AudioLines className={`${windowDimensions.width < 640 ? 'w-3 h-3' : windowDimensions.width < 1024 ? 'w-4 h-4' : 'w-5 h-5'}`} />
-                    }
-                    <span className={`${styles.textSize}`}>{getMessage('home.actions.upload_audio', {}, language)}</span>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Main Actions Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Create New Story */}
+              <Card className="bg-dark-card border-gray-800">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center">
+                    <Target className="w-5 h-5 mr-2 text-tiktok-pink" />
+                    Create Your Story
+                  </CardTitle>
+                  <CardDescription className="text-gray-400">
+                    Choose how you want to start your storytelling journey
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-3">
+                    <Button
+                      onClick={() => createStoryAndNavigate("text", "/upload-story")}
+                      disabled={isCreatingStory}
+                      variant="outline"
+                      className="border-blue-500 text-blue-500 hover:bg-blue-500/20 w-full h-20 flex items-center justify-between px-6 group"
+                    >
+                      <div className="flex items-center gap-4">
+                        {isCreatingStory ? 
+                          <Loader2 className="w-6 h-6 animate-spin" /> : 
+                          <PenTool className="w-6 h-6" />
+                        }
+                        <div className="text-left">
+                          <span className="block font-medium">Write Your Story</span>
+                          <span className="text-xs opacity-70">Type or paste your narrative</span>
+                        </div>
+                      </div>
+                      <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
+                        <PenTool className="w-5 h-5" />
+                      </div>
+                    </Button>
+                    
+                    <Button
+                      onClick={() => createStoryAndNavigate("voice", "/voice-record")}
+                      disabled={isCreatingStory}
+                      variant="outline"
+                      className="border-green-500 text-green-500 hover:bg-green-500/20 w-full h-20 flex items-center justify-between px-6 group"
+                    >
+                      <div className="flex items-center gap-4">
+                        {isCreatingStory ? 
+                          <Loader2 className="w-6 h-6 animate-spin" /> : 
+                          <Mic className="w-6 h-6" />
+                        }
+                        <div className="text-left">
+                          <span className="block font-medium">Record Your Voice</span>
+                          <span className="text-xs opacity-70">Speak your story (up to 5 minutes)</span>
+                        </div>
+                      </div>
+                      <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center group-hover:bg-green-500/20 transition-colors">
+                        <Mic className="w-5 h-5" />
+                      </div>
+                    </Button>
+
+                    <Button
+                      onClick={() => createStoryAndNavigate("audio", "/upload-audio")}
+                      disabled={isCreatingStory}
+                      className="bg-gradient-to-r from-tiktok-red to-purple-600 hover:from-tiktok-red/80 hover:to-purple-600/80 w-full h-20 flex items-center justify-between px-6 group text-white"
+                    >
+                      <div className="flex items-center gap-4">
+                        {isCreatingStory ? 
+                          <Loader2 className="w-6 h-6 animate-spin" /> : 
+                          <AudioLines className="w-6 h-6" />
+                        }
+                        <div className="text-left">
+                          <span className="block font-medium">Upload Audio</span>
+                          <span className="text-xs opacity-90">Import existing recordings</span>
+                        </div>
+                      </div>
+                      <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition-colors">
+                        <Upload className="w-5 h-5" />
+                      </div>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Recent Activity */}
+              <Card className="bg-dark-card border-gray-800">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center">
+                    <Sparkles className="w-5 h-5 mr-2 text-purple-500" />
+                    Your Journey
+                  </CardTitle>
+                  <CardDescription className="text-gray-400">
+                    Recent storytelling milestones
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {storiesData && storiesData.length > 0 ? (
+                      <>
+                        <div className="p-4 rounded-lg bg-gray-800/50 border border-gray-700">
+                          <p className="text-sm text-gray-400 mb-1">Latest Story</p>
+                          <p className="font-medium text-white">{storiesData[0]?.title}</p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {formatDistanceToNow(new Date(storiesData[0]?.createdAt), { addSuffix: true })}
+                          </p>
+                        </div>
+                        
+                        {storiesData.filter(s => s.narratorVoice || s.narratorVoiceType).length > 0 && (
+                          <div className="p-4 rounded-lg bg-purple-900/20 border border-purple-700/50">
+                            <p className="text-sm text-purple-400 mb-1">Recent Narration</p>
+                            <p className="font-medium text-white">
+                              {storiesData.find(s => s.narratorVoice || s.narratorVoiceType)?.title}
+                            </p>
+                            <p className="text-xs text-purple-300 mt-1">With ElevenLabs voice</p>
+                          </div>
+                        )}
+                        
+                        <div className="text-center pt-4">
+                          <p className="text-gray-400 text-sm mb-3">
+                            You've created {storiesData.length} amazing {storiesData.length === 1 ? 'story' : 'stories'}!
+                          </p>
+                          <div className="flex items-center justify-center gap-1">
+                            {[...Array(Math.min(5, storiesData.length))].map((_, i) => (
+                              <div key={i} className="w-2 h-2 rounded-full bg-gradient-to-r from-blue-500 to-purple-500" />
+                            ))}
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-center py-8">
+                        <Sparkles className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+                        <p className="text-gray-400">Start your storytelling journey!</p>
+                        <p className="text-gray-500 text-sm mt-1">Create your first story above</p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <CharacterFeed />
           </div>
-
-          <CharacterFeed />
         </div>
       </div>
       
