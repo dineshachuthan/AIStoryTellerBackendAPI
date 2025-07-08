@@ -1,0 +1,713 @@
+/**
+ * Hierarchical Internationalization Configuration
+ * Namespace-based message organization for better maintainability
+ * Pattern: page.component.element
+ */
+
+import { getCurrentUserLanguage, type Language } from './language-config';
+
+export type MessageType = 'error' | 'warning' | 'success' | 'info';
+export type MessageSeverity = 'low' | 'medium' | 'high' | 'critical';
+
+export interface I18nMessage {
+  type: MessageType;
+  severity: MessageSeverity;
+  variables?: string[];
+  templates: {
+    en: string;
+    es?: string;
+    fr?: string;
+    de?: string;
+    ja?: string;
+    zh?: string;
+    ko?: string;
+  };
+}
+
+/**
+ * Hierarchical message structure organized by feature/page
+ */
+export const MESSAGES = {
+  // Navigation
+  nav: {
+    main: {
+      home: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Home',
+          es: 'Inicio',
+          fr: 'Accueil',
+          de: 'Startseite',
+          ja: 'ホーム',
+          zh: '首页',
+          ko: '홈'
+        }
+      },
+      my_stories: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'My Stories',
+          es: 'Mis Historias',
+          fr: 'Mes Histoires',
+          de: 'Meine Geschichten',
+          ja: '私のストーリー',
+          zh: '我的故事',
+          ko: '내 스토리'
+        }
+      },
+      voice_samples: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Voice Samples',
+          es: 'Muestras de Voz',
+          fr: 'Échantillons Vocaux',
+          de: 'Sprachproben',
+          ja: '音声サンプル',
+          zh: '语音样本',
+          ko: '음성 샘플'
+        }
+      },
+      library: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Library',
+          es: 'Biblioteca',
+          fr: 'Bibliothèque',
+          de: 'Bibliothek',
+          ja: 'ライブラリ',
+          zh: '图书馆',
+          ko: '라이브러리'
+        }
+      },
+      profile: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Profile',
+          es: 'Perfil',
+          fr: 'Profil',
+          de: 'Profil',
+          ja: 'プロフィール',
+          zh: '个人资料',
+          ko: '프로필'
+        }
+      }
+    }
+  },
+
+  // Home Page
+  home: {
+    title: {
+      main: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Create Your Story',
+          es: 'Crea Tu Historia',
+          fr: 'Créez Votre Histoire',
+          de: 'Erstelle Deine Geschichte',
+          ja: 'あなたのストーリーを作成',
+          zh: '创建您的故事',
+          ko: '당신의 이야기를 만드세요'
+        }
+      }
+    },
+    actions: {
+      write_story: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Write Story',
+          es: 'Escribir Historia',
+          fr: 'Écrire une Histoire',
+          de: 'Geschichte Schreiben',
+          ja: 'ストーリーを書く',
+          zh: '写故事',
+          ko: '이야기 쓰기'
+        }
+      },
+      voice_record: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Voice Record',
+          es: 'Grabación de Voz',
+          fr: 'Enregistrement Vocal',
+          de: 'Sprachaufnahme',
+          ja: '音声録音',
+          zh: '语音录制',
+          ko: '음성 녹음'
+        }
+      },
+      upload_audio: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Upload Audio',
+          es: 'Subir Audio',
+          fr: 'Télécharger Audio',
+          de: 'Audio Hochladen',
+          ja: 'オーディオをアップロード',
+          zh: '上传音频',
+          ko: '오디오 업로드'
+        }
+      }
+    },
+    draft_panel: {
+      title: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Draft Stories',
+          es: 'Historias en Borrador',
+          fr: 'Histoires Brouillons',
+          de: 'Entwurfsgeschichten',
+          ja: '下書きストーリー',
+          zh: '草稿故事',
+          ko: '초안 스토리'
+        }
+      },
+      empty_state: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'No draft stories',
+          es: 'No hay historias en borrador',
+          fr: 'Aucune histoire brouillon',
+          de: 'Keine Entwurfsgeschichten',
+          ja: '下書きストーリーがありません',
+          zh: '没有草稿故事',
+          ko: '초안 스토리가 없습니다'
+        }
+      }
+    }
+  },
+
+  // Story Library Page
+  story_library: {
+    title: {
+      main: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Narrated Stories',
+          es: 'Historias Narradas',
+          fr: 'Histoires Narrées',
+          de: 'Erzählte Geschichten',
+          ja: 'ナレーション済みストーリー',
+          zh: '已叙述的故事',
+          ko: '나레이션된 이야기'
+        }
+      }
+    },
+    empty_state: {
+      message: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'No narrated stories found',
+          es: 'No se encontraron historias narradas',
+          fr: 'Aucune histoire narrée trouvée',
+          de: 'Keine erzählten Geschichten gefunden',
+          ja: 'ナレーション済みストーリーが見つかりません',
+          zh: '未找到已叙述的故事',
+          ko: '나레이션된 이야기를 찾을 수 없습니다'
+        }
+      }
+    },
+    story_card: {
+      private_label: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: '(private story)',
+          es: '(historia privada)',
+          fr: '(histoire privée)',
+          de: '(private Geschichte)',
+          ja: '(プライベートストーリー)',
+          zh: '(私人故事)',
+          ko: '(비공개 스토리)'
+        }
+      },
+      minutes_short: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'm',
+          es: 'm',
+          fr: 'm',
+          de: 'm',
+          ja: '分',
+          zh: '分',
+          ko: '분'
+        }
+      }
+    },
+    actions: {
+      edit: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Edit Story',
+          es: 'Editar Historia',
+          fr: 'Modifier l\'Histoire',
+          de: 'Geschichte Bearbeiten',
+          ja: 'ストーリーを編集',
+          zh: '编辑故事',
+          ko: '이야기 편집'
+        }
+      },
+      delete: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Delete Story',
+          es: 'Eliminar Historia',
+          fr: 'Supprimer l\'Histoire',
+          de: 'Geschichte Löschen',
+          ja: 'ストーリーを削除',
+          zh: '删除故事',
+          ko: '이야기 삭제'
+        }
+      },
+      view: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'View Story',
+          es: 'Ver Historia',
+          fr: 'Voir l\'Histoire',
+          de: 'Geschichte Ansehen',
+          ja: 'ストーリーを表示',
+          zh: '查看故事',
+          ko: '이야기 보기'
+        }
+      },
+      collaborate: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Collaborate',
+          es: 'Colaborar',
+          fr: 'Collaborer',
+          de: 'Zusammenarbeiten',
+          ja: 'コラボレート',
+          zh: '协作',
+          ko: '협업'
+        }
+      }
+    },
+    delete_dialog: {
+      title: {
+        type: 'warning' as MessageType,
+        severity: 'high' as MessageSeverity,
+        templates: {
+          en: 'Delete Story',
+          es: 'Eliminar Historia',
+          fr: 'Supprimer l\'Histoire',
+          de: 'Geschichte Löschen',
+          ja: 'ストーリーを削除',
+          zh: '删除故事',
+          ko: '이야기 삭제'
+        }
+      },
+      confirm_message: {
+        type: 'warning' as MessageType,
+        severity: 'high' as MessageSeverity,
+        variables: ['storyTitle'],
+        templates: {
+          en: 'Are you sure you want to delete "{storyTitle}"? This action cannot be undone.',
+          es: '¿Está seguro de que desea eliminar "{storyTitle}"? Esta acción no se puede deshacer.',
+          fr: 'Êtes-vous sûr de vouloir supprimer "{storyTitle}" ? Cette action ne peut pas être annulée.',
+          de: 'Sind Sie sicher, dass Sie "{storyTitle}" löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.',
+          ja: '"{storyTitle}"を削除してもよろしいですか？この操作は取り消せません。',
+          zh: '您确定要删除"{storyTitle}"吗？此操作无法撤消。',
+          ko: '"{storyTitle}"을(를) 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.'
+        }
+      },
+      cancel_button: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Cancel',
+          es: 'Cancelar',
+          fr: 'Annuler',
+          de: 'Abbrechen',
+          ja: 'キャンセル',
+          zh: '取消',
+          ko: '취소'
+        }
+      },
+      delete_button: {
+        type: 'warning' as MessageType,
+        severity: 'high' as MessageSeverity,
+        templates: {
+          en: 'Delete',
+          es: 'Eliminar',
+          fr: 'Supprimer',
+          de: 'Löschen',
+          ja: '削除',
+          zh: '删除',
+          ko: '삭제'
+        }
+      }
+    },
+    status: {
+      converting: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Converting...',
+          es: 'Convirtiendo...',
+          fr: 'Conversion...',
+          de: 'Konvertierung...',
+          ja: '変換中...',
+          zh: '转换中...',
+          ko: '변환 중...'
+        }
+      }
+    },
+    tooltips: {
+      private_story: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Private story - only visible to you',
+          es: 'Historia privada - solo visible para ti',
+          fr: 'Histoire privée - visible uniquement par vous',
+          de: 'Private Geschichte - nur für Sie sichtbar',
+          ja: 'プライベートストーリー - あなたにのみ表示',
+          zh: '私人故事 - 仅对您可见',
+          ko: '비공개 스토리 - 나에게만 표시'
+        }
+      },
+      public_story: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Published story - visible to all users',
+          es: 'Historia publicada - visible para todos los usuarios',
+          fr: 'Histoire publiée - visible par tous les utilisateurs',
+          de: 'Veröffentlichte Geschichte - für alle Nutzer sichtbar',
+          ja: '公開されたストーリー - すべてのユーザーに表示',
+          zh: '已发布的故事 - 对所有用户可见',
+          ko: '게시된 이야기 - 모든 사용자에게 표시'
+        }
+      },
+      available_to_all: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Available to all users',
+          es: 'Disponible para todos los usuarios',
+          fr: 'Disponible pour tous les utilisateurs',
+          de: 'Für alle Benutzer verfügbar',
+          ja: 'すべてのユーザーが利用可能',
+          zh: '对所有用户可用',
+          ko: '모든 사용자가 사용 가능'
+        }
+      }
+    }
+  },
+
+  // Common Actions (used across multiple pages)
+  common: {
+    actions: {
+      save: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Save',
+          es: 'Guardar',
+          fr: 'Sauvegarder',
+          de: 'Speichern',
+          ja: '保存',
+          zh: '保存',
+          ko: '저장'
+        }
+      },
+      cancel: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Cancel',
+          es: 'Cancelar',
+          fr: 'Annuler',
+          de: 'Abbrechen',
+          ja: 'キャンセル',
+          zh: '取消',
+          ko: '취소'
+        }
+      },
+      confirm: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Confirm',
+          es: 'Confirmar',
+          fr: 'Confirmer',
+          de: 'Bestätigen',
+          ja: '確認',
+          zh: '确认',
+          ko: '확인'
+        }
+      },
+      close: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Close',
+          es: 'Cerrar',
+          fr: 'Fermer',
+          de: 'Schließen',
+          ja: '閉じる',
+          zh: '关闭',
+          ko: '닫기'
+        }
+      }
+    },
+    status: {
+      loading: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Loading...',
+          es: 'Cargando...',
+          fr: 'Chargement...',
+          de: 'Lädt...',
+          ja: '読み込み中...',
+          zh: '加载中...',
+          ko: '로딩 중...'
+        }
+      },
+      saving: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Saving...',
+          es: 'Guardando...',
+          fr: 'Enregistrement...',
+          de: 'Speichern...',
+          ja: '保存中...',
+          zh: '保存中...',
+          ko: '저장 중...'
+        }
+      },
+      processing: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Processing...',
+          es: 'Procesando...',
+          fr: 'Traitement...',
+          de: 'Verarbeitung...',
+          ja: '処理中...',
+          zh: '处理中...',
+          ko: '처리 중...'
+        }
+      }
+    },
+    errors: {
+      generic: {
+        type: 'error' as MessageType,
+        severity: 'high' as MessageSeverity,
+        templates: {
+          en: 'An error occurred. Please try again.',
+          es: 'Se produjo un error. Por favor, inténtelo de nuevo.',
+          fr: 'Une erreur s\'est produite. Veuillez réessayer.',
+          de: 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.',
+          ja: 'エラーが発生しました。もう一度お試しください。',
+          zh: '发生错误。请重试。',
+          ko: '오류가 발생했습니다. 다시 시도해주세요.'
+        }
+      },
+      not_found: {
+        type: 'error' as MessageType,
+        severity: 'medium' as MessageSeverity,
+        templates: {
+          en: 'Not found',
+          es: 'No encontrado',
+          fr: 'Non trouvé',
+          de: 'Nicht gefunden',
+          ja: '見つかりません',
+          zh: '未找到',
+          ko: '찾을 수 없음'
+        }
+      }
+    }
+  }
+} as const;
+
+/**
+ * Get a message by its hierarchical key path
+ * @param keyPath - Dot-separated key path (e.g., "story_library.actions.edit")
+ * @param variables - Optional variables for interpolation
+ * @param language - Optional language override
+ */
+export function getMessage(
+  keyPath: string,
+  variables?: Record<string, string | number>,
+  language?: Language
+): string {
+  const lang = language || getCurrentUserLanguage() || 'en';
+  const keys = keyPath.split('.');
+  
+  let current: any = MESSAGES;
+  for (const key of keys) {
+    if (!current[key]) {
+      console.warn(`i18n key not found: ${keyPath}`);
+      return keyPath; // Return the key itself as fallback
+    }
+    current = current[key];
+  }
+
+  const template = current.templates?.[lang] || current.templates?.en;
+  if (!template) {
+    console.warn(`i18n template not found for key: ${keyPath}`);
+    return keyPath;
+  }
+
+  // Interpolate variables if provided
+  if (variables && current.variables) {
+    return interpolateTemplate(template, variables);
+  }
+
+  return template;
+}
+
+/**
+ * Template interpolation utility
+ * Replaces {variable} placeholders with actual values
+ */
+function interpolateTemplate(template: string, variables: Record<string, string | number>): string {
+  return template.replace(/{(\w+)}/g, (match, key) => {
+    if (key in variables) {
+      return String(variables[key]);
+    }
+    console.warn(`Missing variable for interpolation: ${key}`);
+    return match;
+  });
+}
+
+/**
+ * Type-safe message getter with autocomplete support
+ */
+export const t = {
+  nav: {
+    main: {
+      home: () => getMessage('nav.main.home'),
+      myStories: () => getMessage('nav.main.my_stories'),
+      voiceSamples: () => getMessage('nav.main.voice_samples'),
+      library: () => getMessage('nav.main.library'),
+      profile: () => getMessage('nav.main.profile')
+    }
+  },
+  home: {
+    title: {
+      main: () => getMessage('home.title.main')
+    },
+    actions: {
+      writeStory: () => getMessage('home.actions.write_story'),
+      voiceRecord: () => getMessage('home.actions.voice_record'),
+      uploadAudio: () => getMessage('home.actions.upload_audio')
+    },
+    draftPanel: {
+      title: () => getMessage('home.draft_panel.title'),
+      emptyState: () => getMessage('home.draft_panel.empty_state')
+    }
+  },
+  storyLibrary: {
+    title: {
+      main: () => getMessage('story_library.title.main')
+    },
+    emptyState: {
+      message: () => getMessage('story_library.empty_state.message')
+    },
+    storyCard: {
+      privateLabel: () => getMessage('story_library.story_card.private_label'),
+      minutesShort: () => getMessage('story_library.story_card.minutes_short')
+    },
+    actions: {
+      edit: () => getMessage('story_library.actions.edit'),
+      delete: () => getMessage('story_library.actions.delete'),
+      view: () => getMessage('story_library.actions.view'),
+      collaborate: () => getMessage('story_library.actions.collaborate')
+    },
+    deleteDialog: {
+      title: () => getMessage('story_library.delete_dialog.title'),
+      confirmMessage: (storyTitle: string) => getMessage('story_library.delete_dialog.confirm_message', { storyTitle }),
+      cancelButton: () => getMessage('story_library.delete_dialog.cancel_button'),
+      deleteButton: () => getMessage('story_library.delete_dialog.delete_button')
+    },
+    status: {
+      converting: () => getMessage('story_library.status.converting')
+    },
+    tooltips: {
+      privateStory: () => getMessage('story_library.tooltips.private_story'),
+      publicStory: () => getMessage('story_library.tooltips.public_story'),
+      availableToAll: () => getMessage('story_library.tooltips.available_to_all')
+    }
+  },
+  common: {
+    actions: {
+      save: () => getMessage('common.actions.save'),
+      cancel: () => getMessage('common.actions.cancel'),
+      confirm: () => getMessage('common.actions.confirm'),
+      close: () => getMessage('common.actions.close')
+    },
+    status: {
+      loading: () => getMessage('common.status.loading'),
+      saving: () => getMessage('common.status.saving'),
+      processing: () => getMessage('common.status.processing')
+    },
+    errors: {
+      generic: () => getMessage('common.errors.generic'),
+      notFound: () => getMessage('common.errors.not_found')
+    }
+  }
+} as const;
+
+/**
+ * Legacy compatibility layer - maps old flat keys to new hierarchical structure
+ * This allows gradual migration without breaking existing code
+ */
+export const LEGACY_KEY_MAP: Record<string, string> = {
+  'NAV_HOME': 'nav.main.home',
+  'NAV_STORIES': 'nav.main.my_stories',
+  'NAV_VOICE_SAMPLES': 'nav.main.voice_samples',
+  'NAV_LIBRARY': 'nav.main.library',
+  'NAV_PROFILE': 'nav.main.profile',
+  'STORY_PRIVATE_LABEL': 'story_library.story_card.private_label',
+  'BUTTON_EDIT': 'story_library.actions.edit',
+  'BUTTON_DELETE': 'story_library.actions.delete',
+  'BUTTON_CANCEL': 'common.actions.cancel',
+  'BUTTON_VIEW': 'story_library.actions.view',
+  'BUTTON_COLLABORATE': 'story_library.actions.collaborate',
+  'NARRATED_STORIES_TITLE': 'story_library.title.main',
+  'DELETE_STORY_TITLE': 'story_library.delete_dialog.title',
+  'DELETE_STORY_CONFIRM': 'story_library.delete_dialog.confirm_message',
+  'CONVERTING_STATUS': 'story_library.status.converting',
+  'AVAILABLE_TO_ALL_USERS': 'story_library.tooltips.available_to_all',
+  'MINUTES_SHORT': 'story_library.story_card.minutes_short',
+  'NO_NARRATED_STORIES': 'story_library.empty_state.message'
+};
+
+/**
+ * Legacy compatibility function - converts old flat keys to new hierarchical keys
+ */
+export function getLegacyMessage(
+  oldKey: string,
+  variables?: Record<string, string | number>,
+  language?: Language
+): string {
+  const newKey = LEGACY_KEY_MAP[oldKey];
+  if (!newKey) {
+    console.warn(`Legacy i18n key not mapped: ${oldKey}`);
+    return oldKey;
+  }
+  return getMessage(newKey, variables, language);
+}
