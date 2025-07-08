@@ -88,6 +88,8 @@ export class ApiClient {
     register: (data: { email: string; password: string; name?: string }) =>
       this.request<any>('POST', '/api/auth/register', data),
     updateProfile: (data: any) => this.request<any>('PATCH', '/api/auth/profile', data),
+    updateLanguage: (language: string) => 
+      this.request<any>('PUT', '/api/auth/user/language', { language }),
   };
   
   // Story endpoints

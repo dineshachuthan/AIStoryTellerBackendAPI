@@ -48,8 +48,12 @@ export class AuthService {
       let user = await storage.getUserByProvider(authInfo.provider, authInfo.providerId);
 
       if (user) {
-        // User exists, return existing user and publish login event
-        await storage.updateUser(user.id, { lastLoginAt: new Date() });
+        // User exists, update their language preference and last login
+        await storage.updateUser(user.id, { 
+          lastLoginAt: new Date(),
+          language: authInfo.language || user.language || 'en',
+          locale: authInfo.locale || user.locale
+        });
         
         // Use auth adapter to publish login event
         await authAdapterIntegration.handleOAuthCallback(
@@ -65,12 +69,20 @@ export class AuthService {
       user = await storage.getUserByEmail(authInfo.email);
 
       if (user) {
-        // User exists with same email, link accounts
+        // User exists with same email, link accounts and update language
         await storage.createUserProvider({
           userId: user.id,
           provider: authInfo.provider,
           providerId: authInfo.providerId
         });
+        
+        // Update language preference from OAuth provider
+        await storage.updateUser(user.id, { 
+          lastLoginAt: new Date(),
+          language: authInfo.language || user.language || 'en',
+          locale: authInfo.locale || user.locale
+        });
+        
         return user;
       }
 

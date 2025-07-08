@@ -449,9 +449,11 @@ This is a full-stack collaborative storytelling platform that enables users to c
    - **Phase 4**: Roleplay Enhancement - Character-specific invitations, multi-voice playback
    - **Phase 5**: Credits System - Author points for story remixes and public sharing
 
-3. **SSO Language Capture**: Need to capture user's preferred language during OAuth/SSO sign-in and store it in the database
-   - Currently language preference is only stored in localStorage, not persisted with user account
-   - Need to add language field to users table and OAuth provider integration
+3. **SSO Language Capture**: ✅ COMPLETED - User's preferred language is now captured during OAuth/SSO sign-in
+   - Database already had language fields (language, locale, nativeLanguage) in users table
+   - Updated OAuth authentication to capture and persist language from provider profile
+   - Frontend LanguageProvider now syncs with database language preference
+   - Language updates are persisted when user changes language in UI
 
 4. **OpenAI Narrator Voice Enhancement**:
    - **Pass Language to OpenAI**: Currently not sending user's selected language to OpenAI for TTS generation
@@ -459,6 +461,17 @@ This is a full-stack collaborative storytelling platform that enables users to c
    - **Advanced Voice Improvements**: Enhance narrator voice quality with emotion-aware TTS parameters
 
 ## Changelog
+
+### **SSO LANGUAGE CAPTURE IMPLEMENTED - February 10, 2025**
+**User Language Persistence**: OAuth sign-in now captures and persists user language preference
+- **OAUTH LANGUAGE EXTRACTION**: Google OAuth provider extracts locale/language from user profile
+- **DATABASE SYNC ON LOGIN**: Existing users get their language preference updated from OAuth provider on each login
+- **FRONTEND-BACKEND SYNC**: LanguageProvider now syncs with database language preference, not just localStorage
+- **LANGUAGE UPDATE API**: Added PUT /api/auth/user/language endpoint to persist language changes
+- **AUTOMATIC SYNC**: When user data loads, frontend automatically updates to use database language preference
+- **BIDIRECTIONAL SYNC**: Changing language in UI updates both localStorage and database
+- **FUTURE READY**: Microsoft and Facebook providers will automatically benefit when implemented
+- **USER BENEFIT**: Language preference persists across devices and sessions
 
 ### **STORY NARRATOR UI IMPROVEMENTS - February 09, 2025**
 **Clean TV-Style Media Controls**: Enhanced narrator controls with professional interface

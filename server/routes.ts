@@ -381,6 +381,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update user language preference
+  app.put("/api/auth/user/language", requireAuth, async (req, res) => {
+    try {
+      const { language } = req.body;
+      const userId = req.user!.id;
+      
+      // Validate language is supported
+      if (!['en', 'ta'].includes(language)) {
+        return res.status(400).json({ error: 'Unsupported language' });
+      }
+      
+      await storage.updateUser(userId, { language });
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error updating language:', error);
+      res.status(500).json({ error: 'Failed to update language preference' });
+    }
+  });
+
   // Social login routes
   app.get("/api/auth/google", (req, res, next) => {
     console.log('[OAuth] Initiating Google authentication');
