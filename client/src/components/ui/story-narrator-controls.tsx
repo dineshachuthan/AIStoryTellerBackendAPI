@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Headphones, Play, Pause, Save, Download, Loader2, RefreshCw, SkipBack, SkipForward, Volume2, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
+import { getMessage } from '@shared/i18n-hierarchical';
 
 interface NarrationSegment {
   text: string;
@@ -514,7 +515,7 @@ export default function StoryNarratorControls({
                     text-gray-400 hover:text-white
                     ${isGenerating ? 'animate-pulse' : savedNarration ? 'opacity-50' : ''}
                   `}
-                  title={savedNarration ? "Narration already generated" : (!canNarrate ? "Need narrator voice first" : "Generate story narration")}
+                  title={savedNarration ? getMessage('upload_story.narration.tooltips.already_generated') : (!canNarrate ? getMessage('upload_story.narration.tooltips.need_narrator_voice') : getMessage('upload_story.narration.tooltips.generate_narration'))}
                 >
                   {isGenerating ? (
                     <Loader2 className="w-5 h-5 animate-spin" />

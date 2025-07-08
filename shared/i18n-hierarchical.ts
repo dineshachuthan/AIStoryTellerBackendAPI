@@ -640,6 +640,49 @@ export const MESSAGES = {
         }
       }
     },
+    narration: {
+      tooltips: {
+        already_generated: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Narration already generated',
+            es: 'Narración ya generada',
+            fr: 'Narration déjà générée',
+            de: 'Erzählung bereits erstellt',
+            ja: 'ナレーションは既に生成されています',
+            zh: '旁白已生成',
+            ko: '나레이션이 이미 생성됨'
+          }
+        },
+        need_narrator_voice: {
+          type: 'warning' as MessageType,
+          severity: 'medium' as MessageSeverity,
+          templates: {
+            en: 'Need narrator voice first',
+            es: 'Primero necesitas la voz del narrador',
+            fr: 'Voix du narrateur requise d\'abord',
+            de: 'Erzählerstimme zuerst erforderlich',
+            ja: 'まずナレーターボイスが必要です',
+            zh: '需要先创建旁白声音',
+            ko: '먼저 나레이터 음성이 필요합니다'
+          }
+        },
+        generate_narration: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Generate story narration',
+            es: 'Generar narración de historia',
+            fr: 'Générer la narration de l\'histoire',
+            de: 'Geschichte-Erzählung erstellen',
+            ja: 'ストーリーナレーションを生成',
+            zh: '生成故事旁白',
+            ko: '스토리 나레이션 생성'
+          }
+        }
+      }
+    },
     defaults: {
       untitled_story: {
         type: 'info' as MessageType,
