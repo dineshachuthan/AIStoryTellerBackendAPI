@@ -1,0 +1,618 @@
+openapi: 3.0.0
+info:
+  title: Story Service API
+  version: 1.0.0
+  description: Core service for story creation, analysis, and management
+servers:
+  - url: https://api.storytelling.com/story/v1
+    description: Production server
+  - url: http://localhost:3003
+    description: Development server
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  
+  schemas:
+    Story:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          maxLength: 500
+        content:
+          type: string
+        contentHash:
+          type: string
+        authorId:
+          type: string
+        language:
+          type: string
+          default: "en"
+        status:
+          type: string
+          enum: [draft, analyzing, analyzed, published, archived]
+        isPublished:
+          type: boolean
+        publishedAt:
+          type: string
+          format: date-time
+        characters:
+          type: array
+          items:
+            $ref: '#/components/schemas/StoryCharacter'
+        emotions:
+          type: array
+          items:
+            $ref: '#/components/schemas/StoryEmotion'
+        metadata:
+          type: object
+          properties:
+            genre:
+              type: string
+            readingTime:
+              type: integer
+            wordCount:
+              type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    
+    StoryCharacter:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        personality:
+          type: string
+        role:
+          type: string
+          enum: [protagonist, antagonist, supporting, narrator, other]
+        traits:
+          type: array
+          items:
+            type: string
+        imageUrl:
+          type: string
+          format: uri
+    
+    StoryEmotion:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        emotion:
+          type: string
+        intensity:
+          type: integer
+          minimum: 1
+          maximum: 10
+        context:
+          type: string
+        quote:
+          type: string
+        segmentIndex:
+          type: integer
+    
+    StoryAnalysis:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        storyId:
+          type: string
+          format: uuid
+        analysisType:
+          type: string
+          enum: [narrative, roleplay]
+        analysisData:
+          type: object
+        version:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+paths:
+  /stories:
+    get:
+      summary: List user stories
+      tags: [Stories]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, analyzing, analyzed, published, archived]
+        - name: isPublished
+          in: query
+          schema:
+            type: boolean
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        200:
+          description: List of stories
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  stories:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Story'
+                  total:
+                    type: integer
+                  hasMore:
+                    type: boolean
+    
+    post:
+      summary: Create new story
+      tags: [Stories]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - content
+              properties:
+                title:
+                  type: string
+                  maxLength: 500
+                content:
+                  type: string
+                  minLength: 100
+                language:
+                  type: string
+                  default: "en"
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                audioFile:
+                  type: string
+                  format: binary
+                language:
+                  type: string
+      responses:
+        201:
+          description: Story created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Story'
+        400:
+          description: Invalid request
+        403:
+          description: Usage limit reached
+  
+  /stories/{storyId}:
+    get:
+      summary: Get story details
+      tags: [Stories]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: storyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: Story details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Story'
+        404:
+          description: Story not found
+    
+    patch:
+      summary: Update story
+      tags: [Stories]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: storyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                content:
+                  type: string
+                language:
+                  type: string
+      responses:
+        200:
+          description: Story updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Story'
+        400:
+          description: Invalid request
+        404:
+          description: Story not found
+    
+    delete:
+      summary: Delete story
+      tags: [Stories]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: storyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        204:
+          description: Story deleted
+        404:
+          description: Story not found
+  
+  /stories/{storyId}/analyze:
+    post:
+      summary: Analyze story content
+      tags: [Stories]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: storyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                analysisType:
+                  type: string
+                  enum: [narrative, roleplay, both]
+                  default: both
+                force:
+                  type: boolean
+                  default: false
+                  description: Force re-analysis even if cached
+      responses:
+        202:
+          description: Analysis started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  jobId:
+                    type: string
+                  status:
+                    type: string
+        400:
+          description: Invalid request
+  
+  /stories/{storyId}/analysis:
+    get:
+      summary: Get story analysis
+      tags: [Stories]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: storyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: analysisType
+          in: query
+          schema:
+            type: string
+            enum: [narrative, roleplay]
+      responses:
+        200:
+          description: Story analysis
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StoryAnalysis'
+        404:
+          description: Analysis not found
+  
+  /stories/{storyId}/publish:
+    post:
+      summary: Publish story
+      tags: [Stories]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: storyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                visibility:
+                  type: string
+                  enum: [public, private, unlisted]
+                  default: public
+      responses:
+        200:
+          description: Story published
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Story'
+        400:
+          description: Story not ready for publishing
+  
+  /stories/{storyId}/characters:
+    get:
+      summary: Get story characters
+      tags: [Characters]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: storyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: List of characters
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StoryCharacter'
+    
+    post:
+      summary: Add character to story
+      tags: [Characters]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: storyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                personality:
+                  type: string
+                role:
+                  type: string
+                traits:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        201:
+          description: Character added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StoryCharacter'
+  
+  /stories/{storyId}/characters/{characterId}:
+    patch:
+      summary: Update character
+      tags: [Characters]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: storyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                personality:
+                  type: string
+                imageUrl:
+                  type: string
+      responses:
+        200:
+          description: Character updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StoryCharacter'
+  
+  /stories/{storyId}/emotions:
+    get:
+      summary: Get story emotions
+      tags: [Emotions]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: storyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: List of emotions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StoryEmotion'
+  
+  /stories/public:
+    get:
+      summary: Browse public stories
+      tags: [Public]
+      parameters:
+        - name: genre
+          in: query
+          schema:
+            type: string
+        - name: language
+          in: query
+          schema:
+            type: string
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            enum: [trending, recent, popular]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        200:
+          description: Public stories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Story'
+  
+  /stories/{storyId}/clone:
+    post:
+      summary: Clone public story
+      tags: [Stories]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: storyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  description: New title for cloned story
+      responses:
+        201:
+          description: Story cloned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Story'
+        403:
+          description: Story not public or clonable
+  
+  /health:
+    get:
+      summary: Health check
+      tags: [System]
+      responses:
+        200:
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+                  dependencies:
+                    type: object

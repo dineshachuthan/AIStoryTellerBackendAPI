@@ -1,0 +1,382 @@
+openapi: 3.0.0
+info:
+  title: Identity & Access Service API
+  version: 1.0.0
+  description: Handles user authentication, authorization, and role management
+servers:
+  - url: https://api.storytelling.com/identity/v1
+    description: Production server
+  - url: http://localhost:3001
+    description: Development server
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "usr_123abc"
+        email:
+          type: string
+          format: email
+        firstName:
+          type: string
+        lastName:
+          type: string
+        displayName:
+          type: string
+        role:
+          type: string
+          enum: [member, admin, super-admin, customer-support, content-moderator]
+        language:
+          type: string
+          example: "en"
+        profileImageUrl:
+          type: string
+          format: uri
+        createdAt:
+          type: string
+          format: date-time
+    
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+    
+    AuthResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        user:
+          $ref: '#/components/schemas/User'
+    
+    Permission:
+      type: object
+      properties:
+        id:
+          type: string
+        resource:
+          type: string
+          example: "story"
+        action:
+          type: string
+          example: "create"
+        description:
+          type: string
+    
+    Role:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Permission'
+
+paths:
+  /auth/register:
+    post:
+      summary: Register new user
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+                - firstName
+                - lastName
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+      responses:
+        201:
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        400:
+          description: Invalid request data
+        409:
+          description: User already exists
+  
+  /auth/login:
+    post:
+      summary: Login user
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        200:
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        401:
+          description: Invalid credentials
+  
+  /auth/oauth/{provider}:
+    get:
+      summary: Initiate OAuth flow
+      tags: [Authentication]
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [google, facebook, microsoft]
+      responses:
+        302:
+          description: Redirect to OAuth provider
+  
+  /auth/oauth/{provider}/callback:
+    get:
+      summary: OAuth callback
+      tags: [Authentication]
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        302:
+          description: Redirect to app with auth token
+  
+  /auth/refresh:
+    post:
+      summary: Refresh access token
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - refreshToken
+              properties:
+                refreshToken:
+                  type: string
+      responses:
+        200:
+          description: Token refreshed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken:
+                    type: string
+  
+  /users/me:
+    get:
+      summary: Get current user profile
+      tags: [Users]
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+    
+    patch:
+      summary: Update current user profile
+      tags: [Users]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                displayName:
+                  type: string
+                language:
+                  type: string
+                profileImageUrl:
+                  type: string
+      responses:
+        200:
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+  
+  /users/{userId}:
+    get:
+      summary: Get user by ID (admin only)
+      tags: [Users]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        403:
+          description: Insufficient permissions
+        404:
+          description: User not found
+  
+  /users/{userId}/role:
+    put:
+      summary: Update user role (super-admin only)
+      tags: [Users]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - role
+              properties:
+                role:
+                  type: string
+                  enum: [member, admin, super-admin, customer-support, content-moderator]
+      responses:
+        200:
+          description: Role updated
+        403:
+          description: Insufficient permissions
+  
+  /roles:
+    get:
+      summary: List all roles
+      tags: [Roles]
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: List of roles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Role'
+  
+  /permissions:
+    get:
+      summary: List all permissions
+      tags: [Permissions]
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: List of permissions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Permission'
+  
+  /users/me/permissions:
+    get:
+      summary: Get current user permissions
+      tags: [Permissions]
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: User permissions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Permission'
+  
+  /health:
+    get:
+      summary: Health check
+      tags: [System]
+      responses:
+        200:
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+                  version:
+                    type: string
+                  dependencies:
+                    type: object

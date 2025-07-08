@@ -1,0 +1,502 @@
+openapi: 3.0.0
+info:
+  title: Subscription Service API
+  version: 1.0.0
+  description: Manages user subscriptions, usage tracking, and billing
+servers:
+  - url: https://api.storytelling.com/subscription/v1
+    description: Production server
+  - url: http://localhost:3002
+    description: Development server
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  
+  schemas:
+    SubscriptionTier:
+      type: object
+      properties:
+        id:
+          type: string
+          enum: [free, silver, gold, platinum]
+        name:
+          type: string
+        priceMonthly:
+          type: number
+          format: float
+        features:
+          type: object
+          properties:
+            storiesPerMonth:
+              type: integer
+            collaborationsPerMonth:
+              type: integer
+            inviteesPerCollaboration:
+              type: integer
+            videoGenerationsPerMonth:
+              type: integer
+            elevenLabsVoices:
+              type: integer
+            supportPriority:
+              type: string
+        limits:
+          type: object
+    
+    Subscription:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+        tierId:
+          type: string
+        status:
+          type: string
+          enum: [active, cancelled, expired, suspended]
+        currentPeriodStart:
+          type: string
+          format: date-time
+        currentPeriodEnd:
+          type: string
+          format: date-time
+        paymentMethodId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    
+    UsageReport:
+      type: object
+      properties:
+        resourceType:
+          type: string
+          enum: [story, collaboration, video, narration]
+        periodStart:
+          type: string
+          format: date
+        periodEnd:
+          type: string
+          format: date
+        usedCount:
+          type: integer
+        limitCount:
+          type: integer
+        percentage:
+          type: number
+          format: float
+    
+    PaymentMethod:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [card, paypal]
+        last4:
+          type: string
+        expiryMonth:
+          type: integer
+        expiryYear:
+          type: integer
+        isDefault:
+          type: boolean
+
+paths:
+  /tiers:
+    get:
+      summary: List all subscription tiers
+      tags: [Tiers]
+      responses:
+        200:
+          description: List of subscription tiers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SubscriptionTier'
+  
+  /tiers/{tierId}:
+    get:
+      summary: Get tier details
+      tags: [Tiers]
+      parameters:
+        - name: tierId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Tier details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionTier'
+        404:
+          description: Tier not found
+  
+  /subscriptions/current:
+    get:
+      summary: Get current user subscription
+      tags: [Subscriptions]
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Current subscription
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+        404:
+          description: No active subscription
+  
+  /subscriptions:
+    post:
+      summary: Create new subscription
+      tags: [Subscriptions]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - tierId
+                - paymentMethodId
+              properties:
+                tierId:
+                  type: string
+                  enum: [silver, gold, platinum]
+                paymentMethodId:
+                  type: string
+      responses:
+        201:
+          description: Subscription created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+        400:
+          description: Invalid request
+        402:
+          description: Payment required
+  
+  /subscriptions/{subscriptionId}/upgrade:
+    post:
+      summary: Upgrade subscription tier
+      tags: [Subscriptions]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: subscriptionId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - newTierId
+              properties:
+                newTierId:
+                  type: string
+                  enum: [silver, gold, platinum]
+      responses:
+        200:
+          description: Subscription upgraded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+        400:
+          description: Invalid upgrade path
+        402:
+          description: Payment required
+  
+  /subscriptions/{subscriptionId}/downgrade:
+    post:
+      summary: Downgrade subscription tier
+      tags: [Subscriptions]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: subscriptionId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - newTierId
+              properties:
+                newTierId:
+                  type: string
+                  enum: [free, silver, gold]
+      responses:
+        200:
+          description: Subscription downgraded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+  
+  /subscriptions/{subscriptionId}/cancel:
+    post:
+      summary: Cancel subscription
+      tags: [Subscriptions]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: subscriptionId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                feedback:
+                  type: string
+      responses:
+        200:
+          description: Subscription cancelled
+        404:
+          description: Subscription not found
+  
+  /usage/current:
+    get:
+      summary: Get current period usage
+      tags: [Usage]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: resourceType
+          in: query
+          schema:
+            type: string
+            enum: [story, collaboration, video, narration]
+      responses:
+        200:
+          description: Usage report
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UsageReport'
+  
+  /usage/history:
+    get:
+      summary: Get usage history
+      tags: [Usage]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        200:
+          description: Historical usage data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UsageReport'
+  
+  /usage/check:
+    post:
+      summary: Check if user can perform action
+      tags: [Usage]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - resourceType
+                - action
+              properties:
+                resourceType:
+                  type: string
+                  enum: [story, collaboration, video, narration]
+                action:
+                  type: string
+                  enum: [create, generate]
+                count:
+                  type: integer
+                  default: 1
+      responses:
+        200:
+          description: Usage check result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  allowed:
+                    type: boolean
+                  currentUsage:
+                    type: integer
+                  limit:
+                    type: integer
+                  remaining:
+                    type: integer
+  
+  /payment-methods:
+    get:
+      summary: List payment methods
+      tags: [Payment]
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: List of payment methods
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PaymentMethod'
+    
+    post:
+      summary: Add payment method
+      tags: [Payment]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - type
+                - token
+              properties:
+                type:
+                  type: string
+                  enum: [card, paypal]
+                token:
+                  type: string
+                  description: Payment provider token
+                setAsDefault:
+                  type: boolean
+      responses:
+        201:
+          description: Payment method added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentMethod'
+  
+  /payment-methods/{paymentMethodId}:
+    delete:
+      summary: Remove payment method
+      tags: [Payment]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: paymentMethodId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        204:
+          description: Payment method removed
+        400:
+          description: Cannot remove default payment method
+  
+  /invoices:
+    get:
+      summary: List invoices
+      tags: [Payment]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        200:
+          description: List of invoices
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    amount:
+                      type: number
+                    currency:
+                      type: string
+                    status:
+                      type: string
+                    createdAt:
+                      type: string
+                      format: date-time
+  
+  /health:
+    get:
+      summary: Health check
+      tags: [System]
+      responses:
+        200:
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+                  dependencies:
+                    type: object

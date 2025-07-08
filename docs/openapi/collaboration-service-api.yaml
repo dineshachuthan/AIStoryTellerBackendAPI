@@ -1,0 +1,641 @@
+openapi: 3.0.0
+info:
+  title: Collaboration Service API
+  version: 1.0.0
+  description: Manages story collaboration sessions, invitations, and participant contributions
+servers:
+  - url: https://api.storytelling.com/collaboration/v1
+    description: Production server
+  - url: http://localhost:3004
+    description: Development server
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    
+    invitationToken:
+      type: apiKey
+      in: query
+      name: token
+  
+  schemas:
+    CollaborationSession:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        storyId:
+          type: string
+          format: uuid
+        hostUserId:
+          type: string
+        sessionToken:
+          type: string
+        maxParticipants:
+          type: integer
+          default: 5
+        status:
+          type: string
+          enum: [active, completed, expired, cancelled]
+        settings:
+          type: object
+          properties:
+            allowGuestUsers:
+              type: boolean
+            requireApproval:
+              type: boolean
+            autoExpireHours:
+              type: integer
+              default: 120
+        expiresAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+    
+    Invitation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        sessionId:
+          type: string
+          format: uuid
+        invitationToken:
+          type: string
+        recipientEmail:
+          type: string
+          format: email
+        recipientPhone:
+          type: string
+        deliveryMethod:
+          type: string
+          enum: [email, sms]
+        characterAssignment:
+          type: string
+          format: uuid
+        permissions:
+          type: object
+          properties:
+            canRecord:
+              type: boolean
+            canRegenerate:
+              type: boolean
+        sentAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+        acceptedAt:
+          type: string
+          format: date-time
+        acceptedByUserId:
+          type: string
+        status:
+          type: string
+          enum: [pending, accepted, expired, cancelled]
+    
+    Participant:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        sessionId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+        guestIdentifier:
+          type: string
+        displayName:
+          type: string
+        assignedCharacterId:
+          type: string
+          format: uuid
+        joinedAt:
+          type: string
+          format: date-time
+        lastActiveAt:
+          type: string
+          format: date-time
+        contributions:
+          type: object
+          properties:
+            voiceRecordings:
+              type: integer
+            emotionsCovered:
+              type: array
+              items:
+                type: string
+    
+    VoiceContribution:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        participantId:
+          type: string
+          format: uuid
+        emotion:
+          type: string
+        audioUrl:
+          type: string
+          format: uri
+        durationSeconds:
+          type: number
+        qualityScore:
+          type: number
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+        createdAt:
+          type: string
+          format: date-time
+
+paths:
+  /sessions:
+    post:
+      summary: Create collaboration session
+      tags: [Sessions]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - storyId
+              properties:
+                storyId:
+                  type: string
+                  format: uuid
+                maxParticipants:
+                  type: integer
+                  minimum: 2
+                  maximum: 10
+                settings:
+                  type: object
+                  properties:
+                    allowGuestUsers:
+                      type: boolean
+                      default: true
+                    requireApproval:
+                      type: boolean
+                      default: false
+                    autoExpireHours:
+                      type: integer
+                      default: 120
+      responses:
+        201:
+          description: Session created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CollaborationSession'
+        403:
+          description: Usage limit reached or insufficient permissions
+    
+    get:
+      summary: List user's collaboration sessions
+      tags: [Sessions]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum: [host, participant]
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, completed, expired, cancelled]
+      responses:
+        200:
+          description: List of sessions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CollaborationSession'
+  
+  /sessions/{sessionId}:
+    get:
+      summary: Get session details
+      tags: [Sessions]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: Session details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CollaborationSession'
+        404:
+          description: Session not found
+    
+    patch:
+      summary: Update session settings
+      tags: [Sessions]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                maxParticipants:
+                  type: integer
+                settings:
+                  type: object
+      responses:
+        200:
+          description: Session updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CollaborationSession'
+    
+    delete:
+      summary: Cancel collaboration session
+      tags: [Sessions]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        204:
+          description: Session cancelled
+  
+  /sessions/{sessionId}/invite:
+    post:
+      summary: Send invitation
+      tags: [Invitations]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - recipients
+              properties:
+                recipients:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      email:
+                        type: string
+                        format: email
+                      phone:
+                        type: string
+                      characterId:
+                        type: string
+                        format: uuid
+                      deliveryMethod:
+                        type: string
+                        enum: [email, sms]
+                message:
+                  type: string
+                  description: Custom invitation message
+      responses:
+        201:
+          description: Invitations sent
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Invitation'
+        400:
+          description: Invalid recipients or limit exceeded
+  
+  /sessions/{sessionId}/invitations:
+    get:
+      summary: List session invitations
+      tags: [Invitations]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, accepted, expired, cancelled]
+      responses:
+        200:
+          description: List of invitations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Invitation'
+  
+  /invitations/{invitationId}:
+    get:
+      summary: Get invitation details
+      tags: [Invitations]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: invitationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: Invitation details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invitation'
+    
+    delete:
+      summary: Cancel invitation
+      tags: [Invitations]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: invitationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        204:
+          description: Invitation cancelled
+  
+  /invitations/validate:
+    get:
+      summary: Validate invitation token
+      tags: [Invitations]
+      security:
+        - invitationToken: []
+      responses:
+        200:
+          description: Valid invitation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                  invitation:
+                    $ref: '#/components/schemas/Invitation'
+                  story:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      title:
+                        type: string
+                      characters:
+                        type: array
+                        items:
+                          type: object
+        401:
+          description: Invalid or expired token
+  
+  /invitations/accept:
+    post:
+      summary: Accept invitation
+      tags: [Invitations]
+      security:
+        - invitationToken: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                displayName:
+                  type: string
+                  description: For guest users
+      responses:
+        200:
+          description: Invitation accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  participant:
+                    $ref: '#/components/schemas/Participant'
+                  authToken:
+                    type: string
+                    description: Temporary auth token for guest users
+  
+  /sessions/{sessionId}/participants:
+    get:
+      summary: List session participants
+      tags: [Participants]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: List of participants
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Participant'
+  
+  /participants/{participantId}/voice:
+    post:
+      summary: Submit voice recording
+      tags: [Voice Contributions]
+      security:
+        - bearerAuth: []
+        - invitationToken: []
+      parameters:
+        - name: participantId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - emotion
+                - audioFile
+              properties:
+                emotion:
+                  type: string
+                audioFile:
+                  type: string
+                  format: binary
+                durationSeconds:
+                  type: number
+      responses:
+        201:
+          description: Voice recording submitted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoiceContribution'
+    
+    get:
+      summary: List participant voice recordings
+      tags: [Voice Contributions]
+      security:
+        - bearerAuth: []
+        - invitationToken: []
+      parameters:
+        - name: participantId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: List of voice recordings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/VoiceContribution'
+  
+  /sessions/{sessionId}/regenerate:
+    post:
+      summary: Regenerate story with participant voices
+      tags: [Sessions]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                voiceSelection:
+                  type: object
+                  description: Map of character IDs to participant IDs
+      responses:
+        202:
+          description: Regeneration started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  jobId:
+                    type: string
+                  status:
+                    type: string
+  
+  /sessions/{sessionId}/complete:
+    post:
+      summary: Mark session as complete
+      tags: [Sessions]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: Session completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CollaborationSession'
+  
+  /health:
+    get:
+      summary: Health check
+      tags: [System]
+      responses:
+        200:
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+                  dependencies:
+                    type: object
