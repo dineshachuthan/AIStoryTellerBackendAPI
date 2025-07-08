@@ -143,15 +143,19 @@ export default function StoryNarratorControls({
       const activeNarration = tempNarration || savedNarration;
       const currentIdx = currentSegmentRef.current;
       
+      console.log(`Segment ${currentIdx} ended. Total segments: ${activeNarration?.segments.length}`);
+      
       if (activeNarration && currentIdx < activeNarration.segments.length - 1) {
         // Move to next segment
         const nextSegmentIndex = currentIdx + 1;
+        console.log(`Auto-advancing to segment ${nextSegmentIndex}`);
         setCurrentSegment(nextSegmentIndex);
         currentSegmentRef.current = nextSegmentIndex;
         
         // Play next segment immediately if still mounted
         const nextSegment = activeNarration.segments[nextSegmentIndex];
         if (nextSegment?.audioUrl && isMountedRef.current) {
+          console.log(`Playing next segment URL: ${nextSegment.audioUrl}`);
           audio.src = nextSegment.audioUrl;
           audio.play().catch(err => {
             console.error('Failed to auto-play next segment:', err);
@@ -160,6 +164,7 @@ export default function StoryNarratorControls({
         }
       } else {
         // End of narration
+        console.log('End of narration reached');
         setIsPlaying(false);
         setCurrentSegment(0);
         currentSegmentRef.current = 0;
@@ -223,11 +228,6 @@ export default function StoryNarratorControls({
         setTempNarration(null); // Clear any temp narration
         setCurrentSegment(0);
         setProgress(0);
-        
-        toast({
-          title: "Narration Ready",
-          description: `Generated and saved ${response.segments.length} segments`
-        });
       }
     } catch (error) {
       console.error('Error generating narration:', error);
@@ -249,6 +249,7 @@ export default function StoryNarratorControls({
     const segment = activeNarration.segments[currentSegment];
     if (!segment?.audioUrl) return;
 
+    console.log(`Playing segment ${currentSegment}:`, segment.audioUrl);
     audioRef.current.src = segment.audioUrl;
     
     const playSegment = () => {
