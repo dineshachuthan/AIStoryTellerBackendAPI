@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { CharacterFeed } from "@/components/character-feed";
-import { StorySearchPanel } from "@/components/story-search-panel";
+import { DraftStoriesPanel } from "@/components/draft-stories-panel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLocation } from "wouter";
@@ -123,9 +123,9 @@ export default function Home() {
          style={{ minHeight: windowDimensions.height }}>
       <AppTopNavigation />
       
-      <div className="flex pt-16">
-        {/* Collapsible Search Panel */}
-        <StorySearchPanel
+      <div className="flex h-full pt-16">
+        {/* Draft Stories Panel */}
+        <DraftStoriesPanel
           isCollapsed={isSearchPanelCollapsed}
           onToggleCollapse={() => setIsSearchPanelCollapsed(!isSearchPanelCollapsed)}
           showToggle={true}

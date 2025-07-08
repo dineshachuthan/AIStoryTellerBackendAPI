@@ -44,19 +44,19 @@ interface Story {
   narratorVoiceType?: string;
 }
 
-interface StorySearchPanelProps {
+interface DraftStoriesPanelProps {
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
   showToggle?: boolean;
   className?: string;
 }
 
-export function StorySearchPanel({ 
+export function DraftStoriesPanel({ 
   isCollapsed = false, 
   onToggleCollapse, 
   showToggle = false,
   className = ""
-}: StorySearchPanelProps) {
+}: DraftStoriesPanelProps) {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
@@ -118,9 +118,9 @@ export function StorySearchPanel({
   }
 
   return (
-    <div className={`bg-gray-900/50 border-r border-gray-800 transition-all duration-300 ${
+    <div className={`bg-dark-bg border-r border-gray-800 transition-all duration-300 ${
       isCollapsed ? 'w-12 sm:w-16' : 'w-64 sm:w-72 md:w-80 lg:w-96'
-    } ${className} hidden sm:block`}>
+    } ${className} hidden sm:block h-full`}>
       <div className="h-full flex flex-col">
         {/* Toggle Button */}
         {showToggle && (
