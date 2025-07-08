@@ -182,10 +182,19 @@ export default function StoryNarratorControls({
     if (!segment?.audioUrl) return;
 
     audioRef.current.src = segment.audioUrl;
-    audioRef.current.play().catch(err => {
-      console.error('Playback error:', err);
-      setIsPlaying(false);
-    });
+    
+    const playSegment = () => {
+      audioRef.current.play().catch(err => {
+        console.error('Playback error:', err);
+        setIsPlaying(false);
+      });
+    };
+    
+    if (audioRef.current.readyState >= 3) {
+      playSegment();
+    } else {
+      audioRef.current.addEventListener('canplay', playSegment, { once: true });
+    }
   };
 
   // Simple play function
