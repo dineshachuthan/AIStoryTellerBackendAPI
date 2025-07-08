@@ -488,35 +488,6 @@ export default function StoryNarratorControls({
             
             {/* TV Control Panel */}
             <div className="mt-4 bg-gray-800 rounded-xl p-4">
-              {/* Generate Button */}
-              <div className="mb-4 flex justify-center">
-                <Button
-                  onClick={generateNarration}
-                  disabled={isGenerating || !canNarrate || !!savedNarration}
-                  variant="outline"
-                  className={`
-                    h-10 px-6 text-sm border-orange-400/50 bg-orange-900/20 text-orange-200 
-                    hover:bg-orange-900/40 hover:border-orange-400 transition-all duration-200
-                    ${isGenerating ? 'animate-pulse' : savedNarration ? 'opacity-50' : 'hover:scale-105'}
-                  `}
-                  title={savedNarration ? "Narration already generated" : (!canNarrate ? "Need narrator voice first" : "Generate story narration")}
-                >
-                  {isGenerating ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : savedNarration ? (
-                    <>
-                      <Check className="w-4 h-4 mr-2" />
-                      Generated
-                    </>
-                  ) : (
-                    <>
-                      <Download className="w-4 h-4 mr-2" />
-                      Generate Narration
-                    </>
-                  )}
-                </Button>
-              </div>
-              
               {/* Progress Bar */}
               <div className="mb-4">
                 <div className="w-full bg-gray-700 rounded-full h-2 overflow-hidden">
@@ -533,6 +504,27 @@ export default function StoryNarratorControls({
               
               {/* Media Controls */}
               <div className="flex items-center justify-center gap-4">
+                {/* Generate Button */}
+                <Button
+                  onClick={generateNarration}
+                  disabled={isGenerating || !canNarrate || !!savedNarration}
+                  variant="ghost"
+                  size="icon"
+                  className={`
+                    text-gray-400 hover:text-white
+                    ${isGenerating ? 'animate-pulse' : savedNarration ? 'opacity-50' : ''}
+                  `}
+                  title={savedNarration ? "Narration already generated" : (!canNarrate ? "Need narrator voice first" : "Generate story narration")}
+                >
+                  {isGenerating ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : savedNarration ? (
+                    <Check className="w-5 h-5" />
+                  ) : (
+                    <Download className="w-5 h-5" />
+                  )}
+                </Button>
+                
                 {/* Skip Previous */}
                 <Button
                   variant="ghost"
