@@ -1961,12 +1961,17 @@ export class DatabaseStorage implements IStorage {
   async getUserNarratorVoice(userId: string): Promise<string | null> {
     try {
       const { userEsm } = await import('@shared/schema');
-      const result = await db.select({ narrator_voice_id: userEsm.narrator_voice_id })
+      // Get the most recent narrator voice by ordering by created_date DESC
+      const result = await db.select({ 
+        narrator_voice_id: userEsm.narrator_voice_id,
+        created_date: userEsm.created_date 
+      })
         .from(userEsm)
         .where(and(
           eq(userEsm.userId, userId),
           isNotNull(userEsm.narrator_voice_id)
         ))
+        .orderBy(desc(userEsm.created_date))
         .limit(1);
       
       console.log(`[Storage] getUserNarratorVoice for ${userId}:`, result[0]?.narrator_voice_id || null);

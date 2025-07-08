@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { Headphones, Play, Pause, Save, Download, Loader2 } from 'lucide-react';
+import { Headphones, Play, Pause, Save, Download, Loader2, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 
 interface NarrationSegment {
   text: string;
@@ -290,8 +290,25 @@ export default function StoryNarratorControls({
           <Headphones className="w-5 h-5 mr-2 text-purple-400" />
           Story Narration
         </h3>
-        <div className="text-sm text-purple-200 bg-purple-900/30 px-3 py-1 rounded-full">
-          {activeNarration ? `${activeNarration.segments.length} segments` : 'Ready to create'}
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={async () => {
+              await queryClient.invalidateQueries({ queryKey: [`/api/stories/${storyId}/narration/saved`] });
+              await queryClient.refetchQueries({ queryKey: [`/api/stories/${storyId}/narration/saved`] });
+              toast({
+                title: "Refreshed",
+                description: "Narration data refreshed from server"
+              });
+            }}
+            variant="ghost"
+            size="sm"
+            className="text-purple-200 hover:text-purple-100"
+          >
+            <RefreshCw className="w-4 h-4" />
+          </Button>
+          <div className="text-sm text-purple-200 bg-purple-900/30 px-3 py-1 rounded-full">
+            {activeNarration ? `${activeNarration.segments.length} segments` : 'Ready to create'}
+          </div>
         </div>
       </div>
 
