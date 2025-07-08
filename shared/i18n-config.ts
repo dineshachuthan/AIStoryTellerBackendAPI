@@ -812,7 +812,23 @@ export const MESSAGE_TEMPLATES: Record<string, I18nMessageTemplate> = {
     }
   },
 
-  // Story Privacy Tooltips
+  // Story Privacy Labels and Tooltips
+  STORY_PRIVATE_LABEL: {
+    code: 'STORY_PRIVATE_LABEL',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'private story',
+      es: 'historia privada',
+      fr: 'histoire privée',
+      de: 'private Geschichte',
+      ja: 'プライベートストーリー',
+      zh: '私人故事',
+      ko: '비공개 스토리'
+    }
+  },
+
   STORY_PRIVATE_TOOLTIP: {
     code: 'STORY_PRIVATE_TOOLTIP',
     type: 'info',
@@ -842,6 +858,200 @@ export const MESSAGE_TEMPLATES: Record<string, I18nMessageTemplate> = {
       ja: '公開されたストーリー - すべてのユーザーに表示',
       zh: '已发布的故事 - 对所有用户可见',
       ko: '게시된 이야기 - 모든 사용자에게 표시'
+    }
+  },
+
+  // Common Button Labels
+  BUTTON_EDIT: {
+    code: 'BUTTON_EDIT',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Edit',
+      es: 'Editar',
+      fr: 'Modifier',
+      de: 'Bearbeiten',
+      ja: '編集',
+      zh: '编辑',
+      ko: '편집'
+    }
+  },
+
+  BUTTON_DELETE: {
+    code: 'BUTTON_DELETE',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Delete',
+      es: 'Eliminar',
+      fr: 'Supprimer',
+      de: 'Löschen',
+      ja: '削除',
+      zh: '删除',
+      ko: '삭제'
+    }
+  },
+
+  BUTTON_CANCEL: {
+    code: 'BUTTON_CANCEL',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Cancel',
+      es: 'Cancelar',
+      fr: 'Annuler',
+      de: 'Abbrechen',
+      ja: 'キャンセル',
+      zh: '取消',
+      ko: '취소'
+    }
+  },
+
+  BUTTON_VIEW: {
+    code: 'BUTTON_VIEW',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'View',
+      es: 'Ver',
+      fr: 'Voir',
+      de: 'Ansehen',
+      ja: '表示',
+      zh: '查看',
+      ko: '보기'
+    }
+  },
+
+  BUTTON_COLLABORATE: {
+    code: 'BUTTON_COLLABORATE',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Collaborate',
+      es: 'Colaborar',
+      fr: 'Collaborer',
+      de: 'Zusammenarbeiten',
+      ja: 'コラボレート',
+      zh: '协作',
+      ko: '협업'
+    }
+  },
+
+  // Story Library Labels
+  NARRATED_STORIES_TITLE: {
+    code: 'NARRATED_STORIES_TITLE',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Narrated Stories',
+      es: 'Historias Narradas',
+      fr: 'Histoires Narrées',
+      de: 'Erzählte Geschichten',
+      ja: 'ナレーション済みストーリー',
+      zh: '已叙述的故事',
+      ko: '나레이션된 이야기'
+    }
+  },
+
+  DELETE_STORY_TITLE: {
+    code: 'DELETE_STORY_TITLE',
+    type: 'warning',
+    severity: 'high',
+    variables: [],
+    templates: {
+      en: 'Delete Story',
+      es: 'Eliminar Historia',
+      fr: 'Supprimer l\'Histoire',
+      de: 'Geschichte Löschen',
+      ja: 'ストーリーを削除',
+      zh: '删除故事',
+      ko: '이야기 삭제'
+    }
+  },
+
+  DELETE_STORY_CONFIRM: {
+    code: 'DELETE_STORY_CONFIRM',
+    type: 'warning',
+    severity: 'high',
+    variables: ['storyTitle'],
+    templates: {
+      en: 'Are you sure you want to delete "{storyTitle}"? This action cannot be undone.',
+      es: '¿Está seguro de que desea eliminar "{storyTitle}"? Esta acción no se puede deshacer.',
+      fr: 'Êtes-vous sûr de vouloir supprimer "{storyTitle}" ? Cette action ne peut pas être annulée.',
+      de: 'Sind Sie sicher, dass Sie "{storyTitle}" löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.',
+      ja: '"{storyTitle}"を削除してもよろしいですか？この操作は取り消せません。',
+      zh: '您确定要删除"{storyTitle}"吗？此操作无法撤消。',
+      ko: '"{storyTitle}"을(를) 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.'
+    }
+  },
+
+  CONVERTING_STATUS: {
+    code: 'CONVERTING_STATUS',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Converting...',
+      es: 'Convirtiendo...',
+      fr: 'Conversion...',
+      de: 'Konvertierung...',
+      ja: '変換中...',
+      zh: '转换中...',
+      ko: '변환 중...'
+    }
+  },
+
+  AVAILABLE_TO_ALL_USERS: {
+    code: 'AVAILABLE_TO_ALL_USERS',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'Available to all users',
+      es: 'Disponible para todos los usuarios',
+      fr: 'Disponible pour tous les utilisateurs',
+      de: 'Für alle Benutzer verfügbar',
+      ja: 'すべてのユーザーが利用可能',
+      zh: '对所有用户可用',
+      ko: '모든 사용자가 사용 가능'
+    }
+  },
+
+  MINUTES_SHORT: {
+    code: 'MINUTES_SHORT',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'm',
+      es: 'm',
+      fr: 'm',
+      de: 'm',
+      ja: '分',
+      zh: '分',
+      ko: '분'
+    }
+  },
+
+  NO_NARRATED_STORIES: {
+    code: 'NO_NARRATED_STORIES',
+    type: 'info',
+    severity: 'low',
+    variables: [],
+    templates: {
+      en: 'No narrated stories found',
+      es: 'No se encontraron historias narradas',
+      fr: 'Aucune histoire narrée trouvée',
+      de: 'Keine erzählten Geschichten gefunden',
+      ja: 'ナレーション済みストーリーが見つかりません',
+      zh: '未找到已叙述的故事',
+      ko: '나레이션된 이야기를 찾을 수 없습니다'
     }
   },
 
