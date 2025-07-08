@@ -198,7 +198,12 @@ export function DraftStoriesPanel({
                                   )}
                                 </div>
                                 {!story.isPublished && (
-                                  <div className="text-gray-400 text-xs mt-0.5">(private)</div>
+                                  <div className="text-gray-400 text-xs mt-0.5 flex items-center gap-2">
+                                    <span>(private)</span>
+                                    {story.updatedAt && (
+                                      <span>• {formatDistanceToNow(new Date(story.updatedAt), { addSuffix: true })}</span>
+                                    )}
+                                  </div>
                                 )}
                               </div>
                               {story.category && (
@@ -229,13 +234,6 @@ export function DraftStoriesPanel({
                                 </div>
                               )}
                               
-                              {/* Last updated time */}
-                              {story.updatedAt && (
-                                <div className="flex items-center text-xs text-gray-500">
-                                  <Calendar className="w-3 h-3 mr-1" />
-                                  {formatDistanceToNow(new Date(story.updatedAt), { addSuffix: true })}
-                                </div>
-                              )}
                               
                               <div className="flex space-x-1 pt-1">
                                 {story.authorId === user?.id ? (
