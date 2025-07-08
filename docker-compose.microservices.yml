@@ -1,0 +1,150 @@
+version: '3.8'
+
+services:
+  # API Gateway
+  kong:
+    image: kong:3.4-alpine
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /kong/declarative/kong.yml
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_LISTEN: "0.0.0.0:8001"
+    ports:
+      - "8000:8000"    # Proxy port
+      - "8001:8001"    # Admin API
+    volumes:
+      - ./k8s/kong.yml:/kong/declarative/kong.yml:ro
+    networks:
+      - microservices
+
+  # Event Bus (Redis)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - microservices
+    command: redis-server --appendonly yes
+
+  # Databases for each service
+  postgres-identity:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: identity_db
+      POSTGRES_USER: identity_user
+      POSTGRES_PASSWORD: identity_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - identity-db-data:/var/lib/postgresql/data
+    networks:
+      - microservices
+
+  postgres-subscription:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: subscription_db
+      POSTGRES_USER: subscription_user
+      POSTGRES_PASSWORD: subscription_pass
+    ports:
+      - "5433:5432"
+    volumes:
+      - subscription-db-data:/var/lib/postgresql/data
+    networks:
+      - microservices
+
+  postgres-story:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: story_db
+      POSTGRES_USER: story_user
+      POSTGRES_PASSWORD: story_pass
+    ports:
+      - "5434:5432"
+    volumes:
+      - story-db-data:/var/lib/postgresql/data
+    networks:
+      - microservices
+
+  postgres-collaboration:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: collaboration_db
+      POSTGRES_USER: collaboration_user
+      POSTGRES_PASSWORD: collaboration_pass
+    ports:
+      - "5435:5432"
+    volumes:
+      - collaboration-db-data:/var/lib/postgresql/data
+    networks:
+      - microservices
+
+  postgres-narration:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: narration_db
+      POSTGRES_USER: narration_user
+      POSTGRES_PASSWORD: narration_pass
+    ports:
+      - "5436:5432"
+    volumes:
+      - narration-db-data:/var/lib/postgresql/data
+    networks:
+      - microservices
+
+  postgres-video:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: video_db
+      POSTGRES_USER: video_user
+      POSTGRES_PASSWORD: video_pass
+    ports:
+      - "5437:5432"
+    volumes:
+      - video-db-data:/var/lib/postgresql/data
+    networks:
+      - microservices
+
+  # Monitoring Stack (Optional for now)
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./k8s/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    networks:
+      - microservices
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+
+  # Distributed tracing (Optional for now)
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "16686:16686"  # Jaeger UI
+      - "14268:14268"  # Accept jaeger.thrift
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    networks:
+      - microservices
+
+networks:
+  microservices:
+    driver: bridge
+
+volumes:
+  redis-data:
+  identity-db-data:
+  subscription-db-data:
+  story-db-data:
+  collaboration-db-data:
+  narration-db-data:
+  video-db-data:
+  prometheus-data:

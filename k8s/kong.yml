@@ -1,0 +1,95 @@
+_format_version: "3.0"
+
+services:
+  # Identity Service
+  - name: identity-service
+    url: http://host.docker.internal:3001
+    routes:
+      - name: identity-routes
+        paths:
+          - /identity/v1
+        strip_path: true
+
+  # Subscription Service  
+  - name: subscription-service
+    url: http://host.docker.internal:3002
+    routes:
+      - name: subscription-routes
+        paths:
+          - /subscription/v1
+        strip_path: true
+
+  # Story Service
+  - name: story-service
+    url: http://host.docker.internal:3003
+    routes:
+      - name: story-routes
+        paths:
+          - /story/v1
+        strip_path: true
+
+  # Collaboration Service
+  - name: collaboration-service
+    url: http://host.docker.internal:3004
+    routes:
+      - name: collaboration-routes
+        paths:
+          - /collaboration/v1
+        strip_path: true
+
+  # Narration Service
+  - name: narration-service
+    url: http://host.docker.internal:3005
+    routes:
+      - name: narration-routes
+        paths:
+          - /narration/v1
+        strip_path: true
+
+  # Video Service
+  - name: video-service
+    url: http://host.docker.internal:3006
+    routes:
+      - name: video-routes
+        paths:
+          - /video/v1
+        strip_path: true
+
+  # Legacy Monolith (fallback)
+  - name: monolith
+    url: http://host.docker.internal:5000
+    routes:
+      - name: legacy-api
+        paths:
+          - /api
+        strip_path: false
+
+plugins:
+  - name: cors
+    config:
+      origins:
+        - "*"
+      methods:
+        - GET
+        - POST
+        - PUT
+        - PATCH
+        - DELETE
+        - OPTIONS
+      headers:
+        - Accept
+        - Accept-Version
+        - Content-Length
+        - Content-MD5
+        - Content-Type
+        - Date
+        - Authorization
+      exposed_headers:
+        - X-Auth-Token
+      credentials: true
+      max_age: 3600
+
+  - name: rate-limiting
+    config:
+      minute: 60
+      policy: local

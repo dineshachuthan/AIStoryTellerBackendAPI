@@ -412,21 +412,31 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Voice ID**: Successfully using narrator voice `cuxbYT1nu3MZbK8JwgAZ`
 - **Voice Quality Enhancement**: Updated recording requirements to 15-25 seconds (from 5-10 seconds) with 45-60 word sample texts for optimal voice cloning quality
 
-## TODO List - January 15, 2025
+## TODO List - January 16, 2025
 
 ### High Priority Tasks
-1. **RBAC, Collaboration & Subscription System** - Comprehensive system design completed (see docs/RBAC_COLLABORATION_SUBSCRIPTION_DESIGN.md)
+1. **Microservices Migration** - Incremental migration from monolith to DDD microservices
+   - **Phase 0**: Foundation setup, infrastructure, shared libraries (1 week)
+   - **Phase 1**: Identity Service extraction with adapter pattern (2 weeks)
+   - **Phase 2**: Subscription Service with event synchronization (2 weeks)
+   - **Phase 3**: Story Service with complex data migration (3 weeks)
+   - **Phase 4**: Collaboration Service extraction (2 weeks)
+   - **Phase 5**: Narration & Video Services (3 weeks)
+   - **Documentation**: Living documents in docs/ folder with weekly updates
+   - **Strategy**: Strangler Fig Pattern with feature flags for zero downtime
+
+2. **RBAC, Collaboration & Subscription System** - Comprehensive system design completed (see docs/RBAC_COLLABORATION_SUBSCRIPTION_DESIGN.md)
    - **Phase 1**: RBAC Foundation - Add roles (member, admin, super-admin, customer-support, content-moderator)
    - **Phase 2**: Subscription Tiers - Implement free, silver ($9.99), gold ($19.99), platinum ($39.99) tiers
    - **Phase 3**: Enhanced Collaboration - SMS/Email invites, 120-hour expiration, guest user support
    - **Phase 4**: Roleplay Enhancement - Character-specific invitations, multi-voice playback
    - **Phase 5**: Credits System - Author points for story remixes and public sharing
 
-2. **SSO Language Capture**: Need to capture user's preferred language during OAuth/SSO sign-in and store it in the database
+3. **SSO Language Capture**: Need to capture user's preferred language during OAuth/SSO sign-in and store it in the database
    - Currently language preference is only stored in localStorage, not persisted with user account
    - Need to add language field to users table and OAuth provider integration
 
-3. **OpenAI Narrator Voice Enhancement**:
+4. **OpenAI Narrator Voice Enhancement**:
    - **Pass Language to OpenAI**: Currently not sending user's selected language to OpenAI for TTS generation
    - **Pass Emotions to OpenAI**: Logs show emotions array is empty when calling OpenAI - need to fix emotion extraction
    - **Advanced Voice Improvements**: Enhance narrator voice quality with emotion-aware TTS parameters

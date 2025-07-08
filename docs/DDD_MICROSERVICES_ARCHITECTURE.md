@@ -154,7 +154,7 @@
 - VideoGenerated
 - VideoFailed
 
-## Kubernetes-Ready Architecture
+## Kubernetes-Ready Architecture with Sidecar Pattern
 
 ### Container Structure
 ```
@@ -172,6 +172,13 @@ storytelling-platform/
 │   ├── narration-service/
 │   ├── collaboration-service/
 │   └── video-service/
+├── sidecars/
+│   ├── auth-proxy/           # JWT validation & authorization
+│   ├── logging-agent/        # Structured logging collection
+│   ├── metrics-exporter/     # Prometheus metrics
+│   ├── circuit-breaker/      # Fault tolerance
+│   ├── rate-limiter/         # API rate limiting
+│   └── secret-manager/       # Secret rotation & injection
 ├── shared/
 │   ├── domain-events/
 │   ├── value-objects/
@@ -179,8 +186,69 @@ storytelling-platform/
 ├── k8s/
 │   ├── namespace.yaml
 │   ├── ingress.yaml
+│   ├── service-mesh.yaml     # Istio/Linkerd configuration
 │   └── secrets.yaml
 └── docker-compose.yaml
+```
+
+### Cross-Cutting Concerns as Sidecars
+
+#### 1. **Authentication & Authorization Sidecar**
+```yaml
+# Handles JWT validation, permission checks, and request enrichment
+- name: auth-proxy
+  image: storytelling/auth-proxy:latest
+  ports:
+  - containerPort: 8080
+  env:
+  - name: UPSTREAM_SERVICE
+    value: "localhost:3000"
+  - name: JWT_PUBLIC_KEY
+    valueFrom:
+      secretKeyRef:
+        name: jwt-keys
+        key: public
+  volumeMounts:
+  - name: auth-config
+    mountPath: /etc/auth
+```
+
+#### 2. **Logging Sidecar**
+```yaml
+# Collects and forwards structured logs
+- name: fluent-bit
+  image: fluent/fluent-bit:latest
+  volumeMounts:
+  - name: app-logs
+    mountPath: /var/log
+  - name: fluent-bit-config
+    mountPath: /fluent-bit/etc/
+```
+
+#### 3. **Metrics Sidecar**
+```yaml
+# Exports Prometheus metrics
+- name: metrics-exporter
+  image: prom/node-exporter:latest
+  ports:
+  - containerPort: 9100
+  args:
+  - '--path.rootfs=/host'
+  - '--path.procfs=/host/proc'
+  - '--path.sysfs=/host/sys'
+```
+
+#### 4. **Circuit Breaker Sidecar**
+```yaml
+# Provides fault tolerance and retry logic
+- name: envoy-proxy
+  image: envoyproxy/envoy:latest
+  ports:
+  - containerPort: 9901
+  - containerPort: 10000
+  volumeMounts:
+  - name: envoy-config
+    mountPath: /etc/envoy
 ```
 
 ### Service Dockerfile Template
@@ -205,13 +273,15 @@ USER node
 CMD ["node", "dist/index.js"]
 ```
 
-### Kubernetes Deployment Template
+### Kubernetes Deployment Template with Sidecars
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: identity-service
   namespace: storytelling
+  annotations:
+    sidecar.istio.io/inject: "true"  # Enable service mesh injection
 spec:
   replicas: 3
   selector:
@@ -221,12 +291,15 @@ spec:
     metadata:
       labels:
         app: identity-service
+        version: v1
     spec:
       containers:
+      # Main application container
       - name: identity-service
         image: storytelling/identity-service:latest
         ports:
         - containerPort: 3000
+          name: app
         env:
         - name: DATABASE_URL
           valueFrom:
@@ -238,6 +311,8 @@ spec:
             configMapKeyRef:
               name: infrastructure-config
               key: event-bus-url
+        - name: LOG_LEVEL
+          value: "info"
         resources:
           requests:
             memory: "256Mi"
@@ -257,7 +332,255 @@ spec:
             port: 3000
           initialDelaySeconds: 5
           periodSeconds: 5
+        volumeMounts:
+        - name: app-logs
+          mountPath: /var/log/app
+        - name: app-config
+          mountPath: /app/config
+
+      # Authentication proxy sidecar
+      - name: auth-proxy
+        image: storytelling/auth-proxy:latest
+        ports:
+        - containerPort: 8080
+          name: proxy
+        env:
+        - name: UPSTREAM_SERVICE
+          value: "localhost:3000"
+        - name: SERVICE_NAME
+          value: "identity-service"
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+        volumeMounts:
+        - name: auth-config
+          mountPath: /etc/auth
+        - name: jwt-keys
+          mountPath: /etc/jwt
+
+      # Logging sidecar
+      - name: fluent-bit
+        image: fluent/fluent-bit:2.0
+        resources:
+          requests:
+            memory: "32Mi"
+            cpu: "25m"
+          limits:
+            memory: "64Mi"
+            cpu: "50m"
+        volumeMounts:
+        - name: app-logs
+          mountPath: /var/log/app
+        - name: fluent-bit-config
+          mountPath: /fluent-bit/etc
+
+      # Metrics sidecar
+      - name: prometheus-exporter
+        image: prom/node-exporter:latest
+        ports:
+        - containerPort: 9100
+          name: metrics
+        resources:
+          requests:
+            memory: "32Mi"
+            cpu: "25m"
+          limits:
+            memory: "64Mi"
+            cpu: "50m"
+
+      # Secret rotation sidecar
+      - name: secret-manager
+        image: storytelling/secret-rotator:latest
+        env:
+        - name: ROTATION_INTERVAL
+          value: "86400"  # 24 hours
+        resources:
+          requests:
+            memory: "32Mi"
+            cpu: "25m"
+          limits:
+            memory: "64Mi"
+            cpu: "50m"
+        volumeMounts:
+        - name: secrets
+          mountPath: /etc/secrets
+
+      volumes:
+      - name: app-logs
+        emptyDir: {}
+      - name: app-config
+        configMap:
+          name: identity-service-config
+      - name: auth-config
+        configMap:
+          name: auth-proxy-config
+      - name: fluent-bit-config
+        configMap:
+          name: fluent-bit-config
+      - name: jwt-keys
+        secret:
+          secretName: jwt-keys
+      - name: secrets
+        secret:
+          secretName: identity-service-secrets
 ```
+
+### Sidecar Service Definitions
+
+#### 5. **Rate Limiter Sidecar**
+```dockerfile
+# sidecars/rate-limiter/Dockerfile
+FROM envoyproxy/envoy:v1.25-latest
+COPY envoy-ratelimit.yaml /etc/envoy/envoy.yaml
+CMD ["/usr/local/bin/envoy", "-c", "/etc/envoy/envoy.yaml"]
+```
+
+```yaml
+# Rate limiting configuration
+static_resources:
+  listeners:
+  - name: listener_0
+    address:
+      socket_address:
+        address: 0.0.0.0
+        port_value: 8080
+    filter_chains:
+    - filters:
+      - name: envoy.filters.network.http_connection_manager
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+          stat_prefix: ingress_http
+          http_filters:
+          - name: envoy.filters.http.local_ratelimit
+            typed_config:
+              "@type": type.googleapis.com/udpa.type.v1.TypedStruct
+              type_url: type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
+              value:
+                stat_prefix: http_local_rate_limiter
+                token_bucket:
+                  max_tokens: 100
+                  tokens_per_fill: 100
+                  fill_interval: 60s
+```
+
+#### 6. **Distributed Tracing Sidecar**
+```yaml
+# OpenTelemetry collector for distributed tracing
+- name: otel-collector
+  image: otel/opentelemetry-collector:latest
+  ports:
+  - containerPort: 4317  # OTLP gRPC
+  - containerPort: 4318  # OTLP HTTP
+  env:
+  - name: JAEGER_ENDPOINT
+    value: "http://jaeger-collector:14250"
+  resources:
+    requests:
+      memory: "64Mi"
+      cpu: "50m"
+```
+
+#### 7. **Cache Proxy Sidecar**
+```yaml
+# Redis cache proxy for performance
+- name: redis-proxy
+  image: haproxy:alpine
+  ports:
+  - containerPort: 6379
+  volumeMounts:
+  - name: haproxy-config
+    mountPath: /usr/local/etc/haproxy
+  resources:
+    requests:
+      memory: "32Mi"
+      cpu: "25m"
+```
+
+### Service Mesh Configuration
+
+#### Istio Service Mesh Integration
+```yaml
+# k8s/service-mesh.yaml
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: identity-service
+  namespace: storytelling
+spec:
+  hosts:
+  - identity-service
+  http:
+  - match:
+    - headers:
+        api-version:
+          exact: v2
+    route:
+    - destination:
+        host: identity-service
+        subset: v2
+  - route:
+    - destination:
+        host: identity-service
+        subset: v1
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: identity-service
+  namespace: storytelling
+spec:
+  host: identity-service
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 100
+      http:
+        http1MaxPendingRequests: 50
+        http2MaxRequests: 100
+    loadBalancer:
+      consistentHash:
+        httpCookie:
+          name: "session"
+          ttl: 3600s
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+  - name: v2
+    labels:
+      version: v2
+```
+
+### Benefits of Sidecar Pattern
+
+1. **Separation of Concerns**
+   - Business logic isolated from infrastructure concerns
+   - Microservices focus only on domain logic
+   - Sidecars handle cross-cutting functionality
+
+2. **Consistent Implementation**
+   - Same sidecar image used across all services
+   - Centralized configuration management
+   - Uniform security and monitoring
+
+3. **Independent Scaling**
+   - Scale sidecars independently from main service
+   - Resource allocation based on actual usage
+   - Better resource utilization
+
+4. **Easy Updates**
+   - Update sidecars without touching application code
+   - Rolling updates for infrastructure components
+   - Zero downtime deployments
+
+5. **Language Agnostic**
+   - Sidecars work with any programming language
+   - No need to implement cross-cutting concerns in each language
+   - Polyglot microservices support
 
 ## Database Schemas per Bounded Context
 
