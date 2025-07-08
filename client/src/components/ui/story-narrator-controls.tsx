@@ -450,7 +450,7 @@ export default function StoryNarratorControls({
                 </div>
                 
                 {/* Current Text Display */}
-                <div className="text-center px-4 min-h-[120px] flex flex-col justify-center">
+                <div className="text-center px-4 min-h-[100px] flex flex-col justify-center">
                   <div className="space-y-2">
                     <p className={`text-sm font-mono transition-all duration-300 ${
                       isPlaying && activeNarration 
@@ -461,7 +461,7 @@ export default function StoryNarratorControls({
                         ? `NOW PLAYING - SEGMENT ${currentSegment + 1}/${activeNarration.segments.length}`
                         : `${activeNarration?.segments.length || 0} segments ready`}
                     </p>
-                    <p className={`text-xl leading-relaxed font-medium transition-all duration-300 ${
+                    <p className={`text-base leading-relaxed font-medium transition-all duration-300 ${
                       isPlaying && activeNarration 
                         ? 'text-white opacity-100' 
                         : 'text-gray-500 opacity-60'

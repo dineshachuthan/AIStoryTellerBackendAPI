@@ -460,6 +460,17 @@ This is a full-stack collaborative storytelling platform that enables users to c
 
 ## Changelog
 
+### **STORY NARRATOR UI IMPROVEMENTS - February 09, 2025**
+**Clean TV-Style Media Controls**: Enhanced narrator controls with professional interface
+- **REMOVED STATUS DOT**: Eliminated redundant green/red pulsing indicator per user feedback
+- **COMPREHENSIVE TOOLTIPS**: Added i18n tooltips to all media control buttons (play/pause, skip, volume)
+- **FIXED MODULATION ANIMATION**: Audio visualizer only shows when actually playing, not continuous fake animation
+- **CORNER AUDIO INDICATOR**: Moved visualizer to small top-left corner with 5 bars and "LIVE" text when playing
+- **LAYOUT STABILITY**: Fixed play button jumping issue with consistent min-height text area
+- **TEXT SIZE OPTIMIZATION**: Reduced narrative text from text-xl to text-base for better layout
+- **SMOOTH TRANSITIONS**: Using opacity transitions instead of show/hide for seamless experience
+- **CONSISTENT HEIGHT**: Text area maintains 100px minimum height preventing layout shifts
+
 ### **COMPREHENSIVE REST API TEST SUITE - February 07, 2025**
 **Testing Infrastructure**: Created complete API endpoint testing framework validating against api-client.ts
 - **TEST SUITE CREATED**: Comprehensive testing framework at `test-suites/api-tests/` with 60+ test cases
