@@ -244,10 +244,9 @@ export function DraftStoriesPanel({
                                     <Button
                                       size="sm"
                                       onClick={() => setLocation(`/${story.id}/upload-story`)}
-                                      className="flex-1 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white text-xs h-8"
+                                      className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white text-xs h-8 px-2"
                                     >
-                                      <Eye className="w-3 h-3 mr-1" />
-                                      Edit
+                                      <Eye className="w-3 h-3" />
                                     </Button>
                                     <Button
                                       size="sm"
@@ -256,7 +255,7 @@ export function DraftStoriesPanel({
                                       className="flex-1 border-orange-600 text-orange-400 hover:bg-orange-900/20 text-xs h-8"
                                     >
                                       <Mic className="w-3 h-3 mr-1" />
-                                      Voice
+                                      Record your sample voice
                                     </Button>
                                   </>
                                 ) : (
