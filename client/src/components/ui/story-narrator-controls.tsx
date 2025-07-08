@@ -46,6 +46,7 @@ export default function StoryNarratorControls({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [currentSegment, setCurrentSegment] = useState(0);
   const [progress, setProgress] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
   
   const { toast } = useToast();
 
@@ -69,8 +70,10 @@ export default function StoryNarratorControls({
         const activeNarration = tempNarration || savedNarration;
         if (activeNarration && currentSegment < activeNarration.segments.length - 1) {
           setCurrentSegment(prev => prev + 1);
+          setIsPaused(false); // Reset pause state when moving to next segment
         } else {
           setIsPlaying(false);
+          setIsPaused(false); // Reset pause state when narration ends
           setCurrentSegment(0);
           setProgress(0);
         }
@@ -180,13 +183,22 @@ export default function StoryNarratorControls({
     if (!activeNarration) return;
 
     setIsPlaying(true);
-    playCurrentSegment();
+    
+    // If we're resuming from pause, just play without resetting
+    if (isPaused && audioRef.current && audioRef.current.src) {
+      audioRef.current.play();
+      setIsPaused(false);
+    } else {
+      // Fresh start - load and play current segment
+      playCurrentSegment();
+    }
   };
 
   const pauseNarration = () => {
     if (audioRef.current) {
       audioRef.current.pause();
       setIsPlaying(false);
+      setIsPaused(true);
     }
   };
 
@@ -234,6 +246,7 @@ export default function StoryNarratorControls({
     if (savedNarration) {
       setCurrentSegment(0);
       setProgress(0);
+      setIsPaused(false); // Reset pause state when starting fresh
       playNarration();
     } else {
       toast({
