@@ -15,7 +15,28 @@ export class MailgunProvider extends BaseEmailProvider {
   constructor(config: EmailProviderConfig) {
     super('mailgun', config);
     this.baseUrl = config.baseUrl || 'https://api.mailgun.net/v3';
-    this.domain = config.domain || '';
+    
+    // Extract domain from URL if provided as full URL
+    const domainValue = config.domain || '';
+    console.log(`[MailGun] Original domain value: ${domainValue}`);
+    
+    if (domainValue.includes('://')) {
+      // Extract domain from URL like: https://app.mailgun.com/mg/sending/sandboxXXX.mailgun.org/settings
+      const urlParts = domainValue.split('/');
+      // Look for the part that contains the actual domain
+      const domainPart = urlParts.find(part => part.includes('sandbox') && part.includes('.mailgun.org'));
+      if (domainPart) {
+        this.domain = domainPart;
+      } else {
+        // Fallback: try to extract any mailgun domain
+        const match = domainValue.match(/(sandbox[a-f0-9]+\.mailgun\.org|[a-zA-Z0-9.-]+\.mailgun\.com)/);
+        this.domain = match ? match[1] : domainValue;
+      }
+    } else {
+      this.domain = domainValue;
+    }
+    
+    console.log(`[MailGun] Extracted domain: ${this.domain}`);
   }
 
   get name(): string {

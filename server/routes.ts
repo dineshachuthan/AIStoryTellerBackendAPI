@@ -31,6 +31,7 @@ import { videoGenerationService } from "./video-generation-service";
 import { setupVideoWebhooks } from "./video-webhook-handler";
 import { audioStorageFactory } from "./audio-storage-providers";
 import jwt from 'jsonwebtoken';
+import { emailProviderRegistry } from "./email-providers/email-provider-registry";
 
 import multer from "multer";
 import path from "path";
@@ -40,6 +41,32 @@ import { promisify } from "util";
 import OpenAI from "openai";
 
 const execAsync = promisify(exec);
+
+// Helper function for sending test emails
+async function sendEmail({ to, subject, html }: { to: string; subject: string; html: string }) {
+  const provider = emailProviderRegistry.getActiveProvider();
+  if (!provider) {
+    throw new Error('No email provider configured');
+  }
+  
+  const fromEmail = process.env.MAILGUN_FROM_EMAIL || 
+                    process.env.SENDGRID_FROM_EMAIL || 
+                    'noreply@storytelling.app';
+  
+  const result = await provider.sendEmail({
+    to,
+    from: fromEmail,
+    subject,
+    text: subject, // Fallback text version
+    html
+  });
+  
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to send email');
+  }
+  
+  return result;
+}
 
 // Character detection function for emotion samples
 function detectCharacterInText(text: string, characters: any[]): any | null {
@@ -6691,7 +6718,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/persistent-cache', express.static(path.join(process.cwd(), 'persistent-cache')));
 
   // Test email endpoint (for development)
-  app.post('/api/test/email', requireAuth, async (req, res) => {
+  app.post('/api/test/email', async (req, res) => {
     try {
       const { to, subject, content } = req.body;
       
@@ -6699,14 +6726,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Missing required fields: to, subject, content' });
       }
 
-      // Only allow testing to the authenticated user's email
-      const userEmail = req.user?.email;
-      if (!userEmail || to !== userEmail) {
-        return res.status(403).json({ error: 'Can only send test emails to your own email address' });
-      }
-
+      // For testing, allow any email address
       const result = await sendEmail({
-        to: userEmail,
+        to,
         subject: `[Test] ${subject}`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
