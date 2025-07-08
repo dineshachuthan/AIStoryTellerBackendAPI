@@ -78,6 +78,7 @@ export const storyEndpoints: TestEndpoint[] = [
           title: 'Test Story',
           content: 'This is a test story about adventure and discovery.',
           storyType: 'text',
+          category: 'fiction',
         },
         expectedStatus: 201,
         validateResponse: (response) => {
@@ -91,6 +92,7 @@ export const storyEndpoints: TestEndpoint[] = [
         input: {
           content: 'Story without title',
           storyType: 'text',
+          category: 'fiction',
         },
         expectedStatus: 400,
         shouldFail: true,
