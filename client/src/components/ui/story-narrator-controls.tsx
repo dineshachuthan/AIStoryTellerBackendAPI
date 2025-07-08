@@ -580,7 +580,38 @@ export default function StoryNarratorControls({
 
       {/* Main layout: Prominent play button + smaller controls */}
       <div className="space-y-4">
-
+        {/* Prominent Play Button */}
+        <div className="flex justify-center">
+          <Button
+            onClick={() => {
+              if (isPlaying) {
+                pauseNarration();
+              } else {
+                playNarration();
+              }
+            }}
+            disabled={!hasAnyNarration}
+            className={`
+              h-16 px-8 text-lg font-semibold shadow-2xl transform transition-all duration-200 
+              ${hasAnyNarration 
+                ? 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 hover:scale-105 active:scale-95' 
+                : 'bg-gray-600 cursor-not-allowed'
+              }
+            `}
+          >
+            {isPlaying ? (
+              <>
+                <Pause className="w-6 h-6 mr-3" />
+                Pause Story
+              </>
+            ) : (
+              <>
+                <Play className="w-6 h-6 mr-3" />
+                {savedNarration ? 'Play Story' : (tempNarration ? 'Play Preview' : 'Generate First')}
+              </>
+            )}
+          </Button>
+        </div>
 
         {/* Secondary controls in a creative arc layout */}
         <div className="grid grid-cols-3 gap-3 mt-6">
