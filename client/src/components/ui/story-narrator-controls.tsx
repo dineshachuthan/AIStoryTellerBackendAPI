@@ -488,6 +488,32 @@ export default function StoryNarratorControls({
             
             {/* TV Control Panel */}
             <div className="mt-4 bg-gray-800 rounded-xl p-4">
+              {/* Generate Button */}
+              {!savedNarration && (
+                <div className="mb-4 flex justify-center">
+                  <Button
+                    onClick={generateNarration}
+                    disabled={isGenerating || !canNarrate}
+                    variant="outline"
+                    className={`
+                      h-10 px-6 text-sm border-orange-400/50 bg-orange-900/20 text-orange-200 
+                      hover:bg-orange-900/40 hover:border-orange-400 transition-all duration-200
+                      ${isGenerating ? 'animate-pulse' : 'hover:scale-105'}
+                    `}
+                    title={!canNarrate ? "Need narrator voice first" : "Generate story narration"}
+                  >
+                    {isGenerating ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <>
+                        <Download className="w-4 h-4 mr-2" />
+                        Generate Narration
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
+              
               {/* Progress Bar */}
               <div className="mb-4">
                 <div className="w-full bg-gray-700 rounded-full h-2 overflow-hidden">
@@ -579,71 +605,7 @@ export default function StoryNarratorControls({
         </div>
       )}
 
-      {/* Main layout: Prominent play button + smaller controls */}
-      <div className="space-y-4">
-        {/* Prominent Play Button */}
-        <div className="flex justify-center">
-          <Button
-            onClick={() => {
-              if (isPlaying) {
-                pauseNarration();
-              } else {
-                playNarration();
-              }
-            }}
-            disabled={!hasAnyNarration}
-            className={`
-              h-16 px-8 text-lg font-semibold shadow-2xl transform transition-all duration-200 
-              ${hasAnyNarration 
-                ? 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 hover:scale-105 active:scale-95' 
-                : 'bg-gray-600 cursor-not-allowed'
-              }
-            `}
-          >
-            {isPlaying ? (
-              <>
-                <Pause className="w-6 h-6 mr-3" />
-                Pause Story
-              </>
-            ) : (
-              <>
-                <Play className="w-6 h-6 mr-3" />
-                {savedNarration ? 'Play Story' : (tempNarration ? 'Play Preview' : 'Generate First')}
-              </>
-            )}
-          </Button>
-        </div>
 
-        {/* Secondary controls in a creative arc layout */}
-        <div className="grid grid-cols-3 gap-3 mt-6">
-          {/* Generate - Left */}
-          <Button
-            onClick={generateNarration}
-            disabled={isGenerating || !canNarrate || !!savedNarration}
-            variant="outline"
-            className={`
-              h-12 text-sm border-orange-400/50 bg-orange-900/20 text-orange-200 
-              hover:bg-orange-900/40 hover:border-orange-400 transition-all duration-200
-              ${isGenerating ? 'animate-pulse' : 'hover:scale-105'}
-            `}
-            title={savedNarration ? "Narration already generated" : (!canNarrate ? "Need narrator voice first" : "Generate story narration")}
-          >
-            {isGenerating ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <>
-                <Download className="w-4 h-4 mr-2" />
-                {savedNarration ? 'Generated' : 'Generate'}
-              </>
-            )}
-          </Button>
-
-
-
-
-        </div>
-
-      </div>
     </div>
   );
 }
