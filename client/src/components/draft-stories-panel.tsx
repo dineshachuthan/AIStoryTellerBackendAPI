@@ -19,6 +19,7 @@ import {
   Trash2
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { Edit2, Calendar } from "lucide-react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { UIMessages, getDynamicMessage } from "@shared/i18n-config";
@@ -42,6 +43,10 @@ interface Story {
   likes?: number;
   narratorVoice?: string;
   narratorVoiceType?: string;
+  emotions?: string[];
+  emotionalTags?: string[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 interface DraftStoriesPanelProps {
@@ -119,7 +124,7 @@ export function DraftStoriesPanel({
 
   return (
     <div className={`bg-dark-bg transition-all duration-300 ${
-      isCollapsed ? 'w-12 sm:w-16' : 'w-64 sm:w-72 md:w-80 lg:w-96'
+      isCollapsed ? 'w-12 sm:w-16' : 'w-72 sm:w-80 md:w-96 lg:w-[28rem]'
     } ${className} hidden sm:block h-full`}>
       <div className="h-full flex flex-col">
         {/* Toggle Button */}
@@ -177,9 +182,9 @@ export function DraftStoriesPanel({
                     </div>
                     <div className="space-y-2">
                       {genreStories.slice(0, 3).map((story: Story) => (
-                        <Card key={story.id} className="bg-dark-card border-gray-800 hover:border-gray-700 transition-colors cursor-pointer">
-                          <CardContent className="p-3">
-                            <div className="space-y-2">
+                        <Card key={story.id} className="bg-dark-card border-gray-800 hover:border-gray-700 hover:shadow-lg hover:shadow-purple-900/20 transition-all cursor-pointer">
+                          <CardContent className="p-4">
+                            <div className="space-y-2.5">
                               <div>
                                 <div className="flex items-center justify-between">
                                   <h4 className="text-sm font-medium text-white truncate flex-1">
@@ -201,14 +206,45 @@ export function DraftStoriesPanel({
                                   {story.category}
                                 </Badge>
                               )}
-                              <div className="flex space-x-1">
+                              
+                              {story.summary && (
+                                <p className="text-gray-400 text-xs line-clamp-2">
+                                  {story.summary}
+                                </p>
+                              )}
+                              
+                              {/* Display emotion tags if available */}
+                              {(story.emotions || story.emotionalTags || []).length > 0 && (
+                                <div className="flex flex-wrap gap-1">
+                                  {(story.emotions || story.emotionalTags || []).slice(0, 3).map((emotion, idx) => (
+                                    <Badge key={idx} variant="secondary" className="text-xs bg-gray-800/80 text-gray-300 px-1.5 py-0">
+                                      {emotion}
+                                    </Badge>
+                                  ))}
+                                  {(story.emotions || story.emotionalTags || []).length > 3 && (
+                                    <Badge variant="secondary" className="text-xs bg-gray-800/80 text-gray-400 px-1.5 py-0">
+                                      +{(story.emotions || story.emotionalTags || []).length - 3}
+                                    </Badge>
+                                  )}
+                                </div>
+                              )}
+                              
+                              {/* Last updated time */}
+                              {story.updatedAt && (
+                                <div className="flex items-center text-xs text-gray-500">
+                                  <Calendar className="w-3 h-3 mr-1" />
+                                  {formatDistanceToNow(new Date(story.updatedAt), { addSuffix: true })}
+                                </div>
+                              )}
+                              
+                              <div className="flex space-x-1 pt-1">
                                 {story.authorId === user?.id ? (
                                   // User's own story - show analysis and play options
                                   <>
                                     <Button
                                       size="sm"
                                       onClick={() => setLocation(`/${story.id}/upload-story`)}
-                                      className="flex-1 bg-purple-600 hover:bg-purple-700 text-white text-xs h-6"
+                                      className="flex-1 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white text-xs h-8"
                                     >
                                       <Eye className="w-3 h-3 mr-1" />
                                       Edit
@@ -217,10 +253,10 @@ export function DraftStoriesPanel({
                                       size="sm"
                                       variant="outline"
                                       onClick={() => setLocation(`/analysis/${story.id}`)}
-                                      className="flex-1 border-orange-600 text-orange-400 hover:bg-orange-900/20 text-xs h-6"
+                                      className="flex-1 border-orange-600 text-orange-400 hover:bg-orange-900/20 text-xs h-8"
                                     >
                                       <Mic className="w-3 h-3 mr-1" />
-                                      Record Voice Samples
+                                      Voice
                                     </Button>
                                   </>
                                 ) : (
