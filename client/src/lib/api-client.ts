@@ -37,7 +37,6 @@ export class ApiClient {
     const config: RequestInit = {
       method,
       headers: {
-        'Content-Type': 'application/json',
         ...options?.headers,
       },
       credentials: 'include',
@@ -45,17 +44,39 @@ export class ApiClient {
     };
     
     if (data && method !== 'GET') {
-      config.body = JSON.stringify(data);
+      if (data instanceof FormData) {
+        // Don't set Content-Type for FormData, let browser set it
+        config.body = data;
+      } else {
+        // Set JSON content type and stringify data
+        config.headers = {
+          'Content-Type': 'application/json',
+          ...config.headers,
+        };
+        config.body = JSON.stringify(data);
+      }
     }
     
     const response = await fetch(url, config);
-    const result: ApiResponse<T> = await response.json();
     
-    if (!result.success) {
-      throw new ApiError(result.error);
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new ApiError(errorData.message || errorData.error || 'Request failed');
     }
     
-    return result.data;
+    const result = await response.json();
+    
+    // Handle both wrapped and unwrapped responses
+    if (result && typeof result === 'object' && 'success' in result) {
+      // Wrapped response format { success: true, data: ... }
+      if (!result.success) {
+        throw new ApiError(result.error);
+      }
+      return result.data;
+    }
+    
+    // Direct response format
+    return result;
   }
   
   // Auth endpoints

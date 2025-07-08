@@ -330,9 +330,27 @@ export default function StoryAnalysis() {
   };
 
   // Fetch story data if storyId is provided
-  const { data: storyDataFromQuery, isLoading: storyLoading } = useStory(storyId ? parseInt(storyId) : undefined, {
+  const { data: storyDataFromQuery, isLoading: storyLoading, error: storyError } = useStory(storyId ? parseInt(storyId) : undefined, {
     enabled: !!storyId && !!user?.id,
   });
+  
+  // Debug logging
+  console.log('Story query state:', {
+    storyId,
+    storyLoading,
+    hasData: !!storyDataFromQuery,
+    data: storyDataFromQuery,
+    error: storyError,
+    errorMessage: storyError?.message
+  });
+  
+  // Override storyData with query result if available
+  useEffect(() => {
+    if (storyDataFromQuery && !storyData) {
+      console.log('Setting story data from query:', storyDataFromQuery);
+      setStoryData(storyDataFromQuery);
+    }
+  }, [storyDataFromQuery]);
 
   // Generate both narrative and roleplay analyses automatically
   const generateComprehensiveAnalysis = async (story: any) => {
