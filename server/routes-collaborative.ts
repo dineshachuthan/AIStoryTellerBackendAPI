@@ -55,7 +55,7 @@ router.post("/api/stories/:id/invitations", requireAuth, async (req, res) => {
         
         // Store invitation in database
         const invitationData = {
-          token: invitationToken,
+          invitationToken: invitationToken,
           storyId,
           inviterId: userId,
           inviteeEmail: contactMethod === 'email' ? contactValue : null,
@@ -163,7 +163,7 @@ router.get('/api/invitations/:token', async (req, res) => {
         id: storyInvitations.id,
         storyId: storyInvitations.storyId,
         inviterId: storyInvitations.inviterId,
-        token: storyInvitations.token,
+        token: storyInvitations.invitationToken,
         characterId: storyInvitations.characterId,
         characterName: storyInvitations.characterName,
         inviteeEmail: storyInvitations.inviteeEmail,
@@ -183,7 +183,7 @@ router.get('/api/invitations/:token', async (req, res) => {
       .from(storyInvitations)
       .leftJoin(stories, eq(storyInvitations.storyId, stories.id))
       .leftJoin(users, eq(storyInvitations.inviterId, users.id))
-      .where(eq(storyInvitations.token, token));
+      .where(eq(storyInvitations.invitationToken, token));
       
     if (!invitation) {
       return res.status(404).json({ error: 'Invitation not found' });

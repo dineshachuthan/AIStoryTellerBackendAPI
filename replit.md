@@ -479,6 +479,18 @@ This is a full-stack collaborative storytelling platform that enables users to c
 
 ## Changelog
 
+### **TOAST KEY NAMES CREATED - July 08, 2025**
+**Complete i18n Toast Implementation**: Toast utility now fully uses internationalized messages
+- **TOAST KEYS ADDED**: Created comprehensive toast messages under common.toast following 3-4 dot naming standard
+- **KEY STRUCTURE**: common.toast.category.action (e.g., common.toast.invitations.sent, common.toast.save.success)
+- **TOAST CATEGORIES**: invitations, save, delete, recording, video, narration, upload, auth, network
+- **FULL I18N SUPPORT**: All toast messages now use getMessage() from i18n-hierarchical.ts
+- **UNIFIED PATTERN**: toast-utils.ts provides success(), error(), info() methods with consistent 5-second duration
+- **PLURALIZATION**: Added plural support for messages like invitation count (e.g., "Successfully sent {count} invitation(s)")
+- **MULTI-LANGUAGE**: All toast messages translated to 7 languages (en, es, fr, de, ja, zh, ko)
+- **FIXED IMPORT ERROR**: Removed conflicting useToast destructuring in InviteCollaboratorsDialog component
+- **USER BENEFIT**: All toast notifications now display in user's selected language automatically
+
 ### **MAILGUN EMAIL PROVIDER IMPLEMENTED - July 08, 2025**
 **Plug-and-Play Email System**: Successfully migrated from SendGrid to MailGun using unified provider architecture
 - **MAILGUN PRIMARY PROVIDER**: MailGun now configured as priority 1 email provider (SendGrid as priority 2 fallback)

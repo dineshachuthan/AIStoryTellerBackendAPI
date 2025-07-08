@@ -29,7 +29,6 @@ export function InviteCollaboratorsDialog({
   story,
   characters = []
 }: InviteCollaboratorsDialogProps) {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [invites, setInvites] = useState<InviteData[]>([{ type: 'email', value: '' }]);
   const [message, setMessage] = useState('');
@@ -52,11 +51,8 @@ export function InviteCollaboratorsDialog({
       });
     },
     onSuccess: () => {
-      toast({
-        title: "Invitations sent!",
-        description: `Successfully sent ${invites.filter(i => i.value).length} invitation(s)`,
-        duration: 5000, // Auto dismiss after 5 seconds
-      });
+      const count = invites.filter(i => i.value).length;
+      toast.success(toastMessages.invitationsSent(count));
       queryClient.invalidateQueries({ queryKey: ['/api/stories', story.id, 'invitations'] });
       onOpenChange(false);
       // Reset form
@@ -64,12 +60,7 @@ export function InviteCollaboratorsDialog({
       setMessage('');
     },
     onError: (error: Error) => {
-      toast({
-        title: "Failed to send invitations",
-        description: error.message,
-        variant: "destructive",
-        duration: 5000, // Auto dismiss after 5 seconds
-      });
+      toast.error(toastMessages.invitationsFailed(error.message));
     },
   });
 
