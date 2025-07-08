@@ -1269,10 +1269,10 @@ export const MESSAGES = {
           severity: 'low' as MessageSeverity,
           variables: ['count'],
           templates: {
-            en: 'Successfully sent {count} invitation{count, plural, one {} other {s}}',
-            es: 'Se enviaron {count} invitación{count, plural, one {} other {es}} correctamente',
-            fr: '{count} invitation{count, plural, one {} other {s}} envoyée{count, plural, one {} other {s}} avec succès',
-            de: '{count} Einladung{count, plural, one {} other {en}} erfolgreich gesendet',
+            en: 'Successfully sent {count} invitation(s)',
+            es: 'Se enviaron {count} invitación(es) correctamente',
+            fr: '{count} invitation(s) envoyée(s) avec succès',
+            de: '{count} Einladung(en) erfolgreich gesendet',
             ja: '{count}件の招待状を正常に送信しました',
             zh: '成功发送{count}个邀请',
             ko: '{count}개의 초대장을 성공적으로 전송했습니다'
