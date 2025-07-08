@@ -47,6 +47,25 @@ export default function StoryNarratorControls({
   
   const { toast } = useToast();
 
+  // Use React Query to fetch saved narration - this will respond to cache invalidations
+  const { data: savedNarration, isLoading: isLoadingSaved } = useQuery({
+    queryKey: [`/api/stories/${storyId}/narration/saved`],
+    queryFn: async () => {
+      if (!user) return null;
+      try {
+        const response = await apiRequest(`/api/stories/${storyId}/narration/saved`, {
+          method: 'GET'
+        });
+        return response || null;
+      } catch (error) {
+        // No saved narration found - this is normal
+        console.log('No saved narration found');
+        return null;
+      }
+    },
+    enabled: !!user && !!storyId,
+  });
+
   // Initialize audio element
   useEffect(() => {
     if (!audioRef.current) {
@@ -95,25 +114,6 @@ export default function StoryNarratorControls({
       playCurrentSegment();
     }
   }, [currentSegment, isPlaying]);
-
-  // Use React Query to fetch saved narration - this will respond to cache invalidations
-  const { data: savedNarration, isLoading: isLoadingSaved } = useQuery({
-    queryKey: [`/api/stories/${storyId}/narration/saved`],
-    queryFn: async () => {
-      if (!user) return null;
-      try {
-        const response = await apiRequest(`/api/stories/${storyId}/narration/saved`, {
-          method: 'GET'
-        });
-        return response || null;
-      } catch (error) {
-        // No saved narration found - this is normal
-        console.log('No saved narration found');
-        return null;
-      }
-    },
-    enabled: !!user && !!storyId,
-  });
 
   // 1. Generate Narration (costs money)
   const generateNarration = async () => {

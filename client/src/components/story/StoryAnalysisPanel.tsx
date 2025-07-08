@@ -100,17 +100,30 @@ export function StoryAnalysisPanel({
         credentials: 'include'
       });
     },
-    onSuccess: (data) => {
-      setStatusMessage({ text: "Voice generation in progress...", type: 'info' });
+    onSuccess: async (data) => {
+      setStatusMessage({ text: "Voice generation completed! Clearing old narrations...", type: 'success' });
       
-      // Invalidate all story-related queries to force refresh
-      queryClient.invalidateQueries({ queryKey: [`/api/stories/${storyId}/narration/saved`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/stories/${storyId}`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/stories`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/narrator/status`] });
+      // Wait a bit for backend to complete the narration deletion
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Clear message after 3 seconds
-      setTimeout(() => setStatusMessage(null), 3000);
+      // Force refetch of all story-related queries to ensure cache is cleared
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: [`/api/stories/${storyId}/narration/saved`] }),
+        queryClient.invalidateQueries({ queryKey: [`/api/stories/${storyId}`] }),
+        queryClient.invalidateQueries({ queryKey: [`/api/stories`] }),
+        queryClient.invalidateQueries({ queryKey: [`/api/narrator/status`] })
+      ]);
+      
+      // Force immediate refetch with exact=true to prevent partial matches
+      await queryClient.refetchQueries({ 
+        queryKey: [`/api/stories/${storyId}/narration/saved`],
+        exact: true 
+      });
+      
+      setStatusMessage({ text: "New narrator voice ready! You can now generate a fresh narration.", type: 'success' });
+      
+      // Clear message after 5 seconds
+      setTimeout(() => setStatusMessage(null), 5000);
     },
     onError: (error: any) => {
       setStatusMessage({ text: error.message || "Voice generation failed", type: 'error' });

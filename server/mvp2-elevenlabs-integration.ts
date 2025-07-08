@@ -305,7 +305,7 @@ export class MVP2ElevenLabsIntegration {
   private async clearUserStoryNarrations(userId: string): Promise<void> {
     try {
       // Clear narrator_voice from all user's stories
-      const userStories = await storage.getStories(userId);
+      const userStories = await storage.getUserStories(userId);
       
       for (const story of userStories) {
         if (story.narratorVoice) {
