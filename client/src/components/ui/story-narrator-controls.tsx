@@ -57,10 +57,16 @@ export default function StoryNarratorControls({
     }
     
     const audio = audioRef.current;
+    const activeNarration = tempNarration || savedNarration;
     
     audio.ontimeupdate = () => {
-      if (audio.duration) {
-        setProgress((audio.currentTime / audio.duration) * 100);
+      if (audio.duration && activeNarration) {
+        // Calculate overall progress across all segments
+        const segmentProgress = (audio.currentTime / audio.duration);
+        const completedSegments = currentSegment;
+        const totalSegments = activeNarration.segments.length;
+        const overallProgress = ((completedSegments + segmentProgress) / totalSegments) * 100;
+        setProgress(overallProgress);
       }
     };
 
@@ -83,14 +89,14 @@ export default function StoryNarratorControls({
     return () => {
       audio.pause();
     };
-  }, []);
+  }, [isPlaying, tempNarration, savedNarration, currentSegment]);
 
   // Auto-play when segment changes
   useEffect(() => {
     if (isPlaying && currentSegment > 0) {
       playCurrentSegment();
     }
-  }, [currentSegment]);
+  }, [currentSegment, isPlaying]);
 
   // Load saved narration on mount
   useEffect(() => {
@@ -174,7 +180,10 @@ export default function StoryNarratorControls({
     const segment = activeNarration.segments[currentSegment];
     if (!segment?.audioUrl) return;
 
-    audioRef.current.src = segment.audioUrl;
+    // Only set source if it's different (to avoid resetting during pause/resume)
+    if (audioRef.current.src !== window.location.origin + segment.audioUrl) {
+      audioRef.current.src = segment.audioUrl;
+    }
     audioRef.current.play();
   };
 
@@ -299,7 +308,7 @@ export default function StoryNarratorControls({
         {/* Prominent Play Button */}
         <div className="flex justify-center">
           <Button
-            onClick={savedNarration ? playStory : (isPlaying ? pauseNarration : playNarration)}
+            onClick={isPlaying ? pauseNarration : (savedNarration ? playStory : playNarration)}
             disabled={!hasAnyNarration}
             className={`
               h-16 px-8 text-lg font-semibold shadow-2xl transform transition-all duration-200 

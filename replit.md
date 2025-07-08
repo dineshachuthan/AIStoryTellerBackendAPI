@@ -414,14 +414,19 @@ This is a full-stack collaborative storytelling platform that enables users to c
 
 ## Changelog
 
-### **AUDIO PAUSE/RESUME FIX - January 08, 2025**
-**Fixed Audio Playback Issue**: Resolved story narration restarting from beginning after pause
-- **ISSUE IDENTIFIED**: Pausing narration and resuming caused audio to restart from beginning instead of resuming
-- **ROOT CAUSE**: playStory() was always resetting segment to 0, even when resuming from pause
-- **FIX IMPLEMENTED**: Added isPaused state to track pause status and conditional logic in both playNarration() and playStory()
-- **PLAYSTORE FIX**: playStory() now checks isPaused state and only resets segment/progress when starting fresh
-- **RESUME LOGIC**: If paused, audio.play() resumes from current position without resetting source or segment
-- **USER EXPERIENCE**: Pause/resume now works correctly maintaining playback position
+### **AUDIO PLAYBACK FIXES - January 08, 2025**
+**Fixed Multiple Audio Playback Issues**: Resolved pause/resume and segment advancement problems
+- **PAUSE/RESUME ISSUE**: Fixed audio restarting from beginning when resuming from pause
+  - Changed button logic to always check isPlaying state first
+  - playStory() now only resets position when not resuming from pause
+  - Added isPaused state tracking for proper resume behavior
+- **SEGMENT ADVANCEMENT FIX**: Fixed segments not auto-advancing due to stale closure
+  - Added dependencies to audio event handler useEffect to fix stale state
+  - onended event now properly reads current state values
+- **PROGRESS BAR FIX**: Fixed progress showing only single segment progress
+  - Implemented overall progress calculation across all segments
+  - Progress now shows true completion percentage of entire narration
+- **DISPLAY IMPROVEMENTS**: Segment counter and progress now accurately reflect playback state
 
 ### **STORY NARRATION AUTO-SAVE FIX - January 08, 2025**
 **Fixed Narration Save Error**: Resolved duplicate save attempt issue with story narrations
