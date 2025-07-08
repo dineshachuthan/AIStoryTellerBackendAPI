@@ -226,7 +226,7 @@ export default function StoryLibrary() {
         <div className="p-4 pt-20 pb-8 space-y-4">
           <div className="flex items-center space-x-2">
             <Book className="w-5 h-5 text-tiktok-red" />
-            <h1 className="text-lg font-bold text-white">Narrated Stories</h1>
+            <h1 className="text-lg font-bold text-white">My Stories</h1>
           </div>
           
           <div className="relative">
@@ -251,12 +251,12 @@ export default function StoryLibrary() {
             <div className="text-center py-12">
               <Book className="w-16 h-16 mx-auto text-gray-600 mb-4" />
               <h2 className="text-xl font-semibold text-white mb-2">
-                {searchQuery ? 'No Narrated Stories Found' : 'No Narrated Stories Yet'}
+                {searchQuery ? 'No Stories Found' : 'No Stories Yet'}
               </h2>
               <p className="text-gray-400 mb-6">
                 {searchQuery 
-                  ? 'Try adjusting your search terms to find more narrated stories'
-                  : 'Complete narration for your stories to see them here'
+                  ? 'Try adjusting your search terms to find more stories'
+                  : 'Complete story to see them here'
                 }
               </p>
             </div>
@@ -418,7 +418,7 @@ export default function StoryLibrary() {
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
               <Book className="w-6 h-6 text-tiktok-red" />
-              <h1 className="text-xl font-bold text-white">Narrated Stories</h1>
+              <h1 className="text-xl font-bold text-white">My Stories</h1>
             </div>
             
             <div className="relative">
@@ -433,7 +433,7 @@ export default function StoryLibrary() {
             </div>
 
             <div className="text-sm text-gray-400">
-              {filteredStories.length} of {narrationCompleteStories.length} narrated stories
+              {filteredStories.length} of {narrationCompleteStories.length} stories
             </div>
 
 
@@ -446,12 +446,12 @@ export default function StoryLibrary() {
             <div className="text-center py-12">
               <Book className="w-16 h-16 mx-auto text-gray-600 mb-4" />
               <h2 className="text-xl font-semibold text-white mb-2">
-                {searchQuery ? 'No Narrated Stories Found' : 'No Narrated Stories Yet'}
+                {searchQuery ? 'No Stories Found' : 'No Stories Yet'}
               </h2>
               <p className="text-gray-400 mb-6">
                 {searchQuery 
-                  ? 'Try adjusting your search terms to find more narrated stories'
-                  : 'Complete narration for your stories to see them here'
+                  ? 'Try adjusting your search terms to find more stories'
+                  : 'Complete story to see them here'
                 }
               </p>
               {!searchQuery && (
@@ -587,18 +587,6 @@ export default function StoryLibrary() {
                                 )}
                               </div>
                             )}
-                            
-                            <div className="flex space-x-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => setLocation(`/${story.id}/upload-story`)}
-                                className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-800"
-                              >
-                                <Edit2 className="w-4 h-4 mr-1" />
-                                Edit
-                              </Button>
-                            </div>
                             
                             <div className="flex space-x-2">
                               <Button
