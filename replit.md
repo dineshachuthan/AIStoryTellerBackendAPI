@@ -510,6 +510,15 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **GENERATE BUTTON STATE**: UI disables Generate button when narration is cached, enables when cache cleared
 - **USER BENEFIT**: Stories automatically use new ElevenLabs voice without manual intervention
 
+### **ESM TABLES AS SINGLE SOURCE OF TRUTH - January 14, 2025**
+**Strategic Architecture Change**: Removed narrator voice storage from story table to prevent caching issues
+- **REMOVED COLUMNS**: Deleted `narratorVoice` and `narratorVoiceType` columns from stories table
+- **ESM IS TRUTH**: user_esm and user_esm_recordings tables are the only source for narrator voice IDs
+- **NO STORY CACHING**: Story narrator always fetches current voice from ESM tables on each generation
+- **PREVENTS STALE VOICE**: Eliminates bug where old voice IDs were cached and reused after new voice generation
+- **STRATEGIC FIX**: System can never use outdated voice IDs since there's no caching at story level
+- **USER BENEFIT**: New ElevenLabs voices are immediately used without manual cache clearing
+
 ### **VOICE RECORDING DURATION CONFIGURATION UPDATED - January 08, 2025**
 **Enhanced Voice Quality Requirements**: Implemented centralized configuration for optimal ElevenLabs voice cloning quality
 - **CREATED CONFIGURATION FILE**: Added shared/voice-recording-config.ts with centralized duration and text generation settings

@@ -155,8 +155,6 @@ export const stories = pgTable("stories", {
   isAdultContent: boolean("is_adult_content").default(false),
   viewCount: integer("view_count").default(0),
   likes: integer("likes").default(0),
-  narratorVoice: text("narrator_voice"), // Stored narrator voice for story narration (AI voice name or user voice ID)
-  narratorVoiceType: text("narrator_voice_type"), // 'ai' or 'user' to identify voice source
   language: varchar("language", { length: 10 }).default("en-US"), // Story language (en-US, es-ES, fr-FR, etc.)
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

@@ -283,14 +283,29 @@ export class MVP2ElevenLabsIntegration {
 
       console.log(`[MVP2ElevenLabs] Dual-table storage completed for ${voiceType} voice`);
       
-      // Clear all existing story narrations when new narrator voice is generated
+      // STRATEGIC UPDATE: Clear all narrations when new voice is generated
       try {
-        console.log(`[MVP2ElevenLabs] Clearing all story narrations for user to use new voice...`);
-        await this.clearUserStoryNarrations(userId);
-        console.log(`[MVP2ElevenLabs] Successfully cleared story narrations - stories will use new voice`);
+        console.log(`[MVP2ElevenLabs] Strategic cache clearing - removing all old narrations...`);
+        
+        // Delete all existing narrations from database
+        const narrations = await storage.getUserNarrations(userId);
+        for (const narration of narrations) {
+          await storage.deleteNarration(narration.id);
+        }
+        console.log(`[MVP2ElevenLabs] Deleted ${narrations.length} narrations from database`);
+        
+        // Clear audio files since they use old voice
+        const fs = await import('fs/promises');
+        const path = await import('path');
+        
+        const userAudioDir = path.join(process.cwd(), 'stories', 'audio', 'private', userId);
+        await fs.rm(userAudioDir, { recursive: true, force: true });
+        console.log(`[MVP2ElevenLabs] Cleared audio files - will regenerate with new voice`);
+        
+        console.log(`[MVP2ElevenLabs] Strategic update completed - ESM tables are single source of truth`);
       } catch (error) {
-        console.error(`[MVP2ElevenLabs] Failed to clear story narrations:`, error);
-        // Don't throw - voice generation succeeded, cache clearing is secondary
+        console.error(`[MVP2ElevenLabs] Failed to clear narrations:`, error);
+        // Don't throw - voice generation succeeded, clearing is secondary
       }
       
     } catch (error) {
@@ -304,20 +319,7 @@ export class MVP2ElevenLabsIntegration {
    */
   private async clearUserStoryNarrations(userId: string): Promise<void> {
     try {
-      // Clear narrator_voice from all user's stories
-      const userStories = await storage.getUserStories(userId);
-      
-      for (const story of userStories) {
-        if (story.narratorVoice || story.narratorVoiceType) {
-          await storage.updateStory(story.id, {
-            narratorVoice: null,
-            narratorVoiceType: null
-          });
-          console.log(`[MVP2ElevenLabs] Cleared narrator voice from story ${story.id}: "${story.title}"`);
-        }
-      }
-      
-      // Delete all saved narrations from database - this includes story_narrations table
+      // Delete all saved narrations from database - ESM is single source of truth
       await storage.deleteAllUserNarrations(userId);
       console.log(`[MVP2ElevenLabs] Deleted all narrations from database for user ${userId}`);
       

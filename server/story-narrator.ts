@@ -68,19 +68,14 @@ export class StoryNarrator {
     // Get user language preference
     const userLanguage = await this.getUserLanguage(userId);
 
-    // 2. Check if narrator voice is already stored at story level
-    let narratorVoice = story.narratorVoice;
-    let narratorVoiceType = story.narratorVoiceType as 'ai' | 'user';
+    // STRATEGIC FIX: Always fetch current narrator voice from ESM tables
+    // ESM tables are the single source of truth - no caching at story level
+    const voiceSelection = await this.selectNarratorVoice(userId, story);
+    const narratorVoice = voiceSelection.voice;
+    const narratorVoiceType = voiceSelection.type;
     
-    if (!narratorVoice) {
-      // Determine narrator voice using priority: user narrator -> emotion voices -> AI voice
-      const voiceSelection = await this.selectNarratorVoice(userId, story);
-      narratorVoice = voiceSelection.voice;
-      narratorVoiceType = voiceSelection.type;
-      
-      // 3. Store narrator voice at story level
-      await this.storeNarratorVoice(storyId, narratorVoice, narratorVoiceType);
-    }
+    console.log(`[StoryNarrator] Using narrator voice from ESM tables: ${narratorVoice} (type: ${narratorVoiceType})`);
+    // DO NOT store at story level - always fetch fresh from ESM
 
     // Extract emotions from story analysis
     const extractedEmotions = story.extractedEmotions || [];
@@ -185,18 +180,12 @@ export class StoryNarrator {
   }
 
   /**
-   * Store narrator voice at story level in database
+   * @deprecated - No longer storing voice at story level
+   * ESM tables are the single source of truth for narrator voice
    */
   private async storeNarratorVoice(storyId: number, voice: string, voiceType: 'ai' | 'user'): Promise<void> {
-    try {
-      await storage.updateStory(storyId, {
-        narratorVoice: voice,
-        narratorVoiceType: voiceType
-      });
-    } catch (error) {
-      console.error('Failed to store narrator voice:', error);
-      throw error;
-    }
+    // DO NOT STORE - ESM tables are single source of truth
+    console.log(`[StoryNarrator] Skipping story-level voice storage - using ESM tables`);
   }
 
   /**
