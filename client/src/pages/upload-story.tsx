@@ -14,6 +14,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { UIMessages } from "@shared/i18n-config";
+import { getMessage } from "@shared/i18n-hierarchical";
 
 export default function UploadStory() {
   const [, setLocation] = useLocation();
@@ -80,7 +81,7 @@ export default function UploadStory() {
       console.error('Transcription error details:', error);
       
       // Extract meaningful error message from server response
-      let errorMessage = "Could not convert audio to text. Please try again.";
+      let errorMessage = getMessage('upload_story.errors.audio_conversion_failed');
       let errorDetails = "";
       
       if (error.response?.data?.message) {
@@ -200,7 +201,7 @@ export default function UploadStory() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title: storyTitle.trim() || story?.title || "Untitled Story",
+          title: storyTitle.trim() || story?.title || getMessage('upload_story.defaults.untitled_story'),
           content: storyContent,
           language: selectedLanguage
         }),
@@ -260,8 +261,8 @@ export default function UploadStory() {
     } catch (error) {
       console.error("Analysis error:", error);
       toast({
-        title: "Analysis Failed",
-        description: "Could not start analysis. Please try again.",
+        title: getMessage('upload_story.errors.analysis_failed_title'),
+        description: getMessage('upload_story.errors.analysis_failed_description'),
         variant: "destructive",
       });
     } finally {
@@ -286,12 +287,12 @@ export default function UploadStory() {
                   className="text-white hover:bg-white/10"
                 >
                   <ArrowLeft className="w-4 h-4 mr-2" />
-                  Home
+                  {getMessage('upload_story.actions.home')}
                 </Button>
                 <div>
-                  <CardTitle className="text-2xl">Create Your Story</CardTitle>
+                  <CardTitle className="text-2xl">{getMessage('upload_story.title.create_your_story')}</CardTitle>
                   <CardDescription className="text-white/70">
-                    Write your story and let AI analyze characters and emotions
+                    {getMessage('upload_story.title.description')}
                   </CardDescription>
                 </div>
               </div>
@@ -316,15 +317,15 @@ export default function UploadStory() {
                     <SelectValue placeholder={UIMessages.getLabel('SELECT_LANGUAGE_PLACEHOLDER')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="en-US">English</SelectItem>
-                    <SelectItem value="es-ES">Spanish</SelectItem>
-                    <SelectItem value="fr-FR">French</SelectItem>
-                    <SelectItem value="de-DE">German</SelectItem>
-                    <SelectItem value="it-IT">Italian</SelectItem>
-                    <SelectItem value="pt-BR">Portuguese</SelectItem>
-                    <SelectItem value="ja-JP">Japanese</SelectItem>
-                    <SelectItem value="ko-KR">Korean</SelectItem>
-                    <SelectItem value="zh-CN">Chinese (Simplified)</SelectItem>
+                    <SelectItem value="en-US">{getMessage('upload_story.languages.english')}</SelectItem>
+                    <SelectItem value="es-ES">{getMessage('upload_story.languages.spanish')}</SelectItem>
+                    <SelectItem value="fr-FR">{getMessage('upload_story.languages.french')}</SelectItem>
+                    <SelectItem value="de-DE">{getMessage('upload_story.languages.german')}</SelectItem>
+                    <SelectItem value="it-IT">{getMessage('upload_story.languages.italian')}</SelectItem>
+                    <SelectItem value="pt-BR">{getMessage('upload_story.languages.portuguese')}</SelectItem>
+                    <SelectItem value="ja-JP">{getMessage('upload_story.languages.japanese')}</SelectItem>
+                    <SelectItem value="ko-KR">{getMessage('upload_story.languages.korean')}</SelectItem>
+                    <SelectItem value="zh-CN">{getMessage('upload_story.languages.chinese_simplified')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -339,8 +340,8 @@ export default function UploadStory() {
                     <div className="text-center space-y-4">
                       <Loader2 className="w-8 h-8 animate-spin text-white mx-auto" />
                       <div className="space-y-2">
-                        <p className="text-white font-medium">Processing your audio...</p>
-                        <p className="text-white/60 text-sm">Converting speech to text using AI transcription</p>
+                        <p className="text-white font-medium">{getMessage('upload_story.processing.audio_processing')}</p>
+                        <p className="text-white/60 text-sm">{getMessage('upload_story.processing.audio_transcription')}</p>
                       </div>
                     </div>
                   </div>
@@ -348,14 +349,14 @@ export default function UploadStory() {
                   <Textarea
                     value={storyContent}
                     onChange={(e) => setStoryContent(e.target.value)}
-                    placeholder="Write your story here... (500-1000 words recommended)"
+                    placeholder={getMessage('upload_story.form.story_placeholder')}
                     className="min-h-[300px] bg-white/10 border-white/20 text-white placeholder-white/50 resize-none"
                   />
                 )}
                 
                 <div className="flex justify-between text-sm text-white/60">
-                  <span>Word count: {storyContent.trim() ? storyContent.trim().split(/\s+/).length : 0}</span>
-                  <span>Recommended: 500-1000 words</span>
+                  <span>{getMessage('upload_story.form.word_count', { count: storyContent.trim() ? storyContent.trim().split(/\s+/).length : 0 })}</span>
+                  <span>{getMessage('upload_story.form.word_count_recommendation')}</span>
                 </div>
               </div>
               
@@ -365,7 +366,7 @@ export default function UploadStory() {
                   <FileText className="w-3 h-3 text-green-400" />
                   <span className="text-sm text-green-300">{story.title}</span>
                   <span className="text-xs text-green-400/70 ml-auto">
-                    {story.status === 'draft' ? 'Draft' : story.status || 'Draft'}
+                    {story.status === 'draft' ? getMessage('upload_story.status.draft') : story.status || getMessage('upload_story.status.draft')}
                   </span>
                 </div>
               )}
@@ -381,26 +382,26 @@ export default function UploadStory() {
                     {isAnalyzing ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Starting Analysis...
+                        {getMessage('upload_story.actions.starting_analysis')}
                       </>
                     ) : (
                       <>
                         <RefreshCw className="w-4 h-4 mr-2" />
-                        Analyze Story
+                        {getMessage('upload_story.actions.analyze_story')}
                       </>
                     )}
                   </Button>
                 ) : (
                   // Fallback for direct navigation without story ID
                   <div className="text-center p-6">
-                    <p className="text-white/70 mb-4">Please create a story from the home page to continue.</p>
+                    <p className="text-white/70 mb-4">{getMessage('upload_story.errors.no_story_created')}</p>
                     <Button
                       onClick={() => setLocation("/")}
                       variant="outline"
                       className="border-white/20 text-white hover:bg-white/10"
                     >
                       <ArrowLeft className="w-4 h-4 mr-2" />
-                      Go Home
+                      {getMessage('upload_story.actions.go_home')}
                     </Button>
                   </div>
                 )}

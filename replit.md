@@ -414,6 +414,15 @@ This is a full-stack collaborative storytelling platform that enables users to c
 
 ## Changelog
 
+### **I18N CONVERSION PROGRESS - January 13, 2025**
+**Systematic Conversion to Hierarchical i18n Structure**: Converting all hardcoded strings to use centralized message system
+- **HOME PAGE COMPLETED**: All hardcoded strings converted to hierarchical i18n messages (home.title.main, home.actions.write_story, etc.)
+- **UPLOAD-STORY PAGE COMPLETED**: Converted all UI text, error messages, placeholders, and language names to i18n
+- **HIERARCHICAL NAMESPACE PATTERN**: Established pattern of page.component.element for message organization
+- **REMAINING PAGES**: 20+ pages still require conversion including story-library, voice-record, login, register, etc.
+- **CRITICAL COMPONENTS**: Enhanced-voice-recorder and invitation pages contain extensive hardcoded strings
+- **IMPORT PATTERN**: Using `import { getMessage } from "@shared/i18n-hierarchical"` for hierarchical messages
+
 ### **AUDIO PLAYBACK FIXES - January 08, 2025**
 **Fixed Multiple Audio Playback Issues**: Resolved pause/resume and segment advancement problems
 - **PAUSE/RESUME ISSUE**: Fixed audio restarting from beginning when resuming from pause

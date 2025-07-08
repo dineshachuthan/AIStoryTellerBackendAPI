@@ -114,6 +114,32 @@ export const MESSAGES = {
           zh: '创建您的故事',
           ko: '당신의 이야기를 만드세요'
         }
+      },
+      collaborative_storytelling: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Collaborative Storytelling',
+          es: 'Narración Colaborativa',
+          fr: 'Narration Collaborative',
+          de: 'Gemeinsames Geschichtenerzählen',
+          ja: '協力的なストーリーテリング',
+          zh: '协作讲故事',
+          ko: '협업 스토리텔링'
+        }
+      },
+      collaborative_description: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Create stories with friends where each person voices a unique character',
+          es: 'Crea historias con amigos donde cada persona da voz a un personaje único',
+          fr: 'Créez des histoires avec des amis où chaque personne incarne un personnage unique',
+          de: 'Erstelle Geschichten mit Freunden, in denen jede Person einen einzigartigen Charakter spricht',
+          ja: '友達と一緒に、それぞれが独自のキャラクターを演じるストーリーを作成',
+          zh: '与朋友一起创作故事，每个人为独特的角色配音',
+          ko: '친구들과 함께 각자 독특한 캐릭터의 목소리를 내는 이야기 만들기'
+        }
       }
     },
     actions: {
@@ -155,6 +181,19 @@ export const MESSAGES = {
           zh: '上传音频',
           ko: '오디오 업로드'
         }
+      },
+      five_min_duration: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: '(5 min)',
+          es: '(5 min)',
+          fr: '(5 min)',
+          de: '(5 Min)',
+          ja: '(5分)',
+          zh: '(5分钟)',
+          ko: '(5분)'
+        }
       }
     },
     draft_panel: {
@@ -182,6 +221,435 @@ export const MESSAGES = {
           ja: '下書きストーリーがありません',
           zh: '没有草稿故事',
           ko: '초안 스토리가 없습니다'
+        }
+      }
+    },
+    errors: {
+      auth_required_title: {
+        type: 'error' as MessageType,
+        severity: 'high' as MessageSeverity,
+        templates: {
+          en: 'Authentication Required',
+          es: 'Autenticación Requerida',
+          fr: 'Authentification Requise',
+          de: 'Authentifizierung Erforderlich',
+          ja: '認証が必要です',
+          zh: '需要身份验证',
+          ko: '인증 필요'
+        }
+      },
+      auth_required_description: {
+        type: 'error' as MessageType,
+        severity: 'high' as MessageSeverity,
+        templates: {
+          en: 'Please log in to create stories.',
+          es: 'Por favor, inicia sesión para crear historias.',
+          fr: 'Veuillez vous connecter pour créer des histoires.',
+          de: 'Bitte melden Sie sich an, um Geschichten zu erstellen.',
+          ja: 'ストーリーを作成するにはログインしてください。',
+          zh: '请登录以创建故事。',
+          ko: '이야기를 만들려면 로그인하세요.'
+        }
+      },
+      creation_failed_title: {
+        type: 'error' as MessageType,
+        severity: 'high' as MessageSeverity,
+        templates: {
+          en: 'Creation Failed',
+          es: 'Creación Fallida',
+          fr: 'Échec de la Création',
+          de: 'Erstellung Fehlgeschlagen',
+          ja: '作成に失敗しました',
+          zh: '创建失败',
+          ko: '생성 실패'
+        }
+      },
+      creation_failed_description: {
+        type: 'error' as MessageType,
+        severity: 'high' as MessageSeverity,
+        variables: ['error'],
+        templates: {
+          en: 'Could not create story: {error}',
+          es: 'No se pudo crear la historia: {error}',
+          fr: 'Impossible de créer l\'histoire: {error}',
+          de: 'Geschichte konnte nicht erstellt werden: {error}',
+          ja: 'ストーリーを作成できませんでした: {error}',
+          zh: '无法创建故事: {error}',
+          ko: '이야기를 만들 수 없습니다: {error}'
+        }
+      }
+    },
+    story_defaults: {
+      untitled_story: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Untitled Story',
+          es: 'Historia Sin Título',
+          fr: 'Histoire Sans Titre',
+          de: 'Unbenannte Geschichte',
+          ja: '無題のストーリー',
+          zh: '无标题故事',
+          ko: '제목 없는 이야기'
+        }
+      }
+    }
+  },
+
+  // Upload Story Page  
+  upload_story: {
+    title: {
+      create_your_story: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Create Your Story',
+          es: 'Crea Tu Historia',
+          fr: 'Créez Votre Histoire',
+          de: 'Erstelle Deine Geschichte',
+          ja: 'あなたのストーリーを作成',
+          zh: '创建您的故事',
+          ko: '당신의 이야기를 만드세요'
+        }
+      },
+      description: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Write your story and let AI analyze characters and emotions',
+          es: 'Escribe tu historia y deja que la IA analice personajes y emociones',
+          fr: 'Écrivez votre histoire et laissez l\'IA analyser les personnages et les émotions',
+          de: 'Schreibe deine Geschichte und lass KI Charaktere und Emotionen analysieren',
+          ja: 'ストーリーを書いて、AIにキャラクターと感情を分析させましょう',
+          zh: '写下您的故事，让AI分析角色和情感',
+          ko: '이야기를 쓰고 AI가 캐릭터와 감정을 분석하도록 하세요'
+        }
+      }
+    },
+    form: {
+      story_placeholder: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Write your story here... (500-1000 words recommended)',
+          es: 'Escribe tu historia aquí... (500-1000 palabras recomendadas)',
+          fr: 'Écrivez votre histoire ici... (500-1000 mots recommandés)',
+          de: 'Schreibe deine Geschichte hier... (500-1000 Wörter empfohlen)',
+          ja: 'ここにストーリーを書いてください... (500-1000語推奨)',
+          zh: '在此写下您的故事... (建议500-1000字)',
+          ko: '여기에 이야기를 쓰세요... (500-1000단어 권장)'
+        }
+      },
+      word_count: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        variables: ['count'],
+        templates: {
+          en: 'Word count: {count}',
+          es: 'Recuento de palabras: {count}',
+          fr: 'Nombre de mots: {count}',
+          de: 'Wortanzahl: {count}',
+          ja: '単語数: {count}',
+          zh: '字数: {count}',
+          ko: '단어 수: {count}'
+        }
+      },
+      word_count_recommendation: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Recommended: 500-1000 words',
+          es: 'Recomendado: 500-1000 palabras',
+          fr: 'Recommandé: 500-1000 mots',
+          de: 'Empfohlen: 500-1000 Wörter',
+          ja: '推奨: 500-1000語',
+          zh: '建议: 500-1000字',
+          ko: '권장: 500-1000단어'
+        }
+      }
+    },
+    status: {
+      draft: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Draft',
+          es: 'Borrador',
+          fr: 'Brouillon',
+          de: 'Entwurf',
+          ja: '下書き',
+          zh: '草稿',
+          ko: '초안'
+        }
+      }
+    },
+    processing: {
+      audio_processing: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Processing your audio...',
+          es: 'Procesando tu audio...',
+          fr: 'Traitement de votre audio...',
+          de: 'Verarbeite dein Audio...',
+          ja: 'オーディオを処理中...',
+          zh: '正在处理您的音频...',
+          ko: '오디오 처리 중...'
+        }
+      },
+      audio_transcription: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Converting speech to text using AI transcription',
+          es: 'Convirtiendo voz a texto usando transcripción IA',
+          fr: 'Conversion de la parole en texte avec transcription IA',
+          de: 'Sprache zu Text mit KI-Transkription umwandeln',
+          ja: 'AI音声認識を使用して音声をテキストに変換中',
+          zh: '使用AI转录将语音转换为文本',
+          ko: 'AI 전사를 사용하여 음성을 텍스트로 변환'
+        }
+      }
+    },
+    actions: {
+      analyze_story: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Analyze Story',
+          es: 'Analizar Historia',
+          fr: 'Analyser l\'Histoire',
+          de: 'Geschichte Analysieren',
+          ja: 'ストーリーを分析',
+          zh: '分析故事',
+          ko: '이야기 분석'
+        }
+      },
+      starting_analysis: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Starting Analysis...',
+          es: 'Iniciando Análisis...',
+          fr: 'Démarrage de l\'Analyse...',
+          de: 'Analyse wird gestartet...',
+          ja: '分析を開始しています...',
+          zh: '开始分析...',
+          ko: '분석 시작 중...'
+        }
+      },
+      go_home: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Go Home',
+          es: 'Ir a Inicio',
+          fr: 'Aller à l\'Accueil',
+          de: 'Zur Startseite',
+          ja: 'ホームへ',
+          zh: '返回首页',
+          ko: '홈으로 이동'
+        }
+      },
+      home: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Home',
+          es: 'Inicio',
+          fr: 'Accueil',
+          de: 'Startseite',
+          ja: 'ホーム',
+          zh: '首页',
+          ko: '홈'
+        }
+      }
+    },
+    errors: {
+      audio_conversion_failed: {
+        type: 'error' as MessageType,
+        severity: 'high' as MessageSeverity,
+        templates: {
+          en: 'Could not convert audio to text. Please try again.',
+          es: 'No se pudo convertir el audio a texto. Por favor, inténtalo de nuevo.',
+          fr: 'Impossible de convertir l\'audio en texte. Veuillez réessayer.',
+          de: 'Audio konnte nicht in Text umgewandelt werden. Bitte versuche es erneut.',
+          ja: 'オーディオをテキストに変換できませんでした。もう一度お試しください。',
+          zh: '无法将音频转换为文本。请重试。',
+          ko: '오디오를 텍스트로 변환할 수 없습니다. 다시 시도해주세요.'
+        }
+      },
+      analysis_failed_title: {
+        type: 'error' as MessageType,
+        severity: 'high' as MessageSeverity,
+        templates: {
+          en: 'Analysis Failed',
+          es: 'Análisis Fallido',
+          fr: 'Échec de l\'Analyse',
+          de: 'Analyse Fehlgeschlagen',
+          ja: '分析に失敗しました',
+          zh: '分析失败',
+          ko: '분석 실패'
+        }
+      },
+      analysis_failed_description: {
+        type: 'error' as MessageType,
+        severity: 'high' as MessageSeverity,
+        templates: {
+          en: 'Could not start analysis. Please try again.',
+          es: 'No se pudo iniciar el análisis. Por favor, inténtalo de nuevo.',
+          fr: 'Impossible de démarrer l\'analyse. Veuillez réessayer.',
+          de: 'Analyse konnte nicht gestartet werden. Bitte versuche es erneut.',
+          ja: '分析を開始できませんでした。もう一度お試しください。',
+          zh: '无法开始分析。请重试。',
+          ko: '분석을 시작할 수 없습니다. 다시 시도해주세요.'
+        }
+      },
+      no_story_created: {
+        type: 'error' as MessageType,
+        severity: 'medium' as MessageSeverity,
+        templates: {
+          en: 'Please create a story from the home page to continue.',
+          es: 'Por favor, crea una historia desde la página de inicio para continuar.',
+          fr: 'Veuillez créer une histoire depuis la page d\'accueil pour continuer.',
+          de: 'Bitte erstelle eine Geschichte von der Startseite, um fortzufahren.',
+          ja: 'ホームページからストーリーを作成して続行してください。',
+          zh: '请从首页创建一个故事以继续。',
+          ko: '계속하려면 홈 페이지에서 이야기를 만들어주세요.'
+        }
+      }
+    },
+    defaults: {
+      untitled_story: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Untitled Story',
+          es: 'Historia Sin Título',
+          fr: 'Histoire Sans Titre',
+          de: 'Unbenannte Geschichte',
+          ja: '無題のストーリー',
+          zh: '无标题故事',
+          ko: '제목 없는 이야기'
+        }
+      }
+    },
+    languages: {
+      english: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'English',
+          es: 'Inglés',
+          fr: 'Anglais',
+          de: 'Englisch',
+          ja: '英語',
+          zh: '英语',
+          ko: '영어'
+        }
+      },
+      spanish: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Spanish',
+          es: 'Español',
+          fr: 'Espagnol',
+          de: 'Spanisch',
+          ja: 'スペイン語',
+          zh: '西班牙语',
+          ko: '스페인어'
+        }
+      },
+      french: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'French',
+          es: 'Francés',
+          fr: 'Français',
+          de: 'Französisch',
+          ja: 'フランス語',
+          zh: '法语',
+          ko: '프랑스어'
+        }
+      },
+      german: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'German',
+          es: 'Alemán',
+          fr: 'Allemand',
+          de: 'Deutsch',
+          ja: 'ドイツ語',
+          zh: '德语',
+          ko: '독일어'
+        }
+      },
+      italian: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Italian',
+          es: 'Italiano',
+          fr: 'Italien',
+          de: 'Italienisch',
+          ja: 'イタリア語',
+          zh: '意大利语',
+          ko: '이탈리아어'
+        }
+      },
+      portuguese: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Portuguese',
+          es: 'Portugués',
+          fr: 'Portugais',
+          de: 'Portugiesisch',
+          ja: 'ポルトガル語',
+          zh: '葡萄牙语',
+          ko: '포르투갈어'
+        }
+      },
+      japanese: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Japanese',
+          es: 'Japonés',
+          fr: 'Japonais',
+          de: 'Japanisch',
+          ja: '日本語',
+          zh: '日语',
+          ko: '일본어'
+        }
+      },
+      korean: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Korean',
+          es: 'Coreano',
+          fr: 'Coréen',
+          de: 'Koreanisch',
+          ja: '韓国語',
+          zh: '韩语',
+          ko: '한국어'
+        }
+      },
+      chinese_simplified: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Chinese (Simplified)',
+          es: 'Chino (Simplificado)',
+          fr: 'Chinois (Simplifié)',
+          de: 'Chinesisch (Vereinfacht)',
+          ja: '中国語（簡体字）',
+          zh: '中文（简体）',
+          ko: '중국어 (간체)'
         }
       }
     }

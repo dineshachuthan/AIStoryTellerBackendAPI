@@ -12,6 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { defaultStoryConfig } from "@shared/storyConfig";
+import { getMessage } from "@shared/i18n-hierarchical";
 
 export default function Home() {
   const [, setLocation] = useLocation();
@@ -78,8 +79,8 @@ export default function Home() {
   const createStoryAndNavigate = async (storyType: string, targetPath: string) => {
     if (!user?.id) {
       toast({
-        title: "Authentication Required",
-        description: "Please log in to create stories.",
+        title: getMessage('home.errors.auth_required_title'),
+        description: getMessage('home.errors.auth_required_description'),
         variant: "destructive",
       });
       return;
@@ -97,7 +98,7 @@ export default function Home() {
       const story = await apiRequest('/api/stories/draft', {
         method: 'POST',
         body: JSON.stringify({
-          title: "Untitled Story",
+          title: getMessage('home.story_defaults.untitled_story'),
           storyType
         }),
       });
@@ -111,8 +112,8 @@ export default function Home() {
       console.error("Story creation error:", error);
       console.error("Error details:", error.message);
       toast({
-        title: "Creation Failed",
-        description: `Could not create story: ${error.message}`,
+        title: getMessage('home.errors.creation_failed_title'),
+        description: getMessage('home.errors.creation_failed_description', { error: error.message }),
         variant: "destructive",
       });
     } finally {
@@ -159,10 +160,10 @@ export default function Home() {
               <CardHeader className={`pb-2 ${styles.containerPadding}`}>
                 <CardTitle className={`text-white flex items-center ${windowDimensions.width < 640 ? 'text-sm' : windowDimensions.width < 1024 ? 'text-base' : 'text-lg'}`}>
                   <Users className={`${windowDimensions.width < 640 ? 'w-3 h-3' : windowDimensions.width < 1024 ? 'w-4 h-4' : 'w-5 h-5'} mr-2 text-tiktok-pink`} />
-                  Collaborative Storytelling
+                  {getMessage('home.title.collaborative_storytelling')}
                 </CardTitle>
                 <CardDescription className={`text-gray-text ${windowDimensions.width < 640 ? 'text-xs' : 'text-sm'}`}>
-                  Create stories with friends where each person voices a unique character
+                  {getMessage('home.title.collaborative_description')}
                 </CardDescription>
               </CardHeader>
               <CardContent className={`pt-0 ${styles.containerPadding}`}>
@@ -178,7 +179,7 @@ export default function Home() {
                       <Loader2 className={`${windowDimensions.width < 640 ? 'w-3 h-3' : windowDimensions.width < 1024 ? 'w-4 h-4' : 'w-5 h-5'} animate-spin`} /> : 
                       <PenTool className={`${windowDimensions.width < 640 ? 'w-3 h-3' : windowDimensions.width < 1024 ? 'w-4 h-4' : 'w-5 h-5'}`} />
                     }
-                    <span className={`${styles.textSize}`}>Write Story</span>
+                    <span className={`${styles.textSize}`}>{getMessage('home.actions.write_story')}</span>
                   </Button>
                   <Button
                     onClick={() => createStoryAndNavigate("voice", "/voice-record")}
@@ -191,8 +192,8 @@ export default function Home() {
                       <Loader2 className={`${windowDimensions.width < 640 ? 'w-3 h-3' : windowDimensions.width < 1024 ? 'w-4 h-4' : 'w-5 h-5'} animate-spin`} /> : 
                       <Mic className={`${windowDimensions.width < 640 ? 'w-3 h-3' : windowDimensions.width < 1024 ? 'w-4 h-4' : 'w-5 h-5'}`} />
                     }
-                    <span className={`${styles.textSize}`}>Voice Record</span>
-                    {windowDimensions.width >= 640 && <span className="text-xs opacity-70 leading-tight">(5 min)</span>}
+                    <span className={`${styles.textSize}`}>{getMessage('home.actions.voice_record')}</span>
+                    {windowDimensions.width >= 640 && <span className="text-xs opacity-70 leading-tight">{getMessage('home.actions.five_min_duration')}</span>}
                   </Button>
 
                   <Button
@@ -205,7 +206,7 @@ export default function Home() {
                       <Loader2 className={`${windowDimensions.width < 640 ? 'w-3 h-3' : windowDimensions.width < 1024 ? 'w-4 h-4' : 'w-5 h-5'} animate-spin`} /> : 
                       <AudioLines className={`${windowDimensions.width < 640 ? 'w-3 h-3' : windowDimensions.width < 1024 ? 'w-4 h-4' : 'w-5 h-5'}`} />
                     }
-                    <span className={`${styles.textSize}`}>Upload Audio</span>
+                    <span className={`${styles.textSize}`}>{getMessage('home.actions.upload_audio')}</span>
                   </Button>
                 </div>
               </CardContent>
