@@ -277,7 +277,7 @@ export default function StoryLibrary() {
                           <div className="space-y-1">
                             <CardTitle className="text-white text-base leading-tight flex items-center justify-between">
                               <div className="flex-1 mr-2">
-                                <div className="line-clamp-2">
+                                <div className="truncate">
                                   {story.title}
                                 </div>
                                 {!story.isPublic && (
@@ -487,7 +487,7 @@ export default function StoryLibrary() {
                           <div className="space-y-1">
                             <CardTitle className="text-white text-lg leading-tight flex items-center justify-between">
                               <div className="flex-1 mr-2">
-                                <div className="line-clamp-2">
+                                <div className="truncate">
                                   {story.title}
                                 </div>
                                 {!story.isPublic && (
