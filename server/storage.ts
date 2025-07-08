@@ -1354,24 +1354,38 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUserEsm(userEsmId: number, updates: any): Promise<void> {
-    // Build safe SQL query with proper parameter binding
-    const updateFields = [];
-    const values = [];
-    let paramCount = 1;
+    // Use proper Drizzle ORM update syntax
+    if (Object.keys(updates).length === 0) return;
     
-    for (const [key, value] of Object.entries(updates)) {
-      updateFields.push(`${key} = $${paramCount}`);
-      values.push(value);
-      paramCount++;
+    if (updates.narrator_voice_id !== undefined) {
+      await db.execute(
+        sql`UPDATE user_esm SET narrator_voice_id = ${updates.narrator_voice_id} WHERE user_esm_id = ${userEsmId}`
+      );
     }
     
-    if (updateFields.length === 0) return;
+    if (updates.kling_voice_id !== undefined) {
+      await db.execute(
+        sql`UPDATE user_esm SET kling_voice_id = ${updates.kling_voice_id} WHERE user_esm_id = ${userEsmId}`
+      );
+    }
     
-    values.push(userEsmId); // Add WHERE clause parameter
+    if (updates.voice_cloning_status !== undefined) {
+      await db.execute(
+        sql`UPDATE user_esm SET voice_cloning_status = ${updates.voice_cloning_status} WHERE user_esm_id = ${userEsmId}`
+      );
+    }
     
-    const query = `UPDATE user_esm SET ${updateFields.join(', ')} WHERE user_esm_id = $${paramCount}`;
+    if (updates.last_voice_cloning_attempt !== undefined) {
+      await db.execute(
+        sql`UPDATE user_esm SET last_voice_cloning_attempt = ${updates.last_voice_cloning_attempt} WHERE user_esm_id = ${userEsmId}`
+      );
+    }
     
-    await db.execute(sql.raw(query, values));
+    if (updates.sample_count !== undefined) {
+      await db.execute(
+        sql`UPDATE user_esm SET sample_count = ${updates.sample_count} WHERE user_esm_id = ${userEsmId}`
+      );
+    }
   }
 
   async getUserEsmByUser(userId: string): Promise<any[]> {
