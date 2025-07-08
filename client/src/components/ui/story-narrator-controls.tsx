@@ -244,9 +244,11 @@ export default function StoryNarratorControls({
   // 4. Play Story (from saved database - no generation cost)
   const playStory = () => {
     if (savedNarration) {
-      setCurrentSegment(0);
-      setProgress(0);
-      setIsPaused(false); // Reset pause state when starting fresh
+      // Only reset if we're not resuming from pause
+      if (!isPaused) {
+        setCurrentSegment(0);
+        setProgress(0);
+      }
       playNarration();
     } else {
       toast({

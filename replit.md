@@ -417,10 +417,10 @@ This is a full-stack collaborative storytelling platform that enables users to c
 ### **AUDIO PAUSE/RESUME FIX - January 08, 2025**
 **Fixed Audio Playback Issue**: Resolved story narration restarting from beginning after pause
 - **ISSUE IDENTIFIED**: Pausing narration and resuming caused audio to restart from beginning instead of resuming
-- **ROOT CAUSE**: playCurrentSegment() was resetting audio source on every play action
-- **FIX IMPLEMENTED**: Added isPaused state to track pause status and conditional logic in playNarration()
-- **RESUME LOGIC**: If paused, audio.play() resumes from current position without resetting source
-- **FRESH START**: Only sets new audio source when starting fresh or changing segments
+- **ROOT CAUSE**: playStory() was always resetting segment to 0, even when resuming from pause
+- **FIX IMPLEMENTED**: Added isPaused state to track pause status and conditional logic in both playNarration() and playStory()
+- **PLAYSTORE FIX**: playStory() now checks isPaused state and only resets segment/progress when starting fresh
+- **RESUME LOGIC**: If paused, audio.play() resumes from current position without resetting source or segment
 - **USER EXPERIENCE**: Pause/resume now works correctly maintaining playback position
 
 ### **STORY NARRATION AUTO-SAVE FIX - January 08, 2025**
