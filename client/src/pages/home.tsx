@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { defaultStoryConfig } from "@shared/storyConfig";
 import { getMessage } from "@shared/i18n-hierarchical";
+import { formatDistanceToNow } from "date-fns";
 import { useLanguage } from "@/contexts/language-context";
 
 export default function Home() {
@@ -174,7 +175,7 @@ export default function Home() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-gray-400 text-sm">Total Stories</p>
-                      <p className="text-2xl font-bold text-white">{storiesData?.length || 0}</p>
+                      <p className="text-2xl font-bold text-white">{stories?.length || 0}</p>
                     </div>
                     <BookOpen className="w-8 h-8 text-blue-500 opacity-50" />
                   </div>
@@ -187,7 +188,7 @@ export default function Home() {
                     <div>
                       <p className="text-gray-400 text-sm">Voice Recordings</p>
                       <p className="text-2xl font-bold text-white">
-                        {storiesData?.filter(s => s.captureMethod === 'voice').length || 0}
+                        {stories?.filter(s => s.captureMethod === 'voice').length || 0}
                       </p>
                     </div>
                     <Mic className="w-8 h-8 text-green-500 opacity-50" />
@@ -201,7 +202,7 @@ export default function Home() {
                     <div>
                       <p className="text-gray-400 text-sm">Narrated Stories</p>
                       <p className="text-2xl font-bold text-white">
-                        {storiesData?.filter(s => s.narratorVoice || s.narratorVoiceType).length || 0}
+                        {stories?.filter(s => s.narratorVoice || s.narratorVoiceType).length || 0}
                       </p>
                     </div>
                     <Sparkles className="w-8 h-8 text-purple-500 opacity-50" />
@@ -215,7 +216,7 @@ export default function Home() {
                     <div>
                       <p className="text-gray-400 text-sm">This Week</p>
                       <p className="text-2xl font-bold text-white">
-                        {storiesData?.filter(s => {
+                        {stories?.filter(s => {
                           const created = new Date(s.createdAt);
                           const weekAgo = new Date();
                           weekAgo.setDate(weekAgo.getDate() - 7);
@@ -322,21 +323,21 @@ export default function Home() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {storiesData && storiesData.length > 0 ? (
+                    {stories && stories.length > 0 ? (
                       <>
                         <div className="p-4 rounded-lg bg-gray-800/50 border border-gray-700">
                           <p className="text-sm text-gray-400 mb-1">Latest Story</p>
-                          <p className="font-medium text-white">{storiesData[0]?.title}</p>
+                          <p className="font-medium text-white">{stories[0]?.title}</p>
                           <p className="text-xs text-gray-500 mt-1">
-                            {formatDistanceToNow(new Date(storiesData[0]?.createdAt), { addSuffix: true })}
+                            {formatDistanceToNow(new Date(stories[0]?.createdAt), { addSuffix: true })}
                           </p>
                         </div>
                         
-                        {storiesData.filter(s => s.narratorVoice || s.narratorVoiceType).length > 0 && (
+                        {stories.filter(s => s.narratorVoice || s.narratorVoiceType).length > 0 && (
                           <div className="p-4 rounded-lg bg-purple-900/20 border border-purple-700/50">
                             <p className="text-sm text-purple-400 mb-1">Recent Narration</p>
                             <p className="font-medium text-white">
-                              {storiesData.find(s => s.narratorVoice || s.narratorVoiceType)?.title}
+                              {stories.find(s => s.narratorVoice || s.narratorVoiceType)?.title}
                             </p>
                             <p className="text-xs text-purple-300 mt-1">With ElevenLabs voice</p>
                           </div>
@@ -344,10 +345,10 @@ export default function Home() {
                         
                         <div className="text-center pt-4">
                           <p className="text-gray-400 text-sm mb-3">
-                            You've created {storiesData.length} amazing {storiesData.length === 1 ? 'story' : 'stories'}!
+                            You've created {stories.length} amazing {stories.length === 1 ? 'story' : 'stories'}!
                           </p>
                           <div className="flex items-center justify-center gap-1">
-                            {[...Array(Math.min(5, storiesData.length))].map((_, i) => (
+                            {[...Array(Math.min(5, stories.length))].map((_, i) => (
                               <div key={i} className="w-2 h-2 rounded-full bg-gradient-to-r from-blue-500 to-purple-500" />
                             ))}
                           </div>
