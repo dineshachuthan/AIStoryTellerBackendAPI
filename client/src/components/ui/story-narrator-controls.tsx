@@ -140,11 +140,16 @@ export default function StoryNarratorControls({
       });
 
       if (response.segments) {
-        setTempNarration(response);
+        // Narration is automatically saved in backend during generation
+        setSavedNarration(response);
+        setTempNarration(null); // Clear any temp narration
         setCurrentSegment(0);
         setProgress(0);
         
-        // Don't show annoying toast - user can see the narration is ready from UI state
+        toast({
+          title: "Narration Ready",
+          description: `Generated and saved ${response.segments.length} segments`
+        });
       }
     } catch (error) {
       console.error('Error generating narration:', error);
@@ -360,7 +365,7 @@ export default function StoryNarratorControls({
           `}>
             <div className="text-center">
               <div className="font-medium">
-                {savedNarration ? '✓ Saved' : tempNarration ? '⚡ Preview' : '○ Empty'}
+                {savedNarration ? '✓ Auto-Saved' : tempNarration ? '⚡ Preview' : '○ Empty'}
               </div>
             </div>
           </div>

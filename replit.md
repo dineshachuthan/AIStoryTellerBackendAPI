@@ -414,6 +414,15 @@ This is a full-stack collaborative storytelling platform that enables users to c
 
 ## Changelog
 
+### **STORY NARRATION AUTO-SAVE FIX - January 08, 2025**
+**Fixed Narration Save Error**: Resolved duplicate save attempt issue with story narrations
+- **ISSUE IDENTIFIED**: Narrations are automatically saved during generation in backend, but frontend was treating them as temporary
+- **FRONTEND UPDATE**: Modified story-narrator-controls.tsx to set savedNarration directly instead of tempNarration
+- **USER EXPERIENCE**: Narrations now show as "Auto-Saved" immediately after generation
+- **SAVE BUTTON BEHAVIOR**: Save button properly disabled since narrations are automatically persisted
+- **NARRATOR VOICE ID**: Confirmed that narrator voice ID is still needed for voice consistency and regeneration
+- **ARCHITECTURE CLARIFICATION**: Story narrations are always saved during generation - no separate save step needed
+
 ### **VIDEO PROVIDER MANAGER DEPLOYMENT FIX - January 08, 2025**
 **Build Error Resolution**: Fixed missing `videoProviderManager` export causing deployment failures
 - **ISSUE IDENTIFIED**: video-generation-module.ts and runwayml-module.ts were importing non-existent `videoProviderManager` from video-generation-service.ts
