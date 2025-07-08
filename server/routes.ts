@@ -6690,6 +6690,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Serve static files from persistent cache directories
   app.use('/persistent-cache', express.static(path.join(process.cwd(), 'persistent-cache')));
 
+  // Test email endpoint (for development)
+  app.post('/api/test/email', requireAuth, async (req, res) => {
+    try {
+      const { to, subject, content } = req.body;
+      
+      if (!to || !subject || !content) {
+        return res.status(400).json({ error: 'Missing required fields: to, subject, content' });
+      }
+
+      // Only allow testing to the authenticated user's email
+      const userEmail = req.user?.email;
+      if (!userEmail || to !== userEmail) {
+        return res.status(403).json({ error: 'Can only send test emails to your own email address' });
+      }
+
+      const result = await sendEmail({
+        to: userEmail,
+        subject: `[Test] ${subject}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2>Test Email from Storytelling Platform</h2>
+            <p>${content}</p>
+            <hr style="margin: 20px 0;">
+            <p style="color: #666; font-size: 14px;">
+              This is a test email sent from the collaborative storytelling platform.
+              Time: ${new Date().toISOString()}
+            </p>
+          </div>
+        `,
+        text: content
+      });
+
+      res.json({ 
+        success: result.success,
+        message: result.success ? 'Test email sent successfully' : 'Failed to send test email',
+        provider: result.provider,
+        error: result.error
+      });
+    } catch (error) {
+      console.error('Test email error:', error);
+      res.status(500).json({ error: 'Failed to send test email' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

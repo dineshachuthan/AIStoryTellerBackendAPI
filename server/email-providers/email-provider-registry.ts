@@ -29,7 +29,7 @@ function getEnabledEmailProviders(): EmailProviderInfo[] {
       name: 'sendgrid',
       provider: 'sendgrid',
       enabled: true,
-      priority: 1,
+      priority: 2,
       config: {
         apiKey: process.env.SENDGRID_API_KEY,
         fromEmail: process.env.SENDGRID_FROM_EMAIL || 'noreply@storytelling.app',
@@ -46,7 +46,7 @@ function getEnabledEmailProviders(): EmailProviderInfo[] {
       name: 'mailgun',
       provider: 'mailgun',
       enabled: true,
-      priority: process.env.MAILGUN_PRIORITY ? parseInt(process.env.MAILGUN_PRIORITY) : 2,
+      priority: process.env.MAILGUN_PRIORITY ? parseInt(process.env.MAILGUN_PRIORITY) : 1,
       config: {
         apiKey: process.env.MAILGUN_API_KEY,
         domain: process.env.MAILGUN_DOMAIN,

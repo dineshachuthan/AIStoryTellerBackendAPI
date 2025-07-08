@@ -1,4 +1,4 @@
-import { MailService } from '@sendgrid/mail';
+import { EmailProviderRegistry } from './email-providers/email-provider-registry';
 import twilio from 'twilio';
 
 // Common interfaces
@@ -37,32 +37,32 @@ export interface NotificationProvider {
   sendMessage(recipient: string, message: string): Promise<NotificationResult>;
 }
 
-// Email provider implementation
+// Email provider implementation using unified provider system
 export class EmailProvider implements NotificationProvider {
-  private mailService: MailService;
+  private emailRegistry: EmailProviderRegistry;
   private fromEmail: string | null = null;
   private configured: boolean = false;
 
   constructor(config?: NotificationConfig['email']) {
-    this.mailService = new MailService();
+    this.emailRegistry = EmailProviderRegistry.getInstance();
     this.initialize(config);
   }
 
-  private initialize(config?: NotificationConfig['email']): void {
-    const apiKey = config?.apiKey || process.env.SENDGRID_API_KEY;
-    this.fromEmail = config?.fromEmail || process.env.SENDGRID_FROM_EMAIL || null;
+  private async initialize(config?: NotificationConfig['email']): Promise<void> {
+    this.fromEmail = config?.fromEmail || process.env.SENDGRID_FROM_EMAIL || 'noreply@storytelling.app';
 
-    if (apiKey && this.fromEmail) {
-      try {
-        this.mailService.setApiKey(apiKey);
+    try {
+      // The registry is already initialized on app startup
+      const provider = this.emailRegistry.getActiveProvider();
+      if (provider) {
         this.configured = true;
-        console.log('Email provider initialized successfully');
-      } catch (error) {
-        console.warn('Failed to initialize email provider:', error);
+        console.log('Email provider using unified system:', provider.constructor.name);
+      } else {
         this.configured = false;
+        console.warn('No email provider available in registry');
       }
-    } else {
-      console.warn('Email provider not configured - missing API key or from email');
+    } catch (error) {
+      console.warn('Failed to get email provider:', error);
       this.configured = false;
     }
   }
@@ -152,7 +152,15 @@ Thank you for participating in our storytelling community!
     }
 
     try {
-      const result = await this.mailService.send({
+      const provider = this.emailRegistry.getActiveProvider();
+      if (!provider) {
+        return {
+          success: false,
+          error: 'No active email provider'
+        };
+      }
+
+      const result = await provider.sendEmail({
         to: data.recipientContact,
         from: this.fromEmail,
         subject: `Roleplay Invitation: Play ${data.characterName} in "${data.storyTitle}"`,
@@ -162,8 +170,9 @@ Thank you for participating in our storytelling community!
 
       console.log(`Email invitation sent to ${data.recipientContact} for character ${data.characterName}`);
       return {
-        success: true,
-        messageId: Array.isArray(result) ? result[0]?.headers?.['x-message-id'] : undefined
+        success: result.success,
+        messageId: result.messageId,
+        error: result.error
       };
     } catch (error) {
       console.error('Email send error:', error);
