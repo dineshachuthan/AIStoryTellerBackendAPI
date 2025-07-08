@@ -157,16 +157,31 @@
 ## Production Readiness
 
 ### Current Status:
-- ✅ All Phase 0-4 adapters operational
+- ✅ All Phase 0-5 adapters operational
 - ✅ Event bus handling 100+ events/minute
 - ✅ Zero performance impact when disabled
 - ✅ Comprehensive error handling
 - ✅ Detailed logging for debugging
 
-### Next Phase 5: Narration & Video Services
-1. **NarrationServiceAdapter**: ElevenLabs and OpenAI integration
-2. **VideoServiceAdapter**: RunwayML, Pika, Luma providers
-3. **Event Integration**: Voice training and video generation events
+### Phase 5 COMPLETED: Narration & Video Services
+1. ✅ **NarrationServiceAdapter**: 
+   - ElevenLabs voice cloning integration
+   - OpenAI TTS for story narration
+   - Voice training with 5+ sample threshold
+   - Automatic ESM item locking
+   - Event publishing for voice.cloned and narration.generation.completed
+   
+2. ✅ **VideoServiceAdapter**:
+   - Multi-provider support (RunwayML, Pika, Luma)
+   - Automatic fallback handling
+   - Provider registry integration
+   - Video job management with collaborative roleplay storage
+   - Event publishing for video.generation.started and video.generation.completed
+
+3. ✅ **Event Integration**: 
+   - Cross-service event handlers implemented
+   - User deletion cascade handling
+   - Subscription limit enforcement
 
 ### Benefits Realized:
 1. **Gradual Migration**: Services extracted without disruption

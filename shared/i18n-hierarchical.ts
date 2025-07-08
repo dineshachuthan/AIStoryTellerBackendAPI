@@ -23,6 +23,182 @@ export interface I18nMessage {
  * Hierarchical message structure organized by feature/page
  */
 export const MESSAGES = {
+  // Error Codes
+  errors: {
+    api: {
+      fallback_provider_needed: {
+        code: 1001,
+        type: 'error' as MessageType,
+        severity: 'high' as MessageSeverity,
+        templates: {
+          en: 'Primary provider failed. Alternative provider needed.',
+          ta: 'முதன்மை வழங்குநர் தோல்வியுற்றார். மாற்று வழங்குநர் தேவை.'
+        }
+      },
+      voice_cloning_failed: {
+        code: 1002,
+        type: 'error' as MessageType,
+        severity: 'high' as MessageSeverity,
+        templates: {
+          en: 'Voice cloning failed. Please try again.',
+          ta: 'குரல் நகலெடுத்தல் தோல்வியுற்றது. மீண்டும் முயற்சிக்கவும்.'
+        }
+      },
+      video_generation_failed: {
+        code: 1003,
+        type: 'error' as MessageType,
+        severity: 'high' as MessageSeverity,
+        templates: {
+          en: 'Video generation failed. Please try again.',
+          ta: 'வீடியோ உருவாக்கம் தோல்வியுற்றது. மீண்டும் முயற்சிக்கவும்.'
+        }
+      },
+      provider_not_available: {
+        code: 1004,
+        type: 'error' as MessageType,
+        severity: 'high' as MessageSeverity,
+        templates: {
+          en: 'Provider not available: {provider}',
+          ta: 'வழங்குநர் கிடைக்கவில்லை: {provider}'
+        },
+        variables: ['provider']
+      },
+      api_rate_limit: {
+        code: 1005,
+        type: 'error' as MessageType,
+        severity: 'medium' as MessageSeverity,
+        templates: {
+          en: 'API rate limit exceeded. Please try again later.',
+          ta: 'API வரம்பு மீறப்பட்டது. பின்னர் முயற்சிக்கவும்.'
+        }
+      },
+      invalid_api_key: {
+        code: 1006,
+        type: 'error' as MessageType,
+        severity: 'critical' as MessageSeverity,
+        templates: {
+          en: 'Invalid API key for provider: {provider}',
+          ta: 'தவறான API சாவி: {provider}'
+        },
+        variables: ['provider']
+      },
+      insufficient_samples: {
+        code: 1007,
+        type: 'error' as MessageType,
+        severity: 'medium' as MessageSeverity,
+        templates: {
+          en: 'Insufficient voice samples. Need at least {minimum} samples.',
+          ta: 'போதுமான குரல் மாதிரிகள் இல்லை. குறைந்தது {minimum} மாதிரிகள் தேவை.'
+        },
+        variables: ['minimum']
+      },
+      narration_generation_failed: {
+        code: 1008,
+        type: 'error' as MessageType,
+        severity: 'high' as MessageSeverity,
+        templates: {
+          en: 'Story narration generation failed.',
+          ta: 'கதை விவரிப்பு உருவாக்கம் தோல்வியுற்றது.'
+        }
+      },
+      subscription_limit_reached: {
+        code: 1009,
+        type: 'error' as MessageType,
+        severity: 'medium' as MessageSeverity,
+        templates: {
+          en: 'Subscription limit reached for {feature}',
+          ta: 'சந்தா வரம்பு எட்டப்பட்டது: {feature}'
+        },
+        variables: ['feature']
+      },
+      authentication_required: {
+        code: 1010,
+        type: 'error' as MessageType,
+        severity: 'high' as MessageSeverity,
+        templates: {
+          en: 'Authentication required to access this feature.',
+          ta: 'இந்த அம்சத்தை அணுக அங்கீகாரம் தேவை.'
+        }
+      },
+      // Validation errors
+      validation_failed: {
+        code: 2001,
+        type: 'error' as MessageType,
+        severity: 'medium' as MessageSeverity,
+        templates: {
+          en: 'Validation failed: {details}',
+          ta: 'சரிபார்ப்பு தோல்வியுற்றது: {details}'
+        },
+        variables: ['details']
+      },
+      invalid_input: {
+        code: 2002,
+        type: 'error' as MessageType,
+        severity: 'medium' as MessageSeverity,
+        templates: {
+          en: 'Invalid input provided',
+          ta: 'தவறான உள்ளீடு வழங்கப்பட்டது'
+        }
+      },
+      missing_required_field: {
+        code: 2003,
+        type: 'error' as MessageType,
+        severity: 'medium' as MessageSeverity,
+        templates: {
+          en: 'Missing required field: {field}',
+          ta: 'தேவையான புலம் இல்லை: {field}'
+        },
+        variables: ['field']
+      },
+      // Database errors
+      resource_not_found: {
+        code: 3001,
+        type: 'error' as MessageType,
+        severity: 'medium' as MessageSeverity,
+        templates: {
+          en: 'Resource not found',
+          ta: 'வளம் கிடைக்கவில்லை'
+        }
+      },
+      duplicate_resource: {
+        code: 3002,
+        type: 'error' as MessageType,
+        severity: 'medium' as MessageSeverity,
+        templates: {
+          en: 'Resource already exists',
+          ta: 'வளம் ஏற்கனவே உள்ளது'
+        }
+      },
+      database_error: {
+        code: 3003,
+        type: 'error' as MessageType,
+        severity: 'high' as MessageSeverity,
+        templates: {
+          en: 'Database operation failed',
+          ta: 'தரவுத்தள செயல்பாடு தோல்வியுற்றது'
+        }
+      },
+      // Server errors
+      internal_server_error: {
+        code: 5000,
+        type: 'error' as MessageType,
+        severity: 'critical' as MessageSeverity,
+        templates: {
+          en: 'Internal server error occurred',
+          ta: 'உள் சேவையக பிழை ஏற்பட்டது'
+        }
+      },
+      service_unavailable: {
+        code: 5001,
+        type: 'error' as MessageType,
+        severity: 'critical' as MessageSeverity,
+        templates: {
+          en: 'Service temporarily unavailable',
+          ta: 'சேவை தற்காலிகமாக கிடைக்கவில்லை'
+        }
+      }
+    }
+  },
   // Navigation
   nav: {
     main: {

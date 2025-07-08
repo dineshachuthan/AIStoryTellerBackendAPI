@@ -15,6 +15,12 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Import API response middleware
+import { apiResponseMiddleware, globalErrorHandler } from './middleware/api-response';
+
+// Add standardized API response middleware
+app.use(apiResponseMiddleware);
+
 // Public audio file serving (for testing)
 import jwt from 'jsonwebtoken';
 import path from 'path';
@@ -230,6 +236,24 @@ app.use((req, res, next) => {
     console.error('Failed to initialize collaboration adapter:', error);
   }
   
+  // Initialize narration service adapter for microservices migration
+  try {
+    const { narrationServiceAdapter } = await import('./microservices/narration-service-adapter');
+    await narrationServiceAdapter.initialize();
+    console.log('Narration service adapter initialized successfully');
+  } catch (error) {
+    console.error('Failed to initialize narration adapter:', error);
+  }
+  
+  // Initialize video service adapter for microservices migration
+  try {
+    const { videoServiceAdapter } = await import('./microservices/video-service-adapter');
+    await videoServiceAdapter.initialize();
+    console.log('Video service adapter initialized successfully');
+  } catch (error) {
+    console.error('Failed to initialize video adapter:', error);
+  }
+  
   // Initialize character archetypes after server starts (optional, with delay)
   setTimeout(() => {
     archetypeService.initializeDefaultArchetypes().catch((error) => {
@@ -237,13 +261,8 @@ app.use((req, res, next) => {
     });
   }, 5000);
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-
-    res.status(status).json({ message });
-    throw err;
-  });
+  // Use global error handler for standardized error responses
+  app.use(globalErrorHandler);
 
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
