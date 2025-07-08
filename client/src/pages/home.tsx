@@ -11,6 +11,8 @@ import { AppTopNavigation } from "@/components/app-top-navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { apiClient } from "@/lib/api-client";
+import { useStories } from "@/hooks/use-api";
 import { defaultStoryConfig } from "@shared/storyConfig";
 import { getMessage } from "@shared/i18n-hierarchical";
 import { formatDistanceToNow } from "date-fns";
@@ -29,8 +31,7 @@ export default function Home() {
   });
 
   // Fetch stories to check for drafts
-  const { data: stories = [] } = useQuery<any[]>({
-    queryKey: ["/api/stories", user?.id],
+  const { data: stories = [] } = useStories({
     enabled: !!user?.id,
   });
 
@@ -98,12 +99,9 @@ export default function Home() {
         body: { title: "Untitled Story", storyType }
       });
       
-      const story = await apiRequest('/api/stories/draft', {
-        method: 'POST',
-        body: JSON.stringify({
-          title: getMessage('home.story_defaults.untitled_story', {}, language),
-          storyType
-        }),
+      const story = await apiClient.stories.create({
+        title: getMessage('home.story_defaults.untitled_story', {}, language),
+        storyType
       });
 
       console.log('Empty story created:', story);

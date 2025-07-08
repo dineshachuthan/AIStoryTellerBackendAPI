@@ -10,6 +10,7 @@ import { Mic, Camera, User, Mail, CheckCircle, Clock } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { apiClient } from "@/lib/api-client";
 
 interface InvitationDetails {
   instanceTitle: string;
@@ -48,9 +49,8 @@ export default function Invitation() {
   const fetchInvitationDetails = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/invitations/${token}`);
-      if (response.ok) {
-        const data = await response.json();
+      const data = await apiClient.invitations.get(token!);
+      if (data) {
         setInvitation(data);
         
         // Calculate progress based on completed emotions
@@ -76,7 +76,7 @@ export default function Invitation() {
 
   const acceptInvitationAsRegistered = async () => {
     try {
-      await apiRequest(`/api/invitations/${token}/accept`, "POST", {});
+      await apiClient.invitations.accept(token!);
       toast({
         title: "Success",
         description: "Invitation accepted! You can now record your voice samples.",

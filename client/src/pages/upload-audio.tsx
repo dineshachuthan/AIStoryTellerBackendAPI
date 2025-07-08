@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Upload, FileAudio, Play, Pause, RotateCcw, ArrowRight, Shield } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { apiClient } from "@/lib/api-client";
 
 export function UploadAudioPage() {
   const [, setLocation] = useLocation();
@@ -27,8 +28,8 @@ export function UploadAudioPage() {
       const formData = new FormData();
       formData.append('audio', audioFile);
       
-      const response = await apiRequest("POST", "/api/audio/transcribe", formData);
-      return await response.json();
+      const response = await apiClient.audio.transcribe(formData);
+      return response;
     },
     onSuccess: (data) => {
       // Navigate to upload-story with the transcribed content

@@ -11,6 +11,7 @@ import { AppTopNavigation } from "@/components/app-top-navigation";
 import { formatDistanceToNow } from "date-fns";
 import type { Story } from "@shared/schema";
 import { getAllGenres, getAllEmotionalTags, getAllMoods, getGenreLabel, getEmotionalTagLabel, getMoodLabel } from "@shared/storyGenres";
+import { apiClient } from "@/lib/api-client";
 
 interface StoryFilters {
   genre?: string;
@@ -27,29 +28,12 @@ export default function PublicStories() {
 
   const { data: stories = [], isLoading } = useQuery<Story[]>({
     queryKey: ["/api/stories", filters],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      if (filters.genre) params.append('genre', filters.genre);
-      if (filters.moodCategory) params.append('moodCategory', filters.moodCategory);
-      if (filters.ageRating) params.append('ageRating', filters.ageRating);
-      if (filters.search) params.append('search', filters.search);
-      if (filters.emotionalTags?.length) {
-        filters.emotionalTags.forEach(tag => params.append('emotionalTags', tag));
-      }
-      
-      const response = await fetch(`/api/stories?${params.toString()}`);
-      if (!response.ok) throw new Error('Failed to fetch stories');
-      return response.json();
-    },
+    queryFn: () => apiClient.stories.list(filters),
   });
 
   const { data: availableFilters } = useQuery({
     queryKey: ["/api/stories/filters"],
-    queryFn: async () => {
-      const response = await fetch('/api/stories/filters');
-      if (!response.ok) throw new Error('Failed to fetch filters');
-      return response.json();
-    },
+    queryFn: () => apiClient.stories.getFilters(),
   });
 
   const handlePlayStory = (storyId: number) => {

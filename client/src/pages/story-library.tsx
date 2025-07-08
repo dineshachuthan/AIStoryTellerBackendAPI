@@ -38,6 +38,8 @@ import { useToast } from "@/hooks/use-toast";
 import { AppTopNavigation } from "@/components/app-top-navigation";
 import { apiRequest } from "@/lib/queryClient";
 import { UIMessages, getDynamicMessage } from "@shared/i18n-config";
+import { apiClient } from "@/lib/api-client";
+import { useStories } from "@/hooks/use-api";
 
 interface Story {
   id: number;
@@ -88,12 +90,9 @@ export default function StoryLibrary() {
         body: { title: "Untitled Story", storyType }
       });
       
-      const story = await apiRequest('/api/stories/draft', {
-        method: 'POST',
-        body: JSON.stringify({
-          title: "Untitled Story",
-          storyType
-        }),
+      const story = await apiClient.stories.create({
+        title: "Untitled Story",
+        storyType
       });
 
       console.log('Empty story created:', story);
@@ -118,11 +117,7 @@ export default function StoryLibrary() {
     setConvertingStories(prev => new Set(prev).add(storyId));
     
     try {
-      const response = await apiRequest(`/api/stories/${storyId}/convert-to-template`, {
-        method: "POST",
-        body: JSON.stringify({ makePublic: true }),
-        headers: { "Content-Type": "application/json" }
-      });
+      const response = await apiClient.roleplay.createTemplate(storyId);
       
       toast({
         title: "Success",
@@ -151,9 +146,8 @@ export default function StoryLibrary() {
     setDeletingStories(prev => new Set(prev).add(storyId));
     
     try {
-      await apiRequest(`/api/stories/${storyId}/archive`, {
-        method: "PUT"
-      });
+      // Archive the story
+      await apiClient.stories.update(storyId, { archived: true });
       
       toast({
         title: "Story Deleted",
@@ -161,7 +155,7 @@ export default function StoryLibrary() {
       });
       
       // Refresh the stories list
-      queryClient.invalidateQueries({ queryKey: ["/api/stories"] });
+      apiClient.invalidateQueries(["/api/stories"]);
       
     } catch (error) {
       toast({
@@ -178,8 +172,7 @@ export default function StoryLibrary() {
     }
   };
   
-  const { data: stories = [], isLoading } = useQuery<Story[]>({
-    queryKey: ["/api/stories", user?.id],
+  const { data: stories = [], isLoading } = useStories({
     enabled: !!user?.id,
   });
 
