@@ -44,7 +44,24 @@ router.post("/api/stories/:id/invitations", requireAuth, async (req, res) => {
 
     for (const invitation of invitations) {
       try {
-        const { contactMethod, contactValue, characterName, characterId, invitationName } = invitation;
+        const { email, phone, characterId } = invitation;
+        
+        // Determine contact method and value from email/phone fields
+        const contactMethod = email ? 'email' : 'phone';
+        const contactValue = email || phone;
+        
+        if (!contactValue) {
+          errors.push({
+            invitation,
+            error: 'No email or phone provided'
+          });
+          continue;
+        }
+        
+        // Get character name from story if characterId provided
+        const characterName = characterId && story.analysisResults?.characters ? 
+          story.analysisResults.characters.find((c: any) => c.id === characterId)?.name || 'a character' : 
+          'a character';
         
         // Create invitation token and link
         const invitationToken = `inv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -73,7 +90,7 @@ router.post("/api/stories/:id/invitations", requireAuth, async (req, res) => {
         if (contactMethod === 'email') {
           notificationResult = await notificationService.sendInvitation('email', {
             recipientContact: contactValue,
-            recipientName: invitation.recipientName || '',
+            recipientName: '', // We don't collect recipient names in the form
             characterName: characterName || 'a character',
             storyTitle: story.title,
             invitationLink: invitationLink,
@@ -82,7 +99,7 @@ router.post("/api/stories/:id/invitations", requireAuth, async (req, res) => {
         } else if (contactMethod === 'phone') {
           notificationResult = await notificationService.sendInvitation('sms', {
             recipientContact: contactValue,
-            recipientName: invitation.recipientName || '',
+            recipientName: '', // We don't collect recipient names in the form
             characterName: characterName || 'a character',
             storyTitle: story.title,
             invitationLink: invitationLink,
