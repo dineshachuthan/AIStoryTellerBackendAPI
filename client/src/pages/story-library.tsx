@@ -183,10 +183,8 @@ export default function StoryLibrary() {
     enabled: !!user?.id,
   });
 
-  // Filter for narration-complete stories (have narratorVoice or narratorVoiceType)
-  const narrationCompleteStories = stories.filter(story => 
-    story.narratorVoice || story.narratorVoiceType
-  );
+  // Show all user stories - no filtering needed
+  const narrationCompleteStories = stories;
 
   // Filter stories based on search query and get most recent 10
   const filteredStories = narrationCompleteStories.filter(story => 

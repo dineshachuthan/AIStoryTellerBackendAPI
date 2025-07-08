@@ -33,8 +33,8 @@ export default function Home() {
     enabled: !!user?.id,
   });
 
-  // Check if there are draft stories (stories without narrator voice)
-  const draftStories = stories.filter(story => !story.narratorVoice && !story.narratorVoiceType);
+  // All stories are considered draft stories now
+  const draftStories = stories;
 
   // Set initial collapsed state based on draft stories
   useEffect(() => {
