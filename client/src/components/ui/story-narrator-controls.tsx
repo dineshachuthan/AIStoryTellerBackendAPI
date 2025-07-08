@@ -590,20 +590,41 @@ export default function StoryNarratorControls({
                 </Button>
                 
                 {/* Volume Control */}
-                <div className="flex items-center gap-2 ml-4 bg-gray-800 rounded-full px-3 py-2" title={getMessage('upload_story.narration.tooltips.volume_control')}>
-                  <Volume2 className="w-5 h-5 text-gray-400" />
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    defaultValue="70"
-                    className="w-24 h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-green-500 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer"
-                    onChange={(e) => {
-                      if (audioRef.current) {
-                        audioRef.current.volume = parseInt(e.target.value) / 100;
-                      }
-                    }}
-                  />
+                <div className="flex items-center gap-1.5 ml-4 bg-gray-800 rounded-full px-2.5 py-1 border border-gray-700" title={getMessage('upload_story.narration.tooltips.volume_control')}>
+                  <Volume2 className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                  <div className="relative w-20">
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      defaultValue="70"
+                      className="w-full h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer opacity-0 relative z-10"
+                      onChange={(e) => {
+                        const value = parseInt(e.target.value);
+                        if (audioRef.current) {
+                          audioRef.current.volume = value / 100;
+                        }
+                        const track = e.target.nextElementSibling as HTMLElement;
+                        const thumb = track?.nextElementSibling as HTMLElement;
+                        if (track) {
+                          track.style.background = `linear-gradient(to right, #10b981 0%, #10b981 ${value}%, #4b5563 ${value}%, #4b5563 100%)`;
+                        }
+                        if (thumb) {
+                          thumb.style.left = `${value}%`;
+                        }
+                      }}
+                    />
+                    <div 
+                      className="absolute top-1/2 -translate-y-1/2 w-full h-1 bg-gray-600 rounded-lg pointer-events-none"
+                      style={{
+                        background: `linear-gradient(to right, #10b981 0%, #10b981 70%, #4b5563 70%, #4b5563 100%)`
+                      }}
+                    />
+                    <div 
+                      className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-green-500 rounded-full pointer-events-none shadow-sm"
+                      style={{ left: '70%', marginLeft: '-6px' }}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
