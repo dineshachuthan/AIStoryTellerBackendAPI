@@ -107,15 +107,12 @@ export default function StoryAnalysis() {
     try {
       // Check each emotion from this story specifically
       const emotionChecks = storyEmotions.map(async (emotion) => {
-        const response = await fetch(`/api/user-voice-emotions/${user.id}?emotion=${emotion}`, {
-          credentials: 'include'
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
+        try {
+          const data = await apiClient.voice.getUserVoiceEmotions(user.id, emotion);
           return { emotion, hasRecording: data.samples && data.samples.length > 0 };
+        } catch (error) {
+          return { emotion, hasRecording: false };
         }
-        return { emotion, hasRecording: false };
       });
 
       const results = await Promise.all(emotionChecks);
@@ -386,12 +383,7 @@ export default function StoryAnalysis() {
       // Update story title in database if AI generated a new one
       if (narrativeResponse.title && narrativeResponse.title !== story.title) {
         try {
-          await apiRequest(`/api/stories/${storyId}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ title: narrativeResponse.title }),
-            credentials: 'include'
-          });
+          await apiClient.stories.update(parseInt(storyId), { title: narrativeResponse.title });
           console.log('Story title updated to:', narrativeResponse.title);
         } catch (titleUpdateError) {
           console.error('Failed to update story title:', titleUpdateError);
@@ -510,13 +502,7 @@ export default function StoryAnalysis() {
         uploadType: 'manual',
       };
 
-      const story = await apiRequest('/api/stories', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(storyData),
-      });
+      const story = await apiClient.stories.create(storyData);
 
       return story;
     } catch (error) {

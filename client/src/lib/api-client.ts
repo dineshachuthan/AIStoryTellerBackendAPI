@@ -92,11 +92,21 @@ export class ApiClient {
     analyze: (id: number) => this.request<any>('POST', `/api/stories/${id}/analyze`),
     generateNarration: (id: number) => this.request<any>('POST', `/api/stories/${id}/generate-narration`),
     playNarration: (id: number) => this.request<any>('GET', `/api/stories/${id}/play`),
+    // New narration endpoints (based on routes.ts)
+    createNarration: (id: number) => this.request<any>('POST', `/api/stories/${id}/narration`),
+    generateNarrativeAudio: (id: number, data: { emotion: string; intensity: number; text: string }) =>
+      this.request<any>('POST', `/api/stories/${id}/narrative/audio`, data),
     getFilters: () => this.request<any>('GET', '/api/stories/filters'),
     uploadAudio: (formData: FormData) => 
       this.request<any>('POST', '/api/upload-audio', formData, {
         headers: {} // Let browser set Content-Type for FormData
       }),
+    // Narrative analysis endpoints
+    getNarrative: (id: number) => this.request<any>('GET', `/api/stories/${id}/narrative`),
+    createNarrative: (id: number) => this.request<any>('POST', `/api/stories/${id}/narrative`),
+    // Roleplay analysis endpoints
+    getRoleplay: (id: number) => this.request<any>('GET', `/api/stories/${id}/roleplay`),
+    createRoleplay: (id: number) => this.request<any>('POST', `/api/stories/${id}/roleplay`),
   };
   
   // Character endpoints
@@ -106,6 +116,12 @@ export class ApiClient {
     create: (data: any) => this.request<any>('POST', '/api/characters', data),
     update: (id: number, data: any) => this.request<any>('PATCH', `/api/characters/${id}`, data),
     delete: (id: number) => this.request<void>('DELETE', `/api/characters/${id}`),
+  };
+  
+  // Emotion endpoints
+  emotions = {
+    generateSample: (data: { emotion: string; intensity: number; text: string }) =>
+      this.request<any>('POST', '/api/emotions/generate-sample', data),
   };
   
   // Voice endpoints
@@ -118,6 +134,8 @@ export class ApiClient {
     generateNarratorVoice: () => this.request<any>('POST', '/api/voice/generate-narrator'),
     getEsmRecordings: () => this.request<any[]>('GET', '/api/user/esm-recordings'),
     getEsmTemplates: (storyId: number) => this.request<any>('GET', `/api/voice/esm-templates/${storyId}`),
+    getUserVoiceEmotions: (userId: string, emotion: string) => 
+      this.request<any>('GET', `/api/user-voice-emotions/${userId}?emotion=${emotion}`),
   };
   
   // Collaborative roleplay endpoints
