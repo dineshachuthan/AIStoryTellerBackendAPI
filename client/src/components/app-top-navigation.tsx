@@ -3,12 +3,15 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { AudioLines, LogOut, User, Loader2, Home, BookOpen } from "lucide-react";
+import { AudioLines, LogOut, User, Loader2, Home, BookOpen, Globe } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { useLanguage } from "@/contexts/language-context";
+import { LANGUAGE_CONFIG } from "@shared/language-config";
 
 export function AppTopNavigation() {
   const [, setLocation] = useLocation();
   const { user, logout } = useAuth();
+  const { language, setLanguage } = useLanguage();
 
   // Get session-based voice cloning status (no automatic polling)
   const { data: voiceCloningStatus } = useQuery({
@@ -26,6 +29,19 @@ export function AppTopNavigation() {
       ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
       : user.email ? user.email[0].toUpperCase()
       : 'U';
+  };
+
+  const getLanguageName = (lang: string) => {
+    const names: Record<string, string> = {
+      en: 'English',
+      es: 'Español',
+      fr: 'Français',
+      de: 'Deutsch',
+      ja: '日本語',
+      zh: '中文',
+      ko: '한국어'
+    };
+    return names[lang] || lang;
   };
 
   return (
@@ -79,6 +95,33 @@ export function AppTopNavigation() {
                 <BookOpen className="w-4 h-4 mr-2" />
                 My Stories
               </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Language Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-gray-600 text-gray-300 hover:bg-gray-700/20 hidden sm:flex"
+              >
+                <Globe className="w-4 h-4 mr-2" />
+                <span className="hidden md:inline">{language.toUpperCase()}</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-dark-card border-gray-700">
+              {LANGUAGE_CONFIG.supportedLanguages.map((lang) => (
+                <DropdownMenuItem
+                  key={lang}
+                  onClick={() => setLanguage(lang)}
+                  className={`text-gray-300 hover:text-white hover:bg-gray-700 ${
+                    language === lang ? 'bg-gray-800' : ''
+                  }`}
+                >
+                  {lang.toUpperCase()} - {getLanguageName(lang)}
+                </DropdownMenuItem>
+              ))}
             </DropdownMenuContent>
           </DropdownMenu>
 

@@ -34,8 +34,13 @@ export const LANGUAGE_CONFIG: LanguageConfig = {
  * For now returns default language until user profiles are implemented
  */
 export function getCurrentUserLanguage(): Language {
-  // TODO: Once user profiles are implemented, get language from user preferences
-  // For now, return default language
+  // Check localStorage for selected language
+  if (typeof window !== 'undefined') {
+    const saved = localStorage.getItem('selectedLanguage');
+    if (saved && LANGUAGE_CONFIG.supportedLanguages.includes(saved as Language)) {
+      return saved as Language;
+    }
+  }
   return LANGUAGE_CONFIG.defaultLanguage;
 }
 

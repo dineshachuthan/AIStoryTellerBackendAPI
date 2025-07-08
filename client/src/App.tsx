@@ -9,6 +9,7 @@ import { AppTopNavigation } from "@/components/app-top-navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { sessionActivityTracker } from "@/lib/session-activity";
 import { useEffect } from "react";
+import { LanguageProvider } from "@/contexts/language-context";
 import Home from "@/pages/home";
 import Chat from "@/pages/chat";
 import CreateCharacter from "@/pages/create-character";
@@ -107,7 +108,9 @@ function AppContent() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AppContent />
+      <LanguageProvider>
+        <AppContent />
+      </LanguageProvider>
     </QueryClientProvider>
   );
 }
