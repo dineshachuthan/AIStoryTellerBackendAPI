@@ -32,6 +32,10 @@ export class GoogleAuthProvider extends BaseOAuthProvider {
   }
 
   extractUserInfo(profile: any): AuthProviderInfo {
+    // Extract locale/language from Google profile
+    const locale = profile._json?.locale || 'en'; // e.g., 'en-US', 'hi-IN', 'ta-IN'
+    const language = locale.split('-')[0]; // Extract just the language code
+    
     return {
       id: profile.id,
       email: profile.emails?.[0]?.value || '',
@@ -41,6 +45,8 @@ export class GoogleAuthProvider extends BaseOAuthProvider {
       avatarUrl: profile.photos?.[0]?.value || '',
       provider: this.name,
       providerId: profile.id,
+      locale: locale,
+      language: language,
     };
   }
 }

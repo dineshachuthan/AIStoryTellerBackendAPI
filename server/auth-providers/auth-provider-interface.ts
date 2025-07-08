@@ -20,6 +20,8 @@ export interface AuthProviderInfo {
   avatarUrl?: string;
   provider: string;
   providerId: string;
+  locale?: string; // Full locale like 'en-US', 'hi-IN', 'ta-IN'
+  language?: string; // Just the language code like 'en', 'hi', 'ta'
 }
 
 export interface IAuthProvider {

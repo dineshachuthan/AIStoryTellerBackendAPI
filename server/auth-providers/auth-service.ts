@@ -68,7 +68,7 @@ export class AuthService {
       const { externalIdService } = await import('../external-id-service');
       const externalId = externalIdService.generateExternalId();
 
-      // Create new user with external ID
+      // Create new user with external ID and language
       const newUser = await storage.createUser({
         id: `${authInfo.provider}_${authInfo.providerId}`,
         email: authInfo.email,
@@ -76,7 +76,8 @@ export class AuthService {
         lastName: authInfo.lastName || '',
         displayName: authInfo.displayName || authInfo.email,
         profileImageUrl: authInfo.avatarUrl || null,
-        externalId: externalId
+        externalId: externalId,
+        language: authInfo.language || 'en' // Store language from OAuth or default to English
       });
 
       // Link provider to new user
