@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { Headphones, Play, Pause, Save, Download, Loader2, RefreshCw } from 'lucide-react';
+import { Headphones, Play, Pause, Save, Download, Loader2, RefreshCw, SkipBack, SkipForward, Volume2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 
@@ -41,6 +41,8 @@ export default function StoryNarratorControls({
   
   // Audio playback
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const currentSegmentRef = useRef<number>(0);
+  const isMountedRef = useRef<boolean>(true);
   const [currentSegment, setCurrentSegment] = useState(0);
   const [progress, setProgress] = useState(0);
 
@@ -92,54 +94,90 @@ export default function StoryNarratorControls({
     enabled: !!user && !!storyId,
   });
 
-  // Initialize audio element
+  // Initialize audio element once
   useEffect(() => {
     if (!audioRef.current) {
       audioRef.current = new Audio();
     }
+    isMountedRef.current = true;
+    
+    return () => {
+      // Critical cleanup on unmount
+      isMountedRef.current = false;
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = '';
+        audioRef.current = null;
+      }
+    };
+  }, []); // Empty deps - only run once
+
+  // Set up audio event handlers
+  useEffect(() => {
+    if (!audioRef.current) return;
     
     const audio = audioRef.current;
-    const activeNarration = tempNarration || savedNarration;
     
-    audio.ontimeupdate = () => {
+    // Store current segment in a ref to avoid stale closure
+    currentSegmentRef.current = currentSegment;
+    
+    const handleTimeUpdate = () => {
+      const activeNarration = tempNarration || savedNarration;
       if (audio.duration && activeNarration) {
         // Calculate overall progress across all segments
         const segmentProgress = (audio.currentTime / audio.duration);
-        const completedSegments = currentSegment;
+        const completedSegments = currentSegmentRef.current;
         const totalSegments = activeNarration.segments.length;
         const overallProgress = ((completedSegments + segmentProgress) / totalSegments) * 100;
         setProgress(overallProgress);
       }
     };
 
-    audio.onended = () => {
+    const handleEnded = () => {
+      // Check if component is still mounted before auto-advancing
+      if (!isMountedRef.current) {
+        return;
+      }
+      
       // Auto-play next segment
-      if (isPlaying) {
-        const activeNarration = tempNarration || savedNarration;
-        if (activeNarration && currentSegment < activeNarration.segments.length - 1) {
-          setCurrentSegment(prev => prev + 1);
-        } else {
-          setIsPlaying(false);
-          setCurrentSegment(0);
-          setProgress(0);
+      const activeNarration = tempNarration || savedNarration;
+      const currentIdx = currentSegmentRef.current;
+      
+      if (activeNarration && currentIdx < activeNarration.segments.length - 1 && isPlaying) {
+        // Move to next segment
+        const nextSegmentIndex = currentIdx + 1;
+        setCurrentSegment(nextSegmentIndex);
+        currentSegmentRef.current = nextSegmentIndex;
+        
+        // Play next segment immediately if still mounted
+        const nextSegment = activeNarration.segments[nextSegmentIndex];
+        if (nextSegment?.audioUrl && isMountedRef.current) {
+          audio.src = nextSegment.audioUrl;
+          audio.play().catch(err => {
+            console.error('Failed to auto-play next segment:', err);
+            setIsPlaying(false);
+          });
         }
+      } else {
+        // End of narration
+        setIsPlaying(false);
+        setCurrentSegment(0);
+        currentSegmentRef.current = 0;
+        setProgress(0);
       }
     };
+
+    audio.addEventListener('timeupdate', handleTimeUpdate);
+    audio.addEventListener('ended', handleEnded);
 
     return () => {
-      // Only pause on unmount, not on every re-render
-      if (!isPlaying) {
-        audio.pause();
-      }
+      // Remove event listeners
+      audio.removeEventListener('timeupdate', handleTimeUpdate);
+      audio.removeEventListener('ended', handleEnded);
     };
-  }, [tempNarration, savedNarration, currentSegment]); // Remove isPlaying from dependencies
+  }, [tempNarration, savedNarration, currentSegment]);
 
-  // Auto-play when segment changes
-  useEffect(() => {
-    if (isPlaying && currentSegment > 0) {
-      playCurrentSegment();
-    }
-  }, [currentSegment, isPlaying]);
+  // Remove auto-play effect to avoid conflicts with onended handler
 
   // 1. Generate Narration (costs money)
   const generateNarration = async () => {
@@ -244,6 +282,10 @@ export default function StoryNarratorControls({
       audioRef.current.pause();
       setIsPlaying(false);
     } else {
+      // Stop any existing audio first to prevent overlaps
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      
       // Play
       setIsPlaying(true);
       const segment = activeNarration.segments[currentSegment];
@@ -253,6 +295,8 @@ export default function StoryNarratorControls({
         
         // Wait for audio to be ready before playing
         const playAudio = () => {
+          if (!isMountedRef.current || !audioRef.current) return;
+          
           audioRef.current.play().catch(err => {
             console.error('Playback error:', err);
             console.error('Error message:', err.message);
@@ -378,6 +422,152 @@ export default function StoryNarratorControls({
               className="bg-gradient-to-r from-purple-500 to-blue-500 h-3 rounded-full transition-all duration-500 ease-out shadow-lg"
               style={{ width: `${progress}%` }}
             />
+          </div>
+        </div>
+      )}
+
+      {/* TV-Style Media Player */}
+      {hasAnyNarration && (
+        <div className="mb-6">
+          {/* TV Frame */}
+          <div className="bg-gray-900 rounded-3xl p-4 shadow-2xl">
+            {/* TV Screen */}
+            <div className="bg-black rounded-2xl overflow-hidden relative">
+              {/* Screen Content */}
+              <div className={`p-8 min-h-[300px] flex flex-col justify-center ${!isPlaying && 'opacity-50'}`}>
+                {/* Audio Visualizer */}
+                <div className="flex items-center justify-center gap-2 mb-6 h-24">
+                  {[...Array(20)].map((_, i) => (
+                    <div
+                      key={i}
+                      className={`w-2 bg-gradient-to-t from-green-500 via-yellow-500 to-red-500 rounded-full transition-all ${
+                        isPlaying ? 'animate-audio-wave' : ''
+                      }`}
+                      style={{
+                        height: isPlaying ? '100%' : '10%',
+                        animationDelay: `${i * 0.05}s`,
+                        animationDuration: `${0.6 + Math.random() * 0.4}s`,
+                        opacity: isPlaying ? 1 : 0.3
+                      }}
+                    />
+                  ))}
+                </div>
+                
+                {/* Current Text Display */}
+                <div className="text-center px-4">
+                  {isPlaying && activeNarration ? (
+                    <div>
+                      <p className="text-green-400 text-sm mb-2 font-mono">
+                        NOW PLAYING - SEGMENT {currentSegment + 1}/{activeNarration.segments.length}
+                      </p>
+                      <p className="text-white text-xl leading-relaxed font-medium">
+                        "{activeNarration.segments[currentSegment]?.text || 'Loading...'}"
+                      </p>
+                    </div>
+                  ) : (
+                    <div>
+                      <p className="text-gray-500 text-lg">Press play to start narration</p>
+                      <p className="text-gray-600 text-sm mt-2">{activeNarration?.segments.length || 0} segments ready</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {/* TV Status Indicator */}
+              <div className="absolute top-4 right-4">
+                <div className={`w-3 h-3 rounded-full ${isPlaying ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
+              </div>
+            </div>
+            
+            {/* TV Control Panel */}
+            <div className="mt-4 bg-gray-800 rounded-xl p-4">
+              {/* Progress Bar */}
+              <div className="mb-4">
+                <div className="w-full bg-gray-700 rounded-full h-2 overflow-hidden">
+                  <div 
+                    className="bg-gradient-to-r from-green-500 to-blue-500 h-2 rounded-full transition-all duration-500"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+                <div className="flex justify-between text-xs text-gray-400 mt-1">
+                  <span>00:00</span>
+                  <span>{Math.round(progress)}%</span>
+                </div>
+              </div>
+              
+              {/* Media Controls */}
+              <div className="flex items-center justify-center gap-4">
+                {/* Skip Previous */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-gray-400 hover:text-white"
+                  onClick={() => {
+                    if (currentSegment > 0) {
+                      setCurrentSegment(currentSegment - 1);
+                      currentSegmentRef.current = currentSegment - 1;
+                      if (isPlaying) playNarration();
+                    }
+                  }}
+                  disabled={currentSegment === 0}
+                >
+                  <SkipBack className="w-5 h-5" />
+                </Button>
+                
+                {/* Play/Pause */}
+                <Button
+                  onClick={() => {
+                    if (isPlaying) {
+                      pauseNarration();
+                    } else {
+                      playNarration();
+                    }
+                  }}
+                  size="icon"
+                  className="w-14 h-14 rounded-full bg-green-600 hover:bg-green-700 text-white"
+                >
+                  {isPlaying ? (
+                    <Pause className="w-6 h-6" />
+                  ) : (
+                    <Play className="w-6 h-6 ml-1" />
+                  )}
+                </Button>
+                
+                {/* Skip Next */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-gray-400 hover:text-white"
+                  onClick={() => {
+                    if (activeNarration && currentSegment < activeNarration.segments.length - 1) {
+                      setCurrentSegment(currentSegment + 1);
+                      currentSegmentRef.current = currentSegment + 1;
+                      if (isPlaying) playNarration();
+                    }
+                  }}
+                  disabled={!activeNarration || currentSegment >= activeNarration.segments.length - 1}
+                >
+                  <SkipForward className="w-5 h-5" />
+                </Button>
+                
+                {/* Volume Control */}
+                <div className="flex items-center gap-2 ml-4">
+                  <Volume2 className="w-5 h-5 text-gray-400" />
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    defaultValue="70"
+                    className="w-24 h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer"
+                    onChange={(e) => {
+                      if (audioRef.current) {
+                        audioRef.current.volume = parseInt(e.target.value) / 100;
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
