@@ -415,16 +415,21 @@ This is a full-stack collaborative storytelling platform that enables users to c
 ## TODO List - January 20, 2025
 
 ### Current Task - Collaborative Invitation System  
-**Progress**: Frontend dialog and backend API endpoint now fully operational
+**Progress**: Complete invitation flow from creation to landing page now operational
 - ✅ InviteCollaboratorsDialog component integrated in story library
 - ✅ "Invite Collaborators" button added to all story cards
 - ✅ Backend API endpoint `/api/stories/{id}/invitations` created using direct database operations
 - ✅ Database insert using storyInvitations table with proper field mapping
+- ✅ Fixed prop passing issue in InviteCollaboratorsDialog (story object now properly passed)
+- ✅ Added GET route `/api/stories/{id}/invitations` to fetch invitations for testing
+- ✅ Created invitation landing page at `/invite/{token}` accessible to both authenticated and anonymous users
+- ✅ Backend endpoint `/api/invitations/{token}` fetches invitation with story and inviter details
+- ✅ Updated App.tsx routing to place invitation route outside authentication check for public access
 - **Next Steps**:
-  - Test invitation creation flow end-to-end
-  - Implement invitation landing page for invitees
-  - Add email/SMS notification sending
-  - Create voice recording flow for invitees
+  - Implement voice recording functionality in invitation landing page
+  - Create accept invitation flow to update status
+  - Add roleplay submission for guest users
+  - Create multi-voice story playback system
 
 ### High Priority Tasks
 1. **Microservices Migration** - PHASE 0-4 COMPLETED - Using Adapter Pattern for Replit Environment

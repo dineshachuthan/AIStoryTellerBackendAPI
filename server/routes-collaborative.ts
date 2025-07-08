@@ -5,9 +5,9 @@ import { getBaseUrl } from "./oauth-config";
 import { notificationService } from "./notification-service";
 import { storage } from "./storage";
 import { db } from "./db";
-import { storyInvitations } from "@shared/schema";
-import { db } from "./db";
-import { storyInvitations } from "@shared/schema";
+import { storyInvitations, stories, users } from "@shared/schema";
+import { eq } from "drizzle-orm";
+import { nanoid } from "nanoid";
 
 const router = Router();
 
@@ -121,6 +121,80 @@ router.get("/api/collaborative/notification-status", requireAuth, async (req, re
   } catch (error) {
     console.error("Failed to get notification status:", error);
     res.status(500).json({ message: "Failed to get notification status" });
+  }
+});
+
+// Get invitations for a specific story
+router.get('/api/stories/:id/invitations', requireAuth, async (req, res) => {
+  try {
+    const storyId = parseInt(req.params.id);
+    const userId = (req as any).user.id;
+    
+    // Verify user owns the story
+    const story = await storage.getStory(storyId);
+    if (!story || story.userId !== userId) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    
+    // Get invitations directly from database
+    const invitations = await db
+      .select()
+      .from(storyInvitations)
+      .where(eq(storyInvitations.storyId, storyId));
+      
+    res.json(invitations);
+  } catch (error) {
+    console.error('Error getting invitations:', error);
+    res.status(500).json({ error: 'Failed to get invitations' });
+  }
+});
+
+// Get invitation by token (no auth required - for invitees)
+router.get('/api/invitations/:token', async (req, res) => {
+  try {
+    const { token } = req.params;
+    
+    // Get invitation with story details
+    const [invitation] = await db
+      .select({
+        id: storyInvitations.id,
+        storyId: storyInvitations.storyId,
+        inviterId: storyInvitations.inviterId,
+        token: storyInvitations.token,
+        characterId: storyInvitations.characterId,
+        characterName: storyInvitations.characterName,
+        inviteeEmail: storyInvitations.inviteeEmail,
+        inviteePhone: storyInvitations.inviteePhone,
+        expiresAt: storyInvitations.expiresAt,
+        status: storyInvitations.status,
+        story: {
+          title: stories.title,
+          summary: stories.summary
+        },
+        inviter: {
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email
+        }
+      })
+      .from(storyInvitations)
+      .leftJoin(stories, eq(storyInvitations.storyId, stories.id))
+      .leftJoin(users, eq(storyInvitations.inviterId, users.id))
+      .where(eq(storyInvitations.token, token));
+      
+    if (!invitation) {
+      return res.status(404).json({ error: 'Invitation not found' });
+    }
+    
+    // Check if expired
+    if (new Date(invitation.expiresAt) < new Date()) {
+      return res.status(410).json({ error: 'Invitation expired' });
+    }
+    
+    res.json(invitation);
+  } catch (error) {
+    console.error('Error getting invitation:', error);
+    res.status(500).json({ error: 'Failed to get invitation' });
   }
 });
 

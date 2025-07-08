@@ -642,12 +642,14 @@ export default function StoryLibrary() {
       {/* Invite Collaborators Dialog */}
       {selectedStoryForInvite && (
         <InviteCollaboratorsDialog
-          isOpen={inviteDialogOpen}
-          onClose={() => {
-            setInviteDialogOpen(false);
-            setSelectedStoryForInvite(null);
+          open={inviteDialogOpen}
+          onOpenChange={(open) => {
+            setInviteDialogOpen(open);
+            if (!open) {
+              setSelectedStoryForInvite(null);
+            }
           }}
-          storyId={selectedStoryForInvite.id}
+          story={selectedStoryForInvite}
           storyTitle={selectedStoryForInvite.title}
         />
       )}
