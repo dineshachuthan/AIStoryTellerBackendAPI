@@ -3,7 +3,7 @@
  * Manages default language settings for the application
  */
 
-export type Language = 'en' | 'es' | 'fr' | 'de' | 'ja' | 'zh' | 'ko';
+export type Language = 'en' | 'ta';
 
 export interface LanguageConfig {
   defaultLanguage: Language;
@@ -17,15 +17,10 @@ export interface LanguageConfig {
 export const LANGUAGE_CONFIG: LanguageConfig = {
   defaultLanguage: 'en',
   fallbackLanguage: 'en',
-  supportedLanguages: ['en', 'es', 'fr', 'de', 'ja', 'zh', 'ko'],
+  supportedLanguages: ['en', 'ta'],
   locale: {
     en: 'en-US',
-    es: 'es-ES',
-    fr: 'fr-FR',
-    de: 'de-DE',
-    ja: 'ja-JP',
-    zh: 'zh-CN',
-    ko: 'ko-KR'
+    ta: 'ta-IN'
   }
 };
 

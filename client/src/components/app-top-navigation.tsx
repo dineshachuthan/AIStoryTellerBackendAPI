@@ -34,12 +34,7 @@ export function AppTopNavigation() {
   const getLanguageName = (lang: string) => {
     const names: Record<string, string> = {
       en: 'English',
-      es: 'Español',
-      fr: 'Français',
-      de: 'Deutsch',
-      ja: '日本語',
-      zh: '中文',
-      ko: '한국어'
+      ta: 'தமிழ்'
     };
     return names[lang] || lang;
   };

@@ -15,12 +15,7 @@ export interface I18nMessage {
   variables?: string[];
   templates: {
     en: string;
-    es?: string;
-    fr?: string;
-    de?: string;
-    ja?: string;
-    zh?: string;
-    ko?: string;
+    ta?: string;
   };
 }
 
@@ -36,12 +31,7 @@ export const MESSAGES = {
         severity: 'low' as MessageSeverity,
         templates: {
           en: 'Home',
-          es: 'Inicio',
-          fr: 'Accueil',
-          de: 'Startseite',
-          ja: 'ホーム',
-          zh: '首页',
-          ko: '홈'
+          ta: 'முகப்பு'
         }
       },
       my_stories: {

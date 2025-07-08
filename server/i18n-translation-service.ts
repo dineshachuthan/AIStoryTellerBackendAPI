@@ -13,14 +13,12 @@ interface TranslationBatch {
 }
 
 /**
- * Translate a batch of messages to a target language using OpenAI
+ * Translate a batch of messages to ALL target languages at once using OpenAI
  */
-async function translateBatch(
-  batch: TranslationBatch[],
-  targetLanguage: Language,
-  languageName: string
-): Promise<Record<string, string>> {
-  const prompt = `You are a professional translator for a storytelling web application. Translate the following English UI text to ${languageName} (${targetLanguage}).
+async function translateBatchToAllLanguages(
+  batch: TranslationBatch[]
+): Promise<Record<string, Record<Language, string>>> {
+  const prompt = `You are a professional translator for a storytelling web application. Translate the following English UI text to ALL these languages: Spanish (es), French (fr), German (de), Japanese (ja), Chinese Simplified (zh), and Korean (ko).
 
 Context: This is for a collaborative storytelling platform with features like voice recording, story narration, and video generation.
 
@@ -30,9 +28,21 @@ Important guidelines:
 - Preserve any HTML tags if present
 - For button text, keep translations concise
 - For error messages, be clear and helpful
-- Use natural, idiomatic expressions in the target language
+- Use natural, idiomatic expressions in each target language
 
-Translate each item and return a JSON object with the key as the property name and the translation as the value.
+Return a JSON object where each key is the message key, and the value is an object with language codes as keys and translations as values.
+
+Example format:
+{
+  "home.title.main": {
+    "es": "Crea Historias Asombrosas",
+    "fr": "Créez des Histoires Incroyables",
+    "de": "Erstelle Erstaunliche Geschichten",
+    "ja": "素晴らしい物語を作成",
+    "zh": "创作精彩故事",
+    "ko": "놀라운 이야기 만들기"
+  }
+}
 
 Items to translate:
 ${JSON.stringify(batch, null, 2)}`;
@@ -43,7 +53,7 @@ ${JSON.stringify(batch, null, 2)}`;
       messages: [
         {
           role: "system",
-          content: "You are a professional translator specializing in UI/UX text localization."
+          content: "You are a professional translator specializing in UI/UX text localization. Provide translations for all requested languages."
         },
         {
           role: "user",
@@ -51,22 +61,24 @@ ${JSON.stringify(batch, null, 2)}`;
         }
       ],
       response_format: { type: "json_object" },
-      temperature: 0.3 // Lower temperature for more consistent translations
+      temperature: 0.3,
+      max_tokens: 4000
     });
 
     const translations = JSON.parse(response.choices[0].message.content || "{}");
     return translations;
   } catch (error) {
-    console.error(`Error translating batch to ${targetLanguage}:`, error);
+    console.error(`Error translating batch:`, error);
     return {};
   }
 }
 
 /**
- * Extract all messages that need translation from the MESSAGES object
+ * Extract only messages that NEED translation (missing translations) from the MESSAGES object
  */
-function extractMessagesForTranslation(
+function extractMessagesNeedingTranslation(
   obj: any,
+  targetLanguages: Language[],
   parentKey: string = ""
 ): TranslationBatch[] {
   const messages: TranslationBatch[] = [];
@@ -76,15 +88,23 @@ function extractMessagesForTranslation(
 
     if (value && typeof value === "object") {
       if (value.templates && value.templates.en) {
-        // This is a message object with templates
-        messages.push({
-          key: fullKey,
-          englishText: value.templates.en,
-          context: value.type || undefined
-        });
+        // Check if any target language is missing
+        const missingLanguages = targetLanguages.filter(
+          lang => lang !== 'en' && (!value.templates[lang] || value.templates[lang] === '')
+        );
+        
+        if (missingLanguages.length > 0) {
+          // This message needs translation for at least one language
+          messages.push({
+            key: fullKey,
+            englishText: value.templates.en,
+            context: value.type || undefined,
+            missingLanguages
+          });
+        }
       } else {
         // Recurse into nested objects
-        messages.push(...extractMessagesForTranslation(value, fullKey));
+        messages.push(...extractMessagesNeedingTranslation(value, targetLanguages, fullKey));
       }
     }
   }
@@ -149,52 +169,48 @@ export async function generateAllTranslations(): Promise<void> {
   const messagesToTranslate = extractMessagesForTranslation(MESSAGES);
   console.log(`Found ${messagesToTranslate.length} messages to translate`);
 
-  // Group messages into batches of 20 for efficient API usage
-  const batchSize = 20;
+  // Group messages into batches of 30 for more efficient API usage
+  const batchSize = 30;
   const batches: TranslationBatch[][] = [];
   for (let i = 0; i < messagesToTranslate.length; i += batchSize) {
     batches.push(messagesToTranslate.slice(i, i + batchSize));
   }
 
-  // Translate to each target language
+  // Translate all languages at once for each batch
   const allTranslations: Record<string, Record<Language, string>> = {};
 
-  for (const lang of LANGUAGE_CONFIG.supportedLanguages) {
-    if (lang === "en") continue; // Skip English, it's our source
+  console.log(`\nTranslating to all languages (es, fr, de, ja, zh, ko)...`);
+  console.log(`Processing ${batches.length} batches with delays to avoid rate limiting...`);
 
-    const languageNames: Record<Language, string> = {
-      en: "English",
-      es: "Spanish",
-      fr: "French", 
-      de: "German",
-      ja: "Japanese",
-      zh: "Chinese (Simplified)",
-      ko: "Korean"
-    };
-
-    console.log(`\nTranslating to ${languageNames[lang]} (${lang})...`);
-
-    let translatedCount = 0;
-    for (const [index, batch] of batches.entries()) {
-      console.log(`  Processing batch ${index + 1}/${batches.length}...`);
-      
-      const translations = await translateBatch(batch, lang, languageNames[lang]);
+  for (const [index, batch] of batches.entries()) {
+    console.log(`\n  Processing batch ${index + 1}/${batches.length} (${batch.length} messages)...`);
+    
+    try {
+      const batchTranslations = await translateBatchToAllLanguages(batch);
       
       // Store translations
-      for (const [key, translation] of Object.entries(translations)) {
-        if (!allTranslations[key]) {
-          allTranslations[key] = { en: "" };
-        }
-        allTranslations[key][lang] = translation;
-        translatedCount++;
+      let successCount = 0;
+      for (const [key, translations] of Object.entries(batchTranslations)) {
+        allTranslations[key] = { en: "", ...translations };
+        successCount++;
       }
-
-      // Add a small delay to avoid rate limiting
-      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      console.log(`  ✓ Successfully translated ${successCount} messages`);
+      
+      // Add a 2-second delay between batches to avoid rate limiting
+      if (index < batches.length - 1) {
+        console.log(`  Waiting 2 seconds before next batch...`);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    } catch (error) {
+      console.error(`  ✗ Error in batch ${index + 1}:`, error);
+      // Continue with next batch even if one fails
     }
-
-    console.log(`  Completed ${translatedCount} translations for ${lang}`);
   }
+
+  const totalTranslated = Object.keys(allTranslations).length;
+  console.log(`\n✓ Total messages translated: ${totalTranslated}`);
+  
 
   // Generate the updated TypeScript file
   console.log("\nGenerating updated i18n-hierarchical.ts file...");
