@@ -1134,7 +1134,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         emotion,
         narratorProfile,
         voiceId,
-        forceRegenerate
+        forceRegenerate,
+        storyId = 0  // Default to 0 for admin testing
       } = req.body;
 
       if (!text) {
@@ -1173,6 +1174,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           intensity: 5,
           voice: voiceId || "N1tpb4Gkzo0sjT3Jl3Bs", // Use your new ElevenLabs voice as default
           userId,
+          storyId,
           narratorProfile: {
             language: 'en',
             locale: 'en-US'
@@ -1212,6 +1214,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         intensity: 5,
         voice: voiceId || "N1tpb4Gkzo0sjT3Jl3Bs",
         userId,
+        storyId,
         conversationStyle,
         narratorProfile: {
           language: 'en',
