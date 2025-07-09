@@ -59,7 +59,9 @@ export function InviteCollaboratorsDialog({
       
       // Store created invitations for display
       if (data && data.results) {
-        setCreatedInvitations(data.results);
+        // Extract invitation objects from results array
+        const invitations = data.results.map((result: any) => result.invitation);
+        setCreatedInvitations(invitations);
       }
       
       // Don't close dialog, let user see the links
