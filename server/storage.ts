@@ -374,7 +374,16 @@ export class DatabaseStorage implements IStorage {
       locale: users.locale,
       nativeLanguage: users.nativeLanguage
     }).from(users).where(eq(users.id, userId));
-    return user || undefined;
+    
+    if (!user || !user.language) {
+      return undefined;
+    }
+    
+    return {
+      language: user.language,
+      locale: user.locale || undefined,
+      nativeLanguage: user.nativeLanguage || undefined
+    };
   }
 
   async updateUserLanguage(userId: string, language: string, locale?: string, nativeLanguage?: string): Promise<void> {
@@ -921,6 +930,8 @@ export class DatabaseStorage implements IStorage {
   // Story Analysis operations (duplicates removed)
 
   // Story Customization operations
+  // NOTE: These methods require a storyCustomizations table which doesn't exist yet
+  // Placeholder implementation for future use
   async createOrUpdateStoryCustomization(customization: {
     originalStoryId: number;
     customizedByUserId: string;
@@ -930,33 +941,13 @@ export class DatabaseStorage implements IStorage {
     customEmotionMappings: any;
     isPrivate: boolean;
   }): Promise<void> {
-    // For now, store in a simple JSON format in story metadata
-    // In a full implementation, this would use a dedicated storyCustomizations table
-    const story = await this.getStory(customization.originalStoryId);
-    if (story) {
-      await this.updateStory(customization.originalStoryId, {
-        metadata: {
-          ...story.metadata,
-          customizations: {
-            [customization.customizedByUserId]: {
-              customTitle: customization.customTitle,
-              customCharacterImages: customization.customCharacterImages,
-              customVoiceAssignments: customization.customVoiceAssignments,
-              customEmotionMappings: customization.customEmotionMappings,
-              isPrivate: customization.isPrivate,
-              updatedAt: new Date()
-            }
-          }
-        }
-      });
-    }
+    // TODO: Implement with proper storyCustomizations table
+    console.warn('Story customization not yet implemented - requires storyCustomizations table');
   }
 
   async getStoryCustomization(storyId: number, userId: string): Promise<any> {
-    const story = await this.getStory(storyId);
-    if (story?.metadata?.customizations?.[userId]) {
-      return story.metadata.customizations[userId];
-    }
+    // TODO: Implement with proper storyCustomizations table
+    console.warn('Story customization retrieval not yet implemented - requires storyCustomizations table');
     return null;
   }
 
