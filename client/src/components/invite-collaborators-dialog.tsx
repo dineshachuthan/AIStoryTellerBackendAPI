@@ -58,8 +58,8 @@ export function InviteCollaboratorsDialog({
       queryClient.invalidateQueries({ queryKey: ['/api/stories', story.id, 'invitations'] });
       
       // Store created invitations for display
-      if (data && data.invitations) {
-        setCreatedInvitations(data.invitations);
+      if (data && data.results) {
+        setCreatedInvitations(data.results);
       }
       
       // Don't close dialog, let user see the links
