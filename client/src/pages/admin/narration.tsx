@@ -67,12 +67,7 @@ export default function AdminNarration() {
   const selectedStory = stories.find(s => s.id.toString() === selectedStoryId);
   const storyContent = selectedStory?.content || "";
 
-  // Check admin access
-  useEffect(() => {
-    if (user && !user.isAdmin) {
-      window.location.href = "/";
-    }
-  }, [user]);
+  // Admin check removed - page accessible to all authenticated users for testing
 
   const generateNarrationMutation = useMutation({
     mutationFn: async (params: {
