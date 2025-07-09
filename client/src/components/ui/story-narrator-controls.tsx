@@ -387,12 +387,6 @@ export default function StoryNarratorControls({
   const activeNarration = tempNarration || savedNarration;
   const hasAnyNarration = tempNarration || savedNarration;
 
-  console.log('StoryNarratorControls - user:', user);
-  console.log('StoryNarratorControls - storyId:', storyId);
-  console.log('StoryNarratorControls - savedNarration:', savedNarration);
-  console.log('StoryNarratorControls - tempNarration:', tempNarration);
-  console.log('StoryNarratorControls - hasAnyNarration:', hasAnyNarration);
-
   return (
     <div className={`bg-gradient-to-br from-purple-900/20 to-blue-900/20 p-6 rounded-xl border border-purple-500/30 ${className}`}>
       {/* Header */}
@@ -424,6 +418,34 @@ export default function StoryNarratorControls({
       </div>
 
 
+
+      {/* Generate button when no narration exists */}
+      {!hasAnyNarration && (
+        <div className="text-center py-8">
+          <p className="text-white/70 mb-4">No narration generated yet</p>
+          <Button
+            onClick={generateNarration}
+            disabled={isGenerating || !canNarrate || !!savedNarration}
+            size="lg"
+            className="bg-purple-600 hover:bg-purple-700 text-white"
+          >
+            {isGenerating ? (
+              <>
+                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                Generating Narration...
+              </>
+            ) : (
+              <>
+                <Download className="w-5 h-5 mr-2" />
+                Generate Narration
+              </>
+            )}
+          </Button>
+          {!canNarrate && (
+            <p className="text-sm text-red-400 mt-2">You need to set up a narrator voice first</p>
+          )}
+        </div>
+      )}
 
       {/* TV-Style Media Player */}
       {hasAnyNarration && (

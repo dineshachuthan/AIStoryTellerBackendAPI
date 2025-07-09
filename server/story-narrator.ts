@@ -217,7 +217,7 @@ export class StoryNarrator {
       
       try {
         // Detect emotion and character for this chunk
-        const chunkContext = this.detectChunkContext(chunk, extractedEmotions, story.extractedCharacters || []);
+        const chunkContext = this.detectChunkContext(chunk, extractedEmotions, []);
         
         // Get orchestrated voice parameters
         const voiceSettings = await voiceOrchestrationService.calculateVoiceParameters(
