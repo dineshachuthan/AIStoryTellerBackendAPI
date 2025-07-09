@@ -561,6 +561,49 @@ router.get("/api/invitations/:token", async (req, res) => {
   }
 });
 
+// Accept narration invitation
+router.post("/api/invitations/:token/accept", async (req, res) => {
+  const { token } = req.params;
+
+  try {
+    // Get invitation details
+    const invitationResult = await pool.query(`
+      SELECT * FROM story_invitations WHERE invitation_token = $1
+    `, [token]);
+
+    if (invitationResult.rows.length === 0) {
+      return res.status(404).json({ message: "Invitation not found" });
+    }
+
+    const invitation = invitationResult.rows[0];
+
+    // Check if expired
+    if (new Date(invitation.expires_at) < new Date()) {
+      return res.status(400).json({ message: "Invitation has expired" });
+    }
+
+    // Check if already accepted
+    if (invitation.status !== 'pending') {
+      return res.status(400).json({ message: "Invitation has already been used" });
+    }
+
+    // Update invitation status
+    await pool.query(`
+      UPDATE story_invitations 
+      SET status = 'accepted', accepted_at = NOW() 
+      WHERE id = $1
+    `, [invitation.id]);
+
+    res.json({ 
+      message: "Invitation accepted successfully",
+      storyId: invitation.story_id
+    });
+  } catch (error) {
+    console.error("Error accepting invitation:", error);
+    res.status(500).json({ message: "Failed to accept invitation" });
+  }
+});
+
 // Accept invitation (registered users)
 router.post("/api/invitations/:token/accept", requireAuth, async (req, res) => {
   try {

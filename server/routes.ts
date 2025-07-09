@@ -2831,10 +2831,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get saved narration from database (no cost)
-  app.get('/api/stories/:id/narration/saved', requireAuth, async (req, res) => {
+  app.get('/api/stories/:id/narration/saved', async (req, res) => {
     try {
       const storyId = parseInt(req.params.id);
       const userId = (req.user as any)?.id;
+      const invitationToken = req.query.invitationToken as string;
+
+      // Allow access with valid invitation token for unauthenticated users
+      if (!userId && invitationToken) {
+        // Verify invitation is valid and matches story
+        const invitationResult = await pool.query(`
+          SELECT * FROM story_invitations 
+          WHERE invitation_token = $1 AND story_id = $2 AND status = 'pending'
+        `, [invitationToken, storyId]);
+        
+        if (invitationResult.rows.length === 0) {
+          return res.status(403).json({ message: 'Invalid invitation token' });
+        }
+        
+        // Get the inviter's user ID to fetch their narration
+        const invitation = invitationResult.rows[0];
+        const inviterId = invitation.inviter_id;
+        
+        // Get the story narration for the inviter
+        const narration = await storage.getStoryNarration(inviterId, storyId);
+        
+        if (narration) {
+          return res.json({
+            storyId: narration.storyId,
+            segments: narration.segments,
+            totalDuration: narration.totalDuration,
+            audioUrls: narration.segments?.map((s: any) => s.audioUrl).filter(Boolean),
+            narratorVoice: narration.narratorVoice,
+            narratorVoiceType: narration.narratorVoiceType
+          });
+        } else {
+          return res.json(null);
+        }
+      }
 
       if (!userId || isNaN(storyId)) {
         return res.status(400).json({ message: 'Invalid parameters' });
@@ -6064,6 +6098,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     } catch (error: any) {
       console.error('Error creating narrator voice:', error);
+      res.status(500).json({ 
+        success: false,
+        message: error.message || 'Failed to create narrator voice' 
+      });
+    }
+  });
+
+  // Create narrator voice from invitation recordings
+  app.post('/api/voice-cloning/create-narrator', requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any)?.id;
+      const { invitationToken, voiceSamples } = req.body;
+      
+      if (!userId) {
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
+
+      if (!invitationToken || !voiceSamples || voiceSamples.length < 5) {
+        return res.status(400).json({ 
+          message: 'Invitation token and at least 5 voice samples are required' 
+        });
+      }
+
+      // Verify invitation is valid and accepted
+      const invitationResult = await pool.query(`
+        SELECT * FROM story_invitations 
+        WHERE invitation_token = $1 AND status = 'accepted'
+      `, [invitationToken]);
+      
+      if (invitationResult.rows.length === 0) {
+        return res.status(403).json({ message: 'Invalid or unaccepted invitation' });
+      }
+
+      const invitation = invitationResult.rows[0];
+      console.log(`🎙️ Creating narrator voice for user ${userId} from invitation ${invitationToken}`);
+
+      // Import voice training service
+      const { voiceTrainingService } = await import('./voice-training-service');
+      
+      // Prepare samples for voice cloning
+      const samples = voiceSamples.map((sample: any) => ({
+        emotion: sample.emotion,
+        audioUrl: sample.audioUrl,
+        audioData: Buffer.from(sample.audioData || '', 'base64'),
+        userId: userId
+      }));
+
+      // Start MVP1 voice cloning (single narrator voice)
+      const result = await voiceTrainingService.startMVP1VoiceCloning(userId, samples);
+      
+      if (result.success && result.voiceId) {
+        // Clear any cached narrations for the user since they have a new voice
+        await storage.deleteAllUserNarrations(userId);
+        
+        res.json({
+          success: true,
+          voiceId: result.voiceId,
+          samplesUsed: result.samplesProcessed,
+          message: 'Narrator voice created successfully',
+          storyId: invitation.story_id
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          message: result.error || 'Voice creation failed'
+        });
+      }
+
+    } catch (error: any) {
+      console.error('Error creating narrator voice from invitation:', error);
       res.status(500).json({ 
         success: false,
         message: error.message || 'Failed to create narrator voice' 

@@ -26,7 +26,8 @@ import VoiceCloningTest from "@/pages/voice-cloning-test";
 import VoiceCloningTest1 from "@/pages/voice-cloning-test1";
 import CollaborativeRoleplay from "@/pages/collaborative-roleplay";
 import Invitation from "@/pages/invitation";
-import InvitationLanding from "@/pages/invitation-landing";
+import NarrationInvitationLanding from "@/pages/invitations/narration";
+import RoleplayInvitationLanding from "@/pages/invitations/roleplay";
 import RoleplayRecording from "@/pages/roleplay-recording";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
@@ -69,7 +70,8 @@ function AppContent() {
           <Route path="/login" component={Login} />
           <Route path="/register" component={Register} />
           <Route path="/oauth-test" component={OAuthTest} />
-          <Route path="/narration/:token" component={InvitationLanding} />
+          <Route path="/invitations/narration/:token" component={NarrationInvitationLanding} />
+          <Route path="/invitations/roleplay/:token" component={RoleplayInvitationLanding} />
           {isAuthenticated ? (
             <>
 

@@ -26,8 +26,8 @@ export function buildInvitationUrl(
   const baseUrl = getBaseUrl();
   const environment = getEnvironment();
   
-  // Use /narration/{invite_id} pattern as requested
-  let url = `${baseUrl}/narration/${invitationToken}`;
+  // Use /invitations/narration/{invite_id} pattern for story narration invitations
+  let url = `${baseUrl}/invitations/narration/${invitationToken}`;
   
   // Add JWT token if requested (for future use)
   if (options.includeJWT && process.env.JWT_SECRET) {
@@ -107,7 +107,7 @@ export function getInvitationConfig() {
   return {
     environment,
     baseUrl: getBaseUrl(),
-    urlPattern: '/narration/{inviteId}',
+    urlPattern: '/invitations/narration/{inviteId}',
     jwtEnabled: environment === 'production' && !!process.env.JWT_SECRET,
     jwtExpiresIn: process.env.INVITATION_JWT_EXPIRES_IN || '5d',
     invitationExpiresIn: process.env.INVITATION_EXPIRES_IN || '5d'

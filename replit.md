@@ -444,7 +444,29 @@ This is a full-stack collaborative storytelling platform that enables users to c
 
 ## TODO List - January 20, 2025
 
-### Current Task - Multi-Voice Recording System Implementation - COMPLETED
+### Current Task - Narration Invitation Flow Implementation - COMPLETED
+**Progress**: Successfully integrated voice recording with backend voice cloning system
+- ✅ Fixed URL pattern from `/narration/{token}` to `/invitations/narration/{token}` for consistency
+- ✅ Updated all frontend components (InviteCollaboratorsDialog, App.tsx) to use new URL pattern
+- ✅ Updated server-side URL builder to generate correct invitation URLs
+- ✅ Created three-stage narration invitation flow:
+  - **Preview Stage**: User can listen to story with original narrator's voice
+  - **Recording Stage**: User records voice samples with different emotions (10 emotions)
+  - **Generating Stage**: System creates ElevenLabs voice and generates personalized narration
+- ✅ Integrated EnhancedVoiceRecorder component for emotion-based voice recording
+- ✅ Added progress tracking showing minimum 5 samples needed for voice cloning
+- ✅ Implemented `/api/voice-cloning/create-narrator` endpoint for processing voice samples
+- ✅ Connected frontend to backend voice cloning workflow with proper data formatting
+- ✅ Mutation properly converts audio blobs to base64 for backend processing
+- ✅ Backend uses startMVP1VoiceCloning method to create narrator voice via ElevenLabs
+- **Architecture Decisions**:
+  - Narration invitations are for creating narrator voices with emotions
+  - Roleplay invitations (future) will be for character voicing in collaborative stories
+  - Minimum 5 emotion samples required, but users can record all 10 for better quality
+  - Auto-advance to next unrecorded emotion after each recording
+  - Voice samples sent as base64 encoded data to backend for processing
+
+### Previously Completed - Multi-Voice Recording System Implementation
 **Progress**: Full voice recording CRUD API with frontend integration completed
 - ✅ Added voice_type column to user_esm_recordings table with proper indexing
 - ✅ Created GET endpoint `/api/user/voice-recordings` to fetch recordings by voice type
