@@ -387,6 +387,12 @@ export default function StoryNarratorControls({
   const activeNarration = tempNarration || savedNarration;
   const hasAnyNarration = tempNarration || savedNarration;
 
+  console.log('StoryNarratorControls - user:', user);
+  console.log('StoryNarratorControls - storyId:', storyId);
+  console.log('StoryNarratorControls - savedNarration:', savedNarration);
+  console.log('StoryNarratorControls - tempNarration:', tempNarration);
+  console.log('StoryNarratorControls - hasAnyNarration:', hasAnyNarration);
+
   return (
     <div className={`bg-gradient-to-br from-purple-900/20 to-blue-900/20 p-6 rounded-xl border border-purple-500/30 ${className}`}>
       {/* Header */}
