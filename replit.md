@@ -178,40 +178,54 @@ This is a full-stack collaborative storytelling platform that enables users to c
 
 ## Future Roadmap
 
-### Enhanced Story Narration with Ephemeral Voice Architecture (Current Priority)
+### Voice Collection & Narration System Roadmap
+
+#### **Phase 1: Simple Global Voice Sample Collection (Current Priority)**
+**Basic 8-10 Emotion Voice Recording System**
+- **Core Emotions**: Happy, Sad, Angry, Fear, Surprised, Disgusted, Neutral, Excited, Thoughtful, Confident
+- **Simple Interface**: Grid layout showing emotion cards with record buttons
+- **Sample Requirements**: 15-25 seconds per emotion with provided sample text
+- **Storage**: Local audio files in database without external API dependencies
+- **Progress Tracking**: Visual indicators for completed/pending emotions
+- **No Gamification Yet**: Focus on core functionality first
+
+#### **Phase 2: Ephemeral Voice Architecture Implementation**
 **Breakthrough Solution for ElevenLabs Voice Limits**
-
-**Ephemeral Voice Architecture:**
-- **CRITICAL INNOVATION**: Treat ElevenLabs voices as temporary resources, not permanent assets
-- **Flow**: Create voice → Generate all narrations → Delete voice ID
-- **Benefit**: Bypass 30-voice Creator plan limit entirely
-- **Storage**: Keep only generated audio files, not voice IDs
-
-**Architecture Requirements:**
+- **Core Innovation**: Create voice → Generate narrations → Delete voice (bypass 30-voice limit)
 - **Voice Session Manager**: Handles temporary voice lifecycle
 - **Batch Processing**: Generate all pending narrations in one session
 - **Smart Caching**: Check existing narrations before creating voice
-- **Plug-and-Play Playback**: Play button accepts only storyId → backend API returns audio URL
-- **Storage Structure**: `/stories/audio/private/{userId}/{storyId}/` (moves to `/stories/audio/public/` when story becomes public)
+- **Automatic Cleanup**: Delete voice IDs after narration generation
+- **Storage Structure**: Keep only generated audio files, not voice IDs
 
-**Gamification Strategy (Works With or Without AI):**
-- **Local Features**: Achievement tracking, progress visualization, analytics dashboard, social challenges
-- **AI-Enhanced**: Voice cloning, quality analysis, AI narration
-- **Hybrid Approach**: App provides value immediately, grows with user capabilities
-- **Engagement**: Daily challenges, emotion map progress, voice personality profiles, leaderboards
+#### **Phase 3: Gamification & Engagement Features**
+**Make Voice Collection Fun and Addictive**
+- **Achievement System**: 
+  - First Voice, Emotion Explorer (5), Voice Master (10)
+  - Quality Champion, Story Narrator, Prolific Storyteller
+- **Progress Visualization**:
+  - Emotion map showing coverage
+  - Recording streaks and daily challenges
+  - Voice personality profile analysis
+- **Social Features**:
+  - Weekly emotion challenges
+  - Leaderboards (without storing voices)
+  - Story showcase for narrated content
+- **Instant Gratification**:
+  - Preview emotions in mini-stories
+  - Fun voice effects and filters
+  - Satisfying progress animations
 
-**User Workflow:**
-1. User records 10 emotion samples through gamified interface
-2. Clicks "Generate All Narrations" → ephemeral voice created
-3. System batch generates all pending story narrations
-4. Voice ID automatically deleted after generation
-5. Audio files stored permanently for playback
+#### **Phase 4: Advanced Features**
+- **Voice Analytics Dashboard**: Expression scores, clarity metrics, improvement trends
+- **AI Enhancement** (when API available): Quality analysis, voice coaching
+- **Community Features**: Voice challenges, peer reviews, story collaborations
+- **Multi-Language Support**: Expand beyond English to user's native languages
 
-**Technical Implementation:**
-- **Voice Sessions**: Track temporary voice creation/deletion
-- **Batch Manager**: Queue and process multiple narrations
-- **Achievement System**: Database-driven milestones and progress
-- **Analytics**: Voice stats without storing actual voices
+**Technical Implementation Notes:**
+- **Hybrid Approach**: Works with or without external APIs
+- **Progressive Enhancement**: Each phase adds value independently
+- **Data Privacy**: Track metadata only, ephemeral voice handling
 
 **Phase 2: Collaborative Review Infrastructure**
 6. Create story invitation system for friends and family
