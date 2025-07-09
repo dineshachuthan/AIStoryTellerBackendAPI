@@ -83,8 +83,21 @@ export default function AdminNarration() {
       voiceId?: string;
       forceRegenerate: boolean;
     }) => {
-      const response = await apiClient.post("/api/admin/narration/generate", params);
-      return response.data;
+      const response = await fetch("/api/admin/narration/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(params),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to generate narration");
+      }
+      
+      return response.json();
     },
     onSuccess: (data) => {
       setAudioUrl(data.audioUrl);
