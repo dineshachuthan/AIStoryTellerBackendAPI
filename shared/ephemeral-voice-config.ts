@@ -1,17 +1,63 @@
 /**
- * Ephemeral Voice System Configuration
- * Treats ElevenLabs voices as temporary resources to bypass voice count limits
+ * Ephemeral Voice Configuration
+ * Defines voice types and emotion samples for the multi-voice narrator system
  */
+
+export interface VoiceType {
+  id: string;
+  name: string;
+  icon: string;
+  description: string;
+  suggestedFor: string[];
+}
+
+export const VOICE_TYPES: VoiceType[] = [
+  {
+    id: 'hero',
+    name: 'Hero Voice',
+    icon: '🎭',
+    description: 'Confident, inspiring, and uplifting',
+    suggestedFor: ['adventure', 'motivational', 'success']
+  },
+  {
+    id: 'villain',
+    name: 'Villain Voice',
+    icon: '👹',
+    description: 'Dark, mysterious, and dramatic',
+    suggestedFor: ['thriller', 'mystery', 'horror']
+  },
+  {
+    id: 'creature',
+    name: 'Creature Voice',
+    icon: '🐾',
+    description: 'Playful, animated, and whimsical',
+    suggestedFor: ['fantasy', 'children', 'comedy']
+  },
+  {
+    id: 'narrator',
+    name: 'Narrator Voice',
+    icon: '📖',
+    description: 'Neutral, clear, and professional',
+    suggestedFor: ['documentary', 'educational', 'general']
+  },
+  {
+    id: 'elder',
+    name: 'Elder Voice',
+    icon: '🧙',
+    description: 'Wise, gentle, and thoughtful',
+    suggestedFor: ['wisdom', 'folklore', 'historical']
+  }
+];
 
 export interface EmotionSample {
   id: string;
   emotion: string;
   displayName: string;
+  icon: string;
   description: string;
   exampleText: string;
   minDuration: number;
   maxDuration: number;
-  icon: string;
 }
 
 export const GLOBAL_EMOTION_SAMPLES: EmotionSample[] = [
@@ -19,149 +65,110 @@ export const GLOBAL_EMOTION_SAMPLES: EmotionSample[] = [
     id: 'happy',
     emotion: 'happy',
     displayName: 'Happy',
-    description: 'Express joy, excitement, and positive energy',
-    exampleText: 'The sun broke through the clouds, and I couldn\'t help but smile. Everything felt perfect in that moment - the warm breeze, the birds singing, and the feeling that anything was possible.',
+    icon: '😊',
+    description: 'Joyful and cheerful tone',
+    exampleText: 'Today was absolutely wonderful! I woke up to sunshine streaming through my window, birds singing their morning songs, and the smell of fresh coffee brewing. Everything feels perfect and I can\'t stop smiling at how beautiful life can be.',
     minDuration: 15,
-    maxDuration: 25,
-    icon: '😊'
+    maxDuration: 25
   },
   {
     id: 'sad',
     emotion: 'sad',
     displayName: 'Sad',
-    description: 'Convey sorrow, melancholy, or disappointment',
-    exampleText: 'The rain matched my mood perfectly. I sat by the window, watching droplets race down the glass, thinking about all the things I wished I could have said before it was too late.',
+    icon: '😢',
+    description: 'Melancholic and sorrowful',
+    exampleText: 'The rain falls gently on the window, matching the tears in my heart. I miss the days when we were together, laughing without a care in the world. Now those memories feel like distant dreams that slip through my fingers like sand.',
     minDuration: 15,
-    maxDuration: 25,
-    icon: '😢'
+    maxDuration: 25
   },
   {
     id: 'angry',
     emotion: 'angry',
     displayName: 'Angry',
-    description: 'Show frustration, anger, or intense emotion',
-    exampleText: 'I couldn\'t believe they had done this again! My fists clenched as I tried to control my breathing. How many times would I have to explain before they finally understood?',
+    icon: '😠',
+    description: 'Frustrated and intense',
+    exampleText: 'This is completely unacceptable! How could they make such a careless mistake? I\'ve told them a thousand times to be careful, but no one ever listens. My patience has run out and I won\'t stand for this incompetence any longer!',
     minDuration: 15,
-    maxDuration: 25,
-    icon: '😠'
+    maxDuration: 25
   },
   {
     id: 'fear',
     emotion: 'fear',
-    displayName: 'Fearful',
-    description: 'Express worry, anxiety, or fear',
-    exampleText: 'My heart pounded as I heard footsteps in the hallway. Was someone there? I held my breath, listening intently, every shadow seeming to move in the corner of my eye.',
+    displayName: 'Fear',
+    icon: '😨',
+    description: 'Anxious and scared',
+    exampleText: 'My heart pounds in my chest as shadows dance on the walls. Every creak of the floorboards makes me jump. I can\'t shake the feeling that something is watching me from the darkness, waiting for the perfect moment to strike.',
     minDuration: 15,
-    maxDuration: 25,
-    icon: '😨'
+    maxDuration: 25
   },
   {
     id: 'surprised',
     emotion: 'surprised',
     displayName: 'Surprised',
-    description: 'Show shock, amazement, or unexpected discovery',
-    exampleText: 'I couldn\'t believe my eyes! There it was, right in front of me - the thing I\'d been searching for all these years. How had I missed it before? This changed everything!',
+    icon: '😲',
+    description: 'Shocked and amazed',
+    exampleText: 'I can\'t believe what just happened! Out of nowhere, all my friends jumped out and yelled surprise! My jaw dropped and my eyes went wide. This is the most incredible birthday party I\'ve ever had. I\'m completely speechless!',
     minDuration: 15,
-    maxDuration: 25,
-    icon: '😲'
+    maxDuration: 25
   },
   {
-    id: 'disgust',
-    emotion: 'disgust',
+    id: 'disgusted',
+    emotion: 'disgusted',
     displayName: 'Disgusted',
-    description: 'Express revulsion or strong disapproval',
-    exampleText: 'The smell hit me like a wall, and I had to cover my nose. How could anyone live like this? I stepped carefully through the mess, trying not to touch anything.',
+    icon: '🤢',
+    description: 'Repulsed and uncomfortable',
+    exampleText: 'The smell hit me like a wall of rotting garbage mixed with spoiled milk. My stomach churned and I had to cover my nose. How could anyone let things get this bad? This is absolutely revolting and I need to get out of here immediately.',
     minDuration: 15,
-    maxDuration: 25,
-    icon: '🤢'
+    maxDuration: 25
   },
   {
     id: 'neutral',
     emotion: 'neutral',
     displayName: 'Neutral',
-    description: 'Calm, balanced, everyday speaking voice',
-    exampleText: 'The meeting was scheduled for three o\'clock in the conference room. I gathered my notes and made sure I had everything prepared. It was going to be a long afternoon of discussions.',
+    icon: '😐',
+    description: 'Calm and balanced',
+    exampleText: 'The meeting went as expected. We reviewed the quarterly reports, discussed the upcoming projects, and set deadlines for next month. Everything is proceeding according to plan. The weather today is partly cloudy with mild temperatures.',
     minDuration: 15,
-    maxDuration: 25,
-    icon: '😐'
+    maxDuration: 25
   },
   {
     id: 'excited',
     emotion: 'excited',
     displayName: 'Excited',
-    description: 'High energy, enthusiastic delivery',
-    exampleText: 'This is it! The moment we\'ve all been waiting for! I can barely contain myself - after months of preparation, it\'s finally happening! Are you ready? Let\'s do this!',
+    icon: '🤗',
+    description: 'Enthusiastic and energetic',
+    exampleText: 'This is it! The moment I\'ve been waiting for all year! My hands are shaking with anticipation and I can barely contain my enthusiasm. Tomorrow we embark on the adventure of a lifetime. I\'m so pumped I could run a marathon right now!',
     minDuration: 15,
-    maxDuration: 25,
-    icon: '🤩'
+    maxDuration: 25
   },
   {
     id: 'thoughtful',
     emotion: 'thoughtful',
     displayName: 'Thoughtful',
-    description: 'Contemplative, reflective tone',
-    exampleText: 'Sometimes I wonder about the choices we make. Each decision leads us down a different path, and we can never truly know what might have been. It\'s both terrifying and beautiful.',
+    icon: '🤔',
+    description: 'Contemplative and reflective',
+    exampleText: 'As I sit by the window watching the world go by, I find myself pondering life\'s bigger questions. What truly makes us happy? How do we find meaning in our daily routines? These thoughts swirl in my mind like autumn leaves in the wind.',
     minDuration: 15,
-    maxDuration: 25,
-    icon: '🤔'
+    maxDuration: 25
   },
   {
     id: 'confident',
     emotion: 'confident',
     displayName: 'Confident',
-    description: 'Strong, assured, authoritative voice',
-    exampleText: 'I know exactly what needs to be done, and I\'m the person to do it. Years of experience have prepared me for this moment. Watch and learn - this is how it\'s done properly.',
+    icon: '💪',
+    description: 'Assured and determined',
+    exampleText: 'I walk into the room with my head held high, knowing I\'m prepared for whatever comes my way. Years of hard work have led to this moment, and I\'m ready to show everyone what I\'m capable of. Success is not a matter of if, but when.',
     minDuration: 15,
-    maxDuration: 25,
-    icon: '💪'
+    maxDuration: 25
   }
 ];
 
-export const EPHEMERAL_VOICE_CONFIG = {
-  // Minimum samples required to create a voice
-  MIN_SAMPLES_FOR_VOICE: 5,
-  
-  // Maximum samples to use (ElevenLabs limit)
-  MAX_SAMPLES_PER_VOICE: 25,
-  
-  // Voice session settings
-  SESSION_SETTINGS: {
-    // How long to keep voice before deletion (milliseconds)
-    VOICE_RETENTION_TIME: 5 * 60 * 1000, // 5 minutes
-    
-    // Batch size for narration generation
-    NARRATION_BATCH_SIZE: 10,
-    
-    // Maximum concurrent narration generations
-    MAX_CONCURRENT_GENERATIONS: 3
-  },
-  
-  // Achievement thresholds
-  ACHIEVEMENTS: {
-    FIRST_RECORDING: 1,
-    EMOTION_EXPLORER: 5,
-    VOICE_MASTER: 10,
-    EXPRESSIVE_EXPERT: {
-      threshold: 8,
-      minQuality: 0.8
-    }
-  },
-  
-  // Gamification messages
-  MESSAGES: {
-    UNLOCK_MESSAGES: [
-      'Great job! You\'ve unlocked the {emotion} emotion!',
-      'Fantastic! Your voice range is expanding!',
-      'Amazing expression! Keep going!',
-      'You\'re becoming a voice acting pro!'
-    ],
-    ACHIEVEMENT_MESSAGES: {
-      FIRST_RECORDING: 'Voice Journey Begun! You\'ve taken your first step.',
-      EMOTION_EXPLORER: 'Emotion Explorer! You\'ve recorded 5 different emotions.',
-      VOICE_MASTER: 'Voice Master! All emotions unlocked!',
-      EXPRESSIVE_EXPERT: 'Expressive Expert! Your voice quality is exceptional!'
-    }
-  }
-};
+// Minimum samples required to create an ephemeral voice
+export const MIN_SAMPLES_FOR_VOICE = 10;
 
-export type VoiceAchievement = keyof typeof EPHEMERAL_VOICE_CONFIG.ACHIEVEMENTS;
+// Voice cleanup configuration
+export const VOICE_CLEANUP_CONFIG = {
+  maxRetries: 3,
+  retryDelay: 1000, // milliseconds
+  logFailures: true
+};

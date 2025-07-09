@@ -434,31 +434,32 @@ This is a full-stack collaborative storytelling platform that enables users to c
 
 ## TODO List - January 20, 2025
 
-### Current Task - Collaborative Invitation System  
+### Current Task - Multi-Voice Recording System Implementation - COMPLETED
+**Progress**: Full voice recording CRUD API with frontend integration completed
+- ✅ Added voice_type column to user_esm_recordings table with proper indexing
+- ✅ Created GET endpoint `/api/user/voice-recordings` to fetch recordings by voice type
+- ✅ Created POST endpoint `/api/user/voice-recordings` with voice type support
+- ✅ Created DELETE endpoint `/api/user/voice-recordings/:id` with soft delete
+- ✅ Updated API client with voice.getRecordings(), uploadRecording(), deleteRecording()
+- ✅ Enhanced global-voice-samples.tsx with VoiceProgressTracker component integration
+- ✅ Added delete functionality with proper UI feedback and mutations
+- ✅ Integrated ephemeral voice configuration (VOICE_TYPES, MIN_SAMPLES_FOR_VOICE)
+- ✅ Voice recordings now properly stored with emotion and voice type associations
+- **Voice Recording Architecture**:
+  - Database: user_esm_recordings table with voice_type column for multi-voice support
+  - Storage: Audio files saved to /public/voice-samples/ directory
+  - API: RESTful endpoints for CRUD operations with authentication
+  - Frontend: React Query integration with proper cache invalidation
+  - Progress Tracking: VoiceProgressTracker component shows completion per voice type
+
+### Previously Completed - Collaborative Invitation System  
 **Progress**: Complete invitation flow from creation to landing page now operational
 - ✅ InviteCollaboratorsDialog component integrated in story library
 - ✅ "Invite Collaborators" button added to all story cards
-- ✅ Backend API endpoint `/api/stories/{id}/invitations` created using direct database operations
-- ✅ Database insert using storyInvitations table with proper field mapping
-- ✅ Fixed prop passing issue in InviteCollaboratorsDialog (story object now properly passed)
-- ✅ Added GET route `/api/stories/{id}/invitations` to fetch invitations for testing
-- ✅ Created invitation landing page at `/invite/{token}` accessible to both authenticated and anonymous users
-- ✅ Backend endpoint `/api/invitations/{token}` fetches invitation with story and inviter details
-- ✅ Updated App.tsx routing to place invitation route outside authentication check for public access
+- ✅ Backend API endpoint `/api/stories/{id}/invitations` created
+- ✅ Invitation landing page at `/invite/{token}` accessible to both authenticated and anonymous users
 - ✅ MailGun email provider fully integrated and working (sandbox restrictions require authorized recipients)
-- **Pending MailGun Custom Domain Setup (deeevee.com)**:
-  1. Add domain in MailGun Dashboard → Sending → Domains → Add New Domain
-  2. Enter `deeevee.com` or `mg.deeevee.com` (subdomain recommended)
-  3. Add DNS records from MailGun (SPF, DKIM, optional MX/CNAME)
-  4. Verify domain in MailGun dashboard
-  5. Update environment variables: MAILGUN_DOMAIN=deeevee.com, MAILGUN_FROM_EMAIL=noreply@deeevee.com
-  6. Benefits: No sandbox restrictions, better deliverability, professional appearance
-- **Next Steps**:
-  - Display invitation links in dialog for manual testing
-  - Implement voice recording functionality in invitation landing page
-  - Create accept invitation flow to update status
-  - Add roleplay submission for guest users
-  - Create multi-voice story playback system
+- **Next Steps**: Display invitation links, implement voice recording in landing page, create accept flow
 
 ### High Priority Tasks
 1. **Microservices Migration** - PHASE 0-4 COMPLETED - Using Adapter Pattern for Replit Environment

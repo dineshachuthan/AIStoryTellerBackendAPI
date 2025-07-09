@@ -2,7 +2,7 @@ import type { Express } from "express";
 import express from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertCharacterSchema, insertConversationSchema, insertMessageSchema, insertStorySchema, insertUserVoiceSampleSchema, insertStoryCollaborationSchema, insertStoryGroupSchema, insertCharacterVoiceAssignmentSchema } from "@shared/schema";
+import { insertCharacterSchema, insertConversationSchema, insertMessageSchema, insertStorySchema, insertUserVoiceSampleSchema, insertStoryCollaborationSchema, insertStoryGroupSchema, insertCharacterVoiceAssignmentSchema, userEsmRecordings } from "@shared/schema";
 import { VOICE_RECORDING_CONFIG } from "@shared/voice-recording-config";
 import { generateAIResponse } from "./openai";
 import { setupAuth, requireAuth, requireAdmin, hashPassword } from "./auth";
@@ -16,7 +16,7 @@ import { collaborativeRoleplayService } from "./collaborative-roleplay-service";
 // Legacy content cache functionality moved to unified cache architecture
 import { pool } from "./db";
 import { db } from "./db";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, sql } from "drizzle-orm";
 import { videoGenerations } from "@shared/schema";
 import { audioService } from "./audio-service";
 // ELIMINATED LEGACY VOICE CONFIG - Voice cloning config now hardcoded where needed
@@ -231,6 +231,21 @@ const upload = multer({
       cb(null, true);
     } else {
       cb(new Error('Only audio and image files are allowed'));
+    }
+  },
+});
+
+// Configure multer for voice recordings
+const voiceUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit for voice recordings
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('audio/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only audio files are allowed for voice recordings'));
     }
   },
 });
@@ -2513,6 +2528,156 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching user ESM recordings:', error);
       res.status(500).json({ error: 'Failed to fetch voice recordings' });
+    }
+  });
+
+  // Get user's voice recordings for multi-voice system
+  app.get('/api/user/voice-recordings', requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      
+      // Get recordings by voice type
+      const result = await db.execute(
+        sql`SELECT 
+              uer.user_esm_recordings_id as id,
+              er.name as emotion,
+              uer.voice_type,
+              uer.audio_url,
+              uer.duration,
+              uer.created_date as recorded_at
+            FROM user_esm_recordings uer
+            INNER JOIN user_esm ue ON uer.user_esm_id = ue.user_esm_id
+            INNER JOIN esm_ref er ON ue.esm_ref_id = er.esm_ref_id
+            WHERE ue.user_id = ${userId}
+            AND uer.is_active = true
+            AND uer.voice_type IS NOT NULL
+            ORDER BY uer.created_date DESC`
+      );
+      
+      res.json(result.rows);
+    } catch (error) {
+      console.error("Error fetching voice recordings:", error);
+      res.status(500).json({ message: "Failed to fetch voice recordings" });
+    }
+  });
+
+  // Upload voice recording
+  app.post('/api/user/voice-recordings', requireAuth, voiceUpload.single('audio'), async (req: any, res) => {
+    try {
+      const userId = req.user!.id;
+      const { emotion, voiceType } = req.body;
+      const audioFile = req.file;
+
+      if (!audioFile || !emotion || !voiceType) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+
+      // Save the audio file
+      const filename = `voice_${userId}_${voiceType}_${emotion}_${Date.now()}.webm`;
+      const audioPath = path.join(process.cwd(), 'public', 'voice-samples', filename);
+      const audioUrl = `/voice-samples/${filename}`;
+
+      // Ensure directory exists
+      const dir = path.dirname(audioPath);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+
+      // Write the file
+      fs.writeFileSync(audioPath, audioFile.buffer);
+
+      // Find or create ESM reference
+      let esmRef = await storage.getEsmRef(1, emotion); // Category 1 = emotions
+      if (!esmRef) {
+        esmRef = await storage.createEsmRef({
+          category: 1,
+          name: emotion,
+          display_name: emotion,
+          sample_text: `Sample text for ${emotion}`,
+          intensity: 5,
+          created_by: userId
+        });
+      }
+
+      // Find or create user ESM
+      let userEsm = await storage.getUserEsm(userId, esmRef.esm_ref_id);
+      if (!userEsm) {
+        userEsm = await storage.createUserEsm({
+          user_id: userId,
+          esm_ref_id: esmRef.esm_ref_id,
+          created_by: userId
+        });
+      }
+
+      // Create recording with voice type
+      const result = await db.execute(
+        sql`INSERT INTO user_esm_recordings (
+              user_esm_id, 
+              audio_url, 
+              duration, 
+              file_size,
+              voice_type,
+              created_by,
+              created_date,
+              is_active
+            ) VALUES (
+              ${userEsm.user_esm_id},
+              ${audioUrl},
+              20,
+              ${audioFile.buffer.length},
+              ${voiceType},
+              ${userId},
+              NOW(),
+              true
+            ) RETURNING 
+              user_esm_recordings_id as id,
+              audio_url,
+              duration,
+              voice_type,
+              created_date as recorded_at`
+      );
+
+      const recording = result.rows[0];
+      res.json({
+        id: recording.id,
+        emotion,
+        voiceType: recording.voice_type,
+        audioUrl: recording.audio_url,
+        duration: recording.duration,
+        recordedAt: recording.recorded_at
+      });
+    } catch (error) {
+      console.error("Error uploading voice recording:", error);
+      res.status(500).json({ message: "Failed to upload recording" });
+    }
+  });
+
+  // Delete voice recording
+  app.delete('/api/user/voice-recordings/:id', requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const recordingId = parseInt(req.params.id);
+
+      // Verify ownership and delete
+      const result = await db.execute(
+        sql`UPDATE user_esm_recordings uer
+            SET is_active = false
+            FROM user_esm ue
+            WHERE uer.user_esm_id = ue.user_esm_id
+            AND uer.user_esm_recordings_id = ${recordingId}
+            AND ue.user_id = ${userId}
+            AND uer.is_active = true
+            RETURNING uer.user_esm_recordings_id`
+      );
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ message: "Recording not found or unauthorized" });
+      }
+
+      res.json({ message: "Recording deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting voice recording:", error);
+      res.status(500).json({ message: "Failed to delete recording" });
     }
   });
 

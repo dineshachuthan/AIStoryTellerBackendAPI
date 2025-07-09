@@ -159,6 +159,13 @@ export class ApiClient {
     getEsmTemplates: (storyId: number) => this.request<any>('GET', `/api/voice/esm-templates/${storyId}`),
     getUserVoiceEmotions: (userId: string, emotion: string) => 
       this.request<any>('GET', `/api/user-voice-emotions/${userId}?emotion=${emotion}`),
+    // Multi-voice recordings
+    getRecordings: () => this.request<any[]>('GET', '/api/user/voice-recordings'),
+    uploadRecording: (data: FormData) =>
+      this.request<any>('POST', '/api/user/voice-recordings', data, {
+        headers: {} // Let browser set Content-Type for FormData
+      }),
+    deleteRecording: (id: number) => this.request<void>('DELETE', `/api/user/voice-recordings/${id}`),
   };
   
   // Collaborative roleplay endpoints

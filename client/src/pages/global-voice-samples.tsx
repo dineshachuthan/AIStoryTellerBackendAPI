@@ -5,14 +5,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Mic, Play, StopCircle, CheckCircle2, Circle } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import { Mic, Play, StopCircle, CheckCircle2, Circle, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { GLOBAL_EMOTION_SAMPLES } from '@shared/ephemeral-voice-config';
+import { GLOBAL_EMOTION_SAMPLES, VOICE_TYPES, MIN_SAMPLES_FOR_VOICE } from '@shared/ephemeral-voice-config';
 import { apiRequest } from '@/lib/queryClient';
+import { VoiceProgressTracker } from '@/components/VoiceProgressTracker';
+import { apiClient } from '@/lib/api-client';
 
 interface VoiceRecording {
   id: string;
   emotion: string;
+  voiceType: string;
   audioUrl: string;
   duration: number;
   recordedAt: Date;
@@ -20,6 +26,7 @@ interface VoiceRecording {
 
 export default function GlobalVoiceSamples() {
   const { toast } = useToast();
+  const [selectedVoiceType, setSelectedVoiceType] = useState(VOICE_TYPES[0].id);
   const [recordingEmotion, setRecordingEmotion] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
@@ -33,15 +40,13 @@ export default function GlobalVoiceSamples() {
 
   // Upload recording mutation
   const uploadMutation = useMutation({
-    mutationFn: async ({ emotion, audioBlob }: { emotion: string; audioBlob: Blob }) => {
+    mutationFn: async ({ emotion, voiceType, audioBlob }: { emotion: string; voiceType: string; audioBlob: Blob }) => {
       const formData = new FormData();
-      formData.append('audio', audioBlob, `${emotion}_${Date.now()}.webm`);
+      formData.append('audio', audioBlob, `${emotion}_${voiceType}_${Date.now()}.webm`);
       formData.append('emotion', emotion);
+      formData.append('voiceType', voiceType);
       
-      return apiRequest('/api/user/voice-recordings', {
-        method: 'POST',
-        body: formData
-      });
+      return apiClient.voice.uploadRecording(formData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/user/voice-recordings'] });
@@ -53,6 +58,27 @@ export default function GlobalVoiceSamples() {
     onError: (error) => {
       toast({
         title: 'Recording failed',
+        description: error.message,
+        variant: 'destructive'
+      });
+    }
+  });
+
+  // Delete recording mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (recordingId: number) => {
+      return apiClient.voice.deleteRecording(recordingId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/user/voice-recordings'] });
+      toast({
+        title: 'Recording deleted',
+        description: 'Voice sample has been removed.'
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Delete failed',
         description: error.message,
         variant: 'destructive'
       });
@@ -78,7 +104,7 @@ export default function GlobalVoiceSamples() {
 
       recorder.onstop = async () => {
         const audioBlob = new Blob(chunks, { type: 'audio/webm' });
-        await uploadMutation.mutateAsync({ emotion, audioBlob });
+        await uploadMutation.mutateAsync({ emotion, voiceType: selectedVoiceType, audioBlob });
         
         // Clean up
         stream.getTracks().forEach(track => track.stop());
@@ -133,41 +159,86 @@ export default function GlobalVoiceSamples() {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
 
+  const currentVoiceType = VOICE_TYPES.find(v => v.id === selectedVoiceType);
+  const filteredRecordings = recordings.filter(r => r.voiceType === selectedVoiceType);
+  const recordedEmotionsForVoice = new Set(filteredRecordings.map(r => r.emotion));
+  const progressForVoice = Math.min((filteredRecordings.length / MIN_SAMPLES_FOR_VOICE) * 100, 100);
+
   return (
     <div className="container mx-auto py-8 max-w-6xl">
+      {/* Voice Progress Tracker */}
+      <div className="mb-8">
+        <VoiceProgressTracker />
+      </div>
+
       <Card className="mb-8">
         <CardHeader>
-          <CardTitle>Global Voice Sample Collection</CardTitle>
+          <CardTitle>Multi-Voice Sample Collection</CardTitle>
           <CardDescription>
-            Record your voice for each emotion. These samples will be used to create your unique narrator voice.
+            Create multiple narrator voices for different story moods. Each voice needs {MIN_SAMPLES_FOR_VOICE} emotion samples.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="mb-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium">Progress</span>
-              <span className="text-sm text-muted-foreground">
-                {recordedEmotions.size} / {GLOBAL_EMOTION_SAMPLES.length} emotions recorded
-              </span>
-            </div>
-            <Progress value={progress} className="h-2" />
-          </div>
-          
-          {progress === 100 && (
-            <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
-              <p className="text-green-800 dark:text-green-200 font-medium">
-                🎉 All emotions recorded! You're ready to generate narrations.
-              </p>
-            </div>
-          )}
+          <Tabs value={selectedVoiceType} onValueChange={setSelectedVoiceType}>
+            <TabsList className="grid grid-cols-5 w-full mb-6">
+              {VOICE_TYPES.map(voiceType => {
+                const voiceRecordings = recordings.filter(r => r.voiceType === voiceType.id);
+                const count = voiceRecordings.length;
+                return (
+                  <TabsTrigger key={voiceType.id} value={voiceType.id} className="relative">
+                    <span className="mr-1">{voiceType.icon}</span>
+                    <span className="hidden sm:inline">{voiceType.name}</span>
+                    {count >= MIN_SAMPLES_FOR_VOICE && (
+                      <span className="absolute -top-1 -right-1 text-xs text-green-600">✓</span>
+                    )}
+                  </TabsTrigger>
+                );
+              })}
+            </TabsList>
+            
+            <TabsContent value={selectedVoiceType}>
+              {currentVoiceType && (
+                <div className="space-y-4">
+                  <div className="p-4 bg-muted rounded-lg">
+                    <h3 className="font-semibold flex items-center gap-2 mb-2">
+                      <span className="text-2xl">{currentVoiceType.icon}</span>
+                      {currentVoiceType.name}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">{currentVoiceType.description}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Best for: {currentVoiceType.suggestedFor.join(', ')} stories
+                    </p>
+                  </div>
+                  
+                  <div className="mb-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium">Progress</span>
+                      <span className="text-sm text-muted-foreground">
+                        {filteredRecordings.length} / {MIN_SAMPLES_FOR_VOICE} samples recorded
+                      </span>
+                    </div>
+                    <Progress value={progressForVoice} className="h-2" />
+                  </div>
+                  
+                  {progressForVoice >= 100 && (
+                    <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
+                      <p className="text-green-800 dark:text-green-200 font-medium">
+                        🎉 This voice is ready! It will be created when generating your next story.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {GLOBAL_EMOTION_SAMPLES.map((sample) => {
-          const isRecorded = recordedEmotions.has(sample.emotion);
+          const isRecorded = recordedEmotionsForVoice.has(sample.emotion);
           const isCurrentlyRecording = recordingEmotion === sample.emotion;
-          const recording = recordings.find(r => r.emotion === sample.emotion);
+          const recording = filteredRecordings.find(r => r.emotion === sample.emotion);
 
           return (
             <Card key={sample.id} className={isRecorded ? 'border-green-500' : ''}>
@@ -217,13 +288,23 @@ export default function GlobalVoiceSamples() {
                           {isRecorded ? 'Re-record' : 'Record'}
                         </Button>
                         {recording && (
-                          <Button
-                            onClick={() => playRecording(recording.audioUrl)}
-                            variant="outline"
-                            size="icon"
-                          >
-                            <Play className="h-4 w-4" />
-                          </Button>
+                          <>
+                            <Button
+                              onClick={() => playRecording(recording.audioUrl)}
+                              variant="outline"
+                              size="icon"
+                            >
+                              <Play className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              onClick={() => deleteMutation.mutate(Number(recording.id))}
+                              variant="outline"
+                              size="icon"
+                              disabled={deleteMutation.isPending}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </>
                         )}
                       </>
                     ) : (

@@ -1,198 +1,247 @@
 /**
- * Ephemeral Voice Session Manager
- * Handles temporary ElevenLabs voice lifecycle to bypass voice count limits
+ * Ephemeral Voice Manager
+ * Handles the lifecycle of temporary ElevenLabs voices during story narration
+ * Creates voice → Generates narration → Deletes voice immediately
  */
 
-import { storage } from './storage';
+import { db } from './db';
+import { userEsmRecordings } from '@shared/schema';
+import { eq, and, gte } from 'drizzle-orm';
 import { ElevenLabsVoiceCloning } from './elevenlabs-voice-cloning';
-import { StoryNarrator } from './story-narrator';
-import { EPHEMERAL_VOICE_CONFIG } from '@shared/ephemeral-voice-config';
-import type { VoiceSession } from '@shared/voice-gamification-types';
+import { VOICE_TYPES, MIN_SAMPLES_FOR_VOICE, VOICE_CLEANUP_CONFIG } from '@shared/ephemeral-voice-config';
+import { voiceIdCleanup } from '@shared/schema';
+
+interface VoiceCreationResult {
+  voiceId: string | null;
+  voiceType: string;
+  error?: string;
+}
+
+interface EphemeralVoiceOptions {
+  userId: string;
+  voiceType: string;
+  storyId?: number;
+}
 
 export class EphemeralVoiceManager {
   private elevenLabs: ElevenLabsVoiceCloning;
-  private storyNarrator: StoryNarrator;
-  private activeSessions: Map<string, VoiceSession> = new Map();
 
   constructor() {
     this.elevenLabs = new ElevenLabsVoiceCloning();
-    this.storyNarrator = new StoryNarrator();
   }
 
   /**
-   * Create an ephemeral voice session for batch narration generation
+   * Check if user has enough samples for a specific voice type
    */
-  async createVoiceSession(userId: string): Promise<VoiceSession> {
-    console.log(`[EphemeralVoice] Creating voice session for user ${userId}`);
-    
-    // Check if user has enough voice samples
-    const recordings = await storage.getUserEsmRecordingsByUser(userId);
-    const validRecordings = recordings.filter(r => r.audioUrl && r.isActive);
-    
-    if (validRecordings.length < EPHEMERAL_VOICE_CONFIG.MIN_SAMPLES_FOR_VOICE) {
-      throw new Error(`Need at least ${EPHEMERAL_VOICE_CONFIG.MIN_SAMPLES_FOR_VOICE} voice samples. You have ${validRecordings.length}.`);
-    }
-
-    // Create session
-    const session: VoiceSession = {
-      sessionId: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      userId,
-      startedAt: new Date(),
-      emotionSamples: validRecordings.map(r => ({
-        emotion: r.esmName,
-        audioUrl: r.audioUrl!,
-        duration: r.duration || 0,
-        quality: r.qualityScore || 0.8
-      })),
-      generatedNarrations: [],
-      status: 'collecting'
-    };
-
-    this.activeSessions.set(session.sessionId, session);
-    return session;
-  }
-
-  /**
-   * Generate all pending narrations in a single batch
-   */
-  async generateBatchNarrations(sessionId: string): Promise<void> {
-    const session = this.activeSessions.get(sessionId);
-    if (!session) {
-      throw new Error('Voice session not found');
-    }
-
-    try {
-      session.status = 'generating';
-      
-      // Step 1: Create temporary ElevenLabs voice
-      console.log(`[EphemeralVoice] Creating temporary voice with ${session.emotionSamples.length} samples`);
-      const voiceId = await this.createTemporaryVoice(session);
-      session.elevenLabsVoiceId = voiceId;
-
-      // Step 2: Get all pending stories for narration
-      const userStories = await storage.getStoriesByUser(session.userId);
-      const pendingStories = userStories.filter(story => 
-        !story.hasNarration && story.status === 'analyzed'
+  async hasEnoughSamples(userId: string, voiceType: string): Promise<boolean> {
+    const recordings = await db
+      .select()
+      .from(userEsmRecordings)
+      .where(
+        and(
+          eq(userEsmRecordings.userId, userId),
+          eq(userEsmRecordings.voiceType, voiceType),
+          eq(userEsmRecordings.isActive, true)
+        )
       );
 
-      console.log(`[EphemeralVoice] Found ${pendingStories.length} stories pending narration`);
-
-      // Step 3: Generate narrations in batches
-      const batchSize = EPHEMERAL_VOICE_CONFIG.SESSION_SETTINGS.NARRATION_BATCH_SIZE;
-      for (let i = 0; i < pendingStories.length; i += batchSize) {
-        const batch = pendingStories.slice(i, i + batchSize);
-        
-        await Promise.all(batch.map(async (story) => {
-          try {
-            const narrationResult = await this.storyNarrator.generateStoryNarration(
-              story.id,
-              session.userId,
-              voiceId // Use temporary voice
-            );
-            
-            session.generatedNarrations.push({
-              storyId: story.id,
-              audioUrl: narrationResult.audioUrl,
-              generatedAt: new Date()
-            });
-          } catch (error) {
-            console.error(`[EphemeralVoice] Failed to generate narration for story ${story.id}:`, error);
-          }
-        }));
-      }
-
-      // Step 4: Delete the temporary voice
-      await this.deleteTemporaryVoice(voiceId);
-      session.elevenLabsVoiceId = undefined;
-      
-      session.status = 'completed';
-      session.completedAt = new Date();
-      
-      console.log(`[EphemeralVoice] Session completed. Generated ${session.generatedNarrations.length} narrations`);
-      
-    } catch (error) {
-      session.status = 'failed';
-      // Clean up voice if it was created
-      if (session.elevenLabsVoiceId) {
-        await this.deleteTemporaryVoice(session.elevenLabsVoiceId).catch(console.error);
-      }
-      throw error;
-    }
+    return recordings.length >= MIN_SAMPLES_FOR_VOICE;
   }
 
   /**
-   * Create a temporary voice in ElevenLabs
+   * Get available voice types for a user
    */
-  private async createTemporaryVoice(session: VoiceSession): Promise<string> {
-    // Prepare voice samples
-    const voiceSamples = session.emotionSamples.map(sample => ({
-      emotion: sample.emotion,
-      audioUrl: sample.audioUrl,
-      recordingId: `temp_${sample.emotion}`
-    }));
-
-    // Create voice with ephemeral naming
-    const result = await this.elevenLabs.createVoiceFromSamples(
-      session.userId,
-      voiceSamples,
-      `Ephemeral_Voice_${session.sessionId}`
-    );
-
-    if (!result.success || !result.voiceId) {
-      throw new Error('Failed to create temporary voice');
+  async getAvailableVoiceTypes(userId: string): Promise<string[]> {
+    const availableTypes: string[] = [];
+    
+    for (const voiceType of VOICE_TYPES) {
+      if (await this.hasEnoughSamples(userId, voiceType.id)) {
+        availableTypes.push(voiceType.id);
+      }
     }
-
-    return result.voiceId;
+    
+    return availableTypes;
   }
 
   /**
-   * Delete a temporary voice from ElevenLabs
+   * Create ephemeral voice for narration
    */
-  private async deleteTemporaryVoice(voiceId: string): Promise<void> {
-    console.log(`[EphemeralVoice] Deleting temporary voice ${voiceId}`);
+  async createEphemeralVoice(options: EphemeralVoiceOptions): Promise<VoiceCreationResult> {
+    const { userId, voiceType } = options;
     
     try {
-      await this.elevenLabs.deleteVoice(voiceId);
-      console.log(`[EphemeralVoice] Successfully deleted voice ${voiceId}`);
+      // Get voice samples for the specific voice type
+      const recordings = await db
+        .select()
+        .from(userEsmRecordings)
+        .where(
+          and(
+            eq(userEsmRecordings.userId, userId),
+            eq(userEsmRecordings.voiceType, voiceType),
+            eq(userEsmRecordings.isActive, true)
+          )
+        )
+        .limit(MIN_SAMPLES_FOR_VOICE);
+
+      if (recordings.length < MIN_SAMPLES_FOR_VOICE) {
+        return {
+          voiceId: null,
+          voiceType,
+          error: `Not enough samples for ${voiceType} voice. Need ${MIN_SAMPLES_FOR_VOICE}, have ${recordings.length}`
+        };
+      }
+
+      // Create the voice using ElevenLabs
+      const voiceName = `${voiceType}_${userId}_${Date.now()}`;
+      const result = await this.elevenLabs.createVoiceFromSamples(
+        recordings,
+        voiceName,
+        `Ephemeral ${voiceType} voice`
+      );
+
+      if (!result.success || !result.voiceId) {
+        return {
+          voiceId: null,
+          voiceType,
+          error: result.error || 'Failed to create voice'
+        };
+      }
+
+      // Log the creation for cleanup tracking
+      await db.insert(voiceIdCleanup).values({
+        voiceId: result.voiceId,
+        providerId: 'elevenlabs',
+        userId,
+        voiceType,
+        status: 'created',
+        createdAt: new Date()
+      });
+
+      return {
+        voiceId: result.voiceId,
+        voiceType
+      };
     } catch (error) {
-      console.error(`[EphemeralVoice] Failed to delete voice ${voiceId}:`, error);
-      // Log for manual cleanup but don't fail the session
-      await this.logVoiceForCleanup(voiceId);
+      console.error('[EphemeralVoiceManager] Failed to create voice:', error);
+      return {
+        voiceId: null,
+        voiceType,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
     }
   }
 
   /**
-   * Log voice ID for manual cleanup if automatic deletion fails
+   * Delete ephemeral voice after use
    */
-  private async logVoiceForCleanup(voiceId: string): Promise<void> {
-    // Store in voice_id_cleanup table for later manual cleanup
-    await storage.logVoiceCleanup({
-      voiceId,
-      reason: 'ephemeral_deletion_failed',
-      attemptedAt: new Date()
-    });
-  }
-
-  /**
-   * Get session status
-   */
-  getSession(sessionId: string): VoiceSession | undefined {
-    return this.activeSessions.get(sessionId);
-  }
-
-  /**
-   * Clean up old sessions from memory
-   */
-  cleanupSessions(): void {
-    const cutoffTime = Date.now() - EPHEMERAL_VOICE_CONFIG.SESSION_SETTINGS.VOICE_RETENTION_TIME;
+  async deleteEphemeralVoice(voiceId: string): Promise<void> {
+    let retries = 0;
     
-    for (const [sessionId, session] of this.activeSessions) {
-      if (session.startedAt.getTime() < cutoffTime) {
-        this.activeSessions.delete(sessionId);
+    while (retries < VOICE_CLEANUP_CONFIG.maxRetries) {
+      try {
+        // Delete from ElevenLabs
+        const result = await this.elevenLabs.deleteVoice(voiceId);
+        
+        if (result.success) {
+          // Update cleanup log
+          await db
+            .update(voiceIdCleanup)
+            .set({
+              status: 'deleted',
+              deletedAt: new Date()
+            })
+            .where(eq(voiceIdCleanup.voiceId, voiceId));
+          
+          console.log(`[EphemeralVoiceManager] Successfully deleted voice ${voiceId}`);
+          return;
+        }
+        
+        throw new Error(result.error || 'Failed to delete voice');
+      } catch (error) {
+        retries++;
+        console.error(`[EphemeralVoiceManager] Delete attempt ${retries} failed:`, error);
+        
+        if (retries < VOICE_CLEANUP_CONFIG.maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, VOICE_CLEANUP_CONFIG.retryDelay));
+        }
       }
     }
+
+    // Log failure after all retries
+    if (VOICE_CLEANUP_CONFIG.logFailures) {
+      await db
+        .update(voiceIdCleanup)
+        .set({
+          status: 'failed',
+          errorData: { 
+            message: 'Failed to delete after retries',
+            retries: VOICE_CLEANUP_CONFIG.maxRetries
+          }
+        })
+        .where(eq(voiceIdCleanup.voiceId, voiceId));
+    }
+  }
+
+  /**
+   * Get voice progress for all voice types
+   */
+  async getVoiceProgress(userId: string): Promise<Array<{
+    voiceType: string;
+    recordedCount: number;
+    requiredCount: number;
+  }>> {
+    const progress = [];
+    
+    for (const voiceType of VOICE_TYPES) {
+      const recordings = await db
+        .select()
+        .from(userEsmRecordings)
+        .where(
+          and(
+            eq(userEsmRecordings.userId, userId),
+            eq(userEsmRecordings.voiceType, voiceType.id),
+            eq(userEsmRecordings.isActive, true)
+          )
+        );
+      
+      progress.push({
+        voiceType: voiceType.id,
+        recordedCount: recordings.length,
+        requiredCount: MIN_SAMPLES_FOR_VOICE
+      });
+    }
+    
+    return progress;
+  }
+
+  /**
+   * Cleanup orphaned voices (admin function)
+   */
+  async cleanupOrphanedVoices(): Promise<number> {
+    // Find voices created but not deleted after 1 hour
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    
+    const orphanedVoices = await db
+      .select()
+      .from(voiceIdCleanup)
+      .where(
+        and(
+          eq(voiceIdCleanup.status, 'created'),
+          eq(voiceIdCleanup.providerId, 'elevenlabs')
+        )
+      );
+
+    let cleanedCount = 0;
+    
+    for (const voice of orphanedVoices) {
+      if (new Date(voice.createdAt) < oneHourAgo) {
+        await this.deleteEphemeralVoice(voice.voiceId);
+        cleanedCount++;
+      }
+    }
+    
+    return cleanedCount;
   }
 }
 
-// Singleton instance
 export const ephemeralVoiceManager = new EphemeralVoiceManager();
