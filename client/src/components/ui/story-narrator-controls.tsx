@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Headphones, Play, Pause, Save, Download, Loader2, RefreshCw, SkipBack, SkipForward, Volume2, Check } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/lib/toast-utils';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { getMessage } from '@shared/i18n-hierarchical';
 import {
@@ -54,8 +54,7 @@ export default function StoryNarratorControls({
   const [currentSegment, setCurrentSegment] = useState(0);
   const [progress, setProgress] = useState(0);
 
-  
-  const { toast } = useToast();
+
 
   // Get current narrator voice ID in real-time
   const { data: narratorVoiceData } = useQuery({
@@ -196,15 +195,17 @@ export default function StoryNarratorControls({
   const generateNarration = async () => {
     if (!user || !canNarrate) return;
 
-    // Check if we already have a narration with current voice ID
+    // TEMPORARILY DISABLED: Cache checking logic for testing voice profiles
+    /*
     if (savedNarration && narratorVoiceData?.narratorVoiceId && 
         savedNarration.narratorVoice === narratorVoiceData.narratorVoiceId) {
-      toast({
+      toast.info({
         title: "Already Generated",
         description: "Story narration already exists with current voice",
       });
       return;
     }
+    */
 
     setIsGenerating(true);
     try {
@@ -239,10 +240,9 @@ export default function StoryNarratorControls({
       }
     } catch (error) {
       console.error('Error generating narration:', error);
-      toast({
+      toast.error({
         title: "Generation Error",
-        description: "Could not generate story narration. Please try again.",
-        variant: "destructive"
+        description: "Could not generate story narration. Please try again."
       });
     } finally {
       setIsGenerating(false);

@@ -254,7 +254,7 @@ export function registerVoiceProfileRoutes(app: Express) {
   // TEMPORARY: Quick test endpoint for different narrator profiles
   app.post('/api/voice-profile/test-preset', requireAuth, async (req: Request, res: Response) => {
     try {
-      const userId = (req as any).user.claims.sub;
+      const userId = (req as any).user?.claims?.sub || (req as any).user?.id;
       const { preset } = req.body;
       
       // Define preset profiles
