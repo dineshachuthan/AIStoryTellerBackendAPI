@@ -34,6 +34,7 @@ import Register from "@/pages/register";
 import NotFound from "@/pages/not-found";
 import OAuthTest from "@/pages/oauth-test";
 import StoryNarration from "@/pages/StoryNarration";
+import AdminNarration from "@/pages/admin/narration";
 
 
 
@@ -96,7 +97,7 @@ function AppContent() {
               <Route path="/voice-test" component={VoiceModulationTest} />
               <Route path="/voice-cloning-test" component={VoiceCloningTest} />
               <Route path="/voice-cloning-test1" component={VoiceCloningTest1} />
-              <Route path="/admin/narration" component={() => import("@/pages/admin/narration").then(m => <m.default />)} />
+              <Route path="/admin/narration" component={AdminNarration} />
               <Route component={NotFound} />
             </>
           ) : (
