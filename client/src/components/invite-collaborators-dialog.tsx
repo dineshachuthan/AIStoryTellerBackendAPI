@@ -21,6 +21,7 @@ interface InviteData {
   type: 'email' | 'phone';
   value: string;
   characterId?: number;
+  conversationStyle?: string;
 }
 
 export function InviteCollaboratorsDialog({ 
@@ -30,10 +31,22 @@ export function InviteCollaboratorsDialog({
   characters = []
 }: InviteCollaboratorsDialogProps) {
   const queryClient = useQueryClient();
-  const [invites, setInvites] = useState<InviteData[]>([{ type: 'email', value: '' }]);
+  const [invites, setInvites] = useState<InviteData[]>([{ type: 'email', value: '', conversationStyle: 'respectful' }]);
   const [message, setMessage] = useState('');
   const [createdInvitations, setCreatedInvitations] = useState<any[]>([]);
   const [copiedTokens, setCopiedTokens] = useState<Set<string>>(new Set());
+
+  // Conversation styles available for selection
+  const conversationStyles = [
+    { value: 'respectful', label: 'Respectful' },
+    { value: 'business', label: 'Business' },
+    { value: 'jovial', label: 'Jovial' },
+    { value: 'playful', label: 'Playful' },
+    { value: 'close_friends', label: 'Close Friends' },
+    { value: 'parent_to_child', label: 'Parent to Child' },
+    { value: 'child_to_parent', label: 'Child to Parent' },
+    { value: 'siblings', label: 'Siblings' }
+  ];
 
   const sendInvitationsMutation = useMutation({
     mutationFn: async () => {
@@ -48,6 +61,7 @@ export function InviteCollaboratorsDialog({
           email: invite.type === 'email' ? invite.value : undefined,
           phone: invite.type === 'phone' ? invite.value : undefined,
           characterId: invite.characterId,
+          conversationStyle: invite.conversationStyle || 'respectful',
         })),
         message: message.trim() || undefined,
       });
@@ -79,7 +93,7 @@ export function InviteCollaboratorsDialog({
 
   const addInvite = () => {
     if (invites.length < 10) { // Max 10 invites at once
-      setInvites([...invites, { type: 'email', value: '' }]);
+      setInvites([...invites, { type: 'email', value: '', conversationStyle: 'respectful' }]);
     }
   };
 

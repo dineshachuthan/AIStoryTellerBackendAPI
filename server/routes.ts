@@ -2705,13 +2705,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const storyId = parseInt(req.params.id);
       const userId = (req.user as any)?.id;
+      const { conversationStyle } = req.body; // Accept conversationStyle from request body
       
       if (!userId) {
         return res.status(401).json({ message: "User authentication required" });
       }
       
       // Use the proper story narrator flow as specified by user
-      const narrationResult = await storyNarrator.generateStoryNarration(storyId, userId);
+      // Pass conversationStyle if provided, otherwise use default 'respectful'
+      const narrationResult = await storyNarrator.generateStoryNarration(storyId, userId, conversationStyle);
       
       // Convert to expected format for frontend
       const narration = {
@@ -2741,15 +2743,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const storyId = parseInt(req.params.id);
       const userId = (req.user as any)?.id;
+      const { conversationStyle } = req.body; // Accept conversationStyle from request body
       
       if (!userId) {
         return res.status(401).json({ message: "User authentication required" });
       }
       
-      console.log(`[GenerateNarration] Starting story narration generation for story ${storyId}, user ${userId}`);
+      console.log(`[GenerateNarration] Starting story narration generation for story ${storyId}, user ${userId}, style ${conversationStyle || 'respectful'}`);
       
       // Generate narration with ElevenLabs integration - heavy logic happens here
-      const narrationResult = await storyNarrator.generateStoryNarration(storyId, userId);
+      const narrationResult = await storyNarrator.generateStoryNarration(storyId, userId, conversationStyle);
       
       console.log(`[GenerateNarration] Completed story narration: ${narrationResult.segments.length} segments, ${narrationResult.totalDuration}ms total`);
       
