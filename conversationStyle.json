@@ -1,34 +1,4 @@
 {
-  "parent_to_child": {
-    "stability": { "mean": 0.85, "range": [0.8, 0.9] },
-    "similarity_boost": { "mean": 0.88, "range": [0.85, 0.92] },
-    "style": { "mean": 0.5, "range": [0.4, 0.6] },
-    "prosody": {
-      "pitch": { "base": "-2%", "range": [-2, 2] },
-      "rate": { "base": "85%", "range": [80, 90] },
-      "volume": "medium"
-    }
-  },
-  "child_to_parent": {
-    "stability": { "mean": 0.75, "range": [0.7, 0.8] },
-    "similarity_boost": { "mean": 0.83, "range": [0.8, 0.87] },
-    "style": { "mean": 0.65, "range": [0.55, 0.75] },
-    "prosody": {
-      "pitch": { "base": "+6%", "range": [3, 8] },
-      "rate": { "base": "95%", "range": [90, 100] },
-      "volume": "medium"
-    }
-  },
-  "siblings": {
-    "stability": { "mean": 0.78, "range": [0.73, 0.83] },
-    "similarity_boost": { "mean": 0.86, "range": [0.82, 0.9] },
-    "style": { "mean": 0.7, "range": [0.6, 0.8] },
-    "prosody": {
-      "pitch": { "base": "+4%", "range": [2, 6] },
-      "rate": { "base": "98%", "range": [92, 105] },
-      "volume": "medium"
-    }
-  },
   "respectful": {
     "stability": { "mean": 0.85, "range": [0.8, 0.9] },
     "similarity_boost": { "mean": 0.9, "range": [0.85, 0.95] },
@@ -57,6 +27,56 @@
       "pitch": { "base": "+5%", "range": [3, 7] },
       "rate": { "base": "100%", "range": [95, 105] },
       "volume": "loud"
+    }
+  },
+  "playful": {
+    "stability": { "mean": 0.7, "range": [0.65, 0.75] },
+    "similarity_boost": { "mean": 0.83, "range": [0.8, 0.88] },
+    "style": { "mean": 0.7, "range": [0.6, 0.8] },
+    "prosody": {
+      "pitch": { "base": "+8%", "range": [5, 10] },
+      "rate": { "base": "105%", "range": [100, 110] },
+      "volume": "medium"
+    }
+  },
+  "close_friends": {
+    "stability": { "mean": 0.8, "range": [0.75, 0.85] },
+    "similarity_boost": { "mean": 0.87, "range": [0.82, 0.9] },
+    "style": { "mean": 0.65, "range": [0.55, 0.75] },
+    "prosody": {
+      "pitch": { "base": "+3%", "range": [0, 5] },
+      "rate": { "base": "95%", "range": [90, 100] },
+      "volume": "medium"
+    }
+  },
+  "parent_to_child": {
+    "stability": { "mean": 0.85, "range": [0.8, 0.9] },
+    "similarity_boost": { "mean": 0.88, "range": [0.85, 0.92] },
+    "style": { "mean": 0.5, "range": [0.4, 0.6] },
+    "prosody": {
+      "pitch": { "base": "-2%", "range": [-2, 2] },
+      "rate": { "base": "85%", "range": [80, 90] },
+      "volume": "medium"
+    }
+  },
+  "child_to_parent": {
+    "stability": { "mean": 0.75, "range": [0.7, 0.8] },
+    "similarity_boost": { "mean": 0.83, "range": [0.8, 0.87] },
+    "style": { "mean": 0.65, "range": [0.55, 0.75] },
+    "prosody": {
+      "pitch": { "base": "+6%", "range": [3, 8] },
+      "rate": { "base": "95%", "range": [90, 100] },
+      "volume": "medium"
+    }
+  },
+  "siblings": {
+    "stability": { "mean": 0.78, "range": [0.73, 0.83] },
+    "similarity_boost": { "mean": 0.86, "range": [0.82, 0.9] },
+    "style": { "mean": 0.7, "range": [0.6, 0.8] },
+    "prosody": {
+      "pitch": { "base": "+4%", "range": [2, 6] },
+      "rate": { "base": "98%", "range": [92, 105] },
+      "volume": "medium"
     }
   }
 }
