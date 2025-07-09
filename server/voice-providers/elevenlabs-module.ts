@@ -339,18 +339,35 @@ export class ElevenLabsModule extends BaseVoiceProvider {
       console.log(`[ElevenLabs] Narrator profile provided:`, {
         language: narratorProfile.language,
         locale: narratorProfile.locale,
-        nativeLanguage: narratorProfile.nativeLanguage
+        nativeLanguage: narratorProfile.nativeLanguage,
+        voiceSettings: narratorProfile.voiceSettings
       });
     }
     
     try {
+      // Use orchestrated voice settings if provided, otherwise fall back to emotion settings
+      let voiceSettings = this.getEmotionSettings(emotion);
+      
+      if (narratorProfile?.voiceSettings) {
+        // Use orchestrated settings from voice orchestration service
+        const orchestrated = narratorProfile.voiceSettings;
+        voiceSettings = {
+          stability: orchestrated.stability,
+          similarity_boost: orchestrated.similarityBoost,
+          style: orchestrated.style,
+          // ElevenLabs doesn't directly support prosody, but we can influence through other params
+          use_speaker_boost: orchestrated.prosody?.volume === 'loud'
+        };
+        console.log(`[ElevenLabs] Using orchestrated voice settings:`, voiceSettings);
+      }
+      
       // Use direct API call instead of SDK which has issues
       const response = await axios.post(
         `${this.config.baseUrl}/text-to-speech/${voiceId}`,
         {
           text: text,
           model_id: 'eleven_multilingual_v2',
-          voice_settings: this.getEmotionSettings(emotion)
+          voice_settings: voiceSettings
         },
         {
           headers: {

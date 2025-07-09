@@ -8,6 +8,7 @@ import videoRoutes from "./routes-video";
 import { VoiceProviderRegistry } from "./voice-providers/provider-manager";
 import { getVoiceConfig } from "./voice-config";
 import referenceDataRoutes from "./routes-reference-data";
+import { registerVoiceProfileRoutes } from "./routes-voice-profile";
 import { stateManager } from "../shared/state-manager";
 import { createApiExclusionPlugin } from "./vite-api-exclusion-plugin";
 
@@ -171,6 +172,9 @@ app.use((req, res, next) => {
   
   // Add collaborative routes after authentication is set up
   app.use(collaborativeRoutes);
+  
+  // Add voice profile routes
+  registerVoiceProfileRoutes(app);
   
   // Add video generation routes
   app.use(videoRoutes);

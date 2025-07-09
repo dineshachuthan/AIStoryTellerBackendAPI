@@ -2,6 +2,7 @@ import { audioService } from './audio-service';
 import type { NarratorProfile } from './audio-service';
 import { storage } from './storage';
 import { userContentStorage } from './user-content-storage';
+import { voiceOrchestrationService } from './voice-orchestration-service';
 
 export interface NarrationSegment {
   text: string;
@@ -215,10 +216,25 @@ export class StoryNarrator {
       const chunk = chunks[i];
       
       try {
-        // Detect emotion for this chunk
-        const chunkEmotion = this.detectChunkEmotion(chunk, extractedEmotions);
+        // Detect emotion and character for this chunk
+        const chunkContext = this.detectChunkContext(chunk, extractedEmotions, story.extractedCharacters || []);
         
-        // Generate audio using the determined narrator voice
+        // Get orchestrated voice parameters
+        const voiceSettings = await voiceOrchestrationService.calculateVoiceParameters(
+          userId,
+          chunk,
+          chunkContext.character,
+          chunkContext.emotion,
+          storyId
+        );
+        
+        // Add voice settings to narrator profile
+        const enhancedNarratorProfile = {
+          ...narratorProfile,
+          voiceSettings
+        };
+        
+        // Generate audio using the determined narrator voice with orchestrated settings
         const audioResult = await this.generateNarrationAudio(
           chunk, 
           narratorVoice, 
@@ -226,9 +242,9 @@ export class StoryNarrator {
           userId, 
           storyId, 
           i,
-          chunkEmotion,
+          chunkContext,
           userLanguage,
-          narratorProfile
+          enhancedNarratorProfile
         );
 
         segments.push({
@@ -278,33 +294,55 @@ export class StoryNarrator {
   }
 
   /**
-   * Detect emotion for a text chunk based on story analysis
+   * Detect emotion and character for a text chunk based on story analysis
    */
-  private detectChunkEmotion(chunk: string, extractedEmotions: any[]): { emotion: string; intensity: number } {
-    if (!extractedEmotions || extractedEmotions.length === 0) {
-      return { emotion: 'neutral', intensity: 5 };
-    }
+  private detectChunkContext(chunk: string, extractedEmotions: any[], extractedCharacters: any[]): { 
+    emotion: string; 
+    intensity: number; 
+    character: string;
+  } {
+    let emotion = 'neutral';
+    let intensity = 5;
+    let character = 'Narrator';
     
-    // Find the most relevant emotion for this chunk based on context/quotes
     const chunkLower = chunk.toLowerCase();
     
-    for (const emotionData of extractedEmotions) {
-      if (emotionData.quote && chunkLower.includes(emotionData.quote.toLowerCase())) {
-        return { 
-          emotion: emotionData.emotion || 'neutral', 
-          intensity: emotionData.intensity || 5 
-        };
-      }
-      if (emotionData.context && chunkLower.includes(emotionData.context.toLowerCase())) {
-        return { 
-          emotion: emotionData.emotion || 'neutral', 
-          intensity: emotionData.intensity || 5 
-        };
+    // Detect emotion from analysis
+    if (extractedEmotions && extractedEmotions.length > 0) {
+      for (const emotionData of extractedEmotions) {
+        if (emotionData.quote && chunkLower.includes(emotionData.quote.toLowerCase())) {
+          emotion = emotionData.emotion || 'neutral';
+          intensity = emotionData.intensity || 5;
+          break;
+        }
+        if (emotionData.context && chunkLower.includes(emotionData.context.toLowerCase())) {
+          emotion = emotionData.emotion || 'neutral';
+          intensity = emotionData.intensity || 5;
+          break;
+        }
       }
     }
     
-    // Default to neutral if no specific emotion found
-    return { emotion: 'neutral', intensity: 5 };
+    // Detect character from analysis
+    if (extractedCharacters && extractedCharacters.length > 0) {
+      for (const charData of extractedCharacters) {
+        if (charData.name && chunk.includes(charData.name)) {
+          character = charData.name;
+          break;
+        }
+        // Check if chunk contains dialogue patterns
+        if (charData.dialogues && Array.isArray(charData.dialogues)) {
+          for (const dialogue of charData.dialogues) {
+            if (chunkLower.includes(dialogue.toLowerCase())) {
+              character = charData.name;
+              break;
+            }
+          }
+        }
+      }
+    }
+    
+    return { emotion, intensity, character };
   }
 
   /**
@@ -318,7 +356,7 @@ export class StoryNarrator {
     userId: string,
     storyId: number,
     segmentIndex: number,
-    chunkEmotion: { emotion: string; intensity: number },
+    chunkContext: { emotion: string; intensity: number; character: string },
     userLanguage: string,
     narratorProfile: NarratorProfile
   ): Promise<{ audioUrl: string; duration?: number }> {
@@ -327,22 +365,22 @@ export class StoryNarrator {
     
     if (narratorVoiceType === 'user' && narratorVoice.length === 20) {
       // ElevenLabs voice trained on all emotions - pass actual emotion for modulation
-      console.log(`[StoryNarrator] Generating narration segment ${segmentIndex} using ElevenLabs voice: ${narratorVoice} with emotion: ${chunkEmotion.emotion}, intensity: ${chunkEmotion.intensity}`);
+      console.log(`[StoryNarrator] Generating narration segment ${segmentIndex} using ElevenLabs voice: ${narratorVoice} with character: ${chunkContext.character}, emotion: ${chunkContext.emotion}, intensity: ${chunkContext.intensity}`);
       
       try {
         const { VoiceProviderFactory } = await import('./voice-providers/voice-provider-factory');
-        const arrayBuffer = await VoiceProviderFactory.generateSpeech(text, narratorVoice, chunkEmotion.emotion, undefined, narratorProfile);
+        const arrayBuffer = await VoiceProviderFactory.generateSpeech(text, narratorVoice, chunkContext.emotion, undefined, narratorProfile);
         audioBuffer = Buffer.from(arrayBuffer);
         
-        console.log(`[StoryNarrator] ElevenLabs narration generated: ${audioBuffer.length} bytes with ${chunkEmotion.emotion} emotion`);
+        console.log(`[StoryNarrator] ElevenLabs narration generated: ${audioBuffer.length} bytes with ${chunkContext.emotion} emotion`);
         
       } catch (error) {
         console.error(`[StoryNarrator] ElevenLabs generation failed, falling back to audio service:`, error);
         // Fallback to audio service if ElevenLabs fails - pass emotion here too
         const { buffer } = await audioService.getAudioBuffer({
           text,
-          emotion: chunkEmotion.emotion, // Pass actual emotion for fallback
-          intensity: chunkEmotion.intensity,
+          emotion: chunkContext.emotion, // Pass actual emotion for fallback
+          intensity: chunkContext.intensity,
           voice: narratorVoice,
           userId,
           storyId,
@@ -352,12 +390,12 @@ export class StoryNarrator {
       }
     } else {
       // Use audio service for AI voices - pass actual emotions for OpenAI modulation
-      console.log(`[StoryNarrator] Generating narration with OpenAI voice, emotion: ${chunkEmotion.emotion}, intensity: ${chunkEmotion.intensity}, language: ${userLanguage}`);
+      console.log(`[StoryNarrator] Generating narration with OpenAI voice, character: ${chunkContext.character}, emotion: ${chunkContext.emotion}, intensity: ${chunkContext.intensity}, language: ${userLanguage}`);
       
       const { buffer } = await audioService.getAudioBuffer({
         text,
-        emotion: chunkEmotion.emotion, // Use detected emotion for OpenAI voices
-        intensity: chunkEmotion.intensity,
+        emotion: chunkContext.emotion, // Use detected emotion for OpenAI voices
+        intensity: chunkContext.intensity,
         voice: narratorVoice,
         userId,
         storyId,
