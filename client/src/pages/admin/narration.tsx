@@ -12,6 +12,7 @@ import { apiClient } from "@/lib/api-client";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import { getMessage } from "@shared/i18n-hierarchical";
+import { SimpleAudioPlayer } from "@/components/ui/simple-audio-player";
 
 const CONVERSATION_STYLES = [
   "respectful",
@@ -54,9 +55,8 @@ export default function AdminNarration() {
   const [narratorProfile, setNarratorProfile] = useState("neutral");
   const [voiceId, setVoiceId] = useState("");
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
   const [voiceParameters, setVoiceParameters] = useState<any>(null);
+  const [statusMessage, setStatusMessage] = useState<string>("");
   
   // Fetch stories for dropdown
   const { data: stories = [], isLoading: storiesLoading } = useQuery({
@@ -97,17 +97,13 @@ export default function AdminNarration() {
     onSuccess: (data) => {
       setAudioUrl(data.audioUrl);
       setVoiceParameters(data.voiceParameters);
-      toast({
-        title: "Narration Generated",
-        description: "Audio has been generated successfully",
-      });
+      setStatusMessage("Audio generated successfully");
+      setTimeout(() => setStatusMessage(""), 3000);
     },
     onError: (error: any) => {
-      toast({
-        title: "Generation Failed",
-        description: error.message || "Failed to generate narration",
-        variant: "destructive",
-      });
+      console.error("Generation failed:", error);
+      setStatusMessage(`Error: ${error.message}`);
+      setTimeout(() => setStatusMessage(""), 5000);
     },
   });
 
@@ -115,11 +111,7 @@ export default function AdminNarration() {
     const textToNarrate = storyContent || (storyIdInput ? `Story ID ${storyIdInput} content` : "");
     
     if (!textToNarrate.trim() || !selectedStoryId) {
-      toast({
-        title: "Missing Story",
-        description: "Please select a story to narrate",
-        variant: "destructive",
-      });
+      console.error("Missing story - please select a story to narrate");
       return;
     }
 
@@ -133,25 +125,7 @@ export default function AdminNarration() {
     });
   };
 
-  const handlePlayPause = () => {
-    if (!audioUrl) return;
-
-    if (!audio) {
-      const newAudio = new Audio(audioUrl);
-      newAudio.addEventListener("ended", () => setIsPlaying(false));
-      setAudio(newAudio);
-      newAudio.play();
-      setIsPlaying(true);
-    } else {
-      if (isPlaying) {
-        audio.pause();
-        setIsPlaying(false);
-      } else {
-        audio.play();
-        setIsPlaying(true);
-      }
-    }
-  };
+  // Audio is handled by SimpleAudioPlayer component
 
   // Admin check removed - page is accessible to all authenticated users for testing
 
@@ -284,6 +258,12 @@ export default function AdminNarration() {
               />
             </div>
 
+            {statusMessage && (
+              <div className="text-sm text-muted-foreground text-center">
+                {statusMessage}
+              </div>
+            )}
+
             <div className="flex gap-4">
               <Button
                 onClick={() => handleGenerate(false)}
@@ -316,24 +296,10 @@ export default function AdminNarration() {
             <CardContent>
               {audioUrl ? (
                 <div className="space-y-4">
-                  <Button
-                    onClick={handlePlayPause}
-                    size="lg"
-                    className="w-full"
-                    variant={isPlaying ? "secondary" : "default"}
-                  >
-                    {isPlaying ? (
-                      <>
-                        <Pause className="w-5 h-5 mr-2" />
-                        Pause
-                      </>
-                    ) : (
-                      <>
-                        <Play className="w-5 h-5 mr-2" />
-                        Play
-                      </>
-                    )}
-                  </Button>
+                  <SimpleAudioPlayer 
+                    audioUrl={audioUrl}
+                    showVolumeControl={true}
+                  />
                   <div className="text-sm text-muted-foreground">
                     <a
                       href={audioUrl}
