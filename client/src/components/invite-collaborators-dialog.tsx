@@ -57,10 +57,13 @@ export function InviteCollaboratorsDialog({
       toast.success(toastMessages.invitationsSent(count));
       queryClient.invalidateQueries({ queryKey: ['/api/stories', story.id, 'invitations'] });
       
+      console.log('Invitation response data:', data);
+      
       // Store created invitations for display
       if (data && data.results) {
         // Extract invitation objects from results array
         const invitations = data.results.map((result: any) => result.invitation);
+        console.log('Extracted invitations:', invitations);
         setCreatedInvitations(invitations);
       }
       
@@ -123,6 +126,7 @@ export function InviteCollaboratorsDialog({
 
         <div className="space-y-4">
           {/* Created Invitations Display */}
+          {console.log('Rendering dialog, createdInvitations:', createdInvitations)}
           {createdInvitations.length > 0 && (
             <div className="space-y-3 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
               <div className="flex items-center space-x-2">
