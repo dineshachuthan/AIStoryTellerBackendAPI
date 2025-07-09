@@ -250,6 +250,94 @@ export function registerVoiceProfileRoutes(app: Express) {
       ]
     });
   });
+  
+  // TEMPORARY: Quick test endpoint for different narrator profiles
+  app.post('/api/voice-profile/test-preset', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).user.claims.sub;
+      const { preset } = req.body;
+      
+      // Define preset profiles
+      const presets: Record<string, any> = {
+        grandma: {
+          stability: 0.9,      // Very stable, gentle voice
+          similarityBoost: 0.7, // Allow more warmth variation
+          style: 0.8,          // Expressive, storytelling style
+          pitch: "+10%",       // Slightly higher pitch
+          rate: "slow",        // Slower, deliberate pace
+          age: 'elderly'
+        },
+        kid: {
+          stability: 0.5,      // More dynamic, energetic
+          similarityBoost: 0.6, // Allow playful variations
+          style: 0.9,          // Very expressive
+          pitch: "+20%",       // Higher pitch for youthful sound
+          rate: "fast",        // Faster, excited pace
+          age: 'child'
+        },
+        neutral: {
+          stability: 0.75,
+          similarityBoost: 0.85,
+          style: 0.5,
+          pitch: "0%",
+          rate: "medium",
+          age: 'adult'
+        }
+      };
+      
+      const profileData = presets[preset];
+      if (!profileData) {
+        return res.status(400).json({ error: 'Invalid preset' });
+      }
+      
+      // Deactivate existing profiles
+      await db.update(userVoiceProfiles)
+        .set({ isActive: false })
+        .where(eq(userVoiceProfiles.userId, userId));
+      
+      // Check if user has any profile
+      const [existingProfile] = await db.select()
+        .from(userVoiceProfiles)
+        .where(eq(userVoiceProfiles.userId, userId))
+        .limit(1);
+      
+      if (existingProfile) {
+        // Update existing profile
+        await db.update(userVoiceProfiles)
+          .set({
+            ...profileData,
+            storytellingLanguage: 'en',
+            nativeLanguage: existingProfile.nativeLanguage || 'en',
+            onboardingCompleted: true,
+            isActive: true,
+            updatedAt: new Date()
+          })
+          .where(eq(userVoiceProfiles.userId, userId));
+      } else {
+        // Create new profile
+        await db.insert(userVoiceProfiles)
+          .values({
+            userId,
+            ...profileData,
+            storytellingLanguage: 'en',
+            nativeLanguage: 'en',
+            onboardingCompleted: true,
+            isActive: true
+          });
+      }
+      
+      // Clear cached narrations to force regeneration
+      await storage.clearUserStoryNarrations(userId);
+      
+      res.json({ 
+        success: true, 
+        message: `${preset} narrator profile activated. Please regenerate narration to hear the difference.` 
+      });
+    } catch (error) {
+      console.error('Error setting test profile:', error);
+      res.status(500).json({ error: 'Failed to set test profile' });
+    }
+  });
 }
 
 /**

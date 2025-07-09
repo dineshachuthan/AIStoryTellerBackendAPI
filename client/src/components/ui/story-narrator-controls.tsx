@@ -1,10 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Headphones, Play, Pause, Save, Download, Loader2, RefreshCw, SkipBack, SkipForward, Volume2, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { getMessage } from '@shared/i18n-hierarchical';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface NarrationSegment {
   text: string;
@@ -417,35 +424,77 @@ export default function StoryNarratorControls({
         </div>
       </div>
 
-
-
-      {/* Generate button when no narration exists */}
-      {!hasAnyNarration && (
-        <div className="text-center py-8">
-          <p className="text-white/70 mb-4">No narration generated yet</p>
-          <Button
-            onClick={generateNarration}
-            disabled={isGenerating || !canNarrate || !!savedNarration}
-            size="lg"
-            className="bg-purple-600 hover:bg-purple-700 text-white"
+      {/* TEMPORARY: Voice Profile Test Dropdown */}
+      <div className="mb-6 p-4 bg-yellow-900/20 border border-yellow-600/30 rounded-lg">
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-yellow-200">🧪 Test Voice Profile:</span>
+          <Select
+            onValueChange={async (value) => {
+              try {
+                const response = await fetch('/api/voice-profile/test-preset', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ preset: value })
+                });
+                if (response.ok) {
+                  toast({
+                    title: "Profile Changed",
+                    description: `${value} voice profile activated. Regenerate narration to hear the difference.`
+                  });
+                  // Invalidate narration cache
+                  await queryClient.invalidateQueries({ queryKey: [`/api/stories/${storyId}/narration/saved`] });
+                }
+              } catch (error) {
+                toast({
+                  title: "Error",
+                  description: "Failed to change voice profile",
+                  variant: "destructive"
+                });
+              }
+            }}
           >
-            {isGenerating ? (
-              <>
-                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                Generating Narration...
-              </>
-            ) : (
-              <>
-                <Download className="w-5 h-5 mr-2" />
-                Generate Narration
-              </>
-            )}
-          </Button>
-          {!canNarrate && (
-            <p className="text-sm text-red-400 mt-2">You need to set up a narrator voice first</p>
-          )}
+            <SelectTrigger className="w-[180px] bg-gray-800 text-white">
+              <SelectValue placeholder="Select profile" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="grandma">👵 Grandma Voice</SelectItem>
+              <SelectItem value="kid">👶 Kid Voice</SelectItem>
+              <SelectItem value="neutral">👤 Neutral Voice</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-      )}
+      </div>
+
+      {/* Generate/Regenerate button - always visible for testing */}
+      <div className="text-center py-8">
+        {!hasAnyNarration && (
+          <p className="text-white/70 mb-4">No narration generated yet</p>
+        )}
+        {hasAnyNarration && (
+          <p className="text-white/70 mb-4">Regenerate narration with new voice profile</p>
+        )}
+        <Button
+          onClick={generateNarration}
+          disabled={isGenerating || !canNarrate}
+          size="lg"
+          className="bg-purple-600 hover:bg-purple-700 text-white"
+        >
+          {isGenerating ? (
+            <>
+              <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+              Generating Narration...
+            </>
+          ) : (
+            <>
+              <Download className="w-5 h-5 mr-2" />
+              {hasAnyNarration ? 'Regenerate Narration' : 'Generate Narration'}
+            </>
+          )}
+        </Button>
+        {!canNarrate && (
+          <p className="text-sm text-red-400 mt-2">You need to set up a narrator voice first</p>
+        )}
+      </div>
 
       {/* TV-Style Media Player */}
       {hasAnyNarration && (

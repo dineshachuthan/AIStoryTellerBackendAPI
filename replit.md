@@ -454,6 +454,14 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - ✅ Enhanced story narrator to use orchestrated voice settings per segment
 - ✅ Integrated character context detection with voice orchestration
 - ✅ Built implicit user profile learning from story patterns
+- ✅ **TESTING FEATURES ADDED**:
+  - Temporary voice profile dropdown for testing (Grandma, Kid, Neutral profiles)
+  - API endpoint `/api/voice-profile/test-preset` for quick profile switching
+  - Generate button now always visible for regenerating with different profiles
+  - Each profile applies distinct voice parameters:
+    - **Grandma**: High stability (0.9), warm tone, slow pace, slightly higher pitch
+    - **Kid**: Dynamic stability (0.5), very expressive (0.9), fast pace, higher pitch
+    - **Neutral**: Balanced settings for standard narration
 - **Architecture Features**:
   - Voice settings calculated dynamically based on character, emotion, and user preferences
   - System learns from each story to improve voice configurations automatically
