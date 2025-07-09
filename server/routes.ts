@@ -1163,69 +1163,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ? `admin_${Date.now()}_${Math.random().toString(36).substring(7)}`
         : `admin_${text.substring(0, 50)}_${conversationStyle}_${emotion}_${narratorProfile}`;
 
-      // For force regenerate, generate directly without cache
-      if (forceRegenerate) {
-        const { audioService } = await import("./audio-service");
-        
-        // Generate new audio buffer directly, bypassing cache
-        const { buffer, voice } = await audioService.getAudioBuffer({
-          text,
-          emotion,
-          intensity: 5,
-          voice: voiceId || "N1tpb4Gkzo0sjT3Jl3Bs", // Use your new ElevenLabs voice as default
-          userId,
-          storyId,
-          narratorProfile: {
-            language: 'en',
-            locale: 'en-US'
-          }
-        });
-        
-        // Save with unique filename to ensure fresh audio
-        const timestamp = Date.now();
-        const randomId = Math.random().toString(36).substring(7);
-        const filename = `admin_force_${timestamp}_${randomId}.mp3`;
-        const audioPath = path.join(process.cwd(), 'public', 'voice-samples', filename);
-        
-        await fs.mkdir(path.dirname(audioPath), { recursive: true });
-        await fs.writeFile(audioPath, buffer);
-        
-        const audioUrl = `/voice-samples/${filename}`;
-        
-        res.json({
-          audioUrl,
-          voiceParameters: {
-            voiceId: voice,
-            voiceSettings: voiceStyle,
-            conversationStyle,
-            emotion,
-            narratorProfile
-          }
-        });
-        return;
-      }
-      
-      // Normal generation with cache
+      // Import audio service
       const { audioService } = await import("./audio-service");
       
-      const audioResult = await audioService.generateEmotionAudio({
+      const conversationStyleDir = conversationStyle || 'respectful';
+      const narratorProfileDir = narratorProfile || 'neutral';
+      
+      // Check cache first unless force regenerate is requested
+      if (!forceRegenerate) {
+        const cacheDir = path.join(
+          process.cwd(), 
+          'stories', 
+          'audio', 
+          'narrations',
+          userId,
+          storyId.toString(),
+          conversationStyleDir,
+          narratorProfileDir
+        );
+        
+        try {
+          // Check if directory exists and has files for this emotion
+          const files = await fs.readdir(cacheDir);
+          const matchingFiles = files.filter(f => f.startsWith(`${emotion}_`));
+          
+          if (matchingFiles.length > 0) {
+            // Return the most recent cached file
+            const latestFile = matchingFiles.sort().reverse()[0];
+            const audioUrl = `/api/stories/audio/narrations/${userId}/${storyId}/${conversationStyleDir}/${narratorProfileDir}/${latestFile}`;
+            console.log(`[Admin Narration] Using cached audio: ${audioUrl}`);
+            
+            res.json({
+              audioUrl,
+              voiceParameters: {
+                voiceId: voiceId || "N1tpb4Gkzo0sjT3Jl3Bs",
+                voiceSettings: voiceStyle,
+                conversationStyle,
+                emotion,
+                narratorProfile
+              }
+            });
+            return;
+          }
+        } catch (error) {
+          // Directory doesn't exist, continue to generate
+          console.log(`[Admin Narration] Cache directory not found, generating new audio`);
+        }
+      }
+      
+      // Generate new audio
+      const { buffer, voice } = await audioService.forceGenerateAudio({
         text,
         emotion,
         intensity: 5,
         voice: voiceId || "N1tpb4Gkzo0sjT3Jl3Bs",
         userId,
-        storyId,
-        conversationStyle,
         narratorProfile: {
           language: 'en',
           locale: 'en-US'
         }
       });
       
+      // Store the audio file with multi-dimensional path structure
+      const timestamp = Date.now();
+      const randomId = Math.random().toString(36).substring(7);
+      const filename = `${emotion}_${timestamp}_${randomId}.mp3`;
+      
+      const audioPath = path.join(
+        process.cwd(), 
+        'stories', 
+        'audio', 
+        'narrations',
+        userId,
+        storyId.toString(),
+        conversationStyleDir,
+        narratorProfileDir,
+        filename
+      );
+      
+      await fs.mkdir(path.dirname(audioPath), { recursive: true });
+      await fs.writeFile(audioPath, buffer);
+      
+      // Return URL that matches Express route structure
+      const audioUrl = `/api/stories/audio/narrations/${userId}/${storyId}/${conversationStyleDir}/${narratorProfileDir}/${filename}`;
+      
       res.json({
-        audioUrl: audioResult.audioUrl,
+        audioUrl,
         voiceParameters: {
-          voiceId: audioResult.voice || voiceId || "N1tpb4Gkzo0sjT3Jl3Bs",
+          voiceId: voice,
           voiceSettings: voiceStyle,
           conversationStyle,
           emotion,

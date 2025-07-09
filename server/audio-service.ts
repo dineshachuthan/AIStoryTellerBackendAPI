@@ -704,8 +704,7 @@ export class AudioService {
     // Generate new character-level AI audio
     const updatedOptions = { ...options, characters: characterArray };
     const buffer = await this.generateAIAudio(updatedOptions);
-    const fileName = await this.cacheAudioFile(buffer, updatedOptions, selectedVoice);
-    const audioUrl = `/voice-samples/${fileName}`;
+    const audioUrl = await this.cacheAudioFile(buffer, updatedOptions, selectedVoice);
     
     return {
       audioUrl,

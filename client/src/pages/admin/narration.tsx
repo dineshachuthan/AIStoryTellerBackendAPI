@@ -88,6 +88,7 @@ export default function AdminNarration() {
       narratorProfile: string;
       voiceId?: string;
       forceRegenerate: boolean;
+      storyId: number;
     }) => {
       const response = await fetch("/api/admin/narration/generate", {
         method: "POST",
@@ -144,6 +145,7 @@ export default function AdminNarration() {
       narratorProfile,
       voiceId: voiceId || undefined,
       forceRegenerate,
+      storyId: parseInt(selectedStoryId),
     });
   };
 
