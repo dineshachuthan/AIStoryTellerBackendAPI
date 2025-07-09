@@ -322,6 +322,30 @@ export interface IStorage {
   clearAllCacheEntries(): Promise<void>;
   getExpiredCacheEntries(): Promise<any[]>;
   getOldestCacheEntries(limit: number): Promise<any[]>;
+  
+  // Content Sharing Methods
+  createContentItem(content: any): Promise<any>;
+  getContentItem(id: number): Promise<any | undefined>;
+  getContentItemByHash(contentHash: string): Promise<any | undefined>;
+  updateContentItem(id: number, updates: any): Promise<void>;
+  
+  // User Relationships Methods
+  createUserRelationship(relationship: any): Promise<any>;
+  getUserRelationships(userId: string): Promise<any[]>;
+  getUserRelationship(fromUserId: string, toIdentifier: string): Promise<any | undefined>;
+  updateUserRelationship(id: number, updates: any): Promise<void>;
+  deleteUserRelationship(id: number): Promise<void>;
+  
+  // Content Shares Methods
+  createContentShare(share: any): Promise<any>;
+  getContentShare(shareToken: string): Promise<any | undefined>;
+  getContentShareById(id: number): Promise<any | undefined>;
+  getUserContentShares(userId: string): Promise<any[]>;
+  updateContentShare(id: number, updates: any): Promise<void>;
+  markContentShareClicked(shareToken: string): Promise<void>;
+  incrementSharePlayCount(shareToken: string): Promise<void>;
+  getExpiredContentShares(): Promise<any[]>;
+  deleteContentShare(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2200,6 +2224,175 @@ export class DatabaseStorage implements IStorage {
   async getOldestCacheEntries(limit: number): Promise<any[]> {
     // Oldest cache entries retrieval will be implemented with database schema
     return [];
+  }
+  
+  // Content Sharing Methods Implementation
+  async createContentItem(content: any): Promise<any> {
+    const { contentItems } = await import("@shared/schema");
+    const [item] = await db
+      .insert(contentItems)
+      .values(content)
+      .returning();
+    return item;
+  }
+  
+  async getContentItem(id: number): Promise<any | undefined> {
+    const { contentItems } = await import("@shared/schema");
+    const [item] = await db
+      .select()
+      .from(contentItems)
+      .where(eq(contentItems.id, id));
+    return item;
+  }
+  
+  async getContentItemByHash(contentHash: string): Promise<any | undefined> {
+    const { contentItems } = await import("@shared/schema");
+    const [item] = await db
+      .select()
+      .from(contentItems)
+      .where(eq(contentItems.contentHash, contentHash));
+    return item;
+  }
+  
+  async updateContentItem(id: number, updates: any): Promise<void> {
+    const { contentItems } = await import("@shared/schema");
+    await db
+      .update(contentItems)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(contentItems.id, id));
+  }
+  
+  // User Relationships Methods Implementation
+  async createUserRelationship(relationship: any): Promise<any> {
+    const { userRelationships } = await import("@shared/schema");
+    const [rel] = await db
+      .insert(userRelationships)
+      .values(relationship)
+      .returning();
+    return rel;
+  }
+  
+  async getUserRelationships(userId: string): Promise<any[]> {
+    const { userRelationships } = await import("@shared/schema");
+    return db
+      .select()
+      .from(userRelationships)
+      .where(eq(userRelationships.fromUserId, userId))
+      .orderBy(desc(userRelationships.createdAt));
+  }
+  
+  async getUserRelationship(fromUserId: string, toIdentifier: string): Promise<any | undefined> {
+    const { userRelationships } = await import("@shared/schema");
+    const [relationship] = await db
+      .select()
+      .from(userRelationships)
+      .where(and(
+        eq(userRelationships.fromUserId, fromUserId),
+        eq(userRelationships.toIdentifier, toIdentifier)
+      ));
+    return relationship;
+  }
+  
+  async updateUserRelationship(id: number, updates: any): Promise<void> {
+    const { userRelationships } = await import("@shared/schema");
+    await db
+      .update(userRelationships)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(userRelationships.id, id));
+  }
+  
+  async deleteUserRelationship(id: number): Promise<void> {
+    const { userRelationships } = await import("@shared/schema");
+    await db
+      .delete(userRelationships)
+      .where(eq(userRelationships.id, id));
+  }
+  
+  // Content Shares Methods Implementation
+  async createContentShare(share: any): Promise<any> {
+    const { contentShares } = await import("@shared/schema");
+    const [sharedContent] = await db
+      .insert(contentShares)
+      .values(share)
+      .returning();
+    return sharedContent;
+  }
+  
+  async getContentShare(shareToken: string): Promise<any | undefined> {
+    const { contentShares } = await import("@shared/schema");
+    const [share] = await db
+      .select()
+      .from(contentShares)
+      .where(eq(contentShares.shareToken, shareToken));
+    return share;
+  }
+  
+  async getContentShareById(id: number): Promise<any | undefined> {
+    const { contentShares } = await import("@shared/schema");
+    const [share] = await db
+      .select()
+      .from(contentShares)
+      .where(eq(contentShares.id, id));
+    return share;
+  }
+  
+  async getUserContentShares(userId: string): Promise<any[]> {
+    const { contentShares } = await import("@shared/schema");
+    return db
+      .select()
+      .from(contentShares)
+      .where(eq(contentShares.senderId, userId))
+      .orderBy(desc(contentShares.createdAt));
+  }
+  
+  async updateContentShare(id: number, updates: any): Promise<void> {
+    const { contentShares } = await import("@shared/schema");
+    await db
+      .update(contentShares)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(contentShares.id, id));
+  }
+  
+  async markContentShareClicked(shareToken: string): Promise<void> {
+    const { contentShares } = await import("@shared/schema");
+    await db
+      .update(contentShares)
+      .set({ 
+        firstClickedAt: sql`COALESCE(${contentShares.firstClickedAt}, NOW())`,
+        lastClickedAt: new Date(),
+        clickCount: sql`${contentShares.clickCount} + 1`,
+        updatedAt: new Date()
+      })
+      .where(eq(contentShares.shareToken, shareToken));
+  }
+  
+  async incrementSharePlayCount(shareToken: string): Promise<void> {
+    const { contentShares } = await import("@shared/schema");
+    await db
+      .update(contentShares)
+      .set({ 
+        playCount: sql`${contentShares.playCount} + 1`,
+        updatedAt: new Date()
+      })
+      .where(eq(contentShares.shareToken, shareToken));
+  }
+  
+  async getExpiredContentShares(): Promise<any[]> {
+    const { contentShares } = await import("@shared/schema");
+    return db
+      .select()
+      .from(contentShares)
+      .where(and(
+        isNotNull(contentShares.expiresAt),
+        lt(contentShares.expiresAt, new Date())
+      ));
+  }
+  
+  async deleteContentShare(id: number): Promise<void> {
+    const { contentShares } = await import("@shared/schema");
+    await db
+      .delete(contentShares)
+      .where(eq(contentShares.id, id));
   }
 }
 

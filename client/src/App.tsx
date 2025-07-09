@@ -96,6 +96,7 @@ function AppContent() {
               <Route path="/voice-test" component={VoiceModulationTest} />
               <Route path="/voice-cloning-test" component={VoiceCloningTest} />
               <Route path="/voice-cloning-test1" component={VoiceCloningTest1} />
+              <Route path="/admin/narration" component={() => import("@/pages/admin/narration").then(m => <m.default />)} />
               <Route component={NotFound} />
             </>
           ) : (

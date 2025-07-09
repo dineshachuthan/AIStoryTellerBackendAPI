@@ -538,6 +538,78 @@ export const emotionVoiceProfiles = pgTable("emotion_voice_profiles", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// ===== CONTENT SHARING AND RELATIONSHIP SYSTEM =====
+
+// Content items table - stores any shareable content
+export const contentItems = pgTable("content_items", {
+  id: serial("id").primaryKey(),
+  type: varchar("type").notNull(), // 'story', 'article', 'video', 'custom'
+  sourceUrl: text("source_url"), // For external content
+  originalContent: text("original_content"), // Text/markdown content
+  summary: text("summary"), // AI-generated base summary
+  metadata: jsonb("metadata"), // title, author, date, etc.
+  contentHash: varchar("content_hash"), // For caching
+  createdBy: varchar("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_content_items_type").on(table.type),
+  index("idx_content_items_hash").on(table.contentHash),
+]);
+
+// User relationships table - maps conversation styles between users
+export const userRelationships = pgTable("user_relationships", {
+  id: serial("id").primaryKey(),
+  fromUserId: varchar("from_user_id").references(() => users.id).notNull(),
+  toUserId: varchar("to_user_id").references(() => users.id), // Can be null for anonymous
+  toIdentifier: text("to_identifier"), // Email/phone for non-users
+  conversationStyle: varchar("conversation_style").notNull(), // 'respectful', 'business', 'jovial', etc.
+  nickname: varchar("nickname"), // "Mom", "Boss", etc.
+  relationshipContext: text("relationship_context"), // Optional notes
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_user_relationships_from").on(table.fromUserId),
+  index("idx_user_relationships_to").on(table.toUserId),
+  index("idx_user_relationships_style").on(table.conversationStyle),
+]);
+
+// Content shares table - tracks individual shares with personalization
+export const contentShares = pgTable("content_shares", {
+  id: serial("id").primaryKey(),
+  contentItemId: integer("content_item_id").references(() => contentItems.id).notNull(),
+  sharedByUserId: varchar("shared_by_user_id").references(() => users.id).notNull(),
+  sharedWith: text("shared_with").notNull(), // Email/phone
+  relationshipId: integer("relationship_id").references(() => userRelationships.id),
+  shareToken: varchar("share_token").notNull().unique(), // Unique URL token
+  
+  // Personalization
+  personalizedSummary: text("personalized_summary"), // Relationship-specific summary
+  personalizedMessage: text("personalized_message"), // Optional custom message
+  conversationStyle: varchar("conversation_style"), // Override style for this share
+  
+  // Audio generation
+  audioGenerated: boolean("audio_generated").default(false),
+  audioUrl: text("audio_url"),
+  voiceParameters: jsonb("voice_parameters"), // Stored voice settings
+  audioGeneratedAt: timestamp("audio_generated_at"),
+  audioCacheKey: varchar("audio_cache_key"), // For cache lookup
+  
+  // Tracking
+  clickedAt: timestamp("clicked_at"), // When recipient first clicked
+  playCount: integer("play_count").default(0),
+  lastPlayedAt: timestamp("last_played_at"),
+  expiresAt: timestamp("expires_at"), // Auto-cleanup
+  
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_content_shares_token").on(table.shareToken),
+  index("idx_content_shares_content").on(table.contentItemId),
+  index("idx_content_shares_sender").on(table.sharedByUserId),
+  index("idx_content_shares_cache").on(table.audioCacheKey),
+]);
+
 // User schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   createdAt: true,

@@ -1125,6 +1125,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin narration endpoint - for testing voice parameters without cache restrictions
+  app.post("/api/admin/narration/generate", requireAdmin, async (req, res) => {
+    try {
+      const {
+        text,
+        conversationStyle,
+        emotion,
+        narratorProfile,
+        voiceId,
+        forceRegenerate
+      } = req.body;
+
+      if (!text) {
+        return res.status(400).json({ message: "Text is required" });
+      }
+
+      // Import voice orchestration service
+      const { voiceOrchestrationService } = await import("./voice-orchestration-service");
+      
+      // Calculate voice parameters based on conversation style and narrator profile
+      const voiceSettings = await voiceOrchestrationService.calculateVoiceSettings({
+        conversationStyle,
+        emotion,
+        narratorProfile,
+        character: { name: "Admin Test" }
+      });
+
+      // Generate unique cache key for admin testing
+      const cacheKey = forceRegenerate 
+        ? `admin_${Date.now()}_${Math.random().toString(36).substring(7)}`
+        : `admin_${text.substring(0, 50)}_${conversationStyle}_${emotion}_${narratorProfile}`;
+
+      // Use audio service to generate narration
+      const audioResult = await audioService.generateAudio({
+        text,
+        voice: voiceId || voiceSettings.voiceId || "cuxbYT1nu3MZbK8JwgAZ", // Default to known working voice
+        emotion,
+        cacheKey,
+        voiceSettings: voiceSettings.voiceSettings
+      });
+
+      res.json({
+        audioUrl: audioResult.audioUrl,
+        voiceParameters: {
+          voiceId: audioResult.voiceId || voiceId,
+          voiceSettings: voiceSettings.voiceSettings,
+          conversationStyle,
+          emotion,
+          narratorProfile
+        }
+      });
+    } catch (error) {
+      console.error("Admin narration generation error:", error);
+      res.status(500).json({ 
+        message: "Failed to generate narration",
+        error: error.message 
+      });
+    }
+  });
+
   // Audio transcription endpoint for voice recording and file upload
   app.post("/api/audio/transcribe", upload.single('audio'), async (req, res) => {
     try {
