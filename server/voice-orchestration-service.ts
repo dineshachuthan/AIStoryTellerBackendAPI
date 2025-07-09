@@ -30,9 +30,34 @@ interface VoiceConfigData {
   learnedPatterns?: any[];
 }
 
+interface ConversationStyle {
+  stability: { mean: number; range: [number, number] };
+  similarity_boost: { mean: number; range: [number, number] };
+  style: { mean: number; range: [number, number] };
+  prosody: {
+    pitch: { base: string; range: [number, number] };
+    rate: { base: string; range: [number, number] };
+    volume: string;
+  };
+}
+
+interface NarratorProfile {
+  voice_id?: string;
+  baselineVoice: {
+    stability: number;
+    similarity_boost: number;
+    style: number;
+    pitch: string;
+    rate: string;
+    volume: string;
+  };
+}
+
 export class VoiceOrchestrationService {
   private configPath = path.join(process.cwd(), 'fullVoiceConfig.json');
+  private conversationStylePath = path.join(process.cwd(), 'conversationStyle.json');
   private config: VoiceConfigData | null = null;
+  private conversationStyles: Record<string, ConversationStyle> | null = null;
   private configLastLoaded: number = 0;
   private CONFIG_RELOAD_INTERVAL = 60000; // Reload config every minute
 
@@ -69,6 +94,24 @@ export class VoiceOrchestrationService {
   }
 
   /**
+   * Get or load conversation styles configuration
+   */
+  private async getConversationStyles(): Promise<Record<string, ConversationStyle>> {
+    const now = Date.now();
+    if (!this.conversationStyles || now - this.configLastLoaded > this.CONFIG_RELOAD_INTERVAL) {
+      try {
+        const styleContent = await fs.readFile(this.conversationStylePath, 'utf8');
+        this.conversationStyles = JSON.parse(styleContent);
+        console.log('[VoiceOrchestration] Loaded conversation styles:', Object.keys(this.conversationStyles || {}));
+      } catch (error) {
+        console.error('[VoiceOrchestration] Failed to load conversation styles, using empty set', error);
+        this.conversationStyles = {};
+      }
+    }
+    return this.conversationStyles!;
+  }
+
+  /**
    * Save updated configuration
    */
   private async saveConfig(config: VoiceConfigData): Promise<void> {
@@ -90,9 +133,11 @@ export class VoiceOrchestrationService {
     text: string,
     character: string = 'Narrator',
     emotion: string = 'neutral',
-    storyId?: number
+    storyId?: number,
+    conversationType?: string,
+    narratorProfile?: NarratorProfile
   ): Promise<VoiceStyle> {
-    console.log(`[VoiceOrchestration] Calculating parameters for character: ${character}, emotion: ${emotion}`);
+    console.log(`[VoiceOrchestration] Calculating parameters for character: ${character}, emotion: ${emotion}, conversation: ${conversationType || 'none'}`);
 
     // Get user's baseline voice profile
     const userProfile = await this.getUserVoiceProfile(userId);
@@ -106,8 +151,17 @@ export class VoiceOrchestrationService {
     // Overlay character-specific settings
     style = this.overlayCharacterEmotion(style, character, emotion, config);
     
-    // Merge with user's baseline if available
-    if (userProfile) {
+    // Apply conversation style if specified
+    if (conversationType) {
+      const conversationStyles = await this.getConversationStyles();
+      style = await this.overlayConversationStyle(style, conversationType, conversationStyles);
+    }
+    
+    // Merge with narrator profile if provided
+    if (narratorProfile) {
+      style = this.mergeWithNarratorProfile(narratorProfile, style);
+    } else if (userProfile) {
+      // Fallback to user's baseline if no narrator profile
       style = this.mergeWithUserBaseline(userProfile, style);
     }
     
@@ -220,6 +274,75 @@ export class VoiceOrchestrationService {
       }
     }
     return style;
+  }
+
+  /**
+   * Overlay conversation style settings
+   */
+  private async overlayConversationStyle(
+    style: VoiceStyle,
+    conversationType: string,
+    conversationStyles: Record<string, ConversationStyle>
+  ): Promise<VoiceStyle> {
+    const conversationStyle = conversationStyles[conversationType];
+    
+    if (!conversationStyle) {
+      console.log(`[VoiceOrchestration] No conversation style found for: ${conversationType}`);
+      return style;
+    }
+
+    console.log(`[VoiceOrchestration] Applying conversation style: ${conversationType}`);
+
+    // Apply conversation style parameters with random variation within range
+    const randInRange = (min: number, max: number) => Math.random() * (max - min) + min;
+
+    return {
+      stability: (style.stability + conversationStyle.stability.mean) / 2,
+      similarityBoost: (style.similarityBoost + conversationStyle.similarity_boost.mean) / 2,
+      style: (style.style + conversationStyle.style.mean) / 2,
+      prosody: {
+        pitch: this.mergeProsodyWithRange(
+          style.prosody.pitch,
+          conversationStyle.prosody.pitch.base,
+          conversationStyle.prosody.pitch.range
+        ),
+        rate: this.mergeProsodyWithRange(
+          style.prosody.rate,
+          conversationStyle.prosody.rate.base,
+          conversationStyle.prosody.rate.range
+        ),
+        volume: conversationStyle.prosody.volume || style.prosody.volume
+      }
+    };
+  }
+
+  /**
+   * Merge prosody value with range variation
+   */
+  private mergeProsodyWithRange(current: string, base: string, range: [number, number]): string {
+    const currentNum = parseInt(current) || 0;
+    const baseNum = parseInt(base) || 0;
+    const variation = Math.round(Math.random() * (range[1] - range[0]) + range[0]);
+    const merged = Math.round((currentNum + baseNum + variation) / 2);
+    return `${merged}%`;
+  }
+
+  /**
+   * Merge calculated style with narrator profile
+   */
+  private mergeWithNarratorProfile(narratorProfile: NarratorProfile, style: VoiceStyle): VoiceStyle {
+    const baseline = narratorProfile.baselineVoice;
+    
+    return {
+      stability: (baseline.stability + style.stability) / 2,
+      similarityBoost: (baseline.similarity_boost + style.similarityBoost) / 2,
+      style: (baseline.style + style.style) / 2,
+      prosody: {
+        pitch: this.mergeProsodyValue(baseline.pitch, style.prosody.pitch),
+        rate: this.mergeProsodyValue(baseline.rate, style.prosody.rate),
+        volume: baseline.volume || style.prosody.volume
+      }
+    };
   }
 
   /**
@@ -585,6 +708,44 @@ export class VoiceOrchestrationService {
       
       console.log(`[VoiceOrchestration] Updated user profile based on story patterns`);
     }
+  }
+
+  /**
+   * Build SSML (Speech Synthesis Markup Language) for text with prosody settings
+   */
+  buildSSML(text: string, prosody: VoiceStyle['prosody']): string {
+    return `<speak><prosody pitch='${prosody.pitch}' rate='${prosody.rate}' volume='${prosody.volume}'>${text}</prosody></speak>`;
+  }
+
+  /**
+   * Get voice parameters with SSML formatting
+   */
+  async getVoiceParametersWithSSML(
+    userId: string,
+    text: string,
+    character: string = 'Narrator',
+    emotion: string = 'neutral',
+    storyId?: number,
+    conversationType?: string,
+    narratorProfile?: NarratorProfile
+  ): Promise<{ voiceSettings: VoiceStyle; ssml: string; voiceId?: string }> {
+    const voiceSettings = await this.calculateVoiceParameters(
+      userId,
+      text,
+      character,
+      emotion,
+      storyId,
+      conversationType,
+      narratorProfile
+    );
+
+    const ssml = this.buildSSML(text, voiceSettings.prosody);
+
+    return {
+      voiceSettings,
+      ssml,
+      voiceId: narratorProfile?.voice_id
+    };
   }
 }
 
