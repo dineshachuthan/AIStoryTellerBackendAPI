@@ -4,7 +4,7 @@ import { requireAuth } from "./auth";
 import { getBaseUrl } from "./oauth-config";
 import { notificationService } from "./notification-service";
 import { storage } from "./storage";
-import { db } from "./db";
+import { db, pool } from "./db";
 import { storyInvitations, stories, users } from "@shared/schema";
 import { eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
@@ -172,75 +172,76 @@ router.get('/api/stories/:id/invitations', requireAuth, async (req, res) => {
 });
 
 // Get invitation by token (no auth required - for invitees)
-router.get('/api/invitations/:token', async (req, res) => {
-  try {
-    const { token } = req.params;
-    
-    // Get invitation with story details
-    const result = await db
-      .select({
-        id: storyInvitations.id,
-        storyId: storyInvitations.storyId,
-        inviterId: storyInvitations.inviterId,
-        token: storyInvitations.invitationToken,
-        characterId: storyInvitations.characterId,
-        characterName: storyInvitations.characterName,
-        inviteeEmail: storyInvitations.inviteeEmail,
-        inviteePhone: storyInvitations.inviteePhone,
-        expiresAt: storyInvitations.expiresAt,
-        status: storyInvitations.status,
-        storyTitle: stories.title,
-        storySummary: stories.summary,
-        inviterFirstName: users.firstName,
-        inviterLastName: users.lastName,
-        inviterEmail: users.email
-      })
-      .from(storyInvitations)
-      .leftJoin(stories, eq(storyInvitations.storyId, stories.id))
-      .leftJoin(users, eq(storyInvitations.inviterId, users.id))
-      .where(eq(storyInvitations.invitationToken, token))
-      .limit(1);
-      
-    if (result.length === 0) {
-      return res.status(404).json({ error: 'Invitation not found' });
-    }
-    
-    const invitation = result[0];
-    
-    // Check if expired
-    if (new Date(invitation.expiresAt) < new Date()) {
-      return res.status(410).json({ error: 'Invitation expired' });
-    }
-    
-    // Restructure data to match expected format
-    const formattedInvitation = {
-      id: invitation.id,
-      storyId: invitation.storyId,
-      inviterId: invitation.inviterId,
-      token: invitation.token,
-      characterId: invitation.characterId,
-      characterName: invitation.characterName,
-      inviteeEmail: invitation.inviteeEmail,
-      inviteePhone: invitation.inviteePhone,
-      expiresAt: invitation.expiresAt,
-      status: invitation.status,
-      story: invitation.storyTitle ? {
-        title: invitation.storyTitle,
-        summary: invitation.storySummary
-      } : undefined,
-      inviter: invitation.inviterEmail ? {
-        firstName: invitation.inviterFirstName,
-        lastName: invitation.inviterLastName,
-        email: invitation.inviterEmail
-      } : undefined
-    };
-    
-    res.json(formattedInvitation);
-  } catch (error) {
-    console.error('Error getting invitation:', error);
-    res.status(500).json({ error: 'Failed to get invitation' });
-  }
-});
+// COMMENTED OUT - Using the collaborativeRoleplayService version below instead
+// router.get('/api/invitations/:token', async (req, res) => {
+//   try {
+//     const { token } = req.params;
+//     
+//     // Get invitation with story details
+//     const result = await db
+//       .select({
+//         id: storyInvitations.id,
+//         storyId: storyInvitations.storyId,
+//         inviterId: storyInvitations.inviterId,
+//         token: storyInvitations.invitationToken,
+//         characterId: storyInvitations.characterId,
+//         characterName: storyInvitations.characterName,
+//         inviteeEmail: storyInvitations.inviteeEmail,
+//         inviteePhone: storyInvitations.inviteePhone,
+//         expiresAt: storyInvitations.expiresAt,
+//         status: storyInvitations.status,
+//         storyTitle: stories.title,
+//         storySummary: stories.summary,
+//         inviterFirstName: users.firstName,
+//         inviterLastName: users.lastName,
+//         inviterEmail: users.email
+//       })
+//       .from(storyInvitations)
+//       .leftJoin(stories, eq(storyInvitations.storyId, stories.id))
+//       .leftJoin(users, eq(storyInvitations.inviterId, users.id))
+//       .where(eq(storyInvitations.invitationToken, token))
+//       .limit(1);
+//       
+//     if (result.length === 0) {
+//       return res.status(404).json({ error: 'Invitation not found' });
+//     }
+//     
+//     const invitation = result[0];
+//     
+//     // Check if expired
+//     if (new Date(invitation.expiresAt) < new Date()) {
+//       return res.status(410).json({ error: 'Invitation expired' });
+//     }
+//     
+//     // Restructure data to match expected format
+//     const formattedInvitation = {
+//       id: invitation.id,
+//       storyId: invitation.storyId,
+//       inviterId: invitation.inviterId,
+//       token: invitation.token,
+//       characterId: invitation.characterId,
+//       characterName: invitation.characterName,
+//       inviteeEmail: invitation.inviteeEmail,
+//       inviteePhone: invitation.inviteePhone,
+//       expiresAt: invitation.expiresAt,
+//       status: invitation.status,
+//       story: invitation.storyTitle ? {
+//         title: invitation.storyTitle,
+//         summary: invitation.storySummary
+//       } : undefined,
+//       inviter: invitation.inviterEmail ? {
+//         firstName: invitation.inviterFirstName,
+//         lastName: invitation.inviterLastName,
+//         email: invitation.inviterEmail
+//       } : undefined
+//     };
+//     
+//     res.json(formattedInvitation);
+//   } catch (error) {
+//     console.error('Error getting invitation:', error);
+//     res.status(500).json({ error: 'Failed to get invitation' });
+//   }
+// });
 
 // Send per-character invitation
 router.post("/api/collaborative/templates", requireAuth, async (req, res) => {
@@ -502,24 +503,60 @@ router.get("/api/roleplay-instances/:instanceId", requireAuth, async (req, res) 
 router.get("/api/invitations/:token", async (req, res) => {
   try {
     const token = req.params.token;
-    const invitation = collaborativeRoleplayService.getInvitationByToken(token);
     
-    if (!invitation) {
-      return res.status(404).json({ message: "Invitation not found or expired" });
+    // Direct database query to avoid Drizzle ORM issues
+    const query = `
+      SELECT 
+        si.*,
+        s.title as story_title,
+        s.summary as story_summary,
+        s.content as story_content,
+        u.first_name as inviter_first_name,
+        u.last_name as inviter_last_name,
+        u.email as inviter_email
+      FROM story_invitations si
+      LEFT JOIN stories s ON si.story_id = s.id
+      LEFT JOIN users u ON si.inviter_id = u.id
+      WHERE si.invitation_token = $1
+      LIMIT 1
+    `;
+    
+    const result = await pool.query(query, [token]);
+    
+    if (!result.rows || result.rows.length === 0) {
+      return res.status(404).json({ error: 'Invitation not found' });
     }
     
-    const { instance, participant, template } = invitation;
+    const invitation = result.rows[0];
     
+    // Check if expired
+    if (new Date(invitation.expires_at) < new Date()) {
+      return res.status(410).json({ error: 'Invitation expired' });
+    }
+    
+    // Return in expected format for invitation landing page
     res.json({
-      instanceTitle: instance.instanceTitle,
-      characterName: participant.characterName,
-      templateTitle: template.title,
-      genre: template.genre,
-      estimatedDuration: template.estimatedDuration,
-      requiredEmotions: template.characterRoles.find(r => r.name === participant.characterName)?.requiredEmotions || [],
-      invitationStatus: participant.invitationStatus
+      id: invitation.id,
+      token: invitation.invitation_token,
+      storyId: invitation.story_id,
+      characterName: invitation.character_name || 'a character',
+      characterId: invitation.character_id,
+      inviteeEmail: invitation.invitee_email,
+      inviteePhone: invitation.invitee_phone,
+      status: invitation.status,
+      expiresAt: invitation.expires_at,
+      story: {
+        title: invitation.story_title || 'Untitled Story',
+        summary: invitation.story_summary || (invitation.story_content ? invitation.story_content.substring(0, 200) + '...' : '')
+      },
+      inviter: invitation.inviter_email ? {
+        firstName: invitation.inviter_first_name,
+        lastName: invitation.inviter_last_name,
+        email: invitation.inviter_email
+      } : undefined
     });
   } catch (error) {
+    console.error("Error fetching invitation details:", error);
     res.status(500).json({ message: "Failed to fetch invitation details" });
   }
 });

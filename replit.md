@@ -462,7 +462,14 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Next Steps**: Display invitation links, implement voice recording in landing page, create accept flow
 
 ### High Priority Tasks
-1. **Microservices Migration** - PHASE 0-4 COMPLETED - Using Adapter Pattern for Replit Environment
+1. **Collaboration System - Invitation Links Fixed** - January 09, 2025
+   - ✅ Fixed duplicate route definitions causing "Cannot GET /api/invitations/inv_xxx" error
+   - ✅ Removed in-memory invitation storage - now using only database-backed invitations
+   - ✅ Simplified GET /api/invitations/:token route to use storyInvitations table directly
+   - ✅ Invitation links now working properly for both authenticated and anonymous users
+   - **Next Steps**: Implement voice recording flow on invitation landing page
+   
+2. **Microservices Migration** - PHASE 0-4 COMPLETED - Using Adapter Pattern for Replit Environment
    - **Phase 0**: ✅ Foundation setup - Created base adapters and in-memory event bus
    - **Phase 1**: ✅ Identity Service extraction completed
      - ✅ Created BaseMicroserviceAdapter with table ownership validation
