@@ -20,6 +20,16 @@ export interface AudioGenerationOptions {
   characters?: any[];
   narratorProfile?: NarratorProfile; // Complete narrator personality
   conversationStyle?: string; // For multi-dimensional caching
+  voiceSettings?: {
+    stability?: number;
+    similarity_boost?: number;
+    style?: number;
+    prosody?: {
+      pitch?: string;
+      rate?: string;
+      volume?: string;
+    };
+  };
 }
 
 export interface AudioResult {
@@ -606,8 +616,15 @@ export class AudioService {
       console.log(`[AudioService] Detected ElevenLabs voice ID, using ElevenLabs provider`);
       try {
         const { VoiceProviderFactory } = await import('./voice-providers/voice-provider-factory');
+        // Pass voice settings if provided
+        const voiceSettings = options.voiceSettings || {};
         // ElevenLabs should only receive the actual text, not the instructions
-        const arrayBuffer = await VoiceProviderFactory.generateSpeech(narratorText, selectedVoice, options.emotion);
+        const arrayBuffer = await VoiceProviderFactory.generateSpeech(
+          narratorText, 
+          selectedVoice, 
+          options.emotion,
+          voiceSettings
+        );
         return Buffer.from(arrayBuffer);
       } catch (error) {
         console.error(`[AudioService] ElevenLabs generation failed, falling back to default voice:`, error);

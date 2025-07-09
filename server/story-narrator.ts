@@ -58,7 +58,7 @@ export class StoryNarrator {
    * 4. Narrate with stored narrator voice
    * 5. NO new OpenAI analysis during narration
    */
-  async generateStoryNarration(storyId: number, userId: string): Promise<StoryNarrationResult> {
+  async generateStoryNarration(storyId: number, userId: string, conversationStyle: string = 'respectful'): Promise<StoryNarrationResult> {
     
     // 1. Pull story metadata from database
     const story = await storage.getStory(storyId);
@@ -99,7 +99,8 @@ export class StoryNarrator {
       storyId,
       extractedEmotions,
       userLanguage,
-      narratorProfile
+      narratorProfile,
+      conversationStyle
     );
     
     const totalDuration = segments.reduce((sum, segment) => sum + (segment.duration || 0), 0);
@@ -358,7 +359,8 @@ export class StoryNarrator {
     segmentIndex: number,
     chunkContext: { emotion: string; intensity: number; character: string },
     userLanguage: string,
-    narratorProfile: NarratorProfile
+    narratorProfile: NarratorProfile,
+    conversationStyle: string = 'respectful'
   ): Promise<{ audioUrl: string; duration?: number }> {
     
     let audioBuffer: Buffer;
@@ -368,11 +370,24 @@ export class StoryNarrator {
       console.log(`[StoryNarrator] Generating narration segment ${segmentIndex} using ElevenLabs voice: ${narratorVoice} with character: ${chunkContext.character}, emotion: ${chunkContext.emotion}, intensity: ${chunkContext.intensity}`);
       
       try {
+        // Get voice settings from orchestration service
+        const { VoiceOrchestrationService } = await import('./voice-orchestration-service');
+        const orchestrationService = VoiceOrchestrationService.getInstance();
+        const voiceSettings = await orchestrationService.getVoiceSettings(
+          userId,
+          chunkContext.character,
+          chunkContext.emotion,
+          storyId,
+          conversationStyle
+        );
+        
+        console.log(`[StoryNarrator] Using orchestrated voice settings:`, voiceSettings);
+        
         const { VoiceProviderFactory } = await import('./voice-providers/voice-provider-factory');
-        const arrayBuffer = await VoiceProviderFactory.generateSpeech(text, narratorVoice, chunkContext.emotion, undefined, narratorProfile);
+        const arrayBuffer = await VoiceProviderFactory.generateSpeech(text, narratorVoice, chunkContext.emotion, voiceSettings, undefined, narratorProfile);
         audioBuffer = Buffer.from(arrayBuffer);
         
-        console.log(`[StoryNarrator] ElevenLabs narration generated: ${audioBuffer.length} bytes with ${chunkContext.emotion} emotion`);
+        console.log(`[StoryNarrator] ElevenLabs narration generated: ${audioBuffer.length} bytes with ${chunkContext.emotion} emotion and orchestrated settings`);
         
       } catch (error) {
         console.error(`[StoryNarrator] ElevenLabs generation failed, falling back to audio service:`, error);
@@ -385,13 +400,25 @@ export class StoryNarrator {
           userId,
           storyId,
           narratorProfile,
-          conversationStyle: 'respectful' // Default for now
+          conversationStyle,
+          voiceSettings: voiceSettings // Pass the same voice settings to audio service
         });
         audioBuffer = buffer;
       }
     } else {
       // Use audio service for AI voices - pass actual emotions for OpenAI modulation
       console.log(`[StoryNarrator] Generating narration with OpenAI voice, character: ${chunkContext.character}, emotion: ${chunkContext.emotion}, intensity: ${chunkContext.intensity}, language: ${userLanguage}`);
+      
+      // Get voice settings from orchestration service for AI voices too
+      const { VoiceOrchestrationService } = await import('./voice-orchestration-service');
+      const orchestrationService = VoiceOrchestrationService.getInstance();
+      const voiceSettings = await orchestrationService.getVoiceSettings(
+        userId,
+        chunkContext.character,
+        chunkContext.emotion,
+        storyId,
+        conversationStyle
+      );
       
       const { buffer } = await audioService.getAudioBuffer({
         text,
@@ -401,14 +428,13 @@ export class StoryNarrator {
         userId,
         storyId,
         narratorProfile,
-        conversationStyle: 'respectful' // Default for now
+        conversationStyle,
+        voiceSettings // Pass voice settings for AI voices too
       });
       audioBuffer = buffer;
     }
     
     // Store audio in story-specific directory structure
-    // Extract conversation style and narrator profile from parameters
-    const conversationStyle = 'respectful'; // Default for now, will be passed from UI
     const narratorProfileName = narratorProfile?.language || 'neutral';
     
     const localAudioUrl = await this.storeNarrationAudio(

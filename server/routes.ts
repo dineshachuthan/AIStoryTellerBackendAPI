@@ -1211,7 +1211,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Generate new audio
+      // Generate new audio with orchestrated voice settings
       const { buffer, voice } = await audioService.forceGenerateAudio({
         text,
         emotion,
@@ -1221,7 +1221,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         narratorProfile: {
           language: 'en',
           locale: 'en-US'
-        }
+        },
+        conversationStyle,
+        voiceSettings: voiceStyle  // Pass the calculated voice parameters!
       });
       
       // Store the audio file with multi-dimensional path structure

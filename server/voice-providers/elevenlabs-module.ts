@@ -333,8 +333,11 @@ export class ElevenLabsModule extends BaseVoiceProvider {
 
 
 
-  async generateSpeech(text: string, voiceId: string, emotion?: string, narratorProfile?: any): Promise<ArrayBuffer> {
+  async generateSpeech(text: string, voiceId: string, emotion?: string, voiceSettings?: any, narratorProfile?: any): Promise<ArrayBuffer> {
     console.log(`[ElevenLabs] Generating speech using ElevenLabs SDK for voice ID: ${voiceId}, text length: ${text.length} characters, emotion: ${emotion || 'neutral'}`);
+    if (voiceSettings) {
+      console.log(`[ElevenLabs] Voice settings provided:`, voiceSettings);
+    }
     if (narratorProfile) {
       console.log(`[ElevenLabs] Narrator profile provided:`, {
         language: narratorProfile.language,
@@ -346,19 +349,31 @@ export class ElevenLabsModule extends BaseVoiceProvider {
     
     try {
       // Use orchestrated voice settings if provided, otherwise fall back to emotion settings
-      let voiceSettings = this.getEmotionSettings(emotion);
+      let finalVoiceSettings = this.getEmotionSettings(emotion);
       
-      if (narratorProfile?.voiceSettings) {
+      // First priority: direct voiceSettings parameter
+      if (voiceSettings) {
+        finalVoiceSettings = {
+          stability: voiceSettings.stability,
+          similarity_boost: voiceSettings.similarityBoost || voiceSettings.similarity_boost,
+          style: voiceSettings.style,
+          // ElevenLabs doesn't directly support prosody, but we can influence through other params
+          use_speaker_boost: voiceSettings.prosody?.volume === 'loud' || voiceSettings.use_speaker_boost
+        };
+        console.log(`[ElevenLabs] Using provided voice settings:`, finalVoiceSettings);
+      }
+      // Second priority: narrator profile settings (backwards compatibility)
+      else if (narratorProfile?.voiceSettings) {
         // Use orchestrated settings from voice orchestration service
         const orchestrated = narratorProfile.voiceSettings;
-        voiceSettings = {
+        finalVoiceSettings = {
           stability: orchestrated.stability,
           similarity_boost: orchestrated.similarityBoost,
           style: orchestrated.style,
           // ElevenLabs doesn't directly support prosody, but we can influence through other params
           use_speaker_boost: orchestrated.prosody?.volume === 'loud'
         };
-        console.log(`[ElevenLabs] Using orchestrated voice settings:`, voiceSettings);
+        console.log(`[ElevenLabs] Using orchestrated voice settings from narrator profile:`, finalVoiceSettings);
       }
       
       // Use direct API call instead of SDK which has issues
@@ -367,7 +382,7 @@ export class ElevenLabsModule extends BaseVoiceProvider {
         {
           text: text,
           model_id: 'eleven_multilingual_v2',
-          voice_settings: voiceSettings
+          voice_settings: finalVoiceSettings
         },
         {
           headers: {
