@@ -597,9 +597,6 @@ export class AudioService {
     // Build narrator instructions for OpenAI
     const narratorInstructions = this.buildNarratorInstructions(narratorProfile);
     
-    // Combine text with narrator instructions
-    const finalText = narratorInstructions ? `${narratorInstructions} "${narratorText}"` : narratorText;
-    
     const emotionSpeed = this.getEmotionSpeed(options.emotion, options.intensity);
     
     console.log(`Generating modulated audio: voice=${selectedVoice}, emotion=${options.emotion}, intensity=${options.intensity}, speed=${emotionSpeed}, language=${narratorProfile.language}, dialect=${narratorProfile.dialect || 'none'}`);
@@ -609,23 +606,27 @@ export class AudioService {
       console.log(`[AudioService] Detected ElevenLabs voice ID, using ElevenLabs provider`);
       try {
         const { VoiceProviderFactory } = await import('./voice-providers/voice-provider-factory');
-        const arrayBuffer = await VoiceProviderFactory.generateSpeech(finalText, selectedVoice, options.emotion);
+        // ElevenLabs should only receive the actual text, not the instructions
+        const arrayBuffer = await VoiceProviderFactory.generateSpeech(narratorText, selectedVoice, options.emotion);
         return Buffer.from(arrayBuffer);
       } catch (error) {
         console.error(`[AudioService] ElevenLabs generation failed, falling back to default voice:`, error);
         // Fall back to a default OpenAI voice if ElevenLabs fails
         const fallbackVoice = 'nova';
+        // For fallback, combine instructions with text like normal OpenAI
+        const fallbackText = narratorInstructions ? `${narratorInstructions} "${narratorText}"` : narratorText;
         const response = await this.openai.audio.speech.create({
           model: "tts-1",
           voice: fallbackVoice as any,
-          input: finalText,
+          input: fallbackText,
           speed: emotionSpeed,
         });
         return Buffer.from(await response.arrayBuffer());
       }
     }
     
-    // Use OpenAI TTS for regular voices
+    // Use OpenAI TTS for regular voices - combine instructions with text
+    const finalText = narratorInstructions ? `${narratorInstructions} "${narratorText}"` : narratorText;
     const response = await this.openai.audio.speech.create({
       model: "tts-1",
       voice: selectedVoice as any,
