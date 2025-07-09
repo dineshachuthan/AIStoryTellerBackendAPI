@@ -1171,7 +1171,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           text,
           emotion,
           intensity: 5,
-          voice: voiceId || "nova", // Use OpenAI voice as fallback
+          voice: voiceId || "N1tpb4Gkzo0sjT3Jl3Bs", // Use your new ElevenLabs voice as default
           userId,
           narratorProfile: {
             language: 'en',
@@ -1210,7 +1210,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         text,
         emotion,
         intensity: 5,
-        voice: voiceId || "nova",
+        voice: voiceId || "N1tpb4Gkzo0sjT3Jl3Bs",
         userId,
         narratorProfile: {
           language: 'en',

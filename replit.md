@@ -429,7 +429,7 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - ✅ Voice ID recovery mechanisms for data integrity
 - ✅ Soft delete functionality across all ESM tables
 - ✅ Complete MVP2 architecture with intelligent voice generation
-- **Voice ID**: Successfully using narrator voice `cuxbYT1nu3MZbK8JwgAZ`
+- **Voice ID**: Successfully using narrator voice `N1tpb4Gkzo0sjT3Jl3Bs` (updated July 09, 2025)
 - **Voice Quality Enhancement**: Updated recording requirements to 15-25 seconds (from 5-10 seconds) with 45-60 word sample texts for optimal voice cloning quality
 
 ### **MILESTONE 2: Collaboration Invitation System Fixed - January 09, 2025**
