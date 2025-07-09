@@ -22,7 +22,7 @@ import { audioService } from "./audio-service";
 // ELIMINATED LEGACY VOICE CONFIG - Voice cloning config now hardcoded where needed
 import { authAdapterIntegration } from "./microservices/auth-adapter-integration";
 import { userContentStorage } from "./user-content-storage";
-import { getCachedCharacterImage, cacheCharacterImage, getAllCacheStats, cleanOldCacheFiles, getCachedAudio } from "./cache/cache-service";
+import { getCachedCharacterImage, cacheCharacterImage, getAllCacheStats, cleanOldCacheFiles } from "./cache/cache-service";
 
 import { storyNarrator } from "./story-narrator";
 import { grandmaVoiceNarrator } from "./voice-narrator";
@@ -1212,7 +1212,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         intensity: 5,
         voice: voiceId || "N1tpb4Gkzo0sjT3Jl3Bs",
         userId,
-        storyId,
         conversationStyle,
         narratorProfile: {
           language: 'en',
@@ -1417,51 +1416,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Serve cached audio files - both emotion and general paths
-  app.get("/api/emotions/cached-audio/:filename", async (req, res) => {
-    try {
-      const { filename } = req.params;
-      const filePath = path.join(process.cwd(), 'persistent-cache', 'audio', filename);
-      
-      // Check if file exists
-      try {
-        await fs.access(filePath);
-      } catch {
-        return res.status(404).json({ message: "Audio file not found" });
-      }
-      
-      res.setHeader('Content-Type', 'audio/mpeg');
-      res.setHeader('Cache-Control', 'public, max-age=3600');
-      res.setHeader('Accept-Ranges', 'bytes');
-      res.sendFile(path.resolve(filePath));
-    } catch (error) {
-      console.error("Error serving cached audio:", error);
-      res.status(404).json({ message: "Audio file not found" });
-    }
-  });
 
-  // Serve narration audio files
-  app.get("/api/narration-audio/:filename", async (req, res) => {
-    try {
-      const { filename } = req.params;
-      const filePath = path.join(process.cwd(), 'persistent-cache', 'narrations', filename);
-      
-      // Check if file exists
-      try {
-        await fs.access(filePath);
-      } catch {
-        return res.status(404).json({ message: "Narration audio file not found" });
-      }
-      
-      res.setHeader('Content-Type', 'audio/mpeg');
-      res.setHeader('Cache-Control', 'public, max-age=3600');
-      res.setHeader('Accept-Ranges', 'bytes');
-      res.sendFile(path.resolve(filePath));
-    } catch (error) {
-      console.error("Error serving narration audio:", error);
-      res.status(404).json({ message: "Narration audio file not found" });
-    }
-  });
 
   // Save user voice emotion to repository (cross-story)
   app.post("/api/user-voice-emotions", upload.single('audio'), async (req, res) => {
@@ -1646,27 +1601,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
 
-  // Serve cached audio files
-  app.get("/api/cached-audio/:fileName", async (req, res) => {
-    try {
-      const { fileName } = req.params;
-      const filePath = path.join(process.cwd(), 'persistent-cache', 'audio', fileName);
-      
-      // Check if file exists
-      try {
-        await fs.access(filePath);
-      } catch {
-        return res.status(404).json({ message: "Audio file not found" });
-      }
-      
-      // Serve the audio file
-      res.setHeader('Content-Type', 'audio/mpeg');
-      res.sendFile(path.resolve(filePath));
-    } catch (error) {
-      console.error("Audio serve error:", error);
-      res.status(500).json({ message: "Failed to serve audio file" });
-    }
-  });
+
 
   // Serve user voice samples from hierarchical storage
   app.get("/api/user-content/:userId/audio/emotions/:emotionIntensity/:fileName", async (req, res) => {
@@ -1697,29 +1632,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Serve generated story audio files (legacy route)
-  app.get("/api/story-audio/:fileName", async (req, res) => {
-    try {
-      const { fileName } = req.params;
-      const filePath = path.join(process.cwd(), 'persistent-cache', 'story-audio', fileName);
-      
-      // Check if file exists
-      try {
-        await fs.access(filePath);
-      } catch {
-        return res.status(404).json({ message: "Audio file not found" });
-      }
-      
-      res.setHeader('Content-Type', 'audio/mpeg');
-      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-      res.setHeader('Pragma', 'no-cache');
-      res.setHeader('Expires', '0');
-      res.sendFile(path.resolve(filePath));
-    } catch (error) {
-      console.error("Story audio serve error:", error);
-      res.status(500).json({ message: "Failed to serve story audio" });
-    }
-  });
+
 
   // Serve story narration audio files with multi-dimensional directory structure
   app.get("/api/stories/audio/narrations/:userId/:storyId/:conversationStyle/:narratorProfile/:fileName", async (req, res) => {
@@ -1780,55 +1693,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Basic text-to-speech for story content
-  app.post("/api/stories/text-to-speech", async (req, res) => {
-    try {
-      const { text, voice = 'alloy' } = req.body;
-      
-      if (!text) {
-        return res.status(400).json({ message: "Text is required" });
-      }
 
-      // Check cache first
-      const cachedAudio = getCachedAudio(text, voice);
-      if (cachedAudio) {
-        console.log("Using cached text-to-speech audio");
-        return res.json({ url: cachedAudio });
-      }
-
-      // Generate audio using OpenAI TTS
-      const openai = new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY,
-      });
-
-      const response = await openai.audio.speech.create({
-        model: "tts-1",
-        voice: voice as any,
-        input: text.length > 4000 ? text.substring(0, 4000) : text,
-        speed: 1.0,
-      });
-
-      const buffer = Buffer.from(await response.arrayBuffer());
-      
-      // Save audio to cache directory
-      const cacheDir = path.join(process.cwd(), 'persistent-cache', 'audio');
-      await fs.mkdir(cacheDir, { recursive: true });
-      
-      const fileName = `story-tts-${Date.now()}.mp3`;
-      const filePath = path.join(cacheDir, fileName);
-      
-      // Write audio file
-      await fs.writeFile(filePath, buffer);
-      
-      const audioUrl = `/api/cached-audio/${fileName}`;
-      
-      console.log("Generated text-to-speech audio for story content");
-      res.json({ url: audioUrl });
-    } catch (error) {
-      console.error("Text-to-speech error:", error);
-      res.status(500).json({ message: error instanceof Error ? error.message : "Failed to generate speech" });
-    }
-  });
 
   // Public stories routes - only published stories with filtering
   app.get("/api/stories", requireAuth, async (req, res) => {
@@ -3569,26 +3434,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Serve cached audio files
-  app.get("/api/cached-audio/:filename", (req, res) => {
-    try {
-      const filename = req.params.filename;
-      const path = require('path');
-      const fs = require('fs');
-      
-      const filePath = path.join(process.cwd(), 'persistent-cache', 'audio', filename);
-      
-      if (!fs.existsSync(filePath)) {
-        return res.status(404).json({ message: "Audio file not found" });
-      }
-      
-      res.setHeader('Content-Type', 'audio/mpeg');
-      res.sendFile(filePath);
-    } catch (error) {
-      console.error("Error serving cached audio:", error);
-      res.status(500).json({ message: "Failed to serve audio file" });
-    }
-  });
+
 
   // Story User Confidence tracking endpoints
   app.get("/api/stories/:storyId/confidence/:userId", async (req, res) => {
