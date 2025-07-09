@@ -7,9 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AudioLines, Play, Pause, RotateCcw, Settings } from "lucide-react";
+import { AudioLines, Play, Pause, RotateCcw, Settings, BookOpen } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import { getMessage } from "@shared/i18n-hierarchical";
 
@@ -47,7 +47,8 @@ const NARRATOR_PROFILES = [
 
 export default function AdminNarration() {
   const { user } = useAuth();
-  const [text, setText] = useState("Once upon a time, in a kingdom far away, there lived a wise old king who loved to tell stories to his grandchildren.");
+  const [selectedStoryId, setSelectedStoryId] = useState<string>("");
+  const [storyIdInput, setStoryIdInput] = useState<string>("");
   const [conversationStyle, setConversationStyle] = useState("respectful");
   const [emotion, setEmotion] = useState("neutral");
   const [narratorProfile, setNarratorProfile] = useState("neutral");
@@ -56,6 +57,15 @@ export default function AdminNarration() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
   const [voiceParameters, setVoiceParameters] = useState<any>(null);
+  
+  // Fetch stories for dropdown
+  const { data: stories = [], isLoading: storiesLoading } = useQuery({
+    queryKey: ["/api/stories"],
+  });
+  
+  // Get the selected story content
+  const selectedStory = stories.find(s => s.id.toString() === selectedStoryId);
+  const storyContent = selectedStory?.content || "";
 
   // Check admin access
   useEffect(() => {
@@ -94,17 +104,19 @@ export default function AdminNarration() {
   });
 
   const handleGenerate = (forceRegenerate = false) => {
-    if (!text.trim()) {
+    const textToNarrate = storyContent || (storyIdInput ? `Story ID ${storyIdInput} content` : "");
+    
+    if (!textToNarrate.trim() || !selectedStoryId) {
       toast({
-        title: "Missing Text",
-        description: "Please enter some text to narrate",
+        title: "Missing Story",
+        description: "Please select a story to narrate",
         variant: "destructive",
       });
       return;
     }
 
     generateNarrationMutation.mutate({
-      text,
+      text: textToNarrate,
       conversationStyle,
       emotion,
       narratorProfile,
@@ -154,15 +166,54 @@ export default function AdminNarration() {
           </CardHeader>
           <CardContent className="space-y-6">
             <div>
-              <Label htmlFor="text">Text to Narrate</Label>
-              <Textarea
-                id="text"
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                rows={6}
-                placeholder="Enter text to narrate..."
-                className="mt-2"
-              />
+              <Label htmlFor="story">Select Story</Label>
+              <Select 
+                value={selectedStoryId} 
+                onValueChange={(value) => {
+                  setSelectedStoryId(value);
+                  setStoryIdInput(value);
+                }}
+                disabled={storiesLoading}
+              >
+                <SelectTrigger id="story" className="mt-2">
+                  <SelectValue placeholder={storiesLoading ? "Loading stories..." : "Select a story"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {stories.map((story) => (
+                    <SelectItem key={story.id} value={story.id.toString()}>
+                      <div className="flex items-center gap-2">
+                        <BookOpen className="w-4 h-4" />
+                        <span>{story.title}</span>
+                        <span className="text-xs text-muted-foreground">({story.content?.length || 0} chars)</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              <div className="mt-4">
+                <Label htmlFor="storyId">Or Enter Story ID</Label>
+                <Input
+                  id="storyId"
+                  type="number"
+                  value={storyIdInput}
+                  onChange={(e) => {
+                    setStoryIdInput(e.target.value);
+                    setSelectedStoryId(e.target.value);
+                  }}
+                  placeholder="Enter story ID directly"
+                  className="mt-2"
+                />
+              </div>
+              
+              {selectedStory && (
+                <div className="mt-4 p-4 bg-muted rounded-lg">
+                  <div className="text-sm font-medium mb-2">Story Preview:</div>
+                  <div className="text-sm text-muted-foreground line-clamp-3">
+                    {selectedStory.content}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div>
