@@ -439,7 +439,7 @@ export class CollaborativeRoleplayService {
 
     return instance.participants.map(participant => ({
       characterName: participant.characterName,
-      invitationUrl: `${baseUrl}/invite/${participant.invitationToken}`,
+      invitationUrl: `${baseUrl}/narration/${participant.invitationToken}`,
       token: participant.invitationToken,
     }));
   }

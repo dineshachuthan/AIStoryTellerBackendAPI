@@ -111,7 +111,7 @@ export function InviteCollaboratorsDialog({
   };
 
   const getInvitationUrl = (token: string) => {
-    return `${window.location.origin}/invite/${token}`;
+    return `${window.location.origin}/narration/${token}`;
   };
 
   return (
