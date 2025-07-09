@@ -123,8 +123,10 @@ router.post("/api/stories/:id/invitations", requireAuth, async (req, res) => {
 
     res.json({
       success: results.length > 0,
-      results,
-      errors
+      data: {
+        results,
+        errors
+      }
     });
     
   } catch (error) {
