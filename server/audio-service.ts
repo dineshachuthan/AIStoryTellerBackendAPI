@@ -676,6 +676,9 @@ export class AudioService {
 
 
 
+  // COMMENTED OUT: This method was replaced by getAudioBuffer and forceGenerateAudio
+  // which provide more direct control over caching and generation
+  /*
   // Main method to generate or retrieve audio with simplified voice logic
   async generateEmotionAudio(options: AudioGenerationOptions): Promise<AudioResult> {
     const userId = options.userId || '';
@@ -712,6 +715,7 @@ export class AudioService {
       voice: selectedVoice
     };
   }
+  */
 
   // Get audio buffer for direct streaming
   async getAudioBuffer(options: AudioGenerationOptions): Promise<{ buffer: Buffer; voice: string }> {
