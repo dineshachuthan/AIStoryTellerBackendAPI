@@ -1126,7 +1126,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin narration endpoint - for testing voice parameters without cache restrictions
-  app.post("/api/admin/narration/generate", requireAdmin, async (req, res) => {
+  app.post("/api/admin/narration/generate", requireAuth, async (req, res) => {
     try {
       const {
         text,
@@ -1142,35 +1142,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Import voice orchestration service
-      const { voiceOrchestrationService } = await import("./voice-orchestration-service");
+      const { VoiceOrchestrationService } = await import("./voice-orchestration-service");
+      const voiceOrchestrationService = new VoiceOrchestrationService();
       
       // Calculate voice parameters based on conversation style and narrator profile
-      const voiceSettings = await voiceOrchestrationService.calculateVoiceSettings({
-        conversationStyle,
+      const userId = (req.user as any)?.id;
+      const voiceStyle = await voiceOrchestrationService.calculateVoiceParameters(
+        userId,
+        text,
+        "Narrator",
         emotion,
-        narratorProfile,
-        character: { name: "Admin Test" }
-      });
+        undefined,
+        conversationStyle,
+        { baselineVoice: { stability: 0.75, similarity_boost: 0.85, style: 0.5, pitch: "0%", rate: "85%", volume: "medium" } }
+      );
 
       // Generate unique cache key for admin testing
       const cacheKey = forceRegenerate 
         ? `admin_${Date.now()}_${Math.random().toString(36).substring(7)}`
         : `admin_${text.substring(0, 50)}_${conversationStyle}_${emotion}_${narratorProfile}`;
 
-      // Use audio service to generate narration
-      const audioResult = await audioService.generateAudio({
+      // Use the existing audio service which handles voice generation
+      const { audioService } = await import("./audio-service");
+      
+      // Generate audio with voice parameters
+      const audioResult = await audioService.generateEmotionAudio({
         text,
-        voice: voiceId || voiceSettings.voiceId || "cuxbYT1nu3MZbK8JwgAZ", // Default to known working voice
         emotion,
-        cacheKey,
-        voiceSettings: voiceSettings.voiceSettings
+        intensity: 5, // medium intensity
+        voice: voiceId || "cuxbYT1nu3MZbK8JwgAZ",
+        userId,
+        narratorProfile: {
+          language: 'en',
+          locale: 'en-US'
+        }
       });
-
+      
       res.json({
         audioUrl: audioResult.audioUrl,
         voiceParameters: {
-          voiceId: audioResult.voiceId || voiceId,
-          voiceSettings: voiceSettings.voiceSettings,
+          voiceId: audioResult.voice || voiceId || "cuxbYT1nu3MZbK8JwgAZ",
+          voiceSettings: voiceStyle,
           conversationStyle,
           emotion,
           narratorProfile
