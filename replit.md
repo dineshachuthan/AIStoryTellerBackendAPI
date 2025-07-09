@@ -546,6 +546,16 @@ This is a full-stack collaborative storytelling platform that enables users to c
    - **Emotion Passthrough**: Ensure emotions from story analysis are properly passed to ElevenLabs API
    - **Voice Quality**: System already uses 15-25 second samples for optimal voice cloning quality
 
+## Voice Configuration
+
+### ElevenLabs TTS Voice Configuration - July 09, 2025
+- **Configuration File**: Added `fullVoiceConfig.json` with comprehensive voice parameter settings
+- **Global Defaults**: Baseline settings for stability (0.75), similarity_boost (0.85), style (0.5), and prosody
+- **Weighted Defaults**: Pattern-based adjustments for character types (angel/demon) and emotions (fear/joyful)
+- **Character Profiles**: Specific voice configurations for King, Child, Demon, and Narrator with emotional variants
+- **Prosody Control**: Fine-tuned pitch, rate, and volume adjustments for different character states
+- **Dynamic Application**: Configuration supports pattern matching for automatic voice parameter selection
+
 ## Changelog
 
 ### **TOAST KEY NAMES CREATED - July 08, 2025**
