@@ -72,6 +72,11 @@ export default function StoryNarration() {
             </p>
           </div>
 
+          {/* Test message */}
+          <div className="bg-white/10 p-4 rounded-lg mb-4">
+            <p className="text-white">Story loaded successfully! User: {user?.email}</p>
+          </div>
+
           {/* Narration Controls - Clean UI without save text */}
           <StoryNarratorControls
             storyId={storyId}
