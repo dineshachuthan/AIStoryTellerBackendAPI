@@ -371,9 +371,8 @@ export class StoryNarrator {
       
       try {
         // Get voice settings from orchestration service
-        const { VoiceOrchestrationService } = await import('./voice-orchestration-service');
-        const orchestrationService = VoiceOrchestrationService.getInstance();
-        const voiceSettings = await orchestrationService.getVoiceSettings(
+        const { voiceOrchestrationService } = await import('./voice-orchestration-service');
+        const voiceSettings = await voiceOrchestrationService.getVoiceSettings(
           userId,
           chunkContext.character,
           chunkContext.emotion,
@@ -400,8 +399,8 @@ export class StoryNarrator {
           userId,
           storyId,
           narratorProfile,
-          conversationStyle,
-          voiceSettings: voiceSettings // Pass the same voice settings to audio service
+          conversationStyle
+          // voiceSettings not passed in fallback - audio service will use its own defaults
         });
         audioBuffer = buffer;
       }
@@ -410,9 +409,8 @@ export class StoryNarrator {
       console.log(`[StoryNarrator] Generating narration with OpenAI voice, character: ${chunkContext.character}, emotion: ${chunkContext.emotion}, intensity: ${chunkContext.intensity}, language: ${userLanguage}`);
       
       // Get voice settings from orchestration service for AI voices too
-      const { VoiceOrchestrationService } = await import('./voice-orchestration-service');
-      const orchestrationService = VoiceOrchestrationService.getInstance();
-      const voiceSettings = await orchestrationService.getVoiceSettings(
+      const { voiceOrchestrationService } = await import('./voice-orchestration-service');
+      const voiceSettings = await voiceOrchestrationService.getVoiceSettings(
         userId,
         chunkContext.character,
         chunkContext.emotion,
