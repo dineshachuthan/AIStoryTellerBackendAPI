@@ -1221,7 +1221,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         audioUrl: audioResult.audioUrl,
         voiceParameters: {
-          voiceId: audioResult.voice || voiceId || "cuxbYT1nu3MZbK8JwgAZ",
+          voiceId: audioResult.voice || voiceId || "N1tpb4Gkzo0sjT3Jl3Bs",
           voiceSettings: voiceStyle,
           conversationStyle,
           emotion,
