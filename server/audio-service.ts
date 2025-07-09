@@ -637,41 +637,42 @@ export class AudioService {
 
   // Cache audio file
   private async cacheAudioFile(buffer: Buffer, options: AudioGenerationOptions, voice: string): Promise<string> {
-    // Create proper directory structure under voice-samples
+    // Store narration audio separately from voice samples
     let cacheDir: string;
-    let relativePath: string;
+    let fileName: string;
+    let publicUrl: string;
     
     if (options.userId && options.storyId) {
-      // Store under user/story structure: voice-samples/user/{userId}/story/{storyId}/
-      cacheDir = path.join(process.cwd(), 'public', 'voice-samples', 'user', options.userId, 'story', options.storyId.toString());
+      // Store narrations under stories audio structure
+      cacheDir = path.join(process.cwd(), 'stories', 'audio', 'narrations', options.userId, options.storyId.toString());
       await fs.mkdir(cacheDir, { recursive: true });
       
-      // Generate filename with context
+      // Generate filename with multi-dimensional context
       const timestamp = Date.now();
       const randomId = Math.random().toString(36).substring(2, 8);
-      const fileName = `narration_${options.emotion}_${timestamp}_${randomId}.mp3`;
+      fileName = `${options.emotion}_${timestamp}_${randomId}.mp3`;
       const filePath = path.join(cacheDir, fileName);
       
       await fs.writeFile(filePath, buffer);
       
-      // Return relative path from voice-samples
-      relativePath = `user/${options.userId}/story/${options.storyId}/${fileName}`;
+      // Return URL for serving through Express route
+      publicUrl = `/api/stories/audio/narrations/${options.userId}/${options.storyId}/${fileName}`;
     } else {
-      // Fallback for non-story narrations (admin testing)
-      cacheDir = path.join(process.cwd(), 'public', 'voice-samples', 'admin');
+      // Admin testing narrations
+      cacheDir = path.join(process.cwd(), 'stories', 'audio', 'admin-test');
       await fs.mkdir(cacheDir, { recursive: true });
       
       const timestamp = Date.now();
       const randomId = Math.random().toString(36).substring(2, 8);
-      const fileName = `admin_${options.emotion}_${timestamp}_${randomId}.mp3`;
+      fileName = `test_${options.emotion}_${timestamp}_${randomId}.mp3`;
       const filePath = path.join(cacheDir, fileName);
       
       await fs.writeFile(filePath, buffer);
       
-      relativePath = `admin/${fileName}`;
+      publicUrl = `/api/stories/audio/admin-test/${fileName}`;
     }
     
-    return relativePath;
+    return publicUrl;
   }
 
 
