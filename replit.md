@@ -178,34 +178,40 @@ This is a full-stack collaborative storytelling platform that enables users to c
 
 ## Future Roadmap
 
-### Enhanced Story Narration with ElevenLabs Integration (Current Priority)
-**Complete Story Narration System with ElevenLabs Voice Cloning**
+### Enhanced Story Narration with Ephemeral Voice Architecture (Current Priority)
+**Breakthrough Solution for ElevenLabs Voice Limits**
+
+**Ephemeral Voice Architecture:**
+- **CRITICAL INNOVATION**: Treat ElevenLabs voices as temporary resources, not permanent assets
+- **Flow**: Create voice → Generate all narrations → Delete voice ID
+- **Benefit**: Bypass 30-voice Creator plan limit entirely
+- **Storage**: Keep only generated audio files, not voice IDs
 
 **Architecture Requirements:**
-- **Voice Priority**: ElevenLabs narrator voice takes precedence over default OpenAI voices
+- **Voice Session Manager**: Handles temporary voice lifecycle
+- **Batch Processing**: Generate all pending narrations in one session
+- **Smart Caching**: Check existing narrations before creating voice
 - **Plug-and-Play Playback**: Play button accepts only storyId → backend API returns audio URL
-- **Heavy Logic During Generation**: All processing (ElevenLabs TTS, audio creation, file storage) happens during narration generation, not playback
 - **Storage Structure**: `/stories/audio/private/{userId}/{storyId}/` (moves to `/stories/audio/public/` when story becomes public)
-- **Segment-Based Auto-Advance**: Keep segment approach with continuous auto-advance playback (no single merged file)
+
+**Gamification Strategy (Works With or Without AI):**
+- **Local Features**: Achievement tracking, progress visualization, analytics dashboard, social challenges
+- **AI-Enhanced**: Voice cloning, quality analysis, AI narration
+- **Hybrid Approach**: App provides value immediately, grows with user capabilities
+- **Engagement**: Daily challenges, emotion map progress, voice personality profiles, leaderboards
 
 **User Workflow:**
-1. User clicks "Generate Story Narration" → system generates full story narration using ElevenLabs narrator voice
-2. Audio files stored as segments for future individual sharing, reels, etc.
-3. User previews narration → if unhappy, can add more voice samples → regenerate narrator voice → regenerate story narration
-4. Once satisfied → click "Save" → story complete
-
-**Voice Sample Management:**
-- **Locked Voice Behavior**: Once voice samples locked (used in narrator voice generation), they remain locked permanently
-- **Unlocking**: Only happens if ElevenLabs integration fails
-- **Global Voice Samples**: Available from all stories, uses same sharable component with recording/lock/unlock/background color behavior
-- **Narrator Voice Generation**: Available at both story level AND global voice samples page
-- **Minimum Threshold**: Requires 5+ unlocked recorded samples to regenerate narrator voice
-- **Reference Data Tapering**: As users add more stories, emotions/sounds/modulations recordings taper down as reference data is shared across stories
+1. User records 10 emotion samples through gamified interface
+2. Clicks "Generate All Narrations" → ephemeral voice created
+3. System batch generates all pending story narrations
+4. Voice ID automatically deleted after generation
+5. Audio files stored permanently for playback
 
 **Technical Implementation:**
-- **Same Audio File**: Preview and final use same audio file unless user generates new narrator voice
-- **Dual Generation Locations**: "Generate Narrator Voice" button appears at story level and global voice samples level
-- **Failure Recovery**: Voice samples unlock only if ElevenLabs integration fails, allowing re-recording and regeneration
+- **Voice Sessions**: Track temporary voice creation/deletion
+- **Batch Manager**: Queue and process multiple narrations
+- **Achievement System**: Database-driven milestones and progress
+- **Analytics**: Voice stats without storing actual voices
 
 **Phase 2: Collaborative Review Infrastructure**
 6. Create story invitation system for friends and family
