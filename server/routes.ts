@@ -1162,15 +1162,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ? `admin_${Date.now()}_${Math.random().toString(36).substring(7)}`
         : `admin_${text.substring(0, 50)}_${conversationStyle}_${emotion}_${narratorProfile}`;
 
-      // Use the existing audio service which handles voice generation
+      // For force regenerate, generate directly without cache
+      if (forceRegenerate) {
+        const { audioService } = await import("./audio-service");
+        
+        // Generate new audio buffer directly, bypassing cache
+        const { buffer, voice } = await audioService.getAudioBuffer({
+          text,
+          emotion,
+          intensity: 5,
+          voice: voiceId || "nova", // Use OpenAI voice as fallback
+          userId,
+          narratorProfile: {
+            language: 'en',
+            locale: 'en-US'
+          }
+        });
+        
+        // Save with unique filename to ensure fresh audio
+        const timestamp = Date.now();
+        const randomId = Math.random().toString(36).substring(7);
+        const filename = `admin_force_${timestamp}_${randomId}.mp3`;
+        const audioPath = path.join(process.cwd(), 'public', 'voice-samples', filename);
+        
+        await fs.mkdir(path.dirname(audioPath), { recursive: true });
+        await fs.writeFile(audioPath, buffer);
+        
+        const audioUrl = `/voice-samples/${filename}`;
+        
+        res.json({
+          audioUrl,
+          voiceParameters: {
+            voiceId: voice,
+            voiceSettings: voiceStyle,
+            conversationStyle,
+            emotion,
+            narratorProfile
+          }
+        });
+        return;
+      }
+      
+      // Normal generation with cache
       const { audioService } = await import("./audio-service");
       
-      // Generate audio with voice parameters
       const audioResult = await audioService.generateEmotionAudio({
         text,
         emotion,
-        intensity: 5, // medium intensity
-        voice: voiceId || "cuxbYT1nu3MZbK8JwgAZ",
+        intensity: 5,
+        voice: voiceId || "nova",
         userId,
         narratorProfile: {
           language: 'en',

@@ -742,6 +742,17 @@ export class AudioService {
     
     return { buffer, voice: selectedVoice };
   }
+
+  // Force generate audio without any cache checking
+  async forceGenerateAudio(options: AudioGenerationOptions): Promise<{ buffer: Buffer; voice: string }> {
+    const selectedVoice = options.voice || this.selectEmotionVoice(options.emotion, options.intensity, options.characters);
+    
+    // Always generate fresh audio, no cache check
+    const buffer = await this.generateAIAudio(options);
+    
+    // Don't cache this forced generation to avoid polluting the cache
+    return { buffer, voice: selectedVoice };
+  }
 }
 
 export const audioService = new AudioService();
