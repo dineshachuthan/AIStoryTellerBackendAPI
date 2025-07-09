@@ -432,6 +432,16 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Voice ID**: Successfully using narrator voice `cuxbYT1nu3MZbK8JwgAZ`
 - **Voice Quality Enhancement**: Updated recording requirements to 15-25 seconds (from 5-10 seconds) with 45-60 word sample texts for optimal voice cloning quality
 
+### **MILESTONE 2: Collaboration Invitation System Fixed - January 09, 2025**
+**Achievement**: Fixed collaboration invitation system by resolving duplicate route conflicts
+- ✅ Removed duplicate `/api/invitations/:token` route definitions that were causing 404 errors
+- ✅ Replaced complex Drizzle ORM queries with direct SQL using `pool.query` to avoid type issues
+- ✅ Environment-aware invitation URL builder with `/narration/{inviteId}` pattern
+- ✅ JWT token support prepared for future authentication needs
+- ✅ Frontend route updated to handle `/narration/:token` instead of `/invite/:token`
+- **URL Pattern**: `https://domain.com/narration/{inviteId}` with optional JWT and environment parameters
+- **Configuration**: Centralized invitation URL building in `server/invitation-url-builder.ts`
+
 ## TODO List - January 20, 2025
 
 ### Current Task - Multi-Voice Recording System Implementation - COMPLETED

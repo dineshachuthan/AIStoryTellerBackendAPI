@@ -69,7 +69,7 @@ function AppContent() {
           <Route path="/login" component={Login} />
           <Route path="/register" component={Register} />
           <Route path="/oauth-test" component={OAuthTest} />
-          <Route path="/invite/:token" component={InvitationLanding} />
+          <Route path="/narration/:token" component={InvitationLanding} />
           {isAuthenticated ? (
             <>
 

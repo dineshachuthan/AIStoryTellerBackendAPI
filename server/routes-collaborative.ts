@@ -2,6 +2,7 @@ import { Router } from "express";
 import { collaborativeRoleplayService } from "./collaborative-roleplay-service";
 import { requireAuth } from "./auth";
 import { getBaseUrl } from "./oauth-config";
+import { buildInvitationUrl } from "./invitation-url-builder";
 import { notificationService } from "./notification-service";
 import { storage } from "./storage";
 import { db, pool } from "./db";
@@ -65,8 +66,7 @@ router.post("/api/stories/:id/invitations", requireAuth, async (req, res) => {
         
         // Create invitation token and link
         const invitationToken = `inv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        const baseUrl = getBaseUrl();
-        const invitationLink = `${baseUrl}/invite/${invitationToken}`;
+        const invitationLink = buildInvitationUrl(invitationToken);
         
         console.log(`Created invitation for ${characterName} in story ${storyId}: ${invitationToken}`);
         
