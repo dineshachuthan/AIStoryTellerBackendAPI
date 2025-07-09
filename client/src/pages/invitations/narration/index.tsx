@@ -42,6 +42,7 @@ export default function NarrationInvitationLanding() {
   const [currentStage, setCurrentStage] = useState<"preview" | "recording" | "generating">("preview");
   const [isPlayingNarration, setIsPlayingNarration] = useState(false);
   const [narrationProgress, setNarrationProgress] = useState(0);
+  const [sampleTexts, setSampleTexts] = useState<Map<string, string>>(new Map());
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Common emotions for narrator voice
@@ -76,6 +77,44 @@ export default function NarrationInvitationLanding() {
       }
     },
   });
+
+  // Fetch sample texts for all emotions
+  const { data: emotionSampleTexts } = useQuery({
+    queryKey: [`/api/stories/${invitation?.storyId}/emotion-sample-texts`],
+    queryFn: async () => {
+      const texts = new Map<string, string>();
+      
+      // Fetch sample texts for all emotions
+      const results = await Promise.all(
+        narratorEmotions.map(async (emotion) => {
+          try {
+            const response = await apiRequest(`/api/stories/${invitation?.storyId}/sample-text`, {
+              method: 'POST',
+              body: JSON.stringify({ emotion })
+            });
+            return { emotion, text: response.sampleText };
+          } catch (error) {
+            console.error(`Failed to get sample text for ${emotion}:`, error);
+            return { emotion, text: `Express the emotion of ${emotion} in your voice with genuine feeling` };
+          }
+        })
+      );
+      
+      results.forEach(({ emotion, text }) => {
+        texts.set(emotion, text);
+      });
+      
+      return texts;
+    },
+    enabled: !!invitation?.storyId && currentStage === "recording",
+  });
+
+  // Update sample texts when fetched
+  useEffect(() => {
+    if (emotionSampleTexts) {
+      setSampleTexts(emotionSampleTexts);
+    }
+  }, [emotionSampleTexts]);
 
   // Generate narration with new voice
   const generateNarrationMutation = useMutation({
@@ -463,16 +502,16 @@ export default function NarrationInvitationLanding() {
                     Read the sample text with a {selectedEmotion} emotion (15-25 seconds)
                   </p>
                   
-                  {/* Simple voice recording interface */}
+                  {/* Voice recording interface with proper sample text */}
                   <div className="bg-black/40 rounded-lg p-4 space-y-3">
-                    <div className="text-sm text-gray-300 italic mb-3">
-                      Sample text will appear here for {selectedEmotion} emotion...
+                    <div className="text-sm text-gray-300 italic mb-3 p-3 bg-gray-800/50 rounded">
+                      {sampleTexts.get(selectedEmotion) || `Loading sample text for ${selectedEmotion}...`}
                     </div>
                     
                     <div className="flex justify-center">
                       <EnhancedVoiceRecorder
                         emotion={selectedEmotion}
-                        sampleText={`Express the emotion of ${selectedEmotion} in your voice`}
+                        sampleText={sampleTexts.get(selectedEmotion) || `Express the emotion of ${selectedEmotion} in your voice with genuine feeling`}
                         category="emotions"
                         storyId={invitation?.storyId || 0}
                         onRecordingSaved={handleRecordingSaved}

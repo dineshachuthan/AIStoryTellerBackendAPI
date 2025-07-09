@@ -195,8 +195,7 @@ export default function StoryNarratorControls({
   const generateNarration = async () => {
     if (!user || !canNarrate) return;
 
-    // TEMPORARILY DISABLED: Cache checking logic for testing voice profiles
-    /*
+    // Check if narration already exists with current voice
     if (savedNarration && narratorVoiceData?.narratorVoiceId && 
         savedNarration.narratorVoice === narratorVoiceData.narratorVoiceId) {
       toast.info({
@@ -205,7 +204,6 @@ export default function StoryNarratorControls({
       });
       return;
     }
-    */
 
     setIsGenerating(true);
     try {

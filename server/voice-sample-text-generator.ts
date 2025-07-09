@@ -20,6 +20,38 @@ interface GeneratedSampleText {
 
 export class VoiceSampleTextGenerator {
   /**
+   * Generate sample text for a specific emotion
+   * @param emotion The emotion name to generate text for
+   * @returns The generated sample text
+   */
+  async generateEmotionText(emotion: string): Promise<string> {
+    try {
+      const prompt = `Create a voice recording sample text for the emotion "${emotion}". 
+  
+  The text must be exactly ${VOICE_RECORDING_CONFIG.MIN_WORDS}-${VOICE_RECORDING_CONFIG.MAX_WORDS} words long to take approximately ${VOICE_RECORDING_CONFIG.MIN_DURATION}-${VOICE_RECORDING_CONFIG.MAX_DURATION} seconds to read aloud at normal speaking speed.
+  
+  Requirements:
+  - Must be ${VOICE_RECORDING_CONFIG.MIN_WORDS}-${VOICE_RECORDING_CONFIG.MAX_WORDS} words (for ~${VOICE_RECORDING_CONFIG.MIN_DURATION}-${VOICE_RECORDING_CONFIG.MAX_DURATION} second reading time)
+  - Must clearly express ${emotion} emotion
+  - Should be natural dialogue or narrative
+  - Emotionally engaging so the speaker naturally expresses the emotion
+  - No character names or complex scenarios
+  
+  Respond with just the sample text, no JSON or formatting.`;
+  
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.7 // Slightly creative for variety
+      });
+  
+      return response.choices[0].message.content || `Express the emotion of ${emotion} in your voice with genuine feeling`;
+    } catch (error) {
+      console.error(`Error generating sample text for ${emotion}:`, error);
+      return `Express the emotion of ${emotion} in your voice with genuine feeling`;
+    }
+  }
+  /**
    * Generate 6-second sample texts for all emotions in database
    */
   async generateAllEmotionTexts(): Promise<{ updated: number; errors: string[] }> {

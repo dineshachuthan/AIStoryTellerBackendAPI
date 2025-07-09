@@ -4474,6 +4474,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Generate sample text for emotion - Used by narration invitation flow
+  app.post('/api/stories/:storyId/sample-text', async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.storyId);
+      const { emotion } = req.body;
+      
+      if (!emotion || isNaN(storyId)) {
+        return res.status(400).json({ message: 'Emotion and storyId are required' });
+      }
+      
+      // Get story analysis to find emotion context
+      const analysis = await storage.getStoryAnalysis(storyId, 'narrative');
+      if (!analysis?.analysisData?.emotions) {
+        // Generate default sample text if no analysis
+        const { voiceSampleTextGenerator } = await import('./voice-sample-text-generator');
+        const sampleText = await voiceSampleTextGenerator.generateEmotionText(emotion);
+        return res.json({ sampleText });
+      }
+      
+      // Find emotion in story analysis
+      const storyEmotion = analysis.analysisData.emotions.find((e: any) => 
+        e.emotion.toLowerCase() === emotion.toLowerCase()
+      );
+      
+      if (storyEmotion?.quote) {
+        // Use story quote if available and suitable length
+        const wordCount = storyEmotion.quote.split(' ').length;
+        if (wordCount >= 45 && wordCount <= 60) {
+          return res.json({ sampleText: storyEmotion.quote });
+        }
+      }
+      
+      // Generate sample text using voice sample text generator
+      const { voiceSampleTextGenerator } = await import('./voice-sample-text-generator');
+      const sampleText = await voiceSampleTextGenerator.generateEmotionText(emotion);
+      
+      res.json({ sampleText });
+    } catch (error: any) {
+      console.error('Error generating sample text:', error);
+      res.status(500).json({ 
+        message: 'Failed to generate sample text',
+        error: error.message 
+      });
+    }
+  });
+
   // Story narration API endpoints
   app.post('/api/stories/:storyId/narration/preview', requireAuth, async (req, res) => {
     try {
