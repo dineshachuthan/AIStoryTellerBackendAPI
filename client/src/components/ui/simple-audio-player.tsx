@@ -17,6 +17,8 @@ export function SimpleAudioPlayer({
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [volume, setVolume] = useState(0.85);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Initialize audio element
@@ -60,6 +62,13 @@ export function SimpleAudioPlayer({
         if (audioRef.current && audioRef.current.duration) {
           const progressPercent = (audioRef.current.currentTime / audioRef.current.duration) * 100;
           setProgress(progressPercent);
+          setCurrentTime(audioRef.current.currentTime);
+        }
+      };
+      
+      audioRef.current.onloadedmetadata = () => {
+        if (audioRef.current) {
+          setDuration(audioRef.current.duration);
         }
       };
       
@@ -105,6 +114,21 @@ export function SimpleAudioPlayer({
     }
   };
 
+  const handleSeek = (newProgress: number) => {
+    if (!audioRef.current || !audioRef.current.duration) return;
+    
+    const newTime = (newProgress / 100) * audioRef.current.duration;
+    audioRef.current.currentTime = newTime;
+    setProgress(newProgress);
+  };
+
+  const formatTime = (seconds: number) => {
+    if (!seconds || isNaN(seconds)) return '0:00';
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = Math.floor(seconds % 60);
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
   if (!audioUrl) {
     return null;
   }
@@ -125,13 +149,26 @@ export function SimpleAudioPlayer({
           )}
         </Button>
 
-        {/* Progress Bar */}
-        <div className="flex-1">
-          <div className="h-2 bg-muted rounded-full overflow-hidden">
+        {/* Progress Bar - Clickable for seeking */}
+        <div className="flex-1 space-y-1">
+          <div 
+            className="h-2 bg-muted rounded-full overflow-hidden cursor-pointer relative"
+            onClick={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              const x = e.clientX - rect.left;
+              const clickedProgress = (x / rect.width) * 100;
+              handleSeek(clickedProgress);
+            }}
+          >
             <div 
-              className="h-full bg-primary transition-all duration-200"
+              className="h-full bg-primary transition-all duration-200 pointer-events-none"
               style={{ width: `${progress}%` }}
             />
+          </div>
+          {/* Time display */}
+          <div className="flex justify-between text-xs text-muted-foreground">
+            <span>{formatTime(currentTime)}</span>
+            <span>{formatTime(duration)}</span>
           </div>
         </div>
 
