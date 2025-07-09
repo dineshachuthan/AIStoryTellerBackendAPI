@@ -51,14 +51,7 @@ Previous context: This is an ongoing conversation where you are ${character.name
     return aiResponse.trim();
   } catch (error) {
     console.error("OpenAI API Error:", error);
-    
-    // Provide character-appropriate fallback responses
-    const fallbackResponses = [
-      `*${character.name} seems to be having trouble connecting right now* I apologize, but I'm having some difficulty responding at the moment. Please try again.`,
-      `*There seems to be a temporary issue* I'm sorry, but I can't respond properly right now. Could you try sending your message again?`,
-      `*${character.name} pauses thoughtfully* I'm experiencing some technical difficulties. Please give me a moment and try again.`,
-    ];
-    
-    return fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
+    // Fallback logic goes here
+    throw error;
   }
 }

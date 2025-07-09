@@ -322,19 +322,8 @@ export class GrandmaVoiceNarrator {
 
       } catch (error) {
         console.error('Failed to generate voice for segment:', error);
-        
-        // Fallback: create a silent segment
-        const duration = 3000; // 3 seconds
-        voiceSegments.push({
-          text: segment.text,
-          characterName: segment.characterName,
-          emotion: segment.emotion,
-          intensity: segment.intensity,
-          audioUrl: '', // No audio fallback
-          duration,
-          startTime: currentTime,
-        });
-        currentTime += duration;
+        // Fallback logic goes here
+        throw error;
       }
     }
 

@@ -150,19 +150,7 @@ export default function UploadStory() {
           return;
         }
         
-        // Fallback: Check session storage for pre-transcribed content
-        const extractedContent = sessionStorage.getItem('extractedContent') || sessionStorage.getItem('uploadedStoryContent');
-        if (extractedContent) {
-          console.log('Found pre-transcribed content in session storage');
-          setStoryContent(extractedContent);
-          sessionStorage.removeItem('extractedContent');
-          sessionStorage.removeItem('uploadedStoryContent');
-          
-          toast({
-            title: UIMessages.getSuccess('AUDIO_PROCESSING_SUCCESS'),
-            description: UIMessages.getSuccess('AUDIO_PROCESSING_SUCCESS_DESC', { characters: extractedContent.length }),
-          });
-        }
+        // Fallback logic goes here
         setIsLoadingContent(false);
         setHasLoadedOnce(true);
         return;

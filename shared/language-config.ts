@@ -7,7 +7,7 @@ export type Language = 'en' | 'ta';
 
 export interface LanguageConfig {
   defaultLanguage: Language;
-  fallbackLanguage: Language;
+  // Fallback logic goes here - removed fallbackLanguage field
   supportedLanguages: Language[];
   locale: {
     [key in Language]: string;
@@ -16,7 +16,7 @@ export interface LanguageConfig {
 
 export const LANGUAGE_CONFIG: LanguageConfig = {
   defaultLanguage: 'en',
-  fallbackLanguage: 'en',
+  // Fallback logic goes here - removed fallbackLanguage value
   supportedLanguages: ['en', 'ta'],
   locale: {
     en: 'en-US',

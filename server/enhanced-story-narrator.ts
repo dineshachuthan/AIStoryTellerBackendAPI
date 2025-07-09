@@ -281,9 +281,8 @@ export class EnhancedStoryNarrator {
       }
     }
 
-    // Return highest intensity emotion as fallback
-    const sortedEmotions = storyAnalysis.emotions.sort((a, b) => b.intensity - a.intensity);
-    return sortedEmotions[0]?.emotion || null;
+    // Fallback logic goes here
+    return null;
   }
 
   /**

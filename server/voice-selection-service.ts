@@ -123,21 +123,7 @@ export class VoiceSelectionService {
       };
     }
 
-    // Priority 3: Any user voice as fallback (use neutral/calm if available)
-    const fallbackUserEmotion = this.getBestFallbackEmotion(userVoices.availableEmotions);
-    if (fallbackUserEmotion && userVoices.clonedVoices[fallbackUserEmotion]) {
-      return {
-        text: segment.text,
-        emotion: segment.emotion,
-        character: segment.character,
-        voiceId: userVoices.clonedVoices[fallbackUserEmotion],
-        isUserVoice: true,
-        fallbackEmotion: fallbackUserEmotion,
-        confidence: 0.6
-      };
-    }
-
-    // Priority 4: Never fall back to hardcoded voices - return error
+    // Fallback logic goes here
     throw new Error(`No user voice available for emotion "${segment.emotion}". Please record more voice samples.`);
   }
 
@@ -171,19 +157,11 @@ export class VoiceSelectionService {
 
   /**
    * Get the best fallback emotion from available options
+   * @deprecated Fallback logic goes here - removed per development policy
    */
   private getBestFallbackEmotion(availableEmotions: string[]): string | null {
-    // Preferred fallback order
-    const fallbackOrder = ['neutral', 'calm', 'happy', 'confident', 'thoughtful'];
-    
-    for (const preferred of fallbackOrder) {
-      if (availableEmotions.includes(preferred)) {
-        return preferred;
-      }
-    }
-    
-    // Return any available emotion as last resort
-    return availableEmotions.length > 0 ? availableEmotions[0] : null;
+    // Fallback logic goes here
+    throw new Error('Fallback logic not allowed during development');
   }
 
   /**

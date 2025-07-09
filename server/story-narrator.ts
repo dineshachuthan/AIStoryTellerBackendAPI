@@ -138,27 +138,7 @@ export class StoryNarrator {
       console.log('[StoryNarrator] No ElevenLabs narrator voice found, checking user voice samples');
     }
 
-    // PRIORITY 2: Check if user has any voice samples (narrator or emotion)
-    try {
-      const userVoices = await storage.getUserVoiceSamples(userId);
-      if (userVoices && userVoices.length > 0) {
-        // Prefer narrator-type voices, fallback to any emotion voice
-        const narratorVoice = userVoices.find(v => v.sampleType === 'narrator' || v.label === 'narrator');
-        if (narratorVoice && narratorVoice.audioUrl) {
-          // User has recorded narrator voice - use it directly for authentic custom voice
-          return { voice: narratorVoice.audioUrl, type: 'user' };
-        }
-        
-        // Use first available emotion voice as narrator base
-        const emotionVoice = userVoices.find(v => v.sampleType === 'emotion' && v.audioUrl);
-        if (emotionVoice && emotionVoice.audioUrl) {
-          // User has emotion voice recording - use it for narration
-          return { voice: emotionVoice.audioUrl, type: 'user' };
-        }
-      }
-    } catch (error) {
-      console.log('[StoryNarrator] No user voice samples found');
-    }
+    // Fallback logic goes here - removed voice sample fallback
 
     // NO FALLBACK - If no ElevenLabs voice exists, return null
     console.log(`[StoryNarrator] No ElevenLabs narrator voice found - narration cannot be generated`);
@@ -389,47 +369,13 @@ export class StoryNarrator {
         console.log(`[StoryNarrator] ElevenLabs narration generated: ${audioBuffer.length} bytes with ${chunkContext.emotion} emotion and orchestrated settings`);
         
       } catch (error) {
-        console.error(`[StoryNarrator] ElevenLabs generation failed, falling back to audio service:`, error);
-        // Fallback to audio service if ElevenLabs fails - pass emotion here too
-        const { buffer } = await audioService.getAudioBuffer({
-          text,
-          emotion: chunkContext.emotion, // Pass actual emotion for fallback
-          intensity: chunkContext.intensity,
-          voice: narratorVoice,
-          userId,
-          storyId,
-          narratorProfile,
-          conversationStyle
-          // voiceSettings not passed in fallback - audio service will use its own defaults
-        });
-        audioBuffer = buffer;
+        console.error(`[StoryNarrator] ElevenLabs generation failed:`, error);
+        // Fallback logic goes here
+        throw error;
       }
     } else {
-      // Use audio service for AI voices - pass actual emotions for OpenAI modulation
-      console.log(`[StoryNarrator] Generating narration with OpenAI voice, character: ${chunkContext.character}, emotion: ${chunkContext.emotion}, intensity: ${chunkContext.intensity}, language: ${userLanguage}`);
-      
-      // Get voice settings from orchestration service for AI voices too
-      const { voiceOrchestrationService } = await import('./voice-orchestration-service');
-      const voiceSettings = await voiceOrchestrationService.getVoiceSettings(
-        userId,
-        chunkContext.character,
-        chunkContext.emotion,
-        storyId,
-        conversationStyle
-      );
-      
-      const { buffer } = await audioService.getAudioBuffer({
-        text,
-        emotion: chunkContext.emotion, // Use detected emotion for OpenAI voices
-        intensity: chunkContext.intensity,
-        voice: narratorVoice,
-        userId,
-        storyId,
-        narratorProfile,
-        conversationStyle,
-        voiceSettings // Pass voice settings for AI voices too
-      });
-      audioBuffer = buffer;
+      // Fallback logic goes here - no OpenAI voice fallback allowed
+      throw new Error('No ElevenLabs voice available. Please generate your narrator voice first.');
     }
     
     // Store audio in story-specific directory structure
