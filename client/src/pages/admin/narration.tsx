@@ -54,9 +54,20 @@ export default function AdminNarration() {
   const [emotion, setEmotion] = useState("neutral");
   const [narratorProfile, setNarratorProfile] = useState("neutral");
   const [voiceId, setVoiceId] = useState("");
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
-  const [voiceParameters, setVoiceParameters] = useState<any>(null);
   const [statusMessage, setStatusMessage] = useState<string>("");
+  
+  // Store multiple generated audios for comparison
+  const [generatedAudios, setGeneratedAudios] = useState<Array<{
+    id: string;
+    audioUrl: string;
+    voiceParameters: any;
+    conversationStyle: string;
+    emotion: string;
+    narratorProfile: string;
+    storyId: string;
+    storyTitle: string;
+    timestamp: Date;
+  }>>([]);
   
   // Fetch stories for dropdown
   const { data: stories = [], isLoading: storiesLoading } = useQuery({
@@ -95,8 +106,19 @@ export default function AdminNarration() {
       return response.json();
     },
     onSuccess: (data) => {
-      setAudioUrl(data.audioUrl);
-      setVoiceParameters(data.voiceParameters);
+      const newAudio = {
+        id: `${selectedStoryId}-${conversationStyle}-${emotion}-${narratorProfile}-${Date.now()}`,
+        audioUrl: data.audioUrl,
+        voiceParameters: data.voiceParameters,
+        conversationStyle,
+        emotion,
+        narratorProfile,
+        storyId: selectedStoryId,
+        storyTitle: selectedStory?.title || `Story ${selectedStoryId}`,
+        timestamp: new Date()
+      };
+      
+      setGeneratedAudios(prev => [newAudio, ...prev]);
       setStatusMessage("Audio generated successfully");
       setTimeout(() => setStatusMessage(""), 3000);
     },
@@ -286,98 +308,69 @@ export default function AdminNarration() {
           </CardContent>
         </Card>
 
-        {/* Output Section */}
-        <div className="space-y-6">
-          {/* Audio Player */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Generated Audio</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {audioUrl ? (
-                <div className="space-y-4">
-                  <SimpleAudioPlayer 
-                    audioUrl={audioUrl}
-                    showVolumeControl={true}
-                  />
-                  <div className="text-sm text-muted-foreground">
-                    <a
-                      href={audioUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="underline hover:text-primary"
-                    >
-                      Download Audio
-                    </a>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  No audio generated yet. Click "Generate" to create narration.
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Voice Parameters */}
-          {voiceParameters && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Settings className="w-5 h-5" />
-                  Voice Parameters
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Tabs defaultValue="calculated" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="calculated">Calculated</TabsTrigger>
-                    <TabsTrigger value="raw">Raw JSON</TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="calculated" className="space-y-3">
-                    <div className="grid grid-cols-2 gap-3 text-sm">
-                      <div>
-                        <span className="font-medium">Stability:</span>
-                        <span className="ml-2">{voiceParameters.voiceSettings?.stability || 'N/A'}</span>
+        {/* Output Section - Multiple Audio Comparisons */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Generated Audio Comparisons</CardTitle>
+            <p className="text-sm text-muted-foreground">Compare different conversation styles, emotions, and narrator profiles</p>
+          </CardHeader>
+          <CardContent>
+            {generatedAudios.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                No audio generated yet. Click "Generate" to create narration with different settings.
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {generatedAudios.map((audio) => (
+                  <Card key={audio.id} className="border">
+                    <CardContent className="pt-4">
+                      <div className="space-y-3">
+                        {/* Audio info header */}
+                        <div className="flex justify-between items-start">
+                          <div className="space-y-1">
+                            <div className="font-medium">{audio.storyTitle}</div>
+                            <div className="text-sm text-muted-foreground grid grid-cols-2 gap-x-4 gap-y-1">
+                              <div>Style: <span className="font-medium">{audio.conversationStyle}</span></div>
+                              <div>Emotion: <span className="font-medium">{audio.emotion}</span></div>
+                              <div>Profile: <span className="font-medium">{audio.narratorProfile}</span></div>
+                              <div>Time: {audio.timestamp.toLocaleTimeString()}</div>
+                            </div>
+                          </div>
+                          <a
+                            href={audio.audioUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm underline hover:text-primary"
+                          >
+                            Download
+                          </a>
+                        </div>
+                        
+                        {/* Audio player */}
+                        <SimpleAudioPlayer 
+                          audioUrl={audio.audioUrl}
+                          showVolumeControl={true}
+                        />
+                        
+                        {/* Voice parameters */}
+                        {audio.voiceParameters && (
+                          <div className="text-xs text-muted-foreground bg-muted/50 p-2 rounded">
+                            <div className="grid grid-cols-4 gap-2">
+                              <div>Stability: {audio.voiceParameters.voiceSettings?.stability || 'N/A'}</div>
+                              <div>Similarity: {audio.voiceParameters.voiceSettings?.similarityBoost || 'N/A'}</div>
+                              <div>Style: {audio.voiceParameters.voiceSettings?.style || 'N/A'}</div>
+                              <div>Voice: {audio.voiceParameters.voiceId?.slice(-6) || 'Default'}</div>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                      <div>
-                        <span className="font-medium">Similarity:</span>
-                        <span className="ml-2">{voiceParameters.voiceSettings?.similarityBoost || 'N/A'}</span>
-                      </div>
-                      <div>
-                        <span className="font-medium">Style:</span>
-                        <span className="ml-2">{voiceParameters.voiceSettings?.style || 'N/A'}</span>
-                      </div>
-                      <div>
-                        <span className="font-medium">Voice ID:</span>
-                        <span className="ml-2 text-xs">{voiceParameters.voiceId || 'Default'}</span>
-                      </div>
-                    </div>
-                    <div className="space-y-2 text-sm">
-                      <div>
-                        <span className="font-medium">Pitch:</span>
-                        <span className="ml-2">{voiceParameters.voiceSettings?.prosody?.pitch || 'N/A'}</span>
-                      </div>
-                      <div>
-                        <span className="font-medium">Rate:</span>
-                        <span className="ml-2">{voiceParameters.voiceSettings?.prosody?.rate || 'N/A'}</span>
-                      </div>
-                      <div>
-                        <span className="font-medium">Volume:</span>
-                        <span className="ml-2">{voiceParameters.voiceSettings?.prosody?.volume || 'N/A'}</span>
-                      </div>
-                    </div>
-                  </TabsContent>
-                  <TabsContent value="raw">
-                    <pre className="text-xs bg-muted p-4 rounded overflow-auto max-h-64">
-                      {JSON.stringify(voiceParameters, null, 2)}
-                    </pre>
-                  </TabsContent>
-                </Tabs>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

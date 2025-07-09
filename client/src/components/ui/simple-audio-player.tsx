@@ -37,14 +37,17 @@ export function SimpleAudioPlayer({
   // Update audio source when URL changes
   useEffect(() => {
     if (audioRef.current && audioUrl) {
+      // Convert relative URL to absolute for comparison
+      const absoluteUrl = audioUrl.startsWith('http') ? audioUrl : `${window.location.origin}${audioUrl}`;
+      
       // If already playing something else, stop it
-      if (audioRef.current.src && audioRef.current.src !== audioUrl) {
+      if (audioRef.current.src && audioRef.current.src !== absoluteUrl) {
         audioRef.current.pause();
         setIsPlaying(false);
         setProgress(0);
       }
       
-      // Set up new audio
+      // Set up new audio with the original URL (relative or absolute)
       audioRef.current.src = audioUrl;
       
       // Set up event handlers
@@ -61,7 +64,7 @@ export function SimpleAudioPlayer({
       };
       
       audioRef.current.onerror = (e) => {
-        console.error('Audio playback error:', e);
+        console.error('Audio playback error:', e, 'URL:', audioUrl);
         setIsPlaying(false);
       };
     }
@@ -82,11 +85,22 @@ export function SimpleAudioPlayer({
         audioRef.current.pause();
         setIsPlaying(false);
       } else {
+        console.log('Attempting to play audio:', audioUrl);
+        console.log('Audio element src:', audioRef.current.src);
+        console.log('Audio ready state:', audioRef.current.readyState);
         await audioRef.current.play();
         setIsPlaying(true);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Playback error:', error);
+      console.error('Error details:', {
+        name: error.name,
+        message: error.message,
+        audioUrl,
+        readyState: audioRef.current?.readyState,
+        networkState: audioRef.current?.networkState,
+        error: audioRef.current?.error
+      });
       setIsPlaying(false);
     }
   };

@@ -637,28 +637,41 @@ export class AudioService {
 
   // Cache audio file
   private async cacheAudioFile(buffer: Buffer, options: AudioGenerationOptions, voice: string): Promise<string> {
-    const cacheDir = path.join(process.cwd(), 'persistent-cache', 'audio');
-    await fs.mkdir(cacheDir, { recursive: true });
+    // Create proper directory structure under voice-samples
+    let cacheDir: string;
+    let relativePath: string;
     
-    const fileName = `emotion-${options.emotion}-${options.intensity}-${Date.now()}.mp3`;
-    const filePath = path.join(cacheDir, fileName);
+    if (options.userId && options.storyId) {
+      // Store under user/story structure: voice-samples/user/{userId}/story/{storyId}/
+      cacheDir = path.join(process.cwd(), 'public', 'voice-samples', 'user', options.userId, 'story', options.storyId.toString());
+      await fs.mkdir(cacheDir, { recursive: true });
+      
+      // Generate filename with context
+      const timestamp = Date.now();
+      const randomId = Math.random().toString(36).substring(2, 8);
+      const fileName = `narration_${options.emotion}_${timestamp}_${randomId}.mp3`;
+      const filePath = path.join(cacheDir, fileName);
+      
+      await fs.writeFile(filePath, buffer);
+      
+      // Return relative path from voice-samples
+      relativePath = `user/${options.userId}/story/${options.storyId}/${fileName}`;
+    } else {
+      // Fallback for non-story narrations (admin testing)
+      cacheDir = path.join(process.cwd(), 'public', 'voice-samples', 'admin');
+      await fs.mkdir(cacheDir, { recursive: true });
+      
+      const timestamp = Date.now();
+      const randomId = Math.random().toString(36).substring(2, 8);
+      const fileName = `admin_${options.emotion}_${timestamp}_${randomId}.mp3`;
+      const filePath = path.join(cacheDir, fileName);
+      
+      await fs.writeFile(filePath, buffer);
+      
+      relativePath = `admin/${fileName}`;
+    }
     
-    await fs.writeFile(filePath, buffer);
-    
-    const metadata = {
-      text: options.text,
-      voice,
-      emotion: options.emotion,
-      intensity: options.intensity,
-      fileName,
-      timestamp: Date.now(),
-      fileSize: buffer.length,
-    };
-    
-    const metadataPath = path.join(cacheDir, `${fileName}.json`);
-    await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2));
-    
-    return fileName;
+    return relativePath;
   }
 
 
@@ -688,34 +701,11 @@ export class AudioService {
     const characterArray = speakingCharacter ? [speakingCharacter] : (options.characters || []);
     const selectedVoice = options.voice || this.selectCharacterVoice(characterArray);
 
-    // Try cache first
-    try {
-      const cachedAudio = getCachedAudio(options.text, selectedVoice, options.emotion, options.intensity);
-      if (cachedAudio) {
-        const filePath = path.join(process.cwd(), 'persistent-cache', 'audio', path.basename(cachedAudio));
-        try {
-          await fs.access(filePath);
-          return {
-            audioUrl: `/api/emotions/cached-audio/${path.basename(cachedAudio)}`,
-            isUserGenerated: false,
-            voice: selectedVoice
-          };
-        } catch (fileError) {
-          console.warn("Cached audio file missing, generating from source");
-        }
-      }
-    } catch (cacheError) {
-      console.warn("Cache read failed, generating from source:", cacheError);
-    }
-
     // Generate new character-level AI audio
     const updatedOptions = { ...options, characters: characterArray };
     const buffer = await this.generateAIAudio(updatedOptions);
     const fileName = await this.cacheAudioFile(buffer, updatedOptions, selectedVoice);
-    const audioUrl = `/api/emotions/cached-audio/${fileName}`;
-    
-    // Skip caching local URLs to avoid Invalid URL errors
-    // The audio is already cached locally at this point
+    const audioUrl = `/voice-samples/${fileName}`;
     
     return {
       audioUrl,

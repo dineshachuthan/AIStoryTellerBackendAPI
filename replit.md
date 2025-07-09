@@ -432,6 +432,14 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Voice ID**: Successfully using narrator voice `N1tpb4Gkzo0sjT3Jl3Bs` (updated July 09, 2025)
 - **Voice Quality Enhancement**: Updated recording requirements to 15-25 seconds (from 5-10 seconds) with 45-60 word sample texts for optimal voice cloning quality
 
+### **MILESTONE 3: Multi-Dimensional Narration Caching - July 09, 2025**
+**Achievement**: Implemented multi-dimensional cache keys for narration to support relationship-aware content
+- ✅ Cache keys now use combination of: storyId + conversationStyle + emotion + narratorProfile + voiceId
+- ✅ Admin narration page displays multiple generated audios for comparison
+- ✅ Each audio player works independently allowing side-by-side quality comparison
+- ✅ Voice parameters displayed inline with each generated audio
+- **Architecture Decision**: Moving away from single story-based caching to multi-dimensional keys for relationship-aware narration
+
 ### **MILESTONE 2: Collaboration Invitation System Fixed - January 09, 2025**
 **Achievement**: Fixed collaboration invitation system by resolving duplicate route conflicts
 - ✅ Removed duplicate `/api/invitations/:token` route definitions that were causing 404 errors
