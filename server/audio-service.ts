@@ -19,6 +19,7 @@ export interface AudioGenerationOptions {
   storyId?: number;
   characters?: any[];
   narratorProfile?: NarratorProfile; // Complete narrator personality
+  conversationStyle?: string; // For multi-dimensional caching
 }
 
 export interface AudioResult {
@@ -637,40 +638,38 @@ export class AudioService {
 
   // Cache audio file
   private async cacheAudioFile(buffer: Buffer, options: AudioGenerationOptions, voice: string): Promise<string> {
-    // Store narration audio separately from voice samples
-    let cacheDir: string;
-    let fileName: string;
-    let publicUrl: string;
-    
-    if (options.userId && options.storyId) {
-      // Store narrations under stories audio structure
-      cacheDir = path.join(process.cwd(), 'stories', 'audio', 'narrations', options.userId, options.storyId.toString());
-      await fs.mkdir(cacheDir, { recursive: true });
-      
-      // Generate filename with multi-dimensional context
-      const timestamp = Date.now();
-      const randomId = Math.random().toString(36).substring(2, 8);
-      fileName = `${options.emotion}_${timestamp}_${randomId}.mp3`;
-      const filePath = path.join(cacheDir, fileName);
-      
-      await fs.writeFile(filePath, buffer);
-      
-      // Return URL for serving through Express route
-      publicUrl = `/api/stories/audio/narrations/${options.userId}/${options.storyId}/${fileName}`;
-    } else {
-      // Admin testing narrations
-      cacheDir = path.join(process.cwd(), 'stories', 'audio', 'admin-test');
-      await fs.mkdir(cacheDir, { recursive: true });
-      
-      const timestamp = Date.now();
-      const randomId = Math.random().toString(36).substring(2, 8);
-      fileName = `test_${options.emotion}_${timestamp}_${randomId}.mp3`;
-      const filePath = path.join(cacheDir, fileName);
-      
-      await fs.writeFile(filePath, buffer);
-      
-      publicUrl = `/api/stories/audio/admin-test/${fileName}`;
+    // Store narration audio with multi-dimensional caching structure
+    if (!options.userId || !options.storyId) {
+      throw new Error('userId and storyId are required for caching narration audio');
     }
+    
+    // Extract conversation style and narrator profile
+    const conversationStyle = options.conversationStyle || 'respectful';
+    const narratorProfile = options.narratorProfile?.language || 'neutral';
+    
+    // Create full directory path with all dimensions
+    const cacheDir = path.join(
+      process.cwd(), 
+      'stories', 
+      'audio', 
+      'narrations', 
+      options.userId, 
+      options.storyId.toString(),
+      conversationStyle,
+      narratorProfile
+    );
+    await fs.mkdir(cacheDir, { recursive: true });
+    
+    // Generate filename with emotion and unique identifiers
+    const timestamp = Date.now();
+    const randomId = Math.random().toString(36).substring(2, 8);
+    const fileName = `${options.emotion}_${timestamp}_${randomId}.mp3`;
+    const filePath = path.join(cacheDir, fileName);
+    
+    await fs.writeFile(filePath, buffer);
+    
+    // Return URL for serving through Express route
+    const publicUrl = `/api/stories/audio/narrations/${options.userId}/${options.storyId}/${conversationStyle}/${narratorProfile}/${fileName}`;
     
     return publicUrl;
   }

@@ -1212,6 +1212,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         intensity: 5,
         voice: voiceId || "N1tpb4Gkzo0sjT3Jl3Bs",
         userId,
+        storyId,
+        conversationStyle,
         narratorProfile: {
           language: 'en',
           locale: 'en-US'
@@ -1719,11 +1721,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Serve story narration audio files from new directory structure
-  app.get("/api/stories/audio/private/:userId/:storyId/:fileName", async (req, res) => {
+  // Serve story narration audio files with multi-dimensional directory structure
+  app.get("/api/stories/audio/narrations/:userId/:storyId/:conversationStyle/:narratorProfile/:fileName", async (req, res) => {
     try {
-      const { userId, storyId, fileName } = req.params;
-      const filePath = path.join(process.cwd(), 'stories', 'audio', 'private', userId, storyId, fileName);
+      const { userId, storyId, conversationStyle, narratorProfile, fileName } = req.params;
+      const filePath = path.join(
+        process.cwd(), 
+        'stories', 
+        'audio', 
+        'narrations', 
+        userId, 
+        storyId, 
+        conversationStyle,
+        narratorProfile,
+        fileName
+      );
       
       // Check if file exists
       try {

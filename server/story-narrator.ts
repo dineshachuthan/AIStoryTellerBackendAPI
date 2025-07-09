@@ -384,7 +384,8 @@ export class StoryNarrator {
           voice: narratorVoice,
           userId,
           storyId,
-          narratorProfile
+          narratorProfile,
+          conversationStyle: 'respectful' // Default for now
         });
         audioBuffer = buffer;
       }
@@ -399,13 +400,25 @@ export class StoryNarrator {
         voice: narratorVoice,
         userId,
         storyId,
-        narratorProfile
+        narratorProfile,
+        conversationStyle: 'respectful' // Default for now
       });
       audioBuffer = buffer;
     }
     
     // Store audio in story-specific directory structure
-    const localAudioUrl = await this.storeNarrationAudio(audioBuffer, storyId, segmentIndex, userId);
+    // Extract conversation style and narrator profile from parameters
+    const conversationStyle = 'respectful'; // Default for now, will be passed from UI
+    const narratorProfileName = narratorProfile?.language || 'neutral';
+    
+    const localAudioUrl = await this.storeNarrationAudio(
+      audioBuffer, 
+      storyId, 
+      segmentIndex, 
+      userId,
+      conversationStyle,
+      narratorProfileName
+    );
     
     return {
       audioUrl: localAudioUrl,
@@ -414,21 +427,29 @@ export class StoryNarrator {
   }
 
   /**
-   * Store narration audio buffer using new story audio directory structure
+   * Store narration audio buffer using multi-dimensional directory structure
    * Returns local URL for serving
    */
   private async storeNarrationAudio(
     buffer: Buffer, 
     storyId: number, 
     segmentIndex: number, 
-    userId: string
+    userId: string,
+    conversationStyle: string = 'respectful',
+    narratorProfile: string = 'neutral'
   ): Promise<string> {
     
     const fs = await import('fs/promises');
     const path = await import('path');
     
-    // Create directory structure: /stories/audio/private/{userId}/{storyId}/
-    const storyAudioDir = path.join('./stories/audio/private', userId, storyId.toString());
+    // Create multi-dimensional directory structure
+    const storyAudioDir = path.join(
+      './stories/audio/narrations', 
+      userId, 
+      storyId.toString(),
+      conversationStyle,
+      narratorProfile
+    );
     await fs.mkdir(storyAudioDir, { recursive: true });
     
     // Store segment file: segment-{index}.mp3
@@ -437,8 +458,8 @@ export class StoryNarrator {
     
     await fs.writeFile(filePath, buffer);
     
-    // Return URL for serving: /api/stories/audio/private/{userId}/{storyId}/segment-{index}.mp3
-    const publicUrl = `/api/stories/audio/private/${userId}/${storyId}/${fileName}`;
+    // Return URL for serving with full path
+    const publicUrl = `/api/stories/audio/narrations/${userId}/${storyId}/${conversationStyle}/${narratorProfile}/${fileName}`;
     
     console.log(`[StoryNarrator] Stored narration segment: ${filePath} (${buffer.length} bytes)`);
     
