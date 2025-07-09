@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, jsonb, varchar, index, doublePrecision, numeric } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, jsonb, varchar, index, doublePrecision, numeric, real } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -374,8 +374,26 @@ export const emotionTemplates = pgTable("emotion_templates", {
 export const userVoiceProfiles = pgTable("user_voice_profiles", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").references(() => users.id).notNull(),
-  profileName: varchar("profile_name", { length: 255 }).notNull(), // Required field that was missing
+  profileName: varchar("profile_name", { length: 255 }).notNull(), // e.g., "English_Adult_Native", "Spanish_Adult_NonNative"
   elevenLabsVoiceId: text("elevenlabs_voice_id"), // ElevenLabs voice ID, nullable
+  
+  // Language settings
+  language: varchar("language").notNull().default("en"), // Language this profile is for (en, es, fr, etc.)
+  
+  // Voice parameters based on user characteristics
+  pitch: varchar("pitch").notNull().default("0%"), // e.g., "+5%", "-3%"
+  rate: varchar("rate").notNull().default("85%"), // Speaking rate percentage
+  stability: real("stability").notNull().default(0.75), // 0-1
+  similarityBoost: real("similarity_boost").notNull().default(0.85), // 0-1
+  style: real("style").notNull().default(0.5), // 0-1
+  volume: varchar("volume").notNull().default("medium"), // soft, medium, loud
+  
+  // User characteristics that influenced the profile
+  userAge: integer("user_age"), // Age at time of profile creation
+  nativeLanguage: varchar("native_language"), // User's native language
+  isNativeSpeaker: boolean("is_native_speaker").notNull().default(false),
+  
+  // Training and status fields (existing)
   baseVoice: text("base_voice").notNull().default("alloy"), // Required base voice for training
   trainingStatus: varchar("training_status", { length: 50 }).notNull().default("pending"), // Fixed column name and default
   totalSamples: integer("total_samples").default(0), // Nullable with default
@@ -396,7 +414,10 @@ export const userVoiceProfiles = pgTable("user_voice_profiles", {
   lastTrainingError: text("last_training_error"),
   isReadyForNarration: boolean("is_ready_for_narration").default(false),
   lastTrainingAt: timestamp("last_training_at"),
-});
+}, (table) => [
+  index("idx_user_voice_profiles_user_language").on(table.userId, table.language),
+  index("idx_user_voice_profiles_active").on(table.userId, table.isActive),
+]);
 
 // Voice generation cache for performance
 export const voiceGenerationCache = pgTable("voice_generation_cache", {
