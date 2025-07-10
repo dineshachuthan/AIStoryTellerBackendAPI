@@ -20,6 +20,10 @@
     "insert": "(Doooom Dubbb)"
   },
   {
+    "pattern": "\\bchatter(ing|s|ed)?\\b",
+    "insert": "(chatter!)"
+  },
+  {
     "pattern": "fall|fallen|dropping",
     "insert": "(damal)"
   },
