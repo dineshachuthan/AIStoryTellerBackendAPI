@@ -21,6 +21,7 @@ export const useStory = (id: number, options?: UseQueryOptions<any, ApiError>) =
     queryKey: ['/api/stories', id],
     queryFn: () => apiClient.stories.get(id),
     enabled: !!id,
+    staleTime: 0, // Always fetch fresh data for individual story
     ...options
   });
 };

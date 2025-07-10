@@ -131,7 +131,8 @@ export class ApiClient {
     createNarrative: async (id: number) => {
       const result = await this.request<any>('POST', `/api/stories/${id}/narrative`);
       // Invalidate story cache after successful narrative analysis (may have updated title)
-      this.invalidateQueries([`/api/stories/${id}`, '/api/stories']);
+      queryClient.invalidateQueries({ queryKey: ['/api/stories', id] });
+      queryClient.invalidateQueries({ queryKey: ['/api/stories'] });
       return result;
     },
     // Roleplay analysis endpoints

@@ -5,10 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Clock, Users, Film, MapPin, Headphones } from "lucide-react";
+import { ArrowLeft, Clock, Users, Film, MapPin, Headphones, RefreshCw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
-import { apiRequest } from "@/lib/queryClient";
+// Removed direct apiRequest import - using apiClient instead
 import { AppTopNavigation } from "@/components/app-top-navigation";
 import { apiClient } from "@/lib/api-client";
 import { useStory } from "@/hooks/use-api";
@@ -330,9 +330,11 @@ export default function StoryAnalysis() {
   };
 
   // Fetch story data if storyId is provided
-  const { data: storyDataFromQuery, isLoading: storyLoading, error: storyError } = useStory(storyId ? parseInt(storyId) : undefined, {
+  const { data: storyDataFromQuery, isLoading: storyLoading, error: storyError, refetch: refetchStory } = useStory(storyId ? parseInt(storyId) : undefined, {
     enabled: !!storyId && !!user?.id,
   });
+  
+
   
   // Debug logging
   console.log('Story query state:', {
