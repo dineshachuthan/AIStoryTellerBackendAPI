@@ -59,9 +59,9 @@ interface SoundPattern {
 }
 
 export class VoiceOrchestrationService {
-  private configPath = path.join(process.cwd(), 'fullVoiceConfig.json');
-  private conversationStylePath = path.join(process.cwd(), 'conversationStyle.json');
-  private soundsPatternsPath = path.join(process.cwd(), 'soundsPattern.json');
+  private configPath = path.join(process.cwd(), 'config/data/fullVoiceConfig.json');
+  private conversationStylePath = path.join(process.cwd(), 'config/data/conversationStyle.json');
+  private soundsPatternsPath = path.join(process.cwd(), 'config/data/soundsPattern.json');
   private config: VoiceConfigData | null = null;
   private conversationStyles: Record<string, ConversationStyle> | null = null;
   private soundsPatterns: SoundPattern[] | null = null;

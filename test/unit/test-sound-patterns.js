@@ -22,7 +22,7 @@ async function testSoundPatternUpdate() {
   ];
   
   // Load existing patterns
-  const soundsPatternsPath = path.join(process.cwd(), 'soundsPattern.json');
+  const soundsPatternsPath = path.join(process.cwd(), 'config/data/soundsPattern.json');
   let existingPatterns = [];
   
   try {

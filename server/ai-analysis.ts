@@ -737,7 +737,7 @@ async function updateSoundPatterns(soundEffects: ExtractedSoundEffect[]): Promis
     console.log(`🔄 DEBUG updateSoundPatterns: Starting with ${soundEffects.length} sound effects`);
     console.log(`🔄 DEBUG updateSoundPatterns: Sound effects:`, soundEffects.map(se => se.sound));
     
-    const soundsPatternsPath = path.join(process.cwd(), 'soundsPattern.json');
+    const soundsPatternsPath = path.join(process.cwd(), 'config/data/soundsPattern.json');
     console.log(`🔄 DEBUG updateSoundPatterns: File path: ${soundsPatternsPath}`);
     
     // Load existing patterns
