@@ -91,6 +91,17 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - First answer the question, then ask if they want implementation changes
 - This prevents unwanted code modifications when user seeks understanding
 
+### Database-First Cache Architecture (CRITICAL)
+**ALL DATABASE WRITES MUST USE CACHE PROVIDER PATTERN WITH IMMEDIATE CACHE INVALIDATION**
+- **Database-First Rule**: Database write MUST complete before cache update
+- **Immediate Cache Invalidation**: After any database write, cache MUST be invalidated immediately
+- **No Direct Database Writes**: ALL database operations must go through cache provider pattern
+- **BaseCachedProvider Pattern**: External integrations use unified caching, retry, timeout, and error handling
+- **Cache Invalidation Service**: Handles WebSocket-based cache invalidation to frontend React Query
+- **Architecture Violation**: Direct storage.updateStory() calls bypass cache architecture - FORBIDDEN
+- **Frontend Cache Sync**: React Query cache automatically invalidated via WebSocket after database writes
+- **Zero Cache Bypass**: No database operations should bypass the cache provider architecture
+
 ### Mandatory Architectural Patterns (ALWAYS FOLLOW)
 - **BaseCachedProvider**: All external API integrations MUST use cached provider pattern
 - **UIMessages I18N**: All text MUST use internationalization system with proper template interpolation
