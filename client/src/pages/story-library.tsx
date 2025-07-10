@@ -35,7 +35,7 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
+import { toast, toastMessages } from "@/lib/toast-utils";
 import { AppTopNavigation } from "@/components/app-top-navigation";
 import { apiRequest } from "@/lib/queryClient";
 import { UIMessages, getDynamicMessage } from '@shared/config/i18n-config';

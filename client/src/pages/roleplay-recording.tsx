@@ -20,7 +20,7 @@ import {
   Eye,
   EyeOff
 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast, toastMessages } from "@/lib/toast-utils";
 import { apiRequest } from "@/lib/queryClient";
 
 interface DialogueSegment {
