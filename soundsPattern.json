@@ -1,7 +1,15 @@
 [
   {
+    "pattern": "\\b(explo(sion|de|ding)|blast(ing|ed|s)?|bomb|detonate)\\b",
+    "insert": "(Doooom Dubbb)"
+  },
+  {
     "pattern": "\\b(door|doors?)\\s+(slam(ming|s|med)?|bang(ing|s|ed)?)\\b",
     "insert": "(SLAM!)"
+  },
+  {
+    "pattern": "\\b(cry(ing)?|weep(ing)?|sob(bing|s|bed)?|tear(s)?)\\b",
+    "insert": "(ummmm ummmmm)"
   },
   {
     "pattern": "scary|haunted|dark|creepy",
