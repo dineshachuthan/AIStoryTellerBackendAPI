@@ -79,6 +79,9 @@ export const userProviders = pgTable("user_providers", {
 export const localUsers = pgTable("local_users", {
   userId: varchar("user_id").primaryKey().references(() => users.id),
   passwordHash: text("password_hash").notNull(),
+  passwordHint: varchar("password_hint", { length: 255 }),
+  failedLoginAttempts: integer("failed_login_attempts").default(0),
+  accountLockedUntil: timestamp("account_locked_until"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -1522,6 +1525,7 @@ export const storyInvitations = pgTable("story_invitations", {
   inviteeEmail: varchar("invitee_email"),
   inviteePhone: varchar("invitee_phone"),
   invitationToken: varchar("invitation_token").unique().notNull(),
+  conversationStyle: varchar("conversation_style").default("respectful"), // relationship context for narration
   status: varchar("status").default('pending').notNull(), // pending, accepted, completed
   message: text("message"), // Optional personalized message
   characterId: integer("character_id").references(() => storyCharacters.id), // Optional character assignment
@@ -1608,3 +1612,126 @@ export type InsertStandardVoiceSample = z.infer<typeof insertStandardVoiceSample
 
 export type ParticipantVoiceSample = typeof participantVoiceSamples.$inferSelect;
 export type InsertParticipantVoiceSample = z.infer<typeof insertParticipantVoiceSampleSchema>;
+
+// =============================================================================
+// AUTHENTICATION & USER TRACKING SCHEMAS
+// =============================================================================
+
+// User login history tracking
+export const userLoginHistory = pgTable("user_login_history", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id),
+  loginTimestamp: timestamp("login_timestamp").defaultNow(),
+  ipAddress: varchar("ip_address", { length: 45 }),
+  userAgent: text("user_agent"),
+  deviceInfo: jsonb("device_info"),
+  locationInfo: jsonb("location_info"),
+  loginMethod: varchar("login_method", { length: 50 }), // 'google', 'email', 'microsoft', 'facebook'
+  sessionId: varchar("session_id", { length: 255 }),
+  isSuccessful: boolean("is_successful").default(true),
+  failureReason: text("failure_reason"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_login_history_user").on(table.userId),
+  index("idx_login_history_session").on(table.sessionId),
+]);
+
+// User emotion tracking throughout session
+export const userEmotionTracking = pgTable("user_emotion_tracking", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id),
+  sessionId: varchar("session_id", { length: 255 }),
+  emotion: varchar("emotion", { length: 50 }).notNull().default("neutral"),
+  emotionConfidence: doublePrecision("emotion_confidence"), // 0.0 to 1.0
+  detectionMethod: varchar("detection_method", { length: 50 }), // 'manual', 'voice_analysis', 'text_sentiment'
+  context: varchar("context", { length: 100 }), // 'story_reading', 'voice_recording', 'invitation_viewing'
+  storyId: integer("story_id").references(() => stories.id),
+  metadata: jsonb("metadata"),
+  capturedAt: timestamp("captured_at").defaultNow(),
+}, (table) => [
+  index("idx_emotion_tracking_user_session").on(table.userId, table.sessionId),
+  index("idx_emotion_tracking_story").on(table.storyId),
+]);
+
+// User security questions for password recovery
+export const userSecurityQuestions = pgTable("user_security_questions", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id),
+  questionId: integer("question_id"),
+  answerHash: text("answer_hash").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_security_questions_user").on(table.userId),
+]);
+
+// Password reset tokens
+export const passwordResetTokens = pgTable("password_reset_tokens", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id),
+  token: varchar("token", { length: 255 }).unique().notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  isUsed: boolean("is_used").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_password_reset_token").on(table.token),
+  index("idx_password_reset_user").on(table.userId),
+]);
+
+// Two-factor authentication settings
+export const user2faSettings = pgTable("user_2fa_settings", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id).unique(),
+  method: varchar("method", { length: 50 }), // 'sms', 'email', 'authenticator'
+  isEnabled: boolean("is_enabled").default(false),
+  phoneNumber: varchar("phone_number", { length: 20 }),
+  authenticatorSecret: varchar("authenticator_secret", { length: 255 }),
+  backupCodes: text("backup_codes").array(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Insert schemas for authentication tables
+export const insertUserLoginHistorySchema = createInsertSchema(userLoginHistory).omit({
+  id: true,
+  loginTimestamp: true,
+  createdAt: true,
+});
+
+export const insertUserEmotionTrackingSchema = createInsertSchema(userEmotionTracking).omit({
+  id: true,
+  capturedAt: true,
+});
+
+export const insertUserSecurityQuestionSchema = createInsertSchema(userSecurityQuestions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertPasswordResetTokenSchema = createInsertSchema(passwordResetTokens).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertUser2faSettingsSchema = createInsertSchema(user2faSettings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Type exports for authentication tables
+export type UserLoginHistory = typeof userLoginHistory.$inferSelect;
+export type InsertUserLoginHistory = z.infer<typeof insertUserLoginHistorySchema>;
+
+export type UserEmotionTracking = typeof userEmotionTracking.$inferSelect;
+export type InsertUserEmotionTracking = z.infer<typeof insertUserEmotionTrackingSchema>;
+
+export type UserSecurityQuestion = typeof userSecurityQuestions.$inferSelect;
+export type InsertUserSecurityQuestion = z.infer<typeof insertUserSecurityQuestionSchema>;
+
+export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
+export type InsertPasswordResetToken = z.infer<typeof insertPasswordResetTokenSchema>;
+
+export type User2faSettings = typeof user2faSettings.$inferSelect;
+export type InsertUser2faSettings = z.infer<typeof insertUser2faSettingsSchema>;

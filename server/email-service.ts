@@ -1,5 +1,15 @@
 import { emailProviderRegistry } from './email-providers/email-provider-registry';
 import { EmailMessage } from './email-providers/email-provider-interface';
+import { 
+  passwordResetTemplate, 
+  verificationCodeTemplate, 
+  welcomeEmailTemplate, 
+  twoFactorCodeTemplate, 
+  roleplayInvitationTemplate,
+  interpolateTemplate 
+} from './email-templates/auth-email-templates';
+import { narrationInvitationTemplate } from './email-templates/narration-invitation.template';
+import { EmailTemplate } from './email-templates/types';
 
 // Initialize email provider registry
 const emailRegistry = emailProviderRegistry;
@@ -9,6 +19,21 @@ const emailProvider = emailRegistry.getActiveProvider();
 if (!emailProvider) {
   console.warn("Email provider not configured - missing API key or from email");
   console.warn("Configure either MAILGUN_API_KEY + MAILGUN_DOMAIN or SENDGRID_API_KEY");
+}
+
+/**
+ * Helper function to compile email template with data
+ */
+function compileEmailTemplate(template: EmailTemplate, data: Record<string, any>) {
+  const compiledSubject = interpolateTemplate(template.subject, data);
+  const compiledHtml = interpolateTemplate(template.html, data);
+  const compiledText = interpolateTemplate(template.text, data);
+  
+  return {
+    subject: compiledSubject,
+    html: compiledHtml,
+    text: compiledText
+  };
 }
 
 export interface InvitationEmailData {
@@ -28,69 +53,22 @@ export async function sendRoleplayInvitation(data: InvitationEmailData): Promise
   }
   
   try {
-    const htmlContent = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <h2 style="color: #333; text-align: center;">You're Invited to a Roleplay!</h2>
-        
-        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
-          <p style="font-size: 16px; margin-bottom: 15px;">
-            Hi ${data.recipientName || 'there'}!
-          </p>
-          
-          <p style="font-size: 16px; margin-bottom: 15px;">
-            <strong>${data.senderName}</strong> has invited you to participate in a collaborative roleplay story!
-          </p>
-          
-          <div style="background-color: white; padding: 15px; border-radius: 5px; margin: 15px 0;">
-            <p style="margin: 0;"><strong>Story:</strong> ${data.storyTitle}</p>
-            <p style="margin: 10px 0 0 0;"><strong>Your Character:</strong> ${data.characterName}</p>
-          </div>
-          
-          <p style="font-size: 16px; margin-bottom: 20px;">
-            Click the button below to join the roleplay and record your character's voice for the story!
-          </p>
-          
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${data.invitationLink}" 
-               style="background-color: #007bff; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-size: 16px; font-weight: bold;">
-              Join Roleplay as ${data.characterName}
-            </a>
-          </div>
-          
-          <p style="font-size: 14px; color: #666; margin-top: 20px;">
-            If the button doesn't work, copy and paste this link into your browser:<br>
-            <a href="${data.invitationLink}">${data.invitationLink}</a>
-          </p>
-        </div>
-        
-        <div style="text-align: center; font-size: 12px; color: #888; margin-top: 30px;">
-          <p>This is an automated invitation from our storytelling platform.</p>
-        </div>
-      </div>
-    `;
-
-    const textContent = `
-You're Invited to a Roleplay!
-
-Hi ${data.recipientName || 'there'}!
-
-${data.senderName} has invited you to participate in a collaborative roleplay story!
-
-Story: ${data.storyTitle}
-Your Character: ${data.characterName}
-
-Click this link to join the roleplay and record your character's voice:
-${data.invitationLink}
-
-Thank you for participating in our storytelling community!
-    `;
+    const templateData = {
+      recipientName: data.recipientName || 'there',
+      senderName: data.senderName,
+      storyTitle: data.storyTitle,
+      characterName: data.characterName,
+      invitationLink: data.invitationLink
+    };
+    
+    const compiled = compileEmailTemplate(roleplayInvitationTemplate, templateData);
 
     const emailMessage: EmailMessage = {
       to: data.recipientEmail,
       from: emailProvider.config.fromEmail || 'noreply@example.com',
-      subject: `Roleplay Invitation: Play ${data.characterName} in "${data.storyTitle}"`,
-      text: textContent,
-      html: htmlContent,
+      subject: compiled.subject,
+      text: compiled.text,
+      html: compiled.html,
     };
 
     const result = await emailProvider.sendEmail(emailMessage);
@@ -129,6 +107,201 @@ export async function sendSMSInvitation(phoneNumber: string, data: Omit<Invitati
     }
   } catch (error) {
     console.error('SMS service error:', error);
+    return false;
+  }
+}
+
+// Authentication Email Interfaces
+export interface PasswordResetEmailData {
+  recipientEmail: string;
+  recipientName?: string;
+  resetLink: string;
+  passwordHint?: string;
+}
+
+export interface VerificationCodeEmailData {
+  recipientEmail: string;
+  recipientName?: string;
+  verificationCode: string;
+  expiryMinutes?: number;
+}
+
+export interface WelcomeEmailData {
+  recipientEmail: string;
+  recipientName?: string;
+  loginLink?: string;
+}
+
+export interface TwoFactorEmailData {
+  recipientEmail: string;
+  recipientName?: string;
+  code: string;
+  expiryMinutes?: number;
+}
+
+/**
+ * Send password reset email
+ */
+export async function sendPasswordResetEmail(data: PasswordResetEmailData): Promise<boolean> {
+  const emailProvider = emailRegistry.getActiveProvider();
+  if (!emailProvider) {
+    console.log(`Password reset email to ${data.recipientEmail} - No email provider configured`);
+    return false;
+  }
+
+  try {
+    const templateData = {
+      recipientName: data.recipientName || 'there',
+      resetLink: data.resetLink,
+      passwordHint: data.passwordHint || ''
+    };
+    
+    const compiled = compileEmailTemplate(passwordResetTemplate, templateData);
+
+    const emailMessage: EmailMessage = {
+      to: data.recipientEmail,
+      from: emailProvider.config.fromEmail || 'noreply@example.com',
+      subject: compiled.subject,
+      text: compiled.text,
+      html: compiled.html,
+    };
+
+    const result = await emailProvider.sendEmail(emailMessage);
+    
+    if (result.success) {
+      console.log(`Password reset email sent to ${data.recipientEmail}`);
+      return true;
+    } else {
+      console.error('Password reset email error:', result.error);
+      return false;
+    }
+  } catch (error) {
+    console.error('Email service error:', error);
+    return false;
+  }
+}
+
+/**
+ * Send verification code email for account verification
+ */
+export async function sendVerificationCodeEmail(data: VerificationCodeEmailData): Promise<boolean> {
+  const emailProvider = emailRegistry.getActiveProvider();
+  if (!emailProvider) {
+    console.log(`Verification email to ${data.recipientEmail} - No email provider configured`);
+    return false;
+  }
+
+  try {
+    const templateData = {
+      recipientName: data.recipientName || 'there',
+      verificationCode: data.verificationCode,
+      expiryMinutes: data.expiryMinutes || 30
+    };
+    
+    const compiled = compileEmailTemplate(verificationCodeTemplate, templateData);
+
+    const emailMessage: EmailMessage = {
+      to: data.recipientEmail,
+      from: emailProvider.config.fromEmail || 'noreply@example.com',
+      subject: compiled.subject,
+      text: compiled.text,
+      html: compiled.html,
+    };
+
+    const result = await emailProvider.sendEmail(emailMessage);
+    
+    if (result.success) {
+      console.log(`Verification code email sent to ${data.recipientEmail}`);
+      return true;
+    } else {
+      console.error('Verification email error:', result.error);
+      return false;
+    }
+  } catch (error) {
+    console.error('Email service error:', error);
+    return false;
+  }
+}
+
+/**
+ * Send welcome email after successful registration
+ */
+export async function sendWelcomeEmail(data: WelcomeEmailData): Promise<boolean> {
+  const emailProvider = emailRegistry.getActiveProvider();
+  if (!emailProvider) {
+    console.log(`Welcome email to ${data.recipientEmail} - No email provider configured`);
+    return false;
+  }
+
+  try {
+    const templateData = {
+      recipientName: data.recipientName || 'there',
+      loginLink: data.loginLink || ''
+    };
+    
+    const compiled = compileEmailTemplate(welcomeEmailTemplate, templateData);
+
+    const emailMessage: EmailMessage = {
+      to: data.recipientEmail,
+      from: emailProvider.config.fromEmail || 'noreply@example.com',
+      subject: compiled.subject,
+      text: compiled.text,
+      html: compiled.html,
+    };
+
+    const result = await emailProvider.sendEmail(emailMessage);
+    
+    if (result.success) {
+      console.log(`Welcome email sent to ${data.recipientEmail}`);
+      return true;
+    } else {
+      console.error('Welcome email error:', result.error);
+      return false;
+    }
+  } catch (error) {
+    console.error('Email service error:', error);
+    return false;
+  }
+}
+
+/**
+ * Send two-factor authentication code email
+ */
+export async function sendTwoFactorCodeEmail(data: TwoFactorEmailData): Promise<boolean> {
+  const emailProvider = emailRegistry.getActiveProvider();
+  if (!emailProvider) {
+    console.log(`2FA email to ${data.recipientEmail} - No email provider configured`);
+    return false;
+  }
+
+  try {
+    const templateData = {
+      recipientName: data.recipientName || 'there',
+      code: data.code,
+      expiryMinutes: data.expiryMinutes || 10
+    };
+    
+    const compiled = compileEmailTemplate(twoFactorCodeTemplate, templateData);
+
+    const emailMessage: EmailMessage = {
+      to: data.recipientEmail,
+      from: emailProvider.config.fromEmail || 'noreply@example.com',
+      subject: compiled.subject,
+      text: compiled.text,
+      html: compiled.html,
+    };
+
+    const result = await emailProvider.sendEmail(emailMessage);
+    
+    if (result.success) {
+      console.log(`2FA code email sent to ${data.recipientEmail}`);
+      return true;
+    } else {
+      console.error('2FA email error:', result.error);
+      return false;
+    }
+  } catch (error) {
+    console.error('Email service error:', error);
     return false;
   }
 }

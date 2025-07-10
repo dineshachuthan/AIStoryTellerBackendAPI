@@ -85,11 +85,42 @@ export class ApiClient {
     login: (credentials: { email: string; password: string }) => 
       this.request<any>('POST', '/api/auth/login', credentials),
     logout: () => this.request<void>('POST', '/api/auth/logout'),
-    register: (data: { email: string; password: string; name?: string }) =>
+    register: (data: { email: string; password: string; name?: string; passwordHint?: string }) =>
       this.request<any>('POST', '/api/auth/register', data),
     updateProfile: (data: any) => this.request<any>('PATCH', '/api/auth/profile', data),
     updateLanguage: (language: string) => 
       this.request<any>('PUT', '/api/auth/user/language', { language }),
+    // Password recovery
+    checkEmail: (email: string) => 
+      this.request<{ exists: boolean }>('GET', `/api/auth/check-email?email=${encodeURIComponent(email)}`),
+    forgotPassword: (email: string) => 
+      this.request<void>('POST', '/api/auth/forgot-password', { email }),
+    resetPassword: (data: { token: string; password: string }) =>
+      this.request<void>('POST', '/api/auth/reset-password', data),
+    getSecurityQuestions: () =>
+      this.request<any[]>('GET', '/api/auth/security-questions'),
+    verifySecurityAnswers: (data: { questionId: number; answer: string }[]) =>
+      this.request<{ token: string }>('POST', '/api/auth/verify-security', { answers: data }),
+    updatePasswordHint: (hint: string) =>
+      this.request<void>('POST', '/api/auth/update-password-hint', { hint }),
+    // Email verification
+    verifyEmail: (token: string) =>
+      this.request<void>('POST', '/api/auth/verify-email', { token }),
+    resendVerification: (email: string) =>
+      this.request<void>('POST', '/api/auth/resend-verification', { email }),
+    // 2FA
+    setup2FA: (method: 'sms' | 'email' | 'authenticator') =>
+      this.request<any>('POST', '/api/auth/2fa/setup', { method }),
+    verify2FA: (code: string) =>
+      this.request<void>('POST', '/api/auth/2fa/verify', { code }),
+    disable2FA: () =>
+      this.request<void>('POST', '/api/auth/2fa/disable'),
+    getBackupCodes: () =>
+      this.request<{ codes: string[] }>('GET', '/api/auth/2fa/backup-codes'),
+    regenerateBackupCodes: () =>
+      this.request<{ codes: string[] }>('POST', '/api/auth/2fa/regenerate'),
+    send2FACode: () =>
+      this.request<void>('POST', '/api/auth/2fa/send-code'),
   };
   
   // Story endpoints
@@ -234,6 +265,12 @@ export class ApiClient {
   user = {
     getNarratorProfile: () => this.request<any>('GET', '/api/user/narrator-profile'),
     saveNarratorProfile: (profile: any) => this.request<any>('POST', '/api/user/narrator-profile', profile),
+    // User emotion tracking
+    getCurrentEmotion: () => this.request<{ emotion: string; detectionMethod: string }>('GET', '/api/user/current-emotion'),
+    updateEmotion: (emotion: string, context?: string) => 
+      this.request<void>('POST', '/api/user/update-emotion', { emotion, context }),
+    getEmotionHistory: () => this.request<any[]>('GET', '/api/user/emotion-history'),
+    getLoginHistory: () => this.request<any[]>('GET', '/api/user/login-history'),
   };
 
   // Invitations endpoints

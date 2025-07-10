@@ -417,6 +417,634 @@ export const MESSAGES = {
     }
   },
 
+  // Authentication Pages
+  auth: {
+    login: {
+      title: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Login',
+          es: 'Iniciar Sesión',
+          fr: 'Connexion',
+          de: 'Anmelden',
+          ja: 'ログイン',
+          zh: '登录',
+          ko: '로그인'
+        }
+      },
+      description: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Sign in to your account',
+          es: 'Inicia sesión en tu cuenta',
+          fr: 'Connectez-vous à votre compte',
+          de: 'Melden Sie sich bei Ihrem Konto an',
+          ja: 'アカウントにサインイン',
+          zh: '登录您的账户',
+          ko: '계정에 로그인'
+        }
+      },
+      email: {
+        label: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Email',
+            es: 'Correo Electrónico',
+            fr: 'Email',
+            de: 'E-Mail',
+            ja: 'メールアドレス',
+            zh: '电子邮件',
+            ko: '이메일'
+          }
+        },
+        placeholder: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Enter your email',
+            es: 'Ingresa tu correo electrónico',
+            fr: 'Entrez votre email',
+            de: 'Geben Sie Ihre E-Mail ein',
+            ja: 'メールアドレスを入力',
+            zh: '输入您的电子邮件',
+            ko: '이메일을 입력하세요'
+          }
+        }
+      },
+      password: {
+        label: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Password',
+            es: 'Contraseña',
+            fr: 'Mot de passe',
+            de: 'Passwort',
+            ja: 'パスワード',
+            zh: '密码',
+            ko: '비밀번호'
+          }
+        },
+        placeholder: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Enter your password',
+            es: 'Ingresa tu contraseña',
+            fr: 'Entrez votre mot de passe',
+            de: 'Geben Sie Ihr Passwort ein',
+            ja: 'パスワードを入力',
+            zh: '输入您的密码',
+            ko: '비밀번호를 입력하세요'
+          }
+        }
+      },
+      rememberMe: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Remember me',
+          es: 'Recuérdame',
+          fr: 'Se souvenir de moi',
+          de: 'Angemeldet bleiben',
+          ja: 'ログイン状態を保持',
+          zh: '记住我',
+          ko: '로그인 상태 유지'
+        }
+      },
+      forgotPassword: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Forgot password?',
+          es: '¿Olvidaste tu contraseña?',
+          fr: 'Mot de passe oublié?',
+          de: 'Passwort vergessen?',
+          ja: 'パスワードをお忘れですか？',
+          zh: '忘记密码？',
+          ko: '비밀번호를 잊으셨나요?'
+        }
+      },
+      submit: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Sign In',
+          es: 'Iniciar Sesión',
+          fr: 'Se Connecter',
+          de: 'Anmelden',
+          ja: 'サインイン',
+          zh: '登录',
+          ko: '로그인'
+        }
+      },
+      orContinueWith: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Or continue with',
+          es: 'O continúa con',
+          fr: 'Ou continuer avec',
+          de: 'Oder fortfahren mit',
+          ja: 'または以下で続ける',
+          zh: '或继续使用',
+          ko: '또는 다음으로 계속'
+        }
+      },
+      continueWithGoogle: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Continue with Google',
+          es: 'Continuar con Google',
+          fr: 'Continuer avec Google',
+          de: 'Mit Google fortfahren',
+          ja: 'Googleで続ける',
+          zh: '使用Google继续',
+          ko: 'Google로 계속'
+        }
+      }
+    },
+    register: {
+      title: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Register',
+          es: 'Registrarse',
+          fr: 'S\'inscrire',
+          de: 'Registrieren',
+          ja: '登録',
+          zh: '注册',
+          ko: '회원가입'
+        }
+      },
+      description: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Create a new account',
+          es: 'Crear una nueva cuenta',
+          fr: 'Créer un nouveau compte',
+          de: 'Neues Konto erstellen',
+          ja: '新しいアカウントを作成',
+          zh: '创建新账户',
+          ko: '새 계정 만들기'
+        }
+      },
+      email: {
+        label: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Email',
+            es: 'Correo Electrónico',
+            fr: 'Email',
+            de: 'E-Mail',
+            ja: 'メールアドレス',
+            zh: '电子邮件',
+            ko: '이메일'
+          }
+        },
+        placeholder: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Enter your email',
+            es: 'Ingresa tu correo electrónico',
+            fr: 'Entrez votre email',
+            de: 'Geben Sie Ihre E-Mail ein',
+            ja: 'メールアドレスを入力',
+            zh: '输入您的电子邮件',
+            ko: '이메일을 입력하세요'
+          }
+        }
+      },
+      password: {
+        label: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Password',
+            es: 'Contraseña',
+            fr: 'Mot de passe',
+            de: 'Passwort',
+            ja: 'パスワード',
+            zh: '密码',
+            ko: '비밀번호'
+          }
+        },
+        placeholder: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Enter a password',
+            es: 'Ingresa una contraseña',
+            fr: 'Entrez un mot de passe',
+            de: 'Geben Sie ein Passwort ein',
+            ja: 'パスワードを入力',
+            zh: '输入密码',
+            ko: '비밀번호를 입력하세요'
+          }
+        }
+      },
+      confirmPassword: {
+        label: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Confirm Password',
+            es: 'Confirmar Contraseña',
+            fr: 'Confirmer le Mot de Passe',
+            de: 'Passwort Bestätigen',
+            ja: 'パスワードを確認',
+            zh: '确认密码',
+            ko: '비밀번호 확인'
+          }
+        },
+        placeholder: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Re-enter your password',
+            es: 'Vuelve a ingresar tu contraseña',
+            fr: 'Ressaisissez votre mot de passe',
+            de: 'Geben Sie Ihr Passwort erneut ein',
+            ja: 'パスワードを再入力',
+            zh: '再次输入密码',
+            ko: '비밀번호를 다시 입력하세요'
+          }
+        }
+      },
+      passwordHint: {
+        label: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Password Hint (Optional)',
+            es: 'Pista de Contraseña (Opcional)',
+            fr: 'Indice de Mot de Passe (Optionnel)',
+            de: 'Passwort-Hinweis (Optional)',
+            ja: 'パスワードヒント（任意）',
+            zh: '密码提示（可选）',
+            ko: '비밀번호 힌트 (선택사항)'
+          }
+        },
+        placeholder: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Enter a hint to help you remember',
+            es: 'Ingresa una pista para ayudarte a recordar',
+            fr: 'Entrez un indice pour vous aider à vous souvenir',
+            de: 'Geben Sie einen Hinweis ein, der Ihnen hilft, sich zu erinnern',
+            ja: '思い出しやすいヒントを入力',
+            zh: '输入一个提示来帮助您记住',
+            ko: '기억하는데 도움이 될 힌트를 입력하세요'
+          }
+        },
+        description: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'This hint will be visible if you forget your password',
+            es: 'Esta pista será visible si olvidas tu contraseña',
+            fr: 'Cet indice sera visible si vous oubliez votre mot de passe',
+            de: 'Dieser Hinweis wird sichtbar sein, wenn Sie Ihr Passwort vergessen',
+            ja: 'パスワードを忘れた場合、このヒントが表示されます',
+            zh: '如果您忘记密码，此提示将可见',
+            ko: '비밀번호를 잊으셨을 때 이 힌트가 표시됩니다'
+          }
+        }
+      },
+      acceptTerms: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'I accept the',
+          es: 'Acepto los',
+          fr: 'J\'accepte les',
+          de: 'Ich akzeptiere die',
+          ja: '同意します',
+          zh: '我接受',
+          ko: '동의합니다'
+        }
+      },
+      termsLink: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Terms and Conditions',
+          es: 'Términos y Condiciones',
+          fr: 'Termes et Conditions',
+          de: 'Geschäftsbedingungen',
+          ja: '利用規約',
+          zh: '条款和条件',
+          ko: '이용약관'
+        }
+      },
+      termsRequired: {
+        type: 'error' as MessageType,
+        severity: 'medium' as MessageSeverity,
+        templates: {
+          en: 'You must accept the terms to continue',
+          es: 'Debes aceptar los términos para continuar',
+          fr: 'Vous devez accepter les conditions pour continuer',
+          de: 'Sie müssen die Bedingungen akzeptieren, um fortzufahren',
+          ja: '続行するには規約に同意する必要があります',
+          zh: '您必须接受条款才能继续',
+          ko: '계속하려면 약관에 동의해야 합니다'
+        }
+      },
+      submit: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Create Account',
+          es: 'Crear Cuenta',
+          fr: 'Créer un Compte',
+          de: 'Konto Erstellen',
+          ja: 'アカウントを作成',
+          zh: '创建账户',
+          ko: '계정 만들기'
+        }
+      },
+      passwordMismatch: {
+        type: 'error' as MessageType,
+        severity: 'medium' as MessageSeverity,
+        templates: {
+          en: 'Passwords do not match',
+          es: 'Las contraseñas no coinciden',
+          fr: 'Les mots de passe ne correspondent pas',
+          de: 'Passwörter stimmen nicht überein',
+          ja: 'パスワードが一致しません',
+          zh: '密码不匹配',
+          ko: '비밀번호가 일치하지 않습니다'
+        }
+      },
+      passwordStrength: {
+        weak: {
+          type: 'warning' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Weak password',
+            es: 'Contraseña débil',
+            fr: 'Mot de passe faible',
+            de: 'Schwaches Passwort',
+            ja: '弱いパスワード',
+            zh: '密码强度弱',
+            ko: '약한 비밀번호'
+          }
+        },
+        medium: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Medium strength',
+            es: 'Fuerza media',
+            fr: 'Force moyenne',
+            de: 'Mittlere Stärke',
+            ja: '中程度の強度',
+            zh: '中等强度',
+            ko: '보통 강도'
+          }
+        },
+        strong: {
+          type: 'success' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Strong password',
+            es: 'Contraseña fuerte',
+            fr: 'Mot de passe fort',
+            de: 'Starkes Passwort',
+            ja: '強いパスワード',
+            zh: '密码强度高',
+            ko: '강한 비밀번호'
+          }
+        }
+      }
+    },
+    password: {
+      requirements: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: '8-12 characters with uppercase, numbers, and special characters',
+          es: '8-12 caracteres con mayúsculas, números y caracteres especiales',
+          fr: '8-12 caractères avec majuscules, chiffres et caractères spéciaux',
+          de: '8-12 Zeichen mit Großbuchstaben, Zahlen und Sonderzeichen',
+          ja: '8〜12文字で、大文字、数字、特殊文字を含む',
+          zh: '8-12个字符，包含大写字母、数字和特殊字符',
+          ko: '대문자, 숫자, 특수문자를 포함한 8-12자'
+        }
+      }
+    },
+    forgotPassword: {
+      title: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Forgot Password',
+          es: 'Contraseña Olvidada',
+          fr: 'Mot de Passe Oublié',
+          de: 'Passwort Vergessen',
+          ja: 'パスワードを忘れた',
+          zh: '忘记密码',
+          ko: '비밀번호 찾기'
+        }
+      },
+      description: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Enter your email and we\'ll send you a reset link',
+          es: 'Ingresa tu correo y te enviaremos un enlace para restablecer',
+          fr: 'Entrez votre email et nous vous enverrons un lien de réinitialisation',
+          de: 'Geben Sie Ihre E-Mail ein und wir senden Ihnen einen Reset-Link',
+          ja: 'メールアドレスを入力すると、リセットリンクをお送りします',
+          zh: '输入您的电子邮件，我们将向您发送重置链接',
+          ko: '이메일을 입력하시면 재설정 링크를 보내드립니다'
+        }
+      },
+      submit: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Send Reset Link',
+          es: 'Enviar Enlace',
+          fr: 'Envoyer le Lien',
+          de: 'Link Senden',
+          ja: 'リンクを送信',
+          zh: '发送链接',
+          ko: '링크 전송'
+        }
+      }
+    },
+    twoFactor: {
+      title: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Two-Factor Authentication',
+          es: 'Autenticación de Dos Factores',
+          fr: 'Authentification à Deux Facteurs',
+          de: 'Zwei-Faktor-Authentifizierung',
+          ja: '二要素認証',
+          zh: '双因素认证',
+          ko: '2단계 인증'
+        }
+      },
+      enterCode: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Enter the verification code',
+          es: 'Ingresa el código de verificación',
+          fr: 'Entrez le code de vérification',
+          de: 'Geben Sie den Verifizierungscode ein',
+          ja: '確認コードを入力',
+          zh: '输入验证码',
+          ko: '인증 코드를 입력하세요'
+        }
+      },
+      codePlaceholder: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: '6-digit code',
+          es: 'Código de 6 dígitos',
+          fr: 'Code à 6 chiffres',
+          de: '6-stelliger Code',
+          ja: '6桁のコード',
+          zh: '6位数字代码',
+          ko: '6자리 코드'
+        }
+      },
+      submit: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Verify',
+          es: 'Verificar',
+          fr: 'Vérifier',
+          de: 'Verifizieren',
+          ja: '確認',
+          zh: '验证',
+          ko: '확인'
+        }
+      }
+    },
+    common: {
+      emailInvalid: {
+        type: 'error' as MessageType,
+        severity: 'medium' as MessageSeverity,
+        templates: {
+          en: 'Please enter a valid email address',
+          es: 'Por favor ingresa un correo electrónico válido',
+          fr: 'Veuillez entrer une adresse email valide',
+          de: 'Bitte geben Sie eine gültige E-Mail-Adresse ein',
+          ja: '有効なメールアドレスを入力してください',
+          zh: '请输入有效的电子邮件地址',
+          ko: '유효한 이메일 주소를 입력하세요'
+        }
+      },
+      emailRequired: {
+        type: 'error' as MessageType,
+        severity: 'medium' as MessageSeverity,
+        templates: {
+          en: 'Email is required',
+          es: 'El correo electrónico es obligatorio',
+          fr: 'L\'email est requis',
+          de: 'E-Mail ist erforderlich',
+          ja: 'メールアドレスは必須です',
+          zh: '电子邮件是必填项',
+          ko: '이메일은 필수입니다'
+        }
+      },
+      passwordRequired: {
+        type: 'error' as MessageType,
+        severity: 'medium' as MessageSeverity,
+        templates: {
+          en: 'Password is required',
+          es: 'La contraseña es obligatoria',
+          fr: 'Le mot de passe est requis',
+          de: 'Passwort ist erforderlich',
+          ja: 'パスワードは必須です',
+          zh: '密码是必填项',
+          ko: '비밀번호는 필수입니다'
+        }
+      },
+      alreadyHaveAccount: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Already have an account?',
+          es: '¿Ya tienes una cuenta?',
+          fr: 'Vous avez déjà un compte?',
+          de: 'Haben Sie bereits ein Konto?',
+          ja: 'すでにアカウントをお持ちですか？',
+          zh: '已经有账户了？',
+          ko: '이미 계정이 있으신가요?'
+        }
+      },
+      dontHaveAccount: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Don\'t have an account?',
+          es: '¿No tienes una cuenta?',
+          fr: 'Vous n\'avez pas de compte?',
+          de: 'Haben Sie noch kein Konto?',
+          ja: 'アカウントをお持ちでないですか？',
+          zh: '没有账户？',
+          ko: '계정이 없으신가요?'
+        }
+      },
+      signInLink: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Sign in',
+          es: 'Iniciar sesión',
+          fr: 'Se connecter',
+          de: 'Anmelden',
+          ja: 'サインイン',
+          zh: '登录',
+          ko: '로그인'
+        }
+      },
+      signUpLink: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Sign up',
+          es: 'Registrarse',
+          fr: 'S\'inscrire',
+          de: 'Registrieren',
+          ja: '登録',
+          zh: '注册',
+          ko: '회원가입'
+        }
+      },
+      backToLogin: {
+        type: 'info' as MessageType,
+        severity: 'low' as MessageSeverity,
+        templates: {
+          en: 'Back to login',
+          es: 'Volver a iniciar sesión',
+          fr: 'Retour à la connexion',
+          de: 'Zurück zur Anmeldung',
+          ja: 'ログインに戻る',
+          zh: '返回登录',
+          ko: '로그인으로 돌아가기'
+        }
+      }
+    }
+  },
+
   // Upload Story Page  
   upload_story: {
     title: {
@@ -1552,6 +2180,149 @@ export const MESSAGES = {
             ja: 'アクセスが拒否されました',
             zh: '权限被拒绝',
             ko: '권한이 거부되었습니다'
+          }
+        },
+        login_success: {
+          type: 'success' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Login successful',
+            es: 'Inicio de sesión exitoso',
+            fr: 'Connexion réussie',
+            de: 'Anmeldung erfolgreich',
+            ja: 'ログイン成功',
+            zh: '登录成功',
+            ko: '로그인 성공'
+          }
+        },
+        login_failed: {
+          type: 'error' as MessageType,
+          severity: 'high' as MessageSeverity,
+          templates: {
+            en: 'Login failed. Please check your credentials',
+            es: 'Error al iniciar sesión. Verifica tus credenciales',
+            fr: 'Échec de connexion. Vérifiez vos identifiants',
+            de: 'Anmeldung fehlgeschlagen. Bitte überprüfen Sie Ihre Anmeldedaten',
+            ja: 'ログインに失敗しました。認証情報を確認してください',
+            zh: '登录失败。请检查您的凭据',
+            ko: '로그인 실패. 자격 증명을 확인하세요'
+          }
+        },
+        register_success: {
+          type: 'success' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Registration successful. Welcome!',
+            es: 'Registro exitoso. ¡Bienvenido!',
+            fr: 'Inscription réussie. Bienvenue!',
+            de: 'Registrierung erfolgreich. Willkommen!',
+            ja: '登録成功。ようこそ！',
+            zh: '注册成功。欢迎！',
+            ko: '등록 성공. 환영합니다!'
+          }
+        },
+        register_failed: {
+          type: 'error' as MessageType,
+          severity: 'high' as MessageSeverity,
+          templates: {
+            en: 'Registration failed. Please try again',
+            es: 'Registro fallido. Por favor intenta de nuevo',
+            fr: 'Échec de l\'inscription. Veuillez réessayer',
+            de: 'Registrierung fehlgeschlagen. Bitte versuchen Sie es erneut',
+            ja: '登録に失敗しました。もう一度お試しください',
+            zh: '注册失败。请重试',
+            ko: '등록 실패. 다시 시도해주세요'
+          }
+        },
+        email_already_exists: {
+          type: 'error' as MessageType,
+          severity: 'medium' as MessageSeverity,
+          templates: {
+            en: 'Email already exists',
+            es: 'El correo electrónico ya existe',
+            fr: 'Cet email existe déjà',
+            de: 'E-Mail existiert bereits',
+            ja: 'メールアドレスは既に存在します',
+            zh: '电子邮件已存在',
+            ko: '이메일이 이미 존재합니다'
+          }
+        },
+        password_reset_sent: {
+          type: 'success' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Password reset link sent to your email',
+            es: 'Enlace de restablecimiento enviado a tu correo',
+            fr: 'Lien de réinitialisation envoyé à votre email',
+            de: 'Passwort-Reset-Link wurde an Ihre E-Mail gesendet',
+            ja: 'パスワードリセットリンクをメールに送信しました',
+            zh: '密码重置链接已发送到您的邮箱',
+            ko: '비밀번호 재설정 링크가 이메일로 전송되었습니다'
+          }
+        },
+        password_reset_failed: {
+          type: 'error' as MessageType,
+          severity: 'high' as MessageSeverity,
+          templates: {
+            en: 'Failed to send password reset email',
+            es: 'Error al enviar el correo de restablecimiento',
+            fr: 'Échec de l\'envoi de l\'email de réinitialisation',
+            de: 'Fehler beim Senden der Passwort-Reset-E-Mail',
+            ja: 'パスワードリセットメールの送信に失敗しました',
+            zh: '发送密码重置邮件失败',
+            ko: '비밀번호 재설정 이메일 전송 실패'
+          }
+        },
+        verification_code_sent: {
+          type: 'success' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Verification code sent',
+            es: 'Código de verificación enviado',
+            fr: 'Code de vérification envoyé',
+            de: 'Verifizierungscode gesendet',
+            ja: '確認コードを送信しました',
+            zh: '验证码已发送',
+            ko: '인증 코드가 전송되었습니다'
+          }
+        },
+        verification_failed: {
+          type: 'error' as MessageType,
+          severity: 'high' as MessageSeverity,
+          templates: {
+            en: 'Verification failed. Invalid code',
+            es: 'Verificación fallida. Código inválido',
+            fr: 'Échec de la vérification. Code invalide',
+            de: 'Verifizierung fehlgeschlagen. Ungültiger Code',
+            ja: '確認に失敗しました。無効なコードです',
+            zh: '验证失败。无效的代码',
+            ko: '인증 실패. 잘못된 코드입니다'
+          }
+        },
+        logout_success: {
+          type: 'success' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Successfully logged out',
+            es: 'Sesión cerrada exitosamente',
+            fr: 'Déconnexion réussie',
+            de: 'Erfolgreich abgemeldet',
+            ja: 'ログアウトしました',
+            zh: '成功退出登录',
+            ko: '성공적으로 로그아웃되었습니다'
+          }
+        },
+        session_expired: {
+          type: 'warning' as MessageType,
+          severity: 'medium' as MessageSeverity,
+          templates: {
+            en: 'Your session has expired. Please login again',
+            es: 'Tu sesión ha expirado. Por favor inicia sesión nuevamente',
+            fr: 'Votre session a expiré. Veuillez vous reconnecter',
+            de: 'Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an',
+            ja: 'セッションの有効期限が切れました。再度ログインしてください',
+            zh: '您的会话已过期。请重新登录',
+            ko: '세션이 만료되었습니다. 다시 로그인해주세요'
           }
         }
       },
