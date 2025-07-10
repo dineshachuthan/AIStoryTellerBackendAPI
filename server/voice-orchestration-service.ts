@@ -53,11 +53,18 @@ interface NarratorProfile {
   };
 }
 
+interface SoundPattern {
+  pattern: string;
+  insert: string;
+}
+
 export class VoiceOrchestrationService {
   private configPath = path.join(process.cwd(), 'fullVoiceConfig.json');
   private conversationStylePath = path.join(process.cwd(), 'conversationStyle.json');
+  private soundsPatternsPath = path.join(process.cwd(), 'soundsPattern.json');
   private config: VoiceConfigData | null = null;
   private conversationStyles: Record<string, ConversationStyle> | null = null;
+  private soundsPatterns: SoundPattern[] | null = null;
   private configLastLoaded: number = 0;
   private CONFIG_RELOAD_INTERVAL = 60000; // Reload config every minute
 
@@ -91,6 +98,22 @@ export class VoiceOrchestrationService {
       }
     }
     return this.config!;
+  }
+
+  /**
+   * Get or load sound patterns configuration
+   */
+  private async getSoundPatterns(): Promise<SoundPattern[]> {
+    if (!this.soundsPatterns) {
+      try {
+        const patternsContent = await fs.readFile(this.soundsPatternsPath, 'utf8');
+        this.soundsPatterns = JSON.parse(patternsContent);
+      } catch (error) {
+        console.error('[VoiceOrchestration] Failed to load sound patterns, using empty array', error);
+        this.soundsPatterns = [];
+      }
+    }
+    return this.soundsPatterns!;
   }
 
   /**
@@ -708,6 +731,28 @@ export class VoiceOrchestrationService {
       
       console.log(`[VoiceOrchestration] Updated user profile based on story patterns`);
     }
+  }
+
+  /**
+   * Enhance text with sound effects based on patterns
+   */
+  private async enhanceWithSounds(text: string): Promise<string> {
+    const patterns = await this.getSoundPatterns();
+    let enrichedText = text;
+    
+    for (const pattern of patterns) {
+      try {
+        const regex = new RegExp(pattern.pattern, 'gi');
+        if (regex.test(text)) {
+          // Add sound effect at the end of the text
+          enrichedText = enrichedText.trim() + ' ' + pattern.insert;
+        }
+      } catch (error) {
+        console.error(`[VoiceOrchestration] Invalid regex pattern: ${pattern.pattern}`, error);
+      }
+    }
+    
+    return enrichedText;
   }
 
   /**

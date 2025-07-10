@@ -3,6 +3,8 @@ import { AUDIO_FORMAT_CONFIG, AUDIO_PROCESSING_CONFIG } from '@shared/audio-conf
 import { VOICE_RECORDING_CONFIG } from '@shared/voice-recording-config';
 import { storage } from "./storage";
 import { createHash } from 'crypto';
+import fs from 'fs/promises';
+import path from 'path';
 
 // Audio format detection using configuration
 export function detectAudioFormat(buffer: Buffer): string {
@@ -123,6 +125,14 @@ export async function analyzeStoryContent(content: string, userId?: string): Pro
           "quote": "Relevant quote from the story if available"
         }
       ],
+      "soundEffects": [
+        {
+          "sound": "Description of the sound effect (e.g., 'dog barking', 'footsteps', 'door slamming')",
+          "intensity": 5,
+          "context": "Context where this sound appears",
+          "quote": "Exact quote from the story mentioning the sound"
+        }
+      ],
       "summary": "2-3 sentence summary of the story",
       "category": "Category like Romance, Adventure, Mystery, Fantasy, Sci-Fi, Drama, Comedy, Horror, Thriller",
       "genre": "Primary genre (Drama, Fantasy, Mystery, Romance, etc.)",
@@ -152,6 +162,9 @@ export async function analyzeStoryContent(content: string, userId?: string): Pro
     - Provide accurate intensity ratings (1-10 scale) based on story context
     - Include multiple emotions - stories typically evoke 3-8 different emotions
     - Each emotion should have a specific quote and context from the story
+    - EXTRACT SOUND EFFECTS: Identify any sounds mentioned in the story
+    - Include environmental sounds (wind, rain, footsteps, doors), animal sounds (barking, meowing, neighing), mechanical sounds (trains, cars), etc.
+    - For sound effects, include the exact quote where the sound is mentioned
     - Determine appropriate category and themes
     - Flag adult content if it contains explicit material, violence, or mature themes`;
 
@@ -174,6 +187,11 @@ export async function analyzeStoryContent(content: string, userId?: string): Pro
     // Populate ESM reference data from new analysis
     if (userId) {
       await populateEsmReferenceData(analysis, userId);
+    }
+
+    // Update sound patterns based on detected sound effects
+    if (analysis.soundEffects && analysis.soundEffects.length > 0) {
+      await updateSoundPatterns(analysis.soundEffects);
     }
 
     // Analysis is automatically cached by the cached provider
@@ -693,6 +711,110 @@ async function populateEsmReferenceData(analysis: StoryAnalysis, userId: string)
   } catch (error) {
     console.error("❌ Error populating ESM reference data:", error);
     // Don't throw error to prevent blocking story analysis
+  }
+}
+
+/**
+ * Update sound patterns file with newly discovered patterns from story analysis
+ */
+async function updateSoundPatterns(soundEffects: ExtractedSoundEffect[]): Promise<void> {
+  try {
+    const soundsPatternsPath = path.join(process.cwd(), 'soundsPattern.json');
+    
+    // Load existing patterns
+    let existingPatterns: Array<{ pattern: string; insert: string }> = [];
+    try {
+      const fileContent = await fs.readFile(soundsPatternsPath, 'utf8');
+      existingPatterns = JSON.parse(fileContent);
+    } catch (error) {
+      console.log('[AI Analysis] No existing sound patterns file found, creating new one');
+    }
+    
+    // Extract new patterns from sound effects
+    const newPatterns: Array<{ pattern: string; insert: string }> = [];
+    
+    for (const soundEffect of soundEffects) {
+      if (!soundEffect.sound || !soundEffect.quote) continue;
+      
+      // Create a pattern from the sound description
+      const soundDescription = soundEffect.sound.toLowerCase();
+      
+      // Convert sound descriptions to patterns and onomatopoeia
+      const soundMapping: Record<string, { pattern: string; insert: string }> = {
+        'dog barking': { pattern: '\\b(dog|dogs?)\\s+(bark(ing|s|ed)?|woof(ing|s|ed)?)\\b', insert: '(bow bow)' },
+        'cat meowing': { pattern: '\\b(cat|cats?)\\s+(meow(ing|s|ed)?|mew(ing|s|ed)?)\\b', insert: '(meow meow)' },
+        'footsteps': { pattern: '\\b(footstep(s)?|step(s|ping|ped)?|walk(ing|s|ed)?)\\b', insert: '(tap tap)' },
+        'door slamming': { pattern: '\\b(door|doors?)\\s+(slam(ming|s|med)?|bang(ing|s|ed)?)\\b', insert: '(SLAM!)' },
+        'wind blowing': { pattern: '\\b(wind|breeze)\\s+(blow(ing|s)?|howl(ing|s|ed)?|whistle(ing|d)?)\\b', insert: '(whoosh)' },
+        'rain falling': { pattern: '\\b(rain(ing|s|ed)?|drizzl(ing|e)|pour(ing|s|ed)?)\\b', insert: '(pitter patter)' },
+        'thunder': { pattern: '\\b(thunder(ing|s|ed)?|boom(ing|s|ed)?)\\b', insert: '(BOOM!)' },
+        'car engine': { pattern: '\\b(car|engine|motor)\\s+(start(ing|s|ed)?|revv?(ing|s|ed)?|roar(ing|s|ed)?)\\b', insert: '(vroom vroom)' },
+        'phone ringing': { pattern: '\\b(phone|telephone)\\s+(ring(ing|s)?|buzz(ing|es|ed)?)\\b', insert: '(ring ring)' },
+        'clock ticking': { pattern: '\\b(clock|watch)\\s+(tick(ing|s|ed)?|tock(ing|s|ed)?)\\b', insert: '(tick tock)' },
+        'water dripping': { pattern: '\\b(water|faucet|tap)\\s+(drip(ping|s|ped)?|leak(ing|s|ed)?)\\b', insert: '(drip drop)' },
+        'fire crackling': { pattern: '\\b(fire|flame(s)?)\\s+(crackl(ing|es|ed)?|burn(ing|s|ed)?)\\b', insert: '(crackle crackle)' },
+        'glass breaking': { pattern: '\\b(glass|window)\\s+(break(ing|s)?|shatter(ing|s|ed)?|smash(ing|es|ed)?)\\b', insert: '(CRASH!)' },
+        'bell ringing': { pattern: '\\b(bell(s)?)\\s+(ring(ing|s)?|chim(ing|es|ed)?|toll(ing|s|ed)?)\\b', insert: '(ding dong)' },
+        'bird chirping': { pattern: '\\b(bird(s)?)\\s+(chirp(ing|s|ed)?|sing(ing|s)?|tweet(ing|s|ed)?)\\b', insert: '(tweet tweet)' },
+        'horse neighing': { pattern: '\\b(horse(s)?)\\s+(neigh(ing|s|ed)?|whinny(ing|ies|ied)?)\\b', insert: '(neigh)' },
+        'cow mooing': { pattern: '\\b(cow(s)?)\\s+(moo(ing|s|ed)?|low(ing|s|ed)?)\\b', insert: '(moo)' },
+        'sheep bleating': { pattern: '\\b(sheep|lamb(s)?)\\s+(bleat(ing|s|ed)?|baa(ing|s|ed)?)\\b', insert: '(baa baa)' },
+        'owl hooting': { pattern: '\\b(owl(s)?)\\s+(hoot(ing|s|ed)?|call(ing|s|ed)?)\\b', insert: '(hoo hoo)' },
+        'waves crashing': { pattern: '\\b(wave(s)?)\\s+(crash(ing|es|ed)?|break(ing|s)?|pound(ing|s|ed)?)\\b', insert: '(splash!)' }
+      };
+      
+      // Check if we have a mapping for this sound
+      let patternFound = false;
+      for (const [key, mapping] of Object.entries(soundMapping)) {
+        if (soundDescription.includes(key)) {
+          // Check if pattern already exists
+          const exists = existingPatterns.some(p => p.pattern === mapping.pattern);
+          if (!exists) {
+            newPatterns.push(mapping);
+            console.log(`[AI Analysis] Added new sound pattern: ${key} -> ${mapping.insert}`);
+          }
+          patternFound = true;
+          break;
+        }
+      }
+      
+      // If no specific mapping found, try to create a generic one
+      if (!patternFound) {
+        // Extract the main sound word (e.g., "barking" from "dog barking loudly")
+        const soundWords = soundDescription.split(' ');
+        const actionWord = soundWords.find(word => 
+          word.endsWith('ing') || word.endsWith('ed') || word.endsWith('s')
+        );
+        
+        if (actionWord) {
+          const baseWord = actionWord.replace(/(ing|ed|s)$/, '');
+          const pattern = `\\b${baseWord}(ing|s|ed)?\\b`;
+          const insert = `(${baseWord}!)`;
+          
+          const exists = existingPatterns.some(p => p.pattern === pattern);
+          if (!exists) {
+            newPatterns.push({ pattern, insert });
+            console.log(`[AI Analysis] Added generic sound pattern: ${baseWord} -> ${insert}`);
+          }
+        }
+      }
+    }
+    
+    // Merge new patterns with existing ones
+    if (newPatterns.length > 0) {
+      const mergedPatterns = [...existingPatterns, ...newPatterns];
+      
+      // Sort patterns by length (longer patterns first)
+      mergedPatterns.sort((a, b) => b.pattern.length - a.pattern.length);
+      
+      // Write back to file
+      await fs.writeFile(soundsPatternsPath, JSON.stringify(mergedPatterns, null, 2));
+      console.log(`[AI Analysis] Updated sound patterns file with ${newPatterns.length} new patterns`);
+    }
+    
+  } catch (error) {
+    console.error('[AI Analysis] Error updating sound patterns:', error);
+    // Don't throw - this is not critical for story analysis
   }
 }
 
