@@ -84,6 +84,13 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - If testing requires data, ask user for approval and design first
 - VIOLATION OF THIS RULE UNDERMINES SYSTEM INTEGRITY
 
+### Communication Rule - Question Detection Policy
+**WHEN USER MESSAGE ENDS WITH "?" - PROVIDE ANSWER, NOT CODE CHANGES**
+- Any user message ending with "?" indicates they want an explanation or answer
+- Do NOT make code changes when user is asking a question
+- First answer the question, then ask if they want implementation changes
+- This prevents unwanted code modifications when user seeks understanding
+
 ### Mandatory Architectural Patterns (ALWAYS FOLLOW)
 - **BaseCachedProvider**: All external API integrations MUST use cached provider pattern
 - **UIMessages I18N**: All text MUST use internationalization system with proper template interpolation
