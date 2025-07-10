@@ -2228,6 +2228,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
 
+  // Update story metadata (title, genre, etc.) - PATCH endpoint
+  app.patch("/api/stories/:id", requireAuth, async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.id);
+      const userId = (req.user as any)?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const story = await storage.getStory(storyId);
+      if (!story) {
+        return res.status(404).json({ message: "Story not found" });
+      }
+
+      if (story.authorId !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      console.log(`Updating story ${storyId} metadata:`, req.body);
+      const updatedStory = await storage.updateStory(storyId, req.body);
+      res.json(updatedStory);
+    } catch (error) {
+      console.error("Error updating story:", error);
+      res.status(500).json({ message: "Failed to update story" });
+    }
+  });
+
   // Update draft story with content
   app.put("/api/stories/:storyId/content", requireAuth, async (req, res) => {
     try {
