@@ -101,14 +101,7 @@ export async function setupViteEnhanced(app: Express, server: Server) {
  * This maintains backward compatibility if the enhanced version fails
  */
 export async function setupVite(app: Express, server: Server) {
-  try {
-    await setupViteEnhanced(app, server);
-  } catch (error) {
-    console.error("Enhanced Vite setup failed, falling back to original:", error);
-    // Import and use original setupVite if enhanced version fails
-    const { setupVite: originalSetupVite } = await import("./vite");
-    await originalSetupVite(app, server);
-  }
+  await setupViteEnhanced(app, server);
 }
 
 export function serveStatic(app: Express) {
