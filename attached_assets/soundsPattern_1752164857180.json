@@ -1,0 +1,10 @@
+[
+  { "pattern": "dog.*(bark|barking)", "insert": "(bow bow)" },
+  { "pattern": "cat.*(meow|meowing)", "insert": "(meow)" },
+  { "pattern": "train", "insert": "(Koooo tuh chuk chuk)" },
+  { "pattern": "(walk|walking|footsteps)", "insert": "(tok tok tok)" },
+  { "pattern": "door", "insert": "(creeeeak)" },
+  { "pattern": "wind", "insert": "(whoooosh)" },
+  { "pattern": "horse", "insert": "(neigh)" },
+  { "pattern": "bird", "insert": "(chirp chirp)" }
+]

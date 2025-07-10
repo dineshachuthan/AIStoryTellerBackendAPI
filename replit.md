@@ -601,6 +601,12 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Prosody Control**: Fine-tuned pitch, rate, and volume adjustments for different character states
 - **Dynamic Application**: Configuration supports pattern matching for automatic voice parameter selection
 
+### Sound Effects Pattern Configuration - July 10, 2025
+- **Configuration File**: Added `soundsPattern.json` for automatic sound effect insertion in narration
+- **Pattern Matching**: Regex patterns to detect sound-related words in story text
+- **Sound Effects**: Automatic insertion of onomatopoeia for common sounds (dog barking, cat meowing, footsteps, etc.)
+- **Integration**: Used during narration generation to enhance story audio with contextual sound effects
+
 ## Changelog
 
 ### **TOAST KEY NAMES CREATED - July 08, 2025**
