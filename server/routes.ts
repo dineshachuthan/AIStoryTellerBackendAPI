@@ -33,6 +33,8 @@ import { audioStorageFactory } from "./audio-storage-providers";
 import jwt from 'jsonwebtoken';
 import { emailProviderRegistry } from "./email-providers/email-provider-registry";
 import { cacheInvalidationService } from "./cache-invalidation-service";
+import swaggerUi from 'swagger-ui-express';
+import { generateOpenAPISpec } from './openapi-generator';
 
 import multer from "multer";
 import path from "path";
@@ -7092,6 +7094,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+
+  // =============================================================================
+  // OPENAPI DOCUMENTATION ENDPOINTS
+  // =============================================================================
+  
+  // Serve OpenAPI JSON specification
+  app.get('/api/openapi.json', (req, res) => {
+    res.json(generateOpenAPISpec());
+  });
+  
+  // Serve Swagger UI documentation
+  app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(generateOpenAPISpec(), {
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: 'Storytelling Platform API Documentation'
+  }));
 
   const httpServer = createServer(app);
   
