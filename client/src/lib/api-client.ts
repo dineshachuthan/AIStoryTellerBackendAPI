@@ -293,6 +293,14 @@ export class ApiClient {
     message?: string;
   }) => this.request<any>('POST', `/api/stories/${data.storyId}/invitations`, data);
   
+  // Payment endpoints
+  payment = {
+    getConfig: () => this.request<any>('GET', '/api/payment/config'),
+    getStatus: () => this.request<any[]>('GET', '/api/payment/status'),
+    createCheckoutSession: (data: { priceId: string; successUrl?: string; cancelUrl?: string }) =>
+      this.request<any>('POST', '/api/create-checkout-session', data),
+  };
+  
   // Helper method to invalidate queries
   invalidateQueries(keys: string[]) {
     keys.forEach(key => queryClient.invalidateQueries({ queryKey: [key] }));

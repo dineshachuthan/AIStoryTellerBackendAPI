@@ -9,6 +9,7 @@ import { VoiceProviderRegistry } from "./voice-providers/provider-manager";
 import { getVoiceConfig } from "./voice-config";
 import referenceDataRoutes from "./routes-reference-data";
 import { registerVoiceProfileRoutes } from "./routes-voice-profile";
+import { registerSubscriptionRoutes } from "./routes-subscription";
 import { stateManager } from "../shared/utils/state-manager";
 import { createApiExclusionPlugin } from "./vite-api-exclusion-plugin";
 
@@ -185,7 +186,8 @@ app.use((req, res, next) => {
   // Add reference data routes for the new architecture
   app.use('/api/reference-data', referenceDataRoutes);
   
-
+  // Add subscription routes
+  registerSubscriptionRoutes(app);
   
   // Initialize state manager before other services
   try {

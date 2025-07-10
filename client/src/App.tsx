@@ -37,6 +37,7 @@ import NotFound from "@/pages/not-found";
 import OAuthTest from "@/pages/oauth-test";
 import StoryNarration from "@/pages/StoryNarration";
 import AdminNarration from "@/pages/admin/narration";
+import PricingPage from "@/pages/pricing";
 
 
 
@@ -76,6 +77,7 @@ function AppContent() {
           <Route path="/login" component={Login} />
           <Route path="/register" component={Register} />
           <Route path="/oauth-test" component={OAuthTest} />
+          <Route path="/pricing" component={PricingPage} />
           <Route path="/invitations/narration/:token" component={NarrationInvitationLanding} />
           <Route path="/invitations/roleplay/:token" component={RoleplayInvitationLanding} />
           {isAuthenticated ? (

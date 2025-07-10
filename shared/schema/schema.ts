@@ -60,6 +60,9 @@ export const users = pgTable("users", {
   isEmailVerified: boolean("is_email_verified").default(false),
   isAdmin: boolean("is_admin").default(false),
   isActive: boolean("is_active").default(true),
+  stripeCustomerId: varchar("stripe_customer_id"), // Stripe customer ID
+  stripeSubscriptionId: varchar("stripe_subscription_id"), // Stripe subscription ID
+  subscriptionStatus: varchar("subscription_status", { length: 50 }), // active, cancelled, past_due, etc.
   lastLoginAt: timestamp("last_login_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

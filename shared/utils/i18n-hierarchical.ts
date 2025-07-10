@@ -255,6 +255,93 @@ export const MESSAGES = {
     }
   },
 
+  // Subscription
+  subscription: {
+    stripe: {
+      not_configured: {
+        type: 'error' as MessageType,
+        severity: 'medium' as MessageSeverity,
+        templates: {
+          en: 'Stripe is not configured. Please contact support.',
+          es: 'Stripe no está configurado. Por favor contacte soporte.',
+          fr: 'Stripe n\'est pas configuré. Veuillez contacter le support.',
+          de: 'Stripe ist nicht konfiguriert. Bitte kontaktieren Sie den Support.',
+          ja: 'Stripeが設定されていません。サポートにお問い合わせください。',
+          zh: 'Stripe未配置。请联系支持。',
+          ko: 'Stripe가 구성되지 않았습니다. 지원팀에 문의하세요.'
+        }
+      },
+      load_failed: {
+        type: 'error' as MessageType,
+        severity: 'high' as MessageSeverity,
+        templates: {
+          en: 'Failed to load Stripe. Please try again.',
+          es: 'Error al cargar Stripe. Por favor intente de nuevo.',
+          fr: 'Échec du chargement de Stripe. Veuillez réessayer.',
+          de: 'Stripe konnte nicht geladen werden. Bitte versuchen Sie es erneut.',
+          ja: 'Stripeの読み込みに失敗しました。もう一度お試しください。',
+          zh: '加载Stripe失败。请重试。',
+          ko: 'Stripe 로드 실패. 다시 시도해주세요.'
+        }
+      }
+    },
+    checkout: {
+      failed: {
+        type: 'error' as MessageType,
+        severity: 'high' as MessageSeverity,
+        variables: ['error'],
+        templates: {
+          en: 'Checkout failed: {error}',
+          es: 'Error en el pago: {error}',
+          fr: 'Échec du paiement: {error}',
+          de: 'Zahlung fehlgeschlagen: {error}',
+          ja: 'チェックアウトに失敗しました: {error}',
+          zh: '结账失败: {error}',
+          ko: '결제 실패: {error}'
+        }
+      }
+    },
+    no_provider: {
+      type: 'error' as MessageType,
+      severity: 'medium' as MessageSeverity,
+      templates: {
+        en: 'No payment provider configured. Please contact support.',
+        es: 'No hay proveedor de pago configurado. Por favor contacte soporte.',
+        fr: 'Aucun fournisseur de paiement configuré. Veuillez contacter le support.',
+        de: 'Kein Zahlungsanbieter konfiguriert. Bitte kontaktieren Sie den Support.',
+        ja: '支払いプロバイダーが設定されていません。サポートにお問い合わせください。',
+        zh: '未配置支付提供商。请联系支持。',
+        ko: '결제 제공업체가 구성되지 않았습니다. 지원팀에 문의하세요.'
+      }
+    },
+    processing: {
+      type: 'info' as MessageType,
+      severity: 'low' as MessageSeverity,
+      templates: {
+        en: 'Processing...',
+        es: 'Procesando...',
+        fr: 'Traitement en cours...',
+        de: 'Verarbeitung...',
+        ja: '処理中...',
+        zh: '处理中...',
+        ko: '처리 중...'
+      }
+    },
+    subscribe: {
+      type: 'info' as MessageType,
+      severity: 'low' as MessageSeverity,
+      templates: {
+        en: 'Subscribe',
+        es: 'Suscribirse',
+        fr: 'S\'abonner',
+        de: 'Abonnieren',
+        ja: '購読する',
+        zh: '订阅',
+        ko: '구독'
+      }
+    }
+  },
+
   // Home Page
   home: {
     title: {
@@ -2042,6 +2129,22 @@ export const MESSAGES = {
             ja: '録音に失敗しました',
             zh: '录音失败',
             ko: '녹음 실패'
+          }
+        }
+      },
+      subscription: {
+        failed: {
+          type: 'error' as MessageType,
+          severity: 'medium' as MessageSeverity,
+          variables: ['error'],
+          templates: {
+            en: 'Subscription failed: {error}',
+            es: 'Error en la suscripción: {error}',
+            fr: 'Échec de l\'abonnement: {error}',
+            de: 'Abonnement fehlgeschlagen: {error}',
+            ja: 'サブスクリプションに失敗しました: {error}',
+            zh: '订阅失败: {error}',
+            ko: '구독 실패: {error}'
           }
         }
       },
