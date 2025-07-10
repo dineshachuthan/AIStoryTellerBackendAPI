@@ -570,6 +570,9 @@ async function populateEsmReferenceData(analysis: StoryAnalysis, userId: string)
     }
 
     // Process sound effects as sounds (category 2)
+    console.log(`🔊 DEBUG: Sound effects check - soundEffects exists: ${!!analysis.soundEffects}, length: ${analysis.soundEffects?.length || 0}`);
+    console.log(`🔊 DEBUG: Sound effects data:`, JSON.stringify(analysis.soundEffects, null, 2));
+    
     if (analysis.soundEffects && analysis.soundEffects.length > 0) {
       console.log(`🔊 Processing ${analysis.soundEffects.length} sound effects from story analysis`);
       
