@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { sessionActivityTracker } from "@/lib/session-activity";
 import { useEffect } from "react";
 import { LanguageProvider } from "@/contexts/language-context";
+import { PWAUpdateNotification } from "@/components/PWAUpdateNotification";
 
 import Home from "@/pages/home";
 import Chat from "@/pages/chat";
@@ -70,6 +71,7 @@ function AppContent() {
     <TooltipProvider>
       <div className="tiktok-theme min-h-screen">
         <Toaster />
+        <PWAUpdateNotification />
         <Switch>
           <Route path="/login" component={Login} />
           <Route path="/register" component={Register} />
