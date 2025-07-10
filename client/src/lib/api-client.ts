@@ -293,6 +293,12 @@ export class ApiClient {
     message?: string;
   }) => this.request<any>('POST', `/api/stories/${data.storyId}/invitations`, data);
   
+  // SMS endpoints
+  sms = {
+    send: (data: { to: string; message: string }) =>
+      this.request<{ success: boolean; messageId?: string; error?: string }>('POST', '/api/send-sms', data),
+  };
+
   // Payment endpoints
   payment = {
     getConfig: () => this.request<any>('GET', '/api/payment/config'),

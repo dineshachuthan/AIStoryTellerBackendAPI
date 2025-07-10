@@ -35,6 +35,7 @@ import { emailProviderRegistry } from "./email-providers/email-provider-registry
 import { cacheInvalidationService } from "./cache-invalidation-service";
 import swaggerUi from 'swagger-ui-express';
 import { generateOpenAPISpec } from './openapi-generator';
+import { smsProviderRegistry } from './sms-providers/sms-provider-registry';
 
 import multer from "multer";
 import path from "path";
@@ -288,6 +289,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/cache/user-voice-modulations', express.static(path.join(process.cwd(), 'persistent-cache', 'user-voice-modulations')));
 
 
+
+  // Initialize SMS provider registry
+  await smsProviderRegistry.initialize();
 
   // Setup authentication
   await setupAuth(app);
@@ -7042,6 +7046,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Serve static files from persistent cache directories
   app.use('/persistent-cache', express.static(path.join(process.cwd(), 'persistent-cache')));
+
+  // SMS endpoint
+  app.post('/api/send-sms', requireAuth, async (req, res) => {
+    try {
+      const { to, message } = req.body;
+      
+      if (!to || !message) {
+        return res.status(400).json({ 
+          success: false,
+          error: 'Missing required fields: to and message' 
+        });
+      }
+
+      console.log('📱 SMS request:', { to, messageLength: message.length });
+
+      // Send SMS using provider registry
+      const result = await smsProviderRegistry.sendSMS({
+        to,
+        message
+      });
+
+      console.log('📱 SMS result:', result);
+
+      res.json(result);
+    } catch (error) {
+      console.error('SMS send error:', error);
+      res.status(500).json({ 
+        success: false,
+        error: 'Failed to send SMS',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
 
   // Test email endpoint (for development)
   app.post('/api/test/email', async (req, res) => {
