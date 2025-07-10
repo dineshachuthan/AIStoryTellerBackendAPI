@@ -63,6 +63,7 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - NEVER use direct API calls even for "temporary" or "quick" solutions
 - Pattern: `apiClient.stories.get(id)` NOT `fetch('/api/stories/${id}')`
 - Pattern: `apiClient.audio.transcribe(formData)` NOT `fetch('/api/audio/transcribe', {method: 'POST', body: formData})`
+- **ARCHITECTURAL RULE**: api-client.ts MUST be in client/src/lib/ - NEVER in shared folder (fixed July 10, 2025)
 
 ### Zero Tolerance Direct Toast Usage Policy
 **ALL TOAST MESSAGES MUST USE toast-utils.ts - NO DIRECT useToast() CALLS**
@@ -784,6 +785,33 @@ This is a full-stack collaborative storytelling platform that enables users to c
 
 ## Changelog
 
+### **COMPLETE ROOT DIRECTORY CLEANUP - July 10, 2025**
+**Final Organization of All Root Files and Folders**: Achieved minimal root directory with proper file organization
+- **ROOT FILE ORGANIZATION**:
+  - Moved SQL files → `/migrations/` (add-soft-delete-columns.sql, alter-story-content-nullable.sql, proposed_esm_schema.sql)
+  - Moved documentation → `/docs/` and `/docs/architecture/` (ROADMAP.md, KLING_API_ANALYSIS.md, DATABASE_SCHEMA_ANALYSIS.md, etc.)
+  - Moved scripts → `/scripts/` (fix-syntax.py, generate-translations.sh)
+  - Moved docker compose → `/k8s/` (docker-compose.microservices.yml)
+  - Moved i18n docs → `/docs/` (README-i18n.md)
+  - Removed temporary files (cookies.txt, cookies_new.txt)
+- **TEST CONSOLIDATION**: 
+  - Moved scripts from `/test-scripts/` to `/scripts/{domain}/` following file organization guidelines
+  - Moved API tests from `/test-suites/` to `/test/integration/`
+  - Removed empty `/test-scripts/` and `/test-suites/` folders
+- **LEGACY FOLDER REMOVAL**:
+  - Removed `/uploads/` - Obsolete since system uses memory storage (multer.memoryStorage())
+  - Removed `/voice-samples/` - Legacy location, voice samples now under `user-data/{userId}/audio/`
+  - Removed `/stories/` - Moved to `/test/fixtures/stories/` for test data
+- **CRITICAL FOLDER RETAINED**:
+  - Kept `/user-data/` - Essential for hierarchical user content storage following pattern: `user-data/{userId}/{contentType}/{category}/{identifier}/sample-{n}.{ext}`
+- **FINAL ROOT CONTENTS**: Only 11 essential files remain in root directory
+  - Build configs: postcss.config.js, tailwind.config.ts, tsconfig.json (must stay in root)
+  - Package files: package.json, package-lock.json
+  - Documentation: README.md, replit.md
+  - Environment: .env.example, .gitignore, .replit
+  - UI config: components.json (shadcn requirement)
+- **IMPACT**: Achieved perfectly organized root directory following industry best practices
+
 ### **OPENAPI INFRASTRUCTURE IMPLEMENTATION - July 10, 2025**
 **Multi-Vendor Development Support**: Implemented OpenAPI specification generation and TypeScript type generation
 - **OPENAPI GENERATOR**: Created server/openapi-generator.ts to auto-generate OpenAPI 3.0 specification from server routes
@@ -808,8 +836,12 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **TEST FILES ORGANIZED**: All test files consolidated under `/test/`:
   - Unit tests in `/test/unit/`, integration tests in `/test/integration/`
   - Removed duplicate test directories like `/test-suites/`
-- **ROOT DIRECTORY CLEANED**: Only 7 essential files remain in root directory:
-  - package.json, package-lock.json, .env.example, .gitignore, .replit, README.md, replit.md
+- **ROOT DIRECTORY CLEANED**: Only essential files remain in root directory:
+  - package.json, package-lock.json (npm requirements)
+  - .gitignore, .replit (environment configuration)
+  - README.md, replit.md (documentation)
+  - postcss.config.js, tailwind.config.ts, tsconfig.json (build configs that must stay in root)
+  - components.json (shadcn requirement)
 - **IMPACT**: Cleaner project structure following industry best practices
 - **MIGRATION COMPLETE**: All references updated, app running successfully with new structure
 

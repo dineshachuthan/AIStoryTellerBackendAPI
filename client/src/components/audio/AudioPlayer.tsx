@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Play, Pause, Volume2, VolumeX, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { apiClient } from '@shared/api-client';
+import { apiClient } from '@/lib/api-client';
 import type { AudioRequest, NarrationSegment } from '@shared/audio-types';
 
 interface AudioPlayerProps {
