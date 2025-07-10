@@ -263,6 +263,67 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Cleanup Jobs**: Automatic cleanup of expired cache files
 - **Asset Serving**: Optimized static file serving with proper headers
 
+## File Organization Guidelines (MANDATORY - July 10, 2025)
+
+### STRICT FILE PLACEMENT RULES - MUST FOLLOW WITHOUT EXCEPTION
+
+**NEVER CREATE FILES IN ROOT DIRECTORY EXCEPT:**
+- package.json, package-lock.json (npm requirement)
+- .env.example, .gitignore, .replit (environment files)
+- README.md, replit.md (documentation)
+- components.json (shadcn requirement)
+
+**FILE PLACEMENT RULES BY TYPE:**
+
+1. **Test Files**
+   - Integration tests: `/test/integration/{category}/`
+   - Unit tests: `/test/unit/`
+   - E2E tests: `/test/e2e/`
+   - NEVER in root or `/test-scripts/`
+
+2. **Configuration Files**
+   - Build configs: `/config/build/` (vite, tailwind, postcss, drizzle, tsconfig)
+   - Runtime configs: `/config/data/` (conversationStyle.json, soundsPattern.json, etc.)
+   - NEVER in root unless required by tool
+
+3. **Utility Scripts**
+   - Voice scripts: `/scripts/voice/`
+   - Narration scripts: `/scripts/narration/`
+   - Audio scripts: `/scripts/audio/`
+   - Database scripts: `/scripts/database/`
+   - NEVER in root
+
+4. **External Provider Integrations**
+   - AI providers: `/server/external-providers/ai/{provider-name}/`
+   - Voice providers: `/server/external-providers/voice/{provider-name}/`
+   - Video providers: `/server/external-providers/video/{provider-name}/`
+   - Email providers: `/server/external-providers/email/{provider-name}/`
+   - Storage providers: `/server/external-providers/storage/{provider-name}/`
+   - Auth providers: `/server/external-providers/auth/{provider-name}/`
+
+5. **Cache Implementations**
+   - Provider-specific: Within provider folder (e.g., `/server/external-providers/ai/openai/openai-cached-provider.ts`)
+   - Base classes: `/server/cache/`
+
+**DECISION TREE FOR FILE CREATION:**
+1. Is it a test? → `/test/{type}/`
+2. Is it a config? → `/config/{build|data}/`
+3. Is it a script? → `/scripts/{domain}/`
+4. Is it a provider? → `/server/external-providers/{type}/{provider}/`
+5. Is it server code? → `/server/` (appropriate subdirectory)
+6. Is it client code? → `/client/` (appropriate subdirectory)
+7. Is it shared? → `/shared/`
+
+**BEFORE CREATING ANY FILE, ASK:**
+- Does this file type have a designated location above?
+- Am I about to put it in the root directory?
+- Does a similar file exist I can check for pattern?
+
+**VIOLATION CONSEQUENCES:**
+- User has zero tolerance for disorganized file placement
+- Previous violations have caused significant cleanup work
+- This is as important as the code duplication policy
+
 ## Future Roadmap
 
 ### Voice Collection & Narration System Roadmap
