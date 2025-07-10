@@ -711,8 +711,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           try {
             await storage.updateStory(storyId, { title: analysis.title });
             console.log(`📝 Updated story title to: "${analysis.title}"`);
-            // Immediate cache invalidation after database write (following cache provider pattern)
-            cacheInvalidationService.invalidateCache('stories', storyId);
+            // Frontend will handle cache invalidation directly after successful analysis
           } catch (titleUpdateError) {
             console.warn(`Failed to update story title:`, titleUpdateError);
           }
@@ -793,8 +792,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           isAdultContent: analysis.isAdultContent
         });
         console.log(`Updated story ${storyId} title to: "${analysis.title}"`);
-        // Immediate cache invalidation after database write (following cache provider pattern)
-        cacheInvalidationService.invalidateCache('stories', storyId);
+        // Frontend will handle cache invalidation directly after successful analysis
       }
       
       console.log("Narrative analysis generated successfully");
@@ -7097,9 +7095,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   const httpServer = createServer(app);
   
-  // Setup cache invalidation WebSocket service
-  cacheInvalidationService.setupWebSocket(httpServer);
-  console.log('🔄 Cache invalidation WebSocket service initialized');
+
   
   return httpServer;
 }

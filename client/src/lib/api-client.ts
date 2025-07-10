@@ -128,7 +128,12 @@ export class ApiClient {
     getFilters: () => this.request<any>('GET', '/api/stories/filters'),
     // Narrative analysis endpoints
     getNarrative: (id: number) => this.request<any>('GET', `/api/stories/${id}/narrative`),
-    createNarrative: (id: number) => this.request<any>('POST', `/api/stories/${id}/narrative`),
+    createNarrative: async (id: number) => {
+      const result = await this.request<any>('POST', `/api/stories/${id}/narrative`);
+      // Invalidate story cache after successful narrative analysis (may have updated title)
+      this.invalidateQueries([`/api/stories/${id}`, '/api/stories']);
+      return result;
+    },
     // Roleplay analysis endpoints
     getRoleplay: (id: number) => this.request<any>('GET', `/api/stories/${id}/roleplay`),
     createRoleplay: (id: number) => this.request<any>('POST', `/api/stories/${id}/roleplay`),

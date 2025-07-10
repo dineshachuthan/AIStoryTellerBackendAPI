@@ -97,9 +97,9 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Immediate Cache Invalidation**: After any database write, cache MUST be invalidated immediately
 - **No Direct Database Writes**: ALL database operations must go through cache provider pattern
 - **BaseCachedProvider Pattern**: External integrations use unified caching, retry, timeout, and error handling
-- **Cache Invalidation Service**: Handles WebSocket-based cache invalidation to frontend React Query
+- **Simplified Cache Invalidation**: Direct React Query cache invalidation via API client after successful operations  
 - **Architecture Violation**: Direct storage.updateStory() calls bypass cache architecture - FORBIDDEN
-- **Frontend Cache Sync**: React Query cache automatically invalidated via WebSocket after database writes
+- **Frontend Cache Sync**: API client automatically invalidates React Query cache after database writes (same-tab only)
 - **Zero Cache Bypass**: No database operations should bypass the cache provider architecture
 
 ### Mandatory Architectural Patterns (ALWAYS FOLLOW)

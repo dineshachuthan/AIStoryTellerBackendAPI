@@ -10,7 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { sessionActivityTracker } from "@/lib/session-activity";
 import { useEffect } from "react";
 import { LanguageProvider } from "@/contexts/language-context";
-import { cacheInvalidationClient } from "@/lib/cache-invalidation";
+
 import Home from "@/pages/home";
 import Chat from "@/pages/chat";
 import CreateCharacter from "@/pages/create-character";
@@ -53,14 +53,7 @@ function AppContent() {
     };
   }, [isAuthenticated]);
 
-  // Initialize cache invalidation WebSocket connection
-  useEffect(() => {
-    cacheInvalidationClient.connect();
-    
-    return () => {
-      cacheInvalidationClient.disconnect();
-    };
-  }, []);
+
 
   if (isLoading) {
     return (
