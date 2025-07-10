@@ -2273,7 +2273,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         title,
         content,
         summary: analysis?.summary || summary,
-        category: analysis?.category || category,
+        category: analysis?.category || category || "General", // Default to "General" if no category provided
         tags: analysis?.suggestedTags || [],
         extractedCharacters: analysis?.characters || [],
         extractedEmotions: analysis?.emotions || [],
