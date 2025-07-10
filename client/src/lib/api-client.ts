@@ -299,6 +299,12 @@ export class ApiClient {
       this.request<{ success: boolean; messageId?: string; error?: string }>('POST', '/api/send-sms', data),
   };
 
+  // WhatsApp endpoints
+  whatsapp = {
+    send: (data: { to: string; message: string }) =>
+      this.request<{ success: boolean; messageId?: string; status?: string; error?: string }>('POST', '/api/send-whatsapp', data),
+  };
+
   // Payment endpoints
   payment = {
     getConfig: () => this.request<any>('GET', '/api/payment/config'),

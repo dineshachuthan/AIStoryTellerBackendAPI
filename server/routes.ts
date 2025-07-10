@@ -7080,6 +7080,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // WhatsApp endpoint
+  app.post('/api/send-whatsapp', requireAuth, async (req, res) => {
+    try {
+      const { to, message } = req.body;
+      
+      if (!to || !message) {
+        return res.status(400).json({ 
+          success: false,
+          error: 'Missing required fields: to and message' 
+        });
+      }
+
+      console.log('💬 WhatsApp request:', { to, messageLength: message.length });
+
+      // Import Twilio client
+      const twilio = await import('twilio');
+      const client = twilio.default(
+        process.env.TWILIO_ACCOUNT_SID,
+        process.env.TWILIO_AUTH_TOKEN
+      );
+
+      // Format numbers with whatsapp: prefix
+      const fromNumber = `whatsapp:${process.env.TWILIO_WHATSAPP_NUMBER}`;
+      const toNumber = `whatsapp:${to.replace('whatsapp:', '')}`; // Ensure no double prefix
+
+      // Send WhatsApp message
+      const twilioMessage = await client.messages.create({
+        from: fromNumber,
+        to: toNumber,
+        body: message
+      });
+
+      console.log('💬 WhatsApp message sent successfully. SID:', twilioMessage.sid);
+
+      res.json({
+        success: true,
+        messageId: twilioMessage.sid,
+        status: twilioMessage.status
+      });
+    } catch (error) {
+      console.error('WhatsApp send error:', error);
+      res.status(500).json({ 
+        success: false,
+        error: 'Failed to send WhatsApp message',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // Test email endpoint (for development)
   app.post('/api/test/email', async (req, res) => {
     try {
