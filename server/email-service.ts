@@ -10,6 +10,7 @@ import {
 } from './email-templates/auth-email-templates';
 import { narrationInvitationTemplate } from './email-templates/narration-invitation.template';
 import { EmailTemplate } from './email-templates/types';
+import { getMessage, Language } from '../shared/i18n-hierarchical';
 
 // Initialize email provider registry
 const emailRegistry = emailProviderRegistry;
@@ -22,12 +23,31 @@ if (!emailProvider) {
 }
 
 /**
- * Helper function to compile email template with data
+ * Helper function to compile email template with data and i18n
  */
-function compileEmailTemplate(template: EmailTemplate, data: Record<string, any>) {
-  const compiledSubject = interpolateTemplate(template.subject, data);
-  const compiledHtml = interpolateTemplate(template.html, data);
-  const compiledText = interpolateTemplate(template.text, data);
+function compileEmailTemplate(template: EmailTemplate, data: Record<string, any>, language: Language = 'en') {
+  // First, process i18n keys
+  const processI18n = (text: string): string => {
+    return text.replace(/\{\{i18n\.([^\}]+)\}\}/g, (match, keyPath) => {
+      try {
+        const message = getMessage(keyPath, {}, language);
+        return message.message;
+      } catch (error) {
+        console.warn(`Failed to get i18n message for key: ${keyPath}`, error);
+        return match; // Return original if i18n fails
+      }
+    });
+  };
+  
+  // Process i18n in template parts
+  const i18nSubject = processI18n(template.subject);
+  const i18nHtml = processI18n(template.html);
+  const i18nText = processI18n(template.text);
+  
+  // Then interpolate variables
+  const compiledSubject = interpolateTemplate(i18nSubject, data);
+  const compiledHtml = interpolateTemplate(i18nHtml, data);
+  const compiledText = interpolateTemplate(i18nText, data);
   
   return {
     subject: compiledSubject,
@@ -43,6 +63,7 @@ export interface InvitationEmailData {
   storyTitle: string;
   invitationLink: string;
   senderName: string;
+  language?: Language;
 }
 
 export async function sendRoleplayInvitation(data: InvitationEmailData): Promise<boolean> {

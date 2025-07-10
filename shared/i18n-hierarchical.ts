@@ -2342,6 +2342,484 @@ export const MESSAGES = {
         }
       }
     }
+  },
+
+  // Email Templates
+  email: {
+    templates: {
+      passwordReset: {
+        name: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Password Reset Email',
+            es: 'Correo de Restablecimiento de Contraseña',
+            fr: 'Email de Réinitialisation de Mot de Passe',
+            de: 'Passwort-Zurücksetzungs-E-Mail',
+            ja: 'パスワードリセットメール',
+            zh: '密码重置邮件',
+            ko: '비밀번호 재설정 이메일'
+          }
+        },
+        subject: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Password Reset Request',
+            es: 'Solicitud de Restablecimiento de Contraseña',
+            fr: 'Demande de Réinitialisation de Mot de Passe',
+            de: 'Anfrage zum Zurücksetzen des Passworts',
+            ja: 'パスワードリセットのリクエスト',
+            zh: '密码重置请求',
+            ko: '비밀번호 재설정 요청'
+          }
+        },
+        title: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Password Reset Request',
+            es: 'Solicitud de Restablecimiento de Contraseña',
+            fr: 'Demande de Réinitialisation de Mot de Passe',
+            de: 'Anfrage zum Zurücksetzen des Passworts',
+            ja: 'パスワードリセットのリクエスト',
+            zh: '密码重置请求',
+            ko: '비밀번호 재설정 요청'
+          }
+        },
+        intro: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'We received a request to reset your password.',
+            es: 'Recibimos una solicitud para restablecer tu contraseña.',
+            fr: 'Nous avons reçu une demande de réinitialisation de votre mot de passe.',
+            de: 'Wir haben eine Anfrage zum Zurücksetzen Ihres Passworts erhalten.',
+            ja: 'パスワードのリセットリクエストを受け取りました。',
+            zh: '我们收到了重置您密码的请求。',
+            ko: '비밀번호 재설정 요청을 받았습니다.'
+          }
+        },
+        clickButton: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Click the button below to reset your password:',
+            es: 'Haz clic en el botón de abajo para restablecer tu contraseña:',
+            fr: 'Cliquez sur le bouton ci-dessous pour réinitialiser votre mot de passe:',
+            de: 'Klicken Sie auf die Schaltfläche unten, um Ihr Passwort zurückzusetzen:',
+            ja: '以下のボタンをクリックしてパスワードをリセットしてください：',
+            zh: '点击下面的按钮重置您的密码：',
+            ko: '아래 버튼을 클릭하여 비밀번호를 재설정하세요:'
+          }
+        },
+        buttonText: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Reset Password',
+            es: 'Restablecer Contraseña',
+            fr: 'Réinitialiser le Mot de Passe',
+            de: 'Passwort Zurücksetzen',
+            ja: 'パスワードをリセット',
+            zh: '重置密码',
+            ko: '비밀번호 재설정'
+          }
+        },
+        linkExpiry: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'This link will expire in 24 hours.',
+            es: 'Este enlace expirará en 24 horas.',
+            fr: 'Ce lien expirera dans 24 heures.',
+            de: 'Dieser Link läuft in 24 Stunden ab.',
+            ja: 'このリンクは24時間で有効期限が切れます。',
+            zh: '此链接将在24小时后过期。',
+            ko: '이 링크는 24시간 후에 만료됩니다.'
+          }
+        },
+        notRequested: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'If you didn\'t request this, please ignore this email.',
+            es: 'Si no solicitaste esto, por favor ignora este correo.',
+            fr: 'Si vous n\'avez pas demandé cela, veuillez ignorer cet email.',
+            de: 'Wenn Sie dies nicht angefordert haben, ignorieren Sie bitte diese E-Mail.',
+            ja: 'このリクエストに心当たりがない場合は、このメールを無視してください。',
+            zh: '如果您没有请求此操作，请忽略此邮件。',
+            ko: '이 요청을 하지 않으셨다면 이 이메일을 무시해주세요.'
+          }
+        }
+      },
+      verificationCode: {
+        name: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Verification Code Email',
+            es: 'Correo de Código de Verificación',
+            fr: 'Email de Code de Vérification',
+            de: 'Verifizierungscode-E-Mail',
+            ja: '確認コードメール',
+            zh: '验证码邮件',
+            ko: '인증 코드 이메일'
+          }
+        },
+        subject: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Your Verification Code: {code}',
+            es: 'Tu Código de Verificación: {code}',
+            fr: 'Votre Code de Vérification: {code}',
+            de: 'Ihr Verifizierungscode: {code}',
+            ja: '確認コード: {code}',
+            zh: '您的验证码: {code}',
+            ko: '인증 코드: {code}'
+          },
+          variables: ['code']
+        },
+        title: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Verification Code',
+            es: 'Código de Verificación',
+            fr: 'Code de Vérification',
+            de: 'Verifizierungscode',
+            ja: '確認コード',
+            zh: '验证码',
+            ko: '인증 코드'
+          }
+        },
+        yourCode: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Your verification code is:',
+            es: 'Tu código de verificación es:',
+            fr: 'Votre code de vérification est:',
+            de: 'Ihr Verifizierungscode lautet:',
+            ja: 'あなたの確認コードは：',
+            zh: '您的验证码是：',
+            ko: '인증 코드:'
+          }
+        },
+        useCode: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Use this code to complete your registration or login.',
+            es: 'Usa este código para completar tu registro o inicio de sesión.',
+            fr: 'Utilisez ce code pour terminer votre inscription ou connexion.',
+            de: 'Verwenden Sie diesen Code, um Ihre Registrierung oder Anmeldung abzuschließen.',
+            ja: '登録またはログインを完了するには、このコードを使用してください。',
+            zh: '使用此代码完成您的注册或登录。',
+            ko: '이 코드를 사용하여 등록 또는 로그인을 완료하세요.'
+          }
+        },
+        codeExpiry: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'This code will expire in 10 minutes.',
+            es: 'Este código expirará en 10 minutos.',
+            fr: 'Ce code expirera dans 10 minutes.',
+            de: 'Dieser Code läuft in 10 Minuten ab.',
+            ja: 'このコードは10分で有効期限が切れます。',
+            zh: '此代码将在10分钟后过期。',
+            ko: '이 코드는 10분 후에 만료됩니다.'
+          }
+        }
+      },
+      welcome: {
+        name: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Welcome Email',
+            es: 'Correo de Bienvenida',
+            fr: 'Email de Bienvenue',
+            de: 'Willkommens-E-Mail',
+            ja: 'ウェルカムメール',
+            zh: '欢迎邮件',
+            ko: '환영 이메일'
+          }
+        },
+        subject: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Welcome to {appName}!',
+            es: '¡Bienvenido a {appName}!',
+            fr: 'Bienvenue sur {appName}!',
+            de: 'Willkommen bei {appName}!',
+            ja: '{appName}へようこそ！',
+            zh: '欢迎来到{appName}！',
+            ko: '{appName}에 오신 것을 환영합니다!'
+          },
+          variables: ['appName']
+        },
+        title: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Welcome Aboard!',
+            es: '¡Bienvenido a Bordo!',
+            fr: 'Bienvenue à Bord!',
+            de: 'Willkommen an Bord!',
+            ja: 'ようこそ！',
+            zh: '欢迎加入！',
+            ko: '환영합니다!'
+          }
+        },
+        greeting: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Hi {recipientName},',
+            es: 'Hola {recipientName},',
+            fr: 'Bonjour {recipientName},',
+            de: 'Hallo {recipientName},',
+            ja: 'こんにちは {recipientName}さん、',
+            zh: '你好 {recipientName}，',
+            ko: '안녕하세요 {recipientName}님,'
+          },
+          variables: ['recipientName']
+        },
+        accountCreated: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Your account has been successfully created!',
+            es: '¡Tu cuenta ha sido creada exitosamente!',
+            fr: 'Votre compte a été créé avec succès!',
+            de: 'Ihr Konto wurde erfolgreich erstellt!',
+            ja: 'アカウントが正常に作成されました！',
+            zh: '您的账户已成功创建！',
+            ko: '계정이 성공적으로 생성되었습니다!'
+          }
+        },
+        readyToExplore: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'You\'re all set to start exploring and creating amazing stories.',
+            es: 'Estás listo para comenzar a explorar y crear historias increíbles.',
+            fr: 'Vous êtes prêt à explorer et créer des histoires incroyables.',
+            de: 'Sie können jetzt erstaunliche Geschichten erkunden und erstellen.',
+            ja: '素晴らしいストーリーを探索し、作成する準備ができました。',
+            zh: '您已准备好开始探索和创作精彩的故事。',
+            ko: '놀라운 이야기를 탐색하고 만들 준비가 되었습니다.'
+          }
+        },
+        getStartedButton: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Get Started',
+            es: 'Comenzar',
+            fr: 'Commencer',
+            de: 'Loslegen',
+            ja: '始める',
+            zh: '开始使用',
+            ko: '시작하기'
+          }
+        }
+      },
+      twoFactorCode: {
+        name: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Two-Factor Authentication Code',
+            es: 'Código de Autenticación de Dos Factores',
+            fr: 'Code d\'Authentification à Deux Facteurs',
+            de: 'Zwei-Faktor-Authentifizierungscode',
+            ja: '二要素認証コード',
+            zh: '双因素认证代码',
+            ko: '2단계 인증 코드'
+          }
+        },
+        subject: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Your Two-Factor Authentication Code',
+            es: 'Tu Código de Autenticación de Dos Factores',
+            fr: 'Votre Code d\'Authentification à Deux Facteurs',
+            de: 'Ihr Zwei-Faktor-Authentifizierungscode',
+            ja: 'あなたの二要素認証コード',
+            zh: '您的双因素认证代码',
+            ko: '2단계 인증 코드'
+          }
+        },
+        title: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Two-Factor Authentication',
+            es: 'Autenticación de Dos Factores',
+            fr: 'Authentification à Deux Facteurs',
+            de: 'Zwei-Faktor-Authentifizierung',
+            ja: '二要素認証',
+            zh: '双因素认证',
+            ko: '2단계 인증'
+          }
+        },
+        codeText: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Your authentication code is:',
+            es: 'Tu código de autenticación es:',
+            fr: 'Votre code d\'authentification est:',
+            de: 'Ihr Authentifizierungscode lautet:',
+            ja: 'あなたの認証コードは：',
+            zh: '您的认证代码是：',
+            ko: '인증 코드:'
+          }
+        },
+        enterCode: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Enter this code to complete your login.',
+            es: 'Ingresa este código para completar tu inicio de sesión.',
+            fr: 'Entrez ce code pour terminer votre connexion.',
+            de: 'Geben Sie diesen Code ein, um Ihre Anmeldung abzuschließen.',
+            ja: 'ログインを完了するには、このコードを入力してください。',
+            zh: '输入此代码以完成登录。',
+            ko: '로그인을 완료하려면 이 코드를 입력하세요.'
+          }
+        },
+        validFor: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'This code is valid for 5 minutes.',
+            es: 'Este código es válido por 5 minutos.',
+            fr: 'Ce code est valide pendant 5 minutes.',
+            de: 'Dieser Code ist 5 Minuten lang gültig.',
+            ja: 'このコードは5分間有効です。',
+            zh: '此代码有效期为5分钟。',
+            ko: '이 코드는 5분간 유효합니다.'
+          }
+        }
+      },
+      roleplayInvitation: {
+        name: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Roleplay Invitation',
+            es: 'Invitación de Juego de Rol',
+            fr: 'Invitation au Jeu de Rôle',
+            de: 'Rollenspiel-Einladung',
+            ja: 'ロールプレイ招待',
+            zh: '角色扮演邀请',
+            ko: '롤플레이 초대'
+          }
+        },
+        subject: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'You\'re invited to join a roleplay: {roleplayTitle}',
+            es: 'Estás invitado a unirte a un juego de rol: {roleplayTitle}',
+            fr: 'Vous êtes invité à rejoindre un jeu de rôle: {roleplayTitle}',
+            de: 'Sie sind eingeladen, an einem Rollenspiel teilzunehmen: {roleplayTitle}',
+            ja: 'ロールプレイに招待されました: {roleplayTitle}',
+            zh: '您被邀请加入角色扮演: {roleplayTitle}',
+            ko: '롤플레이에 초대되었습니다: {roleplayTitle}'
+          },
+          variables: ['roleplayTitle']
+        },
+        title: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Roleplay Invitation',
+            es: 'Invitación de Juego de Rol',
+            fr: 'Invitation au Jeu de Rôle',
+            de: 'Rollenspiel-Einladung',
+            ja: 'ロールプレイ招待',
+            zh: '角色扮演邀请',
+            ko: '롤플레이 초대'
+          }
+        },
+        greeting: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Hi {recipientName},',
+            es: 'Hola {recipientName},',
+            fr: 'Bonjour {recipientName},',
+            de: 'Hallo {recipientName},',
+            ja: 'こんにちは {recipientName}さん、',
+            zh: '你好 {recipientName}，',
+            ko: '안녕하세요 {recipientName}님,'
+          },
+          variables: ['recipientName']
+        },
+        inviteText: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: '{senderName} has invited you to participate in a roleplay.',
+            es: '{senderName} te ha invitado a participar en un juego de rol.',
+            fr: '{senderName} vous a invité à participer à un jeu de rôle.',
+            de: '{senderName} hat Sie eingeladen, an einem Rollenspiel teilzunehmen.',
+            ja: '{senderName}さんがロールプレイに招待しました。',
+            zh: '{senderName}邀请您参与角色扮演。',
+            ko: '{senderName}님이 롤플레이에 초대했습니다.'
+          },
+          variables: ['senderName']
+        },
+        roleInfo: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'You\'ll be playing: {characterName}',
+            es: 'Interpretarás a: {characterName}',
+            fr: 'Vous jouerez: {characterName}',
+            de: 'Sie werden spielen: {characterName}',
+            ja: 'あなたの役: {characterName}',
+            zh: '您将扮演: {characterName}',
+            ko: '당신의 역할: {characterName}'
+          },
+          variables: ['characterName']
+        },
+        joinButton: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'Join Roleplay',
+            es: 'Unirse al Juego de Rol',
+            fr: 'Rejoindre le Jeu de Rôle',
+            de: 'Rollenspiel Beitreten',
+            ja: 'ロールプレイに参加',
+            zh: '加入角色扮演',
+            ko: '롤플레이 참여'
+          }
+        },
+        linkExpiry: {
+          type: 'info' as MessageType,
+          severity: 'low' as MessageSeverity,
+          templates: {
+            en: 'This invitation expires in 7 days.',
+            es: 'Esta invitación expira en 7 días.',
+            fr: 'Cette invitation expire dans 7 jours.',
+            de: 'Diese Einladung läuft in 7 Tagen ab.',
+            ja: 'この招待は7日で有効期限が切れます。',
+            zh: '此邀请将在7天后过期。',
+            ko: '이 초대는 7일 후에 만료됩니다.'
+          }
+        }
+      }
+    }
   }
 } as const;
 

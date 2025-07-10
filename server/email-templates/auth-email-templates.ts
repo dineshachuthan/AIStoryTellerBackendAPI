@@ -10,8 +10,8 @@ import { EmailTemplate } from './types';
  */
 export const passwordResetTemplate: EmailTemplate = {
   id: 'password-reset',
-  name: 'Password Reset',
-  subject: 'Password Reset Request',
+  name: '{{i18n.email.templates.passwordReset.name}}',
+  subject: '{{i18n.email.templates.passwordReset.subject}}',
   description: 'Sent when a user requests to reset their password',
   
   variables: [
@@ -23,62 +23,60 @@ export const passwordResetTemplate: EmailTemplate = {
   
   html: `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <h2 style="color: #333; text-align: center;">Password Reset Request</h2>
+      <h2 style="color: #333; text-align: center;">{{i18n.email.templates.passwordReset.title}}</h2>
       
       <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
         <p style="font-size: 16px; margin-bottom: 15px;">
-          Hi {{recipientName}},
+          {{i18n.auth.login.greeting}}
         </p>
         
         <p style="font-size: 16px; margin-bottom: 15px;">
-          We received a request to reset your password. Click the button below to set a new password:
+          {{i18n.email.templates.passwordReset.intro}} {{i18n.email.templates.passwordReset.clickButton}}
         </p>
         
         {{#if passwordHint}}
         <div style="background-color: #fff3cd; padding: 10px; border-radius: 5px; margin: 15px 0;">
-          <p style="margin: 0; color: #856404;"><strong>Your password hint:</strong> {{passwordHint}}</p>
+          <p style="margin: 0; color: #856404;"><strong>{{i18n.auth.register.passwordHint.label}}:</strong> {{passwordHint}}</p>
         </div>
         {{/if}}
         
         <div style="text-align: center; margin: 30px 0;">
           <a href="{{resetLink}}" 
              style="background-color: #007bff; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-size: 16px; font-weight: bold;">
-            Reset Password
+            {{i18n.email.templates.passwordReset.buttonText}}
           </a>
         </div>
         
         <p style="font-size: 14px; color: #666;">
-          If you didn't request this password reset, please ignore this email.
-          Your password won't be changed unless you click the button above.
+          {{i18n.email.templates.passwordReset.notRequested}}
         </p>
         
         <p style="font-size: 14px; color: #666; margin-top: 20px;">
-          If the button doesn't work, copy and paste this link into your browser:<br>
+          {{i18n.auth.forgotPassword.linkOrButton}}<br>
           <a href="{{resetLink}}">{{resetLink}}</a>
         </p>
       </div>
       
       <div style="text-align: center; font-size: 12px; color: #888; margin-top: 30px;">
-        <p>This link will expire in 24 hours for security reasons.</p>
+        <p>{{i18n.email.templates.passwordReset.linkExpiry}}</p>
       </div>
     </div>
   `,
   text: `
-Password Reset Request
+{{i18n.email.templates.passwordReset.title}}
 
-Hi {{recipientName}},
+{{i18n.auth.login.greeting}}
 
-We received a request to reset your password.
+{{i18n.email.templates.passwordReset.intro}}
 
-{{#if passwordHint}}Your password hint: {{passwordHint}}{{/if}}
+{{#if passwordHint}}{{i18n.auth.register.passwordHint.label}}: {{passwordHint}}{{/if}}
 
-Click this link to reset your password:
+{{i18n.email.templates.passwordReset.clickButton}}
 {{resetLink}}
 
-If you didn't request this password reset, please ignore this email.
-Your password won't be changed unless you click the link above.
+{{i18n.email.templates.passwordReset.notRequested}}
 
-This link will expire in {{expiryHours}} hours for security reasons.
+{{i18n.email.templates.passwordReset.linkExpiry}}
   `,
   
   webhooks: {
@@ -92,8 +90,8 @@ This link will expire in {{expiryHours}} hours for security reasons.
  */
 export const verificationCodeTemplate: EmailTemplate = {
   id: 'email-verification',
-  name: 'Email Verification',
-  subject: 'Verify Your Email - Verification Code',
+  name: '{{i18n.email.templates.verificationCode.name}}',
+  subject: '{{i18n.email.templates.verificationCode.subject}}',
   description: 'Sent to verify a user\'s email address during registration',
   
   variables: [
@@ -103,15 +101,15 @@ export const verificationCodeTemplate: EmailTemplate = {
   ],
   html: `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <h2 style="color: #333; text-align: center;">Verify Your Email</h2>
+      <h2 style="color: #333; text-align: center;">{{i18n.email.templates.verificationCode.title}}</h2>
       
       <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
         <p style="font-size: 16px; margin-bottom: 15px;">
-          Hi {{recipientName}},
+          {{i18n.auth.login.greeting}}
         </p>
         
         <p style="font-size: 16px; margin-bottom: 20px;">
-          Thank you for registering! Please use the verification code below to complete your registration:
+          {{i18n.email.templates.verificationCode.useCode}}
         </p>
         
         <div style="background-color: #007bff; color: white; padding: 20px; border-radius: 5px; text-align: center; margin: 20px 0;">
@@ -121,33 +119,33 @@ export const verificationCodeTemplate: EmailTemplate = {
         </div>
         
         <p style="font-size: 14px; color: #666; text-align: center;">
-          This code will expire in {{expiryMinutes}} minutes
+          {{i18n.email.templates.verificationCode.codeExpiry}}
         </p>
         
         <p style="font-size: 14px; color: #666; margin-top: 20px;">
-          If you didn't create an account, please ignore this email.
+          {{i18n.email.templates.passwordReset.notRequested}}
         </p>
       </div>
       
       <div style="text-align: center; font-size: 12px; color: #888; margin-top: 30px;">
-        <p>Thank you for joining our storytelling community!</p>
+        <p>{{i18n.common.welcomeMessage}}</p>
       </div>
     </div>
   `,
   text: `
-Verify Your Email
+{{i18n.email.templates.verificationCode.title}}
 
-Hi {{recipientName}},
+{{i18n.auth.login.greeting}}
 
-Thank you for registering! Please use the verification code below to complete your registration:
+{{i18n.email.templates.verificationCode.useCode}}
 
-Verification Code: {{verificationCode}}
+{{i18n.email.templates.verificationCode.yourCode}} {{verificationCode}}
 
-This code will expire in {{expiryMinutes}} minutes.
+{{i18n.email.templates.verificationCode.codeExpiry}}
 
-If you didn't create an account, please ignore this email.
+{{i18n.email.templates.passwordReset.notRequested}}
 
-Thank you for joining our storytelling community!
+{{i18n.common.welcomeMessage}}
   `,
   
   webhooks: {
@@ -160,74 +158,75 @@ Thank you for joining our storytelling community!
  */
 export const welcomeEmailTemplate: EmailTemplate = {
   id: 'welcome',
-  name: 'Welcome Email',
-  subject: 'Welcome to Our Storytelling Platform!',
+  name: '{{i18n.email.templates.welcome.name}}',
+  subject: '{{i18n.email.templates.welcome.subject}}',
   description: 'Sent after successful user registration',
   
   variables: [
     'recipientName',
-    'loginLink'
+    'loginLink',
+    'appName'
   ],
   html: `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <h2 style="color: #333; text-align: center;">Welcome to Our Storytelling Platform!</h2>
+      <h2 style="color: #333; text-align: center;">{{i18n.email.templates.welcome.title}}</h2>
       
       <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
         <p style="font-size: 16px; margin-bottom: 15px;">
-          Hi {{recipientName}},
+          {{i18n.email.templates.welcome.greeting}}
         </p>
         
         <p style="font-size: 16px; margin-bottom: 15px;">
-          Welcome to our collaborative storytelling community! We're excited to have you here.
+          {{i18n.email.templates.welcome.accountCreated}} {{i18n.email.templates.welcome.readyToExplore}}
         </p>
         
-        <h3 style="color: #333; margin-top: 25px;">What you can do:</h3>
+        <h3 style="color: #333; margin-top: 25px;">{{i18n.home.features.title}}</h3>
         <ul style="font-size: 16px; line-height: 1.8;">
-          <li>Create and share your own stories</li>
-          <li>Collaborate with friends on roleplay adventures</li>
-          <li>Use AI to analyze characters and emotions</li>
-          <li>Generate voice narrations for your stories</li>
-          <li>Record custom voices for unique characters</li>
+          <li>{{i18n.home.features.createStories}}</li>
+          <li>{{i18n.home.features.collaborateRoleplay}}</li>
+          <li>{{i18n.home.features.analyzeCharacters}}</li>
+          <li>{{i18n.home.features.voiceNarration}}</li>
+          <li>{{i18n.home.features.recordVoices}}</li>
         </ul>
         
         {{#if loginLink}}
         <div style="text-align: center; margin: 30px 0;">
           <a href="{{loginLink}}" 
              style="background-color: #28a745; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-size: 16px; font-weight: bold;">
-            Start Creating Stories
+            {{i18n.email.templates.welcome.getStartedButton}}
           </a>
         </div>
         {{/if}}
         
         <p style="font-size: 14px; color: #666; margin-top: 20px;">
-          If you have any questions, feel free to reach out to our support team.
+          {{i18n.common.supportContact}}
         </p>
       </div>
       
       <div style="text-align: center; font-size: 12px; color: #888; margin-top: 30px;">
-        <p>Happy storytelling!</p>
+        <p>{{i18n.common.happyStorytelling}}</p>
       </div>
     </div>
   `,
   text: `
-Welcome to Our Storytelling Platform!
+{{i18n.email.templates.welcome.title}}
 
-Hi {{recipientName}},
+{{i18n.email.templates.welcome.greeting}}
 
-Welcome to our collaborative storytelling community! We're excited to have you here.
+{{i18n.email.templates.welcome.accountCreated}} {{i18n.email.templates.welcome.readyToExplore}}
 
-What you can do:
-- Create and share your own stories
-- Collaborate with friends on roleplay adventures
-- Use AI to analyze characters and emotions
-- Generate voice narrations for your stories
-- Record custom voices for unique characters
+{{i18n.home.features.title}}
+- {{i18n.home.features.createStories}}
+- {{i18n.home.features.collaborateRoleplay}}
+- {{i18n.home.features.analyzeCharacters}}
+- {{i18n.home.features.voiceNarration}}
+- {{i18n.home.features.recordVoices}}
 
-{{#if loginLink}}Start creating stories: {{loginLink}}{{/if}}
+{{#if loginLink}}{{i18n.email.templates.welcome.getStartedButton}}: {{loginLink}}{{/if}}
 
-If you have any questions, feel free to reach out to our support team.
+{{i18n.common.supportContact}}
 
-Happy storytelling!
+{{i18n.common.happyStorytelling}}
   `,
   
   webhooks: {
@@ -240,8 +239,8 @@ Happy storytelling!
  */
 export const twoFactorCodeTemplate: EmailTemplate = {
   id: 'two-factor',
-  name: 'Two-Factor Authentication',
-  subject: 'Your Two-Factor Authentication Code',
+  name: '{{i18n.email.templates.twoFactorCode.name}}',
+  subject: '{{i18n.email.templates.twoFactorCode.subject}}',
   description: 'Sent when user has two-factor authentication enabled',
   
   variables: [
@@ -251,15 +250,15 @@ export const twoFactorCodeTemplate: EmailTemplate = {
   ],
   html: `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <h2 style="color: #333; text-align: center;">Two-Factor Authentication</h2>
+      <h2 style="color: #333; text-align: center;">{{i18n.email.templates.twoFactorCode.title}}</h2>
       
       <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
         <p style="font-size: 16px; margin-bottom: 15px;">
-          Hi {{recipientName}},
+          {{i18n.auth.login.greeting}}
         </p>
         
         <p style="font-size: 16px; margin-bottom: 20px;">
-          Your two-factor authentication code is:
+          {{i18n.email.templates.twoFactorCode.codeText}}
         </p>
         
         <div style="background-color: #ffc107; color: #333; padding: 20px; border-radius: 5px; text-align: center; margin: 20px 0;">
@@ -269,31 +268,31 @@ export const twoFactorCodeTemplate: EmailTemplate = {
         </div>
         
         <p style="font-size: 14px; color: #666; text-align: center;">
-          This code will expire in {{expiryMinutes}} minutes
+          {{i18n.email.templates.twoFactorCode.validFor}}
         </p>
         
         <p style="font-size: 14px; color: #666; margin-top: 20px;">
-          If you didn't request this code, please secure your account immediately.
+          {{i18n.auth.twoFactor.notRequested}}
         </p>
       </div>
       
       <div style="text-align: center; font-size: 12px; color: #888; margin-top: 30px;">
-        <p>For security, never share this code with anyone.</p>
+        <p>{{i18n.auth.twoFactor.securityReminder}}</p>
       </div>
     </div>
   `,
   text: `
-Two-Factor Authentication
+{{i18n.email.templates.twoFactorCode.title}}
 
-Hi {{recipientName}},
+{{i18n.auth.login.greeting}}
 
-Your two-factor authentication code is: {{code}}
+{{i18n.email.templates.twoFactorCode.codeText}} {{code}}
 
-This code will expire in {{expiryMinutes}} minutes.
+{{i18n.email.templates.twoFactorCode.validFor}}
 
-If you didn't request this code, please secure your account immediately.
+{{i18n.auth.twoFactor.notRequested}}
 
-For security, never share this code with anyone.
+{{i18n.auth.twoFactor.securityReminder}}
   `,
   
   webhooks: {
@@ -306,71 +305,72 @@ For security, never share this code with anyone.
  */
 export const roleplayInvitationTemplate: EmailTemplate = {
   id: 'roleplay-invitation',
-  name: 'Roleplay Invitation',
-  subject: 'Roleplay Invitation: Play {{characterName}} in "{{storyTitle}}"',
+  name: '{{i18n.email.templates.roleplayInvitation.name}}',
+  subject: '{{i18n.email.templates.roleplayInvitation.subject}}',
   description: 'Sent when inviting someone to participate in a roleplay as a specific character',
   
   variables: [
     'recipientName',
     'senderName',
     'storyTitle',
+    'roleplayTitle',
     'characterName',
     'invitationLink'
   ],
   html: `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <h2 style="color: #333; text-align: center;">You're Invited to a Roleplay!</h2>
+      <h2 style="color: #333; text-align: center;">{{i18n.email.templates.roleplayInvitation.title}}</h2>
       
       <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
         <p style="font-size: 16px; margin-bottom: 15px;">
-          Hi {{recipientName}}!
+          {{i18n.email.templates.roleplayInvitation.greeting}}
         </p>
         
         <p style="font-size: 16px; margin-bottom: 15px;">
-          <strong>{{senderName}}</strong> has invited you to participate in a collaborative roleplay story!
+          {{i18n.email.templates.roleplayInvitation.inviteText}}
         </p>
         
         <div style="background-color: white; padding: 15px; border-radius: 5px; margin: 15px 0;">
-          <p style="margin: 0;"><strong>Story:</strong> {{storyTitle}}</p>
-          <p style="margin: 10px 0 0 0;"><strong>Your Character:</strong> {{characterName}}</p>
+          <p style="margin: 0;"><strong>{{i18n.story_library.labels.story}}:</strong> {{storyTitle}}</p>
+          <p style="margin: 10px 0 0 0;"><strong>{{i18n.email.templates.roleplayInvitation.roleInfo}}</strong></p>
         </div>
         
         <p style="font-size: 16px; margin-bottom: 20px;">
-          Click the button below to join the roleplay and record your character's voice for the story!
+          {{i18n.collaboration.invitation.clickToJoin}}
         </p>
         
         <div style="text-align: center; margin: 30px 0;">
           <a href="{{invitationLink}}" 
              style="background-color: #007bff; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-size: 16px; font-weight: bold;">
-            Join Roleplay as {{characterName}}
+            {{i18n.email.templates.roleplayInvitation.joinButton}}
           </a>
         </div>
         
         <p style="font-size: 14px; color: #666; margin-top: 20px;">
-          If the button doesn't work, copy and paste this link into your browser:<br>
+          {{i18n.auth.forgotPassword.linkOrButton}}<br>
           <a href="{{invitationLink}}">{{invitationLink}}</a>
         </p>
       </div>
       
       <div style="text-align: center; font-size: 12px; color: #888; margin-top: 30px;">
-        <p>This is an automated invitation from our storytelling platform.</p>
+        <p>{{i18n.email.templates.roleplayInvitation.linkExpiry}}</p>
       </div>
     </div>
   `,
   text: `
-You're Invited to a Roleplay!
+{{i18n.email.templates.roleplayInvitation.title}}
 
-Hi {{recipientName}}!
+{{i18n.email.templates.roleplayInvitation.greeting}}
 
-{{senderName}} has invited you to participate in a collaborative roleplay story!
+{{i18n.email.templates.roleplayInvitation.inviteText}}
 
-Story: {{storyTitle}}
-Your Character: {{characterName}}
+{{i18n.story_library.labels.story}}: {{storyTitle}}
+{{i18n.email.templates.roleplayInvitation.roleInfo}}
 
-Click this link to join the roleplay and record your character's voice:
+{{i18n.collaboration.invitation.clickToJoin}}
 {{invitationLink}}
 
-Thank you for participating in our storytelling community!
+{{i18n.common.thankYou}}
   `,
   
   webhooks: {
