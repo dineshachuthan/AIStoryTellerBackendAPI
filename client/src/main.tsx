@@ -1,9 +1,9 @@
 import { createRoot } from "react-dom/client";
-import App from "./App";
+import SimpleApp from "./SimpleApp";
 import "./index.css";
 import * as serviceWorkerRegistration from "./serviceWorkerRegistration";
 
-createRoot(document.getElementById("root")!).render(<App />);
+createRoot(document.getElementById("root")!).render(<SimpleApp />);
 
 // Register service worker for PWA functionality
 serviceWorkerRegistration.register({

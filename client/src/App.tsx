@@ -38,6 +38,7 @@ import OAuthTest from "@/pages/oauth-test";
 import StoryNarration from "@/pages/StoryNarration";
 import AdminNarration from "@/pages/admin/narration";
 import PricingPage from "@/pages/pricing";
+import Test from "@/pages/test";
 
 
 
@@ -55,7 +56,8 @@ function AppContent() {
     };
   }, [isAuthenticated]);
 
-
+  // Debug: Log auth state
+  console.log('Auth state:', { isAuthenticated, isLoading });
 
   if (isLoading) {
     return (
@@ -74,6 +76,7 @@ function AppContent() {
         <Toaster />
         <PWAUpdateNotification />
         <Switch>
+          <Route path="/test" component={Test} />
           <Route path="/login" component={Login} />
           <Route path="/register" component={Register} />
           <Route path="/oauth-test" component={OAuthTest} />
@@ -82,7 +85,6 @@ function AppContent() {
           <Route path="/invitations/roleplay/:token" component={RoleplayInvitationLanding} />
           {isAuthenticated ? (
             <>
-
               {/* Top Navigation for all authenticated pages except Home */}
               <Route path="/" component={Home} />
               <Route path="/stories" component={StoryLibrary} />
@@ -108,7 +110,10 @@ function AppContent() {
               <Route component={NotFound} />
             </>
           ) : (
-            <Route path="*" component={Login} />
+            <>
+              <Route path="/" component={Login} />
+              <Route path="*" component={Login} />
+            </>
           )}
         </Switch>
       </div>
