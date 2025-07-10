@@ -233,7 +233,8 @@ This is a full-stack collaborative storytelling platform that enables users to c
 ### Communication Services
 - **MailGun**: Primary email provider (priority 1) with domain-based configuration
 - **SendGrid**: Secondary email provider (priority 2) as fallback
-- **Twilio**: SMS delivery for mobile notifications
+- **Twilio**: SMS/WhatsApp delivery with sandbox support (priority 2)
+- **MessageBird**: SMS/WhatsApp delivery with business API support (priority 1)
 
 ### Video Generation
 - **RunwayML**: Primary video generation provider

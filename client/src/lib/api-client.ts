@@ -305,6 +305,12 @@ export class ApiClient {
       this.request<{ success: boolean; messageId?: string; status?: string; error?: string }>('POST', '/api/send-whatsapp', data),
   };
 
+  // Unified messaging endpoint (provider-agnostic)
+  messaging = {
+    send: (data: { to: string; message: string; channel: 'sms' | 'whatsapp' }) =>
+      this.request<{ success: boolean; messageId?: string; status?: string; error?: string }>('POST', '/api/send-message', data),
+  };
+
   // Payment endpoints
   payment = {
     getConfig: () => this.request<any>('GET', '/api/payment/config'),

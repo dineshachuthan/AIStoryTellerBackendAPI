@@ -5,6 +5,7 @@
 
 import { ISMSProvider, SMSMessage, SMSSendResult, SMSProviderConfig } from './sms-provider-interface';
 import { TwilioSMSProvider } from './twilio-sms-provider';
+import { MessageBirdSMSProvider } from './messagebird-sms-provider';
 
 export class SMSProviderRegistry {
   private providers: Map<string, ISMSProvider> = new Map();
@@ -32,7 +33,7 @@ export class SMSProviderRegistry {
         accountSid: process.env.TWILIO_ACCOUNT_SID,
         authToken: process.env.TWILIO_AUTH_TOKEN,
         fromNumber: process.env.TWILIO_PHONE_NUMBER,
-        priority: 1
+        priority: parseInt(process.env.TWILIO_PRIORITY || '2', 10)
       });
       
       try {
@@ -41,6 +42,24 @@ export class SMSProviderRegistry {
         console.log('[SMSRegistry] Twilio provider registered');
       } catch (error) {
         console.error('[SMSRegistry] Failed to initialize Twilio provider:', error);
+      }
+    }
+
+    // Auto-register MessageBird if credentials are available
+    if (process.env.MESSAGEBIRD_API_KEY) {
+      const messagebirdProvider = new MessageBirdSMSProvider({
+        apiKey: process.env.MESSAGEBIRD_API_KEY,
+        fromNumber: process.env.MESSAGEBIRD_PHONE_NUMBER,
+        whatsappChannelId: process.env.MESSAGEBIRD_WHATSAPP_CHANNEL_ID,
+        priority: parseInt(process.env.MESSAGEBIRD_PRIORITY || '1', 10)
+      });
+      
+      try {
+        await messagebirdProvider.initialize();
+        this.registerProvider('messagebird', messagebirdProvider);
+        console.log('[SMSRegistry] MessageBird provider registered');
+      } catch (error) {
+        console.error('[SMSRegistry] Failed to initialize MessageBird provider:', error);
       }
     }
 

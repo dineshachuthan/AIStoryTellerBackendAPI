@@ -36,6 +36,7 @@ import { cacheInvalidationService } from "./cache-invalidation-service";
 import swaggerUi from 'swagger-ui-express';
 import { generateOpenAPISpec } from './openapi-generator';
 import { smsProviderRegistry } from './sms-providers/sms-provider-registry';
+import { SMSMessage } from './sms-providers/sms-provider-interface';
 
 import multer from "multer";
 import path from "path";
@@ -7129,6 +7130,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Unified message endpoint (provider-agnostic)
+  app.post('/api/send-message', requireAuth, async (req, res) => {
+    try {
+      const { to, message, channel } = req.body;
+      
+      if (!to || !message || !channel) {
+        return res.status(400).json({ 
+          success: false,
+          error: 'Missing required fields: to, message, and channel' 
+        });
+      }
+
+      if (!['sms', 'whatsapp'].includes(channel)) {
+        return res.status(400).json({ 
+          success: false,
+          error: 'Invalid channel. Must be "sms" or "whatsapp"' 
+        });
+      }
+
+      console.log(`📨 Unified message request:`, { to, channel, messageLength: message.length });
+
+      // Create message object with channel info
+      const messageObj: SMSMessage & { channel?: string } = {
+        to,
+        message,
+        channel
+      };
+
+      // Send through provider registry (provider will handle channel routing)
+      const result = await smsProviderRegistry.sendSMS(messageObj);
+
+      console.log(`📨 Message result:`, result);
+
+      res.json(result);
+    } catch (error) {
+      console.error('Unified message send error:', error);
+      res.status(500).json({ 
+        success: false,
+        error: 'Failed to send message',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // Test email endpoint (for development)
   app.post('/api/test/email', async (req, res) => {
     try {
@@ -7177,6 +7222,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ 
         error: 'Failed to send test email',
         details: error.message 
+      });
+    }
+  });
+
+  // Send email endpoint - provider-agnostic email sending
+  app.post('/send-email', async (req, res) => {
+    try {
+      const { to, subject, text } = req.body;
+
+      // Validate required fields
+      if (!to || !subject || !text) {
+        return res.status(400).json({ 
+          message: 'Missing required fields: to, subject, and text are required' 
+        });
+      }
+
+      // Get active email provider from registry
+      const provider = emailProviderRegistry.getActiveProvider();
+      if (!provider) {
+        return res.status(503).json({ 
+          message: 'No email provider available' 
+        });
+      }
+
+      console.log(`📧 Sending email via ${provider.getName()}:`, { to, subject });
+
+      // Send email using the active provider (MailGun or SendGrid)
+      const result = await provider.sendEmail({
+        to,
+        from: provider.getConfig().fromEmail,
+        subject,
+        text,
+        html: `<p>${text.replace(/\n/g, '<br>')}</p>` // Simple text to HTML conversion
+      });
+
+      if (result.success) {
+        console.log(`✅ Email sent successfully via ${provider.getName()}:`, {
+          messageId: result.messageId,
+          provider: provider.getName()
+        });
+        res.json({ 
+          success: true,
+          messageId: result.messageId,
+          provider: provider.getName()
+        });
+      } else {
+        console.error(`❌ Failed to send email via ${provider.getName()}:`, result.error);
+        res.status(500).json({ 
+          success: false,
+          error: result.error,
+          provider: provider.getName()
+        });
+      }
+    } catch (error: any) {
+      console.error('Email sending error:', error);
+      res.status(500).json({ 
+        success: false,
+        error: error.message || 'Failed to send email'
       });
     }
   });
