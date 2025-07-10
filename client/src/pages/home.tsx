@@ -101,7 +101,8 @@ export default function Home() {
       
       const story = await apiClient.stories.create({
         title: getMessage('home.story_defaults.untitled_story', {}, language),
-        storyType
+        storyType,
+        content: '' // Empty content for draft stories
       });
 
       console.log('Empty story created:', story);
