@@ -14,8 +14,8 @@ import { useLocation } from "wouter";
 import { Search, Play, Heart, Clock, Users, Filter } from "lucide-react";
 import { AppTopNavigation } from "@/components/app-top-navigation";
 import { formatDistanceToNow } from "date-fns";
-import type { Story } from "@shared/schema";
-import { getAllGenres, getAllEmotionalTags, getAllMoods, getGenreLabel, getEmotionalTagLabel, getMoodLabel } from "@shared/storyGenres";
+import type { Story } from '@shared/schema/schema';
+import { getAllGenres, getAllEmotionalTags, getAllMoods, getGenreLabel, getEmotionalTagLabel, getMoodLabel } from '@shared/constants/storyGenres';
 
 // NEW: Import the API client and custom hooks
 import { apiClient } from "@/lib/api-client";

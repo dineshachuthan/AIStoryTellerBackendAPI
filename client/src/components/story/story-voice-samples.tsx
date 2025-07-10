@@ -11,9 +11,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { Mic, Volume2, Users, Zap, DollarSign, Clock, AlertCircle, Radio, Lock, CheckCircle, Unlock, Save, Play } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { EnhancedVoiceRecorder } from "@/components/ui/enhanced-voice-recorder";
-import { AUDIO_PROCESSING_CONFIG } from "@shared/audio-config";
-import { VoiceMessageService } from "@shared/i18n-config";
-import { VOICE_RECORDING_CONFIG } from "@shared/voice-recording-config";
+import { AUDIO_PROCESSING_CONFIG } from '@shared/config/audio-config';
+import { VoiceMessageService } from '@shared/config/i18n-config';
+import { VOICE_RECORDING_CONFIG } from '@shared/config/voice-recording-config';
 
 // Helper function to get audio duration from blob
 const getAudioDuration = (audioBlob: Blob): Promise<number> => {

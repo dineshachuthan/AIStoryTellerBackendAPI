@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { CharacterCard } from "./character-card";
 import { apiRequest } from "@/lib/queryClient";
-import type { Character } from "@shared/schema";
+import type { Character } from '@shared/schema/schema';
 
 export function CharacterFeed() {
   const [, setLocation] = useLocation();

@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { Link, useLocation } from 'wouter';
 import { useMutation } from '@tanstack/react-query';
 import { useLanguage } from '@/contexts/language-context';
-import { UIMessages } from '@shared/i18n-config';
+import { UIMessages } from '@shared/config/i18n-config';
 import { apiClient } from '@/lib/api-client';
 import { toast } from '@/lib/toast-utils';
 import { toastMessages } from '@/lib/toast-utils';

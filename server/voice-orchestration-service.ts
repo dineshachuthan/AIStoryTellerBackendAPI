@@ -8,7 +8,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import _ from 'lodash';
 import { db } from './db';
-import { userVoiceProfiles, stories, storyAnalyses } from '@shared/schema';
+import { userVoiceProfiles, stories, storyAnalyses } from '@shared/schema/schema';
 import { eq, and, isNotNull } from 'drizzle-orm';
 
 interface VoiceStyle {

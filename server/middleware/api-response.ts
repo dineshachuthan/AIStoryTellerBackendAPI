@@ -9,7 +9,7 @@ import {
   createErrorFromException,
   ErrorCodes,
   ApiResponse 
-} from '../../shared/api-response';
+} from '../../shared/types/api-response';
 
 // Extend Express Response type to include our helper methods
 declare global {

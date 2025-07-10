@@ -12,7 +12,7 @@ import {
   type SceneBackground, type InsertSceneBackground,
   type VideoGenerationJob, type InsertVideoGenerationJob,
   type VersionLineage, type InsertVersionLineage
-} from "@shared/schema";
+} from '@shared/schema/schema';
 import { db } from "./db";
 import { eq, and, desc } from "drizzle-orm";
 import crypto from "crypto";

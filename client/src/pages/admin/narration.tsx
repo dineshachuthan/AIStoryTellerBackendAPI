@@ -11,7 +11,7 @@ import { AudioLines, Play, Pause, RotateCcw, Settings, BookOpen } from "lucide-r
 import { apiClient } from "@/lib/api-client";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
-import { getMessage } from "@shared/i18n-hierarchical";
+import { getMessage } from '@shared/utils/i18n-hierarchical';
 import { SimpleAudioPlayer } from "@/components/ui/simple-audio-player";
 
 const CONVERSATION_STYLES = [

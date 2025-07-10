@@ -10,7 +10,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Mic, Play, StopCircle, CheckCircle2, Circle, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { GLOBAL_EMOTION_SAMPLES, VOICE_TYPES, MIN_SAMPLES_FOR_VOICE } from '@shared/ephemeral-voice-config';
+import { GLOBAL_EMOTION_SAMPLES, VOICE_TYPES, MIN_SAMPLES_FOR_VOICE } from '@shared/config/ephemeral-voice-config';
 import { apiRequest } from '@/lib/queryClient';
 import { VoiceProgressTracker } from '@/components/VoiceProgressTracker';
 import { apiClient } from '@/lib/api-client';

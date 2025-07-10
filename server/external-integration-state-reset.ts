@@ -6,7 +6,7 @@
  */
 
 import { db } from './db';
-import { userVoiceProfiles } from '@shared/schema';
+import { userVoiceProfiles } from '@shared/schema/schema';
 import { eq } from 'drizzle-orm';
 
 export interface StateResetOptions {

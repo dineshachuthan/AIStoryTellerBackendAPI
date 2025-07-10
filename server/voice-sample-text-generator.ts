@@ -5,7 +5,7 @@
 
 import OpenAI from 'openai';
 import { storage } from './storage';
-import { VOICE_RECORDING_CONFIG } from '@shared/voice-recording-config';
+import { VOICE_RECORDING_CONFIG } from '@shared/config/voice-recording-config';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 

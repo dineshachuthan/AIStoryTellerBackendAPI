@@ -5,7 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Mic, Play, Pause, CheckCircle, RotateCcw, Volume2, Save, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { VOICE_RECORDING_CONFIG } from '@shared/voice-recording-config';
+import { VOICE_RECORDING_CONFIG } from '@shared/config/voice-recording-config';
 // Toast removed - using in-card status messages
 
 export interface VoiceTemplate {

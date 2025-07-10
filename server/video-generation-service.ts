@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { characterAssets, videoGenerations, storyScenes, aiAssetCache, stories } from "@shared/schema";
+import { characterAssets, videoGenerations, storyScenes, aiAssetCache, stories } from '@shared/schema/schema';
 import { eq, and, desc, lt } from "drizzle-orm";
 import { analyzeStoryContent, generateCharacterImage } from "./ai-analysis";
 import { audioService } from "./audio-service";

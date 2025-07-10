@@ -4,7 +4,7 @@
  */
 
 import { BaseVoiceProvider, VoiceSample, VoiceCloneRequest, VoiceGenerationRequest, AudioResult, VoiceCloneResult, VoiceProviderCapabilities, VoiceProviderStatus } from './base-voice-provider';
-import { getEmotionConfig } from '@shared/voice-config';
+import { getEmotionConfig } from '@shared/config/voice-config';
 
 // Voice Training Types
 export interface VoiceTrainingOptions {

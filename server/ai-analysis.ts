@@ -1,6 +1,6 @@
 import { getOpenAICachedProvider } from './cache/openai-cached-provider';
-import { AUDIO_FORMAT_CONFIG, AUDIO_PROCESSING_CONFIG } from '@shared/audio-config';
-import { VOICE_RECORDING_CONFIG } from '@shared/voice-recording-config';
+import { AUDIO_FORMAT_CONFIG, AUDIO_PROCESSING_CONFIG } from '@shared/config/audio-config';
+import { VOICE_RECORDING_CONFIG } from '@shared/config/voice-recording-config';
 import { storage } from "./storage";
 import { createHash } from 'crypto';
 import fs from 'fs/promises';

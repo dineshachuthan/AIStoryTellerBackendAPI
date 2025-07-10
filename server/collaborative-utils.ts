@@ -3,7 +3,7 @@ import {
   validateMediaFile, 
   canUserPerformAction,
   getNotificationTemplate 
-} from "@shared/collaborative-config";
+} from '@shared/config/collaborative-config';
 
 /**
  * Modular validation utilities for collaborative roleplay

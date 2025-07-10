@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
 import { storage } from './storage';
-import type { Story, StoryCharacter, StoryEmotion } from '@shared/schema';
+import type { Story, StoryCharacter, StoryEmotion } from '@shared/schema/schema';
 
 if (!process.env.OPENAI_API_KEY) {
   throw new Error('OPENAI_API_KEY environment variable is required for voice narration');

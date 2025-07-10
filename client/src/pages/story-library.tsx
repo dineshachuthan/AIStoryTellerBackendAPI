@@ -38,7 +38,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { AppTopNavigation } from "@/components/app-top-navigation";
 import { apiRequest } from "@/lib/queryClient";
-import { UIMessages, getDynamicMessage } from "@shared/i18n-config";
+import { UIMessages, getDynamicMessage } from '@shared/config/i18n-config';
 import { InviteCollaboratorsDialog } from "@/components/invite-collaborators-dialog";
 import { apiClient } from "@/lib/api-client";
 import { useStories } from "@/hooks/use-api";

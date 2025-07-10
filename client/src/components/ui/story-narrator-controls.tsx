@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Headphones, Play, Pause, Save, Download, Loader2, RefreshCw, SkipBack, SkipForward, Volume2, Check } from 'lucide-react';
 import { toast } from '@/lib/toast-utils';
 import { apiRequest, queryClient } from '@/lib/queryClient';
-import { getMessage } from '@shared/i18n-hierarchical';
+import { getMessage } from '@shared/utils/i18n-hierarchical';
 import {
   Select,
   SelectContent,

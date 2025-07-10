@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { requireAuth } from "./auth";
 import { videoGenerationService } from "./video-generation-service";
-import { insertCharacterAssetSchema, insertVideoGenerationSchema, videoGenerations } from "@shared/schema";
+import { insertCharacterAssetSchema, insertVideoGenerationSchema, videoGenerations } from '@shared/schema/schema';
 import { db } from "./db";
 import { and, eq, desc } from "drizzle-orm";
 import { z } from "zod";

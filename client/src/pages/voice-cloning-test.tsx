@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { VoiceMessageService } from "@shared/i18n-config";
+import { VoiceMessageService } from '@shared/config/i18n-config';
 import { Zap, AlertCircle, CheckCircle, Clock, Loader2 } from "lucide-react";
 
 export default function VoiceCloningTest() {

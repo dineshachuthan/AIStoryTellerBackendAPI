@@ -3,7 +3,7 @@
  * These helpers are only used by the server to create standardized responses
  */
 
-import type { ApiSuccessResponse, ApiErrorResponse, ErrorCodes } from '@shared/api-types';
+import type { ApiSuccessResponse, ApiErrorResponse, ErrorCodes } from '@shared/types/api-types';
 
 /**
  * Helper to create success response

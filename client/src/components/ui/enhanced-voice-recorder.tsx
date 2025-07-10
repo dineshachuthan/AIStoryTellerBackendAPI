@@ -8,8 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { AUDIO_PROCESSING_CONFIG } from "../../../../shared/audio-config";
 import { apiRequest } from "@/lib/queryClient";
-import { UIMessages } from "@shared/i18n-config";
-import { VOICE_RECORDING_CONFIG } from "@shared/voice-recording-config";
+import { UIMessages } from '@shared/config/i18n-config';
+import { VOICE_RECORDING_CONFIG } from '@shared/config/voice-recording-config';
 
 interface EnhancedVoiceRecorderProps {
   onRecordingComplete?: (audioBlob: Blob, audioUrl: string) => void;

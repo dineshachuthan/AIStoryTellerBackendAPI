@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Language, LANGUAGE_CONFIG } from '@shared/language-config';
+import { Language, LANGUAGE_CONFIG } from '@shared/config/language-config';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
 import { apiClient } from '@/lib/api-client';

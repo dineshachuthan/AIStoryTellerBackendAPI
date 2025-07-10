@@ -6,7 +6,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { LogOut, User, Home, BookOpen, Globe } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useLanguage } from "@/contexts/language-context";
-import { LANGUAGE_CONFIG } from "@shared/language-config";
+import { LANGUAGE_CONFIG } from '@shared/config/language-config';
 
 export function AppTopNavigation() {
   const [, setLocation] = useLocation();

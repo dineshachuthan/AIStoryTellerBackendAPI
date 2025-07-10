@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import type { InsertCharacter } from "@shared/schema";
+import type { InsertCharacter } from '@shared/schema/schema';
 
 export function useCharacters() {
   return useQuery({

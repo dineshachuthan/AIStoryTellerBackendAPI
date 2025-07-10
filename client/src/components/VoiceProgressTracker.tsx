@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Progress } from '@/components/ui/progress';
-import { VOICE_TYPES, MIN_SAMPLES_FOR_VOICE } from '@shared/ephemeral-voice-config';
+import { VOICE_TYPES, MIN_SAMPLES_FOR_VOICE } from '@shared/config/ephemeral-voice-config';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useState } from 'react';
 

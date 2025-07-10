@@ -4,7 +4,7 @@
  * Handles standardized response format and error handling
  */
 
-import { ApiResponse, ApiSuccessResponse, ApiErrorResponse, ErrorObject } from '@shared/api-response';
+import { ApiResponse, ApiSuccessResponse, ApiErrorResponse, ErrorObject } from '@shared/types/api-response';
 import { queryClient } from './queryClient';
 
 export class ApiError extends Error {

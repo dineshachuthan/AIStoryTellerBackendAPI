@@ -8,7 +8,7 @@ import { toast, toastMessages } from "@/lib/toast-utils";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
 import { Mail, Phone, Send, Plus, X, Copy, CheckCircle } from "lucide-react";
-import type { Story, StoryCharacter } from "@shared/schema";
+import type { Story, StoryCharacter } from '@shared/schema/schema';
 
 interface InviteCollaboratorsDialogProps {
   open: boolean;

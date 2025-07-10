@@ -13,7 +13,7 @@ import * as os from 'os';
 import { BaseVoiceProvider } from './base-voice-provider';
 import { VoiceProviderConfig, VoiceTrainingRequest, VoiceTrainingResult } from './provider-manager';
 import { ExternalIntegrationStateReset } from '../external-integration-state-reset';
-import { AUDIO_FORMAT_CONFIG, AUDIO_PROCESSING_CONFIG } from '@shared/audio-config';
+import { AUDIO_FORMAT_CONFIG, AUDIO_PROCESSING_CONFIG } from '@shared/config/audio-config';
 import { detectAudioFormat } from '../ai-analysis';
 
 export class ElevenLabsModule extends BaseVoiceProvider {

@@ -1,7 +1,7 @@
 // Service to initialize and manage reusable character archetypes for consistent voice assignment
 import { db } from './db';
-import { characterArchetypes, emotionVoiceProfiles, userCharacterPreferences } from '@shared/schema';
-import type { InsertCharacterArchetype, InsertEmotionVoiceProfile } from '@shared/schema';
+import { characterArchetypes, emotionVoiceProfiles, userCharacterPreferences } from '@shared/schema/schema';
+import type { InsertCharacterArchetype, InsertEmotionVoiceProfile } from '@shared/schema/schema';
 import { eq, and, sql } from 'drizzle-orm';
 
 // Comprehensive character archetypes with voice assignments

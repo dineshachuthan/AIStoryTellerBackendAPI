@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Heart, MessageCircle, Share2, Star } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import type { Character } from "@shared/schema";
+import type { Character } from '@shared/schema/schema';
 
 interface CharacterCardProps {
   character: Character;

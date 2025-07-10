@@ -6,7 +6,7 @@
 
 import { drizzle } from 'drizzle-orm/neon-http';
 import { neon } from '@neondatabase/serverless';
-import * as schema from '@shared/schema';
+import * as schema from '@shared/schema/schema';
 import { eq, desc } from 'drizzle-orm';
 import fs from 'fs/promises';
 import path from 'path';

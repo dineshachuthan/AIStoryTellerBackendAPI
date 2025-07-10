@@ -1,5 +1,5 @@
 import { apiRequest } from "./queryClient";
-import type { Character, InsertCharacter, Conversation, Message } from "@shared/schema";
+import type { Character, InsertCharacter, Conversation, Message } from '@shared/schema/schema';
 
 export const api = {
   // Characters

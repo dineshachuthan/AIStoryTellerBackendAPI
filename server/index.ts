@@ -9,7 +9,7 @@ import { VoiceProviderRegistry } from "./voice-providers/provider-manager";
 import { getVoiceConfig } from "./voice-config";
 import referenceDataRoutes from "./routes-reference-data";
 import { registerVoiceProfileRoutes } from "./routes-voice-profile";
-import { stateManager } from "../shared/state-manager";
+import { stateManager } from "../shared/utils/state-manager";
 import { createApiExclusionPlugin } from "./vite-api-exclusion-plugin";
 
 const app = express();

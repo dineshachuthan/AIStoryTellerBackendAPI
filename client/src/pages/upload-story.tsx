@@ -13,8 +13,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
 import { toast, toastMessages } from "@/lib/toast-utils";
-import { UIMessages } from "@shared/i18n-config";
-import { getMessage } from "@shared/i18n-hierarchical";
+import { UIMessages } from '@shared/config/i18n-config';
+import { getMessage } from '@shared/utils/i18n-hierarchical';
 
 export default function UploadStory() {
   const [, setLocation] = useLocation();

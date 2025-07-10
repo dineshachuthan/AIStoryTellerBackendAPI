@@ -2,7 +2,7 @@ import { collaborativeRoleplayStorage } from "./collaborative-roleplay-storage";
 import { storage } from "./storage";
 import { generateRolePlayAnalysis } from "./roleplay-analysis";
 import type { RolePlayAnalysis } from "./roleplay-analysis";
-import type { Story } from "@shared/schema";
+import type { Story } from '@shared/schema/schema';
 
 export interface TemplateConversionResult {
   templateId: number;

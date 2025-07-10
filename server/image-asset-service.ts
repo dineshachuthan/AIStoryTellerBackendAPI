@@ -2,7 +2,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import crypto from 'crypto';
 import { db } from './db';
-import { characterAssets } from '@shared/schema';
+import { characterAssets } from '@shared/schema/schema';
 import { eq } from 'drizzle-orm';
 
 export interface ImageAssetInfo {

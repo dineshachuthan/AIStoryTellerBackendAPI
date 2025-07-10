@@ -7,7 +7,7 @@ import { requireAuth } from './auth';
 import { storage } from './storage';
 import { voiceOrchestrationService } from './voice-orchestration-service';
 import { db } from './db';
-import { userVoiceProfiles } from '@shared/schema';
+import { userVoiceProfiles } from '@shared/schema/schema';
 import { eq, and } from 'drizzle-orm';
 
 export function registerVoiceProfileRoutes(app: Express) {

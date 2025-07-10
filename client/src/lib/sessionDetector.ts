@@ -1,4 +1,4 @@
-import type { DeviceInfo, BrowserInfo, NetworkInfo, UserSessionMetadata } from '@shared/userSession';
+import type { DeviceInfo, BrowserInfo, NetworkInfo, UserSessionMetadata } from '@shared/types/userSession';
 
 export class SessionMetadataDetector {
   private static instance: SessionMetadataDetector;

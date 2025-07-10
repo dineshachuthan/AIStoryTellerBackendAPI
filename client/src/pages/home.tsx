@@ -13,8 +13,8 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { apiClient } from "@/lib/api-client";
 import { useStories } from "@/hooks/use-api";
-import { defaultStoryConfig } from "@shared/storyConfig";
-import { getMessage } from "@shared/i18n-hierarchical";
+import { defaultStoryConfig } from '@shared/config/storyConfig';
+import { getMessage } from '@shared/utils/i18n-hierarchical';
 import { formatDistanceToNow } from "date-fns";
 import { useLanguage } from "@/contexts/language-context";
 

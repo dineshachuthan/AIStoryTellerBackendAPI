@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { db } from "./db";
-import { videoGenerations } from "@shared/schema";
+import { videoGenerations } from '@shared/schema/schema';
 import { eq } from "drizzle-orm";
 import { videoCallbackManager } from "./video-callback-manager";
 

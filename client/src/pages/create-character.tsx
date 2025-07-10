@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { insertCharacterSchema } from "@shared/schema";
+import { insertCharacterSchema } from '@shared/schema/schema';
 import { X, Camera } from "lucide-react";
 
 const categories = ["Fantasy", "Sci-Fi", "Romance", "Adventure", "Mentor", "Comedy"];

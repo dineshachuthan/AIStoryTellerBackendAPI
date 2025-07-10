@@ -6,7 +6,7 @@ import { buildInvitationUrl } from "./invitation-url-builder";
 import { notificationService } from "./notification-service";
 import { storage } from "./storage";
 import { db, pool } from "./db";
-import { storyInvitations, stories, users } from "@shared/schema";
+import { storyInvitations, stories, users } from '@shared/schema/schema';
 import { eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
 

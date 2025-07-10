@@ -7,7 +7,7 @@
 import { BaseMicroserviceAdapter } from "./base-microservice-adapter";
 import { storage } from "../storage-postgres";
 import express from "express";
-import type { User, InsertUser, UpsertUser } from "@shared/schema";
+import type { User, InsertUser, UpsertUser } from '@shared/schema/schema';
 
 export class IdentityServiceAdapter extends BaseMicroserviceAdapter {
   private app: express.Application;
@@ -216,5 +216,5 @@ export class IdentityServiceAdapter extends BaseMicroserviceAdapter {
 }
 
 // Import required dependencies
-import { userProviders, sessions } from "@shared/schema";
+import { userProviders, sessions } from '@shared/schema/schema';
 import { eq } from "drizzle-orm";

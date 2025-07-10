@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Character, Invitation } from "@shared/types";
+import { Character, Invitation } from '@shared/types/types';
 import { User, Mail, Phone, Send } from "lucide-react";
 
 interface CharacterCardProps {

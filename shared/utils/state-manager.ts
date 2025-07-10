@@ -4,10 +4,10 @@
  */
 
 import { eq, and } from "drizzle-orm";
-import { db } from "../server/db";
-import { appStates, stateTransitions } from "./schema";
-import type { StateType, StateDefinition, StateTransition } from "./state-config";
-import { DEFAULT_STATE_DEFINITIONS, DEFAULT_STATE_TRANSITIONS } from "./state-config";
+import { db } from "../../server/db";
+import { appStates, stateTransitions } from "../schema/schema";
+import type { StateType, StateDefinition, StateTransition } from "../config/state-config";
+import { DEFAULT_STATE_DEFINITIONS, DEFAULT_STATE_TRANSITIONS } from "../config/state-config";
 
 export interface ValidationResult {
   isValid: boolean;

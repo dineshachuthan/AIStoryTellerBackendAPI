@@ -1,7 +1,7 @@
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import { eq, and, desc, asc } from 'drizzle-orm';
 import { pool, withRetry } from './db';
-import { stories } from '@shared/schema';
+import { stories } from '@shared/schema/schema';
 import {
   rolePlayProjects,
   rolePlayScenes,
@@ -18,7 +18,7 @@ import {
   type InsertRolePlayScene,
   type InsertRolePlayCharacter,
   type InsertRolePlayDialogue,
-} from '@shared/roleplay-schema';
+} from '@shared/schema/roleplay-schema';
 
 const rpDb = drizzle({ client: pool, schema: {
   stories,

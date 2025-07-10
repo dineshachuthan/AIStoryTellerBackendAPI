@@ -1,5 +1,5 @@
 import { toast as toastFn } from "@/hooks/use-toast";
-import { getMessage } from "@shared/i18n-hierarchical";
+import { getMessage } from '@shared/utils/i18n-hierarchical';
 
 /**
  * Unified toast utility with consistent defaults

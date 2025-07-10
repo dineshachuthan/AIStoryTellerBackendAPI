@@ -5,11 +5,11 @@
  */
 
 import { db } from './db';
-import { userEsmRecordings } from '@shared/schema';
+import { userEsmRecordings } from '@shared/schema/schema';
 import { eq, and, gte } from 'drizzle-orm';
 import { ElevenLabsVoiceCloning } from './elevenlabs-voice-cloning';
-import { VOICE_TYPES, MIN_SAMPLES_FOR_VOICE, VOICE_CLEANUP_CONFIG } from '@shared/ephemeral-voice-config';
-import { voiceIdCleanup } from '@shared/schema';
+import { VOICE_TYPES, MIN_SAMPLES_FOR_VOICE, VOICE_CLEANUP_CONFIG } from '@shared/config/ephemeral-voice-config';
+import { voiceIdCleanup } from '@shared/schema/schema';
 
 interface VoiceCreationResult {
   voiceId: string | null;

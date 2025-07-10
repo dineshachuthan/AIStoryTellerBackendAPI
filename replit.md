@@ -306,6 +306,14 @@ This is a full-stack collaborative storytelling platform that enables users to c
    - Provider-specific: Within provider folder (e.g., `/server/external-providers/ai/openai/openai-cached-provider.ts`)
    - Base classes: `/server/cache/`
 
+6. **Shared Folder Organization (UPDATED - July 10, 2025)**
+   - Configuration files: `/shared/config/` (i18n-config.ts, language-config.ts, state-config.ts, etc.)
+   - Database schemas: `/shared/schema/` (schema.ts and related files)
+   - Type definitions: `/shared/types/` (api-response.ts, api-types.ts, etc.)
+   - Constants: `/shared/constants/` (audio-config.ts, ephemeral-voice-config.ts, etc.)
+   - Utilities: `/shared/utils/` (i18n-hierarchical.ts, state-manager.ts, etc.)
+   - NEVER place files directly in `/shared/` root
+
 **DECISION TREE FOR FILE CREATION:**
 1. Is it a test? → `/test/{type}/`
 2. Is it a config? → `/config/{build|data}/`
@@ -313,7 +321,7 @@ This is a full-stack collaborative storytelling platform that enables users to c
 4. Is it a provider? → `/server/external-providers/{type}/{provider}/`
 5. Is it server code? → `/server/` (appropriate subdirectory)
 6. Is it client code? → `/client/` (appropriate subdirectory)
-7. Is it shared? → `/shared/`
+7. Is it shared? → `/shared/{config|schema|types|constants|utils}/`
 
 **BEFORE CREATING ANY FILE, ASK:**
 - Does this file type have a designated location above?
@@ -784,6 +792,21 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Flexible Matching**: Supports exact, contains, and word-based matching for sound descriptions
 
 ## Changelog
+
+### **SHARED FOLDER REORGANIZATION COMPLETE - July 10, 2025**
+**Monorepo Pattern Implementation**: Reorganized shared folder into logical subdirectories for multi-vendor support
+- **SUBDIRECTORY STRUCTURE CREATED**:
+  - `/shared/config/` - All configuration files (i18n-config.ts, language-config.ts, state-config.ts)
+  - `/shared/schema/` - Database schemas (schema.ts and related)
+  - `/shared/types/` - Type definitions (api-response.ts, api-types.ts)
+  - `/shared/constants/` - Constants (audio-config.ts, ephemeral-voice-config.ts)
+  - `/shared/utils/` - Utilities (i18n-hierarchical.ts, state-manager.ts)
+- **AUTOMATED IMPORT UPDATES**: Created and executed scripts/update-shared-imports.cjs
+  - Fixed 77 imports across 64 files automatically
+  - Script available for future reorganizations
+- **BUILD STABILITY**: All import errors resolved, system running successfully
+- **ARCHITECTURAL BENEFIT**: Cleaner separation of concerns for multi-vendor development
+- **ZERO TOLERANCE MAINTAINED**: No files allowed in shared root directory
 
 ### **COMPLETE ROOT DIRECTORY CLEANUP - July 10, 2025**
 **Final Organization of All Root Files and Folders**: Achieved minimal root directory with proper file organization

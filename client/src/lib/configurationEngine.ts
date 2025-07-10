@@ -2,8 +2,8 @@ import type {
   UserSessionMetadata, 
   SessionBasedConfig, 
   ConfigurationRule 
-} from '@shared/userSession';
-import type { PlatformAudioConfig } from '@shared/audioConfig';
+} from '@shared/types/userSession';
+import type { PlatformAudioConfig } from '@shared/config/audioConfig';
 
 export class ConfigurationEngine {
   private rules: ConfigurationRule[] = [];

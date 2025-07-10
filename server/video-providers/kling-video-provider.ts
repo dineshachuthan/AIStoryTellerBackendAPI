@@ -10,7 +10,7 @@ import {
   VideoProviderException
 } from './video-provider-interface';
 import { JWTAuthUtil } from './jwt-auth-util';
-import { detectFormatWithFallback, getPreferredWebFormat, VIDEO_FORMAT_VALIDATION } from '@shared/video-format-config';
+import { detectFormatWithFallback, getPreferredWebFormat, VIDEO_FORMAT_VALIDATION } from '@shared/config/video-format-config';
 import { ExternalIntegrationStateReset } from '../external-integration-state-reset';
 
 /**

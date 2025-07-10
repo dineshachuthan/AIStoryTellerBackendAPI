@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { stories, storyAnalyses } from "@shared/schema";
+import { stories, storyAnalyses } from '@shared/schema/schema';
 import { eq } from "drizzle-orm";
 
 /**

@@ -6,7 +6,7 @@ import {
   getDefaultEmotionsForCharacter, 
   getProgressThreshold,
   type CollaborativeConfig 
-} from "@shared/collaborative-config";
+} from '@shared/config/collaborative-config';
 import {
   CollaborativeValidator,
   CollaborativePermissionManager,

@@ -8,7 +8,7 @@ import {
   VideoProviderError,
   VideoProviderException
 } from './video-provider-interface';
-import { detectFormatWithFallback, getPreferredWebFormat, VIDEO_FORMAT_VALIDATION } from '@shared/video-format-config';
+import { detectFormatWithFallback, getPreferredWebFormat, VIDEO_FORMAT_VALIDATION } from '@shared/config/video-format-config';
 import { ExternalIntegrationStateReset } from '../external-integration-state-reset';
 
 /**

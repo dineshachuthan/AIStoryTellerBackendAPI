@@ -10,7 +10,7 @@ import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/lib/api-client";
 import AppTopNavigation from "@/components/app-top-navigation";
-import { getMessage } from "@shared/i18n-hierarchical";
+import { getMessage } from '@shared/utils/i18n-hierarchical';
 import { useLanguage } from "@/contexts/language-context";
 
 interface NarratorProfile {

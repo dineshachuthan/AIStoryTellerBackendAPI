@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, Send, MoreVertical, Plus, Mic } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
-import type { Message, Character, Conversation } from "@shared/schema";
+import type { Message, Character, Conversation } from '@shared/schema/schema';
 
 interface ChatInterfaceProps {
   conversationId: number;
