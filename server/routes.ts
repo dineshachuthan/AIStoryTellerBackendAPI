@@ -2043,11 +2043,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Failed to transcribe audio" });
       }
 
-      // Create story with transcribed content
+      // Create draft story with transcribed content using draft endpoint logic
       const story = await storage.createStory({
         title: title || 'Untitled Voice Story',
         content: processedContent,
-        summary: null,
+        summary: "",
         category: category || 'General',
         tags: [],
         extractedCharacters: [],
@@ -2055,9 +2055,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         voiceSampleUrl: null,
         coverImageUrl: null,
         authorId: (req.user as any)?.id || authorId,
-        uploadType: 'voice',
+        uploadType: 'audio',
         originalAudioUrl,
-        processingStatus: 'completed',
+        processingStatus: 'pending', // Draft status - requires analysis
+        status: 'draft',
         copyrightInfo: null,
         licenseType: 'all_rights_reserved',
         isPublished: false,
@@ -2075,7 +2076,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/stories/draft", requireAuth, async (req, res) => {
     try {
       const userId = (req.user as any)?.id;
-      const { title, storyType = "text", content } = req.body;
+      const { title, storyType = "text", content, uploadType, originalAudioUrl } = req.body;
 
       let finalTitle = "New Story";
       let finalCategory = "General";
@@ -2106,8 +2107,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         voiceSampleUrl: null,
         coverImageUrl: null,
         authorId: userId,
-        uploadType: 'text',
-        originalAudioUrl: null,
+        uploadType: uploadType || 'text',
+        originalAudioUrl: originalAudioUrl || null,
         processingStatus: content ? 'completed' : 'pending',
         status: 'draft',
         copyrightInfo: null,
@@ -2138,25 +2139,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log("Storing story in user's private collection");
       
-      // Create story in user's private collection (isPublished: false by default)
+      // Create draft story in user's private collection
       const story = await storage.createStory({
         title,
         content,
-        summary: analysis.summary,
-        category: analysis.category,
-        tags: analysis.suggestedTags,
-        extractedCharacters: analysis.characters,
-        extractedEmotions: analysis.emotions,
+        summary: "",
+        category: analysis?.category || "General",
+        tags: [],
+        extractedCharacters: [],
+        extractedEmotions: [],
         voiceSampleUrl: null,
         coverImageUrl: null,
         authorId: userId,
         uploadType: 'user_created',
         originalAudioUrl: null,
-        processingStatus: 'completed',
+        processingStatus: 'pending', // Draft status - will be analyzed later
+        status: 'draft',
         copyrightInfo: null,
         licenseType: 'all_rights_reserved',
-        isPublished: false, // Private by default
-        isAdultContent: analysis.isAdultContent,
+        isPublished: false,
+        isAdultContent: false,
       });
 
       console.log("Story stored in user's private collection");
@@ -2174,25 +2176,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log("Step 4: Storing story as baseline");
       
-      // Create baseline story with analysis metadata
+      // Create draft baseline story 
       const story = await storage.createStory({
         title,
         content,
-        summary: analysis.summary,
-        category: analysis.category,
-        tags: analysis.suggestedTags,
-        extractedCharacters: analysis.characters,
-        extractedEmotions: analysis.emotions,
+        summary: "",
+        category: analysis?.category || "General",
+        tags: [],
+        extractedCharacters: [],
+        extractedEmotions: [],
         voiceSampleUrl: null,
         coverImageUrl: null,
         authorId,
         uploadType: 'baseline',
         originalAudioUrl: null,
-        processingStatus: 'baseline',
+        processingStatus: 'pending',
+        status: 'draft',
         copyrightInfo: null,
         licenseType: 'all_rights_reserved',
         isPublished: false,
-        isAdultContent: analysis.isAdultContent,
+        isAdultContent: false,
       });
 
       console.log("Step 4 Complete: Baseline story stored");

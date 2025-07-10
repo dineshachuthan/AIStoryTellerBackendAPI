@@ -8,7 +8,8 @@ import { Progress } from "@/components/ui/progress";
 import { Loader2, UserPlus, Mic, Play, Check, Pause, Volume2, Sparkles, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiClient } from "@/lib/api-client";
+import { queryClient } from "@/lib/queryClient";
 import { EnhancedVoiceRecorder } from "@/components/ui/enhanced-voice-recorder";
 
 interface NarrationInvitationData {
@@ -57,6 +58,7 @@ export default function NarrationInvitationLanding() {
   // Fetch invitation details
   const { data: invitation, isLoading, error } = useQuery<NarrationInvitationData>({
     queryKey: [`/api/invitations/${token}`],
+    queryFn: () => apiClient.invitations.get(token),
     enabled: !!token,
   });
 
@@ -66,9 +68,7 @@ export default function NarrationInvitationLanding() {
     enabled: !!invitation?.storyId && !!token && currentStage === "preview",
     queryFn: async () => {
       try {
-        const response = await apiRequest(`/api/stories/${invitation?.storyId}/narration/saved?invitationToken=${token}`, {
-          method: 'GET'
-        });
+        const response = await apiClient.invitations.getSavedNarration(invitation.storyId, token);
         return response || null;
       } catch (error) {
         // No saved narration found - this is normal for pending invitations

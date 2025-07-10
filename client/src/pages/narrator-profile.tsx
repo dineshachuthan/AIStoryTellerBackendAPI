@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { apiClient } from "@/lib/api-client";
 import AppTopNavigation from "@/components/app-top-navigation";
 import { getMessage } from "@shared/i18n-hierarchical";
 import { useLanguage } from "@/contexts/language-context";
@@ -57,7 +57,7 @@ export default function NarratorProfilePage() {
   // Save narrator profile
   const saveProfileMutation = useMutation({
     mutationFn: async (profile: NarratorProfile) => {
-      return apiRequest("/api/user/narrator-profile", "POST", profile);
+      return apiClient.user.saveNarratorProfile(profile);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/user/narrator-profile"] });

@@ -54,6 +54,27 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - When adding ANY text, immediately create corresponding i18n template with proper variables
 - Pattern: `{UIMessages.getTitle('MESSAGE_CODE')}` or `{getDynamicMessage('CODE', variables).message}`
 
+### Zero Tolerance Direct API Call Policy
+**FRONTEND MUST ONLY COMMUNICATE WITH BACKEND THROUGH api-client.ts - NO EXCEPTIONS**
+- ABSOLUTELY NO direct fetch(), apiRequest(), or endpoint calls anywhere in frontend components
+- ALL backend communication MUST go through apiClient.stories, apiClient.auth, apiClient.voice, etc.
+- VIOLATION OF THIS RULE HAS BEEN FIXED MULTIPLE TIMES - user has zero tolerance for this
+- Before ANY API communication, check if endpoint exists in api-client.ts - if not, add it there first
+- NEVER use direct API calls even for "temporary" or "quick" solutions
+- Pattern: `apiClient.stories.get(id)` NOT `fetch('/api/stories/${id}')`
+- Pattern: `apiClient.audio.transcribe(formData)` NOT `fetch('/api/audio/transcribe', {method: 'POST', body: formData})`
+
+### Zero Tolerance Direct Toast Usage Policy
+**ALL TOAST MESSAGES MUST USE toast-utils.ts - NO DIRECT useToast() CALLS**
+- ABSOLUTELY NO direct useToast() or toast() calls anywhere in frontend components
+- ALL toast notifications MUST go through toast.success(), toast.error(), toast.info() from toast-utils.ts
+- VIOLATION OF THIS RULE HAS BEEN FIXED 100+ TIMES - user has zero tolerance for this recurring issue
+- Use toastMessages for common patterns with i18n support
+- ALL toasts automatically use 5-second duration and proper i18n messages
+- NEVER import useToast directly - only import from toast-utils.ts
+- Pattern: `toast.success(toastMessages.saveSuccess('item'))` NOT `toast({ title: 'Success', variant: 'default' })`
+- Pattern: `toast.error(toastMessages.saveFailed('error'))` NOT `toast({ title: 'Error', variant: 'destructive' })`
+
 ### Zero Tolerance Test Data Policy
 **DO NOT ADD ANY TEST DATA INTO DATABASE WITHOUT PRIOR APPROVAL**
 - NEVER insert test records, mock data, or fallback values into any database table
@@ -622,6 +643,19 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Flexible Matching**: Supports exact, contains, and word-based matching for sound descriptions
 
 ## Changelog
+
+### **UNIVERSAL DRAFT WORKFLOW IMPLEMENTATION - July 10, 2025**
+**Complete Story Creation Standardization**: All story creation paths now use draft workflow exclusively
+- **BACKEND UPDATES**: Updated all story creation endpoints to create draft stories:
+  - `/api/stories/upload-audio` - Creates draft stories with transcribed content
+  - `/api/stories/:userId` - Creates draft stories (no longer complete stories)
+  - `/api/stories/baseline` - Creates draft stories (no longer complete stories)
+  - `/api/stories/draft` - Enhanced to support different uploadType (text, voice, audio)
+- **API CLIENT ENHANCEMENT**: Added `createDraft()` method and `uploadAudio()` method for unified draft creation
+- **FRONTEND UPDATES**: Home page and story library now use `apiClient.stories.createDraft()`
+- **WORKFLOW STANDARDIZATION**: ALL story creation (text, voice, audio) now follows: Create Draft → Add Content → Analyze → Complete
+- **DRAFT FIELDS**: All draft stories have `status: 'draft'`, `processingStatus: 'pending'`, empty analysis fields
+- **DATABASE SCHEMA**: Content field made nullable to support empty draft creation
 
 ### **DATABASE SCHEMA UPDATE - Story Content Nullable - July 10, 2025**
 **Story Creation Fix**: Updated database schema to support draft story workflow

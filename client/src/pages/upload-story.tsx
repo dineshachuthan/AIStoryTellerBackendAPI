@@ -11,15 +11,14 @@ import { ArrowLeft, RefreshCw, Loader2, FileText, Upload, Plus } from "lucide-re
 import { AppTopNavigation } from "@/components/app-top-navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { apiClient } from "@/lib/api-client";
+import { toast, toastMessages } from "@/lib/toast-utils";
 import { UIMessages } from "@shared/i18n-config";
 import { getMessage } from "@shared/i18n-hierarchical";
 
 export default function UploadStory() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
-  const { toast } = useToast();
   
   // Extract story ID from URL if present, or from sessionStorage
   const [match, params] = useRoute("/:storyId/upload-story");
@@ -42,7 +41,7 @@ export default function UploadStory() {
   // Fetch existing story if storyId is present
   const { data: existingStory, isLoading: storyLoading, error: storyError } = useQuery({
     queryKey: ['/api/stories', storyId],
-    queryFn: () => fetch(`/api/stories/${storyId}`).then(res => res.json()),
+    queryFn: () => apiClient.stories.get(parseInt(storyId)),
     enabled: !!storyId,
   });
 
@@ -57,17 +56,7 @@ export default function UploadStory() {
       const formData = new FormData();
       formData.append('audio', audioBlob, 'audio.webm');
       
-      const response = await fetch('/api/audio/transcribe', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to transcribe audio');
-      }
-
-      return await response.json();
+      return await apiClient.audio.transcribe(formData);
     },
     onSuccess: (data) => {
       setStoryContent(data.text || '');
@@ -140,11 +129,7 @@ export default function UploadStory() {
             console.error('Error processing pending audio:', error);
             setIsLoadingContent(false);
             sessionStorage.removeItem('pendingAudioBlob');
-            toast({
-              title: UIMessages.getError('AUDIO_PROCESSING_FAILED'),
-              description: UIMessages.getError('AUDIO_PROCESSING_FAILED_DESC'),
-              variant: "destructive",
-            });
+            toast.error(toastMessages.uploadFailed('Audio processing failed'));
             setHasLoadedOnce(true);
           }
           return;
@@ -167,32 +152,20 @@ export default function UploadStory() {
   // Update story content
   async function updateStoryContent() {
     if (!storyId) {
-      toast({
-        title: UIMessages.getError('STORY_ID_MISSING'),
-        description: UIMessages.getError('STORY_ID_MISSING_DESC'),
-        variant: "destructive",
-      });
+      toast.error(toastMessages.saveFailed('Story ID missing'));
       return;
     }
 
     if (!storyContent.trim()) {
-      toast({
-        title: UIMessages.getError('STORY_CONTENT_EMPTY'),
-        description: UIMessages.getError('STORY_CONTENT_EMPTY_DESC'),
-        variant: "destructive",
-      });
+      toast.error(toastMessages.saveFailed('Story content is empty'));
       return;
     }
 
     try {
-      const updatedStory = await apiRequest(`/api/stories/${storyId}/content`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: storyTitle.trim() || story?.title || getMessage('upload_story.defaults.untitled_story'),
-          content: storyContent,
-          language: selectedLanguage
-        }),
+      const updatedStory = await apiClient.stories.updateContent(parseInt(storyId), {
+        title: storyTitle.trim() || story?.title || getMessage('upload_story.defaults.untitled_story'),
+        content: storyContent,
+        language: selectedLanguage
       });
 
       console.log('Story content updated:', updatedStory);
@@ -200,41 +173,25 @@ export default function UploadStory() {
       // Only show "Content Saved" if content actually changed
       const hasContentChanged = storyContent.trim() !== originalContent.trim();
       if (hasContentChanged) {
-        toast({
-          title: UIMessages.getSuccess('CONTENT_SAVED'),
-          description: UIMessages.getSuccess('CONTENT_SAVED_DESC'),
-          duration: 2000, // Auto-dismiss after 2 seconds
-        });
+        toast.success(toastMessages.saveSuccess('story content'));
         // Update the original content after successful save
         setOriginalContent(storyContent);
       }
     } catch (error) {
       console.error("Content update error:", error);
-      toast({
-        title: UIMessages.getError('SAVE_FAILED'),
-        description: UIMessages.getError('SAVE_FAILED_DESC'),
-        variant: "destructive",
-      });
+      toast.error(toastMessages.saveFailed('Failed to save story content'));
     }
   }
 
   // Analyze story and trigger dual analysis
   async function analyzeStory() {
     if (!storyId) {
-      toast({
-        title: UIMessages.getError('NO_STORY'),
-        description: UIMessages.getError('STORY_ID_MISSING_DESC'),
-        variant: "destructive",
-      });
+      toast.error(toastMessages.saveFailed('No story selected'));
       return;
     }
 
     if (!storyContent.trim()) {
-      toast({
-        title: UIMessages.getError('NO_CONTENT'),
-        description: UIMessages.getError('ANALYSIS_CONTENT_EMPTY_DESC'),
-        variant: "destructive",
-      });
+      toast.error(toastMessages.saveFailed('Cannot analyze empty content'));
       return;
     }
 
@@ -248,11 +205,7 @@ export default function UploadStory() {
       setLocation(`/analysis/${storyId}`);
     } catch (error) {
       console.error("Analysis error:", error);
-      toast({
-        title: getMessage('upload_story.errors.analysis_failed_title'),
-        description: getMessage('upload_story.errors.analysis_failed_description'),
-        variant: "destructive",
-      });
+      toast.error(toastMessages.saveFailed('Failed to start analysis'));
     } finally {
       setIsAnalyzing(false);
     }

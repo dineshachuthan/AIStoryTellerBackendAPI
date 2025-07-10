@@ -110,9 +110,13 @@ export class ApiClient {
     },
     get: (id: number) => this.request<any>('GET', `/api/stories/${id}`),
     create: (data: any) => this.request<any>('POST', '/api/stories', data),
-    createDraft: (data: { title: string; storyType: string; content?: string }) => 
+    createDraft: (data: { title: string; storyType?: string; content?: string; uploadType?: string; originalAudioUrl?: string }) => 
       this.request<any>('POST', '/api/stories/draft', data),
+    uploadAudio: (formData: FormData) => 
+      this.request<any>('POST', '/api/stories/upload-audio', formData),
     update: (id: number, data: any) => this.request<any>('PATCH', `/api/stories/${id}`, data),
+    updateContent: (id: number, data: { title: string; content: string; language: string }) =>
+      this.request<any>('PUT', `/api/stories/${id}/content`, data),
     delete: (id: number) => this.request<void>('DELETE', `/api/stories/${id}`),
     analyze: (id: number) => this.request<any>('POST', `/api/stories/${id}/analyze`),
     generateNarration: (id: number) => this.request<any>('POST', `/api/stories/${id}/generate-narration`),
@@ -122,10 +126,6 @@ export class ApiClient {
     generateNarrativeAudio: (id: number, data: { emotion: string; intensity: number; text: string }) =>
       this.request<any>('POST', `/api/stories/${id}/narrative/audio`, data),
     getFilters: () => this.request<any>('GET', '/api/stories/filters'),
-    uploadAudio: (formData: FormData) => 
-      this.request<any>('POST', '/api/upload-audio', formData, {
-        headers: {} // Let browser set Content-Type for FormData
-      }),
     // Narrative analysis endpoints
     getNarrative: (id: number) => this.request<any>('GET', `/api/stories/${id}/narrative`),
     createNarrative: (id: number) => this.request<any>('POST', `/api/stories/${id}/narrative`),
@@ -216,6 +216,29 @@ export class ApiClient {
     getSystemStats: () => this.request<any>('GET', '/api/admin/stats'),
   };
   
+  // Audio endpoints
+  audio = {
+    transcribe: (formData: FormData) =>
+      this.request<any>('POST', '/api/audio/transcribe', formData, {
+        headers: {} // Let browser set Content-Type for FormData
+      }),
+  };
+
+  // User profile endpoints
+  user = {
+    getNarratorProfile: () => this.request<any>('GET', '/api/user/narrator-profile'),
+    saveNarratorProfile: (profile: any) => this.request<any>('POST', '/api/user/narrator-profile', profile),
+  };
+
+  // Invitations endpoints
+  invitations = {
+    get: (token: string) => this.request<any>('GET', `/api/invitations/${token}`),
+    getSampleText: (storyId: number, emotion: string) => 
+      this.request<any>('POST', `/api/stories/${storyId}/sample-text`, { emotion }),
+    getSavedNarration: (storyId: number, token: string) =>
+      this.request<any>('GET', `/api/stories/${storyId}/narration/saved?invitationToken=${token}`),
+  };
+
   // Collaboration endpoints
   sendStoryInvitations = (data: {
     storyId: number;
