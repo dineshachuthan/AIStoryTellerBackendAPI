@@ -200,10 +200,13 @@ export class StoryNarrator {
         // Detect emotion and character for this chunk
         const chunkContext = this.detectChunkContext(chunk, extractedEmotions, []);
         
+        // SOUND PATTERN ENHANCEMENT - Apply sound patterns to text before audio generation
+        const enhancedChunk = await voiceOrchestrationService.enhanceWithSounds(chunk);
+        
         // Get orchestrated voice parameters
         const voiceSettings = await voiceOrchestrationService.calculateVoiceParameters(
           userId,
-          chunk,
+          enhancedChunk,
           chunkContext.character,
           chunkContext.emotion,
           storyId
@@ -215,9 +218,9 @@ export class StoryNarrator {
           voiceSettings
         };
         
-        // Generate audio using the determined narrator voice with orchestrated settings
+        // Generate audio using the enhanced chunk with sound patterns
         const audioResult = await this.generateNarrationAudio(
-          chunk, 
+          enhancedChunk, 
           narratorVoice, 
           narratorVoiceType, 
           userId, 
@@ -362,12 +365,11 @@ export class StoryNarrator {
         
         console.log(`[StoryNarrator] Using orchestrated voice settings:`, voiceSettings);
         
-        // Enhance text with sound effects
-        const enhancedText = await voiceOrchestrationService.enhanceWithSounds(text);
-        console.log(`[StoryNarrator] Enhanced text with sounds: ${enhancedText.substring(0, 100)}...`);
+        // Note: text is already enhanced with sound patterns from createNarrationSegments
+        console.log(`[StoryNarrator] Using enhanced text with sounds: ${text.substring(0, 100)}...`);
         
         const { VoiceProviderFactory } = await import('./voice-providers/voice-provider-factory');
-        const arrayBuffer = await VoiceProviderFactory.generateSpeech(enhancedText, narratorVoice, chunkContext.emotion, voiceSettings, undefined, narratorProfile);
+        const arrayBuffer = await VoiceProviderFactory.generateSpeech(text, narratorVoice, chunkContext.emotion, voiceSettings, undefined, narratorProfile);
         audioBuffer = Buffer.from(arrayBuffer);
         
         console.log(`[StoryNarrator] ElevenLabs narration generated: ${audioBuffer.length} bytes with ${chunkContext.emotion} emotion and orchestrated settings`);

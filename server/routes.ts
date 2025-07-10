@@ -37,7 +37,7 @@ import swaggerUi from 'swagger-ui-express';
 import { generateOpenAPISpec } from './openapi-generator';
 import { smsProviderRegistry } from './sms-providers/sms-provider-registry';
 import { SMSMessage } from './sms-providers/sms-provider-interface';
-import { externalProviderTrackingStorage } from './external-provider-tracking-storage';
+import { externalProviderTracking } from './external-provider-tracking-storage';
 
 import multer from "multer";
 import path from "path";

@@ -91,134 +91,8 @@ export const notificationFailovers = pgTable('notification_failovers', {
   index('idx_nf_original_transaction').on(table.originalTransactionId),
 ]);
 
-// Provider Lifecycle Events table
-export const providerLifecycleEvents = pgTable('provider_lifecycle_events', {
-  id: serial('id').primaryKey(),
-  providerId: integer('provider_id').references(() => notificationProviders.id),
-  eventType: varchar('event_type', { length: 50 }).notNull(),
-  previousStatus: varchar('previous_status', { length: 20 }),
-  newStatus: varchar('new_status', { length: 20 }),
-  
-  // Context
-  reason: text('reason').notNull(),
-  triggeredBy: varchar('triggered_by', { length: 50 }),
-  performedBy: varchar('performed_by', { length: 255 }),
-  
-  // Performance snapshot
-  performanceSnapshot: jsonb('performance_snapshot'),
-  
-  // Duration tracking
-  eventTimestamp: timestamp('event_timestamp').defaultNow(),
-  effectiveUntil: timestamp('effective_until'),
-  durationDays: integer('duration_days'),
-  
-  // Additional context
-  notes: text('notes'),
-  relatedIncidentId: varchar('related_incident_id', { length: 100 }),
-}, (table) => [
-  index('idx_ple_provider_timestamp').on(table.providerId, table.eventTimestamp),
-  index('idx_ple_event_type').on(table.eventType),
-]);
-
-// Provider Performance Periods table
-export const providerPerformancePeriods = pgTable('provider_performance_periods', {
-  id: serial('id').primaryKey(),
-  providerId: integer('provider_id').references(() => notificationProviders.id),
-  periodStart: timestamp('period_start').notNull(),
-  periodEnd: timestamp('period_end'),
-  
-  // Aggregated metrics
-  totalMessagesSent: integer('total_messages_sent').default(0),
-  totalMessagesDelivered: integer('total_messages_delivered').default(0),
-  totalMessagesFailed: integer('total_messages_failed').default(0),
-  overallSuccessRate: decimal('overall_success_rate', { precision: 5, scale: 2 }),
-  averageLatencyMs: integer('average_latency_ms'),
-  totalCost: decimal('total_cost', { precision: 10, scale: 4 }),
-  
-  // End reason
-  endReason: varchar('end_reason', { length: 100 }),
-}, (table) => [
-  unique().on(table.providerId, table.periodStart),
-]);
-
-// Provider Suspensions table
-export const providerSuspensions = pgTable('provider_suspensions', {
-  id: serial('id').primaryKey(),
-  providerId: integer('provider_id').references(() => notificationProviders.id),
-  lifecycleEventId: integer('lifecycle_event_id').references(() => providerLifecycleEvents.id),
-  
-  suspensionType: varchar('suspension_type', { length: 50 }),
-  severity: varchar('severity', { length: 20 }),
-  
-  suspendedAt: timestamp('suspended_at').notNull(),
-  plannedResumeDate: timestamp('planned_resume_date'),
-  actualResumedAt: timestamp('actual_resumed_at'),
-  
-  // Impact assessment
-  estimatedImpact: jsonb('estimated_impact'),
-  actualImpact: jsonb('actual_impact'),
-  
-  // Resolution
-  resolutionNotes: text('resolution_notes'),
-  lessonsLearned: text('lessons_learned'),
-}, (table) => [
-  index('idx_ps_suspension_dates').on(table.suspendedAt, table.actualResumedAt),
-]);
-
-// Provider Health History table
-export const providerHealthHistory = pgTable('provider_health_history', {
-  id: serial('id').primaryKey(),
-  providerId: integer('provider_id').references(() => notificationProviders.id),
-  checkTimestamp: timestamp('check_timestamp').defaultNow(),
-  
-  isHealthy: boolean('is_healthy').notNull(),
-  responseTimeMs: integer('response_time_ms'),
-  
-  // Detailed metrics
-  healthMetrics: jsonb('health_metrics'),
-  errorDetails: jsonb('error_details'),
-}, (table) => [
-  index('idx_phh_provider_timestamp').on(table.providerId, table.checkTimestamp),
-]);
-
-// Provider Usage Stats table
-export const providerUsageStats = pgTable('provider_usage_stats', {
-  id: serial('id').primaryKey(),
-  providerId: integer('provider_id').references(() => notificationProviders.id),
-  date: date('date').notNull(),
-  
-  // Volume metrics
-  totalSent: integer('total_sent').default(0),
-  totalDelivered: integer('total_delivered').default(0),
-  totalFailed: integer('total_failed').default(0),
-  totalBounced: integer('total_bounced').default(0),
-  
-  // Performance metrics
-  avgDeliveryTimeSeconds: decimal('avg_delivery_time_seconds', { precision: 10, scale: 2 }),
-  successRate: decimal('success_rate', { precision: 5, scale: 2 }),
-  
-  // Cost metrics
-  totalCost: decimal('total_cost', { precision: 10, scale: 4 }),
-  avgCostPerMessage: decimal('avg_cost_per_message', { precision: 10, scale: 6 }),
-}, (table) => [
-  unique().on(table.providerId, table.date),
-  index('idx_pus_date').on(table.date),
-]);
-
-// Provider Configuration History table
-export const providerConfigurationHistory = pgTable('provider_configuration_history', {
-  id: serial('id').primaryKey(),
-  providerId: integer('provider_id').references(() => notificationProviders.id),
-  changedBy: varchar('changed_by', { length: 255 }),
-  changeType: varchar('change_type', { length: 50 }),
-  previousConfig: jsonb('previous_config'),
-  newConfig: jsonb('new_config'),
-  reason: text('reason'),
-  changedAt: timestamp('changed_at').defaultNow(),
-}, (table) => [
-  index('idx_pch_provider_id').on(table.providerId),
-  index('idx_pch_changed_at').on(table.changedAt),
-]);
+// Note: Provider lifecycle, performance, health, and usage tracking tables 
+// are now unified in external-provider-tracking.ts to avoid duplication
 
 // Subscription Transactions table
 export const subscriptionTransactions = pgTable('subscription_transactions', {
@@ -249,12 +123,6 @@ export const subscriptionTransactions = pgTable('subscription_transactions', {
 export const insertNotificationProviderSchema = createInsertSchema(notificationProviders);
 export const insertNotificationTransactionSchema = createInsertSchema(notificationTransactions);
 export const insertNotificationFailoverSchema = createInsertSchema(notificationFailovers);
-export const insertProviderLifecycleEventSchema = createInsertSchema(providerLifecycleEvents);
-export const insertProviderPerformancePeriodSchema = createInsertSchema(providerPerformancePeriods);
-export const insertProviderSuspensionSchema = createInsertSchema(providerSuspensions);
-export const insertProviderHealthHistorySchema = createInsertSchema(providerHealthHistory);
-export const insertProviderUsageStatsSchema = createInsertSchema(providerUsageStats);
-export const insertProviderConfigurationHistorySchema = createInsertSchema(providerConfigurationHistory);
 export const insertSubscriptionTransactionSchema = createInsertSchema(subscriptionTransactions);
 
 // Type exports
@@ -264,17 +132,5 @@ export type NotificationTransaction = typeof notificationTransactions.$inferSele
 export type InsertNotificationTransaction = z.infer<typeof insertNotificationTransactionSchema>;
 export type NotificationFailover = typeof notificationFailovers.$inferSelect;
 export type InsertNotificationFailover = z.infer<typeof insertNotificationFailoverSchema>;
-export type ProviderLifecycleEvent = typeof providerLifecycleEvents.$inferSelect;
-export type InsertProviderLifecycleEvent = z.infer<typeof insertProviderLifecycleEventSchema>;
-export type ProviderPerformancePeriod = typeof providerPerformancePeriods.$inferSelect;
-export type InsertProviderPerformancePeriod = z.infer<typeof insertProviderPerformancePeriodSchema>;
-export type ProviderSuspension = typeof providerSuspensions.$inferSelect;
-export type InsertProviderSuspension = z.infer<typeof insertProviderSuspensionSchema>;
-export type ProviderHealthHistory = typeof providerHealthHistory.$inferSelect;
-export type InsertProviderHealthHistory = z.infer<typeof insertProviderHealthHistorySchema>;
-export type ProviderUsageStats = typeof providerUsageStats.$inferSelect;
-export type InsertProviderUsageStats = z.infer<typeof insertProviderUsageStatsSchema>;
-export type ProviderConfigurationHistory = typeof providerConfigurationHistory.$inferSelect;
-export type InsertProviderConfigurationHistory = z.infer<typeof insertProviderConfigurationHistorySchema>;
 export type SubscriptionTransaction = typeof subscriptionTransactions.$inferSelect;
 export type InsertSubscriptionTransaction = z.infer<typeof insertSubscriptionTransactionSchema>;
