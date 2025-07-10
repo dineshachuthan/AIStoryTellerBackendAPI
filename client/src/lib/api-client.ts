@@ -318,6 +318,122 @@ export class ApiClient {
     createCheckoutSession: (data: { priceId: string; successUrl?: string; cancelUrl?: string }) =>
       this.request<any>('POST', '/api/create-checkout-session', data),
   };
+
+  // External Provider Management endpoints
+  externalProviders = {
+    // Get all providers with optional filtering
+    getAll: (filters?: { serviceType?: string; status?: string; isHealthy?: boolean }) => {
+      const params = new URLSearchParams();
+      if (filters?.serviceType) params.append('serviceType', filters.serviceType);
+      if (filters?.status) params.append('status', filters.status);
+      if (filters?.isHealthy !== undefined) params.append('isHealthy', String(filters.isHealthy));
+      const queryString = params.toString();
+      return this.request<any[]>('GET', `/api/external-providers${queryString ? `?${queryString}` : ''}`);
+    },
+
+    // Get provider by ID
+    get: (id: number) => 
+      this.request<any>('GET', `/api/external-providers/${id}`),
+
+    // Create new provider
+    create: (data: {
+      providerName: string;
+      serviceType: string;
+      providerKey?: string;
+      priority?: number;
+      isActive?: boolean;
+      healthCheckEndpoint?: string;
+      configuration?: any;
+      rateLimits?: any;
+      costPerRequest?: number;
+      monthlyCostLimit?: number;
+      apiKeyLastFour?: string;
+    }) => this.request<any>('POST', '/api/external-providers', data),
+
+    // Update provider
+    update: (id: number, data: any) => 
+      this.request<any>('PUT', `/api/external-providers/${id}`, data),
+
+    // Activate provider
+    activate: (id: number, reason?: string) => 
+      this.request<any>('POST', `/api/external-providers/${id}/activate`, { reason }),
+
+    // Deactivate provider
+    deactivate: (id: number, reason?: string) => 
+      this.request<any>('POST', `/api/external-providers/${id}/deactivate`, { reason }),
+
+    // Get provider transactions
+    getTransactions: (id: number, options?: { startDate?: Date; endDate?: Date; limit?: number }) => {
+      const params = new URLSearchParams();
+      if (options?.startDate) params.append('startDate', options.startDate.toISOString());
+      if (options?.endDate) params.append('endDate', options.endDate.toISOString());
+      if (options?.limit) params.append('limit', String(options.limit));
+      const queryString = params.toString();
+      return this.request<any[]>('GET', `/api/external-providers/${id}/transactions${queryString ? `?${queryString}` : ''}`);
+    },
+
+    // Get provider performance stats
+    getPerformance: (id: number, options?: { startDate?: Date; endDate?: Date }) => {
+      const params = new URLSearchParams();
+      if (options?.startDate) params.append('startDate', options.startDate.toISOString());
+      if (options?.endDate) params.append('endDate', options.endDate.toISOString());
+      const queryString = params.toString();
+      return this.request<any>('GET', `/api/external-providers/${id}/performance${queryString ? `?${queryString}` : ''}`);
+    },
+
+    // Get provider health history
+    getHealthHistory: (id: number, hours: number = 24) => 
+      this.request<any[]>('GET', `/api/external-providers/${id}/health?hours=${hours}`),
+
+    // Record health check
+    recordHealthCheck: (id: number, data: { isHealthy: boolean; responseTime?: number; errorMessage?: string }) => 
+      this.request<any>('POST', `/api/external-providers/${id}/health-check`, data),
+
+    // Get provider summary
+    getSummary: (id: number) => 
+      this.request<any>('GET', `/api/external-providers/${id}/summary`),
+
+    // Get usage by service type
+    getUsageByService: (options?: { startDate?: Date; endDate?: Date }) => {
+      const params = new URLSearchParams();
+      if (options?.startDate) params.append('startDate', options.startDate.toISOString());
+      if (options?.endDate) params.append('endDate', options.endDate.toISOString());
+      const queryString = params.toString();
+      return this.request<any[]>('GET', `/api/external-providers/usage/by-service${queryString ? `?${queryString}` : ''}`);
+    },
+
+    // Get cost alerts
+    getCostAlerts: (options?: { resolved?: boolean; limit?: number }) => {
+      const params = new URLSearchParams();
+      if (options?.resolved !== undefined) params.append('resolved', String(options.resolved));
+      if (options?.limit) params.append('limit', String(options.limit));
+      const queryString = params.toString();
+      return this.request<any[]>('GET', `/api/external-providers/cost-alerts${queryString ? `?${queryString}` : ''}`);
+    },
+
+    // Resolve cost alert
+    resolveCostAlert: (alertId: number, notes?: string) => 
+      this.request<any>('POST', `/api/external-providers/cost-alerts/${alertId}/resolve`, { notes }),
+
+    // Get failover events
+    getFailoverEvents: (options?: { serviceType?: string; startDate?: Date; endDate?: Date; limit?: number }) => {
+      const params = new URLSearchParams();
+      if (options?.serviceType) params.append('serviceType', options.serviceType);
+      if (options?.startDate) params.append('startDate', options.startDate.toISOString());
+      if (options?.endDate) params.append('endDate', options.endDate.toISOString());
+      if (options?.limit) params.append('limit', String(options.limit));
+      const queryString = params.toString();
+      return this.request<any[]>('GET', `/api/external-providers/failovers${queryString ? `?${queryString}` : ''}`);
+    },
+
+    // Get API key rotation history
+    getApiKeyHistory: (id: number) => 
+      this.request<any[]>('GET', `/api/external-providers/${id}/api-keys`),
+
+    // Rotate API key
+    rotateApiKey: (id: number, data: { reason?: string; newKeyLastFour?: string }) => 
+      this.request<any>('POST', `/api/external-providers/${id}/rotate-key`, data),
+  };
   
   // Helper method to invalidate queries
   invalidateQueries(keys: string[]) {

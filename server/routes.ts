@@ -37,6 +37,7 @@ import swaggerUi from 'swagger-ui-express';
 import { generateOpenAPISpec } from './openapi-generator';
 import { smsProviderRegistry } from './sms-providers/sms-provider-registry';
 import { SMSMessage } from './sms-providers/sms-provider-interface';
+import { externalProviderTrackingStorage } from './external-provider-tracking-storage';
 
 import multer from "multer";
 import path from "path";
@@ -7281,6 +7282,382 @@ export async function registerRoutes(app: Express): Promise<Server> {
         success: false,
         error: error.message || 'Failed to send email'
       });
+    }
+  });
+
+  // =============================================================================
+  // EXTERNAL PROVIDER MANAGEMENT ENDPOINTS
+  // =============================================================================
+  
+  // Get all external providers with optional filtering
+  app.get('/api/external-providers', requireAuth, async (req, res) => {
+    try {
+      const { serviceType, status, isHealthy } = req.query;
+      
+      const filters: any = {};
+      if (serviceType) filters.serviceType = serviceType as string;
+      if (status) filters.status = status as string;
+      if (isHealthy !== undefined) filters.isHealthy = isHealthy === 'true';
+      
+      const providers = await externalProviderTrackingStorage.getProviders(filters);
+      
+      res.json(providers);
+    } catch (error) {
+      console.error('Failed to fetch external providers:', error);
+      res.status(500).json({ message: 'Failed to fetch providers' });
+    }
+  });
+  
+  // Get provider by ID with full details
+  app.get('/api/external-providers/:id', requireAuth, async (req, res) => {
+    try {
+      const providerId = parseInt(req.params.id);
+      
+      if (isNaN(providerId)) {
+        return res.status(400).json({ message: 'Invalid provider ID' });
+      }
+      
+      const provider = await externalProviderTrackingStorage.getProvider(providerId);
+      
+      if (!provider) {
+        return res.status(404).json({ message: 'Provider not found' });
+      }
+      
+      res.json(provider);
+    } catch (error) {
+      console.error('Failed to fetch provider:', error);
+      res.status(500).json({ message: 'Failed to fetch provider' });
+    }
+  });
+  
+  // Create new external provider
+  app.post('/api/external-providers', requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any)?.id;
+      const providerData = req.body;
+      
+      if (!providerData.providerName || !providerData.serviceType) {
+        return res.status(400).json({ 
+          message: 'Provider name and service type are required' 
+        });
+      }
+      
+      const provider = await externalProviderTrackingStorage.createProvider({
+        ...providerData,
+        createdBy: userId
+      });
+      
+      res.status(201).json(provider);
+    } catch (error) {
+      console.error('Failed to create provider:', error);
+      res.status(500).json({ message: 'Failed to create provider' });
+    }
+  });
+  
+  // Update external provider
+  app.put('/api/external-providers/:id', requireAuth, async (req, res) => {
+    try {
+      const providerId = parseInt(req.params.id);
+      const updateData = req.body;
+      
+      if (isNaN(providerId)) {
+        return res.status(400).json({ message: 'Invalid provider ID' });
+      }
+      
+      const provider = await externalProviderTrackingStorage.updateProvider(
+        providerId,
+        updateData
+      );
+      
+      res.json(provider);
+    } catch (error) {
+      console.error('Failed to update provider:', error);
+      res.status(500).json({ message: 'Failed to update provider' });
+    }
+  });
+  
+  // Activate external provider
+  app.post('/api/external-providers/:id/activate', requireAuth, async (req, res) => {
+    try {
+      const providerId = parseInt(req.params.id);
+      const userId = (req.user as any)?.id;
+      const { reason } = req.body;
+      
+      if (isNaN(providerId)) {
+        return res.status(400).json({ message: 'Invalid provider ID' });
+      }
+      
+      await externalProviderTrackingStorage.activateProvider(
+        providerId,
+        reason || 'Manual activation',
+        userId
+      );
+      
+      res.json({ message: 'Provider activated successfully' });
+    } catch (error) {
+      console.error('Failed to activate provider:', error);
+      res.status(500).json({ message: 'Failed to activate provider' });
+    }
+  });
+  
+  // Deactivate external provider
+  app.post('/api/external-providers/:id/deactivate', requireAuth, async (req, res) => {
+    try {
+      const providerId = parseInt(req.params.id);
+      const userId = (req.user as any)?.id;
+      const { reason } = req.body;
+      
+      if (isNaN(providerId)) {
+        return res.status(400).json({ message: 'Invalid provider ID' });
+      }
+      
+      await externalProviderTrackingStorage.deactivateProvider(
+        providerId,
+        reason || 'Manual deactivation',
+        userId
+      );
+      
+      res.json({ message: 'Provider deactivated successfully' });
+    } catch (error) {
+      console.error('Failed to deactivate provider:', error);
+      res.status(500).json({ message: 'Failed to deactivate provider' });
+    }
+  });
+  
+  // Get provider transactions
+  app.get('/api/external-providers/:id/transactions', requireAuth, async (req, res) => {
+    try {
+      const providerId = parseInt(req.params.id);
+      const { startDate, endDate, limit = 100 } = req.query;
+      
+      if (isNaN(providerId)) {
+        return res.status(400).json({ message: 'Invalid provider ID' });
+      }
+      
+      const transactions = await externalProviderTrackingStorage.getProviderTransactions(
+        providerId,
+        {
+          startDate: startDate ? new Date(startDate as string) : undefined,
+          endDate: endDate ? new Date(endDate as string) : undefined,
+          limit: parseInt(limit as string)
+        }
+      );
+      
+      res.json(transactions);
+    } catch (error) {
+      console.error('Failed to fetch transactions:', error);
+      res.status(500).json({ message: 'Failed to fetch transactions' });
+    }
+  });
+  
+  // Get provider performance stats
+  app.get('/api/external-providers/:id/performance', requireAuth, async (req, res) => {
+    try {
+      const providerId = parseInt(req.params.id);
+      const { startDate, endDate } = req.query;
+      
+      if (isNaN(providerId)) {
+        return res.status(400).json({ message: 'Invalid provider ID' });
+      }
+      
+      const stats = await externalProviderTrackingStorage.getProviderPerformanceStats(
+        providerId,
+        {
+          startDate: startDate ? new Date(startDate as string) : undefined,
+          endDate: endDate ? new Date(endDate as string) : undefined
+        }
+      );
+      
+      res.json(stats);
+    } catch (error) {
+      console.error('Failed to fetch performance stats:', error);
+      res.status(500).json({ message: 'Failed to fetch performance stats' });
+    }
+  });
+  
+  // Get provider health history
+  app.get('/api/external-providers/:id/health', requireAuth, async (req, res) => {
+    try {
+      const providerId = parseInt(req.params.id);
+      const { hours = 24 } = req.query;
+      
+      if (isNaN(providerId)) {
+        return res.status(400).json({ message: 'Invalid provider ID' });
+      }
+      
+      const healthHistory = await externalProviderTrackingStorage.getRecentHealthHistory(
+        providerId,
+        parseInt(hours as string)
+      );
+      
+      res.json(healthHistory);
+    } catch (error) {
+      console.error('Failed to fetch health history:', error);
+      res.status(500).json({ message: 'Failed to fetch health history' });
+    }
+  });
+  
+  // Record provider health check
+  app.post('/api/external-providers/:id/health-check', requireAuth, async (req, res) => {
+    try {
+      const providerId = parseInt(req.params.id);
+      const { isHealthy, responseTime, errorMessage } = req.body;
+      
+      if (isNaN(providerId)) {
+        return res.status(400).json({ message: 'Invalid provider ID' });
+      }
+      
+      const healthCheck = await externalProviderTrackingStorage.recordHealthCheck({
+        providerId,
+        isHealthy,
+        responseTime,
+        errorMessage
+      });
+      
+      res.json(healthCheck);
+    } catch (error) {
+      console.error('Failed to record health check:', error);
+      res.status(500).json({ message: 'Failed to record health check' });
+    }
+  });
+  
+  // Get provider summary with all statistics
+  app.get('/api/external-providers/:id/summary', requireAuth, async (req, res) => {
+    try {
+      const providerId = parseInt(req.params.id);
+      
+      if (isNaN(providerId)) {
+        return res.status(400).json({ message: 'Invalid provider ID' });
+      }
+      
+      const summary = await externalProviderTrackingStorage.getProviderSummary(providerId);
+      
+      res.json(summary);
+    } catch (error) {
+      console.error('Failed to fetch provider summary:', error);
+      res.status(500).json({ message: 'Failed to fetch provider summary' });
+    }
+  });
+  
+  // Get usage statistics by service type
+  app.get('/api/external-providers/usage/by-service', requireAuth, async (req, res) => {
+    try {
+      const { startDate, endDate } = req.query;
+      
+      const usage = await externalProviderTrackingStorage.getUsageByServiceType(
+        startDate ? new Date(startDate as string) : undefined,
+        endDate ? new Date(endDate as string) : undefined
+      );
+      
+      res.json(usage);
+    } catch (error) {
+      console.error('Failed to fetch usage by service:', error);
+      res.status(500).json({ message: 'Failed to fetch usage statistics' });
+    }
+  });
+  
+  // Get cost alerts
+  app.get('/api/external-providers/cost-alerts', requireAuth, async (req, res) => {
+    try {
+      const { resolved = false, limit = 50 } = req.query;
+      
+      const alerts = await externalProviderTrackingStorage.getCostAlerts({
+        resolved: resolved === 'true',
+        limit: parseInt(limit as string)
+      });
+      
+      res.json(alerts);
+    } catch (error) {
+      console.error('Failed to fetch cost alerts:', error);
+      res.status(500).json({ message: 'Failed to fetch cost alerts' });
+    }
+  });
+  
+  // Resolve cost alert
+  app.post('/api/external-providers/cost-alerts/:alertId/resolve', requireAuth, async (req, res) => {
+    try {
+      const alertId = parseInt(req.params.alertId);
+      const userId = (req.user as any)?.id;
+      const { notes } = req.body;
+      
+      if (isNaN(alertId)) {
+        return res.status(400).json({ message: 'Invalid alert ID' });
+      }
+      
+      await externalProviderTrackingStorage.resolveCostAlert(
+        alertId,
+        userId,
+        notes
+      );
+      
+      res.json({ message: 'Cost alert resolved successfully' });
+    } catch (error) {
+      console.error('Failed to resolve cost alert:', error);
+      res.status(500).json({ message: 'Failed to resolve cost alert' });
+    }
+  });
+  
+  // Get failover events
+  app.get('/api/external-providers/failovers', requireAuth, async (req, res) => {
+    try {
+      const { serviceType, startDate, endDate, limit = 100 } = req.query;
+      
+      const failovers = await externalProviderTrackingStorage.getFailoverEvents({
+        serviceType: serviceType as string,
+        startDate: startDate ? new Date(startDate as string) : undefined,
+        endDate: endDate ? new Date(endDate as string) : undefined,
+        limit: parseInt(limit as string)
+      });
+      
+      res.json(failovers);
+    } catch (error) {
+      console.error('Failed to fetch failover events:', error);
+      res.status(500).json({ message: 'Failed to fetch failover events' });
+    }
+  });
+  
+  // Get API key rotation history
+  app.get('/api/external-providers/:id/api-keys', requireAuth, async (req, res) => {
+    try {
+      const providerId = parseInt(req.params.id);
+      
+      if (isNaN(providerId)) {
+        return res.status(400).json({ message: 'Invalid provider ID' });
+      }
+      
+      const keyHistory = await externalProviderTrackingStorage.getApiKeyRotationHistory(
+        providerId
+      );
+      
+      res.json(keyHistory);
+    } catch (error) {
+      console.error('Failed to fetch API key history:', error);
+      res.status(500).json({ message: 'Failed to fetch API key history' });
+    }
+  });
+  
+  // Rotate API key
+  app.post('/api/external-providers/:id/rotate-key', requireAuth, async (req, res) => {
+    try {
+      const providerId = parseInt(req.params.id);
+      const userId = (req.user as any)?.id;
+      const { reason, newKeyLastFour } = req.body;
+      
+      if (isNaN(providerId)) {
+        return res.status(400).json({ message: 'Invalid provider ID' });
+      }
+      
+      const rotation = await externalProviderTrackingStorage.recordApiKeyRotation({
+        providerId,
+        reason: reason || 'Manual rotation',
+        rotatedBy: userId,
+        newKeyLastFour
+      });
+      
+      res.json(rotation);
+    } catch (error) {
+      console.error('Failed to rotate API key:', error);
+      res.status(500).json({ message: 'Failed to rotate API key' });
     }
   });
 

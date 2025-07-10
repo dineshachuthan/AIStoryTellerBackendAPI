@@ -1738,3 +1738,6 @@ export type InsertPasswordResetToken = z.infer<typeof insertPasswordResetTokenSc
 
 export type User2faSettings = typeof user2faSettings.$inferSelect;
 export type InsertUser2faSettings = z.infer<typeof insertUser2faSettingsSchema>;
+
+// Re-export notification tracking schemas
+export * from './notification-tracking';
