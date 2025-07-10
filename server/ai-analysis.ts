@@ -829,9 +829,13 @@ async function updateSoundPatterns(soundEffects: ExtractedSoundEffect[]): Promis
         // First try exact match
         if (soundDescription === key) {
           const exists = existingPatterns.some(p => p.pattern === mapping.pattern);
+          console.log(`🔄 DEBUG updateSoundPatterns: Exact match for "${key}" - pattern exists: ${exists}`);
+          console.log(`🔄 DEBUG updateSoundPatterns: Looking for pattern: "${mapping.pattern}"`);
           if (!exists) {
             newPatterns.push(mapping);
             console.log(`[AI Analysis] Added new sound pattern (exact): ${key} -> ${mapping.insert}`);
+          } else {
+            console.log(`🔄 DEBUG updateSoundPatterns: SKIPPED - Pattern already exists for: ${key}`);
           }
           patternFound = true;
           break;
