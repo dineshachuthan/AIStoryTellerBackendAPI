@@ -643,6 +643,10 @@ async function populateEsmReferenceData(analysis: StoryAnalysis, userId: string)
           console.log(`🔄 Sound effect already exists in reference data: ${soundName}`);
         }
       }
+      
+      // Update sound patterns file with newly discovered sound effects
+      console.log("🔄 Updating sound patterns file with newly discovered sound effects...");
+      await updateSoundPatterns(analysis.soundEffects);
     }
 
     // Process modulations (category 3) - mood category, emotional tags, genre, subGenre
