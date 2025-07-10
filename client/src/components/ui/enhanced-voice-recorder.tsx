@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Mic, Play, RotateCcw, Save, Radio, Volume2, CheckCircle, Circle, Lock, Unlock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { AUDIO_PROCESSING_CONFIG } from "../../../../shared/audio-config";
+import { AUDIO_PROCESSING_CONFIG } from "@shared/config/audio-config";
 import { apiRequest } from "@/lib/queryClient";
 import { UIMessages } from '@shared/config/i18n-config';
 import { VOICE_RECORDING_CONFIG } from '@shared/config/voice-recording-config';

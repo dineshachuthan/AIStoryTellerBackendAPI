@@ -4,7 +4,7 @@
  * Pattern: page.component.element
  */
 
-import { getCurrentUserLanguage, type Language } from './language-config';
+import { getCurrentUserLanguage, type Language } from '../config/language-config';
 
 export type MessageType = 'error' | 'warning' | 'success' | 'info';
 export type MessageSeverity = 'low' | 'medium' | 'high' | 'critical';
