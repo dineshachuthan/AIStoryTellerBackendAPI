@@ -274,14 +274,20 @@ export default function StoryNarratorControls({
 
   // Simple play function
   const playNarration = async () => {
+    console.log('🎵 playNarration called');
     const activeNarration = tempNarration || savedNarration;
+    console.log('🎵 activeNarration:', activeNarration);
+    console.log('🎵 tempNarration:', tempNarration);
+    console.log('🎵 savedNarration:', savedNarration);
     
     // If no narration exists, generate it first
     if (!activeNarration || !activeNarration.segments.length) {
+      console.log('🎵 No narration found, generating...');
       await generateNarration();
       return;
     }
     
+    console.log('🎵 audioRef.current:', audioRef.current);
     if (!audioRef.current) return;
     
     if (isPlaying) {
