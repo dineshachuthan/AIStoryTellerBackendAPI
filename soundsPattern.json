@@ -1,19 +1,74 @@
 [
-  { "pattern": "dog.*(bark|barking)", "insert": "(bow bow)" },
-  { "pattern": "cat.*(meow|meowing)", "insert": "(meow)" },
-  { "pattern": "train", "insert": "(Koooo tuh chuk tuk chuk)" },
-  { "pattern": "(walk|walking|footsteps)", "insert": "(tok tok tok)" },
-  { "pattern": "door", "insert": "(creeeeak)" },
-  { "pattern": "wind", "insert": "(whoooosh)" },
-  { "pattern": "horse", "insert": "(neigh)" },
-  { "pattern": "bird", "insert": "(chirp chirp)" },
-  { "pattern": "\\b(sea|ocean|wave(s)?)\\b", "insert": "(splash splash)" },
-  { "pattern": "fall|fallen|dropping", "insert": "(damal)" },
-  { "pattern": "blast|explode|explosion", "insert": "(Doooom Dubbb)" },
-  { "pattern": "scary|haunted|dark|creepy", "insert": "(oooooooo spooky wind)" },
-  { "pattern": "laugh|laughing", "insert": "(ha ha ha)" },
-  { "pattern": "cry|crying|sob", "insert": "(ummmm ummmmm)" },
-  { "pattern": "fire|flames", "insert": "(fsssshhh crackle)" },
-  { "pattern": "rain|storm", "insert": "(drip drop drip)" },
-  { "pattern": "crowd|people", "insert": "(murmur murmur)" }
+  {
+    "pattern": "\\b(door|doors?)\\s+(slam(ming|s|med)?|bang(ing|s|ed)?)\\b",
+    "insert": "(SLAM!)"
+  },
+  {
+    "pattern": "scary|haunted|dark|creepy",
+    "insert": "(oooooooo spooky wind)"
+  },
+  {
+    "pattern": "(walk|walking|footsteps)",
+    "insert": "(tok tok tok)"
+  },
+  {
+    "pattern": "\\b(sea|ocean|wave(s)?)\\b",
+    "insert": "(splash splash)"
+  },
+  {
+    "pattern": "blast|explode|explosion",
+    "insert": "(Doooom Dubbb)"
+  },
+  {
+    "pattern": "fall|fallen|dropping",
+    "insert": "(damal)"
+  },
+  {
+    "pattern": "dog.*(bark|barking)",
+    "insert": "(bow bow)"
+  },
+  {
+    "pattern": "cat.*(meow|meowing)",
+    "insert": "(meow)"
+  },
+  {
+    "pattern": "laugh|laughing",
+    "insert": "(ha ha ha)"
+  },
+  {
+    "pattern": "cry|crying|sob",
+    "insert": "(ummmm ummmmm)"
+  },
+  {
+    "pattern": "crowd|people",
+    "insert": "(murmur murmur)"
+  },
+  {
+    "pattern": "fire|flames",
+    "insert": "(fsssshhh crackle)"
+  },
+  {
+    "pattern": "rain|storm",
+    "insert": "(drip drop drip)"
+  },
+  {
+    "pattern": "train",
+    "insert": "(Koooo tuh chuk tuk chuk)"
+  },
+  {
+    "pattern": "horse",
+    "insert": "(neigh)"
+  },
+  {
+    "pattern": "door",
+    "insert": "(creeeeak)"
+  },
+  {
+    "pattern": "wind",
+    "insert": "(whoooosh)"
+  },
+  {
+    "pattern": "bird",
+    "insert": "(chirp chirp)"
+  }
 ]

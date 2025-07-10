@@ -734,13 +734,18 @@ async function populateEsmReferenceData(analysis: StoryAnalysis, userId: string)
  */
 async function updateSoundPatterns(soundEffects: ExtractedSoundEffect[]): Promise<void> {
   try {
+    console.log(`🔄 DEBUG updateSoundPatterns: Starting with ${soundEffects.length} sound effects`);
+    console.log(`🔄 DEBUG updateSoundPatterns: Sound effects:`, soundEffects.map(se => se.sound));
+    
     const soundsPatternsPath = path.join(process.cwd(), 'soundsPattern.json');
+    console.log(`🔄 DEBUG updateSoundPatterns: File path: ${soundsPatternsPath}`);
     
     // Load existing patterns
     let existingPatterns: Array<{ pattern: string; insert: string }> = [];
     try {
       const fileContent = await fs.readFile(soundsPatternsPath, 'utf8');
       existingPatterns = JSON.parse(fileContent);
+      console.log(`🔄 DEBUG updateSoundPatterns: Loaded ${existingPatterns.length} existing patterns`);
     } catch (error) {
       console.log('[AI Analysis] No existing sound patterns file found, creating new one');
     }
@@ -749,10 +754,19 @@ async function updateSoundPatterns(soundEffects: ExtractedSoundEffect[]): Promis
     const newPatterns: Array<{ pattern: string; insert: string }> = [];
     
     for (const soundEffect of soundEffects) {
-      if (!soundEffect.sound || !soundEffect.quote) continue;
+      console.log(`🔄 DEBUG updateSoundPatterns: Processing sound effect:`, soundEffect);
+      console.log(`🔄 DEBUG updateSoundPatterns: soundEffect.sound: "${soundEffect.sound}", soundEffect.quote: "${soundEffect.quote}"`);
+      
+      if (!soundEffect.sound || !soundEffect.quote) {
+        console.log(`🔄 DEBUG updateSoundPatterns: SKIPPING - Missing sound (${!!soundEffect.sound}) or quote (${!!soundEffect.quote})`);
+        continue;
+      }
+      
+      console.log(`🔄 DEBUG updateSoundPatterns: Processing sound effect: ${soundEffect.sound}`);
       
       // Create a pattern from the sound description
       const soundDescription = soundEffect.sound.toLowerCase();
+      console.log(`🔄 DEBUG updateSoundPatterns: soundDescription: "${soundDescription}"`);
       
       // Convert sound descriptions to patterns and onomatopoeia
       const soundMapping: Record<string, { pattern: string; insert: string }> = {
@@ -877,15 +891,21 @@ async function updateSoundPatterns(soundEffects: ExtractedSoundEffect[]): Promis
     }
     
     // Merge new patterns with existing ones
+    console.log(`🔄 DEBUG updateSoundPatterns: Found ${newPatterns.length} new patterns to add`);
+    
     if (newPatterns.length > 0) {
       const mergedPatterns = [...existingPatterns, ...newPatterns];
       
       // Sort patterns by length (longer patterns first)
       mergedPatterns.sort((a, b) => b.pattern.length - a.pattern.length);
       
+      console.log(`🔄 DEBUG updateSoundPatterns: Writing ${mergedPatterns.length} total patterns to file`);
+      
       // Write back to file
       await fs.writeFile(soundsPatternsPath, JSON.stringify(mergedPatterns, null, 2));
       console.log(`[AI Analysis] Updated sound patterns file with ${newPatterns.length} new patterns`);
+    } else {
+      console.log(`🔄 DEBUG updateSoundPatterns: No new patterns to add - file not modified`);
     }
     
   } catch (error) {
