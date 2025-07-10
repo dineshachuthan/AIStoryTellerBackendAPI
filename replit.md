@@ -176,6 +176,53 @@ This is a full-stack collaborative storytelling platform that enables users to c
 3. Audio generated and cached with metadata
 4. Public URLs served through Express static middleware
 
+## Critical Design Patterns (MUST FOLLOW)
+
+### Email Template System Architecture
+**PATTERN**: All email content uses template-driven architecture with NO hardcoded HTML/text
+- **Template Location**: `server/email-templates/` directory with organized template files
+- **Template Interface**: EmailTemplate with id, name, subject, description, variables, html, text, webhooks, providerConfig
+- **Template Compilation**: Use `compileEmailTemplate(template, data)` helper that calls `interpolateTemplate()`
+- **Variable Interpolation**: Supports {{variable}} placeholders and {{#if condition}} conditionals
+- **Provider Agnostic**: Templates work with any email provider (MailGun, SendGrid, etc.)
+- **Pattern Example**:
+  ```typescript
+  const templateData = { recipientName: 'John', resetLink: 'https://...' };
+  const compiled = compileEmailTemplate(passwordResetTemplate, templateData);
+  const emailMessage: EmailMessage = {
+    to: email,
+    from: provider.config.fromEmail,
+    subject: compiled.subject,
+    text: compiled.text,
+    html: compiled.html,
+  };
+  ```
+
+### Plug-and-Play Provider Architecture  
+**PATTERN**: All external service integrations use provider registry pattern
+- **Email Providers**: BaseEmailProvider → MailgunEmailProvider/SendGridEmailProvider
+- **Voice Providers**: BaseVoiceProvider → ElevenLabsProvider/KlingVoiceProvider  
+- **Video Providers**: BaseVideoProvider → RunwayMLProvider/PikaLabsProvider
+- **Audio Storage**: BaseAudioStorageProvider → ReplitProvider/S3Provider
+- **Registry Pattern**: Provider registry handles priority-based selection and health checks
+- **Zero Fallback Logic**: No hardcoded fallbacks - only configured providers are used
+- **Environment-Driven**: Provider selection based on available credentials
+
+### Authentication Email Functions
+**ESTABLISHED PATTERNS**: 5 core authentication email functions with template integration
+1. `sendPasswordResetEmail()` - Uses passwordResetTemplate
+2. `sendVerificationCodeEmail()` - Uses verificationCodeTemplate  
+3. `sendWelcomeEmail()` - Uses welcomeEmailTemplate
+4. `sendTwoFactorCodeEmail()` - Uses twoFactorCodeTemplate
+5. `sendRoleplayInvitation()` - Uses roleplayInvitationTemplate
+
+### Error Handling Patterns
+**PATTERN**: Consistent error handling across all email functions
+- Log when no provider configured (not an error, just info)
+- Try/catch blocks with specific error logging
+- Return boolean success/failure
+- Provider-specific error details in logs
+
 ## External Dependencies
 
 ### AI Services
@@ -183,7 +230,8 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Anthropic**: Claude integration for advanced content processing
 
 ### Communication Services
-- **SendGrid**: Email delivery for invitations and notifications
+- **MailGun**: Primary email provider (priority 1) with domain-based configuration
+- **SendGrid**: Secondary email provider (priority 2) as fallback
 - **Twilio**: SMS delivery for mobile notifications
 
 ### Video Generation
