@@ -94,7 +94,7 @@ export default function StoryLibrary() {
         body: { title: "Untitled Story", storyType }
       });
       
-      const story = await apiClient.stories.create({
+      const story = await apiClient.stories.createDraft({
         title: "Untitled Story",
         storyType,
         content: '' // Empty content for draft stories

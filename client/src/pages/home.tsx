@@ -99,7 +99,7 @@ export default function Home() {
         body: { title: "Untitled Story", storyType }
       });
       
-      const story = await apiClient.stories.create({
+      const story = await apiClient.stories.createDraft({
         title: getMessage('home.story_defaults.untitled_story', {}, language),
         storyType,
         content: '' // Empty content for draft stories

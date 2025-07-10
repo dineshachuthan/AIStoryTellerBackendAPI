@@ -110,6 +110,8 @@ export class ApiClient {
     },
     get: (id: number) => this.request<any>('GET', `/api/stories/${id}`),
     create: (data: any) => this.request<any>('POST', '/api/stories', data),
+    createDraft: (data: { title: string; storyType: string; content?: string }) => 
+      this.request<any>('POST', '/api/stories/draft', data),
     update: (id: number, data: any) => this.request<any>('PATCH', `/api/stories/${id}`, data),
     delete: (id: number) => this.request<void>('DELETE', `/api/stories/${id}`),
     analyze: (id: number) => this.request<any>('POST', `/api/stories/${id}/analyze`),
