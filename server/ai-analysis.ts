@@ -127,7 +127,7 @@ export async function analyzeStoryContent(content: string, userId?: string): Pro
       ],
       "soundEffects": [
         {
-          "sound": "Description of the sound effect (e.g., 'dog barking', 'footsteps', 'door slamming')",
+          "sound": "Description of the sound effect (e.g., 'dog barking', 'footsteps', 'door slamming', 'scary atmosphere', 'falling', 'explosion')",
           "intensity": 5,
           "context": "Context where this sound appears",
           "quote": "Exact quote from the story mentioning the sound"
@@ -162,9 +162,17 @@ export async function analyzeStoryContent(content: string, userId?: string): Pro
     - Provide accurate intensity ratings (1-10 scale) based on story context
     - Include multiple emotions - stories typically evoke 3-8 different emotions
     - Each emotion should have a specific quote and context from the story
-    - EXTRACT SOUND EFFECTS: Identify any sounds mentioned in the story
+    - EXTRACT SOUND EFFECTS: Identify ALL sounds including:
+      * Explicit sounds mentioned in the story (dog barking, footsteps, door slamming)
+      * Situational sounds based on atmosphere (scary scene → 'haunted atmosphere', tense moment → 'suspenseful silence')
+      * Action sounds (falling → 'falling noise', explosion → 'blast', crash → 'impact sound')
+      * Mood-based sounds (scary → 'eerie atmosphere', happy → 'cheerful ambiance', sad → 'melancholic tone')
+      * Environmental ambiance (forest → 'nature sounds', city → 'urban noise', ocean → 'waves')
     - Include environmental sounds (wind, rain, footsteps, doors), animal sounds (barking, meowing, neighing), mechanical sounds (trains, cars), etc.
-    - For sound effects, include the exact quote where the sound is mentioned
+    - For each sound, think about what onomatopoeia or atmospheric sound would enhance the narration
+    - Extract sounds for dramatic actions: falling, crashing, exploding, breaking, hitting, etc.
+    - Extract sounds for atmospheric descriptions: scary, peaceful, chaotic, mysterious, etc.
+    - For sound effects, include the exact quote where the sound is mentioned or implied
     - Determine appropriate category and themes
     - Flag adult content if it contains explicit material, violence, or mature themes`;
 
@@ -741,37 +749,98 @@ async function updateSoundPatterns(soundEffects: ExtractedSoundEffect[]): Promis
       
       // Convert sound descriptions to patterns and onomatopoeia
       const soundMapping: Record<string, { pattern: string; insert: string }> = {
+        // Animal sounds
         'dog barking': { pattern: '\\b(dog|dogs?)\\s+(bark(ing|s|ed)?|woof(ing|s|ed)?)\\b', insert: '(bow bow)' },
         'cat meowing': { pattern: '\\b(cat|cats?)\\s+(meow(ing|s|ed)?|mew(ing|s|ed)?)\\b', insert: '(meow meow)' },
-        'footsteps': { pattern: '\\b(footstep(s)?|step(s|ping|ped)?|walk(ing|s|ed)?)\\b', insert: '(tap tap)' },
-        'door slamming': { pattern: '\\b(door|doors?)\\s+(slam(ming|s|med)?|bang(ing|s|ed)?)\\b', insert: '(SLAM!)' },
-        'wind blowing': { pattern: '\\b(wind|breeze)\\s+(blow(ing|s)?|howl(ing|s|ed)?|whistle(ing|d)?)\\b', insert: '(whoosh)' },
-        'rain falling': { pattern: '\\b(rain(ing|s|ed)?|drizzl(ing|e)|pour(ing|s|ed)?)\\b', insert: '(pitter patter)' },
-        'thunder': { pattern: '\\b(thunder(ing|s|ed)?|boom(ing|s|ed)?)\\b', insert: '(BOOM!)' },
-        'car engine': { pattern: '\\b(car|engine|motor)\\s+(start(ing|s|ed)?|revv?(ing|s|ed)?|roar(ing|s|ed)?)\\b', insert: '(vroom vroom)' },
-        'phone ringing': { pattern: '\\b(phone|telephone)\\s+(ring(ing|s)?|buzz(ing|es|ed)?)\\b', insert: '(ring ring)' },
-        'clock ticking': { pattern: '\\b(clock|watch)\\s+(tick(ing|s|ed)?|tock(ing|s|ed)?)\\b', insert: '(tick tock)' },
-        'water dripping': { pattern: '\\b(water|faucet|tap)\\s+(drip(ping|s|ped)?|leak(ing|s|ed)?)\\b', insert: '(drip drop)' },
-        'fire crackling': { pattern: '\\b(fire|flame(s)?)\\s+(crackl(ing|es|ed)?|burn(ing|s|ed)?)\\b', insert: '(crackle crackle)' },
-        'glass breaking': { pattern: '\\b(glass|window)\\s+(break(ing|s)?|shatter(ing|s|ed)?|smash(ing|es|ed)?)\\b', insert: '(CRASH!)' },
-        'bell ringing': { pattern: '\\b(bell(s)?)\\s+(ring(ing|s)?|chim(ing|es|ed)?|toll(ing|s|ed)?)\\b', insert: '(ding dong)' },
         'bird chirping': { pattern: '\\b(bird(s)?)\\s+(chirp(ing|s|ed)?|sing(ing|s)?|tweet(ing|s|ed)?)\\b', insert: '(tweet tweet)' },
         'horse neighing': { pattern: '\\b(horse(s)?)\\s+(neigh(ing|s|ed)?|whinny(ing|ies|ied)?)\\b', insert: '(neigh)' },
         'cow mooing': { pattern: '\\b(cow(s)?)\\s+(moo(ing|s|ed)?|low(ing|s|ed)?)\\b', insert: '(moo)' },
         'sheep bleating': { pattern: '\\b(sheep|lamb(s)?)\\s+(bleat(ing|s|ed)?|baa(ing|s|ed)?)\\b', insert: '(baa baa)' },
         'owl hooting': { pattern: '\\b(owl(s)?)\\s+(hoot(ing|s|ed)?|call(ing|s|ed)?)\\b', insert: '(hoo hoo)' },
-        'waves crashing': { pattern: '\\b(wave(s)?)\\s+(crash(ing|es|ed)?|break(ing|s)?|pound(ing|s|ed)?)\\b', insert: '(splash!)' }
+        
+        // Movement sounds
+        'footsteps': { pattern: '\\b(footstep(s)?|step(s|ping|ped)?|walk(ing|s|ed)?)\\b', insert: '(tok tok tok)' },
+        'running': { pattern: '\\b(run(ning|s)?|sprint(ing|s|ed)?|dash(ing|es|ed)?)\\b', insert: '(tap tap tap tap)' },
+        'falling': { pattern: '\\b(fall(ing|s)?|fell|drop(ping|ped|s)?|plummet(ing|ed|s)?)\\b', insert: '(damal)' },
+        
+        // Object sounds
+        'door slamming': { pattern: '\\b(door|doors?)\\s+(slam(ming|s|med)?|bang(ing|s|ed)?)\\b', insert: '(SLAM!)' },
+        'door opening': { pattern: '\\b(door|doors?)\\s+(open(ing|s|ed)?|creak(ing|s|ed)?)\\b', insert: '(creeeeak)' },
+        'glass breaking': { pattern: '\\b(glass|window)\\s+(break(ing|s)?|shatter(ing|s|ed)?|smash(ing|es|ed)?)\\b', insert: '(CRASH!)' },
+        'bell ringing': { pattern: '\\b(bell(s)?)\\s+(ring(ing|s)?|chim(ing|es|ed)?|toll(ing|s|ed)?)\\b', insert: '(ding dong)' },
+        'clock ticking': { pattern: '\\b(clock|watch)\\s+(tick(ing|s|ed)?|tock(ing|s|ed)?)\\b', insert: '(tick tock)' },
+        'phone ringing': { pattern: '\\b(phone|telephone)\\s+(ring(ing|s)?|buzz(ing|es|ed)?)\\b', insert: '(ring ring)' },
+        
+        // Nature sounds
+        'wind blowing': { pattern: '\\b(wind|breeze)\\s+(blow(ing|s)?|howl(ing|s|ed)?|whistle(ing|d)?)\\b', insert: '(whoooosh)' },
+        'rain falling': { pattern: '\\b(rain(ing|s|ed)?|drizzl(ing|e)|pour(ing|s|ed)?)\\b', insert: '(drip drop drip)' },
+        'thunder': { pattern: '\\b(thunder(ing|s|ed)?|boom(ing|s|ed)?)\\b', insert: '(BOOM!)' },
+        'waves crashing': { pattern: '\\b(wave(s)?)\\s+(crash(ing|es|ed)?|break(ing|s)?|pound(ing|s|ed)?)\\b', insert: '(splash splash)' },
+        'fire crackling': { pattern: '\\b(fire|flame(s)?)\\s+(crackl(ing|es|ed)?|burn(ing|s|ed)?)\\b', insert: '(fsssshhh crackle)' },
+        'water dripping': { pattern: '\\b(water|faucet|tap)\\s+(drip(ping|s|ped)?|leak(ing|s|ed)?)\\b', insert: '(drip drop)' },
+        
+        // Vehicle sounds
+        'car engine': { pattern: '\\b(car|engine|motor)\\s+(start(ing|s|ed)?|revv?(ing|s|ed)?|roar(ing|s|ed)?)\\b', insert: '(vroom vroom)' },
+        'train': { pattern: '\\b(train|locomotive|railway)\\b', insert: '(Koooo tuh chuk tuk chuk)' },
+        
+        // Action sounds
+        'explosion': { pattern: '\\b(explo(sion|de|ding)|blast(ing|ed|s)?|bomb|detonate)\\b', insert: '(Doooom Dubbb)' },
+        'crash': { pattern: '\\b(crash(ing|es|ed)?|collid(e|ing|ed)|impact(ing|ed|s)?)\\b', insert: '(CRASH!)' },
+        'hitting': { pattern: '\\b(hit(ting|s)?|punch(ing|es|ed)?|strike|smack(ing|ed|s)?)\\b', insert: '(whack!)' },
+        'breaking': { pattern: '\\b(break(ing|s)?|snap(ping|ped|s)?|crack(ing|ed|s)?)\\b', insert: '(crack!)' },
+        
+        // Emotional/Situational sounds
+        'scary atmosphere': { pattern: '\\b(scary|spooky|eerie|haunted|creepy|terrifying|frightening)\\b', insert: '(oooooooo spooky wind)' },
+        'laughing': { pattern: '\\b(laugh(ing|s|ed)?|giggl(ing|e|ed)?|chuckl(ing|e|ed)?)\\b', insert: '(ha ha ha)' },
+        'crying': { pattern: '\\b(cry(ing)?|weep(ing)?|sob(bing|s|bed)?|tear(s)?)\\b', insert: '(ummmm ummmmm)' },
+        'crowd noise': { pattern: '\\b(crowd(ed)?|people|gathering|audience|mob)\\b', insert: '(murmur murmur)' },
+        
+        // Atmospheric sounds
+        'peaceful': { pattern: '\\b(peaceful|calm|serene|tranquil|quiet)\\b', insert: '(soft breeze)' },
+        'tense': { pattern: '\\b(tense|suspens(e|eful)|anxious|nervous)\\b', insert: '(silence...)' },
+        'chaotic': { pattern: '\\b(chaos|chaotic|pandemonium|mayhem|disorder)\\b', insert: '(crash bang boom)' },
+        'mysterious': { pattern: '\\b(mysterious|mystery|enigmatic|puzzling|strange)\\b', insert: '(whooooo)' }
       };
       
-      // Check if we have a mapping for this sound
+      // Check if we have a mapping for this sound using flexible matching
       let patternFound = false;
       for (const [key, mapping] of Object.entries(soundMapping)) {
-        if (soundDescription.includes(key)) {
-          // Check if pattern already exists
+        // First try exact match
+        if (soundDescription === key) {
           const exists = existingPatterns.some(p => p.pattern === mapping.pattern);
           if (!exists) {
             newPatterns.push(mapping);
-            console.log(`[AI Analysis] Added new sound pattern: ${key} -> ${mapping.insert}`);
+            console.log(`[AI Analysis] Added new sound pattern (exact): ${key} -> ${mapping.insert}`);
+          }
+          patternFound = true;
+          break;
+        }
+        
+        // Then try contains match
+        if (soundDescription.includes(key)) {
+          const exists = existingPatterns.some(p => p.pattern === mapping.pattern);
+          if (!exists) {
+            newPatterns.push(mapping);
+            console.log(`[AI Analysis] Added new sound pattern (contains): ${key} -> ${mapping.insert}`);
+          }
+          patternFound = true;
+          break;
+        }
+        
+        // Finally try key words match for flexible matching
+        const keyWords = key.split(' ');
+        const descWords = soundDescription.split(' ');
+        const hasMatchingWords = keyWords.some(keyWord => 
+          descWords.some(descWord => 
+            descWord.includes(keyWord) || keyWord.includes(descWord)
+          )
+        );
+        
+        if (hasMatchingWords) {
+          const exists = existingPatterns.some(p => p.pattern === mapping.pattern);
+          if (!exists) {
+            newPatterns.push(mapping);
+            console.log(`[AI Analysis] Added new sound pattern (word match): ${key} -> ${mapping.insert}`);
           }
           patternFound = true;
           break;

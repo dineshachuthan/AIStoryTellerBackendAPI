@@ -606,6 +606,13 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Pattern Matching**: Regex patterns to detect sound-related words in story text
 - **Sound Effects**: Automatic insertion of onomatopoeia for common sounds (dog barking, cat meowing, footsteps, etc.)
 - **Integration**: Used during narration generation to enhance story audio with contextual sound effects
+- **Enhanced Sound Extraction**: AI analysis now extracts:
+  - **Situational Sounds**: Scary scenes → "(oooooooo spooky wind)", tense moments → "(silence...)"
+  - **Action Sounds**: Falling → "(damal)", explosions → "(Doooom Dubbb)", crashes → "(CRASH!)"
+  - **Mood-Based Sounds**: Peaceful → "(soft breeze)", chaotic → "(crash bang boom)", mysterious → "(whooooo)"
+  - **Environmental Ambiance**: Forest, city, ocean sounds based on scene context
+- **Auto-Learning**: Story analysis automatically updates soundsPattern.json with newly discovered sound patterns
+- **Flexible Matching**: Supports exact, contains, and word-based matching for sound descriptions
 
 ## Changelog
 

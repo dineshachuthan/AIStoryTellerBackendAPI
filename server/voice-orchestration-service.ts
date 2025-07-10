@@ -736,7 +736,7 @@ export class VoiceOrchestrationService {
   /**
    * Enhance text with sound effects based on patterns
    */
-  private async enhanceWithSounds(text: string): Promise<string> {
+  async enhanceWithSounds(text: string): Promise<string> {
     const patterns = await this.getSoundPatterns();
     let enrichedText = text;
     

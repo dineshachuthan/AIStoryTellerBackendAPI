@@ -362,8 +362,12 @@ export class StoryNarrator {
         
         console.log(`[StoryNarrator] Using orchestrated voice settings:`, voiceSettings);
         
+        // Enhance text with sound effects
+        const enhancedText = await voiceOrchestrationService.enhanceWithSounds(text);
+        console.log(`[StoryNarrator] Enhanced text with sounds: ${enhancedText.substring(0, 100)}...`);
+        
         const { VoiceProviderFactory } = await import('./voice-providers/voice-provider-factory');
-        const arrayBuffer = await VoiceProviderFactory.generateSpeech(text, narratorVoice, chunkContext.emotion, voiceSettings, undefined, narratorProfile);
+        const arrayBuffer = await VoiceProviderFactory.generateSpeech(enhancedText, narratorVoice, chunkContext.emotion, voiceSettings, undefined, narratorProfile);
         audioBuffer = Buffer.from(arrayBuffer);
         
         console.log(`[StoryNarrator] ElevenLabs narration generated: ${audioBuffer.length} bytes with ${chunkContext.emotion} emotion and orchestrated settings`);
