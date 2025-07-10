@@ -10,7 +10,7 @@ import {
 } from './email-templates/auth-email-templates';
 import { narrationInvitationTemplate } from './email-templates/narration-invitation.template';
 import { EmailTemplate } from './email-templates/types';
-import { getMessage, Language } from '../shared/i18n-hierarchical';
+import { getMessage, Language } from '../shared/utils/i18n-hierarchical';
 
 // Initialize email provider registry
 const emailRegistry = emailProviderRegistry;
