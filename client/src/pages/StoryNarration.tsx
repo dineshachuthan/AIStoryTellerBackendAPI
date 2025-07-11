@@ -1,19 +1,60 @@
 import { useParams, useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Download, AudioLines, Play } from "lucide-react";
+import { ArrowLeft, Download, AudioLines, Play, Settings } from "lucide-react";
 import StoryNarratorControls from "@/components/ui/story-narrator-controls";
 import { SimpleAudioPlayer } from "@/components/ui/simple-audio-player";
 import { useAuth } from "@/hooks/useAuth";
 import { AppTopNavigation } from "@/components/app-top-navigation";
 import { apiClient } from "@/lib/api-client";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { toast, toastMessages } from "@/lib/toast-utils";
+import { useState } from "react";
+
+const CONVERSATION_STYLES = [
+  "respectful",
+  "business", 
+  "jovial",
+  "playful",
+  "close_friends",
+  "parent_to_child",
+  "child_to_parent",
+  "siblings"
+];
+
+const EMOTIONS = [
+  "neutral",
+  "happy",
+  "sad",
+  "angry",
+  "fear",
+  "surprised",
+  "thoughtful",
+  "excited",
+  "confident",
+  "contemplative"
+];
+
+const NARRATOR_PROFILES = [
+  { id: "neutral", name: "Neutral", description: "Standard narration" },
+  { id: "grandma", name: "Grandma", description: "Warm, slow, caring" },
+  { id: "kid", name: "Kid", description: "Energetic, fast, playful" },
+  { id: "business", name: "Business", description: "Professional, clear" },
+  { id: "storyteller", name: "Storyteller", description: "Dramatic, engaging" }
+];
 
 export default function StoryNarration() {
   const { id } = useParams<{ id: string }>();
   const [, navigate] = useLocation();
   const { user } = useAuth();
   const storyId = parseInt(id || "0");
+  
+  // State for test generation controls
+  const [conversationStyle, setConversationStyle] = useState("respectful");
+  const [emotion, setEmotion] = useState("neutral");
+  const [narratorProfile, setNarratorProfile] = useState("neutral");
 
   // Fetch story details
   const { data: story, isLoading } = useQuery({
@@ -23,10 +64,22 @@ export default function StoryNarration() {
   });
 
   // Fetch all narrations for this story
-  const { data: allNarrations = [], isLoading: allNarrationsLoading } = useQuery({
+  const { data: allNarrations = [], isLoading: allNarrationsLoading, refetch: refetchNarrations } = useQuery({
     queryKey: [`/api/stories/${storyId}/narrations/all`],
     queryFn: () => apiClient.stories.getAllNarrations(storyId),
     enabled: !!storyId && !!user
+  });
+
+  // Test generation mutation
+  const testGenerationMutation = useMutation({
+    mutationFn: () => apiClient.stories.generateTestNarrations(storyId),
+    onSuccess: (data) => {
+      toast.success("Test narrations generated successfully");
+      refetchNarrations();
+    },
+    onError: (error) => {
+      toast.error(`Failed to generate test narrations: ${error.message}`);
+    }
   });
 
   if (isLoading || allNarrationsLoading) {
@@ -107,6 +160,89 @@ export default function StoryNarration() {
             canNarrate={true}
             className=""
           />
+
+          {/* Test Generation Controls - For testing different cache keys */}
+          <Card className="mt-6 bg-white/10 backdrop-blur-sm border-white/20">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-2">
+                <Settings className="w-5 h-5" />
+                Test Generation Controls
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="conversation-style" className="text-white/90">
+                    Conversation Style
+                  </Label>
+                  <Select 
+                    value={conversationStyle} 
+                    onValueChange={setConversationStyle}
+                  >
+                    <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CONVERSATION_STYLES.map((style) => (
+                        <SelectItem key={style} value={style}>
+                          {style.replace('_', ' ').charAt(0).toUpperCase() + style.replace('_', ' ').slice(1)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div>
+                  <Label htmlFor="emotion" className="text-white/90">
+                    Emotion
+                  </Label>
+                  <Select value={emotion} onValueChange={setEmotion}>
+                    <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {EMOTIONS.map((emo) => (
+                        <SelectItem key={emo} value={emo}>
+                          {emo.charAt(0).toUpperCase() + emo.slice(1)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div>
+                  <Label htmlFor="narrator-profile" className="text-white/90">
+                    Narrator Profile
+                  </Label>
+                  <Select value={narratorProfile} onValueChange={setNarratorProfile}>
+                    <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {NARRATOR_PROFILES.map((profile) => (
+                        <SelectItem key={profile.id} value={profile.id}>
+                          {profile.name} - {profile.description}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              <div className="pt-4">
+                <Button 
+                  onClick={() => testGenerationMutation.mutate()}
+                  disabled={testGenerationMutation.isPending}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  {testGenerationMutation.isPending ? "Generating..." : "Generate Test Narrations"}
+                </Button>
+                <p className="text-sm text-white/60 mt-2">
+                  This will generate narrations with different conversation styles to test multi-dimensional caching.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* All Available Narrations Section */}
           {allNarrations && allNarrations.length > 0 && (
