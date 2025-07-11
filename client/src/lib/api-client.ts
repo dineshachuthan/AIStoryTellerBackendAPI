@@ -155,6 +155,7 @@ export class ApiClient {
     playNarration: (id: number) => this.request<any>('GET', `/api/stories/${id}/play`),
     // New narration endpoints (based on routes.ts)
     createNarration: (id: number) => this.request<any>('POST', `/api/stories/${id}/narration`),
+    getNarration: (id: number) => this.request<any>('GET', `/api/stories/${id}/narration`),
     generateNarrativeAudio: (id: number, data: { emotion: string; intensity: number; text: string }) =>
       this.request<any>('POST', `/api/stories/${id}/narrative/audio`, data),
     getFilters: () => this.request<any>('GET', '/api/stories/filters'),

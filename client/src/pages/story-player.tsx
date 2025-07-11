@@ -7,7 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { toast, toastMessages } from "@/lib/toast-utils";
 import { ArrowLeft, Play, Pause, SkipBack, SkipForward, Volume2, Share2, Users, Settings, Mic, Loader2 } from "lucide-react";
-import { apiRequest } from "@/lib/queryClient";
+import { apiClient } from "@/lib/api-client";
 import { ConfidenceMeter, useConfidenceTracking } from "@/components/confidence-meter";
 import { useAuth } from "@/hooks/useAuth";
 
