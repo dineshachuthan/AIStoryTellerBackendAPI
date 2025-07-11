@@ -107,6 +107,50 @@ export default function StoryNarration() {
             canNarrate={true}
             className=""
           />
+
+          {/* All Available Narrations Section */}
+          {allNarrations && allNarrations.length > 0 && (
+            <div className="mt-8">
+              <h2 className="text-2xl font-bold text-white mb-4">
+                All Available Narrations ({allNarrations.length})
+              </h2>
+              <div className="grid gap-4">
+                {allNarrations.map((narration) => (
+                  <div
+                    key={narration.id}
+                    className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20"
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="text-sm font-medium text-white/90">
+                          Style: {narration.conversationStyle}
+                        </div>
+                        <div className="text-sm text-white/60">
+                          Profile: {narration.narratorProfile}
+                        </div>
+                        <div className="text-sm text-white/60">
+                          Voice: {narration.narratorVoiceType}
+                        </div>
+                      </div>
+                      <div className="text-sm text-white/50">
+                        {new Date(narration.timestamp).toLocaleString()}
+                      </div>
+                    </div>
+                    
+                    {narration.audioUrl && (
+                      <div className="mt-3">
+                        <SimpleAudioPlayer
+                          audioUrl={narration.audioUrl}
+                          segments={narration.segments}
+                          title={`${narration.conversationStyle} Style`}
+                        />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
