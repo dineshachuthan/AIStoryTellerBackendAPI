@@ -1,535 +1,379 @@
-import { useEffect, useState, useRef } from "react";
-import { useParams, useLocation } from "wouter";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useState, useEffect } from 'react';
+import { useRoute } from 'wouter';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Loader2, UserPlus, Mic, Play, Check, Pause, Volume2, Sparkles, ChevronRight } from "lucide-react";
-import { toast, toastMessages } from "@/lib/toast-utils";
-import { useAuth } from "@/hooks/useAuth";
-import { apiClient } from "@/lib/api-client";
-import { queryClient } from "@/lib/queryClient";
-import { EnhancedVoiceRecorder } from "@/components/ui/enhanced-voice-recorder";
+import { Loader2, Play, Pause, Volume2 } from 'lucide-react';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { EnhancedVoiceRecorder } from '@/components/ui/enhanced-voice-recorder';
+import { apiClient } from '@/lib/api-client';
+import { toast } from '@/hooks/use-toast';
 
 interface NarrationInvitationData {
-  id: number;
+  id: string;
   storyId: number;
-  inviterId: string;
-  token: string;
-  inviteeEmail?: string;
-  inviteePhone?: string;
+  title: string;
+  content: string;
+  invitedBy: string;
   expiresAt: string;
-  status: string;
-  story?: {
-    title: string;
-    summary?: string;
-  };
-  inviter?: {
-    firstName?: string;
-    lastName?: string;
-    email: string;
-  };
+  status: 'pending' | 'accepted' | 'expired';
 }
 
 export default function NarrationInvitationLanding() {
-  const { token } = useParams<{ token: string }>();
+  const [, params] = useRoute('/invitations/narration/:token');
+  const token = params?.token;
+  
+  const [currentStage, setCurrentStage] = useState<'loading' | 'preview' | 'recording' | 'generating' | 'complete'>('loading');
+  const [recordingStates, setRecordingStates] = useState<Record<string, any>>({});
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
 
-  const [, setLocation] = useLocation();
-  const { user, isAuthenticated } = useAuth();
-  const [selectedEmotion, setSelectedEmotion] = useState<string>("happy");
-  const [emotionRecordings, setEmotionRecordings] = useState<Map<string, { blob: Blob, sampleText: string }>>(new Map());
-  const [isRecording, setIsRecording] = useState(false);
-  const [currentStage, setCurrentStage] = useState<"preview" | "recording" | "generating">("preview");
-  const [isPlayingNarration, setIsPlayingNarration] = useState(false);
-  const [narrationProgress, setNarrationProgress] = useState(0);
-  const [sampleTexts, setSampleTexts] = useState<Map<string, string>>(new Map());
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-
-  // Common emotions for narrator voice
-  const narratorEmotions = [
-    "happy", "sad", "angry", "excited", "calm", 
-    "fearful", "surprised", "contemplative", "dramatic", "neutral"
-  ];
-
-  // Minimum samples needed for voice cloning
-  const MIN_SAMPLES_FOR_CLONING = 5;
-
-  // Fetch invitation details
-  const { data: invitation, isLoading, error } = useQuery<NarrationInvitationData>({
-    queryKey: [`/api/invitations/${token}`],
-    queryFn: () => apiClient.invitations.get(token),
+  // Fetch invitation data
+  const { data: invitation, isLoading } = useQuery({
+    queryKey: ['invitation', token],
+    queryFn: async () => {
+      if (!token) throw new Error('No token provided');
+      return apiClient.invitations.get(token);
+    },
     enabled: !!token,
   });
 
-  // Fetch story narration if available
-  const { data: storyNarration } = useQuery({
-    queryKey: [`/api/stories/${invitation?.storyId}/narration/saved`, token],
+  // Fetch story narrative data
+  const { data: narrative } = useQuery({
+    queryKey: ['narrative', invitation?.storyId],
     queryFn: async () => {
-      try {
-        const response = await apiClient.stories.getSavedNarration(invitation.storyId, token);
-        return response || null;
-      } catch (error) {
-        // No saved narration found - this is normal for pending invitations
-        console.log('No saved narration found for preview');
-        return null;
-      }
+      if (!invitation?.storyId) throw new Error('No story ID');
+      return apiClient.stories.getNarrative(invitation.storyId);
     },
-    enabled: !!invitation?.storyId && !!token && currentStage === "preview",
+    enabled: !!invitation?.storyId,
   });
 
-  // Fetch sample texts for all emotions
-  const { data: emotionSampleTexts } = useQuery({
-    queryKey: [`/api/stories/${invitation?.storyId}/emotion-sample-texts`],
-    queryFn: async () => {
-      const texts = new Map<string, string>();
-      
-      // Fetch sample texts for all emotions
-      const results = await Promise.all(
-        narratorEmotions.map(async (emotion) => {
-          try {
-            const response = await apiClient.invitations.getSampleText(invitation?.storyId, emotion);
-            return { emotion, text: response.sampleText };
-          } catch (error) {
-            console.error(`Failed to get sample text for ${emotion}:`, error);
-            return { emotion, text: `Express the emotion of ${emotion} in your voice with genuine feeling` };
-          }
-        })
-      );
-      
-      results.forEach(({ emotion, text }) => {
-        texts.set(emotion, text);
-      });
-      
-      return texts;
+  // Generate narrator voice mutation
+  const generateVoiceMutation = useMutation({
+    mutationFn: async (voiceData: any) => {
+      return apiClient.voice.createNarrator(voiceData);
     },
-    enabled: !!invitation?.storyId && currentStage === "recording",
-  });
-
-  // Update sample texts when fetched
-  useEffect(() => {
-    if (emotionSampleTexts) {
-      setSampleTexts(emotionSampleTexts);
-    }
-  }, [emotionSampleTexts]);
-
-  // Generate narration with new voice
-  const generateNarrationMutation = useMutation({
-    mutationFn: async (voiceId: string) => {
-      return await apiClient.stories.createNarration(invitation?.storyId, voiceId);
-    },
-    onSuccess: (data) => {
-      // Navigate to story narration page
-      setLocation(`/story/${invitation?.storyId}/narration`);
-    },
-    onError: (error: Error) => {
-      toast.error("Failed to generate narration. Please try again.");
-    },
-  });
-
-  // Create voice clone mutation
-  const createVoiceCloneMutation = useMutation({
-    mutationFn: async () => {
-      // Convert recordings to the format expected by backend
-      const voiceSamples = await Promise.all(
-        Array.from(emotionRecordings.entries()).map(async ([emotion, recording]) => {
-          // Convert blob to base64
-          const reader = new FileReader();
-          const base64Promise = new Promise<string>((resolve) => {
-            reader.onloadend = () => {
-              const base64 = reader.result?.toString().split(',')[1] || '';
-              resolve(base64);
-            };
-          });
-          reader.readAsDataURL(recording.blob);
-          const audioData = await base64Promise;
-          
-          // Create a temporary URL for the blob
-          const audioUrl = URL.createObjectURL(recording.blob);
-          
-          return {
-            emotion,
-            audioUrl,
-            audioData
-          };
-        })
-      );
-      
-      return await apiClient.voice.createNarratorVoice({
-        invitationToken: token,
-        voiceSamples
+    onSuccess: () => {
+      setCurrentStage('complete');
+      toast({
+        title: "Success",
+        description: "Your narrator voice has been created successfully!",
       });
     },
-    onSuccess: async (data) => {
-      toast.success("Your narrator voice has been created. Generating story narration...");
-      setCurrentStage("generating");
-      // Generate narration with the new voice
-      await generateNarrationMutation.mutate(data.voiceId);
-    },
-    onError: (error: Error) => {
-      toast.error("Failed to create voice. Please try again.");
-      setCurrentStage("recording");
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to create narrator voice. Please try again.",
+        variant: "destructive",
+      });
     },
   });
 
+  // Initialize recording states from narrative data
   useEffect(() => {
-    if (error) {
-      toast.error("This invitation link is invalid or has expired.");
-    }
-  }, [error, toast]);
-
-  // Cleanup audio when component unmounts or stage changes
-  useEffect(() => {
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
-    };
-  }, [currentStage]);
-
-  const handleAcceptInvitation = async () => {
-    if (!invitation) return;
-
-    try {
-      // Accept the invitation
-      await apiClient.invitations.accept(token);
+    if (narrative) {
+      const states: Record<string, any> = {};
       
-      // Update the invitation status locally
-      queryClient.setQueryData([`/api/invitations/${token}`], (old: any) => ({
-        ...old,
-        status: 'accepted',
+      // Initialize emotion states
+      narrative.emotions?.forEach((emotion: any) => {
+        states[emotion.emotion] = {
+          isRecorded: false,
+          isSaving: false,
+          errorMessage: '',
+          duration: 0,
+        };
+      });
+
+      // Initialize sound states
+      narrative.soundEffects?.forEach((sound: any) => {
+        states[sound.sound] = {
+          isRecorded: false,
+          isSaving: false,
+          errorMessage: '',
+          duration: 0,
+        };
+      });
+
+      setRecordingStates(states);
+      setCurrentStage('preview');
+    }
+  }, [narrative]);
+
+  // Handle voice recording completion
+  const handleVoiceRecorded = (emotionName: string, audioBlob: Blob, duration: number) => {
+    setRecordingStates(prev => ({
+      ...prev,
+      [emotionName]: {
+        ...prev[emotionName],
+        isRecorded: true,
+        duration: duration,
+        audioBlob: audioBlob,
+      }
+    }));
+  };
+
+  // Handle narrator voice generation
+  const handleGenerateVoice = async () => {
+    const recordings = Object.entries(recordingStates)
+      .filter(([_, state]: [string, any]) => state.isRecorded && state.audioBlob)
+      .map(([name, state]: [string, any]) => ({
+        name,
+        audioBlob: state.audioBlob,
+        duration: state.duration,
       }));
-      
-      setCurrentStage("recording");
-      
-      toast.success("Welcome! Let's create your unique narrator voice.");
-    } catch (error) {
-      toast.error("Failed to accept invitation. Please try again.");
-    }
-  };
 
-  const handleRecordingSaved = (emotion: string, blob: Blob, sampleText: string) => {
-    const newRecordings = new Map(emotionRecordings);
-    newRecordings.set(emotion, { blob, sampleText });
-    setEmotionRecordings(newRecordings);
-    
-    // Check if we have enough samples
-    if (newRecordings.size >= MIN_SAMPLES_FOR_CLONING && newRecordings.size === MIN_SAMPLES_FOR_CLONING) {
+    if (recordings.length < 5) {
       toast({
-        title: "Great progress!",
-        description: `You've recorded ${MIN_SAMPLES_FOR_CLONING} emotions. You can now create your narrator voice or continue recording more for better quality.`,
-      });
-    }
-    
-    // Auto-advance to next unrecorded emotion
-    const nextEmotion = narratorEmotions.find(e => !newRecordings.has(e));
-    if (nextEmotion) {
-      setSelectedEmotion(nextEmotion);
-    }
-  };
-
-  const handleDeleteRecording = (emotion: string) => {
-    const newRecordings = new Map(emotionRecordings);
-    newRecordings.delete(emotion);
-    setEmotionRecordings(newRecordings);
-  };
-
-  const handleSubmitAllRecordings = async () => {
-    if (emotionRecordings.size < MIN_SAMPLES_FOR_CLONING) {
-      toast({
-        title: "More recordings needed",
-        description: `Please record at least ${MIN_SAMPLES_FOR_CLONING} different emotions for a quality narrator voice.`,
+        title: "Not enough recordings",
+        description: "Please record at least 5 emotions to generate your narrator voice.",
         variant: "destructive",
       });
       return;
     }
+
+    setCurrentStage('generating');
     
-    setCurrentStage("generating");
-    await createVoiceCloneMutation.mutate();
+    // Convert blobs to base64 for API
+    const voiceData = await Promise.all(
+      recordings.map(async (recording) => {
+        const base64 = await blobToBase64(recording.audioBlob);
+        return {
+          name: recording.name,
+          audioData: base64,
+          duration: recording.duration,
+        };
+      })
+    );
+
+    generateVoiceMutation.mutate({
+      recordings: voiceData,
+      storyId: invitation?.storyId,
+    });
+  };
+
+  // Play/pause story audio
+  const handlePlayPause = () => {
+    if (!audio) return;
+    
+    if (isPlaying) {
+      audio.pause();
+      setIsPlaying(false);
+    } else {
+      audio.play();
+      setIsPlaying(true);
+    }
+  };
+
+  // Helper function to convert blob to base64
+  const blobToBase64 = (blob: Blob): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
   };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-tiktok-red" />
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }
 
-  if (error || !invitation) {
+  if (!invitation) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <Card className="w-full max-w-md bg-dark-card border-gray-800">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl text-white">Invalid Invitation</CardTitle>
-            <CardDescription className="text-gray-400">
-              This invitation link is invalid or has expired.
-            </CardDescription>
+      <div className="min-h-screen flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-center">Invitation Not Found</CardTitle>
           </CardHeader>
+          <CardContent>
+            <p className="text-center text-gray-600">
+              This invitation link is invalid or has expired.
+            </p>
+          </CardContent>
         </Card>
       </div>
     );
   }
 
-  const isExpired = new Date(invitation.expiresAt) < new Date();
+  const completedRecordings = Object.values(recordingStates).filter((state: any) => state.isRecorded).length;
+  const totalRecordings = Object.keys(recordingStates).length;
 
   return (
-    <div className="min-h-screen bg-black">
-      <div className="max-w-4xl mx-auto p-6 pt-20 space-y-6">
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-4xl mx-auto px-4">
         {/* Header */}
-        <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold text-white">
-            {currentStage === "preview" ? "Experience the Story" : 
-             currentStage === "recording" ? "Create Your Narrator Voice" : 
-             "Generating Your Narration"}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Narration Invitation
           </h1>
-          <p className="text-gray-400">
-            {currentStage === "preview" 
-              ? `${invitation.inviter?.firstName || "Someone"} has invited you to narrate their story`
-              : currentStage === "recording"
-              ? "Record voice samples with different emotions"
-              : "Please wait while we create your personalized narration"}
+          <p className="text-gray-600">
+            You've been invited to create a personalized narrator voice for "{invitation.title}"
           </p>
         </div>
 
-        {/* Story Details */}
-        <Card className="bg-dark-card border-gray-800">
-          <CardHeader>
-            <CardTitle className="text-xl text-white">{invitation.story?.title}</CardTitle>
-            {invitation.story?.summary && (
-              <CardDescription className="text-gray-400 mt-2">
-                {invitation.story.summary}
-              </CardDescription>
-            )}
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="bg-gradient-to-r from-blue-900/30 to-purple-900/30 rounded-lg p-4 border border-blue-800">
-              <p className="text-sm text-gray-400 mb-2">Your narrator voice will bring this story to life</p>
-              <p className="text-blue-300">
-                Record voice samples with different emotions to create a personalized narrator voice for this story.
-              </p>
+        {/* Progress Indicator */}
+        <div className="mb-8">
+          <div className="flex justify-center space-x-8">
+            <div className={`flex items-center space-x-2 ${currentStage === 'preview' ? 'text-blue-600' : 'text-gray-400'}`}>
+              <div className={`w-8 h-8 rounded-full ${currentStage === 'preview' ? 'bg-blue-600' : 'bg-gray-300'} flex items-center justify-center text-white font-bold`}>
+                1
+              </div>
+              <span>Preview Story</span>
             </div>
-
-            {isExpired ? (
-              <div className="text-center py-4">
-                <p className="text-red-400 mb-4">This invitation has expired.</p>
-                <Button variant="outline" className="border-gray-700">
-                  Request New Invitation
-                </Button>
+            <div className={`flex items-center space-x-2 ${currentStage === 'recording' ? 'text-blue-600' : 'text-gray-400'}`}>
+              <div className={`w-8 h-8 rounded-full ${currentStage === 'recording' ? 'bg-blue-600' : 'bg-gray-300'} flex items-center justify-center text-white font-bold`}>
+                2
               </div>
-            ) : currentStage === "preview" ? (
-              <div className="space-y-4">
-                {/* Story Preview with Original Narrator */}
-                <div className="bg-gradient-to-r from-purple-900/20 to-blue-900/20 rounded-lg p-6 border border-purple-800">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-white">Listen with Original Narrator</h3>
-                    <Badge className="bg-purple-600 text-white">
-                      <Volume2 className="w-3 h-3 mr-1" />
-                      {invitation.inviter?.firstName}'s Voice
-                    </Badge>
-                  </div>
-                  
-                  {/* Audio Player */}
-                  <div className="bg-black/40 rounded-lg p-4 space-y-3">
-                    {storyNarration?.audioUrls?.length > 0 ? (
-                      <>
-                        <Button 
-                          onClick={() => {
-                            if (isPlayingNarration) {
-                              audioRef.current?.pause();
-                              setIsPlayingNarration(false);
-                            } else {
-                              // Initialize audio if not already initialized
-                              if (!audioRef.current || audioRef.current.src !== storyNarration.audioUrls[0]) {
-                                audioRef.current = new Audio(storyNarration.audioUrls[0]);
-                                audioRef.current.addEventListener('timeupdate', () => {
-                                  if (audioRef.current) {
-                                    const progress = (audioRef.current.currentTime / audioRef.current.duration) * 100;
-                                    setNarrationProgress(progress);
-                                  }
-                                });
-                                audioRef.current.addEventListener('ended', () => {
-                                  setIsPlayingNarration(false);
-                                  setNarrationProgress(0);
-                                });
-                              }
-                              audioRef.current.play();
-                              setIsPlayingNarration(true);
-                            }
-                          }}
-                          className="w-full bg-purple-600 hover:bg-purple-700"
-                        >
-                          {isPlayingNarration ? <Pause className="w-4 h-4 mr-2" /> : <Play className="w-4 h-4 mr-2" />}
-                          {isPlayingNarration ? "Pause Story" : "Play Story"}
-                        </Button>
-                        <div className="w-full bg-gray-700 rounded-full h-2">
-                          <div 
-                            className="bg-purple-600 h-2 rounded-full transition-all duration-300" 
-                            style={{ width: `${narrationProgress}%` }}
-                          ></div>
-                        </div>
-                      </>
-                    ) : (
-                      <div className="text-center text-gray-400 py-4">
-                        <p className="text-sm">Story narration is being prepared...</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
+              <span>Record Voice</span>
+            </div>
+            <div className={`flex items-center space-x-2 ${currentStage === 'generating' || currentStage === 'complete' ? 'text-blue-600' : 'text-gray-400'}`}>
+              <div className={`w-8 h-8 rounded-full ${currentStage === 'generating' || currentStage === 'complete' ? 'bg-blue-600' : 'bg-gray-300'} flex items-center justify-center text-white font-bold`}>
+                3
+              </div>
+              <span>Generate Voice</span>
+            </div>
+          </div>
+        </div>
 
-                {/* Call to Action */}
-                <div className="bg-gradient-to-r from-blue-900/30 to-purple-900/30 rounded-lg p-6 border border-blue-800">
-                  <div className="text-center space-y-3">
-                    <Sparkles className="w-8 h-8 text-yellow-400 mx-auto" />
-                    <h4 className="text-xl font-bold text-white">Want to hear this in YOUR voice?</h4>
-                    <p className="text-gray-300">Create your own narrator voice in just a few minutes!</p>
-                  </div>
-                </div>
-
-                {!isAuthenticated && (
-                  <div className="bg-blue-950/30 border border-blue-800 rounded-lg p-4">
-                    <p className="text-blue-300 text-sm mb-2">
-                      Sign in to save your narrator voice and use it in all your stories
-                    </p>
-                    <Button 
-                      onClick={() => window.location.href = "/api/login"}
-                      className="w-full bg-blue-600 hover:bg-blue-700"
-                    >
-                      <UserPlus className="w-4 h-4 mr-2" />
-                      Sign In & Create Voice
-                    </Button>
-                  </div>
-                )}
-
-                <Button 
-                  onClick={handleAcceptInvitation}
-                  className="w-full bg-tiktok-red hover:bg-red-600"
-                  size="lg"
+        {/* Preview Stage */}
+        {currentStage === 'preview' && (
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Play className="h-5 w-5" />
+                <span>Story Preview</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="bg-gray-100 p-4 rounded-lg mb-4">
+                <p className="text-gray-700 leading-relaxed">
+                  {invitation.content.substring(0, 500)}...
+                </p>
+              </div>
+              <div className="flex justify-center space-x-4">
+                <Button
+                  onClick={handlePlayPause}
+                  variant="outline"
+                  disabled={!audio}
                 >
-                  <Mic className="w-5 h-5 mr-2" />
-                  Create My Narrator Voice
-                  <ChevronRight className="w-5 h-5 ml-2" />
+                  {isPlaying ? <Pause className="h-4 w-4 mr-2" /> : <Play className="h-4 w-4 mr-2" />}
+                  {isPlaying ? 'Pause' : 'Play'} Story
+                </Button>
+                <Button
+                  onClick={() => setCurrentStage('recording')}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  Start Recording
                 </Button>
               </div>
-            ) : currentStage === "recording" ? (
-              <div className="space-y-4">
-                {/* Progress Indicator */}
-                <div className="bg-gray-900 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-gray-400">Voice Samples Progress</span>
-                    <span className="text-sm text-white font-semibold">
-                      {emotionRecordings.size} / {MIN_SAMPLES_FOR_CLONING} minimum
-                    </span>
-                  </div>
-                  <Progress 
-                    value={(emotionRecordings.size / narratorEmotions.length) * 100} 
-                    className="h-2"
-                  />
-                  <p className="text-xs text-gray-500 mt-2">
-                    Record at least {MIN_SAMPLES_FOR_CLONING} emotions. More samples = better voice quality!
-                  </p>
-                </div>
+            </CardContent>
+          </Card>
+        )}
 
-                {/* Emotion Grid */}
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {narratorEmotions.map((emotion) => {
-                    const hasRecording = emotionRecordings.has(emotion);
-                    const isSelected = selectedEmotion === emotion;
-                    
-                    return (
-                      <button
-                        key={emotion}
-                        onClick={() => setSelectedEmotion(emotion)}
-                        className={`
-                          relative p-4 rounded-lg border-2 transition-all
-                          ${isSelected 
-                            ? 'border-tiktok-red bg-red-950/30' 
-                            : hasRecording
-                            ? 'border-green-600 bg-green-950/20'
-                            : 'border-gray-700 bg-gray-900 hover:border-gray-600'
-                          }
-                        `}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="text-white font-medium capitalize">{emotion}</span>
-                          {hasRecording && <Check className="w-4 h-4 text-green-400" />}
-                        </div>
-                      </button>
-                    );
-                  })}
+        {/* Recording Stage */}
+        {currentStage === 'recording' && (
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Volume2 className="h-5 w-5" />
+                  <span>Voice Recording</span>
                 </div>
-
-                {/* Voice Recorder */}
-                <div className="bg-gray-900 rounded-lg p-6">
-                  <h3 className="text-lg font-semibold text-white mb-2">
-                    Record "{selectedEmotion}" Voice
-                  </h3>
-                  <p className="text-sm text-gray-400 mb-4">
-                    Read the sample text with a {selectedEmotion} emotion (15-25 seconds)
-                  </p>
-                  
-                  {/* Voice recording interface with proper sample text */}
-                  <div className="bg-black/40 rounded-lg p-4 space-y-3">
-                    <div className="text-sm text-gray-300 italic mb-3 p-3 bg-gray-800/50 rounded">
-                      {sampleTexts.get(selectedEmotion) || `Loading sample text for ${selectedEmotion}...`}
-                    </div>
-                    
-                    <div className="flex justify-center">
-                      <EnhancedVoiceRecorder
-                        emotion={selectedEmotion}
-                        sampleText={sampleTexts.get(selectedEmotion) || `Express the emotion of ${selectedEmotion} in your voice with genuine feeling`}
-                        category="emotions"
-                        storyId={invitation?.storyId || 0}
-                        onRecordingSaved={handleRecordingSaved}
-                        isLocked={false}
-                        existingRecording={emotionRecordings.get(selectedEmotion) ? {
-                          audioUrl: URL.createObjectURL(emotionRecordings.get(selectedEmotion)!.blob),
-                          recordedAt: new Date().toISOString(),
-                          duration: 10
-                        } : undefined}
-                        hideStoryInfo={true}
-                        color="purple"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Submit Button */}
-                {emotionRecordings.size >= MIN_SAMPLES_FOR_CLONING && (
-                  <Button 
-                    onClick={handleSubmitAllRecordings}
-                    className="w-full bg-green-600 hover:bg-green-700"
-                    size="lg"
-                    disabled={createVoiceCloneMutation.isPending}
-                  >
-                    {createVoiceCloneMutation.isPending ? (
-                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                    ) : (
-                      <Sparkles className="w-5 h-5 mr-2" />
-                    )}
-                    Create My Narrator Voice ({emotionRecordings.size} emotions)
-                  </Button>
-                )}
-              </div>
-            ) : (
-              /* Generating Stage */
-              <div className="space-y-4">
-                <div className="bg-gradient-to-r from-blue-900/30 to-purple-900/30 rounded-lg p-8 border border-blue-800">
-                  <div className="text-center space-y-4">
-                    <Loader2 className="w-12 h-12 text-blue-400 animate-spin mx-auto" />
-                    <h3 className="text-xl font-semibold text-white">Creating Your Narrator Voice</h3>
-                    <p className="text-gray-300">
-                      {createVoiceCloneMutation.isPending 
-                        ? "Processing your voice samples..."
-                        : "Generating story narration with your voice..."}
+                <Badge variant="outline">
+                  {completedRecordings}/{totalRecordings} completed
+                </Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                {/* Emotions */}
+                {narrative?.emotions?.map((emotion: any) => (
+                  <div key={emotion.emotion} className="border rounded-lg p-4">
+                    <h3 className="font-semibold mb-2">{emotion.emotion}</h3>
+                    <p className="text-sm text-gray-600 mb-3">
+                      {emotion.sampleText || `Record yourself expressing ${emotion.emotion.toLowerCase()}`}
                     </p>
+                    <EnhancedVoiceRecorder
+                      emotionName={emotion.emotion}
+                      sampleText={emotion.sampleText}
+                      onVoiceRecorded={handleVoiceRecorded}
+                      isRecorded={recordingStates[emotion.emotion]?.isRecorded}
+                      isSaving={recordingStates[emotion.emotion]?.isSaving}
+                      errorMessage={recordingStates[emotion.emotion]?.errorMessage}
+                      duration={recordingStates[emotion.emotion]?.duration}
+                    />
                   </div>
+                ))}
+
+                {/* Sounds */}
+                {narrative?.soundEffects?.map((sound: any) => (
+                  <div key={sound.sound} className="border rounded-lg p-4">
+                    <h3 className="font-semibold mb-2">{sound.sound}</h3>
+                    <p className="text-sm text-gray-600 mb-3">
+                      {sound.sampleText || `Record yourself making ${sound.sound.toLowerCase()} sound`}
+                    </p>
+                    <EnhancedVoiceRecorder
+                      emotionName={sound.sound}
+                      sampleText={sound.sampleText}
+                      onVoiceRecorded={handleVoiceRecorded}
+                      isRecorded={recordingStates[sound.sound]?.isRecorded}
+                      isSaving={recordingStates[sound.sound]?.isSaving}
+                      errorMessage={recordingStates[sound.sound]?.errorMessage}
+                      duration={recordingStates[sound.sound]?.duration}
+                    />
+                  </div>
+                ))}
+
+                <div className="flex justify-center">
+                  <Button
+                    onClick={handleGenerateVoice}
+                    disabled={completedRecordings < 5}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    Generate Narrator Voice
+                  </Button>
                 </div>
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Generating Stage */}
+        {currentStage === 'generating' && (
+          <Card>
+            <CardContent className="text-center py-8">
+              <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4" />
+              <h3 className="text-xl font-semibold mb-2">Generating Your Narrator Voice</h3>
+              <p className="text-gray-600">
+                This may take a few moments. Please don't close this page.
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Complete Stage */}
+        {currentStage === 'complete' && (
+          <Card>
+            <CardContent className="text-center py-8">
+              <div className="text-green-600 mb-4">
+                <svg className="w-16 h-16 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <h3 className="text-2xl font-bold mb-2">Voice Created Successfully!</h3>
+              <p className="text-gray-600 mb-4">
+                Your personalized narrator voice has been created. The story can now be narrated with your voice.
+              </p>
+              <Button onClick={() => window.close()} className="bg-blue-600 hover:bg-blue-700">
+                Close
+              </Button>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
