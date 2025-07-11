@@ -90,16 +90,17 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
   const queryClient = useQueryClient();
   const [selectedCategory, setSelectedCategory] = useState<string>("emotions");
 
-  // Get consolidated voice samples data for this story
-  const voiceSamplesQuery = useQuery({
-    queryKey: [`/api/stories/${storyId}/voice-samples`],
+  // Get story narrative data which contains emotions and sounds
+  const narrativeQuery = useQuery({
+    queryKey: [`/api/stories/${storyId}/narrative`],
     enabled: !!user?.id && !!storyId,
   });
 
-  const voiceSamplesData = voiceSamplesQuery.data || {};
-  const storyEmotions = voiceSamplesData.emotions || [];
-  const storySounds = voiceSamplesData.sounds || [];
-  const storyModulations = voiceSamplesData.modulations || [];
+  // Transform narrative data into ESM format for display
+  const narrativeData = narrativeQuery.data || {};
+  const storyEmotions = narrativeData.emotions || [];
+  const storySounds = narrativeData.soundEffects || [];
+  const storyModulations = []; // Modulations not in narrative data
 
   // Track recording state per emotion for individual card feedback
   const [recordingStates, setRecordingStates] = useState<Record<string, {
@@ -111,41 +112,48 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
     audioUrl?: string;
   }>>({});
 
-  // Initialize recording states from backend data when voice samples load
+  // Initialize recording states from narrative data
   useEffect(() => {
-    if (voiceSamplesData && Object.keys(voiceSamplesData).length > 0) {
-      console.log('Initializing recording states from backend data:', voiceSamplesData);
+    if (narrativeData && Object.keys(narrativeData).length > 0) {
+      console.log('Initializing recording states from narrative data:', narrativeData);
       const newStates: Record<string, any> = {};
       
-      // Generic function to process any category items
-      const processCategory = (items: any[], categoryName: string) => {
-        if (items && Array.isArray(items)) {
-          items.forEach((item: any) => {
-            // Get item name from any possible field
-            const itemName = item.displayName || item.name || item.emotion || item.sound || item.modulation;
-            console.log(`Processing ${categoryName}:`, itemName, 'isRecorded:', item.isRecorded, 'userRecording:', item.userRecording);
-            
-            if (itemName && item.isRecorded) {
-              newStates[itemName] = {
-                isRecorded: true,
-                isSaving: false,
-                errorMessage: '',
-                duration: item.userRecording?.duration || 0
-              };
-            }
-          });
-        }
-      };
+      // Process emotions from narrative
+      if (narrativeData.emotions && Array.isArray(narrativeData.emotions)) {
+        narrativeData.emotions.forEach((emotion: any) => {
+          const emotionName = emotion.emotion;
+          console.log(`Processing emotion:`, emotionName);
+          
+          // For now, all emotions are unrecorded since we're using narrative data
+          // TODO: Check user ESM recordings for this emotion
+          newStates[emotionName] = {
+            isRecorded: false,
+            isSaving: false,
+            errorMessage: '',
+            duration: 0
+          };
+        });
+      }
       
-      // Process all categories using the generic function
-      processCategory(voiceSamplesData.emotions, 'emotion');
-      processCategory(voiceSamplesData.sounds, 'sound');
-      processCategory(voiceSamplesData.modulations, 'modulation');
+      // Process sounds from narrative
+      if (narrativeData.soundEffects && Array.isArray(narrativeData.soundEffects)) {
+        narrativeData.soundEffects.forEach((sound: any) => {
+          const soundName = sound.sound;
+          console.log(`Processing sound:`, soundName);
+          
+          newStates[soundName] = {
+            isRecorded: false,
+            isSaving: false,
+            errorMessage: '',
+            duration: 0
+          };
+        });
+      }
       
       console.log('Final recording states to set:', newStates);
       setRecordingStates(prev => ({ ...prev, ...newStates }));
     }
-  }, [voiceSamplesData]);
+  }, [narrativeData]);
 
   // Mutation for recording voice samples
   const recordVoiceMutation = useMutation({
@@ -174,7 +182,7 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
       }));
       
       // Invalidate query to refresh data and trigger reordering
-      queryClient.invalidateQueries({ queryKey: [`/api/stories/${storyId}/voice-samples`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/stories/${storyId}/narrative`] });
     },
     onError: (error: any, variables) => {
       // Update error state for this specific emotion
@@ -285,10 +293,10 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
 
   const currentCategoryData = getCurrentCategoryData();
 
-  if (voiceSamplesQuery.isLoading) {
+  if (narrativeQuery.isLoading) {
     return (
       <div className="text-center p-8">
-        <p className="text-gray-500">Loading voice samples...</p>
+        <p className="text-gray-500">Loading narrative data...</p>
       </div>
     );
   }
