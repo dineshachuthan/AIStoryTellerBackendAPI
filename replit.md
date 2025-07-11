@@ -2,7 +2,7 @@
 
 ## Overview
 
-This is a full-stack collaborative storytelling platform that enables users to create, analyze, and perform stories through AI-powered narrative analysis and voice-based roleplay. The application combines modern web technologies with AI services to provide an immersive storytelling experience.
+This is a relationship-aware content sharing platform that enables users to create stories once and automatically narrate them differently based on their relationship with each recipient. The same story content gets narrated with different conversation styles (respectful tone for parents, business tone for colleagues, authoritative tone for kids, etc.) using ElevenLabs TTS. The platform supports multi-dimensional caching with cache keys structured as User.StoryID.ConversationStyle.Emotion, enabling personalized content delivery based on relationship context.
 
 ## System Architecture
 
@@ -656,6 +656,8 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - ✅ Enhanced SimpleAudioPlayer with seeking capability - click anywhere on progress bar to jump to position
 - ✅ Added time display showing current playback time and total duration
 - **Architecture Decision**: Complete migration to multi-dimensional caching with proper folder structure for relationship-aware narration
+- **Relationship-Aware Context**: Same story content narrated differently based on user's relationship with recipient (respectful for parents, business for colleagues, authoritative for kids, etc.)
+- **Cache Structure**: User.StoryID.ConversationStyle.Emotion enables personalized content delivery based on relationship context
 
 ### **MILESTONE 2: Collaboration Invitation System Fixed - January 09, 2025**
 **Achievement**: Fixed collaboration invitation system by resolving duplicate route conflicts

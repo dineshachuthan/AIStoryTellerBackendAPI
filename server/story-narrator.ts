@@ -437,7 +437,9 @@ export class StoryNarrator {
     }
     
     // Store audio in story-specific directory structure
-    const narratorProfileName = narratorProfile?.profileId || narratorProfile?.language || 'neutral';
+    const narratorProfileName = narratorProfile?.profileId || 'neutral';
+    
+    console.log(`[StoryNarrator] Cache key components - User: ${userId}, StoryID: ${storyId}, ConversationStyle: ${conversationStyle}, ProfileId: ${narratorProfileName}`);
     
     const localAudioUrl = await this.storeNarrationAudio(
       audioBuffer, 
