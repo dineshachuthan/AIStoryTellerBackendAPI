@@ -200,12 +200,12 @@ export class ApiClient {
     getUserVoiceEmotions: (userId: string, emotion: string) => 
       this.request<any>('GET', `/api/user-voice-emotions/${userId}?emotion=${emotion}`),
     // Multi-voice recordings
-    getRecordings: () => this.request<any[]>('GET', '/api/user/voice-recordings'),
+    getRecordings: () => this.request<any[]>('GET', '/api/user/esm-recordings'),
     uploadRecording: (data: FormData) =>
-      this.request<any>('POST', '/api/user/voice-recordings', data, {
+      this.request<any>('POST', '/api/user/esm-recordings', data, {
         headers: {} // Let browser set Content-Type for FormData
       }),
-    deleteRecording: (id: number) => this.request<void>('DELETE', `/api/user/voice-recordings/${id}`),
+    deleteRecording: (id: number) => this.request<void>('DELETE', `/api/user/esm-recordings/${id}`),
   };
   
   // Collaborative roleplay endpoints

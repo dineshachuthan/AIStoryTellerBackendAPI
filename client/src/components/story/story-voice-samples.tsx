@@ -99,6 +99,13 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
     enabled: !!user?.id && !!storyId,
   });
 
+  // Get user's voice recordings to check recording status
+  const voiceRecordingsQuery = useQuery({
+    queryKey: [`/api/user/esm-recordings`],
+    queryFn: () => apiClient.voice.getRecordings(),
+    enabled: !!user?.id,
+  });
+
   // Transform narrative data for display with ESM reference data
   const narrativeData = narrativeQuery.data || {};
   const storyEmotions = narrativeData.emotions || [];
@@ -120,11 +127,19 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
     audioUrl?: string;
   }>>({});
 
-  // Initialize recording states from narrative data
+  // Initialize recording states from narrative data and check existing recordings
   useEffect(() => {
     if (narrativeData && Object.keys(narrativeData).length > 0) {
       console.log('Initializing recording states from narrative data:', narrativeData);
       const newStates: Record<string, any> = {};
+      const userRecordings = voiceRecordingsQuery.data || [];
+      
+      // Helper function to check if recording exists for an emotion/sound
+      const hasRecordingForItem = (itemName: string) => {
+        return userRecordings.some((recording: any) => 
+          recording.name === itemName
+        );
+      };
       
       // Process emotions from narrative
       if (narrativeData.emotions && Array.isArray(narrativeData.emotions)) {
@@ -132,10 +147,9 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
           const emotionName = emotion.emotion;
           console.log(`Processing emotion:`, emotionName);
           
-          // For now, all emotions are unrecorded since we're using narrative data
-          // TODO: Check user ESM recordings for this emotion
+          const hasRecording = hasRecordingForItem(emotionName);
           newStates[emotionName] = {
-            isRecorded: false,
+            isRecorded: hasRecording,
             isSaving: false,
             errorMessage: '',
             duration: 0
@@ -149,8 +163,9 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
           const soundName = sound.sound;
           console.log(`Processing sound:`, soundName);
           
+          const hasRecording = hasRecordingForItem(soundName);
           newStates[soundName] = {
-            isRecorded: false,
+            isRecorded: hasRecording,
             isSaving: false,
             errorMessage: '',
             duration: 0
@@ -161,7 +176,7 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
       console.log('Final recording states to set:', newStates);
       setRecordingStates(prev => ({ ...prev, ...newStates }));
     }
-  }, [narrativeData]);
+  }, [narrativeData, voiceRecordingsQuery.data]);
 
   // Mutation for recording voice samples
   const recordVoiceMutation = useMutation({
@@ -452,9 +467,8 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
                               },
                               minDuration: VOICE_RECORDING_CONFIG.MIN_DURATION,
                               onSaveSuccess: (data) => {
-                                // Invalidate queries to refresh data without page reload
-                                queryClient.invalidateQueries({ queryKey: [`/api/stories/${storyId}/voice-samples`] });
-                                queryClient.invalidateQueries({ queryKey: [`/api/user-voice-emotions/${user?.id}`] });
+                                // Invalidate narrative query to refresh data without page reload
+                                queryClient.invalidateQueries({ queryKey: [`/api/stories/${storyId}/narrative`] });
                                 console.log('Voice sample saved successfully - invalidating cache');
                               },
                               onSaveError: (error) => {
