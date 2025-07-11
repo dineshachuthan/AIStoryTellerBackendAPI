@@ -363,9 +363,8 @@ export class StoryNarrator {
         // Get voice settings from orchestration service
         const { VoiceOrchestrationService } = await import('./voice-orchestration-service');
         const voiceOrchestrationService = new VoiceOrchestrationService();
-        const voiceSettings = await voiceOrchestrationService.calculateVoiceParameters(
+        const voiceSettings = await voiceOrchestrationService.getVoiceSettings(
           userId,
-          text,
           chunkContext.character,
           chunkContext.emotion,
           storyId,

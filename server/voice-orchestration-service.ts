@@ -69,6 +69,13 @@ export class VoiceOrchestrationService {
   private CONFIG_RELOAD_INTERVAL = 60000; // Reload config every minute
 
   /**
+   * Random number generator for voice parameter variability
+   */
+  private randInRange(min: number, max: number): number {
+    return +(Math.random() * (max - min) + min).toFixed(2);
+  }
+
+  /**
    * Get or load voice configuration
    */
   private async getConfig(): Promise<VoiceConfigData> {
@@ -146,6 +153,50 @@ export class VoiceOrchestrationService {
     } catch (error) {
       console.error('[VoiceOrchestration] Failed to save config', error);
     }
+  }
+
+  /**
+   * Get voice settings - matches your original JavaScript logic exactly
+   */
+  async getVoiceSettings(
+    userId: string,
+    character: string = 'Narrator',
+    emotion: string = 'neutral',
+    storyId?: number,
+    conversationType?: string,
+    narratorProfile?: NarratorProfile
+  ): Promise<VoiceStyle> {
+    console.log(`[VoiceOrchestration] Getting voice settings for character: ${character}, emotion: ${emotion}, conversation: ${conversationType || 'none'}`);
+
+    // Get voice configuration
+    const config = await this.getConfig();
+    
+    // Ensure voice profile exists for this character/emotion combo
+    this.ensureVoiceProfile(config, character, emotion);
+    
+    // Apply weighted defaults based on character and emotion
+    let style = this.applyWeightedDefaults(character, emotion, config);
+    
+    // Overlay character-specific settings
+    style = this.overlayCharacterEmotion(style, character, emotion, config);
+    
+    // Apply conversation style if specified
+    if (conversationType) {
+      const conversationStyles = await this.getConversationStyles();
+      style = this.overlayConversationStyle(style, conversationType, conversationStyles);
+    }
+    
+    // Merge with narrator profile if provided
+    if (narratorProfile?.baselineVoice) {
+      style = this.mergeNarratorWithStyle(narratorProfile.baselineVoice, style);
+    }
+    
+    // Learn from this interaction
+    if (storyId) {
+      await this.learnFromInteraction(userId, storyId, character, emotion, style);
+    }
+    
+    return style;
   }
 
   /**
@@ -229,23 +280,11 @@ export class VoiceOrchestrationService {
   }
 
   /**
-   * Apply weighted defaults based on patterns
+   * Apply weighted defaults based on patterns - matches your JS logic exactly
    */
   private applyWeightedDefaults(character: string, emotion: string, config: VoiceConfigData): VoiceStyle {
     let style = _.cloneDeep(config.globalDefaults);
     
-    // Convert to proper structure
-    const baseStyle: VoiceStyle = {
-      stability: style.stability.mean,
-      similarityBoost: style.similarity_boost.mean,
-      style: style.style.mean,
-      prosody: {
-        pitch: style.prosody.pitch.base,
-        rate: style.prosody.rate.base,
-        volume: style.prosody.volume
-      }
-    };
-
     // Apply weighted defaults
     for (const weight of config.weightedDefaults) {
       const charPattern = weight.match.characterPattern ? 
@@ -254,89 +293,84 @@ export class VoiceOrchestrationService {
       
       if ((charPattern && charPattern.test(character)) || emoMatch) {
         for (const [path, value] of Object.entries(weight.apply)) {
-          _.set(baseStyle, path, value);
+          _.set(style, path, value);
         }
       }
     }
 
-    // Apply learned patterns if available
-    if (config.learnedPatterns) {
-      for (const pattern of config.learnedPatterns) {
-        if (pattern.character === character && pattern.emotion === emotion) {
-          // Apply learned adjustments
-          baseStyle.stability = (baseStyle.stability + pattern.stability) / 2;
-          baseStyle.similarityBoost = (baseStyle.similarityBoost + pattern.similarityBoost) / 2;
-          baseStyle.style = (baseStyle.style + pattern.style) / 2;
-        }
-      }
-    }
-
-    return baseStyle;
+    return style;
   }
 
   /**
-   * Overlay character-specific emotion settings
+   * Ensure voice profile exists for character/emotion combo - matches your JS logic
+   */
+  private ensureVoiceProfile(config: VoiceConfigData, character: string, emotion: string): void {
+    if (!config.characters[character]) {
+      config.characters[character] = {};
+    }
+    
+    if (!config.characters[character][emotion]) {
+      config.characters[character][emotion] = {
+        stability: this.randInRange(0.6, 0.9),
+        similarity_boost: this.randInRange(0.8, 0.95),
+        style: this.randInRange(0.3, 0.7),
+        prosody: {
+          pitch: `${this.randInRange(-5, 5)}%`,
+          rate: `${this.randInRange(80, 100)}%`,
+          volume: "medium"
+        }
+      };
+      console.log(`🆕 Added new profile: ${character} -> ${emotion}`);
+    }
+  }
+
+  /**
+   * Merge narrator baseline with style - matches your JS logic exactly
+   */
+  private mergeNarratorWithStyle(narratorBaseline: any, style: any): VoiceStyle {
+    return {
+      stability: (narratorBaseline.stability + style.stability.mean) / 2,
+      similarityBoost: (narratorBaseline.similarity_boost + style.similarity_boost.mean) / 2,
+      style: (narratorBaseline.style + style.style.mean) / 2,
+      prosody: {
+        pitch: `${parseInt(narratorBaseline.pitch) + parseInt(style.prosody.pitch.base) + this.randInRange(style.prosody.pitch.range[0], style.prosody.pitch.range[1])}%`,
+        rate: `${parseInt(narratorBaseline.rate) + parseInt(style.prosody.rate.base) + this.randInRange(style.prosody.rate.range[0], style.prosody.rate.range[1])}%`,
+        volume: narratorBaseline.volume || style.prosody.volume
+      }
+    };
+  }
+
+  /**
+   * Overlay character-specific emotion settings - matches your JS logic exactly
    */
   private overlayCharacterEmotion(
-    style: VoiceStyle, 
+    style: any, 
     character: string, 
     emotion: string, 
     config: VoiceConfigData
-  ): VoiceStyle {
+  ): any {
     if (config.characters[character]) {
-      const charConfig = config.characters[character][emotion] || 
-                        config.characters[character]['default'];
-      if (charConfig) {
-        // Deep merge character config into style
-        if (charConfig.stability !== undefined) style.stability = charConfig.stability;
-        if (charConfig.similarity_boost !== undefined) style.similarityBoost = charConfig.similarity_boost;
-        if (charConfig.style !== undefined) style.style = charConfig.style;
-        if (charConfig.prosody) {
-          style.prosody = { ...style.prosody, ...charConfig.prosody };
-        }
+      const charCfg = config.characters[character][emotion] || config.characters[character]['default'];
+      if (charCfg) {
+        _.merge(style, charCfg);
       }
     }
     return style;
   }
 
   /**
-   * Overlay conversation style settings
+   * Overlay conversation style settings - matches your JS logic exactly
    */
-  private async overlayConversationStyle(
-    style: VoiceStyle,
+  private overlayConversationStyle(
+    style: any,
     conversationType: string,
-    conversationStyles: Record<string, ConversationStyle>
-  ): Promise<VoiceStyle> {
-    const conversationStyle = conversationStyles[conversationType];
-    
-    if (!conversationStyle) {
-      console.log(`[VoiceOrchestration] No conversation style found for: ${conversationType}`);
-      return style;
+    conversationStyles: Record<string, any>
+  ): any {
+    const overlay = conversationStyles[conversationType];
+    if (overlay) {
+      _.merge(style, overlay);
     }
-
-    console.log(`[VoiceOrchestration] Applying conversation style: ${conversationType}`);
-
-    // Apply conversation style parameters with random variation within range
-    const randInRange = (min: number, max: number) => Math.random() * (max - min) + min;
-
-    return {
-      stability: (style.stability + conversationStyle.stability.mean) / 2,
-      similarityBoost: (style.similarityBoost + conversationStyle.similarity_boost.mean) / 2,
-      style: (style.style + conversationStyle.style.mean) / 2,
-      prosody: {
-        pitch: this.mergeProsodyWithRange(
-          style.prosody.pitch,
-          conversationStyle.prosody.pitch.base,
-          conversationStyle.prosody.pitch.range
-        ),
-        rate: this.mergeProsodyWithRange(
-          style.prosody.rate,
-          conversationStyle.prosody.rate.base,
-          conversationStyle.prosody.rate.range
-        ),
-        volume: conversationStyle.prosody.volume || style.prosody.volume
-      }
-    };
+    return style;
   }
 
   /**
@@ -734,25 +768,24 @@ export class VoiceOrchestrationService {
   }
 
   /**
-   * Enhance text with sound effects based on patterns
+   * Enhance text with sound effects based on patterns - matches your JS logic exactly
    */
   async enhanceWithSounds(text: string): Promise<string> {
     const patterns = await this.getSoundPatterns();
-    let enrichedText = text;
+    let enriched = text;
     
-    for (const pattern of patterns) {
+    for (const p of patterns) {
       try {
-        const regex = new RegExp(pattern.pattern, 'gi');
-        if (regex.test(text)) {
-          // Add sound effect at the end of the text
-          enrichedText = enrichedText.trim() + ' ' + pattern.insert;
+        const regex = new RegExp(p.pattern, 'i');
+        if (regex.test(enriched)) {
+          enriched += ` ${p.insert}`;
         }
       } catch (error) {
-        console.error(`[VoiceOrchestration] Invalid regex pattern: ${pattern.pattern}`, error);
+        console.error(`[VoiceOrchestration] Invalid regex pattern: ${p.pattern}`, error);
       }
     }
     
-    return enrichedText;
+    return enriched;
   }
 
   /**
