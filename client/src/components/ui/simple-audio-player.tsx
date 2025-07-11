@@ -140,7 +140,7 @@ export function SimpleAudioPlayer({
           onClick={handlePlayPause}
           size="sm"
           variant="outline"
-          className="flex-shrink-0"
+          className="flex-shrink-0 bg-green-600 hover:bg-green-700 text-white border-green-600"
         >
           {isPlaying ? (
             <Pause className="w-4 h-4" />
