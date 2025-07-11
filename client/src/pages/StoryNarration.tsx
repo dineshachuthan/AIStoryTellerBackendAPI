@@ -72,12 +72,17 @@ export default function StoryNarration() {
 
   // Test generation mutation
   const testGenerationMutation = useMutation({
-    mutationFn: () => apiClient.stories.generateTestNarrations(storyId),
+    mutationFn: () => {
+      console.log(`[TestGeneration] Calling generateTestNarrations for storyId: ${storyId}`);
+      return apiClient.stories.generateTestNarrations(storyId);
+    },
     onSuccess: (data) => {
+      console.log('[TestGeneration] Success:', data);
       toast.success("Test narrations generated successfully");
       refetchNarrations();
     },
     onError: (error) => {
+      console.error('[TestGeneration] Error:', error);
       toast.error(`Failed to generate test narrations: ${error.message}`);
     }
   });
