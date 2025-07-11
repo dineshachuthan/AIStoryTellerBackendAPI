@@ -2571,7 +2571,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get user's voice recordings for multi-voice system
+  /* DEPRECATED - Multi-voice system endpoint - Use /api/user/esm-recordings instead
   app.get('/api/user/voice-recordings', requireAuth, async (req, res) => {
     try {
       const userId = req.user!.id;
@@ -2599,9 +2599,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error fetching voice recordings:", error);
       res.status(500).json({ message: "Failed to fetch voice recordings" });
     }
-  });
+  }); */
 
-  // Upload voice recording
+  /* DEPRECATED - Multi-voice upload endpoint - Use /api/user/esm-recordings instead
   app.post('/api/user/voice-recordings', requireAuth, voiceUpload.single('audio'), async (req: any, res) => {
     try {
       const userId = req.user!.id;
@@ -2690,9 +2690,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error uploading voice recording:", error);
       res.status(500).json({ message: "Failed to upload recording" });
     }
-  });
+  }); */
 
-  // Delete voice recording
+  /* DEPRECATED - Multi-voice delete endpoint - Use /api/user/esm-recordings instead
   app.delete('/api/user/voice-recordings/:id', requireAuth, async (req, res) => {
     try {
       const userId = req.user!.id;
@@ -2719,7 +2719,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error deleting voice recording:", error);
       res.status(500).json({ message: "Failed to delete recording" });
     }
-  });
+  }); */
 
   // Story Narration routes - POST to generate narration following user requirements
   app.post("/api/stories/:id/narration", requireAuth, async (req, res) => {
