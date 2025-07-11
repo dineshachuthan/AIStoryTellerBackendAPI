@@ -3060,6 +3060,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       if (!userId || isNaN(storyId)) {
+        console.log('DEBUG: Invalid parameters - userId:', userId, 'storyId:', storyId, 'isNaN(storyId):', isNaN(storyId));
         return res.status(400).json({ message: 'Invalid parameters' });
       }
 

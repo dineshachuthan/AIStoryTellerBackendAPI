@@ -191,15 +191,15 @@ export default function StoryNarratorControls({
   const generateNarration = async () => {
     if (!user || !canNarrate) return;
 
-    // Check if narration already exists with current voice
-    if (savedNarration && narratorVoiceData?.narratorVoiceId && 
-        savedNarration.narratorVoice === narratorVoiceData.narratorVoiceId) {
-      toast.info({
-        title: "Already Generated",
-        description: "Story narration already exists with current voice",
-      });
-      return;
-    }
+    // Allow regeneration for testing - comment out the check
+    // if (savedNarration && narratorVoiceData?.narratorVoiceId && 
+    //     savedNarration.narratorVoice === narratorVoiceData.narratorVoiceId) {
+    //   toast.info({
+    //     title: "Already Generated",
+    //     description: "Story narration already exists with current voice",
+    //   });
+    //   return;
+    // }
 
     setIsGenerating(true);
     try {
