@@ -164,10 +164,11 @@ export class StoryNarrator {
       totalDuration,
       narratorVoice,
       narratorVoiceType,
+      conversationStyle, // Include conversation style in result
       generatedAt: new Date()
     };
     
-    await this.saveNarrationToDatabase(narrationResult, userId);
+    await this.saveNarrationToDatabase(narrationResult, userId, conversationStyle);
 
     return narrationResult;
   }
@@ -525,7 +526,7 @@ export class StoryNarrator {
   /**
    * Save narration to database for future access and replay
    */
-  private async saveNarrationToDatabase(narrationResult: StoryNarrationResult, userId: string): Promise<void> {
+  private async saveNarrationToDatabase(narrationResult: StoryNarrationResult, userId: string, conversationStyle: string): Promise<void> {
     const { storage } = await import('./storage');
 
     try {
@@ -534,11 +535,12 @@ export class StoryNarrator {
         userId,
         narratorVoice: narrationResult.narratorVoice,
         narratorVoiceType: narrationResult.narratorVoiceType,
+        conversationStyle, // Store conversation style in database
         segments: narrationResult.segments,
         totalDuration: narrationResult.totalDuration
       });
       
-      console.log(`Saved narration to database: Story ${narrationResult.storyId}, ${narrationResult.segments.length} segments, ${narrationResult.totalDuration}ms total`);
+      console.log(`Saved narration to database: Story ${narrationResult.storyId}, conversation style: ${conversationStyle}, ${narrationResult.segments.length} segments, ${narrationResult.totalDuration}ms total`);
     } catch (error) {
       console.error('Failed to save narration to database:', error);
       // Don't throw error - narration generation still worked

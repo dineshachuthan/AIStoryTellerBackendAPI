@@ -3073,9 +3073,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         id: `narration-${narration.id}`,
         storyId: narration.storyId,
         storyTitle,
-        conversationStyle: narration.conversationStyle || 'default',
-        emotion: 'neutral', // Default emotion
-        narratorProfile: 'neutral', // Default profile
+        conversationStyle: narration.conversationStyle || 'respectful',
+        emotion: 'mixed', // Stories have multiple emotions per segment
+        narratorProfile: narration.narratorVoiceType === 'user' ? 'ElevenLabs Cloned' : 'AI Generated',
         narratorVoice: narration.narratorVoice,
         narratorVoiceType: narration.narratorVoiceType,
         segments: narration.segments,
