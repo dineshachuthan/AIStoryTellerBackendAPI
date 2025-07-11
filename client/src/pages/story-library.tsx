@@ -137,7 +137,7 @@ export default function StoryLibrary() {
     
     try {
       // Archive the story
-      await apiClient.stories.update(storyId, { archived: true });
+      await apiClient.stories.archive(storyId);
       
       toast.success("Your story has been moved to the archive.");
       

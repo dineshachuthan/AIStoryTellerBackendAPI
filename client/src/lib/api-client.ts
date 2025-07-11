@@ -146,6 +146,7 @@ export class ApiClient {
     uploadAudio: (formData: FormData) => 
       this.request<any>('POST', '/api/stories/upload-audio', formData),
     update: (id: number, data: any) => this.request<any>('PATCH', `/api/stories/${id}`, data),
+    archive: (id: number) => this.request<any>('PUT', `/api/stories/${id}/archive`, {}),
     updateContent: (id: number, data: { title: string; content: string; language: string }) =>
       this.request<any>('PUT', `/api/stories/${id}/content`, data),
     delete: (id: number) => this.request<void>('DELETE', `/api/stories/${id}`),
