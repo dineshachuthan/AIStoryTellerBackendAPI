@@ -278,10 +278,72 @@ export default function StoryNarration() {
                     </div>
                     
                     {narration.audioUrl && (
-                      <div className="mt-3">
-                        <SimpleAudioPlayer
-                          audioUrl={narration.audioUrl}
-                        />
+                      <div className="mt-6">
+                        {/* TV-Style Media Player */}
+                        <div className="bg-gray-900 rounded-3xl p-4 shadow-2xl">
+                          {/* TV Screen */}
+                          <div className="bg-black rounded-2xl overflow-hidden relative">
+                            {/* Screen Content */}
+                            <div className="p-8 min-h-[300px] flex flex-col justify-center relative">
+                              {/* Audio Visualizer - Small Corner Indicator */}
+                              <div className="absolute top-4 left-4 flex items-center gap-1 h-8">
+                                {[...Array(5)].map((_, i) => (
+                                  <div
+                                    key={i}
+                                    className="w-1 bg-green-400 rounded-full"
+                                    style={{
+                                      height: '100%',
+                                      animation: `audio-wave ${0.8 + i * 0.1}s ease-in-out infinite`,
+                                      animationDelay: `${i * 0.1}s`,
+                                      opacity: 0.7
+                                    }}
+                                  />
+                                ))}
+                                <span className="text-green-400 text-xs ml-2 font-mono">LIVE</span>
+                              </div>
+                              
+                              {/* Current Text Display */}
+                              <div className="text-center px-4 min-h-[100px] flex items-center justify-center">
+                                <div className="text-white text-lg leading-relaxed">
+                                  {narration.conversationStyle.replace('_', ' ').charAt(0).toUpperCase() + 
+                                   narration.conversationStyle.replace('_', ' ').slice(1)} Style Narration
+                                </div>
+                              </div>
+                              
+                              {/* Progress Info at Bottom */}
+                              <div className="absolute bottom-4 left-4 right-4">
+                                <div className="flex justify-between text-xs text-gray-500 font-mono">
+                                  <span>ELEVENLABS VOICE</span>
+                                  <span>{new Date(narration.timestamp).toLocaleString()}</span>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {/* TV Control Panel */}
+                            <div className="mt-4 bg-gray-800 rounded-xl p-4">
+                              {/* Progress Bar */}
+                              <div className="mb-4">
+                                <div className="w-full bg-gray-700 rounded-full h-2 overflow-hidden">
+                                  <div 
+                                    className="bg-gradient-to-r from-green-500 to-blue-500 h-2 rounded-full transition-all duration-500"
+                                    style={{ width: '0%' }}
+                                  />
+                                </div>
+                                <div className="flex justify-between text-xs text-gray-400 mt-1">
+                                  <span>00:00</span>
+                                  <span>--:--</span>
+                                </div>
+                              </div>
+                              
+                              {/* Media Controls */}
+                              <div className="flex items-center justify-center gap-4">
+                                <SimpleAudioPlayer
+                                  audioUrl={narration.audioUrl}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>
