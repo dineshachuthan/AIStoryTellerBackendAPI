@@ -180,12 +180,12 @@ export default function StoryNarration() {
             className=""
           />
 
-          {/* Test Generation Controls - For testing different cache keys */}
+          {/* Narration Generation Controls - For generating different cache keys */}
           <Card className="mt-6 bg-white/10 backdrop-blur-sm border-white/20">
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-2">
                 <Settings className="w-5 h-5" />
-                Test Generation Controls
+                Narration Generation Controls
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
