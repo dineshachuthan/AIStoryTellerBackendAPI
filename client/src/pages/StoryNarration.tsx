@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import StoryNarratorControls from "@/components/ui/story-narrator-controls";
 import { useAuth } from "@/hooks/useAuth";
 import { AppTopNavigation } from "@/components/app-top-navigation";
+import { apiClient } from "@/lib/api-client";
 
 export default function StoryNarration() {
   const { id } = useParams<{ id: string }>();
@@ -15,6 +16,7 @@ export default function StoryNarration() {
   // Fetch story details
   const { data: story, isLoading } = useQuery({
     queryKey: [`/api/stories/${storyId}`],
+    queryFn: () => apiClient.stories.get(storyId),
     enabled: !!storyId && !!user
   });
 
