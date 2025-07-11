@@ -26,7 +26,7 @@ import { UIMessages, getDynamicMessage } from '@shared/config/i18n-config';
 import { MAX_DRAFT_STORIES } from '@shared/config/draft-config';
 import { toast, toastMessages } from "@/lib/toast-utils";
 import { useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { queryClient } from "@/lib/queryClient";
 
 interface Story {
   id: number;
@@ -65,7 +65,6 @@ export function DraftStoriesPanel({
   const [, setLocation] = useLocation();
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
-  const { toast } = useToast();
 
   // Delete story mutation
   const deleteStoryMutation = useMutation({
