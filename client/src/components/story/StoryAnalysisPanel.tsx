@@ -74,7 +74,7 @@ export function StoryAnalysisPanel({
   // Query to check if narrator voice exists
   const { data: narratorVoiceData, isLoading: narratorVoiceLoading, error: narratorVoiceError } = useQuery({
     queryKey: ['/api/user/narrator-voice'],
-    enabled: !!storyId,
+    enabled: true, // Always enabled for debugging
     onError: (error) => {
       console.error('Narrator voice query error:', error);
     },

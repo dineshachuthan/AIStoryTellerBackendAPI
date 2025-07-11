@@ -1933,9 +1933,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Get current narrator voice ID for user
   app.get('/api/user/narrator-voice', requireAuth, async (req, res) => {
+    console.log('[DEBUG] Narrator voice endpoint called');
     try {
       const userId = (req.user as any)?.id;
+      console.log('[DEBUG] Getting narrator voice for user:', userId);
+      
+      if (!userId) {
+        console.log('[DEBUG] No user ID found in request');
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
+      
       const narratorVoiceId = await storage.getUserNarratorVoice(userId);
+      console.log('[DEBUG] Found narrator voice ID:', narratorVoiceId);
       res.json({ narratorVoiceId });
     } catch (error) {
       console.error('Error getting narrator voice:', error);
