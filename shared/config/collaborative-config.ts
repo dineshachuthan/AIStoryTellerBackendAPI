@@ -104,13 +104,8 @@ export const defaultCollaborativeConfig: CollaborativeConfig = {
   },
   
   instance: {
-    statusFlow: {
-      'draft': ['inviting'],
-      'inviting': ['recording', 'draft'],
-      'recording': ['processing', 'inviting'],
-      'processing': ['completed', 'recording'],
-      'completed': []
-    },
+    // Status flow moved to database-driven StateManager
+    // Use stateManager.getValidTransitionsFrom('story_instance', currentState) instead
     progressThresholds: {
       voice: 70,
       photo: 30,
@@ -165,15 +160,8 @@ export const defaultCollaborativeConfig: CollaborativeConfig = {
   },
   
   emotions: {
-    defaults: [
-      { name: 'happy', defaultIntensity: 6, category: 'positive', aiVoiceMapping: { 'child': 'nova', 'adult': 'alloy', 'elderly': 'echo' } },
-      { name: 'sad', defaultIntensity: 7, category: 'negative', aiVoiceMapping: { 'child': 'shimmer', 'adult': 'onyx', 'elderly': 'fable' } },
-      { name: 'angry', defaultIntensity: 8, category: 'negative', aiVoiceMapping: { 'child': 'nova', 'adult': 'onyx', 'elderly': 'echo' } },
-      { name: 'excited', defaultIntensity: 8, category: 'positive', aiVoiceMapping: { 'child': 'nova', 'adult': 'shimmer', 'elderly': 'alloy' } },
-      { name: 'fearful', defaultIntensity: 7, category: 'negative', aiVoiceMapping: { 'child': 'shimmer', 'adult': 'fable', 'elderly': 'echo' } },
-      { name: 'calm', defaultIntensity: 4, category: 'neutral', aiVoiceMapping: { 'child': 'alloy', 'adult': 'fable', 'elderly': 'echo' } },
-      { name: 'surprised', defaultIntensity: 6, category: 'neutral', aiVoiceMapping: { 'child': 'nova', 'adult': 'shimmer', 'elderly': 'alloy' } }
-    ],
+    // Emotion defaults moved to database-driven ESM system
+    // Use database queries on user_esm table for emotion categories and mappings
     intensityRange: { min: 1, max: 10 },
     maxEmotionsPerCharacter: 5
   },
