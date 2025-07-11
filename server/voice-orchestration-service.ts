@@ -189,6 +189,9 @@ export class VoiceOrchestrationService {
     // Merge with narrator profile if provided
     if (narratorProfile?.baselineVoice) {
       style = this.mergeNarratorWithStyle(narratorProfile.baselineVoice, style);
+    } else {
+      // Convert complex style format to simple VoiceStyle format
+      style = this.convertToVoiceStyle(style);
     }
     
     // Learn from this interaction
@@ -197,6 +200,22 @@ export class VoiceOrchestrationService {
     }
     
     return style;
+  }
+
+  /**
+   * Convert complex style format to simple VoiceStyle format
+   */
+  private convertToVoiceStyle(style: any): VoiceStyle {
+    return {
+      stability: style.stability?.mean || style.stability || 0.75,
+      similarityBoost: style.similarity_boost?.mean || style.similarity_boost || 0.85,
+      style: style.style?.mean || style.style || 0.5,
+      prosody: {
+        pitch: style.prosody?.pitch?.base || style.prosody?.pitch || "0%",
+        rate: style.prosody?.rate?.base || style.prosody?.rate || "85%",
+        volume: style.prosody?.volume || "medium"
+      }
+    };
   }
 
   /**
@@ -282,7 +301,7 @@ export class VoiceOrchestrationService {
   /**
    * Apply weighted defaults based on patterns - matches your JS logic exactly
    */
-  private applyWeightedDefaults(character: string, emotion: string, config: VoiceConfigData): VoiceStyle {
+  private applyWeightedDefaults(character: string, emotion: string, config: VoiceConfigData): any {
     let style = _.cloneDeep(config.globalDefaults);
     
     // Apply weighted defaults
@@ -328,14 +347,19 @@ export class VoiceOrchestrationService {
    * Merge narrator baseline with style - matches your JS logic exactly
    */
   private mergeNarratorWithStyle(narratorBaseline: any, style: any): VoiceStyle {
+    // Extract mean values from style structure
+    const stabilityMean = style.stability?.mean || style.stability || 0.75;
+    const similarityMean = style.similarity_boost?.mean || style.similarity_boost || 0.85;
+    const styleMean = style.style?.mean || style.style || 0.5;
+    
     return {
-      stability: (narratorBaseline.stability + style.stability.mean) / 2,
-      similarityBoost: (narratorBaseline.similarity_boost + style.similarity_boost.mean) / 2,
-      style: (narratorBaseline.style + style.style.mean) / 2,
+      stability: (narratorBaseline.stability + stabilityMean) / 2,
+      similarityBoost: (narratorBaseline.similarity_boost + similarityMean) / 2,
+      style: (narratorBaseline.style + styleMean) / 2,
       prosody: {
-        pitch: `${parseInt(narratorBaseline.pitch) + parseInt(style.prosody.pitch.base) + this.randInRange(style.prosody.pitch.range[0], style.prosody.pitch.range[1])}%`,
-        rate: `${parseInt(narratorBaseline.rate) + parseInt(style.prosody.rate.base) + this.randInRange(style.prosody.rate.range[0], style.prosody.rate.range[1])}%`,
-        volume: narratorBaseline.volume || style.prosody.volume
+        pitch: `${parseInt(narratorBaseline.pitch) + parseInt(style.prosody?.pitch?.base || '0') + this.randInRange(style.prosody?.pitch?.range?.[0] || -2, style.prosody?.pitch?.range?.[1] || 2)}%`,
+        rate: `${parseInt(narratorBaseline.rate) + parseInt(style.prosody?.rate?.base || '0') + this.randInRange(style.prosody?.rate?.range?.[0] || -10, style.prosody?.rate?.range?.[1] || 10)}%`,
+        volume: narratorBaseline.volume || style.prosody?.volume || 'medium'
       }
     };
   }
