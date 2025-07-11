@@ -141,6 +141,13 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
         );
       };
       
+      // Helper function to get recording data for an emotion/sound
+      const getRecordingForItem = (itemName: string) => {
+        return userRecordings.find((recording: any) => 
+          recording.name === itemName
+        );
+      };
+      
       // Process emotions from narrative
       if (narrativeData.emotions && Array.isArray(narrativeData.emotions)) {
         narrativeData.emotions.forEach((emotion: any) => {
@@ -148,11 +155,13 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
           console.log(`Processing emotion:`, emotionName);
           
           const hasRecording = hasRecordingForItem(emotionName);
+          const recordingData = getRecordingForItem(emotionName);
           newStates[emotionName] = {
             isRecorded: hasRecording,
             isSaving: false,
             errorMessage: '',
-            duration: 0
+            duration: recordingData?.duration || 0,
+            audioUrl: recordingData?.audioUrl
           };
         });
       }
@@ -164,11 +173,13 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
           console.log(`Processing sound:`, soundName);
           
           const hasRecording = hasRecordingForItem(soundName);
+          const recordingData = getRecordingForItem(soundName);
           newStates[soundName] = {
             isRecorded: hasRecording,
             isSaving: false,
             errorMessage: '',
-            duration: 0
+            duration: recordingData?.duration || 0,
+            audioUrl: recordingData?.audioUrl
           };
         });
       }
@@ -473,10 +484,10 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
                             onRecordingComplete={handleRecordingComplete(emotionName)}
                             disabled={recordingState.isSaving}
                             simpleMode={true}
-                            recordedSample={item.userRecording ? {
-                              audioUrl: item.userRecording.audioUrl,
-                              recordedAt: new Date(item.userRecording.recordedAt),
-                              duration: item.userRecording.duration
+                            recordedSample={recordingState.audioUrl ? {
+                              audioUrl: recordingState.audioUrl,
+                              recordedAt: new Date(), // We don't have exact timestamp, using current
+                              duration: recordingState.duration || 0
                             } : undefined}
                             saveConfig={{
                               endpoint: `/api/stories/${storyId}/voice-samples`,
