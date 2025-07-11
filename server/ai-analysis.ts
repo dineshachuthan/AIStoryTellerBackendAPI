@@ -2,6 +2,7 @@ import { getOpenAICachedProvider } from './cache/openai-cached-provider';
 import { AUDIO_FORMAT_CONFIG, AUDIO_PROCESSING_CONFIG } from '@shared/config/audio-config';
 import { VOICE_RECORDING_CONFIG } from '@shared/config/voice-recording-config';
 import { storage } from "./storage";
+import { SampleTextCore } from './core/sample-text-core';
 import { createHash } from 'crypto';
 import fs from 'fs/promises';
 import path from 'path';
@@ -505,45 +506,23 @@ async function populateEsmReferenceData(analysis: StoryAnalysis, userId: string)
         if (!existingEmotion) {
           console.log(`➕ Adding new emotion to ESM reference: ${emotionName}`);
           
-          // Try to extract sample text from story first, then fall back to OpenAI generation
+          // Use unified sample text core with graceful failure handling
           let sampleText: string;
-          
-          // Helper function to check if text is suitable length
-          const isTextSuitable = (text: string | undefined): boolean => {
-            if (!text) return false;
-            const wordCount = text.trim().split(/\s+/).length;
-            return wordCount >= VOICE_RECORDING_CONFIG.MIN_WORDS && 
-                   wordCount <= VOICE_RECORDING_CONFIG.MAX_WORDS;
-          };
-          
-          // Priority 1: Try emotion quote from story if suitable length
-          if (emotion.quote && isTextSuitable(emotion.quote)) {
-            sampleText = emotion.quote;
-            console.log(`✅ Using story quote for ${emotionName}: "${sampleText.substring(0, 50)}..."`);
-          }
-          // Priority 2: Try emotion context from story if suitable length
-          else if (emotion.context && isTextSuitable(emotion.context)) {
-            sampleText = emotion.context;
-            console.log(`✅ Using story context for ${emotionName}: "${sampleText.substring(0, 50)}..."`);
-          }
-          // Priority 3: Generate professional text using OpenAI
-          else {
-            try {
-              console.log(`🤖 Generating professional sample text for ${emotionName} (quote/context too short or missing)`);
-              const result = await openaiProvider.generateCompletionWithCache({
-                messages: [{ 
-                  role: 'user', 
-                  content: `Generate a voice recording sample text for the emotion "${emotion.emotion}". Be exactly ${VOICE_RECORDING_CONFIG.MIN_WORDS}-${VOICE_RECORDING_CONFIG.MAX_WORDS} words for a ${VOICE_RECORDING_CONFIG.MIN_DURATION}-${VOICE_RECORDING_CONFIG.MAX_DURATION} second recording, natural conversational language, first person perspective that clearly expresses ${emotion.emotion}. No character names or story references. Just the emotional sample text.`
-                }],
-                maxTokens: 100,
-                temperature: 0.7
-              });
-              sampleText = result.content.trim().replace(/^["']|["']$/g, '');
-              console.log(`✅ Generated professional sample text for ${emotionName}: "${sampleText.substring(0, 50)}..."`);
-            } catch (error) {
-              console.error(`⚠️ Failed to generate sample text for ${emotionName}, using fallback: ${error.message}`);
-              sampleText = `Express the emotion of ${emotion.emotion}`;
-            }
+          try {
+            const sampleResult = await SampleTextCore.generateSampleText({
+              emotion: emotionName,
+              displayName: emotion.emotion,
+              context: emotion.context,
+              quote: emotion.quote,
+              storyContent: analysis.summary, // Use story summary as context
+              intensity: emotion.intensity
+            });
+            
+            sampleText = sampleResult.sampleText;
+            console.log(`✅ Generated sample text for ${emotionName} (${sampleResult.source}): "${sampleText.substring(0, 50)}..." (${sampleResult.wordCount} words)`);
+          } catch (error) {
+            console.error(`❌ Sample text generation failed for ${emotionName}, using fallback:`, error);
+            sampleText = `Express the emotion of ${emotionName} in your voice with genuine feeling and natural pacing for high-quality voice cloning.`;
           }
           
           // Create new ESM reference entry for emotion
@@ -585,45 +564,23 @@ async function populateEsmReferenceData(analysis: StoryAnalysis, userId: string)
         if (!existingSound) {
           console.log(`➕ Adding new sound effect to ESM reference: ${soundName}`);
           
-          // Try to extract sample text from story first, then fall back to OpenAI generation
+          // Use unified sample text core with graceful failure handling
           let sampleText: string;
-          
-          // Helper function to check if text is suitable length
-          const isTextSuitable = (text: string | undefined): boolean => {
-            if (!text) return false;
-            const wordCount = text.trim().split(/\s+/).length;
-            return wordCount >= VOICE_RECORDING_CONFIG.MIN_WORDS && 
-                   wordCount <= VOICE_RECORDING_CONFIG.MAX_WORDS;
-          };
-          
-          // Priority 1: Try sound quote from story if suitable length
-          if (soundEffect.quote && isTextSuitable(soundEffect.quote)) {
-            sampleText = soundEffect.quote;
-            console.log(`✅ Using story quote for ${soundName}: "${sampleText.substring(0, 50)}..."`);
-          }
-          // Priority 2: Try sound context from story if suitable length
-          else if (soundEffect.context && isTextSuitable(soundEffect.context)) {
-            sampleText = soundEffect.context;
-            console.log(`✅ Using story context for ${soundName}: "${sampleText.substring(0, 50)}..."`);
-          }
-          // Priority 3: Generate professional text using OpenAI
-          else {
-            try {
-              console.log(`🤖 Generating professional sample text for sound ${soundName} (quote/context too short or missing)`);
-              const result = await openaiProvider.generateCompletionWithCache({
-                messages: [{ 
-                  role: 'user', 
-                  content: `Generate a voice recording sample text for the environmental sound "${soundEffect.sound}". Be exactly ${VOICE_RECORDING_CONFIG.MIN_WORDS}-${VOICE_RECORDING_CONFIG.MAX_WORDS} words for a ${VOICE_RECORDING_CONFIG.MIN_DURATION}-${VOICE_RECORDING_CONFIG.MAX_DURATION} second recording. Create a narrative scene that naturally includes this sound effect. First person perspective, natural conversational language. No character names.`
-                }],
-                maxTokens: 100,
-                temperature: 0.7
-              });
-              sampleText = result.content.trim().replace(/^["']|["']$/g, '');
-              console.log(`✅ Generated professional sample text for ${soundName}: "${sampleText.substring(0, 50)}..."`);
-            } catch (error) {
-              console.error(`⚠️ Failed to generate sample text for ${soundName}, using fallback: ${error.message}`);
-              sampleText = `Audio effect: ${soundEffect.sound}`;
-            }
+          try {
+            const sampleResult = await SampleTextCore.generateSampleText({
+              emotion: soundName,
+              displayName: soundEffect.sound,
+              context: soundEffect.context,
+              quote: soundEffect.quote,
+              storyContent: analysis.summary, // Use story summary as context
+              intensity: soundEffect.intensity
+            });
+            
+            sampleText = sampleResult.sampleText;
+            console.log(`✅ Generated sample text for sound ${soundName} (${sampleResult.source}): "${sampleText.substring(0, 50)}..." (${sampleResult.wordCount} words)`);
+          } catch (error) {
+            console.error(`❌ Sample text generation failed for sound ${soundName}, using fallback:`, error);
+            sampleText = `Create a narrative scene that naturally includes the sound of ${soundName} with natural pacing and clear pronunciation.`;
           }
           
           await storage.createEsmRef({
@@ -679,22 +636,22 @@ async function populateEsmReferenceData(analysis: StoryAnalysis, userId: string)
         if (!existingEmotion) {
           console.log(`➕ Adding emotional tag as emotion to ESM reference: ${emotionName}`);
           
-          // Generate professional voice sample text using OpenAI cached provider
+          // Use unified sample text core with graceful failure handling
           let sampleText: string;
           try {
-            const result = await openaiProvider.generateCompletionWithCache({
-              messages: [{ 
-                role: 'user', 
-                content: `Generate a voice recording sample text for the emotion "${emotionalTag}". Be exactly ${VOICE_RECORDING_CONFIG.MIN_WORDS}-${VOICE_RECORDING_CONFIG.MAX_WORDS} words for a ${VOICE_RECORDING_CONFIG.MIN_DURATION}-${VOICE_RECORDING_CONFIG.MAX_DURATION} second recording, natural conversational language, first person perspective that clearly expresses ${emotionalTag}. No character names or story references. Just the emotional sample text.`
-              }],
-              maxTokens: 100,
-              temperature: 0.7
+            const sampleResult = await SampleTextCore.generateSampleText({
+              emotion: emotionName,
+              displayName: emotionalTag,
+              context: `Emotional tag from story: ${emotionalTag}`,
+              storyContent: analysis.summary, // Use story summary as context
+              intensity: 5 // Default intensity for emotional tags
             });
-            sampleText = result.content.trim().replace(/^["']|["']$/g, '');
-            console.log(`✅ Generated professional sample text for emotional tag ${emotionName}: "${sampleText.substring(0, 50)}..."`);
+            
+            sampleText = sampleResult.sampleText;
+            console.log(`✅ Generated sample text for emotional tag ${emotionName} (${sampleResult.source}): "${sampleText.substring(0, 50)}..." (${sampleResult.wordCount} words)`);
           } catch (error) {
-            console.error(`⚠️ Failed to generate sample text for ${emotionName}, using fallback: ${error.message}`);
-            sampleText = `Express the emotion of ${emotionalTag}`;
+            console.error(`❌ Sample text generation failed for emotional tag ${emotionName}, using fallback:`, error);
+            sampleText = `Express the emotion of ${emotionalTag} in your voice with genuine feeling and natural pacing for high-quality voice cloning.`;
           }
           
           // Create new ESM reference entry for emotional tag as emotion

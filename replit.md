@@ -818,6 +818,16 @@ This is a full-stack collaborative storytelling platform that enables users to c
 
 ## Changelog
 
+### **UNIFIED SAMPLE TEXT ARCHITECTURE WITH GRACEFUL FAILURE HANDLING - July 11, 2025**
+**Integrated Sample Text Generation Into Story Analysis**: Unified and hardened sample text generation system
+- **ARCHITECTURAL INTEGRATION**: Story analysis now uses SampleTextCore for all ESM reference data population
+- **GRACEFUL FAILURE HANDLING**: Sample text generation failures do not break story analysis - system uses intelligent fallbacks
+- **THREE-TIER PRIORITY SYSTEM**: Story quote → Story context → AI-generated contextual text (45-60 words)
+- **UNIFIED CORE INTEGRATION**: All sample text generation (emotions, sounds, emotional tags) now uses SampleTextCore
+- **FAILURE RESILIENCE**: Each category (emotions, sounds, emotional tags) has specific fallback text for robustness
+- **ENHANCED LOGGING**: Detailed logging shows source type (story_quote, story_context, ai_generated) and word count
+- **STORY ANALYSIS PROTECTION**: Analysis process continues even if sample text generation fails completely
+
 ### **OUTDATED CONFIG CLEANUP COMPLETE - July 11, 2025**
 **Database-Driven Architecture Enforcement**: Removed all hardcoded state and emotion data from configuration files
 - **COLLABORATIVE CONFIG**: Removed hardcoded `statusFlow` states - now uses database-driven StateManager
