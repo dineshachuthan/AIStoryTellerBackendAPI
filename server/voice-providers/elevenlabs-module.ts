@@ -353,25 +353,46 @@ export class ElevenLabsModule extends BaseVoiceProvider {
       
       // First priority: direct voiceSettings parameter
       if (voiceSettings) {
+        // Flatten complex objects to simple numeric values for ElevenLabs API
+        const flattenValue = (val: any) => {
+          if (typeof val === 'object' && val !== null) {
+            if (val.mean !== undefined) return val.mean;
+            if (val.base !== undefined) return parseFloat(val.base.replace('%', '')) / 100;
+            return 0.6; // fallback
+          }
+          return val || 0.6;
+        };
+        
         finalVoiceSettings = {
-          stability: voiceSettings.stability || 0.6,
-          similarity_boost: voiceSettings.similarityBoost || voiceSettings.similarity_boost || 0.75,
-          style: voiceSettings.style || 0.0,
+          stability: flattenValue(voiceSettings.stability),
+          similarity_boost: flattenValue(voiceSettings.similarityBoost || voiceSettings.similarity_boost),
+          style: flattenValue(voiceSettings.style),
           use_speaker_boost: voiceSettings.prosody?.volume === 'loud' || voiceSettings.use_speaker_boost || true
         };
-        console.log(`[ElevenLabs] Using provided voice settings:`, finalVoiceSettings);
+        console.log(`[ElevenLabs] Using provided voice settings (flattened):`, finalVoiceSettings);
       }
       // Second priority: narrator profile settings (backwards compatibility)
       else if (narratorProfile?.voiceSettings) {
         // Use orchestrated settings from voice orchestration service
         const orchestrated = narratorProfile.voiceSettings;
+        
+        // Flatten complex objects to simple numeric values for ElevenLabs API
+        const flattenValue = (val: any) => {
+          if (typeof val === 'object' && val !== null) {
+            if (val.mean !== undefined) return val.mean;
+            if (val.base !== undefined) return parseFloat(val.base.replace('%', '')) / 100;
+            return 0.6; // fallback
+          }
+          return val || 0.6;
+        };
+        
         finalVoiceSettings = {
-          stability: orchestrated.stability || 0.6,
-          similarity_boost: orchestrated.similarityBoost || 0.75,
-          style: orchestrated.style || 0.0,
+          stability: flattenValue(orchestrated.stability),
+          similarity_boost: flattenValue(orchestrated.similarityBoost || orchestrated.similarity_boost),
+          style: flattenValue(orchestrated.style),
           use_speaker_boost: orchestrated.prosody?.volume === 'loud' || true
         };
-        console.log(`[ElevenLabs] Using orchestrated voice settings from narrator profile:`, finalVoiceSettings);
+        console.log(`[ElevenLabs] Using orchestrated voice settings from narrator profile (flattened):`, finalVoiceSettings);
       }
       
       // Log the request data for debugging
