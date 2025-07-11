@@ -663,25 +663,7 @@ export default function StoryAnalysis() {
             </div>
           </div>
 
-          {/* Story Narration Button - Navigate to dedicated narration page */}
-          {storyId && storyDataFromQuery && user?.id === (storyDataFromQuery as any).authorId ? (
-            <div className="mb-8">
-              <Button
-                onClick={() => setLocation(`/stories/${storyId}/narration`)}
-                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
-                size="lg"
-              >
-                <Headphones className="w-5 h-5 mr-2" />
-                Open Story Narration
-              </Button>
-            </div>
-          ) : storyId && storyDataFromQuery && user?.id !== (storyDataFromQuery as any).authorId ? (
-            <div className="mb-8 p-4 bg-blue-900/30 rounded-xl border border-blue-500/50">
-              <div className="text-blue-300 text-sm">
-                <span className="font-medium">📖 Story Narration:</span> Only the story author can generate narrations
-              </div>
-            </div>
-          ) : null}
+
 
           {/* Enhanced Narration Player - ElevenLabs Voice Clone Integration */}
           {/* {storyId && user?.id && (

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +12,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { CharacterAvatar } from "./CharacterAvatar";
 import { EmotionBadge } from "./EmotionBadge";
 import StoryVoiceSamples from "./story-voice-samples";
-import { Clock, BookOpen, Users, Tag, Mic, Loader2, FlaskConical } from "lucide-react";
+import { Clock, BookOpen, Users, Tag, Mic, Loader2, FlaskConical, Headphones } from "lucide-react";
 
 interface StoryAnalysisData {
   characters: Array<{
@@ -64,6 +65,7 @@ export function StoryAnalysisPanel({
   className
 }: StoryAnalysisPanelProps) {
   const [statusMessage, setStatusMessage] = useState<{text: string, type: 'success' | 'error' | 'info'} | null>(null);
+  const [, setLocation] = useLocation();
 
   // Query to get all user voice samples across all stories
   const { data: allVoiceSamples } = useQuery({
@@ -93,12 +95,7 @@ export function StoryAnalysisPanel({
   // Check if narrator voice exists
   const hasNarratorVoice = narratorVoiceData && narratorVoiceData.narratorVoiceId;
   
-  // Debug logging
-  console.log('Narrator voice data:', narratorVoiceData);
-  console.log('Narrator voice loading:', narratorVoiceLoading);
-  console.log('Narrator voice error:', narratorVoiceError);
-  console.log('Has narrator voice:', hasNarratorVoice);
-  console.log('Total recordings:', totalRecordings);
+  // Clean up debug logging - narrator voice detection now working properly
   
   // Enable button when we have at least 5 recordings for voice cloning
   const canGenerateNarratorVoice = totalRecordings >= 5;
@@ -214,43 +211,58 @@ export function StoryAnalysisPanel({
               <BookOpen className="h-5 w-5" />
               Story Analysis
             </CardTitle>
-            {storyId > 0 && (
-              <Button
-                onClick={() => voiceCloningMutation.mutate()}
-                disabled={!canGenerateNarratorVoice || voiceCloningMutation.isPending}
-                size="sm"
-                className="flex items-center gap-2"
-                title={
-                  !canGenerateNarratorVoice 
-                    ? totalRecordings === 0
-                      ? "Record at least 5 voice samples to create your narrator voice"
-                      : `Record more samples (${totalRecordings}/5 minimum needed) to create your narrator voice`
+            <div className="flex items-center gap-2">
+              {storyId > 0 && (
+                <Button
+                  onClick={() => voiceCloningMutation.mutate()}
+                  disabled={!canGenerateNarratorVoice || voiceCloningMutation.isPending}
+                  size="sm"
+                  className="flex items-center gap-2"
+                  title={
+                    !canGenerateNarratorVoice 
+                      ? totalRecordings === 0
+                        ? "Record at least 5 voice samples to create your narrator voice"
+                        : `Record more samples (${totalRecordings}/5 minimum needed) to create your narrator voice`
+                      : hasNarratorVoice
+                        ? totalRecordings > 9 
+                          ? "Update your narrator voice with your latest recordings"
+                          : "Update your narrator voice (you have enough samples to improve quality)"
+                        : totalRecordings > 9 
+                          ? "Create your personal narrator voice using your recorded samples"
+                          : "Create your personal narrator voice (you have enough samples to get started)"
+                  }
+                >
+                  {voiceCloningMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Mic className="h-4 w-4" />
+                  )}
+                  {voiceCloningMutation.isPending 
+                    ? "Creating Voice..." 
                     : hasNarratorVoice
                       ? totalRecordings > 9 
-                        ? "Update your narrator voice with your latest recordings"
-                        : "Update your narrator voice (you have enough samples to improve quality)"
+                        ? "Regenerate Narrator Voice" 
+                        : `Regenerate Narrator Voice (${totalRecordings} samples)`
                       : totalRecordings > 9 
-                        ? "Create your personal narrator voice using your recorded samples"
-                        : "Create your personal narrator voice (you have enough samples to get started)"
-                }
-              >
-                {voiceCloningMutation.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Mic className="h-4 w-4" />
-                )}
-                {voiceCloningMutation.isPending 
-                  ? "Creating Voice..." 
-                  : hasNarratorVoice
-                    ? totalRecordings > 9 
-                      ? "Regenerate Narrator Voice" 
-                      : `Regenerate Narrator Voice (${totalRecordings} samples)`
-                    : totalRecordings > 9 
-                      ? "Generate Narrator Voice" 
-                      : `Generate Narrator Voice (${totalRecordings} samples)`
-                }
-              </Button>
-            )}
+                        ? "Generate Narrator Voice" 
+                        : `Generate Narrator Voice (${totalRecordings} samples)`
+                  }
+                </Button>
+              )}
+              
+              {/* Open Story Narration Button */}
+              {storyId > 0 && hasNarratorVoice && (
+                <Button
+                  onClick={() => setLocation(`/stories/${storyId}/narration`)}
+                  size="sm"
+                  className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
+                  title="Open the story narration interface to generate and listen to your personalized story narration"
+                >
+                  <Headphones className="h-4 w-4" />
+                  Open Story Narration
+                </Button>
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent>
