@@ -34,19 +34,64 @@ export class StoryNarrator {
   }
 
   /**
-   * Get user's narrator profile with language, locale, and native language
+   * Get user's narrator profile with language, locale, native language, and profile ID
    */
   private async getUserNarratorProfile(userId: string): Promise<NarratorProfile> {
     try {
       const languageData = await storage.getUserLanguage(userId);
-      return {
+      
+      // Get active voice profile to determine profile ID
+      const activeProfile = await this.getActiveVoiceProfile(userId);
+      
+      const profile = {
         language: languageData?.language || 'en',
         locale: languageData?.locale,
-        nativeLanguage: languageData?.nativeLanguage
+        nativeLanguage: languageData?.nativeLanguage,
+        profileId: activeProfile?.profileId || 'neutral'
       };
+      
+      console.log(`[StoryNarrator] getUserNarratorProfile for ${userId}: ${JSON.stringify(profile)}`);
+      
+      return profile;
     } catch (error) {
       console.error('Error fetching user narrator profile:', error);
-      return { language: 'en' };
+      return { language: 'en', profileId: 'neutral' };
+    }
+  }
+
+  /**
+   * Get user's active voice profile to determine profile ID for cache key
+   */
+  private async getActiveVoiceProfile(userId: string): Promise<{ profileId: string } | null> {
+    try {
+      const { userVoiceProfiles } = await import('@shared/schema/schema');
+      const { eq, and } = await import('drizzle-orm');
+      
+      const [profile] = await db
+        .select({
+          metadata: userVoiceProfiles.metadata
+        })
+        .from(userVoiceProfiles)
+        .where(and(
+          eq(userVoiceProfiles.userId, userId),
+          eq(userVoiceProfiles.isActive, true)
+        ))
+        .limit(1);
+      
+      // Extract profile ID from metadata if it exists
+      if (profile?.metadata && typeof profile.metadata === 'object') {
+        const metadata = profile.metadata as any;
+        if (metadata.presetType) {
+          console.log(`[StoryNarrator] Found active voice profile: ${metadata.presetType}`);
+          return { profileId: metadata.presetType };
+        }
+      }
+      
+      console.log(`[StoryNarrator] No active voice profile found, using default: neutral`);
+      return { profileId: 'neutral' };
+    } catch (error) {
+      console.error('Error fetching active voice profile:', error);
+      return null;
     }
   }
   /**
@@ -392,7 +437,7 @@ export class StoryNarrator {
     }
     
     // Store audio in story-specific directory structure
-    const narratorProfileName = narratorProfile?.language || 'neutral';
+    const narratorProfileName = narratorProfile?.profileId || narratorProfile?.language || 'neutral';
     
     const localAudioUrl = await this.storeNarrationAudio(
       audioBuffer, 

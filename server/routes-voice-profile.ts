@@ -306,9 +306,7 @@ export function registerVoiceProfileRoutes(app: Express) {
         await db.update(userVoiceProfiles)
           .set({
             ...profileData,
-            storytellingLanguage: 'en',
-            nativeLanguage: existingProfile.nativeLanguage || 'en',
-            onboardingCompleted: true,
+            metadata: { presetType: preset }, // Store preset name in metadata
             isActive: true,
             updatedAt: new Date()
           })
@@ -318,16 +316,15 @@ export function registerVoiceProfileRoutes(app: Express) {
         await db.insert(userVoiceProfiles)
           .values({
             userId,
+            profileName: `Test_${preset}_${Date.now()}`,
             ...profileData,
-            storytellingLanguage: 'en',
-            nativeLanguage: 'en',
-            onboardingCompleted: true,
+            metadata: { presetType: preset }, // Store preset name in metadata
             isActive: true
           });
       }
       
       // Clear cached narrations to force regeneration
-      await storage.clearUserStoryNarrations(userId);
+      await storage.deleteAllUserNarrations(userId);
       
       res.json({ 
         success: true, 
