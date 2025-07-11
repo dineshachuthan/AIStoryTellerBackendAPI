@@ -65,6 +65,20 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - Pattern: `apiClient.audio.transcribe(formData)` NOT `fetch('/api/audio/transcribe', {method: 'POST', body: formData})`
 - **ARCHITECTURAL RULE**: api-client.ts MUST be in client/src/lib/ - NEVER in shared folder (fixed July 10, 2025)
 
+### Zero Tolerance Deprecated API Usage Policy
+**NEVER USE, REFERENCE, OR ANALYZE DEPRECATED API ENDPOINTS WITHOUT EXPLICIT REQUEST**
+- ABSOLUTELY NO use of deprecated endpoints in any development, analysis, or recommendations
+- DEPRECATED endpoints are marked with `/* DEPRECATED` comments in server/routes.ts
+- FORBIDDEN deprecated endpoints (July 11, 2025):
+  - `/api/stories/:storyId/voice-samples` - Use narrative endpoint instead
+  - `/api/user-voice-emotions/:userId` - Legacy system removed
+  - `/api/users/:userId/voice-samples` - Legacy voice samples mapping
+  - `/api/user/voice-recordings` - Use `/api/user/esm-recordings` instead
+- ONLY analyze deprecated endpoints when explicitly asked "analyze deprecated API"
+- USER HAS ZERO TOLERANCE for repeated use of deprecated endpoints
+- Pattern: Use `/api/user/esm-recordings` NOT `/api/user/voice-recordings`
+- Pattern: Use `/api/stories/:storyId/narrative` NOT `/api/stories/:storyId/voice-samples`
+
 ### Zero Tolerance Direct Toast Usage Policy
 **ALL TOAST MESSAGES MUST USE toast-utils.ts - NO DIRECT useToast() CALLS**
 - ABSOLUTELY NO direct useToast() or toast() calls anywhere in frontend components
