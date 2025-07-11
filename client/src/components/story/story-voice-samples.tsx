@@ -189,101 +189,11 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
     }
   }, [narrativeData, voiceRecordingsQuery.data]);
 
-  // Mutation for recording voice samples
-  const recordVoiceMutation = useMutation({
-    mutationFn: async ({ emotion, audioBlob }: { emotion: string; audioBlob: Blob }) => {
-      const formData = new FormData();
-      formData.append('audio', audioBlob, 'voice-sample.mp3');
-      formData.append('emotion', emotion);
-      formData.append('category', selectedCategory);
-
-      return apiClient.voice.recordSample(formData);
-    },
-    onSuccess: (data, variables) => {
-      // Update recording state for this emotion
-      setRecordingStates(prev => ({
-        ...prev,
-        [variables.emotion]: {
-          ...prev[variables.emotion],
-          isRecorded: true,
-          isSaving: false,
-          errorMessage: ''
-        }
-      }));
-      
-      // Invalidate both queries to refresh data and trigger UI refresh
-      queryClient.invalidateQueries({ queryKey: [`/api/stories/${storyId}/narrative`] });
-      queryClient.invalidateQueries({ queryKey: ['/api/user/esm-recordings'] });
-    },
-    onError: (error: any, variables) => {
-      // Update error state for this specific emotion
-      setRecordingStates(prev => ({
-        ...prev,
-        [variables.emotion]: {
-          ...prev[variables.emotion],
-          isSaving: false,
-          errorMessage: error.message || 'Failed to save voice sample'
-        }
-      }));
-    }
-  });
-
-  // Handle recording completion (just store the recording, don't save yet)
+  // Handle recording completion - EnhancedVoiceRecorder handles save internally
   const handleRecordingComplete = (emotion: string) => (audioBlob: Blob, audioUrl: string) => {
-    console.log(`🎤 Recording complete for: ${emotion}`);
-    getAudioDuration(audioBlob).then(duration => {
-      console.log(`📏 Duration for ${emotion}: ${duration}s`);
-      setRecordingStates(prev => {
-        console.log(`📝 Updating state for ${emotion}`, {
-          currentStates: Object.keys(prev),
-          emotionState: prev[emotion]
-        });
-        return {
-          ...prev,
-          [emotion]: {
-            ...prev[emotion],
-            duration,
-            audioBlob,
-            audioUrl,
-            errorMessage: '',
-            isSaving: false,
-            isRecorded: false
-          }
-        };
-      });
-    });
-  };
-
-  // Handle save button click with frontend validation
-  const handleSaveRecording = async (emotion: string) => {
-    const recordingState = recordingStates[emotion];
-    if (!recordingState?.audioBlob) return;
-
-    // Frontend validation: Check if audio is long enough
-    const audioDuration = recordingState.duration || 0;
-    if (audioDuration < 6) {
-      setRecordingStates(prev => ({
-        ...prev,
-        [emotion]: {
-          ...prev[emotion],
-          errorMessage: `Recording too short: ${audioDuration.toFixed(1)}s. Need at least 6 seconds for voice cloning.`
-        }
-      }));
-      return;
-    }
-
-    // Set saving state
-    setRecordingStates(prev => ({
-      ...prev,
-      [emotion]: {
-        ...prev[emotion],
-        isSaving: true,
-        errorMessage: ''
-      }
-    }));
-
-    // Call API
-    recordVoiceMutation.mutate({ emotion, audioBlob: recordingState.audioBlob });
+    console.log(`🎤 Recording complete for: ${emotion} - EnhancedVoiceRecorder will handle saving`);
+    // EnhancedVoiceRecorder component handles saving internally through saveConfig
+    // No need to update recordingStates here as save success will update it
   };
 
   // Generate categories with counts
@@ -490,21 +400,40 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
                               duration: recordingState.duration || 0
                             } : undefined}
                             saveConfig={{
-                              endpoint: `/api/stories/${storyId}/voice-samples`,
+                              endpoint: `/api/user/esm-recordings`,
                               payload: {
-                                itemName: emotionName,
+                                name: emotionName,
                                 category: category.id === 'emotions' ? 1 : category.id === 'sounds' ? 2 : 3,
-                                storyId: storyId,
                                 intensity: intensity
                               },
                               minDuration: VOICE_RECORDING_CONFIG.MIN_DURATION,
                               onSaveSuccess: (data) => {
-                                // Invalidate narrative query to refresh data without page reload
+                                // Update recording state to show green background
+                                setRecordingStates(prev => ({
+                                  ...prev,
+                                  [emotionName]: {
+                                    ...prev[emotionName],
+                                    isRecorded: true,
+                                    isSaving: false,
+                                    errorMessage: ''
+                                  }
+                                }));
+                                
+                                // Invalidate queries to refresh data
                                 queryClient.invalidateQueries({ queryKey: [`/api/stories/${storyId}/narrative`] });
+                                queryClient.invalidateQueries({ queryKey: ['/api/user/esm-recordings'] });
                                 console.log('Voice sample saved successfully - invalidating cache');
                               },
                               onSaveError: (error) => {
                                 console.error('Failed to save voice sample:', error);
+                                setRecordingStates(prev => ({
+                                  ...prev,
+                                  [emotionName]: {
+                                    ...prev[emotionName],
+                                    isSaving: false,
+                                    errorMessage: error || 'Failed to save voice sample'
+                                  }
+                                }));
                               }
                             }}
                           />
