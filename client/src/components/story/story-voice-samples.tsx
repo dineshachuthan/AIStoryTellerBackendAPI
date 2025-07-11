@@ -256,11 +256,6 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold">Story Voice Samples</h2>
-        <p className="text-gray-600">
-          Record your voice for emotions and sounds found in this story
-        </p>
-        
         {/* Progress indicator */}
         {(() => {
           const totalItems = storyEmotions.length + storySounds.length + storyModulations.length;
