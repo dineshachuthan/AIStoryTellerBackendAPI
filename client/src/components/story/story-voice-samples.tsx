@@ -90,14 +90,14 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
   const queryClient = useQueryClient();
   const [selectedCategory, setSelectedCategory] = useState<string>("emotions");
 
-  // Get story narrative data which contains emotions and sounds
+  // Get story narrative data which contains emotions and sounds with ESM reference data
   const narrativeQuery = useQuery({
     queryKey: [`/api/stories/${storyId}/narrative`],
     queryFn: () => apiClient.stories.getNarrative(storyId),
     enabled: !!user?.id && !!storyId,
   });
 
-  // Transform narrative data into ESM format for display
+  // Transform narrative data for display with ESM reference data
   const narrativeData = narrativeQuery.data || {};
   const storyEmotions = narrativeData.emotions || [];
   const storySounds = narrativeData.soundEffects || [];
@@ -390,7 +390,8 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
                   const intensity = item.intensity || 5;
                   const isLocked = item.isLocked || false;
                   const isRecorded = item.isRecorded || false;
-                  const sampleText = item.sampleText;
+                  // Use quote from narrative data, fallback to context if quote not available
+                  const sampleText = item.quote || item.context || item.sampleText || '';
                   
                   const recordingState = recordingStates[emotionName] || {
                     isRecorded: false,
