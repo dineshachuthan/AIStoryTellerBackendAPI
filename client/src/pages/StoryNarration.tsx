@@ -163,10 +163,7 @@ export default function StoryNarration() {
             <p className="text-white/70">
               Story Narration
             </p>
-            {/* Debug info */}
-            <div className="text-xs text-white/50 mt-2">
-              Debug: story object exists: {story ? 'YES' : 'NO'}, title: {story?.title || 'NONE'}
-            </div>
+
           </div>
 
           {/* Narration Generation Controls - For generating different cache keys */}
@@ -284,8 +281,6 @@ export default function StoryNarration() {
                       <div className="mt-3">
                         <SimpleAudioPlayer
                           audioUrl={narration.audioUrl}
-                          segments={narration.segments}
-                          title={`${narration.conversationStyle.replace('_', ' ').charAt(0).toUpperCase() + narration.conversationStyle.replace('_', ' ').slice(1)} Style`}
                         />
                       </div>
                     )}
