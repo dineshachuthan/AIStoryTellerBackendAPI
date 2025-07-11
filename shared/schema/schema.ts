@@ -81,21 +81,7 @@ export const userLanguagePreferences = pgTable("user_language_preferences", {
   index("idx_user_language_prefs_user_lang").on(table.userId, table.language),
 ]);
 
-// User relationships - Complex relationship mapping with language and style preferences
-export const userRelationships = pgTable("user_relationships", {
-  id: serial("id").primaryKey(),
-  userId: varchar("user_id").references(() => users.id).notNull(),
-  relationshipType: varchar("relationship_type", { length: 50 }).notNull(), // 'spouse', 'parent', 'child', 'sibling', 'colleague', 'friend', 'boss'
-  relationshipLabel: varchar("relationship_label", { length: 100 }), // "My Mom", "My Boss", "College Friend"
-  preferredLanguage: varchar("preferred_language", { length: 10 }).notNull(), // Language used with this relationship
-  conversationStyle: varchar("conversation_style", { length: 50 }).notNull(), // 'respectful', 'business', 'intimate', 'playful'
-  intimacyLevel: integer("intimacy_level").default(5), // 1-10 scale for customization
-  contactInfo: jsonb("contact_info"), // Optional: email, phone for direct sharing
-  createdAt: timestamp("created_at").defaultNow(),
-}, (table) => [
-  index("idx_user_relationships_user_type").on(table.userId, table.relationshipType),
-  index("idx_user_relationships_lang_style").on(table.preferredLanguage, table.conversationStyle),
-]);
+// User relationships - Complex relationship mapping with language and style preferences (REMOVED DUPLICATE - see line 665)
 
 // Language-specific voice profiles - Different narrator voices per language
 export const userLanguageVoiceProfiles = pgTable("user_language_voice_profiles", {
