@@ -51,18 +51,21 @@ export default function StoryPlayer() {
   // Fetch story details
   const { data: story, isLoading: storyLoading } = useQuery({
     queryKey: [`/api/stories/${storyId}`],
+    queryFn: () => apiClient.stories.get(parseInt(storyId!)),
     enabled: !!storyId,
   });
 
   // Fetch story narration
   const { data: narration, isLoading: narrationLoading } = useQuery<StoryNarration>({
     queryKey: [`/api/stories/${storyId}/narration`],
+    queryFn: () => apiClient.stories.getNarration(parseInt(storyId!)),
     enabled: !!storyId,
   });
 
   // Fetch voice assignments
   const { data: voiceAssignments = [] } = useQuery({
     queryKey: [`/api/stories/${storyId}/voice-assignments`],
+    queryFn: () => apiClient.stories.getVoiceAssignments ? apiClient.stories.getVoiceAssignments(parseInt(storyId!)) : [],
     enabled: !!storyId,
   });
 
@@ -75,17 +78,10 @@ export default function StoryPlayer() {
     },
     onSuccess: (data) => {
       setGrandmaNarration(data);
-      toast({
-        title: "Narration Generated!",
-        description: "Your personalized story narration is ready to play.",
-      });
+      toast.success("Your personalized story narration is ready to play.");
     },
     onError: (error) => {
-      toast({
-        title: "Generation Failed",
-        description: "Could not generate narration. Please try again.",
-        variant: "destructive",
-      });
+      toast.error("Could not generate narration. Please try again.");
     },
   });
 
@@ -173,11 +169,7 @@ export default function StoryPlayer() {
 
     } catch (error) {
       console.error("Character narration error:", error);
-      toast({
-        title: "Narration Failed",
-        description: "Could not generate character-based narration.",
-        variant: "destructive",
-      });
+      toast.error("Could not generate character-based narration.");
     }
   };
 
