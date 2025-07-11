@@ -260,10 +260,13 @@ export default function StoryNarration() {
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
                         <div className="text-sm font-medium text-white/90">
-                          Style: {narration.conversationStyle}
+                          Conversation Style: {narration.conversationStyle.replace('_', ' ').charAt(0).toUpperCase() + narration.conversationStyle.replace('_', ' ').slice(1)}
                         </div>
                         <div className="text-sm text-white/60">
-                          Profile: {narration.narratorProfile}
+                          Narrator Profile: {(() => {
+                            const profile = NARRATOR_PROFILES.find(p => p.id === narration.narratorProfile);
+                            return profile ? `${profile.name} - ${profile.description}` : narration.narratorProfile;
+                          })()}
                         </div>
                         <div className="text-sm text-white/60">
                           Voice: {narration.narratorVoiceType}
@@ -293,7 +296,7 @@ export default function StoryNarration() {
                         <SimpleAudioPlayer
                           audioUrl={narration.audioUrl}
                           segments={narration.segments}
-                          title={`${narration.conversationStyle} Style`}
+                          title={`${narration.conversationStyle.replace('_', ' ').charAt(0).toUpperCase() + narration.conversationStyle.replace('_', ' ').slice(1)} Style`}
                         />
                       </div>
                     )}
