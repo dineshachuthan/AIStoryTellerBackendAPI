@@ -2,7 +2,7 @@ import type { Express } from "express";
 import express from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertCharacterSchema, insertConversationSchema, insertMessageSchema, insertStorySchema, insertUserVoiceSampleSchema, insertStoryCollaborationSchema, insertStoryGroupSchema, insertCharacterVoiceAssignmentSchema, userEsmRecordings } from '@shared/schema/schema';
+import { insertCharacterSchema, insertConversationSchema, insertMessageSchema, insertStorySchema, insertUserVoiceSampleSchema, insertStoryCollaborationSchema, insertStoryGroupSchema, insertCharacterVoiceAssignmentSchema, userEsmRecordings, storyNarrations } from '@shared/schema/schema';
 import { VOICE_RECORDING_CONFIG } from '@shared/config/voice-recording-config';
 import { generateAIResponse } from "./openai";
 import { setupAuth, requireAuth, requireAdmin, hashPassword } from "./auth";
@@ -2987,23 +2987,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Story Narration routes - GET to retrieve existing narration
-  app.get("/api/stories/:id/narration", async (req, res) => {
+  app.get("/api/stories/:id/narration", requireAuth, async (req, res) => {
     try {
       const storyId = parseInt(req.params.id);
+      const userId = (req.user as any)?.id;
       
-      // Check if we have a cached narration
-      const existingPlayback = await storage.getStoryPlaybacks(storyId);
-      if (existingPlayback.length > 0) {
-        const playback = existingPlayback[0];
-        if (playback.narrationData) {
-          const narrationData = playback.narrationData as any;
-          return res.json({
-            storyId: storyId,
-            totalDuration: narrationData.totalDuration || 0,
-            segments: narrationData.segments || [],
-            pacing: narrationData.pacing || 'normal'
-          });
-        }
+      if (!userId) {
+        return res.status(401).json({ message: "User authentication required" });
+      }
+      
+      // Get the most recent narration for this story and user from story_narrations table
+      const narrations = await db.select()
+        .from(storyNarrations)
+        .where(and(
+          eq(storyNarrations.storyId, storyId),
+          eq(storyNarrations.userId, userId)
+        ))
+        .orderBy(desc(storyNarrations.createdAt))
+        .limit(1);
+      
+      if (narrations.length > 0) {
+        const narration = narrations[0];
+        return res.json({
+          storyId: storyId,
+          totalDuration: narration.totalDuration || 0,
+          segments: narration.segments || [],
+          narratorVoice: narration.narratorVoice,
+          narratorVoiceType: narration.narratorVoiceType,
+          pacing: 'normal'
+        });
       }
 
       // Return empty narration if none exists
@@ -3015,6 +3027,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Error fetching story narration:", error);
+      console.error("Error details:", error instanceof Error ? error.message : error);
       res.status(500).json({ message: "Failed to fetch story narration" });
     }
   });
