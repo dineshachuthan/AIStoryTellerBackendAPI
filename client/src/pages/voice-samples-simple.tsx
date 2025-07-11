@@ -30,6 +30,10 @@ export default function SimplifiedVoiceSamples() {
   // Get user's ESM recordings
   const { data: recordings = [], isLoading } = useQuery<UserRecording[]>({
     queryKey: ["/api/user/esm-recordings"],
+    queryFn: async () => {
+      const { apiClient } = await import('@/lib/api-client');
+      return apiClient.voice.getRecordings();
+    },
   });
 
   return (

@@ -251,73 +251,58 @@ export default function StoryAnalysis() {
       setPlayingUserRecording(emotion);
       console.log(`Playing user recording for emotion: ${emotion}`);
       
-      // Find the actual user voice file using the correct endpoint
-      const response = await fetch(`/api/user-voice-emotions/${user.id}?emotion=${emotion}`, {
+      // Find the actual user voice file using the ESM recordings endpoint
+      const recordings = await apiClient.voice.getRecordings();
+      const userRecording = recordings.find((recording: any) => recording.name === emotion);
+      
+      if (!userRecording) {
+        throw new Error('No voice recordings found for this emotion');
+      }
+      
+      // Use the audioUrl from the recording
+      let audioUrl = userRecording.audioUrl;
+        
+      // Stop any currently playing audio
+      if (userAudioPlayerRef.current) {
+        userAudioPlayerRef.current.pause();
+        userAudioPlayerRef.current = null;
+      }
+      
+      // Fetch audio with credentials and create blob URL (like upload-audio page)
+      const audioResponse = await fetch(audioUrl, {
         credentials: 'include'
       });
       
-      if (response.ok) {
-        const data = await response.json();
-        console.log('User voice data:', data);
-        
-        // Check if we have samples for this emotion
-        if (!data.samples || data.samples.length === 0) {
-          throw new Error('No voice recordings found for this emotion');
-        }
-        
-        // Use the audioUrl from the most recent sample and convert old format to new format
-        let audioUrl = data.samples[0].audioUrl;
-        
-        // Convert old URL format to new format for compatibility
-        if (audioUrl.includes('/api/user-voice-emotions/') && !audioUrl.includes('/files/')) {
-          const filename = audioUrl.split('/api/user-voice-emotions/')[1];
-          audioUrl = `/api/user-voice-emotions/files/${filename}`;
-        }
-        
-        // Stop any currently playing audio
-        if (userAudioPlayerRef.current) {
-          userAudioPlayerRef.current.pause();
-          userAudioPlayerRef.current = null;
-        }
-        
-        // Fetch audio with credentials and create blob URL (like upload-audio page)
-        const audioResponse = await fetch(audioUrl, {
-          credentials: 'include'
-        });
-        
-        if (!audioResponse.ok) {
-          throw new Error('Failed to fetch audio file');
-        }
-        
-        const audioBlob = await audioResponse.blob();
-        const blobUrl = URL.createObjectURL(audioBlob);
-        
-        // Use blob URL pattern like upload-audio page
-        userAudioPlayerRef.current = new Audio(blobUrl);
-        userAudioPlayerRef.current.volume = 0.8;
-        
-        userAudioPlayerRef.current.onended = () => {
-          console.log('User recording playback ended');
-          setPlayingUserRecording("");
-          URL.revokeObjectURL(blobUrl); // Clean up blob URL
-        };
-        
-        userAudioPlayerRef.current.onerror = (e) => {
-          console.error('Audio error:', e);
-          setPlayingUserRecording("");
-          URL.revokeObjectURL(blobUrl); // Clean up blob URL
-          toast({
-            title: "Playback Error",
-            description: "Could not play your voice recording.",
-            variant: "destructive",
-          });
-        };
-        
-        await userAudioPlayerRef.current.play();
-        console.log('User recording playback started successfully');
-      } else {
-        throw new Error('User voice recording not found');
+      if (!audioResponse.ok) {
+        throw new Error('Failed to fetch audio file');
       }
+      
+      const audioBlob = await audioResponse.blob();
+      const blobUrl = URL.createObjectURL(audioBlob);
+      
+      // Use blob URL pattern like upload-audio page
+      userAudioPlayerRef.current = new Audio(blobUrl);
+      userAudioPlayerRef.current.volume = 0.8;
+      
+      userAudioPlayerRef.current.onended = () => {
+        console.log('User recording playback ended');
+        setPlayingUserRecording("");
+        URL.revokeObjectURL(blobUrl); // Clean up blob URL
+      };
+      
+      userAudioPlayerRef.current.onerror = (e) => {
+        console.error('Audio error:', e);
+        setPlayingUserRecording("");
+        URL.revokeObjectURL(blobUrl); // Clean up blob URL
+        toast({
+          title: "Playback Error",
+          description: "Could not play your voice recording.",
+          variant: "destructive",
+        });
+      };
+      
+      await userAudioPlayerRef.current.play();
+      console.log('User recording playback started successfully');
     } catch (error) {
       console.error('Error playing user recording:', error);
       setPlayingUserRecording("");

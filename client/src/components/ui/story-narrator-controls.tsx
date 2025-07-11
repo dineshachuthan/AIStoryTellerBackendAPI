@@ -62,10 +62,8 @@ export default function StoryNarratorControls({
     queryFn: async () => {
       if (!user) return null;
       try {
-        const response = await apiRequest('/api/user/narrator-voice', {
-          method: 'GET'
-        });
-        return response;
+        const { apiClient } = await import('@/lib/api-client');
+        return await apiClient.voice.getNarratorVoice();
       } catch (error) {
         console.error('Error fetching narrator voice:', error);
         return null;
@@ -80,9 +78,8 @@ export default function StoryNarratorControls({
     queryFn: async () => {
       if (!user) return null;
       try {
-        const response = await apiRequest(`/api/stories/${storyId}/narration/saved`, {
-          method: 'GET'
-        });
+        const { apiClient } = await import('@/lib/api-client');
+        const response = await apiClient.stories.getSavedNarration(storyId);
         
         // Check if narration matches current voice ID
         if (response && narratorVoiceData?.narratorVoiceId && 

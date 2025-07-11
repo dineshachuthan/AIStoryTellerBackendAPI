@@ -116,28 +116,17 @@ export default function VoiceModulationTest() {
         if (audioBlob.size > 0) {
           await saveVoiceEmotion(audioBlob);
         } else {
-          toast({
-            title: "Recording Error",
-            description: "No audio data recorded. Please try again.",
-            variant: "destructive",
-          });
+          toast.error("No audio data recorded. Please try again.");
         }
         stream.getTracks().forEach(track => track.stop());
       };
 
       mediaRecorder.start(100); // Record in 100ms chunks
       setIsRecording(true);
-      toast({
-        title: "Recording Started",
-        description: `Recording your voice for ${selectedEmotion} emotion`,
-      });
+      toast.success(`Recording your voice for ${selectedEmotion} emotion`);
     } catch (error) {
       console.error('Error starting recording:', error);
-      toast({
-        title: "Recording Error",
-        description: "Could not access microphone",
-        variant: "destructive",
-      });
+      toast.error("Could not access microphone");
     }
   };
 
@@ -150,11 +139,7 @@ export default function VoiceModulationTest() {
 
   const saveVoiceEmotion = async (audioBlob: Blob) => {
     if (!selectedEmotion) {
-      toast({
-        title: "Error",
-        description: "Please select an emotion first",
-        variant: "destructive",
-      });
+      toast.error("Please select an emotion first");
       return;
     }
 
@@ -164,38 +149,19 @@ export default function VoiceModulationTest() {
     formData.append('intensity', intensity[0].toString());
 
     try {
-      const response = await fetch('/api/user-voice-emotions', {
-        method: 'POST',
-        body: formData,
-        credentials: 'include'
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        toast({
-          title: "Voice Saved",
-          description: `Your ${selectedEmotion} voice has been saved to your emotion repository`,
-        });
-      } else {
-        throw new Error('Failed to save voice emotion');
-      }
+      const { apiClient } = await import('@/lib/api-client');
+      await apiClient.voice.uploadRecording(formData);
+      
+      toast.success(`Your ${selectedEmotion} voice has been saved to your emotion repository`);
     } catch (error) {
       console.error('Error saving voice emotion:', error);
-      toast({
-        title: "Save Error",
-        description: "Failed to save voice emotion",
-        variant: "destructive",
-      });
+      toast.error("Failed to save voice emotion");
     }
   };
 
   const generateModulatedAudio = async () => {
     if (!testText || !selectedEmotion || !selectedCharacter) {
-      toast({
-        title: "Missing Information",
-        description: "Please select character, emotion, and enter text",
-        variant: "destructive",
-      });
+      toast.error("Please select character, emotion, and enter text");
       return;
     }
 
@@ -219,10 +185,7 @@ export default function VoiceModulationTest() {
         const result = await response.json();
         console.log('Generated audio result:', result);
         setAudioUrl(result.audioUrl);
-        toast({
-          title: "Audio Generated",
-          description: `Generated ${selectedCharacter.name}'s voice with ${selectedEmotion} emotion (${result.voice})`,
-        });
+        toast.success(`Generated ${selectedCharacter.name}'s voice with ${selectedEmotion} emotion (${result.voice})`);
       } else {
         const errorText = await response.text();
         console.error('Audio generation failed:', errorText);
@@ -230,11 +193,7 @@ export default function VoiceModulationTest() {
       }
     } catch (error) {
       console.error('Error generating audio:', error);
-      toast({
-        title: "Generation Error",
-        description: "Failed to generate modulated audio",
-        variant: "destructive",
-      });
+      toast.error("Failed to generate modulated audio");
     } finally {
       setIsGenerating(false);
     }
@@ -249,20 +208,12 @@ export default function VoiceModulationTest() {
         audioRef.current.onended = () => setIsPlaying(false);
         audioRef.current.onerror = () => {
           setIsPlaying(false);
-          toast({
-            title: "Playback Error",
-            description: "Failed to play audio file",
-            variant: "destructive",
-          });
+          toast.error("Failed to play audio file");
         };
       } catch (error) {
         setIsPlaying(false);
         console.error('Audio playback error:', error);
-        toast({
-          title: "Playback Error", 
-          description: "Could not play audio - try again",
-          variant: "destructive",
-        });
+        toast.error("Could not play audio - try again");
       }
     }
   };
@@ -468,7 +419,7 @@ export default function VoiceModulationTest() {
                     oscillator.start();
                     oscillator.stop(audioContext.currentTime + 0.5);
                     
-                    toast({ title: "Audio Test", description: "Playing test tone" });
+                    toast.info("Playing test tone");
                   }}
                   variant="ghost"
                   size="sm"

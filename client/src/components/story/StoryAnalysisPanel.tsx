@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiClient } from "@/lib/api-client";
 // EmotionVoiceRecorder has been deprecated and replaced with enhanced voice sample system
 import { CharacterAvatar } from "./CharacterAvatar";
 import { EmotionBadge } from "./EmotionBadge";
@@ -70,6 +71,7 @@ export function StoryAnalysisPanel({
   // Query to get all user voice samples across all stories
   const { data: allVoiceSamples } = useQuery({
     queryKey: ['/api/user/esm-recordings'],
+    queryFn: () => apiClient.voice.getRecordings(),
     enabled: !!storyId,
   });
 
@@ -167,19 +169,12 @@ export function StoryAnalysisPanel({
       formData.append('emotion', emotion);
       formData.append('intensity', '5'); // Default intensity
 
-      const response = await fetch('/api/user-voice-emotions', {
-        method: 'POST',
-        body: formData,
-        credentials: 'include'
-      });
-
-      if (response.ok) {
-        setStatusMessage({ text: `Voice saved for ${emotion}`, type: 'success' });
-        setTimeout(() => setStatusMessage(null), 2000);
-        onEmotionRecorded?.(emotion, audioBlob);
-      } else {
-        throw new Error('Failed to save recording');
-      }
+      // Use the new ESM recordings endpoint instead of deprecated user-voice-emotions
+      await apiClient.voice.uploadRecording(formData);
+      
+      setStatusMessage({ text: `Voice saved for ${emotion}`, type: 'success' });
+      setTimeout(() => setStatusMessage(null), 2000);
+      onEmotionRecorded?.(emotion, audioBlob);
     } catch (error) {
       console.error('Error saving emotion recording:', error);
       setStatusMessage({ text: "Failed to save recording", type: 'error' });

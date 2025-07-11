@@ -11,6 +11,10 @@ export default function Chat() {
   
   const { data: conversation, isLoading } = useQuery({
     queryKey: [`/api/conversations/${conversationId}`],
+    queryFn: async () => {
+      const { apiClient } = await import('@/lib/api-client');
+      return apiClient.request('GET', `/api/conversations/${conversationId}`);
+    },
     enabled: !!conversationId,
   });
 
