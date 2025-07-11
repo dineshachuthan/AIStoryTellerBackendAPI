@@ -163,6 +163,10 @@ export default function StoryNarration() {
             <p className="text-white/70">
               Story Narration
             </p>
+            {/* Debug info */}
+            <div className="text-xs text-white/50 mt-2">
+              Debug: story object exists: {story ? 'YES' : 'NO'}, title: {story?.title || 'NONE'}
+            </div>
           </div>
 
           {/* Narration Generation Controls - For generating different cache keys */}
