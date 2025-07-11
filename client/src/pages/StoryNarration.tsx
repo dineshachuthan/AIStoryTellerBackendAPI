@@ -153,33 +153,6 @@ export default function StoryNarration() {
       
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
-          {/* Header */}
-          <div className="mb-8">
-            <Button
-              variant="ghost"
-              onClick={() => navigate(`/stories/${storyId}`)}
-              className="mb-4 text-white hover:bg-white/10"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Story
-            </Button>
-            
-            <h1 className="text-4xl font-bold text-white mb-2">
-              {story.title}
-            </h1>
-            <p className="text-white/70">
-              Story Narration
-            </p>
-          </div>
-
-          {/* Narration Controls - Clean UI without save text */}
-          <StoryNarratorControls
-            storyId={storyId}
-            user={user}
-            canNarrate={true}
-            className=""
-          />
-
           {/* Narration Generation Controls - For generating different cache keys */}
           <Card className="mt-6 bg-white/10 backdrop-blur-sm border-white/20">
             <CardHeader>
