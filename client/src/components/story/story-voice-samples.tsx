@@ -41,12 +41,14 @@ interface StoryAnalysis {
     intensity: number;
     context: string;
     quote?: string;
+    sampleText?: string;
   }>;
   soundEffects?: Array<{
     sound: string;
     intensity: number;
     context: string;
     quote?: string;
+    sampleText?: string;
   }>;
   moodCategory?: string;
   genre?: string;
@@ -390,8 +392,8 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
                   const intensity = item.intensity || 5;
                   const isLocked = item.isLocked || false;
                   const isRecorded = item.isRecorded || false;
-                  // Use quote from narrative data, fallback to context if quote not available
-                  const sampleText = item.quote || item.context || item.sampleText || '';
+                  // Use sampleText from ESM database first, fallback to quote then context
+                  const sampleText = item.sampleText || item.quote || item.context || '';
                   
                   const recordingState = recordingStates[emotionName] || {
                     isRecorded: false,
