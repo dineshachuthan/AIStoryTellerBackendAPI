@@ -4712,7 +4712,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // VOICE SAMPLES SYSTEM - Story-specific voice recording API
   // =============================================================================
 
-  // Get all voice sample data for a specific story (consolidated endpoint)
+  /* DEPRECATED - Legacy endpoint for story voice samples
   app.get('/api/stories/:storyId/voice-samples', requireAuth, async (req, res) => {
     try {
       const userId = (req.user as any)?.id;
@@ -4848,7 +4848,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Error fetching story voice samples:', error);
       res.status(500).json({ message: 'Failed to fetch voice samples' });
     }
-  });
+  }); */
 
   // Record/update voice sample for a story (consolidated endpoint)
   app.post('/api/stories/:storyId/voice-samples', requireAuth, upload.single('audio'), async (req, res) => {
