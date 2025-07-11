@@ -72,9 +72,15 @@ export function StoryAnalysisPanel({
   });
 
   // Query to check if narrator voice exists
-  const { data: narratorVoiceData } = useQuery({
+  const { data: narratorVoiceData, isLoading: narratorVoiceLoading, error: narratorVoiceError } = useQuery({
     queryKey: ['/api/user/narrator-voice'],
     enabled: !!storyId,
+    onError: (error) => {
+      console.error('Narrator voice query error:', error);
+    },
+    onSuccess: (data) => {
+      console.log('Narrator voice query success:', data);
+    }
   });
 
   // Calculate total recordings count across all stories
@@ -85,6 +91,8 @@ export function StoryAnalysisPanel({
   
   // Debug logging
   console.log('Narrator voice data:', narratorVoiceData);
+  console.log('Narrator voice loading:', narratorVoiceLoading);
+  console.log('Narrator voice error:', narratorVoiceError);
   console.log('Has narrator voice:', hasNarratorVoice);
   console.log('Total recordings:', totalRecordings);
   
