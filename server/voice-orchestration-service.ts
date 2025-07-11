@@ -70,8 +70,7 @@ export class VoiceOrchestrationService {
 
   /**
    * Default baseline voice settings used when no user-specific baseline is available
-   * This ensures voice orchestration always has proper baseline values to work with,
-   * matching the original JavaScript logic that expected narrator baseline voice
+   * These are required configuration values, not fallback logic
    */
   private readonly DEFAULT_BASELINE_VOICE = {
     stability: 0.75,
