@@ -65,29 +65,26 @@ export function StoryAnalysisPanel({
 }: StoryAnalysisPanelProps) {
   const [statusMessage, setStatusMessage] = useState<{text: string, type: 'success' | 'error' | 'info'} | null>(null);
 
-  // Query to get voice samples count
-  const { data: voiceSamplesData } = useQuery({
-    queryKey: [`/api/stories/${storyId}/voice-samples`],
+  // Query to get all user voice samples across all stories
+  const { data: allVoiceSamples } = useQuery({
+    queryKey: ['/api/user/esm-recordings'],
     enabled: !!storyId,
   });
 
-  // Calculate total recordings count
-  const emotionCount = voiceSamplesData ? ((voiceSamplesData as any).emotions?.filter((e: any) => e.isRecorded).length || 0) : 0;
-  const soundCount = voiceSamplesData ? ((voiceSamplesData as any).sounds?.filter((s: any) => s.isRecorded).length || 0) : 0;
-  const modulationCount = voiceSamplesData ? ((voiceSamplesData as any).modulations?.filter((m: any) => m.isRecorded).length || 0) : 0;
-  const totalRecordings = emotionCount + soundCount + modulationCount;
+  // Query to check if narrator voice exists
+  const { data: narratorVoiceData } = useQuery({
+    queryKey: ['/api/user/narrator-voice'],
+    enabled: !!storyId,
+  });
+
+  // Calculate total recordings count across all stories
+  const totalRecordings = allVoiceSamples ? (Array.isArray(allVoiceSamples) ? allVoiceSamples.length : 0) : 0;
   
-  // Calculate if all story-level recordings are complete
-  const totalStoryEmotions = voiceSamplesData ? ((voiceSamplesData as any).emotions?.length || 0) : 0;
-  const totalStorySounds = voiceSamplesData ? ((voiceSamplesData as any).sounds?.length || 0) : 0;
-  const totalStoryModulations = voiceSamplesData ? ((voiceSamplesData as any).modulations?.length || 0) : 0;
-  const totalStoryItems = totalStoryEmotions + totalStorySounds + totalStoryModulations;
+  // Check if narrator voice exists
+  const hasNarratorVoice = narratorVoiceData && narratorVoiceData.voiceId;
   
-  // Enable button when all story-level recordings are complete OR we have at least 5 recordings
-  const canGenerateNarratorVoice = totalStoryItems > 0 && (
-    totalRecordings === totalStoryItems || // All story items recorded
-    totalRecordings >= 5 // Minimum threshold for voice cloning
-  );
+  // Enable button when we have at least 5 recordings for voice cloning
+  const canGenerateNarratorVoice = totalRecordings >= 5;
 
   // Voice cloning mutation
   const voiceCloningMutation = useMutation({
@@ -208,14 +205,12 @@ export function StoryAnalysisPanel({
                 className="flex items-center gap-2"
                 title={
                   !canGenerateNarratorVoice 
-                    ? totalStoryItems === 0
-                      ? "Loading story voice samples..."
-                      : totalRecordings === 0
-                        ? "Record at least one voice sample to start"
-                        : totalRecordings < 5 && totalRecordings < totalStoryItems
-                          ? `Record all story items (${totalRecordings}/${totalStoryItems}) or at least 5 samples`
-                          : "Complete recording requirements to generate narrator voice"
-                    : "Click to generate your narrator voice"
+                    ? totalRecordings === 0
+                      ? "Record at least 5 voice samples to start"
+                      : `Record more samples (${totalRecordings}/5 minimum needed)`
+                    : hasNarratorVoice
+                      ? "Click to regenerate your narrator voice with updated samples"
+                      : "Click to generate your narrator voice"
                 }
               >
                 {voiceCloningMutation.isPending ? (
@@ -225,7 +220,9 @@ export function StoryAnalysisPanel({
                 )}
                 {voiceCloningMutation.isPending 
                   ? "Creating Voice..." 
-                  : `Generate Narrator Voice (${totalRecordings}/${totalStoryItems > 0 ? totalStoryItems : '?'})`
+                  : hasNarratorVoice
+                    ? `Regenerate Narrator Voice${totalRecordings > 9 ? ' (You have voice id)' : ` (${totalRecordings} samples)`}`
+                    : `Generate Narrator Voice${totalRecordings > 9 ? ' (You have voice id)' : ` (${totalRecordings} samples)`}`
                 }
               </Button>
             )}
