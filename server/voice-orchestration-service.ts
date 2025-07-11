@@ -69,6 +69,20 @@ export class VoiceOrchestrationService {
   private CONFIG_RELOAD_INTERVAL = 60000; // Reload config every minute
 
   /**
+   * Default baseline voice settings used when no user-specific baseline is available
+   * This ensures voice orchestration always has proper baseline values to work with,
+   * matching the original JavaScript logic that expected narrator baseline voice
+   */
+  private readonly DEFAULT_BASELINE_VOICE = {
+    stability: 0.75,
+    similarity_boost: 0.85,
+    style: 0.5,
+    pitch: "0%",
+    rate: "85%",
+    volume: "medium"
+  };
+
+  /**
    * Random number generator for voice parameter variability
    */
   private randInRange(min: number, max: number): number {
@@ -186,13 +200,10 @@ export class VoiceOrchestrationService {
       style = this.overlayConversationStyle(style, conversationType, conversationStyles);
     }
     
-    // Merge with narrator profile if provided
-    if (narratorProfile?.baselineVoice) {
-      style = this.mergeNarratorWithStyle(narratorProfile.baselineVoice, style);
-    } else {
-      // Convert complex style format to simple VoiceStyle format
-      style = this.convertToVoiceStyle(style);
-    }
+    // Merge with narrator profile baseline voice
+    // Use user's baseline voice if available, otherwise use global default baseline
+    const baselineVoice = narratorProfile?.baselineVoice || this.DEFAULT_BASELINE_VOICE;
+    style = this.mergeNarratorWithStyle(baselineVoice, style);
     
     // Learn from this interaction
     if (storyId) {
@@ -202,21 +213,7 @@ export class VoiceOrchestrationService {
     return style;
   }
 
-  /**
-   * Convert complex style format to simple VoiceStyle format
-   */
-  private convertToVoiceStyle(style: any): VoiceStyle {
-    return {
-      stability: style.stability?.mean || style.stability || 0.75,
-      similarityBoost: style.similarity_boost?.mean || style.similarity_boost || 0.85,
-      style: style.style?.mean || style.style || 0.5,
-      prosody: {
-        pitch: style.prosody?.pitch?.base || style.prosody?.pitch || "0%",
-        rate: style.prosody?.rate?.base || style.prosody?.rate || "85%",
-        volume: style.prosody?.volume || "medium"
-      }
-    };
-  }
+
 
   /**
    * Calculate voice parameters for a text segment
