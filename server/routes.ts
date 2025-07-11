@@ -2614,37 +2614,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
 
-  // Get user's ESM recordings with story information
-  // TODO: Use this endpoint for global voice recording system when implemented
+  // Get user's ESM recordings with enhanced functionality
   app.get('/api/user/esm-recordings', requireAuth, async (req, res) => {
     try {
       const userId = req.user!.id;
+      const { voiceType, category, storyId } = req.query;
       
       // Get all recordings for this user
       const recordings = await storage.getUserEsmRecordings(userId);
       
+      // Apply filters if provided
+      let filteredRecordings = recordings;
+      
+      // Filter by voice type if specified
+      if (voiceType) {
+        filteredRecordings = filteredRecordings.filter(rec => rec.voice_type === voiceType);
+      }
+      
+      // Filter by category if specified (1=emotions, 2=sounds, 3=modulations)
+      if (category) {
+        const categoryId = parseInt(category as string);
+        filteredRecordings = filteredRecordings.filter(rec => rec.category === categoryId);
+      }
+      
+      // Filter by story ID if specified
+      if (storyId) {
+        const storyIdInt = parseInt(storyId as string);
+        filteredRecordings = filteredRecordings.filter(rec => rec.story_id === storyIdInt);
+      }
+      
       // Get story titles for the recordings
-      const storyIds = [...new Set(recordings.filter(r => r.story_id).map(r => r.story_id))];
+      const storyIds = [...new Set(filteredRecordings.filter(r => r.story_id).map(r => r.story_id))];
       const stories = await Promise.all(
         storyIds.map(id => storage.getStory(id))
       );
       const storyMap = new Map(stories.map(s => [s?.id, s?.title || `Story #${s?.id}`]));
       
-      // Format the response
-      const formattedRecordings = recordings.map(rec => ({
+      // Format the response with enhanced data
+      const formattedRecordings = filteredRecordings.map(rec => ({
         id: rec.id,
         name: rec.display_name || rec.name,
         storyId: rec.story_id,
         storyTitle: rec.story_id ? storyMap.get(rec.story_id) : undefined,
         audioUrl: rec.audio_url,
         duration: rec.duration,
+        fileSize: rec.file_size,
         isLocked: rec.is_locked || false,
+        lockedAt: rec.locked_at,
         narratorVoiceId: rec.narrator_voice_id || rec.recording_narrator_voice_id,
         category: rec.category,
-        createdDate: rec.created_date
+        categoryName: rec.category === 1 ? 'emotions' : rec.category === 2 ? 'sounds' : 'modulations',
+        voiceType: rec.voice_type,
+        createdDate: rec.created_date,
+        userEsmId: rec.user_esm_id,
+        // Enhanced fields for compatibility
+        emotion: rec.category === 1 ? rec.name : undefined, // For emotion-specific usage
+        sound: rec.category === 2 ? rec.name : undefined,   // For sound-specific usage
+        recordedAt: rec.created_date // Alternative timestamp field
       }));
       
-      res.json(formattedRecordings);
+      // Add summary statistics
+      const summary = {
+        totalRecordings: formattedRecordings.length,
+        byCategory: {
+          emotions: formattedRecordings.filter(r => r.category === 1).length,
+          sounds: formattedRecordings.filter(r => r.category === 2).length,
+          modulations: formattedRecordings.filter(r => r.category === 3).length
+        },
+        byVoiceType: filteredRecordings.reduce((acc, rec) => {
+          if (rec.voice_type) {
+            acc[rec.voice_type] = (acc[rec.voice_type] || 0) + 1;
+          }
+          return acc;
+        }, {} as Record<string, number>),
+        lockedRecordings: formattedRecordings.filter(r => r.isLocked).length,
+        totalDuration: formattedRecordings.reduce((sum, r) => sum + (r.duration || 0), 0)
+      };
+      
+      // For backward compatibility, return flat array if no query parameters
+      // Otherwise return enhanced format with summary
+      if (!voiceType && !category && !storyId) {
+        res.json(formattedRecordings);
+      } else {
+        res.json({
+          recordings: formattedRecordings,
+          summary: summary
+        });
+      }
     } catch (error) {
       console.error('Error fetching user ESM recordings:', error);
       res.status(500).json({ error: 'Failed to fetch voice recordings' });

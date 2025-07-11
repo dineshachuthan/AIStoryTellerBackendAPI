@@ -132,7 +132,7 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
     if (narrativeData && Object.keys(narrativeData).length > 0) {
       console.log('Initializing recording states from narrative data:', narrativeData);
       const newStates: Record<string, any> = {};
-      const userRecordings = voiceRecordingsQuery.data || [];
+      const userRecordings = voiceRecordingsQuery.data?.recordings || voiceRecordingsQuery.data || [];
       
       // Helper function to check if recording exists for an emotion/sound
       const hasRecordingForItem = (itemName: string) => {
