@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -95,6 +95,34 @@ export function StoryAnalysisPanel({
   console.log('Narrator voice error:', narratorVoiceError);
   console.log('Has narrator voice:', hasNarratorVoice);
   console.log('Total recordings:', totalRecordings);
+  
+  // Test direct API call
+  useEffect(() => {
+    const testNarratorVoiceAPI = async () => {
+      try {
+        console.log('Testing direct API call to /api/user/narrator-voice');
+        const response = await fetch('/api/user/narrator-voice', {
+          credentials: 'include',
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        console.log('Direct API response status:', response.status);
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Direct API response data:', data);
+        } else {
+          const errorText = await response.text();
+          console.log('Direct API error:', errorText);
+        }
+      } catch (error) {
+        console.error('Direct API call failed:', error);
+      }
+    };
+    
+    testNarratorVoiceAPI();
+  }, []);
   
   // Enable button when we have at least 5 recordings for voice cloning
   const canGenerateNarratorVoice = totalRecordings >= 5;
