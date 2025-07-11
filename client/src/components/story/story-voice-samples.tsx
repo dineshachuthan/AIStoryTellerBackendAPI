@@ -101,6 +101,11 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
   const storyEmotions = narrativeData.emotions || [];
   const storySounds = narrativeData.soundEffects || [];
   const storyModulations = []; // Modulations not in narrative data
+  
+  // Debug logging
+  console.log('StoryVoiceSamples - narrativeData:', narrativeData);
+  console.log('StoryVoiceSamples - storyEmotions:', storyEmotions);
+  console.log('StoryVoiceSamples - storySounds:', storySounds);
 
   // Track recording state per emotion for individual card feedback
   const [recordingStates, setRecordingStates] = useState<Record<string, {
