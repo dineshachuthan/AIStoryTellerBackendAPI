@@ -200,8 +200,9 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
         }
       }));
       
-      // Invalidate query to refresh data and trigger reordering
+      // Invalidate both queries to refresh data and trigger UI refresh
       queryClient.invalidateQueries({ queryKey: [`/api/stories/${storyId}/narrative`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/user/esm-recordings'] });
     },
     onError: (error: any, variables) => {
       // Update error state for this specific emotion
