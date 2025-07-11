@@ -36,7 +36,7 @@ export function CharacterInviteCard({ character, storyId, existingInvitation, on
   const [contactValue, setContactValue] = useState("");
   const [sending, setSending] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const { toast } = useToast();
+
 
   const sendInvitation = async () => {
     if (!contactValue.trim()) {

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Play, Pause, Volume2, VolumeX, Loader2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { toast, toastMessages } from '@/lib/toast-utils';
 import { apiClient } from '@/lib/api-client';
 import type { AudioRequest, NarrationSegment } from '@shared/types/audio-types';
 
@@ -37,7 +37,7 @@ export function AudioPlayer({
   const [isMuted, setIsMuted] = useState(false);
   const [currentSegmentIndex, setCurrentSegmentIndex] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const { toast } = useToast();
+
 
   const buttonSizes = {
     sm: 'h-8 w-8 p-0',

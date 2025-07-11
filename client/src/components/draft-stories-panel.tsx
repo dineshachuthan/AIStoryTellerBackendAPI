@@ -24,7 +24,7 @@ import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { UIMessages, getDynamicMessage } from '@shared/config/i18n-config';
 import { MAX_DRAFT_STORIES } from '@shared/config/draft-config';
-import { useToast } from "@/hooks/use-toast";
+import { toast, toastMessages } from "@/lib/toast-utils";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 

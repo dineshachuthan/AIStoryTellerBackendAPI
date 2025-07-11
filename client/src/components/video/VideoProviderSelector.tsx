@@ -4,7 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Settings, Check, AlertCircle } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { toast, toastMessages } from '@/lib/toast-utils';
 
 interface ProviderStatus {
   enabled: boolean;
@@ -24,7 +24,7 @@ export function VideoProviderSelector() {
   const [config, setConfig] = useState<VideoConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [switching, setSwitching] = useState(false);
-  const { toast } = useToast();
+
 
   useEffect(() => {
     loadConfig();

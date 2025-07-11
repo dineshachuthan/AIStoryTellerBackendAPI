@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { CheckCircle, XCircle, Settings, DollarSign, Clock, Zap } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { toast, toastMessages } from '@/lib/toast-utils';
 
 interface VideoProvider {
   name: string;
@@ -28,7 +28,7 @@ interface ProviderConfig {
 }
 
 export function VideoProviderSettings() {
-  const { toast } = useToast();
+
   const queryClient = useQueryClient();
   const [selectedProvider, setSelectedProvider] = useState<string>('');
 
