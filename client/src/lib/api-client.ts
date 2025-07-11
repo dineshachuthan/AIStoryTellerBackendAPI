@@ -171,6 +171,13 @@ export class ApiClient {
     // Roleplay analysis endpoints
     getRoleplay: (id: number) => this.request<any>('GET', `/api/stories/${id}/roleplay`),
     createRoleplay: (id: number) => this.request<any>('POST', `/api/stories/${id}/roleplay`),
+    // Saved narration endpoints
+    getSavedNarration: (storyId: number, token?: string) => {
+      const url = token 
+        ? `/api/stories/${storyId}/narration/saved?invitationToken=${token}`
+        : `/api/stories/${storyId}/narration/saved`;
+      return this.request<any>('GET', url);
+    },
   };
   
   // Character endpoints
@@ -280,8 +287,6 @@ export class ApiClient {
     get: (token: string) => this.request<any>('GET', `/api/invitations/${token}`),
     getSampleText: (storyId: number, emotion: string) => 
       this.request<any>('POST', `/api/stories/${storyId}/sample-text`, { emotion }),
-    getSavedNarration: (storyId: number, token: string) =>
-      this.request<any>('GET', `/api/stories/${storyId}/narration/saved?invitationToken=${token}`),
   };
 
   // Collaboration endpoints

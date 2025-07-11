@@ -78,7 +78,7 @@ export default function StoryNarratorControls({
     queryFn: async () => {
       if (!user) return null;
       try {
-        const response = await apiClient.stories.getNarration(storyId);
+        const response = await apiClient.stories.getSavedNarration(storyId);
         
         // Check if narration matches current voice ID
         if (response && narratorVoiceData?.narratorVoiceId && 
@@ -219,8 +219,8 @@ export default function StoryNarratorControls({
       if (response.segments) {
         // Narration is automatically saved in backend during generation
         // Invalidate and refetch the saved narration query
-        await queryClient.invalidateQueries({ queryKey: [`/api/stories/${storyId}/narration/saved`] });
-        await queryClient.refetchQueries({ queryKey: [`/api/stories/${storyId}/narration/saved`] });
+        await queryClient.invalidateQueries({ queryKey: [`/api/stories/${storyId}/narration`] });
+        await queryClient.refetchQueries({ queryKey: [`/api/stories/${storyId}/narration`] });
         
         setTempNarration(null); // Clear any temp narration
         setCurrentSegment(0);
