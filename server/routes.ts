@@ -2535,6 +2535,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
   // Get user's ESM recordings with story information
+  // TODO: Use this endpoint for global voice recording system when implemented
   app.get('/api/user/esm-recordings', requireAuth, async (req, res) => {
     try {
       const userId = req.user!.id;
