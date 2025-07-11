@@ -108,8 +108,10 @@ export default function StoryAnalysis() {
       // Check each emotion from this story specifically
       const emotionChecks = storyEmotions.map(async (emotion) => {
         try {
-          const data = await apiClient.voice.getUserVoiceEmotions(user.id, emotion);
-          return { emotion, hasRecording: data.samples && data.samples.length > 0 };
+          // Use the new ESM recordings endpoint instead of deprecated user-voice-emotions
+          const recordings = await apiClient.voice.getRecordings();
+          const hasRecording = recordings.some((recording: any) => recording.name === emotion);
+          return { emotion, hasRecording };
         } catch (error) {
           return { emotion, hasRecording: false };
         }
