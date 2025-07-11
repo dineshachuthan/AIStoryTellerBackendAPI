@@ -1459,7 +1459,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
 
-  // Save user voice emotion to repository (cross-story)
+  // Save user voice emotion to repository (cross-story) - COMMENTED OUT FOR DEBUGGING
+  /*
   app.post("/api/user-voice-emotions", upload.single('audio'), async (req, res) => {
     try {
       const { emotion, intensity, storyId } = req.body;
@@ -1532,8 +1533,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to save voice emotion" });
     }
   });
+  */
 
-  // Serve user voice emotion files (MUST be before /:userId route to avoid conflicts)
+  // Serve user voice emotion files (MUST be before /:userId route to avoid conflicts) - COMMENTED OUT FOR DEBUGGING
+  /*
   app.get("/api/user-voice-emotions/files/:fileName", async (req, res) => {
     try {
       const { fileName } = req.params;
@@ -1580,8 +1583,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to serve voice emotion" });
     }
   });
+  */
 
-  // Get user voice recordings by emotion
+  // Get user voice recordings by emotion - COMMENTED OUT FOR DEBUGGING
+  /*
   app.get("/api/user-voice-emotions/:userId", requireAuth, async (req, res) => {
     try {
       const { userId } = req.params;
@@ -1638,6 +1643,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to retrieve voice samples" });
     }
   });
+  */
 
 
 
