@@ -430,24 +430,24 @@ export class StoryNarrator {
         console.log(`[StoryNarrator] Using orchestrated voice settings:`, voiceSettings);
         
         // Apply conversation style modifications to voice settings
+        let finalVoiceSettings = voiceSettings;
         if (styleConfig?.voiceParameters) {
           console.log(`[StoryNarrator] Applying conversation style '${conversationStyle}' modifications:`, styleConfig.voiceParameters);
           
           // Merge style parameters with orchestrated settings
-          const mergedSettings = {
+          finalVoiceSettings = {
             ...voiceSettings,
             ...styleConfig.voiceParameters
           };
           
-          console.log(`[StoryNarrator] Merged voice settings with style:`, mergedSettings);
-          voiceSettings = mergedSettings;
+          console.log(`[StoryNarrator] Merged voice settings with style:`, finalVoiceSettings);
         }
         
         // Note: text is already enhanced with sound patterns from createNarrationSegments
         console.log(`[StoryNarrator] Using enhanced text with sounds: ${text.substring(0, 100)}...`);
         
         const { VoiceProviderFactory } = await import('./voice-providers/voice-provider-factory');
-        const arrayBuffer = await VoiceProviderFactory.generateSpeech(text, narratorVoice, chunkContext.emotion, voiceSettings, undefined, narratorProfile);
+        const arrayBuffer = await VoiceProviderFactory.generateSpeech(text, narratorVoice, chunkContext.emotion, finalVoiceSettings, undefined, narratorProfile);
         audioBuffer = Buffer.from(arrayBuffer);
         
         console.log(`[StoryNarrator] ElevenLabs narration generated: ${audioBuffer.length} bytes with ${chunkContext.emotion} emotion and conversation style ${conversationStyle}`);

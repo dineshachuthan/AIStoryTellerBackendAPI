@@ -278,15 +278,17 @@ export class VoiceOrchestrationService {
         .limit(1);
       
       if (profile) {
+        // The user_voice_profiles table doesn't contain voice parameter columns
+        // Return basic profile info with default voice parameters
         return {
-          stability: profile.stability,
-          similarity_boost: profile.similarityBoost,
-          style: profile.style,
-          pitch: profile.pitch || "0%",
-          rate: profile.rate || "85%",
-          age: profile.age,
-          nativeLanguage: profile.nativeLanguage,
-          storytellingLanguage: profile.storytellingLanguage
+          stability: 0.75, // Default stability
+          similarity_boost: 0.85, // Default similarity boost
+          style: 0.5, // Default style
+          pitch: "0%", // Default pitch
+          rate: "85%", // Default rate
+          age: null, // Age not stored in current schema
+          nativeLanguage: profile.language || 'en', // Use language column
+          storytellingLanguage: profile.language || 'en'
         };
       }
     } catch (error) {
@@ -778,13 +780,11 @@ export class VoiceOrchestrationService {
     }
 
     // Update profile if we have insights
+    // Note: user_voice_profiles table doesn't have these columns currently
+    // This update is disabled to prevent database errors
     if (Object.keys(updates).length > 0) {
-      await db
-        .update(userVoiceProfiles)
-        .set(updates)
-        .where(eq(userVoiceProfiles.userId, userId));
-      
-      console.log(`[VoiceOrchestration] Updated user profile based on story patterns`);
+      console.log(`[VoiceOrchestration] Would update user profile with:`, updates);
+      console.log(`[VoiceOrchestration] Profile update skipped - table schema doesn't support these columns`);
     }
   }
 
