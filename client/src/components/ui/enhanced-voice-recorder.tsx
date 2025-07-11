@@ -86,7 +86,7 @@ export function EnhancedVoiceRecorder({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const equalizerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const holdDelayRef = useRef<NodeJS.Timeout | null>(null);
-  const { toast } = useToast();
+  // Using toast utility from toast-utils (already imported)
 
   const formatTime = (seconds: number) => {
     return `${seconds.toString().padStart(2, '0')}s`;

@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast, toastMessages } from "@/lib/toast-utils";
-import { apiRequest } from "@/lib/queryClient";
+import { apiClient } from "@/lib/api-client";
 import { useAuth } from "@/hooks/useAuth";
 import { Mic, Volume2, Users, Zap, DollarSign, Clock, AlertCircle, Radio, Lock, CheckCircle, Unlock, Save, Play } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
@@ -93,6 +93,7 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
   // Get story narrative data which contains emotions and sounds
   const narrativeQuery = useQuery({
     queryKey: [`/api/stories/${storyId}/narrative`],
+    queryFn: () => apiClient.stories.getNarrative(storyId),
     enabled: !!user?.id && !!storyId,
   });
 
@@ -168,11 +169,7 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
       formData.append('emotion', emotion);
       formData.append('category', selectedCategory);
 
-      return apiRequest(`/api/stories/${storyId}/voice-samples/record`, {
-        method: 'POST',
-        body: formData,
-        credentials: 'include'
-      });
+      return apiClient.voice.recordSample(formData);
     },
     onSuccess: (data, variables) => {
       // Update recording state for this emotion
