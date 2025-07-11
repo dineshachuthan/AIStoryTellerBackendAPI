@@ -258,6 +258,78 @@ const voiceUpload = multer({
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
+  // Helper function to enhance analysis with ESM reference data (full sample texts)
+  async function enhanceAnalysisWithEsmData(analysis: any): Promise<any> {
+    try {
+      console.log("🔍 Enhancing analysis with ESM reference data for full sample texts...");
+      
+      // Create a copy of the analysis to avoid mutating the original
+      const enhancedAnalysis = { ...analysis };
+      
+      // Enhance emotions with ESM reference data
+      if (enhancedAnalysis.emotions && enhancedAnalysis.emotions.length > 0) {
+        console.log(`📊 Enhancing ${enhancedAnalysis.emotions.length} emotions with ESM sample texts`);
+        
+        for (let i = 0; i < enhancedAnalysis.emotions.length; i++) {
+          const emotion = enhancedAnalysis.emotions[i];
+          const emotionName = emotion.emotion?.trim();
+          
+          if (emotionName) {
+            // Look up ESM reference data for this emotion
+            const esmRef = await storage.getEsmRef(1, emotionName); // Category 1 = emotions
+            
+            if (esmRef && esmRef.sample_text) {
+              // Replace the original quote with the full sample text from ESM
+              enhancedAnalysis.emotions[i] = {
+                ...emotion,
+                quote: esmRef.sample_text, // Use full sample text instead of story excerpt
+                sampleText: esmRef.sample_text // Also set sampleText for backward compatibility
+              };
+              console.log(`✅ Enhanced emotion ${emotionName} with ESM sample text (${esmRef.sample_text.split(' ').length} words)`);
+            } else {
+              console.log(`⚠️ No ESM reference data found for emotion: ${emotionName}`);
+            }
+          }
+        }
+      }
+      
+      // Enhance sound effects with ESM reference data
+      if (enhancedAnalysis.soundEffects && enhancedAnalysis.soundEffects.length > 0) {
+        console.log(`🔊 Enhancing ${enhancedAnalysis.soundEffects.length} sound effects with ESM sample texts`);
+        
+        for (let i = 0; i < enhancedAnalysis.soundEffects.length; i++) {
+          const sound = enhancedAnalysis.soundEffects[i];
+          const soundName = sound.sound?.trim();
+          
+          if (soundName) {
+            // Look up ESM reference data for this sound
+            const esmRef = await storage.getEsmRef(2, soundName); // Category 2 = sounds
+            
+            if (esmRef && esmRef.sample_text) {
+              // Replace the original quote with the full sample text from ESM
+              enhancedAnalysis.soundEffects[i] = {
+                ...sound,
+                quote: esmRef.sample_text, // Use full sample text instead of story excerpt
+                sampleText: esmRef.sample_text // Also set sampleText for backward compatibility
+              };
+              console.log(`✅ Enhanced sound ${soundName} with ESM sample text (${esmRef.sample_text.split(' ').length} words)`);
+            } else {
+              console.log(`⚠️ No ESM reference data found for sound: ${soundName}`);
+            }
+          }
+        }
+      }
+      
+      console.log("✅ Analysis enhancement with ESM reference data completed");
+      return enhancedAnalysis;
+      
+    } catch (error) {
+      console.error("❌ Error enhancing analysis with ESM data:", error);
+      // Return original analysis if enhancement fails
+      return analysis;
+    }
+  }
+  
   // =============================================================================
   // VOICE CLONING DIRECT DATABASE QUERY - BYPASS VITE MIDDLEWARE
   // =============================================================================
@@ -709,7 +781,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (existingAnalysis && !needsRegeneration) {
         console.log(`Retrieved existing narrative analysis for story ${storyId} (content unchanged)`);
-        return res.json(existingAnalysis.analysisData);
+        
+        // Enhance the analysis with ESM reference data for full sample texts
+        const enhancedAnalysis = await enhanceAnalysisWithEsmData(existingAnalysis.analysisData);
+        return res.json(enhancedAnalysis);
       } else {
         console.log(`Content changed for story ${storyId}, regenerating narrative analysis`);
         // Content has changed, regenerate analysis
@@ -748,7 +823,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Reference data extraction already happens within analyzeStoryContentWithHashCache via populateEsmReferenceData
         console.log("✅ Reference data extraction completed as part of analysis generation");
         
-        return res.json(analysis);
+        // Enhance the analysis with ESM reference data for full sample texts
+        const enhancedAnalysis = await enhanceAnalysisWithEsmData(analysis);
+        return res.json(enhancedAnalysis);
       }
     } catch (error) {
       console.error("Error fetching narrative analysis:", error);
@@ -775,7 +852,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const existingAnalysis = await storage.getStoryAnalysis(storyId, 'narrative');
       if (existingAnalysis) {
         console.log(`Found existing narrative analysis for story ${storyId}`);
-        return res.json(existingAnalysis.analysisData);
+        // Enhance the analysis with ESM reference data for full sample texts
+        const enhancedAnalysis = await enhanceAnalysisWithEsmData(existingAnalysis.analysisData);
+        return res.json(enhancedAnalysis);
       }
 
       console.log(`Generating narrative analysis for story ${storyId} with content hash cache invalidation`);
@@ -805,7 +884,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       console.log("Narrative analysis generated successfully");
-      res.json(analysis);
+      
+      // Enhance the analysis with ESM reference data for full sample texts
+      const enhancedAnalysis = await enhanceAnalysisWithEsmData(analysis);
+      res.json(enhancedAnalysis);
     } catch (error) {
       console.error("Error generating narrative analysis:", error);
       
