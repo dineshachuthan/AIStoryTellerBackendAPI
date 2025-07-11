@@ -663,7 +663,7 @@ export class AudioService {
     
     // Extract conversation style and narrator profile
     const conversationStyle = options.conversationStyle || 'respectful';
-    const narratorProfile = options.narratorProfile?.language || 'neutral';
+    const narratorProfile = options.narratorProfile?.profileId || options.narratorProfile?.language || 'neutral';
     
     // Create full directory path with all dimensions
     const cacheDir = path.join(
