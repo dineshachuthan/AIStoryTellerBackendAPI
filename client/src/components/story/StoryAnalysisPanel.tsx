@@ -206,11 +206,15 @@ export function StoryAnalysisPanel({
                 title={
                   !canGenerateNarratorVoice 
                     ? totalRecordings === 0
-                      ? "Record at least 5 voice samples to start"
-                      : `Record more samples (${totalRecordings}/5 minimum needed)`
+                      ? "Record at least 5 voice samples to create your narrator voice"
+                      : `Record more samples (${totalRecordings}/5 minimum needed) to create your narrator voice`
                     : hasNarratorVoice
-                      ? "Click to regenerate your narrator voice with updated samples"
-                      : "Click to generate your narrator voice"
+                      ? totalRecordings > 9 
+                        ? "Update your narrator voice with your latest recordings"
+                        : "Update your narrator voice (you have enough samples to improve quality)"
+                      : totalRecordings > 9 
+                        ? "Create your personal narrator voice using your recorded samples"
+                        : "Create your personal narrator voice (you have enough samples to get started)"
                 }
               >
                 {voiceCloningMutation.isPending ? (
@@ -221,8 +225,12 @@ export function StoryAnalysisPanel({
                 {voiceCloningMutation.isPending 
                   ? "Creating Voice..." 
                   : hasNarratorVoice
-                    ? `Regenerate Narrator Voice${totalRecordings > 9 ? ' (You have voice id)' : ` (${totalRecordings} samples)`}`
-                    : `Generate Narrator Voice${totalRecordings > 9 ? ' (You have voice id)' : ` (${totalRecordings} samples)`}`
+                    ? totalRecordings > 9 
+                      ? "Regenerate Narrator Voice" 
+                      : `Regenerate Narrator Voice (${totalRecordings} samples)`
+                    : totalRecordings > 9 
+                      ? "Generate Narrator Voice" 
+                      : `Generate Narrator Voice (${totalRecordings} samples)`
                 }
               </Button>
             )}
