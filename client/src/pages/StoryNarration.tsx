@@ -2,7 +2,7 @@ import { useParams, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Download, AudioLines, Play, Settings, Trash2 } from "lucide-react";
+import { ArrowLeft, Download, AudioLines, Play, Settings, Trash2, SkipBack, SkipForward, Pause } from "lucide-react";
 import StoryNarratorControls from "@/components/ui/story-narrator-controls";
 import { SimpleAudioPlayer } from "@/components/ui/simple-audio-player";
 import { useAuth } from "@/hooks/useAuth";
@@ -11,7 +11,7 @@ import { apiClient } from "@/lib/api-client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { toast, toastMessages } from "@/lib/toast-utils";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
 const CONVERSATION_STYLES = [
   "respectful",
@@ -44,6 +44,14 @@ export default function StoryNarration() {
   // State for test generation controls
   const [conversationStyle, setConversationStyle] = useState("respectful");
   const [narratorProfile, setNarratorProfile] = useState("neutral");
+  
+  // Multi-segment audio player state
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentSegment, setCurrentSegment] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [progress, setProgress] = useState(0);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   
   // Emotion is hardcoded to "neutral" for now (future feature)
   const emotion = "neutral";
@@ -102,6 +110,62 @@ export default function StoryNarration() {
       toast.error(`Failed to delete narration: ${error.message}`);
     }
   });
+
+  // Audio event handlers and progress tracking
+  useEffect(() => {
+    if (!audioRef.current) return;
+
+    const audio = audioRef.current;
+
+    const handleTimeUpdate = () => {
+      if (audio.duration && audio.currentTime) {
+        setCurrentTime(audio.currentTime);
+        setDuration(audio.duration);
+        setProgress((audio.currentTime / audio.duration) * 100);
+      }
+    };
+
+    const handleLoadedMetadata = () => {
+      if (audio.duration) {
+        setDuration(audio.duration);
+      }
+    };
+
+    const handleEnded = () => {
+      const currentNarration = allNarrations.find(n => n.conversationStyle === conversationStyle && n.narratorProfile === narratorProfile);
+      if (currentNarration?.segments && currentSegment < currentNarration.segments.length - 1) {
+        setCurrentSegment(currentSegment + 1);
+        const nextSegment = currentNarration.segments[currentSegment + 1];
+        if (nextSegment?.audioUrl) {
+          audioRef.current!.src = nextSegment.audioUrl;
+          audioRef.current!.play().catch(console.error);
+        }
+      } else {
+        setIsPlaying(false);
+        setProgress(0);
+        setCurrentTime(0);
+      }
+    };
+
+    audio.addEventListener('timeupdate', handleTimeUpdate);
+    audio.addEventListener('loadedmetadata', handleLoadedMetadata);
+    audio.addEventListener('ended', handleEnded);
+
+    return () => {
+      audio.removeEventListener('timeupdate', handleTimeUpdate);
+      audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      audio.removeEventListener('ended', handleEnded);
+    };
+  }, [currentSegment, allNarrations, conversationStyle, narratorProfile]);
+
+  // Reset segment when switching narrations
+  useEffect(() => {
+    setCurrentSegment(0);
+    setIsPlaying(false);
+    setProgress(0);
+    setCurrentTime(0);
+    setDuration(0);
+  }, [conversationStyle, narratorProfile]);
 
   if (isLoading || allNarrationsLoading) {
     return (
@@ -287,38 +351,63 @@ export default function StoryNarration() {
                             <div className="p-8 min-h-[300px] flex flex-col justify-center relative">
                               {/* Audio Visualizer - Small Corner Indicator */}
                               <div className="absolute top-4 left-4 flex items-center gap-1 h-8">
-                                {[...Array(5)].map((_, i) => (
-                                  <div
-                                    key={i}
-                                    className="w-1 bg-green-400 rounded-full"
-                                    style={{
-                                      height: '100%',
-                                      animation: `audio-wave ${0.8 + i * 0.1}s ease-in-out infinite`,
-                                      animationDelay: `${i * 0.1}s`,
-                                      opacity: 0.7
-                                    }}
-                                  />
-                                ))}
-                                <span className="text-green-400 text-xs ml-2 font-mono">LIVE</span>
+                                {isPlaying && (
+                                  <>
+                                    {[...Array(5)].map((_, i) => (
+                                      <div
+                                        key={i}
+                                        className="w-1 bg-green-400 rounded-full"
+                                        style={{
+                                          height: '100%',
+                                          animation: `audioWave ${0.8 + i * 0.1}s ease-in-out infinite`,
+                                          animationDelay: `${i * 0.1}s`,
+                                          opacity: 0.7
+                                        }}
+                                      />
+                                    ))}
+                                    <span className="text-green-400 text-xs ml-2 font-mono">LIVE</span>
+                                  </>
+                                )}
                               </div>
                               
                               {/* Current Text Display */}
-                              <div className="text-center px-4 min-h-[100px] flex items-center justify-center">
-                                <div className="text-white text-base leading-relaxed max-w-3xl">
-                                  {narration.segments && narration.segments.length > 0 ? (
-                                    narration.segments[0].text
-                                  ) : (
-                                    `${narration.conversationStyle.replace('_', ' ').charAt(0).toUpperCase() + 
-                                     narration.conversationStyle.replace('_', ' ').slice(1)} Style Narration`
-                                  )}
+                              <div className="text-center px-4 min-h-[100px] flex flex-col justify-center">
+                                <div className="space-y-2">
+                                  <p className={`text-sm font-mono transition-all duration-300 ${
+                                    isPlaying && narration.segments 
+                                      ? 'text-green-400 opacity-100' 
+                                      : 'text-gray-600 opacity-60'
+                                  }`}>
+                                    {isPlaying && narration.segments 
+                                      ? `NOW PLAYING - SEGMENT ${currentSegment + 1}/${narration.segments.length}`
+                                      : `${narration.segments?.length || 0} segments ready`}
+                                  </p>
+                                  <p className={`text-base leading-relaxed font-medium transition-all duration-300 ${
+                                    isPlaying && narration.segments 
+                                      ? 'text-white opacity-100' 
+                                      : 'text-gray-500 opacity-60'
+                                  }`}>
+                                    {narration.segments && narration.segments.length > 0 ? (
+                                      `"${narration.segments[currentSegment]?.text || 'Loading...'}"`
+                                    ) : (
+                                      'Press play to start narration'
+                                    )}
+                                  </p>
                                 </div>
+                              </div>
+                              
+                              {/* Segment Info */}
+                              <div className="absolute top-4 right-4">
+                                <span className="text-gray-400 text-sm font-mono">
+                                  SEGMENT {currentSegment + 1}/{narration.segments?.length || 0}
+                                </span>
                               </div>
                               
                               {/* Progress Info at Bottom */}
                               <div className="absolute bottom-4 left-4 right-4">
                                 <div className="flex justify-between text-xs text-gray-500 font-mono">
+                                  <span>{Math.round(progress)}% COMPLETE</span>
                                   <span>ELEVENLABS VOICE</span>
-                                  <span>{new Date(narration.timestamp).toLocaleString()}</span>
                                 </div>
                               </div>
                             </div>
@@ -326,6 +415,28 @@ export default function StoryNarration() {
                             {/* TV Control Panel */}
                             <div className="mt-4 bg-gray-800 rounded-xl p-4">
                               {/* Progress Bar */}
+                              <div className="mb-4">
+                                <div className="w-full bg-gray-700 rounded-full h-2 overflow-hidden cursor-pointer"
+                                     onClick={(e) => {
+                                       if (audioRef.current && duration > 0) {
+                                         const rect = e.currentTarget.getBoundingClientRect();
+                                         const percent = (e.clientX - rect.left) / rect.width;
+                                         const newTime = percent * duration;
+                                         audioRef.current.currentTime = newTime;
+                                         setCurrentTime(newTime);
+                                         setProgress(percent * 100);
+                                       }
+                                     }}>
+                                  <div 
+                                    className="bg-gradient-to-r from-green-500 to-blue-500 h-2 rounded-full transition-all duration-300"
+                                    style={{ width: `${progress}%` }}
+                                  />
+                                </div>
+                                <div className="flex justify-between text-xs text-gray-400 mt-1">
+                                  <span>{Math.floor(currentTime / 60)}:{(currentTime % 60).toFixed(0).padStart(2, '0')}</span>
+                                  <span>{Math.floor(duration / 60)}:{(duration % 60).toFixed(0).padStart(2, '0')}</span>
+                                </div>
+                              </div>
                               <div className="mb-4">
                                 <div className="w-full bg-gray-700 rounded-full h-2 overflow-hidden">
                                   <div 
@@ -341,9 +452,60 @@ export default function StoryNarration() {
                               
                               {/* Media Controls */}
                               <div className="flex items-center justify-center gap-4">
-                                <SimpleAudioPlayer
-                                  audioUrl={narration.audioUrl}
-                                />
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    if (currentSegment > 0) {
+                                      setCurrentSegment(currentSegment - 1);
+                                    }
+                                  }}
+                                  disabled={currentSegment === 0}
+                                  className="text-white hover:text-green-400"
+                                >
+                                  <SkipBack className="w-5 h-5" />
+                                </Button>
+                                
+                                <Button
+                                  variant="ghost"
+                                  size="lg"
+                                  onClick={() => {
+                                    if (!audioRef.current) {
+                                      audioRef.current = new Audio();
+                                    }
+                                    
+                                    if (isPlaying) {
+                                      audioRef.current.pause();
+                                      setIsPlaying(false);
+                                    } else {
+                                      const segment = narration.segments?.[currentSegment];
+                                      if (segment?.audioUrl) {
+                                        audioRef.current.src = segment.audioUrl;
+                                        audioRef.current.play().then(() => {
+                                          setIsPlaying(true);
+                                        }).catch(console.error);
+                                      }
+                                    }
+                                  }}
+                                  disabled={!narration.segments?.[currentSegment]?.audioUrl}
+                                  className="text-white hover:text-green-400"
+                                >
+                                  {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
+                                </Button>
+                                
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    if (narration.segments && currentSegment < narration.segments.length - 1) {
+                                      setCurrentSegment(currentSegment + 1);
+                                    }
+                                  }}
+                                  disabled={!narration.segments || currentSegment >= narration.segments.length - 1}
+                                  className="text-white hover:text-green-400"
+                                >
+                                  <SkipForward className="w-5 h-5" />
+                                </Button>
                               </div>
                             </div>
                           </div>
