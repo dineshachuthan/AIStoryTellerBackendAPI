@@ -339,6 +339,26 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
         <p className="text-gray-600">
           Record your voice for emotions and sounds found in this story
         </p>
+        
+        {/* Progress indicator */}
+        {(() => {
+          const totalItems = storyEmotions.length + storySounds.length + storyModulations.length;
+          const recordedItems = Object.values(recordingStates).filter(state => state.isRecorded).length;
+          const progressPercentage = totalItems > 0 ? (recordedItems / totalItems) * 100 : 0;
+          
+          return totalItems > 0 && (
+            <div className="flex items-center justify-center space-x-2 text-sm text-gray-600">
+              <span>Progress: {recordedItems}/{totalItems} recorded</span>
+              <div className="w-32 bg-gray-200 rounded-full h-2">
+                <div 
+                  className="bg-green-500 h-2 rounded-full transition-all duration-300 ease-in-out"
+                  style={{ width: `${progressPercentage}%` }}
+                ></div>
+              </div>
+              <span>{Math.round(progressPercentage)}%</span>
+            </div>
+          );
+        })()}
       </div>
 
       {/* Category Tabs */}
@@ -389,8 +409,8 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
                   const aState = recordingStates[aName];
                   const bState = recordingStates[bName];
                   
-                  const aRecorded = aState?.isRecorded || hasRecording(a);
-                  const bRecorded = bState?.isRecorded || hasRecording(b);
+                  const aRecorded = aState?.isRecorded || false;
+                  const bRecorded = bState?.isRecorded || false;
                   const aLocked = a.isLocked || false;
                   const bLocked = b.isLocked || false;
                   
@@ -418,9 +438,9 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
                     duration: 0
                   };
 
-                  // Determine background color based on state
+                  // Determine background color based on recording state only
                   const getCardClassName = () => {
-                    if (recordingState.isRecorded || hasRecording(item)) {
+                    if (recordingState.isRecorded) {
                       return "p-4 bg-green-50 dark:bg-green-950 border-green-200";
                     }
                     if (recordingState.isSaving) {
@@ -429,9 +449,9 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
                     return "p-4";
                   };
 
-                  // Determine status icon
+                  // Determine status icon based on recording state only
                   const getStatusIcon = () => {
-                    if (recordingState.isRecorded || hasRecording(item)) {
+                    if (recordingState.isRecorded) {
                       return <CheckCircle className="w-4 h-4 text-green-500" />;
                     }
                     if (recordingState.isSaving) {
@@ -449,7 +469,7 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
                             emotionName={emotionName}
                             intensity={intensity}
                             isLocked={isLocked}
-                            isRecorded={isRecorded}
+                            isRecorded={recordingState.isRecorded}
                             onRecordingComplete={handleRecordingComplete(emotionName)}
                             disabled={recordingState.isSaving}
                             simpleMode={true}
