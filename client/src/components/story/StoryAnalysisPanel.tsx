@@ -81,7 +81,12 @@ export function StoryAnalysisPanel({
   const totalRecordings = allVoiceSamples ? (Array.isArray(allVoiceSamples) ? allVoiceSamples.length : 0) : 0;
   
   // Check if narrator voice exists
-  const hasNarratorVoice = narratorVoiceData && narratorVoiceData.voiceId;
+  const hasNarratorVoice = narratorVoiceData && narratorVoiceData.narratorVoiceId;
+  
+  // Debug logging
+  console.log('Narrator voice data:', narratorVoiceData);
+  console.log('Has narrator voice:', hasNarratorVoice);
+  console.log('Total recordings:', totalRecordings);
   
   // Enable button when we have at least 5 recordings for voice cloning
   const canGenerateNarratorVoice = totalRecordings >= 5;
