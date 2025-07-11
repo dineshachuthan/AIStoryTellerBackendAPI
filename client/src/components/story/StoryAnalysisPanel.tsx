@@ -74,6 +74,10 @@ export function StoryAnalysisPanel({
   // Query to check if narrator voice exists
   const { data: narratorVoiceData, isLoading: narratorVoiceLoading, error: narratorVoiceError } = useQuery({
     queryKey: ['/api/user/narrator-voice'],
+    queryFn: async () => {
+      const apiClient = (await import('@/lib/api-client')).apiClient;
+      return apiClient.voice.getNarratorVoice();
+    },
     enabled: true, // Always enabled for debugging
     onError: (error) => {
       console.error('Narrator voice query error:', error);
@@ -95,35 +99,6 @@ export function StoryAnalysisPanel({
   console.log('Narrator voice error:', narratorVoiceError);
   console.log('Has narrator voice:', hasNarratorVoice);
   console.log('Total recordings:', totalRecordings);
-  
-  // Test direct API call
-  useEffect(() => {
-    const testNarratorVoiceAPI = async () => {
-      try {
-        console.log('Testing direct API call to /api/user/narrator-voice');
-        const response = await fetch('/api/user/narrator-voice', {
-          credentials: 'include',
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-        console.log('Direct API response status:', response.status);
-        if (response.ok) {
-          const data = await response.json();
-          console.log('Direct API response data:', data);
-          console.log('Direct API narratorVoiceId:', data.narratorVoiceId);
-        } else {
-          const errorText = await response.text();
-          console.log('Direct API error:', errorText);
-        }
-      } catch (error) {
-        console.error('Direct API call failed:', error);
-      }
-    };
-    
-    testNarratorVoiceAPI();
-  }, []);
   
   // Enable button when we have at least 5 recordings for voice cloning
   const canGenerateNarratorVoice = totalRecordings >= 5;
