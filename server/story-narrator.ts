@@ -201,10 +201,17 @@ export class StoryNarrator {
         const chunkContext = this.detectChunkContext(chunk, extractedEmotions, []);
         
         // SOUND PATTERN ENHANCEMENT - Apply sound patterns to text before audio generation
-        const enhancedChunk = await voiceOrchestrationService.enhanceWithSounds(chunk);
+        const { VoiceOrchestrationService } = await import('./voice-orchestration-service');
+        const orchestrationService = new VoiceOrchestrationService();
+        const enhancedChunk = await orchestrationService.enhanceWithSounds(chunk);
+        
+        console.log(`[StoryNarrator] 🎵 SOUND PATTERNS APPLIED:`);
+        console.log(`[StoryNarrator] Original text: "${chunk.substring(0, 100)}..."`);
+        console.log(`[StoryNarrator] Enhanced text: "${enhancedChunk.substring(0, 100)}..."`);
+        console.log(`[StoryNarrator] Sound patterns detected: ${enhancedChunk !== chunk ? 'YES' : 'NO'}`);
         
         // Get orchestrated voice parameters
-        const voiceSettings = await voiceOrchestrationService.calculateVoiceParameters(
+        const voiceSettings = await orchestrationService.calculateVoiceParameters(
           userId,
           enhancedChunk,
           chunkContext.character,
@@ -354,7 +361,8 @@ export class StoryNarrator {
       
       try {
         // Get voice settings from orchestration service
-        const { voiceOrchestrationService } = await import('./voice-orchestration-service');
+        const { VoiceOrchestrationService } = await import('./voice-orchestration-service');
+        const voiceOrchestrationService = new VoiceOrchestrationService();
         const voiceSettings = await voiceOrchestrationService.getVoiceSettings(
           userId,
           chunkContext.character,
