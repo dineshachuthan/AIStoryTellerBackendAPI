@@ -151,7 +151,7 @@ export class ApiClient {
       this.request<any>('PUT', `/api/stories/${id}/content`, data),
     delete: (id: number) => this.request<void>('DELETE', `/api/stories/${id}`),
     analyze: (id: number) => this.request<any>('POST', `/api/stories/${id}/analyze`),
-    generateNarration: (id: number) => this.request<any>('POST', `/api/stories/${id}/generate-narration`),
+    generateNarrationLegacy: (id: number) => this.request<any>('POST', `/api/stories/${id}/generate-narration`),
     playNarration: (id: number) => this.request<any>('GET', `/api/stories/${id}/play`),
     // New narration endpoints (based on routes.ts)
     createNarration: (id: number, voiceId?: string) => this.request<any>('POST', `/api/stories/${id}/narration`, { voiceId }),
@@ -179,7 +179,12 @@ export class ApiClient {
       return this.request<any>('GET', url);
     },
     getAllNarrations: (storyId: number) => this.request<any[]>('GET', `/api/stories/${storyId}/narrations/all`),
-    generateTestNarrations: (storyId: number) => this.request<any>('POST', `/api/stories/${storyId}/narrations/test-styles`),
+    generateNarration: (storyId: number, conversationStyle: string, narratorProfile: string) => 
+      this.request<any>('POST', `/api/stories/${storyId}/narrations/generate`, {
+        conversationStyle,
+        narratorProfile,
+        emotion: 'neutral'
+      }),
     deleteNarration: (storyId: number, narrationId: number) => this.request<void>('DELETE', `/api/stories/${storyId}/narrations/${narrationId}`),
   };
   

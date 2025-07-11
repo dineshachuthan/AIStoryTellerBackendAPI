@@ -3199,63 +3199,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Test endpoint to create narrations with different conversation styles
-  app.post("/api/stories/:id/narrations/test-styles", requireAuth, async (req, res) => {
-    try {
-      const storyId = parseInt(req.params.id);
-      const userId = (req.user as any)?.id;
-      
-      if (!storyId || !userId) {
-        return res.status(400).json({ message: "Story ID and user ID required" });
-      }
 
-      const conversationStyles = ['respectful', 'casual', 'authoritative', 'business'];
-      const results = [];
-
-      for (const style of conversationStyles) {
-        try {
-          console.log(`[TestStyles] Generating narration with style: ${style}`);
-          
-          // Call the story narrator with different conversation style
-          const narrationResult = await storyNarrator.generateStoryNarration(
-            storyId,
-            userId,
-            style // Pass conversation style
-          );
-          
-          if (narrationResult && narrationResult.segments && narrationResult.segments.length > 0) {
-            results.push({
-              conversationStyle: style,
-              segments: narrationResult.segments.length,
-              totalDuration: narrationResult.totalDuration,
-              success: true
-            });
-          } else {
-            results.push({
-              conversationStyle: style,
-              success: false,
-              error: 'No segments generated'
-            });
-          }
-        } catch (error) {
-          console.error(`[TestStyles] Error generating ${style} narration:`, error);
-          results.push({
-            conversationStyle: style,
-            success: false,
-            error: error.message
-          });
-        }
-      }
-
-      res.json({
-        message: 'Test narrations generation completed',
-        results
-      });
-    } catch (error) {
-      console.error("Error in test styles generation:", error);
-      res.status(500).json({ message: "Failed to generate test narrations" });
-    }
-  });
 
   // Get saved narration from database (no cost)
   app.get('/api/stories/:id/narration/saved', async (req, res) => {

@@ -62,20 +62,20 @@ export default function StoryNarration() {
     enabled: !!storyId && !!user
   });
 
-  // Test generation mutation
-  const testGenerationMutation = useMutation({
+  // Narration generation mutation
+  const generateNarrationMutation = useMutation({
     mutationFn: () => {
-      console.log(`[TestGeneration] Calling generateTestNarrations for storyId: ${storyId}`);
-      return apiClient.stories.generateTestNarrations(storyId);
+      console.log(`[GenerateNarration] Generating narration for storyId: ${storyId}, style: ${conversationStyle}, profile: ${narratorProfile}`);
+      return apiClient.stories.generateNarration(storyId, conversationStyle, narratorProfile);
     },
     onSuccess: (data) => {
-      console.log('[TestGeneration] Success:', data);
-      toast.success("Test narrations generated successfully");
+      console.log('[GenerateNarration] Success:', data);
+      toast.success("Narration generated successfully");
       refetchNarrations();
     },
     onError: (error) => {
-      console.error('[TestGeneration] Error:', error);
-      toast.error(`Failed to generate test narrations: ${error.message}`);
+      console.error('[GenerateNarration] Error:', error);
+      toast.error(`Failed to generate narration: ${error.message}`);
     }
   });
 
@@ -232,14 +232,14 @@ export default function StoryNarration() {
               
               <div className="pt-4">
                 <Button 
-                  onClick={() => testGenerationMutation.mutate()}
-                  disabled={testGenerationMutation.isPending}
+                  onClick={() => generateNarrationMutation.mutate()}
+                  disabled={generateNarrationMutation.isPending}
                   className="bg-blue-600 hover:bg-blue-700 text-white"
                 >
-                  {testGenerationMutation.isPending ? "Generating..." : "Generate Narrations"}
+                  {generateNarrationMutation.isPending ? "Generating..." : "Generate Narration"}
                 </Button>
                 <p className="text-sm text-white/60 mt-2">
-                  This will generate narrations with different conversation styles to test multi-dimensional caching.
+                  This will generate a narration with the selected conversation style and narrator profile.
                 </p>
               </div>
             </CardContent>
