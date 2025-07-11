@@ -3101,6 +3101,104 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete specific narration with complete cleanup
+  app.delete("/api/stories/:storyId/narrations/:narrationId", requireAuth, async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.storyId);
+      const narrationId = parseInt(req.params.narrationId);
+      const userId = (req.user as any)?.id;
+      
+      if (!storyId || !narrationId || !userId) {
+        return res.status(400).json({ message: "Story ID, narration ID, and user ID required" });
+      }
+      
+      // Get narration details before deletion
+      const narration = await db.select()
+        .from(storyNarrations)
+        .where(and(
+          eq(storyNarrations.id, narrationId),
+          eq(storyNarrations.storyId, storyId),
+          eq(storyNarrations.userId, userId)
+        ))
+        .limit(1);
+      
+      if (!narration || narration.length === 0) {
+        return res.status(404).json({ message: "Narration not found" });
+      }
+      
+      const narrationData = narration[0];
+      
+      // Delete audio files from filesystem
+      const path = await import('path');
+      const fs = await import('fs/promises');
+      
+      try {
+        // Delete segment audio files
+        if (narrationData.segments && Array.isArray(narrationData.segments)) {
+          for (const segment of narrationData.segments as any[]) {
+            if (segment.audioUrl) {
+              // Convert URL to file path
+              const audioPath = segment.audioUrl.replace('/api/stories/audio/narrations/', 'stories/audio/narrations/');
+              const fullPath = path.join(process.cwd(), audioPath);
+              
+              try {
+                await fs.unlink(fullPath);
+                console.log(`Deleted audio file: ${fullPath}`);
+              } catch (fileError) {
+                console.warn(`Could not delete audio file: ${fullPath}`, fileError);
+              }
+            }
+          }
+        }
+        
+        // Delete combined audio file if exists
+        if (narrationData.audioFileUrl) {
+          const audioPath = narrationData.audioFileUrl.replace('/api/stories/audio/narrations/', 'stories/audio/narrations/');
+          const fullPath = path.join(process.cwd(), audioPath);
+          
+          try {
+            await fs.unlink(fullPath);
+            console.log(`Deleted combined audio file: ${fullPath}`);
+          } catch (fileError) {
+            console.warn(`Could not delete combined audio file: ${fullPath}`, fileError);
+          }
+        }
+        
+        // Clean up empty directories
+        const conversationStyle = narrationData.conversationStyle || 'respectful';
+        const narratorProfile = narrationData.narratorVoiceType === 'user' ? 'custom' : 'ai';
+        const baseDir = path.join(process.cwd(), 'stories', 'audio', 'narrations', userId, storyId.toString(), conversationStyle, narratorProfile);
+        
+        try {
+          const files = await fs.readdir(baseDir);
+          if (files.length === 0) {
+            await fs.rmdir(baseDir);
+            console.log(`Removed empty directory: ${baseDir}`);
+          }
+        } catch (dirError) {
+          console.warn(`Could not remove directory: ${baseDir}`, dirError);
+        }
+        
+      } catch (fsError) {
+        console.error("Error deleting audio files:", fsError);
+      }
+      
+      // Delete from database
+      await db.delete(storyNarrations).where(eq(storyNarrations.id, narrationId));
+      
+      console.log(`Deleted narration ${narrationId} for story ${storyId} by user ${userId}`);
+      
+      res.json({ 
+        message: "Narration deleted successfully",
+        deletedNarrationId: narrationId 
+      });
+      
+    } catch (error) {
+      console.error("Error deleting narration:", error);
+      res.status(500).json({ message: "Failed to delete narration" });
+    }
+  });
+
   // Test endpoint to create narrations with different conversation styles
   app.post("/api/stories/:id/narrations/test-styles", requireAuth, async (req, res) => {
     try {

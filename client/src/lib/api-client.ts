@@ -180,6 +180,7 @@ export class ApiClient {
     },
     getAllNarrations: (storyId: number) => this.request<any[]>('GET', `/api/stories/${storyId}/narrations/all`),
     generateTestNarrations: (storyId: number) => this.request<any>('POST', `/api/stories/${storyId}/narrations/test-styles`),
+    deleteNarration: (storyId: number, narrationId: number) => this.request<void>('DELETE', `/api/stories/${storyId}/narrations/${narrationId}`),
   };
   
   // Character endpoints

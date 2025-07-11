@@ -1,8 +1,8 @@
 import { useParams, useLocation } from "wouter";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Download, AudioLines, Play, Settings } from "lucide-react";
+import { ArrowLeft, Download, AudioLines, Play, Settings, Trash2 } from "lucide-react";
 import StoryNarratorControls from "@/components/ui/story-narrator-controls";
 import { SimpleAudioPlayer } from "@/components/ui/simple-audio-player";
 import { useAuth } from "@/hooks/useAuth";
@@ -50,6 +50,7 @@ export default function StoryNarration() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
   const storyId = parseInt(id || "0");
+  const queryClient = useQueryClient();
   
   // State for test generation controls
   const [conversationStyle, setConversationStyle] = useState("respectful");
@@ -84,6 +85,28 @@ export default function StoryNarration() {
     onError: (error) => {
       console.error('[TestGeneration] Error:', error);
       toast.error(`Failed to generate test narrations: ${error.message}`);
+    }
+  });
+
+  // Delete narration mutation
+  const deleteNarrationMutation = useMutation({
+    mutationFn: (narrationId: number) => {
+      console.log(`[DeleteNarration] Deleting narration ${narrationId} for story ${storyId}`);
+      return apiClient.stories.deleteNarration(storyId, narrationId);
+    },
+    onSuccess: (data, narrationId) => {
+      console.log('[DeleteNarration] Success:', data);
+      toast.success("Narration deleted successfully - removed from database, cache, and audio files");
+      
+      // Invalidate queries to refresh the list
+      queryClient.invalidateQueries({
+        queryKey: [`/api/stories/${storyId}/narrations/all`]
+      });
+      refetchNarrations();
+    },
+    onError: (error) => {
+      console.error('[DeleteNarration] Error:', error);
+      toast.error(`Failed to delete narration: ${error.message}`);
     }
   });
 
@@ -273,8 +296,22 @@ export default function StoryNarration() {
                           Voice: {narration.narratorVoiceType}
                         </div>
                       </div>
-                      <div className="text-sm text-white/50">
-                        {new Date(narration.timestamp).toLocaleString()}
+                      <div className="flex items-center gap-3">
+                        <div className="text-sm text-white/50">
+                          {new Date(narration.timestamp).toLocaleString()}
+                        </div>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => {
+                            const narrationId = parseInt(narration.id.replace('narration-', ''));
+                            deleteNarrationMutation.mutate(narrationId);
+                          }}
+                          disabled={deleteNarrationMutation.isPending}
+                          className="h-8 w-8 p-0 bg-red-600 hover:bg-red-700"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </div>
                     </div>
                     
