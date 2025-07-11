@@ -390,8 +390,7 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
                   const intensity = item.intensity || 5;
                   const isLocked = item.isLocked || false;
                   const isRecorded = item.isRecorded || false;
-                  const sampleText = item.sampleText || item.quote || item.context || 
-                    `Express the emotion of ${emotionName} with clear articulation and natural pacing for high-quality voice cloning.`;
+                  const sampleText = item.sampleText;
                   
                   const recordingState = recordingStates[emotionName] || {
                     isRecorded: false,

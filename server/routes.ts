@@ -4791,13 +4791,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const userRecording = findUserRecording(emotion.emotion, 'emotions');
           const esmText = esmRef.sample_text;
           
+          console.log(`📝 ESM sample text for ${emotion.emotion}: "${esmText || 'EMPTY/NULL'}"`);
+          
           response.emotions.push({
             name: emotion.emotion,
             displayName: emotion.emotion,
             intensity: emotion.intensity,
             context: emotion.context,
             quote: emotion.quote,
-            sampleText: esmText || emotion.quote || emotion.context || `Express the emotion of ${emotion.emotion}`,
+            sampleText: esmText,
             userRecording: userRecording ? {
               audioUrl: userRecording.audio_url,
               recordedAt: userRecording.created_date,
@@ -4823,13 +4825,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const userRecording = findUserRecording(sound.sound, 'sounds');
           const esmText = esmRef.sample_text;
           
+          console.log(`📝 ESM sample text for ${sound.sound}: "${esmText || 'EMPTY/NULL'}"`);
+          
           response.sounds.push({
             name: sound.sound,
             displayName: sound.sound,
             intensity: sound.intensity,
             context: sound.context,
             quote: sound.quote,
-            sampleText: esmText || sound.quote || sound.context || `Create the sound of ${sound.sound}`,
+            sampleText: esmText,
             userRecording: userRecording ? {
               audioUrl: userRecording.audio_url,
               recordedAt: userRecording.created_date,
