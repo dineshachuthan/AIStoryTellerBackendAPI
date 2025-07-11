@@ -11,7 +11,7 @@ import { apiClient } from "@/lib/api-client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { toast, toastMessages } from "@/lib/toast-utils";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 
 const CONVERSATION_STYLES = [
   "respectful",
@@ -45,13 +45,38 @@ export default function StoryNarration() {
   const [conversationStyle, setConversationStyle] = useState("respectful");
   const [narratorProfile, setNarratorProfile] = useState("neutral");
   
-  // Multi-segment audio player state
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentSegment, setCurrentSegment] = useState(0);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [progress, setProgress] = useState(0);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  // Multi-segment audio player state - per narration
+  const [audioStates, setAudioStates] = useState<Record<string, {
+    isPlaying: boolean;
+    currentSegment: number;
+    currentTime: number;
+    duration: number;
+    progress: number;
+  }>>({});
+  
+  const audioRefs = useRef<Record<string, HTMLAudioElement>>({});
+  
+  // Helper function to get narration key
+  const getNarrationKey = (style: string, profile: string) => `${style}-${profile}`;
+  
+  // Helper function to get or create audio state
+  const getAudioState = (narrationKey: string) => {
+    return audioStates[narrationKey] || {
+      isPlaying: false,
+      currentSegment: 0,
+      currentTime: 0,
+      duration: 0,
+      progress: 0
+    };
+  };
+  
+  // Helper function to update audio state
+  const updateAudioState = (narrationKey: string, updates: Partial<typeof audioStates[string]>) => {
+    setAudioStates(prev => ({
+      ...prev,
+      [narrationKey]: { ...getAudioState(narrationKey), ...updates }
+    }));
+  };
   
   // Emotion is hardcoded to "neutral" for now (future feature)
   const emotion = "neutral";
@@ -111,39 +136,72 @@ export default function StoryNarration() {
     }
   });
 
+  // Get current narration from all narrations
+  const narration = useMemo(() => {
+    return allNarrations.find(n => 
+      n.conversationStyle === conversationStyle && 
+      n.narratorProfile === narratorProfile
+    ) || null;
+  }, [allNarrations, conversationStyle, narratorProfile]);
+  
+  // Get current narration key and audio state
+  const currentNarrationKey = getNarrationKey(conversationStyle, narratorProfile);
+  const currentAudioState = getAudioState(currentNarrationKey);
+  
+  // Extract current audio state properties for easier access
+  const { isPlaying, currentSegment, currentTime, duration, progress } = currentAudioState;
+
   // Audio event handlers and progress tracking
   useEffect(() => {
-    if (!audioRef.current) return;
-
-    const audio = audioRef.current;
+    const narrationKey = currentNarrationKey;
+    
+    if (!audioRefs.current[narrationKey]) {
+      audioRefs.current[narrationKey] = new Audio();
+    }
+    
+    const audio = audioRefs.current[narrationKey];
 
     const handleTimeUpdate = () => {
       if (audio.duration && audio.currentTime) {
-        setCurrentTime(audio.currentTime);
-        setDuration(audio.duration);
-        setProgress((audio.currentTime / audio.duration) * 100);
+        updateAudioState(narrationKey, {
+          currentTime: audio.currentTime,
+          duration: audio.duration,
+          progress: (audio.currentTime / audio.duration) * 100
+        });
       }
     };
 
     const handleLoadedMetadata = () => {
       if (audio.duration) {
-        setDuration(audio.duration);
+        updateAudioState(narrationKey, {
+          duration: audio.duration
+        });
       }
     };
 
     const handleEnded = () => {
       const currentNarration = allNarrations.find(n => n.conversationStyle === conversationStyle && n.narratorProfile === narratorProfile);
-      if (currentNarration?.segments && currentSegment < currentNarration.segments.length - 1) {
-        setCurrentSegment(currentSegment + 1);
-        const nextSegment = currentNarration.segments[currentSegment + 1];
-        if (nextSegment?.audioUrl) {
-          audioRef.current!.src = nextSegment.audioUrl;
-          audioRef.current!.play().catch(console.error);
+      const currentState = getAudioState(narrationKey);
+      
+      if (currentNarration?.segments && currentState.currentSegment < currentNarration.segments.length - 1) {
+        const nextSegment = currentState.currentSegment + 1;
+        updateAudioState(narrationKey, {
+          currentSegment: nextSegment,
+          currentTime: 0,
+          progress: 0
+        });
+        
+        const nextSegmentData = currentNarration.segments[nextSegment];
+        if (nextSegmentData?.audioUrl) {
+          audio.src = nextSegmentData.audioUrl;
+          audio.play().catch(console.error);
         }
       } else {
-        setIsPlaying(false);
-        setProgress(0);
-        setCurrentTime(0);
+        updateAudioState(narrationKey, {
+          isPlaying: false,
+          progress: 0,
+          currentTime: 0
+        });
       }
     };
 
@@ -156,16 +214,24 @@ export default function StoryNarration() {
       audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
       audio.removeEventListener('ended', handleEnded);
     };
-  }, [currentSegment, allNarrations, conversationStyle, narratorProfile]);
+  }, [currentNarrationKey, allNarrations, conversationStyle, narratorProfile]);
 
   // Reset segment when switching narrations
   useEffect(() => {
-    setCurrentSegment(0);
-    setIsPlaying(false);
-    setProgress(0);
-    setCurrentTime(0);
-    setDuration(0);
-  }, [conversationStyle, narratorProfile]);
+    const narrationKey = currentNarrationKey;
+    updateAudioState(narrationKey, {
+      currentSegment: 0,
+      isPlaying: false,
+      progress: 0,
+      currentTime: 0,
+      duration: 0
+    });
+    
+    if (audioRefs.current[narrationKey]) {
+      audioRefs.current[narrationKey].pause();
+      audioRefs.current[narrationKey].currentTime = 0;
+    }
+  }, [conversationStyle, narratorProfile, currentNarrationKey]);
 
   if (isLoading || allNarrationsLoading) {
     return (
@@ -418,13 +484,16 @@ export default function StoryNarration() {
                               <div className="mb-4">
                                 <div className="w-full bg-gray-700 rounded-full h-2 overflow-hidden cursor-pointer"
                                      onClick={(e) => {
-                                       if (audioRef.current && duration > 0) {
+                                       const audio = audioRefs.current[currentNarrationKey];
+                                       if (audio && duration > 0) {
                                          const rect = e.currentTarget.getBoundingClientRect();
                                          const percent = (e.clientX - rect.left) / rect.width;
                                          const newTime = percent * duration;
-                                         audioRef.current.currentTime = newTime;
-                                         setCurrentTime(newTime);
-                                         setProgress(percent * 100);
+                                         audio.currentTime = newTime;
+                                         updateAudioState(currentNarrationKey, {
+                                           currentTime: newTime,
+                                           progress: percent * 100
+                                         });
                                        }
                                      }}>
                                   <div 
@@ -437,18 +506,6 @@ export default function StoryNarration() {
                                   <span>{Math.floor(duration / 60)}:{(duration % 60).toFixed(0).padStart(2, '0')}</span>
                                 </div>
                               </div>
-                              <div className="mb-4">
-                                <div className="w-full bg-gray-700 rounded-full h-2 overflow-hidden">
-                                  <div 
-                                    className="bg-gradient-to-r from-green-500 to-blue-500 h-2 rounded-full transition-all duration-500"
-                                    style={{ width: '0%' }}
-                                  />
-                                </div>
-                                <div className="flex justify-between text-xs text-gray-400 mt-1">
-                                  <span>00:00</span>
-                                  <span>--:--</span>
-                                </div>
-                              </div>
                               
                               {/* Media Controls */}
                               <div className="flex items-center justify-center gap-4">
@@ -457,7 +514,18 @@ export default function StoryNarration() {
                                   size="sm"
                                   onClick={() => {
                                     if (currentSegment > 0) {
-                                      setCurrentSegment(currentSegment - 1);
+                                      const newSegment = currentSegment - 1;
+                                      updateAudioState(currentNarrationKey, {
+                                        currentSegment: newSegment,
+                                        progress: 0,
+                                        currentTime: 0,
+                                        duration: 0,
+                                        isPlaying: false
+                                      });
+                                      
+                                      if (audioRefs.current[currentNarrationKey]) {
+                                        audioRefs.current[currentNarrationKey].pause();
+                                      }
                                     }
                                   }}
                                   disabled={currentSegment === 0}
@@ -470,19 +538,21 @@ export default function StoryNarration() {
                                   variant="ghost"
                                   size="lg"
                                   onClick={() => {
-                                    if (!audioRef.current) {
-                                      audioRef.current = new Audio();
+                                    if (!audioRefs.current[currentNarrationKey]) {
+                                      audioRefs.current[currentNarrationKey] = new Audio();
                                     }
                                     
+                                    const audio = audioRefs.current[currentNarrationKey];
+                                    
                                     if (isPlaying) {
-                                      audioRef.current.pause();
-                                      setIsPlaying(false);
+                                      audio.pause();
+                                      updateAudioState(currentNarrationKey, { isPlaying: false });
                                     } else {
                                       const segment = narration.segments?.[currentSegment];
                                       if (segment?.audioUrl) {
-                                        audioRef.current.src = segment.audioUrl;
-                                        audioRef.current.play().then(() => {
-                                          setIsPlaying(true);
+                                        audio.src = segment.audioUrl;
+                                        audio.play().then(() => {
+                                          updateAudioState(currentNarrationKey, { isPlaying: true });
                                         }).catch(console.error);
                                       }
                                     }
@@ -498,7 +568,18 @@ export default function StoryNarration() {
                                   size="sm"
                                   onClick={() => {
                                     if (narration.segments && currentSegment < narration.segments.length - 1) {
-                                      setCurrentSegment(currentSegment + 1);
+                                      const newSegment = currentSegment + 1;
+                                      updateAudioState(currentNarrationKey, {
+                                        currentSegment: newSegment,
+                                        progress: 0,
+                                        currentTime: 0,
+                                        duration: 0,
+                                        isPlaying: false
+                                      });
+                                      
+                                      if (audioRefs.current[currentNarrationKey]) {
+                                        audioRefs.current[currentNarrationKey].pause();
+                                      }
                                     }
                                   }}
                                   disabled={!narration.segments || currentSegment >= narration.segments.length - 1}
