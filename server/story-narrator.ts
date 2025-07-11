@@ -62,6 +62,49 @@ export class StoryNarrator {
   }
 
   /**
+   * Check if narration with same cache key already exists
+   */
+  private async checkExistingNarration(storyId: number, userId: string, conversationStyle: string, narratorProfile: string): Promise<StoryNarrationResult | null> {
+    try {
+      const { storyNarrations } = await import('@shared/schema/schema');
+      const { eq, and } = await import('drizzle-orm');
+      
+      // Query for existing narration with same cache key parameters
+      // NOTE: Currently only using conversationStyle as primary cache key
+      // narratorProfile is part of the cache logic but not stored in DB yet
+      const [existingNarration] = await db
+        .select()
+        .from(storyNarrations)
+        .where(and(
+          eq(storyNarrations.storyId, storyId),
+          eq(storyNarrations.userId, userId),
+          eq(storyNarrations.conversationStyle, conversationStyle)
+        ))
+        .limit(1);
+      
+      if (existingNarration) {
+        // Get the segments for this narration
+        const segments = JSON.parse(existingNarration.segments || '[]');
+        
+        return {
+          storyId: existingNarration.storyId,
+          segments,
+          totalDuration: existingNarration.totalDuration || 0,
+          narratorVoice: existingNarration.narratorVoice || '',
+          narratorVoiceType: existingNarration.narratorVoiceType || 'ai',
+          conversationStyle: existingNarration.conversationStyle || 'respectful',
+          generatedAt: new Date(existingNarration.createdAt)
+        };
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error checking existing narration:', error);
+      return null;
+    }
+  }
+
+  /**
    * Get user's active voice profile to determine profile ID for cache key
    */
   private async getActiveVoiceProfile(userId: string): Promise<{ profileId: string } | null> {
@@ -140,6 +183,18 @@ export class StoryNarrator {
     // Get conversation style configuration for relationship-aware narration
     const styleConfig = await conversationStylesManager.getStyle(conversationStyle);
     console.log(`[StoryNarrator] Using conversation style: ${conversationStyle} - ${styleConfig?.displayName || 'Unknown'}`);
+    
+    // CHECK FOR EXISTING CACHE - Prevent duplicate narrations with same cache key
+    const cacheKey = `${conversationStyle}/${narratorProfile.profileId || 'neutral'}`;
+    console.log(`[StoryNarrator] Checking cache for key: ${cacheKey}`);
+    
+    const existingNarration = await this.checkExistingNarration(storyId, userId, conversationStyle, narratorProfile.profileId || 'neutral');
+    if (existingNarration) {
+      console.log(`[StoryNarrator] Found existing narration for cache key: ${cacheKey}, returning cached result`);
+      return existingNarration;
+    }
+    
+    console.log(`[StoryNarrator] No existing narration found for cache key: ${cacheKey}, generating new narration`);
     
     // 4. Narrate story content with the determined narrator voice
     const segments = await this.createNarrationSegments(
