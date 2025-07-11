@@ -153,6 +153,16 @@ export default function StoryNarration() {
       
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
+          {/* Story Title */}
+          <div className="mb-8">
+            <h1 className="text-4xl font-bold text-white mb-2">
+              {story.title}
+            </h1>
+            <p className="text-white/70">
+              Story Narration
+            </p>
+          </div>
+
           {/* Narration Generation Controls - For generating different cache keys */}
           <Card className="mt-6 bg-white/10 backdrop-blur-sm border-white/20">
             <CardHeader>
