@@ -27,7 +27,7 @@ const CONVERSATION_STYLES = [
 // Emotion is set to "neutral" by default for now (future feature)
 
 const NARRATOR_PROFILES = [
-  { id: "neutral", name: "Neutral", description: "Standard narration" },
+  { id: "neutral", name: "Neutral", description: "Your cloned voice" },
   { id: "grandma", name: "Grandma", description: "Warm, slow, caring" },
   { id: "kid", name: "Kid", description: "Energetic, fast, playful" },
   { id: "business", name: "Business", description: "Professional, clear" },
@@ -236,7 +236,7 @@ export default function StoryNarration() {
                   disabled={testGenerationMutation.isPending}
                   className="bg-blue-600 hover:bg-blue-700 text-white"
                 >
-                  {testGenerationMutation.isPending ? "Generating..." : "Generate Test Narrations"}
+                  {testGenerationMutation.isPending ? "Generating..." : "Generate Narrations"}
                 </Button>
                 <p className="text-sm text-white/60 mt-2">
                   This will generate narrations with different conversation styles to test multi-dimensional caching.
