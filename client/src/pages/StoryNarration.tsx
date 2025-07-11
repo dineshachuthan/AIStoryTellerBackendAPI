@@ -304,9 +304,13 @@ export default function StoryNarration() {
                               
                               {/* Current Text Display */}
                               <div className="text-center px-4 min-h-[100px] flex items-center justify-center">
-                                <div className="text-white text-lg leading-relaxed">
-                                  {narration.conversationStyle.replace('_', ' ').charAt(0).toUpperCase() + 
-                                   narration.conversationStyle.replace('_', ' ').slice(1)} Style Narration
+                                <div className="text-white text-base leading-relaxed max-w-3xl">
+                                  {narration.segments && narration.segments.length > 0 ? (
+                                    narration.segments[0].text
+                                  ) : (
+                                    `${narration.conversationStyle.replace('_', ' ').charAt(0).toUpperCase() + 
+                                     narration.conversationStyle.replace('_', ' ').slice(1)} Style Narration`
+                                  )}
                                 </div>
                               </div>
                               
