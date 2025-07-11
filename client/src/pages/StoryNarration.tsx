@@ -24,18 +24,7 @@ const CONVERSATION_STYLES = [
   "siblings"
 ];
 
-const EMOTIONS = [
-  "neutral",
-  "happy",
-  "sad",
-  "angry",
-  "fear",
-  "surprised",
-  "thoughtful",
-  "excited",
-  "confident",
-  "contemplative"
-];
+// Emotion is set to "neutral" by default for now (future feature)
 
 const NARRATOR_PROFILES = [
   { id: "neutral", name: "Neutral", description: "Standard narration" },
@@ -54,8 +43,10 @@ export default function StoryNarration() {
   
   // State for test generation controls
   const [conversationStyle, setConversationStyle] = useState("respectful");
-  const [emotion, setEmotion] = useState("neutral");
   const [narratorProfile, setNarratorProfile] = useState("neutral");
+  
+  // Emotion is hardcoded to "neutral" for now (future feature)
+  const emotion = "neutral";
 
   // Fetch story details
   const { data: story, isLoading } = useQuery({
@@ -198,7 +189,7 @@ export default function StoryNarration() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="conversation-style" className="text-white/90">
                     Conversation Style
@@ -214,24 +205,6 @@ export default function StoryNarration() {
                       {CONVERSATION_STYLES.map((style) => (
                         <SelectItem key={style} value={style}>
                           {style.replace('_', ' ').charAt(0).toUpperCase() + style.replace('_', ' ').slice(1)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div>
-                  <Label htmlFor="emotion" className="text-white/90">
-                    Emotion
-                  </Label>
-                  <Select value={emotion} onValueChange={setEmotion}>
-                    <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {EMOTIONS.map((emo) => (
-                        <SelectItem key={emo} value={emo}>
-                          {emo.charAt(0).toUpperCase() + emo.slice(1)}
                         </SelectItem>
                       ))}
                     </SelectContent>
