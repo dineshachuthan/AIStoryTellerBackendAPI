@@ -627,6 +627,15 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Voice ID**: Successfully using narrator voice `N1tpb4Gkzo0sjT3Jl3Bs` (updated July 09, 2025)
 - **Voice Quality Enhancement**: Updated recording requirements to 15-25 seconds (from 5-10 seconds) with 45-60 word sample texts for optimal voice cloning quality
 
+### **MILESTONE 5: Story Narration API Architecture Fix - July 11, 2025**
+**Achievement**: Fixed story narration retrieval to use correct database architecture
+- ✅ Updated GET /api/stories/:id/narration endpoint to query story_narrations table directly
+- ✅ Fixed database query to use both storyId and userId parameters for proper data retrieval
+- ✅ Added proper authentication requirement to narration endpoint
+- ✅ Deprecated old storage.getStoryPlaybacks method in favor of direct database queries
+- ✅ Confirmed ElevenLabs narration segments are properly stored and retrievable
+- **Architecture Decision**: Narration retrieval now uses direct database queries instead of storage layer for better performance and accuracy
+
 ### **MILESTONE 4: Story Content Nullable Schema Update - July 10, 2025**
 **Achievement**: Updated database schema to allow draft stories with null content
 - ✅ Modified stories table content column to allow NULL values

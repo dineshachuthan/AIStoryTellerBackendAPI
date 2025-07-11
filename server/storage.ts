@@ -210,6 +210,7 @@ export interface IStorage {
   deleteCharacterVoiceAssignment(id: number): Promise<void>;
   
   // Story Playbacks
+  /* DEPRECATED - July 11, 2025 - Use direct database query for story_narrations table instead */
   getStoryPlaybacks(storyId: number): Promise<StoryPlayback[]>;
   getStoryPlayback(id: number): Promise<StoryPlayback | undefined>;
   createStoryPlayback(playback: InsertStoryPlayback): Promise<StoryPlayback>;
@@ -935,6 +936,7 @@ export class DatabaseStorage implements IStorage {
     await db.delete(characterVoiceAssignments).where(eq(characterVoiceAssignments.id, id));
   }
 
+  /* DEPRECATED - July 11, 2025 - Use direct database query for story_narrations table instead */
   async getStoryPlaybacks(storyId: number): Promise<StoryPlayback[]> {
     return await db.select().from(storyPlaybacks).where(eq(storyPlaybacks.storyId, storyId));
   }
