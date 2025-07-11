@@ -44,9 +44,7 @@ import Test from "@/pages/test";
 
 
 function AppContent() {
-  // Temporarily disable useAuth to fix React hooks issue
-  const isAuthenticated = false;
-  const isLoading = false;
+  const { isAuthenticated, isLoading } = useAuth();
 
   // Initialize session activity tracking for authenticated users
   useEffect(() => {
