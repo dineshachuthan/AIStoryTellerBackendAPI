@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bypass Test</title>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <div id="test" style="padding: 20px; background: #FFD700; min-height: 100vh;">
+        <h1>Direct HTML Bypass Test</h1>
+        <p>If you see this yellow page, we've bypassed all caching!</p>
+        <p id="time"></p>
+        <button onclick="clearAllCaches()">Clear All Caches</button>
+        <div id="log"></div>
+    </div>
+    <script>
+        document.getElementById('time').textContent = 'Time: ' + new Date().toISOString();
+        
+        function log(msg) {
+            const logDiv = document.getElementById('log');
+            logDiv.innerHTML += '<p>' + msg + '</p>';
+        }
+        
+        async function clearAllCaches() {
+            log('Starting cache clear...');
+            
+            // Clear service worker
+            if ('serviceWorker' in navigator) {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                for(let registration of registrations) {
+                    await registration.unregister();
+                    log('Unregistered service worker');
+                }
+            }
+            
+            // Clear cache storage
+            if ('caches' in window) {
+                const names = await caches.keys();
+                await Promise.all(names.map(name => caches.delete(name)));
+                log('Cleared ' + names.length + ' caches');
+            }
+            
+            // Clear local storage
+            localStorage.clear();
+            sessionStorage.clear();
+            log('Cleared local/session storage');
+            
+            log('All caches cleared! Reload the page.');
+        }
+    </script>
+</body>
+</html>
