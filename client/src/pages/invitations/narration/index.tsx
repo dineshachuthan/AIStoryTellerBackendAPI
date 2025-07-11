@@ -68,7 +68,7 @@ export default function NarrationInvitationLanding() {
     enabled: !!invitation?.storyId && !!token && currentStage === "preview",
     queryFn: async () => {
       try {
-        const response = await apiClient.invitations.getSavedNarration(invitation.storyId, token);
+        const response = await apiClient.stories.getSavedNarration(invitation.storyId, token);
         return response || null;
       } catch (error) {
         // No saved narration found - this is normal for pending invitations
@@ -88,10 +88,7 @@ export default function NarrationInvitationLanding() {
       const results = await Promise.all(
         narratorEmotions.map(async (emotion) => {
           try {
-            const response = await apiRequest(`/api/stories/${invitation?.storyId}/sample-text`, {
-              method: 'POST',
-              body: JSON.stringify({ emotion })
-            });
+            const response = await apiClient.invitations.getSampleText(invitation?.storyId, emotion);
             return { emotion, text: response.sampleText };
           } catch (error) {
             console.error(`Failed to get sample text for ${emotion}:`, error);
@@ -119,21 +116,14 @@ export default function NarrationInvitationLanding() {
   // Generate narration with new voice
   const generateNarrationMutation = useMutation({
     mutationFn: async (voiceId: string) => {
-      return await apiRequest(`/api/stories/${invitation?.storyId}/narration`, {
-        method: 'POST',
-        body: JSON.stringify({ voiceId }),
-      });
+      return await apiClient.stories.createNarration(invitation?.storyId, voiceId);
     },
     onSuccess: (data) => {
       // Navigate to story narration page
       setLocation(`/story/${invitation?.storyId}/narration`);
     },
     onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: "Failed to generate narration. Please try again.",
-        variant: "destructive",
-      });
+      toast.error("Failed to generate narration. Please try again.");
     },
   });
 
@@ -165,40 +155,26 @@ export default function NarrationInvitationLanding() {
         })
       );
       
-      return await apiRequest('/api/voice-cloning/create-narrator', {
-        method: 'POST',
-        body: JSON.stringify({
-          invitationToken: token,
-          voiceSamples
-        }),
+      return await apiClient.voice.createNarratorVoice({
+        invitationToken: token,
+        voiceSamples
       });
     },
     onSuccess: async (data) => {
-      toast({
-        title: "Success!",
-        description: "Your narrator voice has been created. Generating story narration...",
-      });
+      toast.success("Your narrator voice has been created. Generating story narration...");
       setCurrentStage("generating");
       // Generate narration with the new voice
       await generateNarrationMutation.mutate(data.voiceId);
     },
     onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: "Failed to create voice. Please try again.",
-        variant: "destructive",
-      });
+      toast.error("Failed to create voice. Please try again.");
       setCurrentStage("recording");
     },
   });
 
   useEffect(() => {
     if (error) {
-      toast({
-        title: "Invalid Invitation",
-        description: "This invitation link is invalid or has expired.",
-        variant: "destructive",
-      });
+      toast.error("This invitation link is invalid or has expired.");
     }
   }, [error, toast]);
 
@@ -217,9 +193,7 @@ export default function NarrationInvitationLanding() {
 
     try {
       // Accept the invitation
-      await apiRequest(`/api/invitations/${token}/accept`, {
-        method: 'POST',
-      });
+      await apiClient.invitations.accept(token);
       
       // Update the invitation status locally
       queryClient.setQueryData([`/api/invitations/${token}`], (old: any) => ({
@@ -229,16 +203,9 @@ export default function NarrationInvitationLanding() {
       
       setCurrentStage("recording");
       
-      toast({
-        title: "Welcome!",
-        description: "Let's create your unique narrator voice.",
-      });
+      toast.success("Welcome! Let's create your unique narrator voice.");
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to accept invitation. Please try again.",
-        variant: "destructive",
-      });
+      toast.error("Failed to accept invitation. Please try again.");
     }
   };
 

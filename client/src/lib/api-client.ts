@@ -214,6 +214,8 @@ export class ApiClient {
         headers: {} // Let browser set Content-Type for FormData
       }),
     deleteRecording: (id: number) => this.request<void>('DELETE', `/api/user/esm-recordings/${id}`),
+    createNarratorVoice: (data: { invitationToken: string; voiceSamples: any[] }) =>
+      this.request<any>('POST', '/api/voice-cloning/create-narrator', data),
   };
   
   // Collaborative roleplay endpoints
@@ -287,6 +289,7 @@ export class ApiClient {
     get: (token: string) => this.request<any>('GET', `/api/invitations/${token}`),
     getSampleText: (storyId: number, emotion: string) => 
       this.request<any>('POST', `/api/stories/${storyId}/sample-text`, { emotion }),
+    accept: (token: string) => this.request<any>('POST', `/api/invitations/${token}/accept`),
   };
 
   // Collaboration endpoints
