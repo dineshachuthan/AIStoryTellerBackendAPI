@@ -77,11 +77,7 @@ export default function StoryLibrary() {
   // Create story and navigate to upload page
   const createStoryAndNavigate = async (storyType: string, targetPath: string) => {
     if (!user) {
-      toast({
-        title: "Authentication Required",
-        description: "Please log in to create stories.",
-        variant: "destructive",
-      });
+      toast.error("Please log in to create stories.");
       return;
     }
 
@@ -107,11 +103,7 @@ export default function StoryLibrary() {
     } catch (error: any) {
       console.error("Story creation error:", error);
       console.error("Error details:", error.message);
-      toast({
-        title: "Creation Failed",
-        description: `Could not create story: ${error.message}`,
-        variant: "destructive",
-      });
+      toast.error(`Could not create story: ${error.message}`);
     } finally {
       setIsCreatingStory(false);
     }
@@ -124,20 +116,13 @@ export default function StoryLibrary() {
     try {
       const template = await apiClient.roleplay.createTemplate(storyId);
       
-      toast({
-        title: "Success",
-        description: "Story converted to collaborative template! You can now invite participants.",
-      });
+      toast.success("Story converted to collaborative template! You can now invite participants.");
       
       // Navigate to collaborative roleplay page to view the template
       setLocation("/collaborative-roleplay");
       
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to convert story to collaborative template",
-        variant: "destructive",
-      });
+      toast.error(error.message || "Failed to convert story to collaborative template");
     } finally {
       setConvertingStories(prev => {
         const next = new Set(prev);
@@ -154,20 +139,13 @@ export default function StoryLibrary() {
       // Archive the story
       await apiClient.stories.update(storyId, { archived: true });
       
-      toast({
-        title: "Story Deleted",
-        description: "Your story has been moved to the archive.",
-      });
+      toast.success("Your story has been moved to the archive.");
       
       // Refresh the stories list
       apiClient.invalidateQueries(["/api/stories"]);
       
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete story",
-        variant: "destructive",
-      });
+      toast.error("Failed to delete story");
     } finally {
       setDeletingStories(prev => {
         const next = new Set(prev);
