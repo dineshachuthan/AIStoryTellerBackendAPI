@@ -278,21 +278,21 @@ export class VoiceOrchestrationService {
         .limit(1);
       
       if (profile) {
-        // The user_voice_profiles table doesn't contain voice parameter columns
-        // Return basic profile info with default voice parameters
+        // Return profile with actual database values
         return {
-          stability: 0.75, // Default stability
-          similarity_boost: 0.85, // Default similarity boost
-          style: 0.5, // Default style
-          pitch: "0%", // Default pitch
-          rate: "85%", // Default rate
-          age: null, // Age not stored in current schema
-          nativeLanguage: profile.language || 'en', // Use language column
+          stability: profile.stability || 0.75,
+          similarity_boost: profile.similarityBoost || 0.85,
+          style: profile.style || 0.5,
+          pitch: profile.pitch || "0%",
+          rate: profile.rate || "85%",
+          age: profile.userAge || null,
+          nativeLanguage: profile.nativeLanguage || profile.language || 'en',
           storytellingLanguage: profile.language || 'en'
         };
       }
     } catch (error) {
       console.error('[VoiceOrchestration] Error fetching user profile', error);
+      // Return null on error - system will use defaults
     }
     return null;
   }

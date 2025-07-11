@@ -168,5 +168,15 @@
         }
       }
     }
-  }
+  },
+  "learnedPatterns": [
+    {
+      "character": "Narrator",
+      "emotion": "neutral",
+      "stability": 0.7875,
+      "similarityBoost": 0.8759999999999999,
+      "style": 0.415,
+      "usageCount": 20
+    }
+  ]
 }
