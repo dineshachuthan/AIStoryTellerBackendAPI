@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, UserPlus, Mic, Play, Check, Film } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast, toastMessages } from "@/lib/toast-utils";
 import { useAuth } from "@/hooks/useAuth";
 
 interface RoleplayInvitationData {

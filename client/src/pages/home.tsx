@@ -9,7 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AppTopNavigation } from "@/components/app-top-navigation";
 import { useQuery } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
+import { toast, toastMessages } from "@/lib/toast-utils";
 import { apiRequest } from "@/lib/queryClient";
 import { apiClient } from "@/lib/api-client";
 import { useStories } from "@/hooks/use-api";
@@ -21,7 +21,7 @@ import { useLanguage } from "@/contexts/language-context";
 export default function Home() {
   const [, setLocation] = useLocation();
   const { user, logout } = useAuth();
-  const { toast } = useToast();
+
   const { language } = useLanguage();
   const [isSearchPanelCollapsed, setIsSearchPanelCollapsed] = useState(true); // Default to collapsed
   const [isCreatingStory, setIsCreatingStory] = useState(false);

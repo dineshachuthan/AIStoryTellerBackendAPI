@@ -1,0 +1,64 @@
+
+    at setupWebSocket (client:536:19)
+    at fallback (client:509:16)
+    at WebSocket.<anonymous> (client:555:7)
+setupWebSocket @ client:536
+fallback @ client:509
+(anonymous) @ client:555
+client:536  Uncaught (in promise) SyntaxError: Failed to construct 'WebSocket': The URL 'wss://localhost:undefined/?token=IDJzOSWsRUup' is invalid.
+    at setupWebSocket (client:536:19)
+    at fallback (client:509:16)
+    at WebSocket.<anonymous> (client:555:7)
+setupWebSocket @ client:536
+fallback @ client:509
+(anonymous) @ client:555
+  grm ERROR [Messaging.extension-api.content] ░░ failed to invoke postMessage() on bg port {type: 'cs-to-bg-rpc-1557421403805', callid: '0a95e9f0-9be8-ce3f-f816-45311642d234', content: {…}} Error: Attempting to use a disconnected port object
+    at An.postMessage (Grammarly-check.js:1:241637)
+    at On.broadcastBackground (Grammarly-check.js:1:239785)
+write @ Grammarly-check.js:1
+handleEvent @ Grammarly-check.js:1
+_logMessage @ Grammarly-check.js:1
+error @ Grammarly-check.js:1
+error @ Grammarly-check.js:1
+On.broadcastBackground @ Grammarly-check.js:1
+await in On.broadcastBackground
+sendBackground @ Grammarly-check.js:1
+outbound @ Grammarly-check.js:1
+_handleCall @ Grammarly-check.js:1
+(anonymous) @ Grammarly-check.js:1
+getTreatment @ Grammarly-check.js:1
+(anonymous) @ Grammarly-check.js:1
+(anonymous) @ Grammarly-check.js:1
+(anonymous) @ Grammarly-check.js:1
+(anonymous) @ Grammarly-check.js:1
+i @ Grammarly-check.js:1
+_fetchTreatments @ Grammarly-check.js:1
+(anonymous) @ Grammarly-check.js:1
+(anonymous) @ Grammarly-check.js:1
+(anonymous) @ Grammarly-check.js:1
+(anonymous) @ Grammarly-check.js:1
+i @ Grammarly-check.js:1
+e @ Grammarly-check.js:1
+Grammarly-check.js:1  Uncaught (in promise) Error: Attempting to use a disconnected port object
+    at An.postMessage (Grammarly-check.js:1:241637)
+    at On.broadcastBackground (Grammarly-check.js:1:239785)
+postMessage @ Grammarly-check.js:1
+On.broadcastBackground @ Grammarly-check.js:1
+await in On.broadcastBackground
+sendBackground @ Grammarly-check.js:1
+outbound @ Grammarly-check.js:1
+_handleCall @ Grammarly-check.js:1
+(anonymous) @ Grammarly-check.js:1
+getTreatment @ Grammarly-check.js:1
+(anonymous) @ Grammarly-check.js:1
+(anonymous) @ Grammarly-check.js:1
+(anonymous) @ Grammarly-check.js:1
+(anonymous) @ Grammarly-check.js:1
+i @ Grammarly-check.js:1
+_fetchTreatments @ Grammarly-check.js:1
+(anonymous) @ Grammarly-check.js:1
+(anonymous) @ Grammarly-check.js:1
+(anonymous) @ Grammarly-check.js:1
+(anonymous) @ Grammarly-check.js:1
+i @ Grammarly-check.js:1
+e @ Grammarly-check.js:1

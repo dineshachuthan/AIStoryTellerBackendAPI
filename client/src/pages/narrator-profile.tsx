@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
-import { useToast } from "@/hooks/use-toast";
+import { toast, toastMessages } from "@/lib/toast-utils";
 import { apiClient } from "@/lib/api-client";
 import AppTopNavigation from "@/components/app-top-navigation";
 import { getMessage } from '@shared/utils/i18n-hierarchical';
@@ -24,7 +24,6 @@ interface NarratorProfile {
 
 export default function NarratorProfilePage() {
   const { language: uiLanguage } = useLanguage();
-  const { toast } = useToast();
   
   // Fetch user data to get current language preference
   const { data: user } = useQuery({

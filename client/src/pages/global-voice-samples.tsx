@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Mic, Play, StopCircle, CheckCircle2, Circle, Trash2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { toast, toastMessages } from '@/lib/toast-utils';
 import { GLOBAL_EMOTION_SAMPLES, VOICE_TYPES, MIN_SAMPLES_FOR_VOICE } from '@shared/config/ephemeral-voice-config';
 import { apiRequest } from '@/lib/queryClient';
 import { VoiceProgressTracker } from '@/components/VoiceProgressTracker';
@@ -25,7 +25,6 @@ interface VoiceRecording {
 }
 
 export default function GlobalVoiceSamples() {
-  const { toast } = useToast();
   const [selectedVoiceType, setSelectedVoiceType] = useState(VOICE_TYPES[0].id);
   const [recordingEmotion, setRecordingEmotion] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
@@ -50,10 +49,7 @@ export default function GlobalVoiceSamples() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/user/voice-recordings'] });
-      toast({
-        title: 'Voice sample saved!',
-        description: 'Your emotion has been recorded successfully.'
-      });
+      toast.success('Your emotion has been recorded successfully.');
     },
     onError: (error) => {
       toast({

@@ -50,7 +50,7 @@ interface StoryInstance {
 
 export default function CollaborativeRoleplay() {
   const [, setLocation] = useLocation();
-  const { toast } = useToast();
+
   const queryClient = useQueryClient();
   const [selectedStoryId, setSelectedStoryId] = useState<number | null>(null);
   const [instanceTitle, setInstanceTitle] = useState("");

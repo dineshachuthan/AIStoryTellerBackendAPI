@@ -37,4 +37,15 @@ export default defineConfig({
       deny: ["**/.*"],
     },
   },
+  optimizeDeps: {
+    include: ["react", "react-dom", "@tanstack/react-query", "react/jsx-runtime"],
+    exclude: ["@replit/vite-plugin-runtime-error-modal", "@replit/vite-plugin-cartographer"],
+    force: true,
+  },
+  define: {
+    'process.env.NODE_ENV': '"development"',
+  },
+  esbuild: {
+    jsx: 'automatic',
+  },
 });

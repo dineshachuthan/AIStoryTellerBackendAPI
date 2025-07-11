@@ -6,12 +6,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Upload, FileAudio, Play, Pause, RotateCcw, ArrowRight, Shield } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { toast, toastMessages } from "@/lib/toast-utils";
 import { apiClient } from "@/lib/api-client";
 
 export function UploadAudioPage() {
   const [, setLocation] = useLocation();
-  const { toast } = useToast();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);

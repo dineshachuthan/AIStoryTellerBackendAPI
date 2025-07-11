@@ -65,7 +65,7 @@ interface Story {
 export default function StoryLibrary() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
-  const { toast } = useToast();
+
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreatingStory, setIsCreatingStory] = useState(false);

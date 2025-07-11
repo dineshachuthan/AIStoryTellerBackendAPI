@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
+import { toast, toastMessages } from "@/lib/toast-utils";
 import { apiRequest } from "@/lib/queryClient";
 import { VoiceMessageService } from '@shared/config/i18n-config';
 import { Zap, AlertCircle, CheckCircle, Clock, Loader2 } from "lucide-react";
@@ -14,7 +14,6 @@ import { Zap, AlertCircle, CheckCircle, Clock, Loader2 } from "lucide-react";
 export default function VoiceCloningTest() {
   const [storyId, setStoryId] = useState("75");
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
-  const { toast } = useToast();
 
   // Get validation status for all categories
   const { data: emotionsData, refetch: refetchEmotions } = useQuery({

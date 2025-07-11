@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
 import { Mic, Play, Square, Volume2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { toast, toastMessages } from '@/lib/toast-utils';
 
 const sampleCharacters = [
   {
@@ -56,7 +56,6 @@ export default function VoiceModulationTest() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const { toast } = useToast();
 
   const startRecording = async () => {
     try {

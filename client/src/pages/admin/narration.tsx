@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AudioLines, Play, Pause, RotateCcw, Settings, BookOpen } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { toast } from "@/hooks/use-toast";
+import { toast, toastMessages } from "@/lib/toast-utils";
 import { getMessage } from '@shared/utils/i18n-hierarchical';
 import { SimpleAudioPlayer } from "@/components/ui/simple-audio-player";
 

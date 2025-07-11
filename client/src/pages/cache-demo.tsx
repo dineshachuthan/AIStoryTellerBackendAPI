@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { AlertCircle, CheckCircle, Clock, Hash, RefreshCw } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useToast } from "@/hooks/use-toast";
+import { toast, toastMessages } from "@/lib/toast-utils";
 
 interface CacheInfo {
   storyId: number;
@@ -35,7 +35,6 @@ The creature looked up at Luna with wise, knowing eyes and spoke in a voice like
 
 Luna's eyes widened with wonder as she realized this was the beginning of the greatest adventure of her life.`);
   const [lastHash, setLastHash] = useState<string | null>(null);
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   // Mutation for enhanced analysis with cache invalidation
@@ -55,17 +54,10 @@ Luna's eyes widened with wonder as she realized this was the beginning of the gr
     },
     onSuccess: (data) => {
       setLastHash(generateSimpleHash(content));
-      toast({
-        title: "Analysis Complete",
-        description: `Story ${data.cacheInfo.storyId} analyzed using ${data.cacheInfo.cacheStrategy} strategy`
-      });
+      toast.success(`Story ${data.cacheInfo.storyId} analyzed using ${data.cacheInfo.cacheStrategy} strategy`);
     },
     onError: (error) => {
-      toast({
-        title: "Analysis Failed",
-        description: error instanceof Error ? error.message : "Unknown error occurred",
-        variant: "destructive"
-      });
+      toast.error(error instanceof Error ? error.message : "Unknown error occurred");
     }
   });
 

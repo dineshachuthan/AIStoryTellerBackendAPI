@@ -31,7 +31,7 @@ interface StoryNarration {
 export default function StoryPlayer() {
   const { storyId } = useParams();
   const [, setLocation] = useLocation();
-  const { toast } = useToast();
+
   const queryClient = useQueryClient();
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentSegmentIndex, setCurrentSegmentIndex] = useState(0);

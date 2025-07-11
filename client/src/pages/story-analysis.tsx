@@ -55,7 +55,7 @@ interface AnalysisData {
 
 export default function StoryAnalysis() {
   const [, setLocation] = useLocation();
-  const { toast } = useToast();
+
   const { user } = useAuth();
   const [match, params] = useRoute("/analysis/:storyId");
   const storyId = params?.storyId;

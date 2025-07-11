@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Loader2, UserPlus, Mic, Play, Check, Pause, Volume2, Sparkles, ChevronRight } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast, toastMessages } from "@/lib/toast-utils";
 import { useAuth } from "@/hooks/useAuth";
 import { apiClient } from "@/lib/api-client";
 import { queryClient } from "@/lib/queryClient";
@@ -34,7 +34,7 @@ interface NarrationInvitationData {
 
 export default function NarrationInvitationLanding() {
   const { token } = useParams<{ token: string }>();
-  const { toast } = useToast();
+
   const [, setLocation] = useLocation();
   const { user, isAuthenticated } = useAuth();
   const [selectedEmotion, setSelectedEmotion] = useState<string>("happy");

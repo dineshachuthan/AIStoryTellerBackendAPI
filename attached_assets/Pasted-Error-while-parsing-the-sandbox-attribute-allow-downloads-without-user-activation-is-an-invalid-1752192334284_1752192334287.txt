@@ -1,0 +1,1361 @@
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+framework-064efb141beaefd4.js:1  Unrecognized feature: 'ambient-light-sensor'.
+_ @ framework-064efb141beaefd4.js:1
+(anonymous) @ framework-064efb141beaefd4.js:1
+uD @ framework-064efb141beaefd4.js:1
+uI @ framework-064efb141beaefd4.js:1
+uM @ framework-064efb141beaefd4.js:1
+uS @ framework-064efb141beaefd4.js:1
+C @ framework-064efb141beaefd4.js:1
+z @ framework-064efb141beaefd4.js:1
+framework-064efb141beaefd4.js:1  Unrecognized feature: 'battery'.
+_ @ framework-064efb141beaefd4.js:1
+(anonymous) @ framework-064efb141beaefd4.js:1
+uD @ framework-064efb141beaefd4.js:1
+uI @ framework-064efb141beaefd4.js:1
+uM @ framework-064efb141beaefd4.js:1
+uS @ framework-064efb141beaefd4.js:1
+C @ framework-064efb141beaefd4.js:1
+z @ framework-064efb141beaefd4.js:1
+framework-064efb141beaefd4.js:1  Unrecognized feature: 'execution-while-not-rendered'.
+_ @ framework-064efb141beaefd4.js:1
+(anonymous) @ framework-064efb141beaefd4.js:1
+uD @ framework-064efb141beaefd4.js:1
+uI @ framework-064efb141beaefd4.js:1
+uM @ framework-064efb141beaefd4.js:1
+uS @ framework-064efb141beaefd4.js:1
+C @ framework-064efb141beaefd4.js:1
+z @ framework-064efb141beaefd4.js:1
+framework-064efb141beaefd4.js:1  Unrecognized feature: 'execution-while-out-of-viewport'.
+_ @ framework-064efb141beaefd4.js:1
+(anonymous) @ framework-064efb141beaefd4.js:1
+uD @ framework-064efb141beaefd4.js:1
+uI @ framework-064efb141beaefd4.js:1
+uM @ framework-064efb141beaefd4.js:1
+uS @ framework-064efb141beaefd4.js:1
+C @ framework-064efb141beaefd4.js:1
+z @ framework-064efb141beaefd4.js:1
+framework-064efb141beaefd4.js:1  Unrecognized feature: 'layout-animations'.
+_ @ framework-064efb141beaefd4.js:1
+(anonymous) @ framework-064efb141beaefd4.js:1
+uD @ framework-064efb141beaefd4.js:1
+uI @ framework-064efb141beaefd4.js:1
+uM @ framework-064efb141beaefd4.js:1
+uS @ framework-064efb141beaefd4.js:1
+C @ framework-064efb141beaefd4.js:1
+z @ framework-064efb141beaefd4.js:1
+framework-064efb141beaefd4.js:1  Unrecognized feature: 'legacy-image-formats'.
+_ @ framework-064efb141beaefd4.js:1
+(anonymous) @ framework-064efb141beaefd4.js:1
+uD @ framework-064efb141beaefd4.js:1
+uI @ framework-064efb141beaefd4.js:1
+uM @ framework-064efb141beaefd4.js:1
+uS @ framework-064efb141beaefd4.js:1
+C @ framework-064efb141beaefd4.js:1
+z @ framework-064efb141beaefd4.js:1
+framework-064efb141beaefd4.js:1  Unrecognized feature: 'navigation-override'.
+_ @ framework-064efb141beaefd4.js:1
+(anonymous) @ framework-064efb141beaefd4.js:1
+uD @ framework-064efb141beaefd4.js:1
+uI @ framework-064efb141beaefd4.js:1
+uM @ framework-064efb141beaefd4.js:1
+uS @ framework-064efb141beaefd4.js:1
+C @ framework-064efb141beaefd4.js:1
+z @ framework-064efb141beaefd4.js:1
+framework-064efb141beaefd4.js:1  Unrecognized feature: 'oversized-images'.
+_ @ framework-064efb141beaefd4.js:1
+(anonymous) @ framework-064efb141beaefd4.js:1
+uD @ framework-064efb141beaefd4.js:1
+uI @ framework-064efb141beaefd4.js:1
+uM @ framework-064efb141beaefd4.js:1
+uS @ framework-064efb141beaefd4.js:1
+C @ framework-064efb141beaefd4.js:1
+z @ framework-064efb141beaefd4.js:1
+framework-064efb141beaefd4.js:1  Unrecognized feature: 'publickey-credentials'.
+_ @ framework-064efb141beaefd4.js:1
+(anonymous) @ framework-064efb141beaefd4.js:1
+uD @ framework-064efb141beaefd4.js:1
+uI @ framework-064efb141beaefd4.js:1
+uM @ framework-064efb141beaefd4.js:1
+uS @ framework-064efb141beaefd4.js:1
+C @ framework-064efb141beaefd4.js:1
+z @ framework-064efb141beaefd4.js:1
+framework-064efb141beaefd4.js:1  Unrecognized feature: 'speaker-selection'.
+_ @ framework-064efb141beaefd4.js:1
+(anonymous) @ framework-064efb141beaefd4.js:1
+uD @ framework-064efb141beaefd4.js:1
+uI @ framework-064efb141beaefd4.js:1
+uM @ framework-064efb141beaefd4.js:1
+uS @ framework-064efb141beaefd4.js:1
+C @ framework-064efb141beaefd4.js:1
+z @ framework-064efb141beaefd4.js:1
+framework-064efb141beaefd4.js:1  Unrecognized feature: 'unoptimized-images'.
+_ @ framework-064efb141beaefd4.js:1
+(anonymous) @ framework-064efb141beaefd4.js:1
+uD @ framework-064efb141beaefd4.js:1
+uI @ framework-064efb141beaefd4.js:1
+uM @ framework-064efb141beaefd4.js:1
+uS @ framework-064efb141beaefd4.js:1
+C @ framework-064efb141beaefd4.js:1
+z @ framework-064efb141beaefd4.js:1
+framework-064efb141beaefd4.js:1  Unrecognized feature: 'unsized-media'.
+_ @ framework-064efb141beaefd4.js:1
+(anonymous) @ framework-064efb141beaefd4.js:1
+uD @ framework-064efb141beaefd4.js:1
+uI @ framework-064efb141beaefd4.js:1
+uM @ framework-064efb141beaefd4.js:1
+uS @ framework-064efb141beaefd4.js:1
+C @ framework-064efb141beaefd4.js:1
+z @ framework-064efb141beaefd4.js:1
+framework-064efb141beaefd4.js:1  Unrecognized feature: 'pointer-lock'.
+_ @ framework-064efb141beaefd4.js:1
+(anonymous) @ framework-064efb141beaefd4.js:1
+uD @ framework-064efb141beaefd4.js:1
+uI @ framework-064efb141beaefd4.js:1
+uM @ framework-064efb141beaefd4.js:1
+uS @ framework-064efb141beaefd4.js:1
+C @ framework-064efb141beaefd4.js:1
+z @ framework-064efb141beaefd4.js:1
+framework-064efb141beaefd4.js:1  Allow attribute will take precedence over 'allowfullscreen'.
+_ @ framework-064efb141beaefd4.js:1
+(anonymous) @ framework-064efb141beaefd4.js:1
+uD @ framework-064efb141beaefd4.js:1
+uI @ framework-064efb141beaefd4.js:1
+uM @ framework-064efb141beaefd4.js:1
+uS @ framework-064efb141beaefd4.js:1
+C @ framework-064efb141beaefd4.js:1
+z @ framework-064efb141beaefd4.js:1
+framework-064efb141beaefd4.js:1  Allow attribute will take precedence over 'allowpaymentrequest'.
+_ @ framework-064efb141beaefd4.js:1
+(anonymous) @ framework-064efb141beaefd4.js:1
+uD @ framework-064efb141beaefd4.js:1
+uI @ framework-064efb141beaefd4.js:1
+uM @ framework-064efb141beaefd4.js:1
+uS @ framework-064efb141beaefd4.js:1
+C @ framework-064efb141beaefd4.js:1
+z @ framework-064efb141beaefd4.js:1
+[NEW] Explain Console errors by using Copilot in Edge: click
+         
+         to explain an error. 
+        Learn more
+        Don't show again
+workspace_iframe.html:32  Unrecognized feature: 'ambient-light-sensor'.
+workspace_iframe.html:32  Unrecognized feature: 'battery'.
+workspace_iframe.html:32  Unrecognized feature: 'execution-while-not-rendered'.
+workspace_iframe.html:32  Unrecognized feature: 'execution-while-out-of-viewport'.
+workspace_iframe.html:32  Unrecognized feature: 'layout-animations'.
+workspace_iframe.html:32  Unrecognized feature: 'legacy-image-formats'.
+workspace_iframe.html:32  Unrecognized feature: 'navigation-override'.
+workspace_iframe.html:32  Unrecognized feature: 'oversized-images'.
+workspace_iframe.html:32  Unrecognized feature: 'publickey-credentials'.
+workspace_iframe.html:32  Unrecognized feature: 'speaker-selection'.
+workspace_iframe.html:32  Unrecognized feature: 'unoptimized-images'.
+workspace_iframe.html:32  Unrecognized feature: 'unsized-media'.
+workspace_iframe.html:32  Allow attribute will take precedence over 'allowfullscreen'.
+workspace_iframe.html:32  Allow attribute will take precedence over 'allowpaymentrequest'.
+client:536  WebSocket connection to 'wss://317873c7-d975-4993-b88a-1b45d18b4311-00-2zlumfvl3ydq0.worf.replit.dev/?token=IDJzOSWsRUup' failed: Error during WebSocket handshake: Unexpected response code: 400
+setupWebSocket @ client:536
+(anonymous) @ client:531
+client:536  Uncaught (in promise) SyntaxError: Failed to construct 'WebSocket': The URL 'wss://localhost:undefined/?token=IDJzOSWsRUup' is invalid.
+    at setupWebSocket (client:536:19)
+    at fallback (client:509:16)
+    at WebSocket.<anonymous> (client:555:7)
+setupWebSocket @ client:536
+fallback @ client:509
+(anonymous) @ client:555
+client:536  WebSocket connection to 'wss://317873c7-d975-4993-b88a-1b45d18b4311-00-2zlumfvl3ydq0.worf.replit.dev/?token=IDJzOSWsRUup' failed: Error during WebSocket handshake: Unexpected response code: 400
+setupWebSocket @ client:536
+(anonymous) @ client:531
+client:536  Uncaught (in promise) SyntaxError: Failed to construct 'WebSocket': The URL 'wss://localhost:undefined/?token=IDJzOSWsRUup' is invalid.
+    at setupWebSocket (client:536:19)
+    at fallback (client:509:16)
+    at WebSocket.<anonymous> (client:555:7)
+setupWebSocket @ client:536
+fallback @ client:509
+(anonymous) @ client:555
+chunk-QCHXOAYK.js:136  Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ react.development.js:209
+error @ react.development.js:183
+resolveDispatcher @ react.development.js:1592
+useEffect @ react.development.js:1633
+QueryClientProvider @ QueryClientProvider.tsx:33
+renderWithHooks @ react-dom.development.js:15486
+mountIndeterminateComponent @ react-dom.development.js:20103
+beginWork @ react-dom.development.js:21626
+beginWork$1 @ react-dom.development.js:27465
+performUnitOfWork @ react-dom.development.js:26596
+workLoopSync @ react-dom.development.js:26505
+renderRootSync @ react-dom.development.js:26473
+performConcurrentWorkOnRoot @ react-dom.development.js:25777
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533
+chunk-QCHXOAYK.js:136  Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ react.development.js:209
+error @ react.development.js:183
+resolveDispatcher @ react.development.js:1592
+useEffect @ react.development.js:1633
+QueryClientProvider @ QueryClientProvider.tsx:33
+renderWithHooks @ react-dom.development.js:15486
+mountIndeterminateComponent @ react-dom.development.js:20103
+beginWork @ react-dom.development.js:21626
+callCallback2 @ react-dom.development.js:4164
+invokeGuardedCallbackDev @ react-dom.development.js:4213
+invokeGuardedCallback @ react-dom.development.js:4277
+beginWork$1 @ react-dom.development.js:27490
+performUnitOfWork @ react-dom.development.js:26596
+workLoopSync @ react-dom.development.js:26505
+renderRootSync @ react-dom.development.js:26473
+performConcurrentWorkOnRoot @ react-dom.development.js:25777
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533
+chunk-QCHXOAYK.js:1078  Uncaught TypeError: Cannot read properties of null (reading 'useEffect')
+    at Object.useEffect (chunk-QCHXOAYK.js:1078:29)
+    at QueryClientProvider (@tanstack_react-query.js:2808:9)
+    at renderWithHooks (chunk-RPCDYKBN.js:11548:26)
+    at mountIndeterminateComponent (chunk-RPCDYKBN.js:14926:21)
+    at beginWork (chunk-RPCDYKBN.js:15914:22)
+    at HTMLUnknownElement.callCallback2 (chunk-RPCDYKBN.js:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-RPCDYKBN.js:3699:24)
+    at invokeGuardedCallback (chunk-RPCDYKBN.js:3733:39)
+    at beginWork$1 (chunk-RPCDYKBN.js:19765:15)
+    at performUnitOfWork (chunk-RPCDYKBN.js:19198:20)
+useEffect @ react.development.js:1634
+QueryClientProvider @ QueryClientProvider.tsx:33
+renderWithHooks @ react-dom.development.js:15486
+mountIndeterminateComponent @ react-dom.development.js:20103
+beginWork @ react-dom.development.js:21626
+callCallback2 @ react-dom.development.js:4164
+invokeGuardedCallbackDev @ react-dom.development.js:4213
+invokeGuardedCallback @ react-dom.development.js:4277
+beginWork$1 @ react-dom.development.js:27490
+performUnitOfWork @ react-dom.development.js:26596
+workLoopSync @ react-dom.development.js:26505
+renderRootSync @ react-dom.development.js:26473
+performConcurrentWorkOnRoot @ react-dom.development.js:25777
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533
+chunk-QCHXOAYK.js:136  Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ react.development.js:209
+error @ react.development.js:183
+resolveDispatcher @ react.development.js:1592
+useEffect @ react.development.js:1633
+QueryClientProvider @ QueryClientProvider.tsx:33
+renderWithHooks @ react-dom.development.js:15486
+mountIndeterminateComponent @ react-dom.development.js:20103
+beginWork @ react-dom.development.js:21626
+beginWork$1 @ react-dom.development.js:27465
+performUnitOfWork @ react-dom.development.js:26596
+workLoopSync @ react-dom.development.js:26505
+renderRootSync @ react-dom.development.js:26473
+recoverFromConcurrentError @ react-dom.development.js:25889
+performConcurrentWorkOnRoot @ react-dom.development.js:25789
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533
+chunk-QCHXOAYK.js:136  Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ react.development.js:209
+error @ react.development.js:183
+resolveDispatcher @ react.development.js:1592
+useEffect @ react.development.js:1633
+QueryClientProvider @ QueryClientProvider.tsx:33
+renderWithHooks @ react-dom.development.js:15486
+mountIndeterminateComponent @ react-dom.development.js:20103
+beginWork @ react-dom.development.js:21626
+callCallback2 @ react-dom.development.js:4164
+invokeGuardedCallbackDev @ react-dom.development.js:4213
+invokeGuardedCallback @ react-dom.development.js:4277
+beginWork$1 @ react-dom.development.js:27490
+performUnitOfWork @ react-dom.development.js:26596
+workLoopSync @ react-dom.development.js:26505
+renderRootSync @ react-dom.development.js:26473
+recoverFromConcurrentError @ react-dom.development.js:25889
+performConcurrentWorkOnRoot @ react-dom.development.js:25789
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533
+chunk-QCHXOAYK.js:1078  Uncaught TypeError: Cannot read properties of null (reading 'useEffect')
+    at Object.useEffect (chunk-QCHXOAYK.js:1078:29)
+    at QueryClientProvider (@tanstack_react-query.js:2808:9)
+    at renderWithHooks (chunk-RPCDYKBN.js:11548:26)
+    at mountIndeterminateComponent (chunk-RPCDYKBN.js:14926:21)
+    at beginWork (chunk-RPCDYKBN.js:15914:22)
+    at HTMLUnknownElement.callCallback2 (chunk-RPCDYKBN.js:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-RPCDYKBN.js:3699:24)
+    at invokeGuardedCallback (chunk-RPCDYKBN.js:3733:39)
+    at beginWork$1 (chunk-RPCDYKBN.js:19765:15)
+    at performUnitOfWork (chunk-RPCDYKBN.js:19198:20)
+useEffect @ react.development.js:1634
+QueryClientProvider @ QueryClientProvider.tsx:33
+renderWithHooks @ react-dom.development.js:15486
+mountIndeterminateComponent @ react-dom.development.js:20103
+beginWork @ react-dom.development.js:21626
+callCallback2 @ react-dom.development.js:4164
+invokeGuardedCallbackDev @ react-dom.development.js:4213
+invokeGuardedCallback @ react-dom.development.js:4277
+beginWork$1 @ react-dom.development.js:27490
+performUnitOfWork @ react-dom.development.js:26596
+workLoopSync @ react-dom.development.js:26505
+renderRootSync @ react-dom.development.js:26473
+recoverFromConcurrentError @ react-dom.development.js:25889
+performConcurrentWorkOnRoot @ react-dom.development.js:25789
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533
+chunk-RPCDYKBN.js:14032  The above error occurred in the <QueryClientProvider> component:
+
+    at QueryClientProvider (https://317873c7-d975-4993-b88a-1b45d18b4311-00-2zlumfvl3ydq0.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=ebbdccc0:2805:3)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+logCapturedError @ react-dom.development.js:18704
+update.callback @ react-dom.development.js:18737
+callCallback @ react-dom.development.js:15036
+commitUpdateQueue @ react-dom.development.js:15057
+commitLayoutEffectOnFiber @ react-dom.development.js:23430
+commitLayoutMountEffects_complete @ react-dom.development.js:24727
+commitLayoutEffects_begin @ react-dom.development.js:24713
+commitLayoutEffects @ react-dom.development.js:24651
+commitRootImpl @ react-dom.development.js:26862
+commitRoot @ react-dom.development.js:26721
+finishConcurrentRender @ react-dom.development.js:25931
+performConcurrentWorkOnRoot @ react-dom.development.js:25848
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533
+chunk-RPCDYKBN.js:19413  Uncaught TypeError: Cannot read properties of null (reading 'useEffect')
+    at Object.useEffect (chunk-QCHXOAYK.js:1078:29)
+    at QueryClientProvider (@tanstack_react-query.js:2808:9)
+    at renderWithHooks (chunk-RPCDYKBN.js:11548:26)
+    at mountIndeterminateComponent (chunk-RPCDYKBN.js:14926:21)
+    at beginWork (chunk-RPCDYKBN.js:15914:22)
+    at beginWork$1 (chunk-RPCDYKBN.js:19753:22)
+    at performUnitOfWork (chunk-RPCDYKBN.js:19198:20)
+    at workLoopSync (chunk-RPCDYKBN.js:19137:13)
+    at renderRootSync (chunk-RPCDYKBN.js:19116:15)
+    at recoverFromConcurrentError (chunk-RPCDYKBN.js:18736:28)
+useEffect @ react.development.js:1634
+QueryClientProvider @ QueryClientProvider.tsx:33
+renderWithHooks @ react-dom.development.js:15486
+mountIndeterminateComponent @ react-dom.development.js:20103
+beginWork @ react-dom.development.js:21626
+beginWork$1 @ react-dom.development.js:27465
+performUnitOfWork @ react-dom.development.js:26596
+workLoopSync @ react-dom.development.js:26505
+renderRootSync @ react-dom.development.js:26473
+recoverFromConcurrentError @ react-dom.development.js:25889
+performConcurrentWorkOnRoot @ react-dom.development.js:25789
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533
+chunk-QCHXOAYK.js:136  Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ react.development.js:209
+error @ react.development.js:183
+resolveDispatcher @ react.development.js:1592
+useEffect @ react.development.js:1633
+QueryClientProvider @ QueryClientProvider.tsx:33
+renderWithHooks @ react-dom.development.js:15486
+mountIndeterminateComponent @ react-dom.development.js:20103
+beginWork @ react-dom.development.js:21626
+beginWork$1 @ react-dom.development.js:27465
+performUnitOfWork @ react-dom.development.js:26596
+workLoopSync @ react-dom.development.js:26505
+renderRootSync @ react-dom.development.js:26473
+performConcurrentWorkOnRoot @ react-dom.development.js:25777
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533
+chunk-QCHXOAYK.js:136  Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ react.development.js:209
+error @ react.development.js:183
+resolveDispatcher @ react.development.js:1592
+useEffect @ react.development.js:1633
+QueryClientProvider @ QueryClientProvider.tsx:33
+renderWithHooks @ react-dom.development.js:15486
+mountIndeterminateComponent @ react-dom.development.js:20103
+beginWork @ react-dom.development.js:21626
+callCallback2 @ react-dom.development.js:4164
+invokeGuardedCallbackDev @ react-dom.development.js:4213
+invokeGuardedCallback @ react-dom.development.js:4277
+beginWork$1 @ react-dom.development.js:27490
+performUnitOfWork @ react-dom.development.js:26596
+workLoopSync @ react-dom.development.js:26505
+renderRootSync @ react-dom.development.js:26473
+performConcurrentWorkOnRoot @ react-dom.development.js:25777
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533
+chunk-QCHXOAYK.js:1078  Uncaught TypeError: Cannot read properties of null (reading 'useEffect')
+    at Object.useEffect (chunk-QCHXOAYK.js:1078:29)
+    at QueryClientProvider (@tanstack_react-query.js:2808:9)
+    at renderWithHooks (chunk-RPCDYKBN.js:11548:26)
+    at mountIndeterminateComponent (chunk-RPCDYKBN.js:14926:21)
+    at beginWork (chunk-RPCDYKBN.js:15914:22)
+    at HTMLUnknownElement.callCallback2 (chunk-RPCDYKBN.js:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-RPCDYKBN.js:3699:24)
+    at invokeGuardedCallback (chunk-RPCDYKBN.js:3733:39)
+    at beginWork$1 (chunk-RPCDYKBN.js:19765:15)
+    at performUnitOfWork (chunk-RPCDYKBN.js:19198:20)
+useEffect @ react.development.js:1634
+QueryClientProvider @ QueryClientProvider.tsx:33
+renderWithHooks @ react-dom.development.js:15486
+mountIndeterminateComponent @ react-dom.development.js:20103
+beginWork @ react-dom.development.js:21626
+callCallback2 @ react-dom.development.js:4164
+invokeGuardedCallbackDev @ react-dom.development.js:4213
+invokeGuardedCallback @ react-dom.development.js:4277
+beginWork$1 @ react-dom.development.js:27490
+performUnitOfWork @ react-dom.development.js:26596
+workLoopSync @ react-dom.development.js:26505
+renderRootSync @ react-dom.development.js:26473
+performConcurrentWorkOnRoot @ react-dom.development.js:25777
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533
+chunk-QCHXOAYK.js:136  Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ react.development.js:209
+error @ react.development.js:183
+resolveDispatcher @ react.development.js:1592
+useEffect @ react.development.js:1633
+QueryClientProvider @ QueryClientProvider.tsx:33
+renderWithHooks @ react-dom.development.js:15486
+mountIndeterminateComponent @ react-dom.development.js:20103
+beginWork @ react-dom.development.js:21626
+beginWork$1 @ react-dom.development.js:27465
+performUnitOfWork @ react-dom.development.js:26596
+workLoopSync @ react-dom.development.js:26505
+renderRootSync @ react-dom.development.js:26473
+recoverFromConcurrentError @ react-dom.development.js:25889
+performConcurrentWorkOnRoot @ react-dom.development.js:25789
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533
+chunk-QCHXOAYK.js:136  Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ react.development.js:209
+error @ react.development.js:183
+resolveDispatcher @ react.development.js:1592
+useEffect @ react.development.js:1633
+QueryClientProvider @ QueryClientProvider.tsx:33
+renderWithHooks @ react-dom.development.js:15486
+mountIndeterminateComponent @ react-dom.development.js:20103
+beginWork @ react-dom.development.js:21626
+callCallback2 @ react-dom.development.js:4164
+invokeGuardedCallbackDev @ react-dom.development.js:4213
+invokeGuardedCallback @ react-dom.development.js:4277
+beginWork$1 @ react-dom.development.js:27490
+performUnitOfWork @ react-dom.development.js:26596
+workLoopSync @ react-dom.development.js:26505
+renderRootSync @ react-dom.development.js:26473
+recoverFromConcurrentError @ react-dom.development.js:25889
+performConcurrentWorkOnRoot @ react-dom.development.js:25789
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533
+chunk-QCHXOAYK.js:1078  Uncaught TypeError: Cannot read properties of null (reading 'useEffect')
+    at Object.useEffect (chunk-QCHXOAYK.js:1078:29)
+    at QueryClientProvider (@tanstack_react-query.js:2808:9)
+    at renderWithHooks (chunk-RPCDYKBN.js:11548:26)
+    at mountIndeterminateComponent (chunk-RPCDYKBN.js:14926:21)
+    at beginWork (chunk-RPCDYKBN.js:15914:22)
+    at HTMLUnknownElement.callCallback2 (chunk-RPCDYKBN.js:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-RPCDYKBN.js:3699:24)
+    at invokeGuardedCallback (chunk-RPCDYKBN.js:3733:39)
+    at beginWork$1 (chunk-RPCDYKBN.js:19765:15)
+    at performUnitOfWork (chunk-RPCDYKBN.js:19198:20)
+useEffect @ react.development.js:1634
+QueryClientProvider @ QueryClientProvider.tsx:33
+renderWithHooks @ react-dom.development.js:15486
+mountIndeterminateComponent @ react-dom.development.js:20103
+beginWork @ react-dom.development.js:21626
+callCallback2 @ react-dom.development.js:4164
+invokeGuardedCallbackDev @ react-dom.development.js:4213
+invokeGuardedCallback @ react-dom.development.js:4277
+beginWork$1 @ react-dom.development.js:27490
+performUnitOfWork @ react-dom.development.js:26596
+workLoopSync @ react-dom.development.js:26505
+renderRootSync @ react-dom.development.js:26473
+recoverFromConcurrentError @ react-dom.development.js:25889
+performConcurrentWorkOnRoot @ react-dom.development.js:25789
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533
+chunk-RPCDYKBN.js:14032  The above error occurred in the <QueryClientProvider> component:
+
+    at QueryClientProvider (https://317873c7-d975-4993-b88a-1b45d18b4311-00-2zlumfvl3ydq0.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=ebbdccc0:2805:3)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+logCapturedError @ react-dom.development.js:18704
+update.callback @ react-dom.development.js:18737
+callCallback @ react-dom.development.js:15036
+commitUpdateQueue @ react-dom.development.js:15057
+commitLayoutEffectOnFiber @ react-dom.development.js:23430
+commitLayoutMountEffects_complete @ react-dom.development.js:24727
+commitLayoutEffects_begin @ react-dom.development.js:24713
+commitLayoutEffects @ react-dom.development.js:24651
+commitRootImpl @ react-dom.development.js:26862
+commitRoot @ react-dom.development.js:26721
+finishConcurrentRender @ react-dom.development.js:25931
+performConcurrentWorkOnRoot @ react-dom.development.js:25848
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533
+chunk-RPCDYKBN.js:19413  Uncaught TypeError: Cannot read properties of null (reading 'useEffect')
+    at Object.useEffect (chunk-QCHXOAYK.js:1078:29)
+    at QueryClientProvider (@tanstack_react-query.js:2808:9)
+    at renderWithHooks (chunk-RPCDYKBN.js:11548:26)
+    at mountIndeterminateComponent (chunk-RPCDYKBN.js:14926:21)
+    at beginWork (chunk-RPCDYKBN.js:15914:22)
+    at beginWork$1 (chunk-RPCDYKBN.js:19753:22)
+    at performUnitOfWork (chunk-RPCDYKBN.js:19198:20)
+    at workLoopSync (chunk-RPCDYKBN.js:19137:13)
+    at renderRootSync (chunk-RPCDYKBN.js:19116:15)
+    at recoverFromConcurrentError (chunk-RPCDYKBN.js:18736:28)
+useEffect @ react.development.js:1634
+QueryClientProvider @ QueryClientProvider.tsx:33
+renderWithHooks @ react-dom.development.js:15486
+mountIndeterminateComponent @ react-dom.development.js:20103
+beginWork @ react-dom.development.js:21626
+beginWork$1 @ react-dom.development.js:27465
+performUnitOfWork @ react-dom.development.js:26596
+workLoopSync @ react-dom.development.js:26505
+renderRootSync @ react-dom.development.js:26473
+recoverFromConcurrentError @ react-dom.development.js:25889
+performConcurrentWorkOnRoot @ react-dom.development.js:25789
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533
+chunk-QCHXOAYK.js:136  Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ react.development.js:209
+error @ react.development.js:183
+resolveDispatcher @ react.development.js:1592
+useEffect @ react.development.js:1633
+QueryClientProvider @ QueryClientProvider.tsx:33
+renderWithHooks @ react-dom.development.js:15486
+mountIndeterminateComponent @ react-dom.development.js:20103
+beginWork @ react-dom.development.js:21626
+beginWork$1 @ react-dom.development.js:27465
+performUnitOfWork @ react-dom.development.js:26596
+workLoopSync @ react-dom.development.js:26505
+renderRootSync @ react-dom.development.js:26473
+performConcurrentWorkOnRoot @ react-dom.development.js:25777
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533
+chunk-QCHXOAYK.js:136  Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ react.development.js:209
+error @ react.development.js:183
+resolveDispatcher @ react.development.js:1592
+useEffect @ react.development.js:1633
+QueryClientProvider @ QueryClientProvider.tsx:33
+renderWithHooks @ react-dom.development.js:15486
+mountIndeterminateComponent @ react-dom.development.js:20103
+beginWork @ react-dom.development.js:21626
+callCallback2 @ react-dom.development.js:4164
+invokeGuardedCallbackDev @ react-dom.development.js:4213
+invokeGuardedCallback @ react-dom.development.js:4277
+beginWork$1 @ react-dom.development.js:27490
+performUnitOfWork @ react-dom.development.js:26596
+workLoopSync @ react-dom.development.js:26505
+renderRootSync @ react-dom.development.js:26473
+performConcurrentWorkOnRoot @ react-dom.development.js:25777
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533
+chunk-QCHXOAYK.js:1078  Uncaught TypeError: Cannot read properties of null (reading 'useEffect')
+    at Object.useEffect (chunk-QCHXOAYK.js:1078:29)
+    at QueryClientProvider (@tanstack_react-query.js:2808:9)
+    at renderWithHooks (chunk-RPCDYKBN.js:11548:26)
+    at mountIndeterminateComponent (chunk-RPCDYKBN.js:14926:21)
+    at beginWork (chunk-RPCDYKBN.js:15914:22)
+    at HTMLUnknownElement.callCallback2 (chunk-RPCDYKBN.js:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-RPCDYKBN.js:3699:24)
+    at invokeGuardedCallback (chunk-RPCDYKBN.js:3733:39)
+    at beginWork$1 (chunk-RPCDYKBN.js:19765:15)
+    at performUnitOfWork (chunk-RPCDYKBN.js:19198:20)
+useEffect @ react.development.js:1634
+QueryClientProvider @ QueryClientProvider.tsx:33
+renderWithHooks @ react-dom.development.js:15486
+mountIndeterminateComponent @ react-dom.development.js:20103
+beginWork @ react-dom.development.js:21626
+callCallback2 @ react-dom.development.js:4164
+invokeGuardedCallbackDev @ react-dom.development.js:4213
+invokeGuardedCallback @ react-dom.development.js:4277
+beginWork$1 @ react-dom.development.js:27490
+performUnitOfWork @ react-dom.development.js:26596
+workLoopSync @ react-dom.development.js:26505
+renderRootSync @ react-dom.development.js:26473
+performConcurrentWorkOnRoot @ react-dom.development.js:25777
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533
+chunk-QCHXOAYK.js:136  Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ react.development.js:209
+error @ react.development.js:183
+resolveDispatcher @ react.development.js:1592
+useEffect @ react.development.js:1633
+QueryClientProvider @ QueryClientProvider.tsx:33
+renderWithHooks @ react-dom.development.js:15486
+mountIndeterminateComponent @ react-dom.development.js:20103
+beginWork @ react-dom.development.js:21626
+beginWork$1 @ react-dom.development.js:27465
+performUnitOfWork @ react-dom.development.js:26596
+workLoopSync @ react-dom.development.js:26505
+renderRootSync @ react-dom.development.js:26473
+recoverFromConcurrentError @ react-dom.development.js:25889
+performConcurrentWorkOnRoot @ react-dom.development.js:25789
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533
+chunk-QCHXOAYK.js:136  Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ react.development.js:209
+error @ react.development.js:183
+resolveDispatcher @ react.development.js:1592
+useEffect @ react.development.js:1633
+QueryClientProvider @ QueryClientProvider.tsx:33
+renderWithHooks @ react-dom.development.js:15486
+mountIndeterminateComponent @ react-dom.development.js:20103
+beginWork @ react-dom.development.js:21626
+callCallback2 @ react-dom.development.js:4164
+invokeGuardedCallbackDev @ react-dom.development.js:4213
+invokeGuardedCallback @ react-dom.development.js:4277
+beginWork$1 @ react-dom.development.js:27490
+performUnitOfWork @ react-dom.development.js:26596
+workLoopSync @ react-dom.development.js:26505
+renderRootSync @ react-dom.development.js:26473
+recoverFromConcurrentError @ react-dom.development.js:25889
+performConcurrentWorkOnRoot @ react-dom.development.js:25789
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533
+chunk-QCHXOAYK.js:1078  Uncaught TypeError: Cannot read properties of null (reading 'useEffect')
+    at Object.useEffect (chunk-QCHXOAYK.js:1078:29)
+    at QueryClientProvider (@tanstack_react-query.js:2808:9)
+    at renderWithHooks (chunk-RPCDYKBN.js:11548:26)
+    at mountIndeterminateComponent (chunk-RPCDYKBN.js:14926:21)
+    at beginWork (chunk-RPCDYKBN.js:15914:22)
+    at HTMLUnknownElement.callCallback2 (chunk-RPCDYKBN.js:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-RPCDYKBN.js:3699:24)
+    at invokeGuardedCallback (chunk-RPCDYKBN.js:3733:39)
+    at beginWork$1 (chunk-RPCDYKBN.js:19765:15)
+    at performUnitOfWork (chunk-RPCDYKBN.js:19198:20)
+useEffect @ react.development.js:1634
+QueryClientProvider @ QueryClientProvider.tsx:33
+renderWithHooks @ react-dom.development.js:15486
+mountIndeterminateComponent @ react-dom.development.js:20103
+beginWork @ react-dom.development.js:21626
+callCallback2 @ react-dom.development.js:4164
+invokeGuardedCallbackDev @ react-dom.development.js:4213
+invokeGuardedCallback @ react-dom.development.js:4277
+beginWork$1 @ react-dom.development.js:27490
+performUnitOfWork @ react-dom.development.js:26596
+workLoopSync @ react-dom.development.js:26505
+renderRootSync @ react-dom.development.js:26473
+recoverFromConcurrentError @ react-dom.development.js:25889
+performConcurrentWorkOnRoot @ react-dom.development.js:25789
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533
+chunk-RPCDYKBN.js:14032  The above error occurred in the <QueryClientProvider> component:
+
+    at QueryClientProvider (https://317873c7-d975-4993-b88a-1b45d18b4311-00-2zlumfvl3ydq0.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=ebbdccc0:2805:3)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+logCapturedError @ react-dom.development.js:18704
+update.callback @ react-dom.development.js:18737
+callCallback @ react-dom.development.js:15036
+commitUpdateQueue @ react-dom.development.js:15057
+commitLayoutEffectOnFiber @ react-dom.development.js:23430
+commitLayoutMountEffects_complete @ react-dom.development.js:24727
+commitLayoutEffects_begin @ react-dom.development.js:24713
+commitLayoutEffects @ react-dom.development.js:24651
+commitRootImpl @ react-dom.development.js:26862
+commitRoot @ react-dom.development.js:26721
+finishConcurrentRender @ react-dom.development.js:25931
+performConcurrentWorkOnRoot @ react-dom.development.js:25848
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533
+chunk-RPCDYKBN.js:19413  Uncaught TypeError: Cannot read properties of null (reading 'useEffect')
+    at Object.useEffect (chunk-QCHXOAYK.js:1078:29)
+    at QueryClientProvider (@tanstack_react-query.js:2808:9)
+    at renderWithHooks (chunk-RPCDYKBN.js:11548:26)
+    at mountIndeterminateComponent (chunk-RPCDYKBN.js:14926:21)
+    at beginWork (chunk-RPCDYKBN.js:15914:22)
+    at beginWork$1 (chunk-RPCDYKBN.js:19753:22)
+    at performUnitOfWork (chunk-RPCDYKBN.js:19198:20)
+    at workLoopSync (chunk-RPCDYKBN.js:19137:13)
+    at renderRootSync (chunk-RPCDYKBN.js:19116:15)
+    at recoverFromConcurrentError (chunk-RPCDYKBN.js:18736:28)
+useEffect @ react.development.js:1634
+QueryClientProvider @ QueryClientProvider.tsx:33
+renderWithHooks @ react-dom.development.js:15486
+mountIndeterminateComponent @ react-dom.development.js:20103
+beginWork @ react-dom.development.js:21626
+beginWork$1 @ react-dom.development.js:27465
+performUnitOfWork @ react-dom.development.js:26596
+workLoopSync @ react-dom.development.js:26505
+renderRootSync @ react-dom.development.js:26473
+recoverFromConcurrentError @ react-dom.development.js:25889
+performConcurrentWorkOnRoot @ react-dom.development.js:25789
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533
+client:536  WebSocket connection to 'wss://317873c7-d975-4993-b88a-1b45d18b4311-00-2zlumfvl3ydq0.worf.replit.dev/?token=IDJzOSWsRUup' failed: Error during WebSocket handshake: Unexpected response code: 400
+setupWebSocket @ client:536
+(anonymous) @ client:531
+client:536  Uncaught (in promise) SyntaxError: Failed to construct 'WebSocket': The URL 'wss://localhost:undefined/?token=IDJzOSWsRUup' is invalid.
+    at setupWebSocket (client:536:19)
+    at fallback (client:509:16)
+    at WebSocket.<anonymous> (client:555:7)
+setupWebSocket @ client:536
+fallback @ client:509
+(anonymous) @ client:555
+workspace_iframe.html:32  Unrecognized feature: 'ambient-light-sensor'.
+workspace_iframe.html:32  Unrecognized feature: 'battery'.
+workspace_iframe.html:32  Unrecognized feature: 'execution-while-not-rendered'.
+workspace_iframe.html:32  Unrecognized feature: 'execution-while-out-of-viewport'.
+workspace_iframe.html:32  Unrecognized feature: 'layout-animations'.
+workspace_iframe.html:32  Unrecognized feature: 'legacy-image-formats'.
+workspace_iframe.html:32  Unrecognized feature: 'navigation-override'.
+workspace_iframe.html:32  Unrecognized feature: 'oversized-images'.
+workspace_iframe.html:32  Unrecognized feature: 'publickey-credentials'.
+workspace_iframe.html:32  Unrecognized feature: 'speaker-selection'.
+workspace_iframe.html:32  Unrecognized feature: 'unoptimized-images'.
+workspace_iframe.html:32  Unrecognized feature: 'unsized-media'.
+workspace_iframe.html:32  Allow attribute will take precedence over 'allowfullscreen'.
+workspace_iframe.html:32  Allow attribute will take precedence over 'allowpaymentrequest'.
+client:536  WebSocket connection to 'wss://317873c7-d975-4993-b88a-1b45d18b4311-00-2zlumfvl3ydq0.worf.replit.dev/?token=IDJzOSWsRUup' failed: Error during WebSocket handshake: Unexpected response code: 400
+setupWebSocket @ client:536
+(anonymous) @ client:531
+client:536  Uncaught (in promise) SyntaxError: Failed to construct 'WebSocket': The URL 'wss://localhost:undefined/?token=IDJzOSWsRUup' is invalid.
+    at setupWebSocket (client:536:19)
+    at fallback (client:509:16)
+    at WebSocket.<anonymous> (client:555:7)
+setupWebSocket @ client:536
+fallback @ client:509
+(anonymous) @ client:555
+client:536  WebSocket connection to 'wss://317873c7-d975-4993-b88a-1b45d18b4311-00-2zlumfvl3ydq0.worf.replit.dev/?token=IDJzOSWsRUup' failed: Error during WebSocket handshake: Unexpected response code: 400
+setupWebSocket @ client:536
+(anonymous) @ client:531
+client:536  Uncaught (in promise) SyntaxError: Failed to construct 'WebSocket': The URL 'wss://localhost:undefined/?token=IDJzOSWsRUup' is invalid.
+    at setupWebSocket (client:536:19)
+    at fallback (client:509:16)
+    at WebSocket.<anonymous> (client:555:7)
+setupWebSocket @ client:536
+fallback @ client:509
+(anonymous) @ client:555
+react.development.js:209  Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ react.development.js:209
+error @ react.development.js:183
+resolveDispatcher @ react.development.js:1592
+useEffect @ react.development.js:1633
+QueryClientProvider @ @tanstack_react-query.js?v=ebbdccc0:2808
+renderWithHooks @ react-dom.development.js:15486
+mountIndeterminateComponent @ react-dom.development.js:20103
+beginWork @ react-dom.development.js:21626
+beginWork$1 @ react-dom.development.js:27465
+performUnitOfWork @ react-dom.development.js:26596
+workLoopSync @ react-dom.development.js:26505
+renderRootSync @ react-dom.development.js:26473
+performConcurrentWorkOnRoot @ react-dom.development.js:25777
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533
+react.development.js:209  Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ react.development.js:209
+error @ react.development.js:183
+resolveDispatcher @ react.development.js:1592
+useEffect @ react.development.js:1633
+QueryClientProvider @ @tanstack_react-query.js?v=ebbdccc0:2808
+renderWithHooks @ react-dom.development.js:15486
+mountIndeterminateComponent @ react-dom.development.js:20103
+beginWork @ react-dom.development.js:21626
+callCallback2 @ react-dom.development.js:4164
+invokeGuardedCallbackDev @ react-dom.development.js:4213
+invokeGuardedCallback @ react-dom.development.js:4277
+beginWork$1 @ react-dom.development.js:27490
+performUnitOfWork @ react-dom.development.js:26596
+workLoopSync @ react-dom.development.js:26505
+renderRootSync @ react-dom.development.js:26473
+performConcurrentWorkOnRoot @ react-dom.development.js:25777
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533
+react.development.js:1634  Uncaught TypeError: Cannot read properties of null (reading 'useEffect')
+    at Object.useEffect (react.development.js:1634:21)
+    at QueryClientProvider (@tanstack_react-query.js?v=ebbdccc0:2808:9)
+    at renderWithHooks (react-dom.development.js:15486:18)
+    at mountIndeterminateComponent (react-dom.development.js:20103:13)
+    at beginWork (react-dom.development.js:21626:16)
+    at HTMLUnknownElement.callCallback2 (react-dom.development.js:4164:14)
+    at Object.invokeGuardedCallbackDev (react-dom.development.js:4213:16)
+    at invokeGuardedCallback (react-dom.development.js:4277:31)
+    at beginWork$1 (react-dom.development.js:27490:7)
+    at performUnitOfWork (react-dom.development.js:26596:12)
+useEffect @ react.development.js:1634
+QueryClientProvider @ @tanstack_react-query.js?v=ebbdccc0:2808
+renderWithHooks @ react-dom.development.js:15486
+mountIndeterminateComponent @ react-dom.development.js:20103
+beginWork @ react-dom.development.js:21626
+callCallback2 @ react-dom.development.js:4164
+invokeGuardedCallbackDev @ react-dom.development.js:4213
+invokeGuardedCallback @ react-dom.development.js:4277
+beginWork$1 @ react-dom.development.js:27490
+performUnitOfWork @ react-dom.development.js:26596
+workLoopSync @ react-dom.development.js:26505
+renderRootSync @ react-dom.development.js:26473
+performConcurrentWorkOnRoot @ react-dom.development.js:25777
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533
+react.development.js:209  Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ react.development.js:209
+error @ react.development.js:183
+resolveDispatcher @ react.development.js:1592
+useEffect @ react.development.js:1633
+QueryClientProvider @ @tanstack_react-query.js?v=ebbdccc0:2808
+renderWithHooks @ react-dom.development.js:15486
+mountIndeterminateComponent @ react-dom.development.js:20103
+beginWork @ react-dom.development.js:21626
+beginWork$1 @ react-dom.development.js:27465
+performUnitOfWork @ react-dom.development.js:26596
+workLoopSync @ react-dom.development.js:26505
+renderRootSync @ react-dom.development.js:26473
+recoverFromConcurrentError @ react-dom.development.js:25889
+performConcurrentWorkOnRoot @ react-dom.development.js:25789
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533
+react.development.js:209  Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ react.development.js:209
+error @ react.development.js:183
+resolveDispatcher @ react.development.js:1592
+useEffect @ react.development.js:1633
+QueryClientProvider @ @tanstack_react-query.js?v=ebbdccc0:2808
+renderWithHooks @ react-dom.development.js:15486
+mountIndeterminateComponent @ react-dom.development.js:20103
+beginWork @ react-dom.development.js:21626
+callCallback2 @ react-dom.development.js:4164
+invokeGuardedCallbackDev @ react-dom.development.js:4213
+invokeGuardedCallback @ react-dom.development.js:4277
+beginWork$1 @ react-dom.development.js:27490
+performUnitOfWork @ react-dom.development.js:26596
+workLoopSync @ react-dom.development.js:26505
+renderRootSync @ react-dom.development.js:26473
+recoverFromConcurrentError @ react-dom.development.js:25889
+performConcurrentWorkOnRoot @ react-dom.development.js:25789
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533
+react.development.js:1634  Uncaught TypeError: Cannot read properties of null (reading 'useEffect')
+    at Object.useEffect (react.development.js:1634:21)
+    at QueryClientProvider (@tanstack_react-query.js?v=ebbdccc0:2808:9)
+    at renderWithHooks (react-dom.development.js:15486:18)
+    at mountIndeterminateComponent (react-dom.development.js:20103:13)
+    at beginWork (react-dom.development.js:21626:16)
+    at HTMLUnknownElement.callCallback2 (react-dom.development.js:4164:14)
+    at Object.invokeGuardedCallbackDev (react-dom.development.js:4213:16)
+    at invokeGuardedCallback (react-dom.development.js:4277:31)
+    at beginWork$1 (react-dom.development.js:27490:7)
+    at performUnitOfWork (react-dom.development.js:26596:12)
+useEffect @ react.development.js:1634
+QueryClientProvider @ @tanstack_react-query.js?v=ebbdccc0:2808
+renderWithHooks @ react-dom.development.js:15486
+mountIndeterminateComponent @ react-dom.development.js:20103
+beginWork @ react-dom.development.js:21626
+callCallback2 @ react-dom.development.js:4164
+invokeGuardedCallbackDev @ react-dom.development.js:4213
+invokeGuardedCallback @ react-dom.development.js:4277
+beginWork$1 @ react-dom.development.js:27490
+performUnitOfWork @ react-dom.development.js:26596
+workLoopSync @ react-dom.development.js:26505
+renderRootSync @ react-dom.development.js:26473
+recoverFromConcurrentError @ react-dom.development.js:25889
+performConcurrentWorkOnRoot @ react-dom.development.js:25789
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533
+react-dom.development.js:18704  The above error occurred in the <QueryClientProvider> component:
+
+    at QueryClientProvider (https://317873c7-d975-4993-b88a-1b45d18b4311-00-2zlumfvl3ydq0.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=ebbdccc0:2805:3)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+logCapturedError @ react-dom.development.js:18704
+update.callback @ react-dom.development.js:18737
+callCallback @ react-dom.development.js:15036
+commitUpdateQueue @ react-dom.development.js:15057
+commitLayoutEffectOnFiber @ react-dom.development.js:23430
+commitLayoutMountEffects_complete @ react-dom.development.js:24727
+commitLayoutEffects_begin @ react-dom.development.js:24713
+commitLayoutEffects @ react-dom.development.js:24651
+commitRootImpl @ react-dom.development.js:26862
+commitRoot @ react-dom.development.js:26721
+finishConcurrentRender @ react-dom.development.js:25931
+performConcurrentWorkOnRoot @ react-dom.development.js:25848
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533
+react-dom.development.js:26962  Uncaught TypeError: Cannot read properties of null (reading 'useEffect')
+    at Object.useEffect (react.development.js:1634:21)
+    at QueryClientProvider (@tanstack_react-query.js?v=ebbdccc0:2808:9)
+    at renderWithHooks (react-dom.development.js:15486:18)
+    at mountIndeterminateComponent (react-dom.development.js:20103:13)
+    at beginWork (react-dom.development.js:21626:16)
+    at beginWork$1 (react-dom.development.js:27465:14)
+    at performUnitOfWork (react-dom.development.js:26596:12)
+    at workLoopSync (react-dom.development.js:26505:5)
+    at renderRootSync (react-dom.development.js:26473:7)
+    at recoverFromConcurrentError (react-dom.development.js:25889:20)
+useEffect @ react.development.js:1634
+QueryClientProvider @ @tanstack_react-query.js?v=ebbdccc0:2808
+renderWithHooks @ react-dom.development.js:15486
+mountIndeterminateComponent @ react-dom.development.js:20103
+beginWork @ react-dom.development.js:21626
+beginWork$1 @ react-dom.development.js:27465
+performUnitOfWork @ react-dom.development.js:26596
+workLoopSync @ react-dom.development.js:26505
+renderRootSync @ react-dom.development.js:26473
+recoverFromConcurrentError @ react-dom.development.js:25889
+performConcurrentWorkOnRoot @ react-dom.development.js:25789
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533
+chunk-QCHXOAYK.js?v=ebbdccc0:136  Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ chunk-QCHXOAYK.js?v=ebbdccc0:136
+error @ chunk-QCHXOAYK.js?v=ebbdccc0:120
+resolveDispatcher @ chunk-QCHXOAYK.js?v=ebbdccc0:1045
+useEffect @ chunk-QCHXOAYK.js?v=ebbdccc0:1077
+QueryClientProvider @ @tanstack_react-query.js?v=ebbdccc0:2808
+renderWithHooks @ chunk-RPCDYKBN.js?v=fe7b5952:11548
+mountIndeterminateComponent @ chunk-RPCDYKBN.js?v=fe7b5952:14926
+beginWork @ chunk-RPCDYKBN.js?v=fe7b5952:15914
+beginWork$1 @ chunk-RPCDYKBN.js?v=fe7b5952:19753
+performUnitOfWork @ chunk-RPCDYKBN.js?v=fe7b5952:19198
+workLoopSync @ chunk-RPCDYKBN.js?v=fe7b5952:19137
+renderRootSync @ chunk-RPCDYKBN.js?v=fe7b5952:19116
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=fe7b5952:18678
+workLoop @ chunk-RPCDYKBN.js?v=fe7b5952:197
+flushWork @ chunk-RPCDYKBN.js?v=fe7b5952:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=fe7b5952:384
+chunk-QCHXOAYK.js?v=ebbdccc0:136  Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ chunk-QCHXOAYK.js?v=ebbdccc0:136
+error @ chunk-QCHXOAYK.js?v=ebbdccc0:120
+resolveDispatcher @ chunk-QCHXOAYK.js?v=ebbdccc0:1045
+useEffect @ chunk-QCHXOAYK.js?v=ebbdccc0:1077
+QueryClientProvider @ @tanstack_react-query.js?v=ebbdccc0:2808
+renderWithHooks @ chunk-RPCDYKBN.js?v=fe7b5952:11548
+mountIndeterminateComponent @ chunk-RPCDYKBN.js?v=fe7b5952:14926
+beginWork @ chunk-RPCDYKBN.js?v=fe7b5952:15914
+callCallback2 @ chunk-RPCDYKBN.js?v=fe7b5952:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=fe7b5952:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=fe7b5952:3733
+beginWork$1 @ chunk-RPCDYKBN.js?v=fe7b5952:19765
+performUnitOfWork @ chunk-RPCDYKBN.js?v=fe7b5952:19198
+workLoopSync @ chunk-RPCDYKBN.js?v=fe7b5952:19137
+renderRootSync @ chunk-RPCDYKBN.js?v=fe7b5952:19116
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=fe7b5952:18678
+workLoop @ chunk-RPCDYKBN.js?v=fe7b5952:197
+flushWork @ chunk-RPCDYKBN.js?v=fe7b5952:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=fe7b5952:384
+chunk-QCHXOAYK.js?v=ebbdccc0:1078  Uncaught TypeError: Cannot read properties of null (reading 'useEffect')
+    at Object.useEffect (chunk-QCHXOAYK.js?v=ebbdccc0:1078:29)
+    at QueryClientProvider (@tanstack_react-query.js?v=ebbdccc0:2808:9)
+    at renderWithHooks (chunk-RPCDYKBN.js?v=fe7b5952:11548:26)
+    at mountIndeterminateComponent (chunk-RPCDYKBN.js?v=fe7b5952:14926:21)
+    at beginWork (chunk-RPCDYKBN.js?v=fe7b5952:15914:22)
+    at HTMLUnknownElement.callCallback2 (chunk-RPCDYKBN.js?v=fe7b5952:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-RPCDYKBN.js?v=fe7b5952:3699:24)
+    at invokeGuardedCallback (chunk-RPCDYKBN.js?v=fe7b5952:3733:39)
+    at beginWork$1 (chunk-RPCDYKBN.js?v=fe7b5952:19765:15)
+    at performUnitOfWork (chunk-RPCDYKBN.js?v=fe7b5952:19198:20)
+useEffect @ chunk-QCHXOAYK.js?v=ebbdccc0:1078
+QueryClientProvider @ @tanstack_react-query.js?v=ebbdccc0:2808
+renderWithHooks @ chunk-RPCDYKBN.js?v=fe7b5952:11548
+mountIndeterminateComponent @ chunk-RPCDYKBN.js?v=fe7b5952:14926
+beginWork @ chunk-RPCDYKBN.js?v=fe7b5952:15914
+callCallback2 @ chunk-RPCDYKBN.js?v=fe7b5952:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=fe7b5952:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=fe7b5952:3733
+beginWork$1 @ chunk-RPCDYKBN.js?v=fe7b5952:19765
+performUnitOfWork @ chunk-RPCDYKBN.js?v=fe7b5952:19198
+workLoopSync @ chunk-RPCDYKBN.js?v=fe7b5952:19137
+renderRootSync @ chunk-RPCDYKBN.js?v=fe7b5952:19116
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=fe7b5952:18678
+workLoop @ chunk-RPCDYKBN.js?v=fe7b5952:197
+flushWork @ chunk-RPCDYKBN.js?v=fe7b5952:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=fe7b5952:384
+chunk-QCHXOAYK.js?v=ebbdccc0:136  Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ chunk-QCHXOAYK.js?v=ebbdccc0:136
+error @ chunk-QCHXOAYK.js?v=ebbdccc0:120
+resolveDispatcher @ chunk-QCHXOAYK.js?v=ebbdccc0:1045
+useEffect @ chunk-QCHXOAYK.js?v=ebbdccc0:1077
+QueryClientProvider @ @tanstack_react-query.js?v=ebbdccc0:2808
+renderWithHooks @ chunk-RPCDYKBN.js?v=fe7b5952:11548
+mountIndeterminateComponent @ chunk-RPCDYKBN.js?v=fe7b5952:14926
+beginWork @ chunk-RPCDYKBN.js?v=fe7b5952:15914
+beginWork$1 @ chunk-RPCDYKBN.js?v=fe7b5952:19753
+performUnitOfWork @ chunk-RPCDYKBN.js?v=fe7b5952:19198
+workLoopSync @ chunk-RPCDYKBN.js?v=fe7b5952:19137
+renderRootSync @ chunk-RPCDYKBN.js?v=fe7b5952:19116
+recoverFromConcurrentError @ chunk-RPCDYKBN.js?v=fe7b5952:18736
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=fe7b5952:18684
+workLoop @ chunk-RPCDYKBN.js?v=fe7b5952:197
+flushWork @ chunk-RPCDYKBN.js?v=fe7b5952:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=fe7b5952:384
+chunk-QCHXOAYK.js?v=ebbdccc0:136  Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ chunk-QCHXOAYK.js?v=ebbdccc0:136
+error @ chunk-QCHXOAYK.js?v=ebbdccc0:120
+resolveDispatcher @ chunk-QCHXOAYK.js?v=ebbdccc0:1045
+useEffect @ chunk-QCHXOAYK.js?v=ebbdccc0:1077
+QueryClientProvider @ @tanstack_react-query.js?v=ebbdccc0:2808
+renderWithHooks @ chunk-RPCDYKBN.js?v=fe7b5952:11548
+mountIndeterminateComponent @ chunk-RPCDYKBN.js?v=fe7b5952:14926
+beginWork @ chunk-RPCDYKBN.js?v=fe7b5952:15914
+callCallback2 @ chunk-RPCDYKBN.js?v=fe7b5952:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=fe7b5952:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=fe7b5952:3733
+beginWork$1 @ chunk-RPCDYKBN.js?v=fe7b5952:19765
+performUnitOfWork @ chunk-RPCDYKBN.js?v=fe7b5952:19198
+workLoopSync @ chunk-RPCDYKBN.js?v=fe7b5952:19137
+renderRootSync @ chunk-RPCDYKBN.js?v=fe7b5952:19116
+recoverFromConcurrentError @ chunk-RPCDYKBN.js?v=fe7b5952:18736
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=fe7b5952:18684
+workLoop @ chunk-RPCDYKBN.js?v=fe7b5952:197
+flushWork @ chunk-RPCDYKBN.js?v=fe7b5952:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=fe7b5952:384
+chunk-QCHXOAYK.js?v=ebbdccc0:1078  Uncaught TypeError: Cannot read properties of null (reading 'useEffect')
+    at Object.useEffect (chunk-QCHXOAYK.js?v=ebbdccc0:1078:29)
+    at QueryClientProvider (@tanstack_react-query.js?v=ebbdccc0:2808:9)
+    at renderWithHooks (chunk-RPCDYKBN.js?v=fe7b5952:11548:26)
+    at mountIndeterminateComponent (chunk-RPCDYKBN.js?v=fe7b5952:14926:21)
+    at beginWork (chunk-RPCDYKBN.js?v=fe7b5952:15914:22)
+    at HTMLUnknownElement.callCallback2 (chunk-RPCDYKBN.js?v=fe7b5952:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-RPCDYKBN.js?v=fe7b5952:3699:24)
+    at invokeGuardedCallback (chunk-RPCDYKBN.js?v=fe7b5952:3733:39)
+    at beginWork$1 (chunk-RPCDYKBN.js?v=fe7b5952:19765:15)
+    at performUnitOfWork (chunk-RPCDYKBN.js?v=fe7b5952:19198:20)
+useEffect @ chunk-QCHXOAYK.js?v=ebbdccc0:1078
+QueryClientProvider @ @tanstack_react-query.js?v=ebbdccc0:2808
+renderWithHooks @ chunk-RPCDYKBN.js?v=fe7b5952:11548
+mountIndeterminateComponent @ chunk-RPCDYKBN.js?v=fe7b5952:14926
+beginWork @ chunk-RPCDYKBN.js?v=fe7b5952:15914
+callCallback2 @ chunk-RPCDYKBN.js?v=fe7b5952:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=fe7b5952:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=fe7b5952:3733
+beginWork$1 @ chunk-RPCDYKBN.js?v=fe7b5952:19765
+performUnitOfWork @ chunk-RPCDYKBN.js?v=fe7b5952:19198
+workLoopSync @ chunk-RPCDYKBN.js?v=fe7b5952:19137
+renderRootSync @ chunk-RPCDYKBN.js?v=fe7b5952:19116
+recoverFromConcurrentError @ chunk-RPCDYKBN.js?v=fe7b5952:18736
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=fe7b5952:18684
+workLoop @ chunk-RPCDYKBN.js?v=fe7b5952:197
+flushWork @ chunk-RPCDYKBN.js?v=fe7b5952:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=fe7b5952:384
+  The above error occurred in the <QueryClientProvider> component:
+
+    at QueryClientProvider (https://317873c7-d975-4993-b88a-1b45d18b4311-00-2zlumfvl3ydq0.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=ebbdccc0:2805:3)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+logCapturedError @ chunk-RPCDYKBN.js:14032
+update.callback @ chunk-RPCDYKBN.js:14052
+callCallback @ chunk-RPCDYKBN.js:11248
+commitUpdateQueue @ chunk-RPCDYKBN.js:11265
+commitLayoutEffectOnFiber @ chunk-RPCDYKBN.js:17093
+commitLayoutMountEffects_complete @ chunk-RPCDYKBN.js:17980
+commitLayoutEffects_begin @ chunk-RPCDYKBN.js:17969
+commitLayoutEffects @ chunk-RPCDYKBN.js:17920
+commitRootImpl @ chunk-RPCDYKBN.js:19353
+commitRoot @ chunk-RPCDYKBN.js:19277
+finishConcurrentRender @ chunk-RPCDYKBN.js:18760
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js:18718
+workLoop @ chunk-RPCDYKBN.js:197
+flushWork @ chunk-RPCDYKBN.js:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js:384
+chunk-RPCDYKBN.js:19413  Uncaught 
+useEffect @ chunk-QCHXOAYK.js:1078
+QueryClientProvider @ @tanstack_react-query.js:2808
+renderWithHooks @ chunk-RPCDYKBN.js:11548
+mountIndeterminateComponent @ chunk-RPCDYKBN.js:14926
+beginWork @ chunk-RPCDYKBN.js:15914
+beginWork$1 @ chunk-RPCDYKBN.js:19753
+performUnitOfWork @ chunk-RPCDYKBN.js:19198
+workLoopSync @ chunk-RPCDYKBN.js:19137
+renderRootSync @ chunk-RPCDYKBN.js:19116
+recoverFromConcurrentError @ chunk-RPCDYKBN.js:18736
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js:18684
+workLoop @ chunk-RPCDYKBN.js:197
+flushWork @ chunk-RPCDYKBN.js:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js:384
+  WebSocket connection to 'wss://317873c7-d975-4993-b88a-1b45d18b4311-00-2zlumfvl3ydq0.worf.replit.dev/?token=IDJzOSWsRUup' failed: Error during WebSocket handshake: Unexpected response code: 400
+setupWebSocket @ client:536
+(anonymous) @ client:531
+  Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ chunk-QCHXOAYK.js:136
+error @ chunk-QCHXOAYK.js:120
+resolveDispatcher @ chunk-QCHXOAYK.js:1045
+useEffect @ chunk-QCHXOAYK.js:1077
+QueryClientProvider @ @tanstack_react-query.js:2808
+renderWithHooks @ chunk-RPCDYKBN.js:11548
+mountIndeterminateComponent @ chunk-RPCDYKBN.js:14926
+beginWork @ chunk-RPCDYKBN.js:15914
+beginWork$1 @ chunk-RPCDYKBN.js:19753
+performUnitOfWork @ chunk-RPCDYKBN.js:19198
+workLoopSync @ chunk-RPCDYKBN.js:19137
+renderRootSync @ chunk-RPCDYKBN.js:19116
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js:18678
+workLoop @ chunk-RPCDYKBN.js:197
+flushWork @ chunk-RPCDYKBN.js:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js:384
+  Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ chunk-QCHXOAYK.js:136
+error @ chunk-QCHXOAYK.js:120
+resolveDispatcher @ chunk-QCHXOAYK.js:1045
+useEffect @ chunk-QCHXOAYK.js:1077
+QueryClientProvider @ @tanstack_react-query.js:2808
+renderWithHooks @ chunk-RPCDYKBN.js:11548
+mountIndeterminateComponent @ chunk-RPCDYKBN.js:14926
+beginWork @ chunk-RPCDYKBN.js:15914
+callCallback2 @ chunk-RPCDYKBN.js:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js:3733
+beginWork$1 @ chunk-RPCDYKBN.js:19765
+performUnitOfWork @ chunk-RPCDYKBN.js:19198
+workLoopSync @ chunk-RPCDYKBN.js:19137
+renderRootSync @ chunk-RPCDYKBN.js:19116
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js:18678
+workLoop @ chunk-RPCDYKBN.js:197
+flushWork @ chunk-RPCDYKBN.js:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js:384
+chunk-QCHXOAYK.js:1078  Uncaught 
+useEffect @ chunk-QCHXOAYK.js:1078
+QueryClientProvider @ @tanstack_react-query.js:2808
+renderWithHooks @ chunk-RPCDYKBN.js:11548
+mountIndeterminateComponent @ chunk-RPCDYKBN.js:14926
+beginWork @ chunk-RPCDYKBN.js:15914
+callCallback2 @ chunk-RPCDYKBN.js:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js:3733
+beginWork$1 @ chunk-RPCDYKBN.js:19765
+performUnitOfWork @ chunk-RPCDYKBN.js:19198
+workLoopSync @ chunk-RPCDYKBN.js:19137
+renderRootSync @ chunk-RPCDYKBN.js:19116
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js:18678
+workLoop @ chunk-RPCDYKBN.js:197
+flushWork @ chunk-RPCDYKBN.js:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js:384
+  Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ chunk-QCHXOAYK.js:136
+error @ chunk-QCHXOAYK.js:120
+resolveDispatcher @ chunk-QCHXOAYK.js:1045
+useEffect @ chunk-QCHXOAYK.js:1077
+QueryClientProvider @ @tanstack_react-query.js:2808
+renderWithHooks @ chunk-RPCDYKBN.js:11548
+mountIndeterminateComponent @ chunk-RPCDYKBN.js:14926
+beginWork @ chunk-RPCDYKBN.js:15914
+beginWork$1 @ chunk-RPCDYKBN.js:19753
+performUnitOfWork @ chunk-RPCDYKBN.js:19198
+workLoopSync @ chunk-RPCDYKBN.js:19137
+renderRootSync @ chunk-RPCDYKBN.js:19116
+recoverFromConcurrentError @ chunk-RPCDYKBN.js:18736
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js:18684
+workLoop @ chunk-RPCDYKBN.js:197
+flushWork @ chunk-RPCDYKBN.js:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js:384
+  Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ chunk-QCHXOAYK.js:136
+error @ chunk-QCHXOAYK.js:120
+resolveDispatcher @ chunk-QCHXOAYK.js:1045
+useEffect @ chunk-QCHXOAYK.js:1077
+QueryClientProvider @ @tanstack_react-query.js:2808
+renderWithHooks @ chunk-RPCDYKBN.js:11548
+mountIndeterminateComponent @ chunk-RPCDYKBN.js:14926
+beginWork @ chunk-RPCDYKBN.js:15914
+callCallback2 @ chunk-RPCDYKBN.js:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js:3733
+beginWork$1 @ chunk-RPCDYKBN.js:19765
+performUnitOfWork @ chunk-RPCDYKBN.js:19198
+workLoopSync @ chunk-RPCDYKBN.js:19137
+renderRootSync @ chunk-RPCDYKBN.js:19116
+recoverFromConcurrentError @ chunk-RPCDYKBN.js:18736
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js:18684
+workLoop @ chunk-RPCDYKBN.js:197
+flushWork @ chunk-RPCDYKBN.js:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js:384
+chunk-QCHXOAYK.js:1078  Uncaught 
+useEffect @ chunk-QCHXOAYK.js:1078
+QueryClientProvider @ @tanstack_react-query.js:2808
+renderWithHooks @ chunk-RPCDYKBN.js:11548
+mountIndeterminateComponent @ chunk-RPCDYKBN.js:14926
+beginWork @ chunk-RPCDYKBN.js:15914
+callCallback2 @ chunk-RPCDYKBN.js:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js:3733
+beginWork$1 @ chunk-RPCDYKBN.js:19765
+performUnitOfWork @ chunk-RPCDYKBN.js:19198
+workLoopSync @ chunk-RPCDYKBN.js:19137
+renderRootSync @ chunk-RPCDYKBN.js:19116
+recoverFromConcurrentError @ chunk-RPCDYKBN.js:18736
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js:18684
+workLoop @ chunk-RPCDYKBN.js:197
+flushWork @ chunk-RPCDYKBN.js:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js:384
+  The above error occurred in the <QueryClientProvider> component:
+
+    at QueryClientProvider (https://317873c7-d975-4993-b88a-1b45d18b4311-00-2zlumfvl3ydq0.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=ebbdccc0:2805:3)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+logCapturedError @ chunk-RPCDYKBN.js:14032
+update.callback @ chunk-RPCDYKBN.js:14052
+callCallback @ chunk-RPCDYKBN.js:11248
+commitUpdateQueue @ chunk-RPCDYKBN.js:11265
+commitLayoutEffectOnFiber @ chunk-RPCDYKBN.js:17093
+commitLayoutMountEffects_complete @ chunk-RPCDYKBN.js:17980
+commitLayoutEffects_begin @ chunk-RPCDYKBN.js:17969
+commitLayoutEffects @ chunk-RPCDYKBN.js:17920
+commitRootImpl @ chunk-RPCDYKBN.js:19353
+commitRoot @ chunk-RPCDYKBN.js:19277
+finishConcurrentRender @ chunk-RPCDYKBN.js:18760
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js:18718
+workLoop @ chunk-RPCDYKBN.js:197
+flushWork @ chunk-RPCDYKBN.js:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js:384
+chunk-RPCDYKBN.js:19413  Uncaught 
+useEffect @ chunk-QCHXOAYK.js:1078
+QueryClientProvider @ @tanstack_react-query.js:2808
+renderWithHooks @ chunk-RPCDYKBN.js:11548
+mountIndeterminateComponent @ chunk-RPCDYKBN.js:14926
+beginWork @ chunk-RPCDYKBN.js:15914
+beginWork$1 @ chunk-RPCDYKBN.js:19753
+performUnitOfWork @ chunk-RPCDYKBN.js:19198
+workLoopSync @ chunk-RPCDYKBN.js:19137
+renderRootSync @ chunk-RPCDYKBN.js:19116
+recoverFromConcurrentError @ chunk-RPCDYKBN.js:18736
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js:18684
+workLoop @ chunk-RPCDYKBN.js:197
+flushWork @ chunk-RPCDYKBN.js:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js:384
+client:536  Uncaught (in promise) 
+setupWebSocket @ client:536
+fallback @ client:509
+(anonymous) @ client:555

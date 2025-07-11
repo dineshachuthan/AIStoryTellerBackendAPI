@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Mic, Camera, User, Mail, CheckCircle, Clock } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
+import { toast, toastMessages } from "@/lib/toast-utils";
 import { apiRequest } from "@/lib/queryClient";
 import { apiClient } from "@/lib/api-client";
 
@@ -30,7 +30,6 @@ interface InvitationDetails {
 export default function Invitation() {
   const { token } = useParams();
   const { user, isLoading: authLoading } = useAuth();
-  const { toast } = useToast();
   
   const [invitation, setInvitation] = useState<InvitationDetails | null>(null);
   const [loading, setLoading] = useState(true);
@@ -57,18 +56,10 @@ export default function Invitation() {
         const completedCount = data.requiredEmotions.filter((e: any) => e.completed).length;
         setRecordingProgress((completedCount / data.requiredEmotions.length) * 100);
       } else {
-        toast({
-          title: "Error",
-          description: "Invalid or expired invitation link",
-          variant: "destructive",
-        });
+        toast.error("Invalid or expired invitation link");
       }
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to load invitation details",
-        variant: "destructive",
-      });
+      toast.error("Failed to load invitation details");
     } finally {
       setLoading(false);
     }

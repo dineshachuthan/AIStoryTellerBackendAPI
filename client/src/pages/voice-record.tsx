@@ -6,11 +6,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Play, Pause, RotateCcw, ArrowRight, Shield } from "lucide-react";
 import { EnhancedVoiceRecorder } from "@/components/ui/enhanced-voice-recorder";
 import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { toast, toastMessages } from "@/lib/toast-utils";
 
 export function VoiceRecordPage() {
   const [, setLocation] = useLocation();
-  const { toast } = useToast();
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);

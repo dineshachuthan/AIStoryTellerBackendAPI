@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
+import { toast, toastMessages } from "@/lib/toast-utils";
 import { apiRequest } from "@/lib/queryClient";
 import { Loader2, Mic, Clock, CheckCircle, Lock } from "lucide-react";
 
@@ -39,7 +39,7 @@ interface ValidationResponse {
 export default function VoiceCloningTest1() {
   const [storyId, setStoryId] = useState("75");
   const [validationData, setValidationData] = useState<ValidationResponse | null>(null);
-  const { toast } = useToast();
+
 
   // Fetch validation data for a story
   const fetchValidationMutation = useMutation({

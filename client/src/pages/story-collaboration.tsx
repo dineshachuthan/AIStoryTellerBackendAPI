@@ -32,7 +32,7 @@ const groupSchema = z.object({
 export default function StoryCollaboration() {
   const { storyId } = useParams();
   const [, setLocation] = useLocation();
-  const { toast } = useToast();
+
   const queryClient = useQueryClient();
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [isGroupDialogOpen, setIsGroupDialogOpen] = useState(false);

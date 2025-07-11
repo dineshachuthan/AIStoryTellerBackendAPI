@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
+import { toast, toastMessages } from "@/lib/toast-utils";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
 import { ConfidenceMeter, useConfidenceTracking } from "@/components/confidence-meter";
@@ -80,7 +80,6 @@ interface EmotionWithSound {
 
 export default function UploadStory() {
   const [, setLocation] = useLocation();
-  const { toast } = useToast();
   const { user } = useAuth();
   
   // Step management

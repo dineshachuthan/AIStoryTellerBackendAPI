@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useToast } from "@/hooks/use-toast";
+import { toast, toastMessages } from "@/lib/toast-utils";
 import { apiRequest } from "@/lib/queryClient";
 import { insertCharacterSchema } from '@shared/schema/schema';
 import { X, Camera } from "lucide-react";
@@ -21,7 +21,6 @@ const backgrounds = [
 
 export default function CreateCharacter() {
   const [, setLocation] = useLocation();
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [selectedBackground, setSelectedBackground] = useState<string>(backgrounds[0]);
@@ -46,10 +45,7 @@ export default function CreateCharacter() {
       return await response.json();
     },
     onSuccess: () => {
-      toast({
-        title: "Character Created!",
-        description: "Your character has been added to the feed.",
-      });
+      toast.success("Your character has been added to the feed.");
       queryClient.invalidateQueries({ queryKey: ["/api/characters"] });
       setLocation("/");
     },
