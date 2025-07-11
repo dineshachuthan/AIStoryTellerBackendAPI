@@ -306,7 +306,7 @@ export function StoryAnalysisPanel({
         <TabsContent value="emotions" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Record Your Voice for Each Emotion</CardTitle>
+              <CardTitle>Record a sample voice for each emotion and Sound</CardTitle>
               <p className="text-sm text-muted-foreground">
                 Record your voice for each detected emotion to personalize the story narration. 
                 These recordings will be saved to your voice repository for use across all stories.
