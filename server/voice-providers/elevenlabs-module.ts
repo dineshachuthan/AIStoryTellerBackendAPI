@@ -354,11 +354,10 @@ export class ElevenLabsModule extends BaseVoiceProvider {
       // First priority: direct voiceSettings parameter
       if (voiceSettings) {
         finalVoiceSettings = {
-          stability: voiceSettings.stability,
-          similarity_boost: voiceSettings.similarityBoost || voiceSettings.similarity_boost,
-          style: voiceSettings.style,
-          // ElevenLabs doesn't directly support prosody, but we can influence through other params
-          use_speaker_boost: voiceSettings.prosody?.volume === 'loud' || voiceSettings.use_speaker_boost
+          stability: voiceSettings.stability || 0.6,
+          similarity_boost: voiceSettings.similarityBoost || voiceSettings.similarity_boost || 0.75,
+          style: voiceSettings.style || 0.0,
+          use_speaker_boost: voiceSettings.prosody?.volume === 'loud' || voiceSettings.use_speaker_boost || true
         };
         console.log(`[ElevenLabs] Using provided voice settings:`, finalVoiceSettings);
       }
@@ -367,23 +366,26 @@ export class ElevenLabsModule extends BaseVoiceProvider {
         // Use orchestrated settings from voice orchestration service
         const orchestrated = narratorProfile.voiceSettings;
         finalVoiceSettings = {
-          stability: orchestrated.stability,
-          similarity_boost: orchestrated.similarityBoost,
-          style: orchestrated.style,
-          // ElevenLabs doesn't directly support prosody, but we can influence through other params
-          use_speaker_boost: orchestrated.prosody?.volume === 'loud'
+          stability: orchestrated.stability || 0.6,
+          similarity_boost: orchestrated.similarityBoost || 0.75,
+          style: orchestrated.style || 0.0,
+          use_speaker_boost: orchestrated.prosody?.volume === 'loud' || true
         };
         console.log(`[ElevenLabs] Using orchestrated voice settings from narrator profile:`, finalVoiceSettings);
       }
       
+      // Log the request data for debugging
+      const requestData = {
+        text: text,
+        model_id: 'eleven_multilingual_v2',
+        voice_settings: finalVoiceSettings
+      };
+      console.log('[ElevenLabs] Request data:', JSON.stringify(requestData, null, 2));
+      
       // Use direct API call instead of SDK which has issues
       const response = await axios.post(
         `${this.config.baseUrl}/text-to-speech/${voiceId}`,
-        {
-          text: text,
-          model_id: 'eleven_multilingual_v2',
-          voice_settings: finalVoiceSettings
-        },
+        requestData,
         {
           headers: {
             'Accept': 'audio/mpeg',
@@ -399,6 +401,15 @@ export class ElevenLabsModule extends BaseVoiceProvider {
       
     } catch (error: any) {
       this.log('error', `Speech generation failed for voice ${voiceId}`, error);
+      
+      // Log detailed error information for debugging
+      if (error.response?.data) {
+        console.log('[ElevenLabs] Error response data:', error.response.data.toString());
+      }
+      if (error.response?.status) {
+        console.log('[ElevenLabs] Error status:', error.response.status);
+      }
+      
       throw new Error(`ElevenLabs TTS failed: ${error.response?.status || 'Unknown error'} - ${error.message}`);
     }
   }
@@ -625,15 +636,21 @@ export class ElevenLabsModule extends BaseVoiceProvider {
 
   private getEmotionSettings(emotion?: string): any {
     // ElevenLabs emotion settings based on emotion type
+    // Must match the exact API format with all required parameters
     const emotionMap: Record<string, any> = {
-      happy: { stability: 0.5, similarity_boost: 0.8 },
-      sad: { stability: 0.7, similarity_boost: 0.6 },
-      angry: { stability: 0.3, similarity_boost: 0.9 },
-      calm: { stability: 0.8, similarity_boost: 0.7 },
-      excited: { stability: 0.4, similarity_boost: 0.8 }
+      happy: { stability: 0.5, similarity_boost: 0.8, style: 0.0, use_speaker_boost: true },
+      sad: { stability: 0.7, similarity_boost: 0.6, style: 0.0, use_speaker_boost: true },
+      angry: { stability: 0.3, similarity_boost: 0.9, style: 0.0, use_speaker_boost: true },
+      calm: { stability: 0.8, similarity_boost: 0.7, style: 0.0, use_speaker_boost: true },
+      excited: { stability: 0.4, similarity_boost: 0.8, style: 0.0, use_speaker_boost: true }
     };
     
-    return emotionMap[emotion || 'neutral'] || { stability: 0.6, similarity_boost: 0.75 };
+    return emotionMap[emotion || 'neutral'] || { 
+      stability: 0.6, 
+      similarity_boost: 0.75, 
+      style: 0.0, 
+      use_speaker_boost: true 
+    };
   }
 
   private getVoiceLabelsFromConfig(): any {
