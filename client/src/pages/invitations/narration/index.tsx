@@ -65,7 +65,6 @@ export default function NarrationInvitationLanding() {
   // Fetch story narration if available
   const { data: storyNarration } = useQuery({
     queryKey: [`/api/stories/${invitation?.storyId}/narration/saved`, token],
-    enabled: !!invitation?.storyId && !!token && currentStage === "preview",
     queryFn: async () => {
       try {
         const response = await apiClient.stories.getSavedNarration(invitation.storyId, token);
@@ -76,6 +75,7 @@ export default function NarrationInvitationLanding() {
         return null;
       }
     },
+    enabled: !!invitation?.storyId && !!token && currentStage === "preview",
   });
 
   // Fetch sample texts for all emotions
