@@ -4,6 +4,7 @@ import { storage } from './storage';
 import { userContentStorage } from './user-content-storage';
 import { voiceOrchestrationService } from './voice-orchestration-service';
 import { conversationStylesManager } from '../shared/utils/conversation-styles-manager';
+import { db } from './db';
 
 export interface NarrationSegment {
   text: string;
@@ -137,8 +138,8 @@ export class StoryNarrator {
     const narratorProfile = await this.getUserNarratorProfile(userId);
     
     // Get conversation style configuration for relationship-aware narration
-    const styleConfig = await conversationStylesManager.getConversationStyle(conversationStyle);
-    console.log(`[StoryNarrator] Using conversation style: ${conversationStyle} - ${styleConfig.displayName}`);
+    const styleConfig = await conversationStylesManager.getStyle(conversationStyle);
+    console.log(`[StoryNarrator] Using conversation style: ${conversationStyle} - ${styleConfig?.displayName || 'Unknown'}`);
     
     // 4. Narrate story content with the determined narrator voice
     const segments = await this.createNarrationSegments(
