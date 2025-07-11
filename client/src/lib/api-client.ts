@@ -180,7 +180,7 @@ export class ApiClient {
     },
     getAllNarrations: (storyId: number) => this.request<any[]>('GET', `/api/stories/${storyId}/narrations/all`),
     generateNarration: (storyId: number, conversationStyle: string, narratorProfile: string) => 
-      this.request<any>('POST', `/api/stories/${storyId}/narrations/generate`, {
+      this.request<any>('POST', `/api/stories/${storyId}/narration`, {
         conversationStyle,
         narratorProfile,
         emotion: 'neutral'

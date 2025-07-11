@@ -55,8 +55,7 @@ export default function StoryNarration() {
     enabled: !!storyId && !!user
   });
 
-  // Debug log to see story data
-  console.log('[StoryNarration] Story data:', story);
+
 
   // Fetch all narrations for this story
   const { data: allNarrations = [], isLoading: allNarrationsLoading, refetch: refetchNarrations } = useQuery({
