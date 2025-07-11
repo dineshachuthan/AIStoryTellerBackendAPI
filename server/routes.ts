@@ -573,6 +573,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Voice Samples routes - route moved to line ~3829 with proper transformation
 
+  /* DEPRECATED - Legacy voice samples endpoint - DO NOT USE
   app.get("/api/users/:userId/voice-samples", requireAuth, async (req, res) => {
     try {
       const userId = req.params.userId;
@@ -627,7 +628,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Voice sample upload error:", error);
       res.status(500).json({ message: "Failed to upload voice sample" });
     }
-  });
+  }); */
 
   app.put("/api/voice-samples/:id", requireAuth, upload.single('audio'), async (req, res) => {
     try {
