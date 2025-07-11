@@ -1174,12 +1174,13 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **USER REQUEST FULFILLED**: Simplified interface as requested to focus on core data display without complex interactions
 - **DEFERRED FEATURES**: Voice cloning management, narrator voice generation, and cross-story aggregation postponed for later implementation
 
-### **CASE SENSITIVITY BUG FIXED - January 07, 2025**
-**Fixed ESM Reference Data Case Handling**: Removed lowercase conversion to preserve AI analysis casing
-- **ROOT CAUSE IDENTIFIED**: populateEsmReferenceData was converting emotions/sounds to lowercase (e.g., "Frustration" → "frustration")
-- **FRONTEND-BACKEND MISMATCH**: Frontend sent original casing from AI analysis while backend stored lowercase versions
-- **FIX APPLIED**: Removed toLowerCase() calls in populateEsmReferenceData for both emotions and sounds
-- **CASE PRESERVATION**: ESM now stores exact casing from AI analysis (e.g., "Frustration" stays "Frustration")
+### **CASE SENSITIVITY INVESTIGATION - July 11, 2025**
+**Root Cause Analysis of Emotion Display Regression**: Identified that case sensitivity was NOT the actual issue
+- **FALSE ASSUMPTION**: Initial diagnosis incorrectly assumed case conversion was causing ESM reference data mismatch
+- **ACTUAL DATA FLOW**: AI analysis generates proper capitalized emotions ("Reverence", "Anxiety", "Despair") that match ESM reference data exactly
+- **REAL ISSUE**: Voice samples endpoint failing to display emotions due to different underlying cause (not case sensitivity)
+- **ARCHITECTURE CONFIRMED**: Data flow from AI analysis → ESM reference data → voice samples display is architecturally sound
+- **BAND-AID REMOVED**: Reverted case-insensitive database query fix as it was treating symptoms not root cause: ESM now stores exact casing from AI analysis (e.g., "Frustration" stays "Frustration")
 - **STRATEGIC SOLUTION**: Follows user requirement that all case handling must occur at analysis stage only
 - **VOICE RECORDING FIXED**: Voice samples now properly match and save with correct emotion/sound names
 

@@ -1276,7 +1276,7 @@ export class DatabaseStorage implements IStorage {
   async getEsmRef(category: number, name: string): Promise<any | null> {
     console.log('🔍 getEsmRef called with:', { category, name });
     const result = await db.execute(
-      sql`SELECT * FROM esm_ref WHERE category = ${category} AND LOWER(name) = LOWER(${name}) AND is_active = true LIMIT 1`
+      sql`SELECT * FROM esm_ref WHERE category = ${category} AND name = ${name} AND is_active = true LIMIT 1`
     );
     console.log('🔍 getEsmRef result:', result.rows[0] ? 'FOUND' : 'NOT FOUND');
     return result.rows[0] || null;

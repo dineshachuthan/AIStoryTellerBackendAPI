@@ -4776,11 +4776,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (analysis.analysisData.emotions) {
         console.log(`🎯 Story ${storyId} emotions:`, analysis.analysisData.emotions.map(e => e.emotion));
         for (const emotion of analysis.analysisData.emotions) {
-          // Check if emotion exists in ESM reference data (now case insensitive)
+          // Check if emotion exists in ESM reference data
           console.log(`🔍 Checking emotion "${emotion.emotion}" in ESM reference data...`);
           const esmRef = await storage.getEsmRef(1, emotion.emotion);
           if (!esmRef) {
             console.log(`⚠️ Skipping emotion "${emotion.emotion}" - not in ESM reference data`);
+            console.log(`🔍 Available emotions in ESM:`, await storage.getEsmRefsByCategory(1));
             continue;
           }
           console.log(`✅ Found emotion "${emotion.emotion}" in ESM reference data`);
