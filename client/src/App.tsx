@@ -1,3 +1,4 @@
+import React, { useEffect } from "react";
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -8,7 +9,6 @@ import { AppTopNavigation } from "@/components/app-top-navigation";
 // import { VoiceSessionInitializer } from "@/components/voice-session-initializer"; // Temporarily disabled
 import { useAuth } from "@/hooks/useAuth";
 import { sessionActivityTracker } from "@/lib/session-activity";
-import { useEffect } from "react";
 import { LanguageProvider } from "@/contexts/language-context";
 import { PWAUpdateNotification } from "@/components/PWAUpdateNotification";
 
