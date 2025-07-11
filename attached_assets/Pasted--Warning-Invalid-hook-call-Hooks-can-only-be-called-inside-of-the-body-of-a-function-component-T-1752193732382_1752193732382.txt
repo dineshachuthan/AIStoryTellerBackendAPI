@@ -1,0 +1,195 @@
+  Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ chunk-QCHXOAYK.js?v=ebbdccc0:136
+  Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ chunk-QCHXOAYK.js?v=ebbdccc0:136
+chunk-QCHXOAYK.js?v=ebbdccc0:1078  Uncaught TypeError: Cannot read properties of null (reading 'useEffect')
+    at Object.useEffect (chunk-QCHXOAYK.js?v=ebbdccc0:1078:29)
+    at QueryClientProvider (@tanstack_react-query.js?v=ebbdccc0:2808:9)
+    at renderWithHooks (chunk-RPCDYKBN.js?v=fe7b5952:11548:26)
+    at mountIndeterminateComponent (chunk-RPCDYKBN.js?v=fe7b5952:14926:21)
+    at beginWork (chunk-RPCDYKBN.js?v=fe7b5952:15914:22)
+    at HTMLUnknownElement.callCallback2 (chunk-RPCDYKBN.js?v=fe7b5952:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-RPCDYKBN.js?v=fe7b5952:3699:24)
+    at invokeGuardedCallback (chunk-RPCDYKBN.js?v=fe7b5952:3733:39)
+    at beginWork$1 (chunk-RPCDYKBN.js?v=fe7b5952:19765:15)
+    at performUnitOfWork (chunk-RPCDYKBN.js?v=fe7b5952:19198:20)
+  Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ chunk-QCHXOAYK.js?v=ebbdccc0:136
+  Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ chunk-QCHXOAYK.js?v=ebbdccc0:136
+chunk-QCHXOAYK.js?v=ebbdccc0:1078  Uncaught TypeError: Cannot read properties of null (reading 'useEffect')
+    at Object.useEffect (chunk-QCHXOAYK.js?v=ebbdccc0:1078:29)
+    at QueryClientProvider (@tanstack_react-query.js?v=ebbdccc0:2808:9)
+    at renderWithHooks (chunk-RPCDYKBN.js?v=fe7b5952:11548:26)
+    at mountIndeterminateComponent (chunk-RPCDYKBN.js?v=fe7b5952:14926:21)
+    at beginWork (chunk-RPCDYKBN.js?v=fe7b5952:15914:22)
+    at HTMLUnknownElement.callCallback2 (chunk-RPCDYKBN.js?v=fe7b5952:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-RPCDYKBN.js?v=fe7b5952:3699:24)
+    at invokeGuardedCallback (chunk-RPCDYKBN.js?v=fe7b5952:3733:39)
+    at beginWork$1 (chunk-RPCDYKBN.js?v=fe7b5952:19765:15)
+    at performUnitOfWork (chunk-RPCDYKBN.js?v=fe7b5952:19198:20)
+  The above error occurred in the <QueryClientProvider> component:
+
+    at QueryClientProvider (https://317873c7-d975-4993-b88a-1b45d18b4311-00-2zlumfvl3ydq0.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=ebbdccc0:2805:3)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+logCapturedError @ chunk-RPCDYKBN.js?v=fe7b5952:14032
+chunk-RPCDYKBN.js?v=fe7b5952:19413  Uncaught TypeError: Cannot read properties of null (reading 'useEffect')
+    at Object.useEffect (chunk-QCHXOAYK.js?v=ebbdccc0:1078:29)
+    at QueryClientProvider (@tanstack_react-query.js?v=ebbdccc0:2808:9)
+    at renderWithHooks (chunk-RPCDYKBN.js?v=fe7b5952:11548:26)
+    at mountIndeterminateComponent (chunk-RPCDYKBN.js?v=fe7b5952:14926:21)
+    at beginWork (chunk-RPCDYKBN.js?v=fe7b5952:15914:22)
+    at beginWork$1 (chunk-RPCDYKBN.js?v=fe7b5952:19753:22)
+    at performUnitOfWork (chunk-RPCDYKBN.js?v=fe7b5952:19198:20)
+    at workLoopSync (chunk-RPCDYKBN.js?v=fe7b5952:19137:13)
+    at renderRootSync (chunk-RPCDYKBN.js?v=fe7b5952:19116:15)
+    at recoverFromConcurrentError (chunk-RPCDYKBN.js?v=fe7b5952:18736:28)
+  Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ 317873c7-d975-4993-b…K.js?v=ebbdccc0:136
+  Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ 317873c7-d975-4993-b…K.js?v=ebbdccc0:136
+317873c7-d975-4993-b….js?v=ebbdccc0:1078  Uncaught TypeError: Cannot read properties of null (reading 'useEffect')
+    at Object.useEffect (chunk-QCHXOAYK.js?v=ebbdccc0:1078:29)
+    at QueryClientProvider (@tanstack_react-query.js?v=ebbdccc0:2808:9)
+    at renderWithHooks (chunk-RPCDYKBN.js?v=fe7b5952:11548:26)
+    at mountIndeterminateComponent (chunk-RPCDYKBN.js?v=fe7b5952:14926:21)
+    at beginWork (chunk-RPCDYKBN.js?v=fe7b5952:15914:22)
+    at HTMLUnknownElement.callCallback2 (chunk-RPCDYKBN.js?v=fe7b5952:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-RPCDYKBN.js?v=fe7b5952:3699:24)
+    at invokeGuardedCallback (chunk-RPCDYKBN.js?v=fe7b5952:3733:39)
+    at beginWork$1 (chunk-RPCDYKBN.js?v=fe7b5952:19765:15)
+    at performUnitOfWork (chunk-RPCDYKBN.js?v=fe7b5952:19198:20)
+  Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ 317873c7-d975-4993-b…K.js?v=ebbdccc0:136
+  Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ 317873c7-d975-4993-b…K.js?v=ebbdccc0:136
+317873c7-d975-4993-b….js?v=ebbdccc0:1078  Uncaught TypeError: Cannot read properties of null (reading 'useEffect')
+    at Object.useEffect (chunk-QCHXOAYK.js?v=ebbdccc0:1078:29)
+    at QueryClientProvider (@tanstack_react-query.js?v=ebbdccc0:2808:9)
+    at renderWithHooks (chunk-RPCDYKBN.js?v=fe7b5952:11548:26)
+    at mountIndeterminateComponent (chunk-RPCDYKBN.js?v=fe7b5952:14926:21)
+    at beginWork (chunk-RPCDYKBN.js?v=fe7b5952:15914:22)
+    at HTMLUnknownElement.callCallback2 (chunk-RPCDYKBN.js?v=fe7b5952:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-RPCDYKBN.js?v=fe7b5952:3699:24)
+    at invokeGuardedCallback (chunk-RPCDYKBN.js?v=fe7b5952:3733:39)
+    at beginWork$1 (chunk-RPCDYKBN.js?v=fe7b5952:19765:15)
+    at performUnitOfWork (chunk-RPCDYKBN.js?v=fe7b5952:19198:20)
+  The above error occurred in the <QueryClientProvider> component:
+
+    at QueryClientProvider (https://317873c7-d975-4993-b88a-1b45d18b4311-00-2zlumfvl3ydq0.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=ebbdccc0:2805:3)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+logCapturedError @ 317873c7-d975-4993-b…js?v=fe7b5952:14032
+317873c7-d975-4993-b…js?v=fe7b5952:19413  Uncaught TypeError: Cannot read properties of null (reading 'useEffect')
+    at Object.useEffect (chunk-QCHXOAYK.js?v=ebbdccc0:1078:29)
+    at QueryClientProvider (@tanstack_react-query.js?v=ebbdccc0:2808:9)
+    at renderWithHooks (chunk-RPCDYKBN.js?v=fe7b5952:11548:26)
+    at mountIndeterminateComponent (chunk-RPCDYKBN.js?v=fe7b5952:14926:21)
+    at beginWork (chunk-RPCDYKBN.js?v=fe7b5952:15914:22)
+    at beginWork$1 (chunk-RPCDYKBN.js?v=fe7b5952:19753:22)
+    at performUnitOfWork (chunk-RPCDYKBN.js?v=fe7b5952:19198:20)
+    at workLoopSync (chunk-RPCDYKBN.js?v=fe7b5952:19137:13)
+    at renderRootSync (chunk-RPCDYKBN.js?v=fe7b5952:19116:15)
+    at recoverFromConcurrentError (chunk-RPCDYKBN.js?v=fe7b5952:18736:28)
+react.development.js:209  Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ react.development.js:209
+react.development.js:209  Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ react.development.js:209
+react.development.js:1634  Uncaught TypeError: Cannot read properties of null (reading 'useEffect')
+    at Object.useEffect (react.development.js:1634:21)
+    at QueryClientProvider (QueryClientProvider.tsx:33:9)
+    at renderWithHooks (react-dom.development.js:15486:18)
+    at mountIndeterminateComponent (react-dom.development.js:20103:13)
+    at beginWork (react-dom.development.js:21626:16)
+    at HTMLUnknownElement.callCallback2 (react-dom.development.js:4164:14)
+    at Object.invokeGuardedCallbackDev (react-dom.development.js:4213:16)
+    at invokeGuardedCallback (react-dom.development.js:4277:31)
+    at beginWork$1 (react-dom.development.js:27490:7)
+    at performUnitOfWork (react-dom.development.js:26596:12)
+react.development.js:209  Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ react.development.js:209
+react.development.js:209  Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ react.development.js:209
+react.development.js:1634  Uncaught TypeError: Cannot read properties of null (reading 'useEffect')
+    at Object.useEffect (react.development.js:1634:21)
+    at QueryClientProvider (QueryClientProvider.tsx:33:9)
+    at renderWithHooks (react-dom.development.js:15486:18)
+    at mountIndeterminateComponent (react-dom.development.js:20103:13)
+    at beginWork (react-dom.development.js:21626:16)
+    at HTMLUnknownElement.callCallback2 (react-dom.development.js:4164:14)
+    at Object.invokeGuardedCallbackDev (react-dom.development.js:4213:16)
+    at invokeGuardedCallback (react-dom.development.js:4277:31)
+    at beginWork$1 (react-dom.development.js:27490:7)
+    at performUnitOfWork (react-dom.development.js:26596:12)
+react-dom.development.js:18704  The above error occurred in the <QueryClientProvider> component:
+
+    at QueryClientProvider (https://317873c7-d975-4993-b88a-1b45d18b4311-00-2zlumfvl3ydq0.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=ebbdccc0:2805:3)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+logCapturedError @ react-dom.development.js:18704
+react-dom.development.js:26962  Uncaught TypeError: Cannot read properties of null (reading 'useEffect')
+    at Object.useEffect (react.development.js:1634:21)
+    at QueryClientProvider (QueryClientProvider.tsx:33:9)
+    at renderWithHooks (react-dom.development.js:15486:18)
+    at mountIndeterminateComponent (react-dom.development.js:20103:13)
+    at beginWork (react-dom.development.js:21626:16)
+    at beginWork$1 (react-dom.development.js:27465:14)
+    at performUnitOfWork (react-dom.development.js:26596:12)
+    at workLoopSync (react-dom.development.js:26505:5)
+    at renderRootSync (react-dom.development.js:26473:7)
+    at recoverFromConcurrentError (react-dom.development.js:25889:20)

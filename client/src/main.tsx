@@ -1,6 +1,5 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App';
 import './index.css';
 
 // Debug logging
@@ -8,16 +7,27 @@ console.log('main.tsx loading...');
 console.log('React:', React);
 console.log('ReactDOM:', ReactDOM);
 
+function SimpleApp() {
+  return (
+    <div style={{ padding: '20px', backgroundColor: '#e8f5e8', minHeight: '100vh' }}>
+      <h1>Simple Test App</h1>
+      <p>If you see this, React is working!</p>
+      <p>Current time: {new Date().toISOString()}</p>
+      <button onClick={() => alert('Button clicked!')}>Test Button</button>
+    </div>
+  );
+}
+
 try {
   console.log('Creating React root...');
   const root = ReactDOM.createRoot(document.getElementById('root')!);
-  console.log('Rendering App...');
+  console.log('Rendering SimpleApp...');
   root.render(
     <React.StrictMode>
-      <App />
+      <SimpleApp />
     </React.StrictMode>
   );
-  console.log('App rendered successfully');
+  console.log('SimpleApp rendered successfully');
 } catch (error) {
   console.error('Error during React initialization:', error);
   // Fallback rendering

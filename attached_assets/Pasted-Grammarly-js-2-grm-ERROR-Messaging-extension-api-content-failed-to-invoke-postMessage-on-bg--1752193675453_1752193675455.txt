@@ -1,0 +1,663 @@
+Grammarly.js:2  grm ERROR [Messaging.extension-api.content] ░░ failed to invoke postMessage() on bg port Object Error: Attempting to use a disconnected port object
+    at Ii.postMessage (Grammarly.js:2:497020)
+    at xi.broadcastBackground (Grammarly.js:2:495168)
+write @ Grammarly.js:2
+handleEvent @ Grammarly.js:2
+_logMessage @ Grammarly.js:2
+error @ Grammarly.js:2
+error @ Grammarly.js:2
+broadcastBackground @ Grammarly.js:2
+Grammarly.js:2  grm ERROR [Messaging.extension-api.content] ░░ failed to invoke postMessage() on bg port Object Error: Attempting to use a disconnected port object
+    at Ii.postMessage (Grammarly.js:2:497020)
+    at xi.broadcastBackground (Grammarly.js:2:495168)
+write @ Grammarly.js:2
+handleEvent @ Grammarly.js:2
+_logMessage @ Grammarly.js:2
+error @ Grammarly.js:2
+error @ Grammarly.js:2
+broadcastBackground @ Grammarly.js:2
+Grammarly.js:2  Uncaught (in promise) Error: Attempting to use a disconnected port object
+    at Ii.postMessage (Grammarly.js:2:497020)
+    at xi.broadcastBackground (Grammarly.js:2:495168)
+postMessage @ Grammarly.js:2
+broadcastBackground @ Grammarly.js:2
+Grammarly.js:2  Uncaught (in promise) Error: Attempting to use a disconnected port object
+    at Ii.postMessage (Grammarly.js:2:497020)
+    at xi.broadcastBackground (Grammarly.js:2:495168)
+postMessage @ Grammarly.js:2
+broadcastBackground @ Grammarly.js:2
+Grammarly.js:2  grm ERROR [Messaging.extension-api.content] ░░ failed to invoke postMessage() on bg port Object Error: Attempting to use a disconnected port object
+    at Ii.postMessage (Grammarly.js:2:497020)
+    at xi.broadcastBackground (Grammarly.js:2:495168)
+write @ Grammarly.js:2
+handleEvent @ Grammarly.js:2
+_logMessage @ Grammarly.js:2
+error @ Grammarly.js:2
+error @ Grammarly.js:2
+broadcastBackground @ Grammarly.js:2
+Grammarly.js:2  grm ERROR [Messaging.extension-api.content] ░░ failed to invoke postMessage() on bg port Object Error: Attempting to use a disconnected port object
+    at Ii.postMessage (Grammarly.js:2:497020)
+    at xi.broadcastBackground (Grammarly.js:2:495168)
+write @ Grammarly.js:2
+handleEvent @ Grammarly.js:2
+_logMessage @ Grammarly.js:2
+error @ Grammarly.js:2
+error @ Grammarly.js:2
+broadcastBackground @ Grammarly.js:2
+Grammarly.js:2  Uncaught (in promise) Error: Attempting to use a disconnected port object
+    at Ii.postMessage (Grammarly.js:2:497020)
+    at xi.broadcastBackground (Grammarly.js:2:495168)
+postMessage @ Grammarly.js:2
+broadcastBackground @ Grammarly.js:2
+Grammarly.js:2  Uncaught (in promise) Error: Attempting to use a disconnected port object
+    at Ii.postMessage (Grammarly.js:2:497020)
+    at xi.broadcastBackground (Grammarly.js:2:495168)
+postMessage @ Grammarly.js:2
+broadcastBackground @ Grammarly.js:2
+Grammarly.js:2  grm ERROR [Messaging.extension-api.content] ░░ failed to invoke postMessage() on bg port Object Error: Attempting to use a disconnected port object
+    at Ii.postMessage (Grammarly.js:2:497020)
+    at xi.broadcastBackground (Grammarly.js:2:495168)
+write @ Grammarly.js:2
+handleEvent @ Grammarly.js:2
+_logMessage @ Grammarly.js:2
+error @ Grammarly.js:2
+error @ Grammarly.js:2
+broadcastBackground @ Grammarly.js:2
+Grammarly.js:2  grm ERROR [Messaging.extension-api.content] ░░ failed to invoke postMessage() on bg port Object Error: Attempting to use a disconnected port object
+    at Ii.postMessage (Grammarly.js:2:497020)
+    at xi.broadcastBackground (Grammarly.js:2:495168)
+write @ Grammarly.js:2
+handleEvent @ Grammarly.js:2
+_logMessage @ Grammarly.js:2
+error @ Grammarly.js:2
+error @ Grammarly.js:2
+broadcastBackground @ Grammarly.js:2
+Grammarly.js:2  Uncaught (in promise) Error: Attempting to use a disconnected port object
+    at Ii.postMessage (Grammarly.js:2:497020)
+    at xi.broadcastBackground (Grammarly.js:2:495168)
+postMessage @ Grammarly.js:2
+broadcastBackground @ Grammarly.js:2
+Grammarly.js:2  Uncaught (in promise) Error: Attempting to use a disconnected port object
+    at Ii.postMessage (Grammarly.js:2:497020)
+    at xi.broadcastBackground (Grammarly.js:2:495168)
+postMessage @ Grammarly.js:2
+broadcastBackground @ Grammarly.js:2
+Grammarly.js:2  grm ERROR [Messaging.extension-api.content] ░░ failed to invoke postMessage() on bg port Object Error: Attempting to use a disconnected port object
+    at Ii.postMessage (Grammarly.js:2:497020)
+    at xi.broadcastBackground (Grammarly.js:2:495168)
+write @ Grammarly.js:2
+handleEvent @ Grammarly.js:2
+_logMessage @ Grammarly.js:2
+error @ Grammarly.js:2
+error @ Grammarly.js:2
+broadcastBackground @ Grammarly.js:2
+Grammarly.js:2  Uncaught (in promise) Error: Attempting to use a disconnected port object
+    at Ii.postMessage (Grammarly.js:2:497020)
+    at xi.broadcastBackground (Grammarly.js:2:495168)
+postMessage @ Grammarly.js:2
+broadcastBackground @ Grammarly.js:2
+Grammarly.js:2  grm ERROR [Messaging.extension-api.content] ░░ failed to invoke postMessage() on bg port Object Error: Attempting to use a disconnected port object
+    at Ii.postMessage (Grammarly.js:2:497020)
+    at xi.broadcastBackground (Grammarly.js:2:495168)
+write @ Grammarly.js:2
+handleEvent @ Grammarly.js:2
+_logMessage @ Grammarly.js:2
+error @ Grammarly.js:2
+error @ Grammarly.js:2
+broadcastBackground @ Grammarly.js:2
+Grammarly.js:2  Uncaught (in promise) Error: Attempting to use a disconnected port object
+    at Ii.postMessage (Grammarly.js:2:497020)
+    at xi.broadcastBackground (Grammarly.js:2:495168)
+postMessage @ Grammarly.js:2
+broadcastBackground @ Grammarly.js:2
+Grammarly.js:2  grm ERROR [Messaging.extension-api.content] ░░ failed to invoke postMessage() on bg port Object Error: Attempting to use a disconnected port object
+    at Ii.postMessage (Grammarly.js:2:497020)
+    at xi.broadcastBackground (Grammarly.js:2:495168)
+write @ Grammarly.js:2
+handleEvent @ Grammarly.js:2
+_logMessage @ Grammarly.js:2
+error @ Grammarly.js:2
+error @ Grammarly.js:2
+broadcastBackground @ Grammarly.js:2
+Grammarly.js:2  Uncaught (in promise) Error: Attempting to use a disconnected port object
+    at Ii.postMessage (Grammarly.js:2:497020)
+    at xi.broadcastBackground (Grammarly.js:2:495168)
+postMessage @ Grammarly.js:2
+broadcastBackground @ Grammarly.js:2
+Grammarly.js:2  grm ERROR [Messaging.extension-api.content] ░░ failed to invoke postMessage() on bg port Object Error: Attempting to use a disconnected port object
+    at Ii.postMessage (Grammarly.js:2:497020)
+    at xi.broadcastBackground (Grammarly.js:2:495168)
+write @ Grammarly.js:2
+handleEvent @ Grammarly.js:2
+_logMessage @ Grammarly.js:2
+error @ Grammarly.js:2
+error @ Grammarly.js:2
+broadcastBackground @ Grammarly.js:2
+Grammarly.js:2  Uncaught (in promise) Error: Attempting to use a disconnected port object
+    at Ii.postMessage (Grammarly.js:2:497020)
+    at xi.broadcastBackground (Grammarly.js:2:495168)
+postMessage @ Grammarly.js:2
+broadcastBackground @ Grammarly.js:2
+Grammarly.js:2  grm ERROR [Messaging.extension-api.content] ░░ failed to invoke postMessage() on bg port Object Error: Attempting to use a disconnected port object
+    at Ii.postMessage (Grammarly.js:2:497020)
+    at xi.broadcastBackground (Grammarly.js:2:495168)
+write @ Grammarly.js:2
+handleEvent @ Grammarly.js:2
+_logMessage @ Grammarly.js:2
+error @ Grammarly.js:2
+error @ Grammarly.js:2
+broadcastBackground @ Grammarly.js:2
+Grammarly.js:2  Uncaught (in promise) Error: Attempting to use a disconnected port object
+    at Ii.postMessage (Grammarly.js:2:497020)
+    at xi.broadcastBackground (Grammarly.js:2:495168)
+postMessage @ Grammarly.js:2
+broadcastBackground @ Grammarly.js:2
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+framework-064efb141beaefd4.js:1  Unrecognized feature: 'ambient-light-sensor'.
+_ @ framework-064efb141beaefd4.js:1
+(anonymous) @ framework-064efb141beaefd4.js:1
+uD @ framework-064efb141beaefd4.js:1
+uI @ framework-064efb141beaefd4.js:1
+uM @ framework-064efb141beaefd4.js:1
+uS @ framework-064efb141beaefd4.js:1
+C @ framework-064efb141beaefd4.js:1
+z @ framework-064efb141beaefd4.js:1
+framework-064efb141beaefd4.js:1  Unrecognized feature: 'battery'.
+_ @ framework-064efb141beaefd4.js:1
+(anonymous) @ framework-064efb141beaefd4.js:1
+uD @ framework-064efb141beaefd4.js:1
+uI @ framework-064efb141beaefd4.js:1
+uM @ framework-064efb141beaefd4.js:1
+uS @ framework-064efb141beaefd4.js:1
+C @ framework-064efb141beaefd4.js:1
+z @ framework-064efb141beaefd4.js:1
+framework-064efb141beaefd4.js:1  Unrecognized feature: 'execution-while-not-rendered'.
+_ @ framework-064efb141beaefd4.js:1
+(anonymous) @ framework-064efb141beaefd4.js:1
+uD @ framework-064efb141beaefd4.js:1
+uI @ framework-064efb141beaefd4.js:1
+uM @ framework-064efb141beaefd4.js:1
+uS @ framework-064efb141beaefd4.js:1
+C @ framework-064efb141beaefd4.js:1
+z @ framework-064efb141beaefd4.js:1
+framework-064efb141beaefd4.js:1  Unrecognized feature: 'execution-while-out-of-viewport'.
+_ @ framework-064efb141beaefd4.js:1
+(anonymous) @ framework-064efb141beaefd4.js:1
+uD @ framework-064efb141beaefd4.js:1
+uI @ framework-064efb141beaefd4.js:1
+uM @ framework-064efb141beaefd4.js:1
+uS @ framework-064efb141beaefd4.js:1
+C @ framework-064efb141beaefd4.js:1
+z @ framework-064efb141beaefd4.js:1
+framework-064efb141beaefd4.js:1  Unrecognized feature: 'layout-animations'.
+_ @ framework-064efb141beaefd4.js:1
+(anonymous) @ framework-064efb141beaefd4.js:1
+uD @ framework-064efb141beaefd4.js:1
+uI @ framework-064efb141beaefd4.js:1
+uM @ framework-064efb141beaefd4.js:1
+uS @ framework-064efb141beaefd4.js:1
+C @ framework-064efb141beaefd4.js:1
+z @ framework-064efb141beaefd4.js:1
+framework-064efb141beaefd4.js:1  Unrecognized feature: 'legacy-image-formats'.
+_ @ framework-064efb141beaefd4.js:1
+(anonymous) @ framework-064efb141beaefd4.js:1
+uD @ framework-064efb141beaefd4.js:1
+uI @ framework-064efb141beaefd4.js:1
+uM @ framework-064efb141beaefd4.js:1
+uS @ framework-064efb141beaefd4.js:1
+C @ framework-064efb141beaefd4.js:1
+z @ framework-064efb141beaefd4.js:1
+framework-064efb141beaefd4.js:1  Unrecognized feature: 'navigation-override'.
+_ @ framework-064efb141beaefd4.js:1
+(anonymous) @ framework-064efb141beaefd4.js:1
+uD @ framework-064efb141beaefd4.js:1
+uI @ framework-064efb141beaefd4.js:1
+uM @ framework-064efb141beaefd4.js:1
+uS @ framework-064efb141beaefd4.js:1
+C @ framework-064efb141beaefd4.js:1
+z @ framework-064efb141beaefd4.js:1
+framework-064efb141beaefd4.js:1  Unrecognized feature: 'oversized-images'.
+_ @ framework-064efb141beaefd4.js:1
+(anonymous) @ framework-064efb141beaefd4.js:1
+uD @ framework-064efb141beaefd4.js:1
+uI @ framework-064efb141beaefd4.js:1
+uM @ framework-064efb141beaefd4.js:1
+uS @ framework-064efb141beaefd4.js:1
+C @ framework-064efb141beaefd4.js:1
+z @ framework-064efb141beaefd4.js:1
+framework-064efb141beaefd4.js:1  Unrecognized feature: 'publickey-credentials'.
+_ @ framework-064efb141beaefd4.js:1
+(anonymous) @ framework-064efb141beaefd4.js:1
+uD @ framework-064efb141beaefd4.js:1
+uI @ framework-064efb141beaefd4.js:1
+uM @ framework-064efb141beaefd4.js:1
+uS @ framework-064efb141beaefd4.js:1
+C @ framework-064efb141beaefd4.js:1
+z @ framework-064efb141beaefd4.js:1
+framework-064efb141beaefd4.js:1  Unrecognized feature: 'speaker-selection'.
+_ @ framework-064efb141beaefd4.js:1
+(anonymous) @ framework-064efb141beaefd4.js:1
+uD @ framework-064efb141beaefd4.js:1
+uI @ framework-064efb141beaefd4.js:1
+uM @ framework-064efb141beaefd4.js:1
+uS @ framework-064efb141beaefd4.js:1
+C @ framework-064efb141beaefd4.js:1
+z @ framework-064efb141beaefd4.js:1
+framework-064efb141beaefd4.js:1  Unrecognized feature: 'unoptimized-images'.
+_ @ framework-064efb141beaefd4.js:1
+(anonymous) @ framework-064efb141beaefd4.js:1
+uD @ framework-064efb141beaefd4.js:1
+uI @ framework-064efb141beaefd4.js:1
+uM @ framework-064efb141beaefd4.js:1
+uS @ framework-064efb141beaefd4.js:1
+C @ framework-064efb141beaefd4.js:1
+z @ framework-064efb141beaefd4.js:1
+framework-064efb141beaefd4.js:1  Unrecognized feature: 'unsized-media'.
+_ @ framework-064efb141beaefd4.js:1
+(anonymous) @ framework-064efb141beaefd4.js:1
+uD @ framework-064efb141beaefd4.js:1
+uI @ framework-064efb141beaefd4.js:1
+uM @ framework-064efb141beaefd4.js:1
+uS @ framework-064efb141beaefd4.js:1
+C @ framework-064efb141beaefd4.js:1
+z @ framework-064efb141beaefd4.js:1
+framework-064efb141beaefd4.js:1  Unrecognized feature: 'pointer-lock'.
+_ @ framework-064efb141beaefd4.js:1
+(anonymous) @ framework-064efb141beaefd4.js:1
+uD @ framework-064efb141beaefd4.js:1
+uI @ framework-064efb141beaefd4.js:1
+uM @ framework-064efb141beaefd4.js:1
+uS @ framework-064efb141beaefd4.js:1
+C @ framework-064efb141beaefd4.js:1
+z @ framework-064efb141beaefd4.js:1
+framework-064efb141beaefd4.js:1  Allow attribute will take precedence over 'allowfullscreen'.
+_ @ framework-064efb141beaefd4.js:1
+(anonymous) @ framework-064efb141beaefd4.js:1
+uD @ framework-064efb141beaefd4.js:1
+uI @ framework-064efb141beaefd4.js:1
+uM @ framework-064efb141beaefd4.js:1
+uS @ framework-064efb141beaefd4.js:1
+C @ framework-064efb141beaefd4.js:1
+z @ framework-064efb141beaefd4.js:1
+framework-064efb141beaefd4.js:1  Allow attribute will take precedence over 'allowpaymentrequest'.
+_ @ framework-064efb141beaefd4.js:1
+(anonymous) @ framework-064efb141beaefd4.js:1
+uD @ framework-064efb141beaefd4.js:1
+uI @ framework-064efb141beaefd4.js:1
+uM @ framework-064efb141beaefd4.js:1
+uS @ framework-064efb141beaefd4.js:1
+C @ framework-064efb141beaefd4.js:1
+z @ framework-064efb141beaefd4.js:1
+Grammarly.js:2  grm ERROR [Messaging.extension-api.content] ░░ failed to invoke postMessage() on bg port Object Error: Attempting to use a disconnected port object
+    at Ii.postMessage (Grammarly.js:2:497020)
+    at xi.broadcastBackground (Grammarly.js:2:495168)
+write @ Grammarly.js:2
+handleEvent @ Grammarly.js:2
+_logMessage @ Grammarly.js:2
+error @ Grammarly.js:2
+error @ Grammarly.js:2
+broadcastBackground @ Grammarly.js:2
+Grammarly.js:2  Uncaught (in promise) Error: Attempting to use a disconnected port object
+    at Ii.postMessage (Grammarly.js:2:497020)
+    at xi.broadcastBackground (Grammarly.js:2:495168)
+postMessage @ Grammarly.js:2
+broadcastBackground @ Grammarly.js:2
+Grammarly.js:2  grm ERROR [Messaging.extension-api.content] ░░ failed to invoke postMessage() on bg port Object Error: Attempting to use a disconnected port object
+    at Ii.postMessage (Grammarly.js:2:497020)
+    at xi.broadcastBackground (Grammarly.js:2:495168)
+write @ Grammarly.js:2
+handleEvent @ Grammarly.js:2
+_logMessage @ Grammarly.js:2
+error @ Grammarly.js:2
+error @ Grammarly.js:2
+broadcastBackground @ Grammarly.js:2
+Grammarly.js:2  Uncaught (in promise) Error: Attempting to use a disconnected port object
+    at Ii.postMessage (Grammarly.js:2:497020)
+    at xi.broadcastBackground (Grammarly.js:2:495168)
+postMessage @ Grammarly.js:2
+broadcastBackground @ Grammarly.js:2
+Grammarly.js:2  grm ERROR [Messaging.extension-api.content] ░░ failed to invoke postMessage() on bg port Object Error: Attempting to use a disconnected port object
+    at Ii.postMessage (Grammarly.js:2:497020)
+    at xi.broadcastBackground (Grammarly.js:2:495168)
+write @ Grammarly.js:2
+handleEvent @ Grammarly.js:2
+_logMessage @ Grammarly.js:2
+error @ Grammarly.js:2
+error @ Grammarly.js:2
+broadcastBackground @ Grammarly.js:2
+Grammarly.js:2  Uncaught (in promise) Error: Attempting to use a disconnected port object
+    at Ii.postMessage (Grammarly.js:2:497020)
+    at xi.broadcastBackground (Grammarly.js:2:495168)
+postMessage @ Grammarly.js:2
+broadcastBackground @ Grammarly.js:2
+Grammarly.js:2  grm ERROR [Messaging.extension-api.content] ░░ failed to invoke postMessage() on bg port Object Error: Attempting to use a disconnected port object
+    at Ii.postMessage (Grammarly.js:2:497020)
+    at xi.broadcastBackground (Grammarly.js:2:495168)
+write @ Grammarly.js:2
+handleEvent @ Grammarly.js:2
+_logMessage @ Grammarly.js:2
+error @ Grammarly.js:2
+error @ Grammarly.js:2
+broadcastBackground @ Grammarly.js:2
+Grammarly.js:2  Uncaught (in promise) Error: Attempting to use a disconnected port object
+    at Ii.postMessage (Grammarly.js:2:497020)
+    at xi.broadcastBackground (Grammarly.js:2:495168)
+postMessage @ Grammarly.js:2
+broadcastBackground @ Grammarly.js:2
+Grammarly.js:2  grm ERROR [Messaging.extension-api.content] ░░ failed to invoke postMessage() on bg port Object Error: Attempting to use a disconnected port object
+    at Ii.postMessage (Grammarly.js:2:497020)
+    at xi.broadcastBackground (Grammarly.js:2:495168)
+write @ Grammarly.js:2
+handleEvent @ Grammarly.js:2
+_logMessage @ Grammarly.js:2
+error @ Grammarly.js:2
+error @ Grammarly.js:2
+broadcastBackground @ Grammarly.js:2
+Grammarly.js:2  Uncaught (in promise) Error: Attempting to use a disconnected port object
+    at Ii.postMessage (Grammarly.js:2:497020)
+    at xi.broadcastBackground (Grammarly.js:2:495168)
+postMessage @ Grammarly.js:2
+broadcastBackground @ Grammarly.js:2
+317873c7-d975-4993-b88a-1b45d18b4311-00-2zlumfvl3ydq0.worf.replit.dev/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arb2h%3A:32  Unrecognized feature: 'ambient-light-sensor'.
+workspace_iframe.html:32  Unrecognized feature: 'ambient-light-sensor'.
+workspace_iframe.html:32  Unrecognized feature: 'ambient-light-sensor'.
+317873c7-d975-4993-b88a-1b45d18b4311-00-2zlumfvl3ydq0.worf.replit.dev/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arb2h%3A:32  Unrecognized feature: 'battery'.
+workspace_iframe.html:32  Unrecognized feature: 'battery'.
+workspace_iframe.html:32  Unrecognized feature: 'battery'.
+317873c7-d975-4993-b88a-1b45d18b4311-00-2zlumfvl3ydq0.worf.replit.dev/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arb2h%3A:32  Unrecognized feature: 'execution-while-not-rendered'.
+workspace_iframe.html:32  Unrecognized feature: 'execution-while-not-rendered'.
+workspace_iframe.html:32  Unrecognized feature: 'execution-while-not-rendered'.
+317873c7-d975-4993-b88a-1b45d18b4311-00-2zlumfvl3ydq0.worf.replit.dev/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arb2h%3A:32  Unrecognized feature: 'execution-while-out-of-viewport'.
+workspace_iframe.html:32  Unrecognized feature: 'execution-while-out-of-viewport'.
+workspace_iframe.html:32  Unrecognized feature: 'execution-while-out-of-viewport'.
+317873c7-d975-4993-b88a-1b45d18b4311-00-2zlumfvl3ydq0.worf.replit.dev/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arb2h%3A:32  Unrecognized feature: 'layout-animations'.
+workspace_iframe.html:32  Unrecognized feature: 'layout-animations'.
+workspace_iframe.html:32  Unrecognized feature: 'layout-animations'.
+317873c7-d975-4993-b88a-1b45d18b4311-00-2zlumfvl3ydq0.worf.replit.dev/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arb2h%3A:32  Unrecognized feature: 'legacy-image-formats'.
+workspace_iframe.html:32  Unrecognized feature: 'legacy-image-formats'.
+workspace_iframe.html:32  Unrecognized feature: 'legacy-image-formats'.
+317873c7-d975-4993-b88a-1b45d18b4311-00-2zlumfvl3ydq0.worf.replit.dev/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arb2h%3A:32  Unrecognized feature: 'navigation-override'.
+workspace_iframe.html:32  Unrecognized feature: 'navigation-override'.
+workspace_iframe.html:32  Unrecognized feature: 'navigation-override'.
+317873c7-d975-4993-b88a-1b45d18b4311-00-2zlumfvl3ydq0.worf.replit.dev/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arb2h%3A:32  Unrecognized feature: 'oversized-images'.
+workspace_iframe.html:32  Unrecognized feature: 'oversized-images'.
+workspace_iframe.html:32  Unrecognized feature: 'oversized-images'.
+317873c7-d975-4993-b88a-1b45d18b4311-00-2zlumfvl3ydq0.worf.replit.dev/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arb2h%3A:32  Unrecognized feature: 'publickey-credentials'.
+workspace_iframe.html:32  Unrecognized feature: 'publickey-credentials'.
+workspace_iframe.html:32  Unrecognized feature: 'publickey-credentials'.
+317873c7-d975-4993-b88a-1b45d18b4311-00-2zlumfvl3ydq0.worf.replit.dev/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arb2h%3A:32  Unrecognized feature: 'speaker-selection'.
+workspace_iframe.html:32  Unrecognized feature: 'speaker-selection'.
+workspace_iframe.html:32  Unrecognized feature: 'speaker-selection'.
+317873c7-d975-4993-b88a-1b45d18b4311-00-2zlumfvl3ydq0.worf.replit.dev/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arb2h%3A:32  Unrecognized feature: 'unoptimized-images'.
+workspace_iframe.html:32  Unrecognized feature: 'unoptimized-images'.
+workspace_iframe.html:32  Unrecognized feature: 'unoptimized-images'.
+317873c7-d975-4993-b88a-1b45d18b4311-00-2zlumfvl3ydq0.worf.replit.dev/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arb2h%3A:32  Unrecognized feature: 'unsized-media'.
+workspace_iframe.html:32  Unrecognized feature: 'unsized-media'.
+workspace_iframe.html:32  Unrecognized feature: 'unsized-media'.
+317873c7-d975-4993-b88a-1b45d18b4311-00-2zlumfvl3ydq0.worf.replit.dev/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arb2h%3A:32  Allow attribute will take precedence over 'allowfullscreen'.
+workspace_iframe.html:32  Allow attribute will take precedence over 'allowfullscreen'.
+workspace_iframe.html:32  Allow attribute will take precedence over 'allowfullscreen'.
+317873c7-d975-4993-b88a-1b45d18b4311-00-2zlumfvl3ydq0.worf.replit.dev/__replco/workspace_iframe.html?initialPath=%2F&id=%3Arb2h%3A:32  Allow attribute will take precedence over 'allowpaymentrequest'.
+workspace_iframe.html:32  Allow attribute will take precedence over 'allowpaymentrequest'.
+workspace_iframe.html:32  Allow attribute will take precedence over 'allowpaymentrequest'.
+  WebSocket connection to 'wss://317873c7-d975-4993-b88a-1b45d18b4311-00-2zlumfvl3ydq0.worf.replit.dev/?token=IDJzOSWsRUup' failed: Error during WebSocket handshake: Unexpected response code: 400
+setupWebSocket @ 317873c7-d975-4993-b…ev/@vite/client:536
+client:536  WebSocket connection to 'wss://317873c7-d975-4993-b88a-1b45d18b4311-00-2zlumfvl3ydq0.worf.replit.dev/?token=IDJzOSWsRUup' failed: Error during WebSocket handshake: Unexpected response code: 400
+setupWebSocket @ client:536
+  WebSocket connection to 'wss://317873c7-d975-4993-b88a-1b45d18b4311-00-2zlumfvl3ydq0.worf.replit.dev/?token=IDJzOSWsRUup' failed: Error during WebSocket handshake: Unexpected response code: 400
+setupWebSocket @ client:536
+client:536  Uncaught (in promise) SyntaxError: Failed to construct 'WebSocket': The URL 'wss://localhost:undefined/?token=IDJzOSWsRUup' is invalid.
+    at setupWebSocket (client:536:19)
+    at fallback (client:509:16)
+    at WebSocket.<anonymous> (client:555:7)
+  Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ chunk-QCHXOAYK.js?v=ebbdccc0:136
+  Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ chunk-QCHXOAYK.js?v=ebbdccc0:136
+chunk-QCHXOAYK.js?v=ebbdccc0:1078  Uncaught TypeError: Cannot read properties of null (reading 'useEffect')
+    at Object.useEffect (chunk-QCHXOAYK.js?v=ebbdccc0:1078:29)
+    at QueryClientProvider (@tanstack_react-query.js?v=ebbdccc0:2808:9)
+    at renderWithHooks (chunk-RPCDYKBN.js?v=fe7b5952:11548:26)
+    at mountIndeterminateComponent (chunk-RPCDYKBN.js?v=fe7b5952:14926:21)
+    at beginWork (chunk-RPCDYKBN.js?v=fe7b5952:15914:22)
+    at HTMLUnknownElement.callCallback2 (chunk-RPCDYKBN.js?v=fe7b5952:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-RPCDYKBN.js?v=fe7b5952:3699:24)
+    at invokeGuardedCallback (chunk-RPCDYKBN.js?v=fe7b5952:3733:39)
+    at beginWork$1 (chunk-RPCDYKBN.js?v=fe7b5952:19765:15)
+    at performUnitOfWork (chunk-RPCDYKBN.js?v=fe7b5952:19198:20)
+  Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ chunk-QCHXOAYK.js?v=ebbdccc0:136
+  Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ chunk-QCHXOAYK.js?v=ebbdccc0:136
+chunk-QCHXOAYK.js?v=ebbdccc0:1078  Uncaught TypeError: Cannot read properties of null (reading 'useEffect')
+    at Object.useEffect (chunk-QCHXOAYK.js?v=ebbdccc0:1078:29)
+    at QueryClientProvider (@tanstack_react-query.js?v=ebbdccc0:2808:9)
+    at renderWithHooks (chunk-RPCDYKBN.js?v=fe7b5952:11548:26)
+    at mountIndeterminateComponent (chunk-RPCDYKBN.js?v=fe7b5952:14926:21)
+    at beginWork (chunk-RPCDYKBN.js?v=fe7b5952:15914:22)
+    at HTMLUnknownElement.callCallback2 (chunk-RPCDYKBN.js?v=fe7b5952:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-RPCDYKBN.js?v=fe7b5952:3699:24)
+    at invokeGuardedCallback (chunk-RPCDYKBN.js?v=fe7b5952:3733:39)
+    at beginWork$1 (chunk-RPCDYKBN.js?v=fe7b5952:19765:15)
+    at performUnitOfWork (chunk-RPCDYKBN.js?v=fe7b5952:19198:20)
+  The above error occurred in the <QueryClientProvider> component:
+
+    at QueryClientProvider (https://317873c7-d975-4993-b88a-1b45d18b4311-00-2zlumfvl3ydq0.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=ebbdccc0:2805:3)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+logCapturedError @ chunk-RPCDYKBN.js?v=fe7b5952:14032
+chunk-RPCDYKBN.js?v=fe7b5952:19413  Uncaught TypeError: Cannot read properties of null (reading 'useEffect')
+    at Object.useEffect (chunk-QCHXOAYK.js?v=ebbdccc0:1078:29)
+    at QueryClientProvider (@tanstack_react-query.js?v=ebbdccc0:2808:9)
+    at renderWithHooks (chunk-RPCDYKBN.js?v=fe7b5952:11548:26)
+    at mountIndeterminateComponent (chunk-RPCDYKBN.js?v=fe7b5952:14926:21)
+    at beginWork (chunk-RPCDYKBN.js?v=fe7b5952:15914:22)
+    at beginWork$1 (chunk-RPCDYKBN.js?v=fe7b5952:19753:22)
+    at performUnitOfWork (chunk-RPCDYKBN.js?v=fe7b5952:19198:20)
+    at workLoopSync (chunk-RPCDYKBN.js?v=fe7b5952:19137:13)
+    at renderRootSync (chunk-RPCDYKBN.js?v=fe7b5952:19116:15)
+    at recoverFromConcurrentError (chunk-RPCDYKBN.js?v=fe7b5952:18736:28)
+  Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ 317873c7-d975-4993-b…K.js?v=ebbdccc0:136
+  Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ 317873c7-d975-4993-b…K.js?v=ebbdccc0:136
+317873c7-d975-4993-b….js?v=ebbdccc0:1078  Uncaught TypeError: Cannot read properties of null (reading 'useEffect')
+    at Object.useEffect (chunk-QCHXOAYK.js?v=ebbdccc0:1078:29)
+    at QueryClientProvider (@tanstack_react-query.js?v=ebbdccc0:2808:9)
+    at renderWithHooks (chunk-RPCDYKBN.js?v=fe7b5952:11548:26)
+    at mountIndeterminateComponent (chunk-RPCDYKBN.js?v=fe7b5952:14926:21)
+    at beginWork (chunk-RPCDYKBN.js?v=fe7b5952:15914:22)
+    at HTMLUnknownElement.callCallback2 (chunk-RPCDYKBN.js?v=fe7b5952:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-RPCDYKBN.js?v=fe7b5952:3699:24)
+    at invokeGuardedCallback (chunk-RPCDYKBN.js?v=fe7b5952:3733:39)
+    at beginWork$1 (chunk-RPCDYKBN.js?v=fe7b5952:19765:15)
+    at performUnitOfWork (chunk-RPCDYKBN.js?v=fe7b5952:19198:20)
+  Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ 317873c7-d975-4993-b…K.js?v=ebbdccc0:136
+  Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ 317873c7-d975-4993-b…K.js?v=ebbdccc0:136
+317873c7-d975-4993-b….js?v=ebbdccc0:1078  Uncaught TypeError: Cannot read properties of null (reading 'useEffect')
+    at Object.useEffect (chunk-QCHXOAYK.js?v=ebbdccc0:1078:29)
+    at QueryClientProvider (@tanstack_react-query.js?v=ebbdccc0:2808:9)
+    at renderWithHooks (chunk-RPCDYKBN.js?v=fe7b5952:11548:26)
+    at mountIndeterminateComponent (chunk-RPCDYKBN.js?v=fe7b5952:14926:21)
+    at beginWork (chunk-RPCDYKBN.js?v=fe7b5952:15914:22)
+    at HTMLUnknownElement.callCallback2 (chunk-RPCDYKBN.js?v=fe7b5952:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-RPCDYKBN.js?v=fe7b5952:3699:24)
+    at invokeGuardedCallback (chunk-RPCDYKBN.js?v=fe7b5952:3733:39)
+    at beginWork$1 (chunk-RPCDYKBN.js?v=fe7b5952:19765:15)
+    at performUnitOfWork (chunk-RPCDYKBN.js?v=fe7b5952:19198:20)
+  The above error occurred in the <QueryClientProvider> component:
+
+    at QueryClientProvider (https://317873c7-d975-4993-b88a-1b45d18b4311-00-2zlumfvl3ydq0.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=ebbdccc0:2805:3)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+logCapturedError @ 317873c7-d975-4993-b…js?v=fe7b5952:14032
+317873c7-d975-4993-b…js?v=fe7b5952:19413  Uncaught TypeError: Cannot read properties of null (reading 'useEffect')
+    at Object.useEffect (chunk-QCHXOAYK.js?v=ebbdccc0:1078:29)
+    at QueryClientProvider (@tanstack_react-query.js?v=ebbdccc0:2808:9)
+    at renderWithHooks (chunk-RPCDYKBN.js?v=fe7b5952:11548:26)
+    at mountIndeterminateComponent (chunk-RPCDYKBN.js?v=fe7b5952:14926:21)
+    at beginWork (chunk-RPCDYKBN.js?v=fe7b5952:15914:22)
+    at beginWork$1 (chunk-RPCDYKBN.js?v=fe7b5952:19753:22)
+    at performUnitOfWork (chunk-RPCDYKBN.js?v=fe7b5952:19198:20)
+    at workLoopSync (chunk-RPCDYKBN.js?v=fe7b5952:19137:13)
+    at renderRootSync (chunk-RPCDYKBN.js?v=fe7b5952:19116:15)
+    at recoverFromConcurrentError (chunk-RPCDYKBN.js?v=fe7b5952:18736:28)
+react.development.js:209  Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ react.development.js:209
+react.development.js:209  Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ react.development.js:209
+react.development.js:1634  Uncaught TypeError: Cannot read properties of null (reading 'useEffect')
+    at Object.useEffect (react.development.js:1634:21)
+    at QueryClientProvider (QueryClientProvider.tsx:33:9)
+    at renderWithHooks (react-dom.development.js:15486:18)
+    at mountIndeterminateComponent (react-dom.development.js:20103:13)
+    at beginWork (react-dom.development.js:21626:16)
+    at HTMLUnknownElement.callCallback2 (react-dom.development.js:4164:14)
+    at Object.invokeGuardedCallbackDev (react-dom.development.js:4213:16)
+    at invokeGuardedCallback (react-dom.development.js:4277:31)
+    at beginWork$1 (react-dom.development.js:27490:7)
+    at performUnitOfWork (react-dom.development.js:26596:12)
+react.development.js:209  Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ react.development.js:209
+react.development.js:209  Warning: Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://reactjs.org/link/invalid-hook-call for tips about how to debug and fix this problem.
+printWarning @ react.development.js:209
+react.development.js:1634  Uncaught TypeError: Cannot read properties of null (reading 'useEffect')
+    at Object.useEffect (react.development.js:1634:21)
+    at QueryClientProvider (QueryClientProvider.tsx:33:9)
+    at renderWithHooks (react-dom.development.js:15486:18)
+    at mountIndeterminateComponent (react-dom.development.js:20103:13)
+    at beginWork (react-dom.development.js:21626:16)
+    at HTMLUnknownElement.callCallback2 (react-dom.development.js:4164:14)
+    at Object.invokeGuardedCallbackDev (react-dom.development.js:4213:16)
+    at invokeGuardedCallback (react-dom.development.js:4277:31)
+    at beginWork$1 (react-dom.development.js:27490:7)
+    at performUnitOfWork (react-dom.development.js:26596:12)
+react-dom.development.js:18704  The above error occurred in the <QueryClientProvider> component:
+
+    at QueryClientProvider (https://317873c7-d975-4993-b88a-1b45d18b4311-00-2zlumfvl3ydq0.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=ebbdccc0:2805:3)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+logCapturedError @ react-dom.development.js:18704
+react-dom.development.js:26962  Uncaught TypeError: Cannot read properties of null (reading 'useEffect')
+    at Object.useEffect (react.development.js:1634:21)
+    at QueryClientProvider (QueryClientProvider.tsx:33:9)
+    at renderWithHooks (react-dom.development.js:15486:18)
+    at mountIndeterminateComponent (react-dom.development.js:20103:13)
+    at beginWork (react-dom.development.js:21626:16)
+    at beginWork$1 (react-dom.development.js:27465:14)
+    at performUnitOfWork (react-dom.development.js:26596:12)
+    at workLoopSync (react-dom.development.js:26505:5)
+    at renderRootSync (react-dom.development.js:26473:7)
+    at recoverFromConcurrentError (react-dom.development.js:25889:20)
+  WebSocket connection to 'wss://317873c7-d975-4993-b88a-1b45d18b4311-00-2zlumfvl3ydq0.worf.replit.dev/?token=IDJzOSWsRUup' failed: Error during WebSocket handshake: Unexpected response code: 400
+setupWebSocket @ 317873c7-d975-4993-b…ev/@vite/client:536
+client:536  WebSocket connection to 'wss://317873c7-d975-4993-b88a-1b45d18b4311-00-2zlumfvl3ydq0.worf.replit.dev/?token=IDJzOSWsRUup' failed: Error during WebSocket handshake: Unexpected response code: 400
+setupWebSocket @ client:536
+  WebSocket connection to 'wss://317873c7-d975-4993-b88a-1b45d18b4311-00-2zlumfvl3ydq0.worf.replit.dev/?token=IDJzOSWsRUup' failed: Error during WebSocket handshake: Unexpected response code: 400
+setupWebSocket @ client:536
+317873c7-d975-4993-b…ev/@vite/client:536  Uncaught (in promise) SyntaxError: Failed to construct 'WebSocket': The URL 'wss://localhost:undefined/?token=IDJzOSWsRUup' is invalid.
+    at setupWebSocket (client:536:19)
+    at fallback (client:509:16)
+    at WebSocket.<anonymous> (client:555:7)
+  WebSocket connection to 'wss://317873c7-d975-4993-b88a-1b45d18b4311-00-2zlumfvl3ydq0.worf.replit.dev/?token=IDJzOSWsRUup' failed: Error during WebSocket handshake: Unexpected response code: 400
+setupWebSocket @ 317873c7-d975-4993-b…ev/@vite/client:536
+client:536  WebSocket connection to 'wss://317873c7-d975-4993-b88a-1b45d18b4311-00-2zlumfvl3ydq0.worf.replit.dev/?token=IDJzOSWsRUup' failed: Error during WebSocket handshake: Unexpected response code: 400
+setupWebSocket @ client:536
+  WebSocket connection to 'wss://317873c7-d975-4993-b88a-1b45d18b4311-00-2zlumfvl3ydq0.worf.replit.dev/?token=IDJzOSWsRUup' failed: Error during WebSocket handshake: Unexpected response code: 400
+setupWebSocket @ client:536
+client:536  Uncaught (in promise) SyntaxError: Failed to construct 'WebSocket': The URL 'wss://localhost:undefined/?token=IDJzOSWsRUup' is invalid.
+    at setupWebSocket (client:536:19)
+    at fallback (client:509:16)
+    at WebSocket.<anonymous> (client:555:7)
+Grammarly.js:2  grm ERROR [Messaging.extension-api.content] ░░ failed to invoke postMessage() on bg port Object Error: Attempting to use a disconnected port object
+    at Ii.postMessage (Grammarly.js:2:497020)
+    at xi.broadcastBackground (Grammarly.js:2:495168)
+write @ Grammarly.js:2
+Grammarly.js:2  grm ERROR [Messaging.extension-api.content] ░░ failed to invoke postMessage() on bg port Object Error: Attempting to use a disconnected port object
+    at Ii.postMessage (Grammarly.js:2:497020)
+    at xi.broadcastBackground (Grammarly.js:2:495168)
+write @ Grammarly.js:2
+Grammarly.js:2  Uncaught (in promise) Error: Attempting to use a disconnected port object
+    at Ii.postMessage (Grammarly.js:2:497020)
+    at xi.broadcastBackground (Grammarly.js:2:495168)
+Grammarly.js:2  Uncaught (in promise) Error: Attempting to use a disconnected port object
+    at Ii.postMessage (Grammarly.js:2:497020)
+    at xi.broadcastBackground (Grammarly.js:2:495168)
+[NEW] Explain Console errors by using Copilot in Edge: click
+         
+         to explain an error. 
+        Learn more
+        Don't show again
