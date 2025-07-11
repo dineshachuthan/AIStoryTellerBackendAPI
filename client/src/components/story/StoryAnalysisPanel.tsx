@@ -112,6 +112,7 @@ export function StoryAnalysisPanel({
         if (response.ok) {
           const data = await response.json();
           console.log('Direct API response data:', data);
+          console.log('Direct API narratorVoiceId:', data.narratorVoiceId);
         } else {
           const errorText = await response.text();
           console.log('Direct API error:', errorText);

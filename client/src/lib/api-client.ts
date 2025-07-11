@@ -195,6 +195,7 @@ export class ApiClient {
         headers: {} // Let browser set Content-Type for FormData
       }),
     generateNarratorVoice: () => this.request<any>('POST', '/api/voice/generate-narrator'),
+    getNarratorVoice: () => this.request<{ narratorVoiceId: string | null }>('GET', '/api/user/narrator-voice'),
     getEsmRecordings: () => this.request<any[]>('GET', '/api/user/esm-recordings'),
     getEsmTemplates: (storyId: number) => this.request<any>('GET', `/api/voice/esm-templates/${storyId}`),
     getUserVoiceEmotions: (userId: string, emotion: string) => 
