@@ -659,7 +659,6 @@ export default function StoryAnalysis() {
             </Button>
             <div>
               <h1 className="text-3xl font-bold text-white">{analysisData.title}</h1>
-              <p className="text-white/70">Character & Emotion Analysis</p>
             </div>
           </div>
 
