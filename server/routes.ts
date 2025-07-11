@@ -3119,11 +3119,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log(`[TestStyles] Generating narration with style: ${style}`);
           
           // Call the story narrator with different conversation style
-          const narrationResult = await storyNarrator.generateNarration(
+          const narrationResult = await storyNarrator.generateStoryNarration(
             storyId,
             userId,
-            style, // Pass conversation style
-            'neutral' // narrator profile
+            style // Pass conversation style
           );
           
           if (narrationResult && narrationResult.segments && narrationResult.segments.length > 0) {
