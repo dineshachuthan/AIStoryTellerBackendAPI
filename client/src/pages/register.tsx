@@ -31,6 +31,28 @@ export default function Register() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { register: registerUser, registerLoading, registerError } = useAuth();
 
+  const handleOAuthRegister = (provider: string) => {
+    console.log(`[OAuth] Attempting to open popup for ${provider}`);
+    const popup = window.open(`/api/auth/${provider}`, 'oauth_popup', 'width=500,height=600,scrollbars=yes,resizable=yes');
+    
+    if (!popup) {
+      console.log('[OAuth] Popup blocked, redirecting in same tab');
+      // Fallback to same-tab if popup blocked
+      window.location.href = `/api/auth/${provider}`;
+      return;
+    }
+
+    console.log('[OAuth] Popup opened successfully');
+    // Only monitor for closure without refreshing - message handler will handle success
+    const checkClosed = setInterval(() => {
+      if (popup.closed) {
+        console.log('[OAuth] Popup closed');
+        clearInterval(checkClosed);
+        // Don't refresh here - let the message handler do it
+      }
+    }, 1000);
+  };
+
   const form = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -214,7 +236,7 @@ export default function Register() {
               <div className="grid grid-cols-3 gap-3 mt-6">
                 <Button
                   variant="outline"
-                  onClick={() => window.location.href = "/api/auth/google"}
+                  onClick={() => handleOAuthRegister('google')}
                   className="w-full"
                 >
                   <svg className="w-4 h-4" viewBox="0 0 24 24">
@@ -226,7 +248,7 @@ export default function Register() {
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={() => window.location.href = "/api/auth/facebook"}
+                  onClick={() => handleOAuthRegister('facebook')}
                   className="w-full"
                 >
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -235,7 +257,7 @@ export default function Register() {
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={() => window.location.href = "/api/auth/microsoft"}
+                  onClick={() => handleOAuthRegister('microsoft')}
                   className="w-full"
                 >
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">

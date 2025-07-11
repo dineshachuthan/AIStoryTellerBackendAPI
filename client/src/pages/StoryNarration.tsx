@@ -29,6 +29,23 @@ export default function StoryNarration() {
     );
   }
 
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600 dark:text-gray-400 mb-2">Please log in to view story narration</p>
+          <Button
+            variant="outline"
+            onClick={() => navigate("/login")}
+            className="mt-4"
+          >
+            Log In
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   if (!story) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
