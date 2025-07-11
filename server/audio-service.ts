@@ -678,10 +678,9 @@ export class AudioService {
     );
     await fs.mkdir(cacheDir, { recursive: true });
     
-    // Generate filename with emotion and unique identifiers
-    const timestamp = Date.now();
-    const randomId = Math.random().toString(36).substring(2, 8);
-    const fileName = `${options.emotion}_${timestamp}_${randomId}.mp3`;
+    // Use deterministic filename based on emotion only (no timestamp/random)
+    // This ensures same cache key always maps to same file
+    const fileName = `${options.emotion}.mp3`;
     const filePath = path.join(cacheDir, fileName);
     
     await fs.writeFile(filePath, buffer);
