@@ -3,6 +3,7 @@ import type { NarratorProfile } from './audio-service';
 import { storage } from './storage';
 import { userContentStorage } from './user-content-storage';
 import { voiceOrchestrationService } from './voice-orchestration-service';
+import { conversationStylesManager } from '../shared/utils/conversation-styles-manager';
 
 export interface NarrationSegment {
   text: string;
@@ -135,6 +136,10 @@ export class StoryNarrator {
     // Get user's narrator profile for voice generation
     const narratorProfile = await this.getUserNarratorProfile(userId);
     
+    // Get conversation style configuration for relationship-aware narration
+    const styleConfig = await conversationStylesManager.getConversationStyle(conversationStyle);
+    console.log(`[StoryNarrator] Using conversation style: ${conversationStyle} - ${styleConfig.displayName}`);
+    
     // 4. Narrate story content with the determined narrator voice
     const segments = await this.createNarrationSegments(
       story.content, 
@@ -145,7 +150,8 @@ export class StoryNarrator {
       extractedEmotions,
       userLanguage,
       narratorProfile,
-      conversationStyle
+      conversationStyle,
+      styleConfig
     );
     
     const totalDuration = segments.reduce((sum, segment) => sum + (segment.duration || 0), 0);
@@ -231,7 +237,9 @@ export class StoryNarrator {
     storyId: number,
     extractedEmotions: any[],
     userLanguage: string,
-    narratorProfile: NarratorProfile
+    narratorProfile: NarratorProfile,
+    conversationStyle: string,
+    styleConfig: any
   ): Promise<NarrationSegment[]> {
     
     // Split content into manageable chunks for narration
@@ -280,7 +288,9 @@ export class StoryNarrator {
           i,
           chunkContext,
           userLanguage,
-          enhancedNarratorProfile
+          enhancedNarratorProfile,
+          conversationStyle,
+          styleConfig
         );
 
         segments.push({
@@ -395,7 +405,8 @@ export class StoryNarrator {
     chunkContext: { emotion: string; intensity: number; character: string },
     userLanguage: string,
     narratorProfile: NarratorProfile,
-    conversationStyle: string = 'respectful'
+    conversationStyle: string = 'respectful',
+    styleConfig?: any
   ): Promise<{ audioUrl: string; duration?: number }> {
     
     let audioBuffer: Buffer;
@@ -417,6 +428,20 @@ export class StoryNarrator {
         
         console.log(`[StoryNarrator] Using orchestrated voice settings:`, voiceSettings);
         
+        // Apply conversation style modifications to voice settings
+        if (styleConfig?.voiceParameters) {
+          console.log(`[StoryNarrator] Applying conversation style '${conversationStyle}' modifications:`, styleConfig.voiceParameters);
+          
+          // Merge style parameters with orchestrated settings
+          const mergedSettings = {
+            ...voiceSettings,
+            ...styleConfig.voiceParameters
+          };
+          
+          console.log(`[StoryNarrator] Merged voice settings with style:`, mergedSettings);
+          voiceSettings = mergedSettings;
+        }
+        
         // Note: text is already enhanced with sound patterns from createNarrationSegments
         console.log(`[StoryNarrator] Using enhanced text with sounds: ${text.substring(0, 100)}...`);
         
@@ -424,7 +449,7 @@ export class StoryNarrator {
         const arrayBuffer = await VoiceProviderFactory.generateSpeech(text, narratorVoice, chunkContext.emotion, voiceSettings, undefined, narratorProfile);
         audioBuffer = Buffer.from(arrayBuffer);
         
-        console.log(`[StoryNarrator] ElevenLabs narration generated: ${audioBuffer.length} bytes with ${chunkContext.emotion} emotion and orchestrated settings`);
+        console.log(`[StoryNarrator] ElevenLabs narration generated: ${audioBuffer.length} bytes with ${chunkContext.emotion} emotion and conversation style ${conversationStyle}`);
         
       } catch (error) {
         console.error(`[StoryNarrator] ElevenLabs generation failed:`, error);

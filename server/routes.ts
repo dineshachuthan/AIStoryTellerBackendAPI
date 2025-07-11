@@ -38,6 +38,7 @@ import { generateOpenAPISpec } from './openapi-generator';
 import { smsProviderRegistry } from './sms-providers/sms-provider-registry';
 import { SMSMessage } from './sms-providers/sms-provider-interface';
 import { externalProviderTracking } from './external-provider-tracking-storage';
+import { conversationStylesManager } from '../shared/utils/conversation-styles-manager';
 
 import multer from "multer";
 import path from "path";
@@ -257,6 +258,14 @@ const voiceUpload = multer({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  
+  // Initialize conversation styles manager on startup
+  try {
+    await conversationStylesManager.initialize();
+    console.log('✅ Conversation styles manager initialized successfully');
+  } catch (error) {
+    console.error('❌ Failed to initialize conversation styles manager:', error);
+  }
   
   // Helper function to add sampleText from ESM database to analysis response
   async function addSampleTextsToAnalysis(analysis: any): Promise<any> {

@@ -339,12 +339,19 @@ export const storyNarrations = pgTable("story_narrations", {
   userId: text("user_id").notNull(),
   narratorVoice: varchar("narrator_voice").notNull(),
   narratorVoiceType: varchar("narrator_voice_type").notNull(),
+  conversationStyle: varchar("conversation_style").references(() => conversationStyles.styleKey), // Relationship context for this narration
+  relationshipId: integer("relationship_id").references(() => userRelationships.id), // Link to user relationship
+  sharedWithIdentifier: text("shared_with_identifier"), // For non-registered recipients (email/phone)
   segments: jsonb("segments").notNull(), // array of {text, emotion, audioUrl, voiceUsed}
   totalDuration: integer("total_duration").notNull(), // milliseconds
   audioFileUrl: text("audio_file_url"), // final combined audio file
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  index("idx_story_narrations_story_user").on(table.storyId, table.userId),
+  index("idx_story_narrations_conversation_style").on(table.conversationStyle),
+  index("idx_story_narrations_relationship").on(table.relationshipId),
+]);
 
 // Story modulation requirements - what modulations a story needs
 export const storyModulationRequirements = pgTable("story_modulation_requirements", {
@@ -546,6 +553,23 @@ export const emotionVoiceProfiles = pgTable("emotion_voice_profiles", {
 
 // ===== CONTENT SHARING AND RELATIONSHIP SYSTEM =====
 
+// Conversation styles table - defines relationship-based conversation tones
+export const conversationStyles = pgTable("conversation_styles", {
+  id: serial("id").primaryKey(),
+  styleKey: varchar("style_key", { length: 50 }).notNull().unique(), // 'respectful', 'business', 'jovial', etc.
+  displayName: varchar("display_name", { length: 100 }).notNull(),
+  description: text("description"),
+  voiceParameters: jsonb("voice_parameters").notNull(), // JSON structure with stability, similarity_boost, style, prosody
+  relationshipContext: varchar("relationship_context", { length: 100 }), // 'parent_to_child', 'professional', 'casual', etc.
+  isActive: boolean("is_active").default(true),
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_conversation_styles_key").on(table.styleKey),
+  index("idx_conversation_styles_active").on(table.isActive),
+]);
+
 // Content items table - stores any shareable content
 export const contentItems = pgTable("content_items", {
   id: serial("id").primaryKey(),
@@ -569,7 +593,7 @@ export const userRelationships = pgTable("user_relationships", {
   fromUserId: varchar("from_user_id").references(() => users.id).notNull(),
   toUserId: varchar("to_user_id").references(() => users.id), // Can be null for anonymous
   toIdentifier: text("to_identifier"), // Email/phone for non-users
-  conversationStyle: varchar("conversation_style").notNull(), // 'respectful', 'business', 'jovial', etc.
+  conversationStyle: varchar("conversation_style").notNull().references(() => conversationStyles.styleKey), // FK to conversation_styles table
   nickname: varchar("nickname"), // "Mom", "Boss", etc.
   relationshipContext: text("relationship_context"), // Optional notes
   isActive: boolean("is_active").default(true),
@@ -593,7 +617,7 @@ export const contentShares = pgTable("content_shares", {
   // Personalization
   personalizedSummary: text("personalized_summary"), // Relationship-specific summary
   personalizedMessage: text("personalized_message"), // Optional custom message
-  conversationStyle: varchar("conversation_style"), // Override style for this share
+  conversationStyle: varchar("conversation_style").references(() => conversationStyles.styleKey), // Override style for this share
   
   // Audio generation
   audioGenerated: boolean("audio_generated").default(false),
@@ -1528,7 +1552,7 @@ export const storyInvitations = pgTable("story_invitations", {
   inviteeEmail: varchar("invitee_email"),
   inviteePhone: varchar("invitee_phone"),
   invitationToken: varchar("invitation_token").unique().notNull(),
-  conversationStyle: varchar("conversation_style").default("respectful"), // relationship context for narration
+  conversationStyle: varchar("conversation_style").references(() => conversationStyles.styleKey).default("respectful"), // FK to conversation_styles table
   status: varchar("status").default('pending').notNull(), // pending, accepted, completed
   message: text("message"), // Optional personalized message
   characterId: integer("character_id").references(() => storyCharacters.id), // Optional character assignment
@@ -1615,6 +1639,16 @@ export type InsertStandardVoiceSample = z.infer<typeof insertStandardVoiceSample
 
 export type ParticipantVoiceSample = typeof participantVoiceSamples.$inferSelect;
 export type InsertParticipantVoiceSample = z.infer<typeof insertParticipantVoiceSampleSchema>;
+
+// Conversation styles schema and types
+export const insertConversationStyleSchema = createInsertSchema(conversationStyles).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type ConversationStyle = typeof conversationStyles.$inferSelect;
+export type InsertConversationStyle = z.infer<typeof insertConversationStyleSchema>;
 
 // =============================================================================
 // AUTHENTICATION & USER TRACKING SCHEMAS
