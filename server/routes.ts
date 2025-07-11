@@ -1585,8 +1585,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   */
 
-  // Get user voice recordings by emotion - COMMENTED OUT FOR DEBUGGING
-  /*
+  /* DEPRECATED - Legacy user voice emotions endpoint - DO NOT USE
   app.get("/api/user-voice-emotions/:userId", requireAuth, async (req, res) => {
     try {
       const { userId } = req.params;
