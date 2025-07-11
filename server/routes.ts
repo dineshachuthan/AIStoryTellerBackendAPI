@@ -4745,7 +4745,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Categories: 1=emotions, 2=sounds, 3=modulations
         const categoryId = category === 'emotions' ? 1 : category === 'sounds' ? 2 : 3;
         
-        // Simply match by name and category since recordings are already filtered by story_id
+        // Case-insensitive match by name and category since recordings are already filtered by story_id
         const found = userRecordings.find(recording => 
           recording.name.toLowerCase() === itemName.toLowerCase() && 
           recording.category === categoryId
@@ -4776,7 +4776,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (analysis.analysisData.emotions) {
         console.log(`🎯 Story ${storyId} emotions:`, analysis.analysisData.emotions.map(e => e.emotion));
         for (const emotion of analysis.analysisData.emotions) {
-          // Check if emotion exists in ESM reference data (case insensitive)
+          // Check if emotion exists in ESM reference data (now case insensitive)
           console.log(`🔍 Checking emotion "${emotion.emotion}" in ESM reference data...`);
           const esmRef = await storage.getEsmRef(1, emotion.emotion);
           if (!esmRef) {
@@ -4785,15 +4785,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
           console.log(`✅ Found emotion "${emotion.emotion}" in ESM reference data`);
           
-          // Debug: Check if case sensitivity is the issue
-          const esmRefLower = await storage.getEsmRef(1, emotion.emotion.toLowerCase());
-          const esmRefUpper = await storage.getEsmRef(1, emotion.emotion.toUpperCase());
-          console.log(`🔍 Case sensitivity check: lower=${!!esmRefLower}, upper=${!!esmRefUpper}`);
-          
-          if (!esmRef && !esmRefLower && !esmRefUpper) {
-            console.log(`❌ Emotion "${emotion.emotion}" not found in any case variation`);
-            continue;
-          }
           
           const userRecording = findUserRecording(emotion.emotion, 'emotions');
           const esmText = esmRef.sample_text;
