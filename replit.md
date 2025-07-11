@@ -1180,7 +1180,17 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **PATTERN EXAMPLES**: "explosion" → "(Doooom Dubbb)", "crying" → "(ummmm ummmmm)", "footsteps" → "(tok tok tok)"
 - **AUTO-LEARNING**: AI story analysis automatically discovers new sound patterns and updates soundsPattern.json
 - **ELEVENLABS INTEGRATION**: Enhanced text with onomatopoeia sent to ElevenLabs for more immersive audio narration
-- **PRODUCTION READY**: System working in all conversation styles (respectful, casual, etc.) with voice orchestration: ESM now stores exact casing from AI analysis (e.g., "Frustration" stays "Frustration")
+- **PRODUCTION READY**: System working in all conversation styles (respectful, casual, etc.) with voice orchestration
+
+### **RECURRING AUTHENTICATION ISSUES - July 11, 2025**
+**Summary of Persistent Problems**: Multiple authentication-related failures preventing proper testing
+- **VOICE SAMPLES ENDPOINT**: Returns 401 "Authentication required" preventing emotion display verification
+- **NARRATION GENERATION**: `/api/stories/88/generate-narration` returns 401 preventing narration testing
+- **ESM DATA DISPLAY**: Emotions not appearing in analysis page due to authentication pipeline issues
+- **ROOT CAUSE UNKNOWN**: Authentication middleware failing despite user being logged in browser
+- **IMPACT**: Cannot test core functionality due to authentication blocks on API endpoints
+- **PATTERN**: Same authentication issues recurring throughout development session
+- **NEXT STEPS**: Focus on authentication middleware debugging before feature testing: ESM now stores exact casing from AI analysis (e.g., "Frustration" stays "Frustration")
 - **STRATEGIC SOLUTION**: Follows user requirement that all case handling must occur at analysis stage only
 - **VOICE RECORDING FIXED**: Voice samples now properly match and save with correct emotion/sound names
 
