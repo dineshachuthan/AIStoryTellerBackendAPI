@@ -68,6 +68,80 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// User language preferences - Multi-language support per user
+export const userLanguagePreferences = pgTable("user_language_preferences", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  language: varchar("language", { length: 10 }).notNull(), // 'en', 'ta', 'hi', 'te', etc.
+  proficiencyLevel: varchar("proficiency_level", { length: 20 }).default('native'), // 'native', 'fluent', 'intermediate', 'basic'
+  isPreferred: boolean("is_preferred").default(false), // Primary language for UI
+  useContexts: text("use_contexts").array(), // ['family', 'work', 'friends', 'formal']
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_user_language_prefs_user_lang").on(table.userId, table.language),
+]);
+
+// User relationships - Complex relationship mapping with language and style preferences
+export const userRelationships = pgTable("user_relationships", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  relationshipType: varchar("relationship_type", { length: 50 }).notNull(), // 'spouse', 'parent', 'child', 'sibling', 'colleague', 'friend', 'boss'
+  relationshipLabel: varchar("relationship_label", { length: 100 }), // "My Mom", "My Boss", "College Friend"
+  preferredLanguage: varchar("preferred_language", { length: 10 }).notNull(), // Language used with this relationship
+  conversationStyle: varchar("conversation_style", { length: 50 }).notNull(), // 'respectful', 'business', 'intimate', 'playful'
+  intimacyLevel: integer("intimacy_level").default(5), // 1-10 scale for customization
+  contactInfo: jsonb("contact_info"), // Optional: email, phone for direct sharing
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_user_relationships_user_type").on(table.userId, table.relationshipType),
+  index("idx_user_relationships_lang_style").on(table.preferredLanguage, table.conversationStyle),
+]);
+
+// Language-specific voice profiles - Different narrator voices per language
+export const userLanguageVoiceProfiles = pgTable("user_language_voice_profiles", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  language: varchar("language", { length: 10 }).notNull(),
+  profileName: varchar("profile_name", { length: 100 }).notNull(), // "Tamil Narrator", "English Business Voice"
+  elevenlabsVoiceId: text("elevenlabs_voice_id"),
+  voiceCharacteristics: jsonb("voice_characteristics"), // Language-specific voice settings
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_user_lang_voice_user_lang").on(table.userId, table.language),
+]);
+
+// Language-specific conversation styles - Cultural context per language
+export const languageConversationStyles = pgTable("language_conversation_styles", {
+  id: serial("id").primaryKey(),
+  language: varchar("language", { length: 10 }).notNull(),
+  styleKey: varchar("style_key", { length: 50 }).notNull(),
+  displayName: varchar("display_name", { length: 100 }).notNull(),
+  description: text("description"),
+  voiceParameters: jsonb("voice_parameters"), // Language-specific voice modifications
+  culturalContext: text("cultural_context"), // Language-specific cultural considerations
+  samplePhrases: text("sample_phrases").array(), // Example phrases in this language/style
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_lang_conv_styles_lang_key").on(table.language, table.styleKey),
+]);
+
+// Story sharing contexts - Multi-dimensional relationship-aware narration
+export const storySharingContexts = pgTable("story_sharing_contexts", {
+  id: serial("id").primaryKey(),
+  storyId: integer("story_id").references(() => stories.id).notNull(),
+  authorId: varchar("author_id").references(() => users.id).notNull(),
+  recipientRelationshipId: integer("recipient_relationship_id").references(() => userRelationships.id),
+  language: varchar("language", { length: 10 }).notNull(),
+  conversationStyle: varchar("conversation_style", { length: 50 }).notNull(),
+  narrationUrl: text("narration_url"), // Cached narration for this specific context
+  cacheKey: varchar("cache_key", { length: 255 }), // User.Story.Language.Style.Relationship
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_story_sharing_contexts_cache").on(table.cacheKey),
+  index("idx_story_sharing_contexts_story_recipient").on(table.storyId, table.recipientRelationshipId),
+]);
+
 // Social authentication providers table
 export const userProviders = pgTable("user_providers", {
   id: serial("id").primaryKey(),
