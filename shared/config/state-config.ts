@@ -31,6 +31,9 @@ export enum StoryStatus {
   DRAFT = 'draft',
   READY = 'ready',
   ANALYZED = 'analyzed',
+  PRIVATE_TESTING = 'private_testing',
+  COLLABORATIVE_REVIEW = 'collaborative_review',
+  FINALIZED = 'finalized',
   PUBLISHED = 'published'
 }
 
@@ -78,7 +81,10 @@ export const DEFAULT_STATE_DEFINITIONS: Record<StateType, StateDefinition[]> = {
     { stateKey: 'draft', displayName: 'Draft', description: 'Story is being written or edited', isInitial: true, isTerminal: false, sortOrder: 1, isActive: true },
     { stateKey: 'ready', displayName: 'Ready', description: 'Story is complete and ready for analysis', isInitial: false, isTerminal: false, sortOrder: 2, isActive: true },
     { stateKey: 'analyzed', displayName: 'Analyzed', description: 'AI analysis has been completed', isInitial: false, isTerminal: false, sortOrder: 3, isActive: true },
-    { stateKey: 'published', displayName: 'Published', description: 'Story is published and visible to others', isInitial: false, isTerminal: true, sortOrder: 4, isActive: true }
+    { stateKey: 'private_testing', displayName: 'Private Testing', description: 'Author testing narration with voice samples and refinements', isInitial: false, isTerminal: false, sortOrder: 4, isActive: true },
+    { stateKey: 'collaborative_review', displayName: 'Collaborative Review', description: 'Friends and family invited to test story with their own voices', isInitial: false, isTerminal: false, sortOrder: 5, isActive: true },
+    { stateKey: 'finalized', displayName: 'Finalized', description: 'Story completed with all feedback incorporated', isInitial: false, isTerminal: false, sortOrder: 6, isActive: true },
+    { stateKey: 'published', displayName: 'Published', description: 'Story is published and visible to others', isInitial: false, isTerminal: true, sortOrder: 7, isActive: true }
   ],
   story_processing: [
     { stateKey: 'pending', displayName: 'Pending', description: 'Waiting for processing to begin', isInitial: true, isTerminal: false, sortOrder: 1, isActive: true },
@@ -112,7 +118,14 @@ export const DEFAULT_STATE_TRANSITIONS: Record<StateType, StateTransition[]> = {
   story: [
     { fromState: 'draft', toState: 'ready', isAutomatic: false, requiresPermission: false },
     { fromState: 'ready', toState: 'analyzed', isAutomatic: true, requiresPermission: false },
-    { fromState: 'analyzed', toState: 'published', isAutomatic: false, requiresPermission: false },
+    { fromState: 'analyzed', toState: 'private_testing', isAutomatic: false, requiresPermission: false },
+    { fromState: 'private_testing', toState: 'collaborative_review', isAutomatic: false, requiresPermission: false },
+    { fromState: 'private_testing', toState: 'analyzed', isAutomatic: false, requiresPermission: false }, // Go back for refinement
+    { fromState: 'collaborative_review', toState: 'finalized', isAutomatic: false, requiresPermission: false },
+    { fromState: 'collaborative_review', toState: 'private_testing', isAutomatic: false, requiresPermission: false }, // Go back for changes
+    { fromState: 'finalized', toState: 'published', isAutomatic: false, requiresPermission: false },
+    { fromState: 'finalized', toState: 'collaborative_review', isAutomatic: false, requiresPermission: false }, // Go back for more feedback
+    { fromState: 'analyzed', toState: 'published', isAutomatic: false, requiresPermission: false }, // Skip workflow
     { fromState: 'draft', toState: 'published', isAutomatic: false, requiresPermission: true } // Admin shortcut
   ],
   story_processing: [

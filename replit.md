@@ -103,6 +103,16 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - **Frontend Cache Sync**: API client automatically invalidates React Query cache after database writes (same-tab only)
 - **Zero Cache Bypass**: No database operations should bypass the cache provider architecture
 
+### Database-Driven State Management (MANDATORY)
+**ALL APPLICATION STATES LOADED FROM DATABASE VIA SINGLETON STATEMANAGER**
+- **StateManager Singleton**: Single instance loads all states from database on app startup
+- **Zero Database Calls**: State lookups use in-memory cache for instant access
+- **Complete State Types**: story, story_instance, video_job, voice_training, story_processing
+- **Never Use state-config.ts**: Configuration file is outdated - all states come from database
+- **Initialization**: StateManager.initialize() called on server startup
+- **API Integration**: Routes use stateManager.getValidStates() for state information
+- **Type Safety**: StateTypeSchema validates against actual database state types
+
 ### Mandatory Architectural Patterns (ALWAYS FOLLOW)
 - **BaseCachedProvider**: All external API integrations MUST use cached provider pattern
 - **UIMessages I18N**: All text MUST use internationalization system with proper template interpolation

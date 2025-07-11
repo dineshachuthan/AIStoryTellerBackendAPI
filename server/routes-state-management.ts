@@ -5,13 +5,12 @@
 
 import { Router } from "express";
 import { z } from "zod";
-import { stateManager } from "../shared/state-manager";
+import { stateManager } from "../shared/utils/state-manager";
 import { requireAuth, requireAdmin } from "./auth";
-import type { StateType } from "../shared/state-config";
 
 const router = Router();
 
-// Validation schemas
+// Validation schemas - using database-driven state types
 const StateTypeSchema = z.enum(['story', 'story_instance', 'video_job', 'voice_training', 'story_processing']);
 const TransitionValidationSchema = z.object({
   stateType: StateTypeSchema,
@@ -19,6 +18,9 @@ const TransitionValidationSchema = z.object({
   toState: z.string(),
   hasPermission: z.boolean().optional().default(false)
 });
+
+// Type alias for state types
+type StateType = z.infer<typeof StateTypeSchema>;
 
 /**
  * GET /api/states/:stateType - Get all valid states for a state type (OPTIMIZED - no database calls)
