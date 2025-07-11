@@ -67,7 +67,7 @@ export const getQueryFn: <T>(options: {
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      queryFn: getQueryFn({ on401: "throw" }),
+      // No default queryFn - all queries must explicitly specify queryFn with API client methods
       refetchInterval: false,
       refetchOnWindowFocus: false,
       staleTime: 30 * 60 * 1000, // 30 minutes cache duration
