@@ -65,6 +65,19 @@ This is a full-stack collaborative storytelling platform that enables users to c
 - Pattern: `apiClient.audio.transcribe(formData)` NOT `fetch('/api/audio/transcribe', {method: 'POST', body: formData})`
 - **ARCHITECTURAL RULE**: api-client.ts MUST be in client/src/lib/ - NEVER in shared folder (fixed July 10, 2025)
 
+### Zero Tolerance React Query Default QueryFn Policy (MANDATORY - July 11, 2025)
+**ALL REACT QUERY USAGE MUST EXPLICITLY SPECIFY queryFn WITH API CLIENT METHODS**
+- ABSOLUTELY NO reliance on default queryFn in useQuery hooks - ALL queries must specify explicit queryFn
+- MANDATORY PATTERN: `queryFn: () => apiClient.stories.get(id)` - NEVER omit queryFn
+- VIOLATION: `queryKey: ['/api/stories']` without explicit queryFn is FORBIDDEN
+- DEFAULT QUERYFN REMOVED: client/src/lib/queryClient.ts no longer provides automatic fetch behavior
+- **MIGRATION ENFORCEMENT**: When touching ANY component with React Query usage:
+  1. IMMEDIATELY fix ALL useQuery calls to use explicit queryFn with API client methods
+  2. Add missing API client methods if endpoints don't exist in api-client.ts
+  3. NEVER proceed with other changes until ALL queries are compliant
+- **ARCHITECTURAL COMPLIANCE**: This enforces the Zero Tolerance Direct API Call Policy at the React Query level
+- **AUTOMATIC ENFORCEMENT**: Missing queryFn will cause immediate runtime errors, surfacing violations instantly
+
 ### Zero Tolerance Deprecated API Usage Policy
 **NEVER USE, REFERENCE, OR ANALYZE DEPRECATED API ENDPOINTS WITHOUT EXPLICIT REQUEST**
 - ABSOLUTELY NO use of deprecated endpoints in any development, analysis, or recommendations
