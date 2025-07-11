@@ -13,6 +13,7 @@ import { LanguageProvider } from "@/contexts/language-context";
 import { PWAUpdateNotification } from "@/components/PWAUpdateNotification";
 
 import Home from "@/pages/home";
+import Landing from "@/pages/landing";
 import Chat from "@/pages/chat";
 import CreateCharacter from "@/pages/create-character";
 import UploadStory from "@/pages/upload-story";
@@ -111,8 +112,8 @@ function AppContent() {
             </>
           ) : (
             <>
-              <Route path="/" component={Login} />
-              <Route path="*" component={Login} />
+              <Route path="/" component={Landing} />
+              <Route path="*" component={Landing} />
             </>
           )}
         </Switch>
