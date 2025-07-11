@@ -258,17 +258,17 @@ const voiceUpload = multer({
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
-  // Helper function to enhance analysis with ESM reference data (full sample texts)
-  async function enhanceAnalysisWithEsmData(analysis: any): Promise<any> {
+  // Helper function to add sampleText from ESM database to analysis response
+  async function addSampleTextsToAnalysis(analysis: any): Promise<any> {
     try {
-      console.log("🔍 Enhancing analysis with ESM reference data for full sample texts...");
+      console.log("🔍 Adding ESM sample texts to analysis response...");
       
       // Create a copy of the analysis to avoid mutating the original
       const enhancedAnalysis = { ...analysis };
       
-      // Enhance emotions with ESM reference data
+      // Add sampleText to emotions from ESM database
       if (enhancedAnalysis.emotions && enhancedAnalysis.emotions.length > 0) {
-        console.log(`📊 Enhancing ${enhancedAnalysis.emotions.length} emotions with ESM sample texts`);
+        console.log(`📊 Adding sample texts to ${enhancedAnalysis.emotions.length} emotions`);
         
         for (let i = 0; i < enhancedAnalysis.emotions.length; i++) {
           const emotion = enhancedAnalysis.emotions[i];
@@ -279,13 +279,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const esmRef = await storage.getEsmRef(1, emotionName); // Category 1 = emotions
             
             if (esmRef && esmRef.sample_text) {
-              // Replace the original quote with the full sample text from ESM
+              // Add sampleText field while preserving original quote
               enhancedAnalysis.emotions[i] = {
                 ...emotion,
-                quote: esmRef.sample_text, // Use full sample text instead of story excerpt
-                sampleText: esmRef.sample_text // Also set sampleText for backward compatibility
+                sampleText: esmRef.sample_text // Add professional voice cloning text
               };
-              console.log(`✅ Enhanced emotion ${emotionName} with ESM sample text (${esmRef.sample_text.split(' ').length} words)`);
+              console.log(`✅ Added sample text to emotion ${emotionName} (${esmRef.sample_text.split(' ').length} words)`);
             } else {
               console.log(`⚠️ No ESM reference data found for emotion: ${emotionName}`);
             }
@@ -293,9 +292,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Enhance sound effects with ESM reference data
+      // Add sampleText to sound effects from ESM database
       if (enhancedAnalysis.soundEffects && enhancedAnalysis.soundEffects.length > 0) {
-        console.log(`🔊 Enhancing ${enhancedAnalysis.soundEffects.length} sound effects with ESM sample texts`);
+        console.log(`🔊 Adding sample texts to ${enhancedAnalysis.soundEffects.length} sound effects`);
         
         for (let i = 0; i < enhancedAnalysis.soundEffects.length; i++) {
           const sound = enhancedAnalysis.soundEffects[i];
@@ -306,13 +305,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const esmRef = await storage.getEsmRef(2, soundName); // Category 2 = sounds
             
             if (esmRef && esmRef.sample_text) {
-              // Replace the original quote with the full sample text from ESM
+              // Add sampleText field while preserving original quote
               enhancedAnalysis.soundEffects[i] = {
                 ...sound,
-                quote: esmRef.sample_text, // Use full sample text instead of story excerpt
-                sampleText: esmRef.sample_text // Also set sampleText for backward compatibility
+                sampleText: esmRef.sample_text // Add professional voice cloning text
               };
-              console.log(`✅ Enhanced sound ${soundName} with ESM sample text (${esmRef.sample_text.split(' ').length} words)`);
+              console.log(`✅ Added sample text to sound ${soundName} (${esmRef.sample_text.split(' ').length} words)`);
             } else {
               console.log(`⚠️ No ESM reference data found for sound: ${soundName}`);
             }
@@ -320,11 +318,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      console.log("✅ Analysis enhancement with ESM reference data completed");
+      console.log("✅ Sample text addition completed");
       return enhancedAnalysis;
       
     } catch (error) {
-      console.error("❌ Error enhancing analysis with ESM data:", error);
+      console.error("❌ Error adding sample texts to analysis:", error);
       // Return original analysis if enhancement fails
       return analysis;
     }
@@ -782,8 +780,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (existingAnalysis && !needsRegeneration) {
         console.log(`Retrieved existing narrative analysis for story ${storyId} (content unchanged)`);
         
-        // Enhance the analysis with ESM reference data for full sample texts
-        const enhancedAnalysis = await enhanceAnalysisWithEsmData(existingAnalysis.analysisData);
+        // Add sampleText from ESM database to analysis response
+        const enhancedAnalysis = await addSampleTextsToAnalysis(existingAnalysis.analysisData);
         return res.json(enhancedAnalysis);
       } else {
         console.log(`Content changed for story ${storyId}, regenerating narrative analysis`);
@@ -824,7 +822,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log("✅ Reference data extraction completed as part of analysis generation");
         
         // Enhance the analysis with ESM reference data for full sample texts
-        const enhancedAnalysis = await enhanceAnalysisWithEsmData(analysis);
+        const enhancedAnalysis = await addSampleTextsToAnalysis(analysis);
         return res.json(enhancedAnalysis);
       }
     } catch (error) {
@@ -852,8 +850,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const existingAnalysis = await storage.getStoryAnalysis(storyId, 'narrative');
       if (existingAnalysis) {
         console.log(`Found existing narrative analysis for story ${storyId}`);
-        // Enhance the analysis with ESM reference data for full sample texts
-        const enhancedAnalysis = await enhanceAnalysisWithEsmData(existingAnalysis.analysisData);
+        // Add sampleText from ESM database to analysis response
+        const enhancedAnalysis = await addSampleTextsToAnalysis(existingAnalysis.analysisData);
         return res.json(enhancedAnalysis);
       }
 
@@ -885,8 +883,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log("Narrative analysis generated successfully");
       
-      // Enhance the analysis with ESM reference data for full sample texts
-      const enhancedAnalysis = await enhanceAnalysisWithEsmData(analysis);
+      // Add sampleText from ESM database to analysis response
+      const enhancedAnalysis = await addSampleTextsToAnalysis(analysis);
       res.json(enhancedAnalysis);
     } catch (error) {
       console.error("Error generating narrative analysis:", error);
