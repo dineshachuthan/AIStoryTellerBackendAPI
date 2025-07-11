@@ -173,10 +173,10 @@
     {
       "character": "Narrator",
       "emotion": "neutral",
-      "stability": 0.7875,
-      "similarityBoost": 0.8759999999999999,
-      "style": 0.415,
-      "usageCount": 20
+      "stability": 0.7883333333333336,
+      "similarityBoost": 0.8756666666666667,
+      "style": 0.42,
+      "usageCount": 30
     }
   ]
 }
