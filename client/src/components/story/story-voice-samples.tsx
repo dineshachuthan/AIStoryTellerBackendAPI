@@ -87,7 +87,6 @@ const isTextSuitableForRecording = (text: string): boolean => {
 
 export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceSamplesProps) {
   const { user } = useAuth();
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedCategory, setSelectedCategory] = useState<string>("emotions");
 
