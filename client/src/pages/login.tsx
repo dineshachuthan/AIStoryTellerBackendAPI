@@ -47,17 +47,21 @@ export default function Login() {
   }, [setLocation, queryClient]);
 
   const handleOAuthLogin = (provider: string) => {
+    console.log(`[OAuth] Attempting to open popup for ${provider}`);
     const popup = window.open(`/api/auth/${provider}`, 'oauth_popup', 'width=500,height=600,scrollbars=yes,resizable=yes');
     
     if (!popup) {
+      console.log('[OAuth] Popup blocked, redirecting in same tab');
       // Fallback to same-tab if popup blocked
       window.location.href = `/api/auth/${provider}`;
       return;
     }
 
+    console.log('[OAuth] Popup opened successfully');
     // Only monitor for closure without refreshing - message handler will handle success
     const checkClosed = setInterval(() => {
       if (popup.closed) {
+        console.log('[OAuth] Popup closed');
         clearInterval(checkClosed);
         // Don't refresh here - let the message handler do it
       }
