@@ -1,8 +1,10 @@
 import { useParams, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowLeft, Download, AudioLines, Play } from "lucide-react";
 import StoryNarratorControls from "@/components/ui/story-narrator-controls";
+import { SimpleAudioPlayer } from "@/components/ui/simple-audio-player";
 import { useAuth } from "@/hooks/useAuth";
 import { AppTopNavigation } from "@/components/app-top-navigation";
 import { apiClient } from "@/lib/api-client";
@@ -20,7 +22,14 @@ export default function StoryNarration() {
     enabled: !!storyId && !!user
   });
 
-  if (isLoading) {
+  // Fetch all narrations for this story
+  const { data: allNarrations = [], isLoading: allNarrationsLoading } = useQuery({
+    queryKey: [`/api/stories/${storyId}/narrations/all`],
+    queryFn: () => apiClient.stories.getAllNarrations(storyId),
+    enabled: !!storyId && !!user
+  });
+
+  if (isLoading || allNarrationsLoading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">

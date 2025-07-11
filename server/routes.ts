@@ -2,7 +2,7 @@ import type { Express } from "express";
 import express from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertCharacterSchema, insertConversationSchema, insertMessageSchema, insertStorySchema, insertUserVoiceSampleSchema, insertStoryCollaborationSchema, insertStoryGroupSchema, insertCharacterVoiceAssignmentSchema, userEsmRecordings, storyNarrations } from '@shared/schema/schema';
+import { insertCharacterSchema, insertConversationSchema, insertMessageSchema, insertStorySchema, insertUserVoiceSampleSchema, insertStoryCollaborationSchema, insertStoryGroupSchema, insertCharacterVoiceAssignmentSchema, userEsmRecordings, storyNarrations, stories } from '@shared/schema/schema';
 import { VOICE_RECORDING_CONFIG } from '@shared/config/voice-recording-config';
 import { generateAIResponse } from "./openai";
 import { setupAuth, requireAuth, requireAdmin, hashPassword } from "./auth";
@@ -3038,6 +3038,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error fetching story narration:", error);
       console.error("Error details:", error instanceof Error ? error.message : error);
       res.status(500).json({ message: "Failed to fetch story narration" });
+    }
+  });
+
+  // Get all available narrations for a story with different cache keys
+  app.get("/api/stories/:id/narrations/all", requireAuth, async (req, res) => {
+    try {
+      const storyId = parseInt(req.params.id);
+      const userId = (req.user as any)?.id;
+      
+      if (!storyId || !userId) {
+        return res.status(400).json({ message: "Story ID and user ID required" });
+      }
+      
+      // Get all narrations for this story and user
+      const narrations = await db.select()
+        .from(storyNarrations)
+        .where(and(
+          eq(storyNarrations.storyId, storyId),
+          eq(storyNarrations.userId, userId)
+        ))
+        .orderBy(desc(storyNarrations.createdAt));
+      
+      // Get story title
+      const story = await db.select()
+        .from(stories)
+        .where(eq(stories.id, storyId))
+        .limit(1);
+      
+      const storyTitle = story[0]?.title || `Story ${storyId}`;
+      
+      // Transform narrations to match admin page format
+      const transformedNarrations = narrations.map(narration => ({
+        id: `narration-${narration.id}`,
+        storyId: narration.storyId,
+        storyTitle,
+        conversationStyle: narration.conversationStyle || 'default',
+        emotion: 'neutral', // Default emotion
+        narratorProfile: 'neutral', // Default profile
+        narratorVoice: narration.narratorVoice,
+        narratorVoiceType: narration.narratorVoiceType,
+        segments: narration.segments,
+        totalDuration: narration.totalDuration,
+        timestamp: narration.createdAt,
+        // Generate first segment audio URL for playback
+        audioUrl: narration.segments && narration.segments.length > 0 ? 
+          narration.segments[0].audioUrl : null,
+        voiceParameters: {
+          voiceId: narration.narratorVoice,
+          voiceSettings: {
+            stability: 0.8,
+            similarityBoost: 0.9,
+            style: 0.5
+          }
+        }
+      }));
+      
+      res.json(transformedNarrations);
+    } catch (error) {
+      console.error("Error fetching all narrations:", error);
+      res.status(500).json({ message: "Failed to fetch narrations" });
     }
   });
 

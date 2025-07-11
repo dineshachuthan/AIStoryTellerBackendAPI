@@ -178,6 +178,7 @@ export class ApiClient {
         : `/api/stories/${storyId}/narration/saved`;
       return this.request<any>('GET', url);
     },
+    getAllNarrations: (storyId: number) => this.request<any[]>('GET', `/api/stories/${storyId}/narrations/all`),
   };
   
   // Character endpoints
