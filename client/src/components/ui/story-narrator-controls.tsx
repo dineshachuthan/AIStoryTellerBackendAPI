@@ -3,7 +3,8 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Headphones, Play, Pause, Save, Download, Loader2, RefreshCw, SkipBack, SkipForward, Volume2, Check } from 'lucide-react';
 import { toast } from '@/lib/toast-utils';
-import { apiRequest, queryClient } from '@/lib/queryClient';
+import { queryClient } from '@/lib/queryClient';
+import { apiClient } from '@/lib/api-client';
 import { getMessage } from '@shared/utils/i18n-hierarchical';
 import {
   Select,
@@ -62,7 +63,6 @@ export default function StoryNarratorControls({
     queryFn: async () => {
       if (!user) return null;
       try {
-        const { apiClient } = await import('@/lib/api-client');
         return await apiClient.voice.getNarratorVoice();
       } catch (error) {
         console.error('Error fetching narrator voice:', error);
@@ -74,12 +74,11 @@ export default function StoryNarratorControls({
 
   // Use React Query to fetch saved narration - this will respond to cache invalidations
   const { data: savedNarration, isLoading: isLoadingSaved } = useQuery({
-    queryKey: [`/api/stories/${storyId}/narration/saved`, narratorVoiceData?.narratorVoiceId],
+    queryKey: [`/api/stories/${storyId}/narration`, narratorVoiceData?.narratorVoiceId],
     queryFn: async () => {
       if (!user) return null;
       try {
-        const { apiClient } = await import('@/lib/api-client');
-        const response = await apiClient.stories.getSavedNarration(storyId);
+        const response = await apiClient.stories.getNarration(storyId);
         
         // Check if narration matches current voice ID
         if (response && narratorVoiceData?.narratorVoiceId && 
@@ -206,8 +205,8 @@ export default function StoryNarratorControls({
     try {
       // Get story content and narrative analysis
       const [storyResponse, analysisResponse] = await Promise.all([
-        apiRequest(`/api/stories/${storyId}`, { method: 'GET' }),
-        apiRequest(`/api/stories/${storyId}/narrative`, { method: 'GET' })
+        apiClient.stories.get(storyId),
+        apiClient.stories.getNarrative(storyId)
       ]);
 
       if (!storyResponse.content || !analysisResponse.emotions) {
@@ -215,13 +214,7 @@ export default function StoryNarratorControls({
       }
 
       // Generate new narration (this costs money)
-      const response = await apiRequest(`/api/stories/${storyId}/narration`, {
-        method: 'POST',
-        body: JSON.stringify({
-          content: storyResponse.content,
-          emotions: analysisResponse.emotions
-        })
-      });
+      const response = await apiClient.stories.createNarration(storyId);
 
       if (response.segments) {
         // Narration is automatically saved in backend during generation
@@ -350,36 +343,29 @@ export default function StoryNarratorControls({
   // 3. Save Narration (to database for permanent storage)
   const saveNarration = async () => {
     if (!tempNarration) {
-      toast({
+      toast.error({
         title: "Nothing to Save",
         description: "Generate a narration first before saving.",
-        variant: "destructive"
       });
       return;
     }
 
     setIsSaving(true);
     try {
-      const response = await apiRequest(`/api/stories/${storyId}/narration/save`, {
-        method: 'POST',
-        body: JSON.stringify(tempNarration)
+      // Note: Narration is automatically saved when generated
+      // This function is kept for UI consistency but doesn't need to make API calls
+      setSavedNarration(tempNarration);
+      setTempNarration(null); // Clear temp after saving
+      
+      toast.success({
+        title: "Narration Saved",
+        description: "Your story narration has been saved permanently."
       });
-
-      if (response) {
-        setSavedNarration(tempNarration);
-        setTempNarration(null); // Clear temp after saving
-        
-        toast({
-          title: "Narration Saved",
-          description: "Your story narration has been saved permanently."
-        });
-      }
     } catch (error) {
       console.error('Error saving narration:', error);
-      toast({
+      toast.error({
         title: "Save Error",
         description: "Could not save narration. Please try again.",
-        variant: "destructive"
       });
     } finally {
       setIsSaving(false);
