@@ -652,21 +652,71 @@ async function populateEsmReferenceData(analysis: StoryAnalysis, userId: string)
       await updateSoundPatterns(analysis.soundEffects);
     }
 
-    // Process modulations (category 3) - mood category, emotional tags, genre, subGenre
+    // Process modulations (category 3) - mood category, genre, subGenre (NOT emotional tags)
     const modulations: string[] = [];
     
-    // Collect all modulation items
+    // Collect all modulation items (excluding emotionalTags which are emotions, not modulations)
     if (analysis.moodCategory) {
       modulations.push(analysis.moodCategory);
-    }
-    if (analysis.emotionalTags && Array.isArray(analysis.emotionalTags)) {
-      modulations.push(...analysis.emotionalTags);
     }
     if (analysis.genre) {
       modulations.push(analysis.genre);
     }
     if (analysis.subGenre) {
       modulations.push(analysis.subGenre);
+    }
+    
+    // Process emotional tags as emotions (category 1), not modulations
+    if (analysis.emotionalTags && Array.isArray(analysis.emotionalTags)) {
+      console.log(`📊 Processing ${analysis.emotionalTags.length} emotional tags as emotions`);
+      
+      for (const emotionalTag of analysis.emotionalTags) {
+        const emotionName = emotionalTag.trim();
+        
+        // Check if emotion already exists in ESM reference
+        const existingEmotion = await storage.getEsmRef(1, emotionName);
+        
+        if (!existingEmotion) {
+          console.log(`➕ Adding emotional tag as emotion to ESM reference: ${emotionName}`);
+          
+          // Generate professional voice sample text using OpenAI cached provider
+          let sampleText: string;
+          try {
+            const result = await openaiProvider.generateCompletionWithCache({
+              messages: [{ 
+                role: 'user', 
+                content: `Generate a voice recording sample text for the emotion "${emotionalTag}". Be exactly ${VOICE_RECORDING_CONFIG.MIN_WORDS}-${VOICE_RECORDING_CONFIG.MAX_WORDS} words for a ${VOICE_RECORDING_CONFIG.MIN_DURATION}-${VOICE_RECORDING_CONFIG.MAX_DURATION} second recording, natural conversational language, first person perspective that clearly expresses ${emotionalTag}. No character names or story references. Just the emotional sample text.`
+              }],
+              maxTokens: 100,
+              temperature: 0.7
+            });
+            sampleText = result.content.trim().replace(/^["']|["']$/g, '');
+            console.log(`✅ Generated professional sample text for emotional tag ${emotionName}: "${sampleText.substring(0, 50)}..."`);
+          } catch (error) {
+            console.error(`⚠️ Failed to generate sample text for ${emotionName}, using fallback: ${error.message}`);
+            sampleText = `Express the emotion of ${emotionalTag}`;
+          }
+          
+          // Create new ESM reference entry for emotional tag as emotion
+          await storage.createEsmRef({
+            category: 1, // Emotions (not modulations)
+            name: emotionName,
+            display_name: emotionalTag,
+            sample_text: sampleText,
+            intensity: 5, // Default intensity for emotional tags
+            description: `Emotional tag from story analysis`,
+            ai_variations: {
+              type: 'emotional_tag',
+              source: 'story_analysis'
+            },
+            created_by: userId
+          });
+          
+          console.log(`✅ Successfully added emotional tag as emotion: ${emotionName}`);
+        } else {
+          console.log(`🔄 Emotional tag already exists in reference data: ${emotionName}`);
+        }
+      }
     }
     
     // Process each modulation with OpenAI-generated sample texts

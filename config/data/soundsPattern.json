@@ -36,6 +36,10 @@
     "insert": "(damal)"
   },
   {
+    "pattern": "\\brumbl(ing|s|ed)?\\b",
+    "insert": "(rumbl!)"
+  },
+  {
     "pattern": "dog.*(bark|barking)",
     "insert": "(bow bow)"
   },
