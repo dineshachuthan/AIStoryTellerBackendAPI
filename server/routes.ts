@@ -2707,6 +2707,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+
   /* DEPRECATED - Multi-voice system endpoint - Use /api/user/esm-recordings instead
   app.get('/api/user/voice-recordings', requireAuth, async (req, res) => {
     try {

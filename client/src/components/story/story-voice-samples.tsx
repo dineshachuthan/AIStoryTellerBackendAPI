@@ -400,9 +400,9 @@ export default function StoryVoiceSamples({ storyId, analysisData }: StoryVoiceS
                               duration: recordingState.duration || 0
                             } : undefined}
                             saveConfig={{
-                              endpoint: `/api/user/esm-recordings`,
+                              endpoint: `/api/stories/${storyId}/voice-samples`,
                               payload: {
-                                name: emotionName,
+                                itemName: emotionName,
                                 category: category.id === 'emotions' ? 1 : category.id === 'sounds' ? 2 : 3,
                                 intensity: intensity
                               },
