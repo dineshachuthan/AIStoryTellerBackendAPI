@@ -55,6 +55,9 @@ export default function StoryNarration() {
     enabled: !!storyId && !!user
   });
 
+  // Debug log to see story data
+  console.log('[StoryNarration] Story data:', story);
+
   // Fetch all narrations for this story
   const { data: allNarrations = [], isLoading: allNarrationsLoading, refetch: refetchNarrations } = useQuery({
     queryKey: [`/api/stories/${storyId}/narrations/all`],
@@ -156,7 +159,7 @@ export default function StoryNarration() {
           {/* Story Title */}
           <div className="mb-8">
             <h1 className="text-4xl font-bold text-white mb-2">
-              {story.title}
+              {story?.title || "Loading..."}
             </h1>
             <p className="text-white/70">
               Story Narration
