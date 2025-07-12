@@ -216,124 +216,47 @@ export function UniversalNarrationPlayer({
     }
   };
   
-  // Previous segment handler - SIMPLE APPROACH (like play button)
+  // Previous segment handler - SAME AS PLAY BUTTON
   const handlePreviousSegment = () => {
     if (currentSegment > 0) {
-      const newSegment = currentSegment - 1;
-      const audio = audioRef.current;
-      const newSegmentData = segments?.[newSegment];
+      const wasPlaying = !audioRef.current?.paused;
       
-      if (audio && newSegmentData?.audioUrl) {
-        console.log('Manual previous: switching from', audio.src, 'to', newSegmentData.audioUrl);
-        
-        // Remember if audio was playing BEFORE any manipulation
-        const wasPlaying = !audio.paused;
-        console.log('Was playing before navigation:', wasPlaying);
-        
-        // Update state first
-        updateAudioState({
-          currentSegment: newSegment,
-          progress: 0,
-          currentTime: 0,
-          isPlaying: false
-        });
-        
-        // Simple approach like play button: just update the source
-        audio.pause();
-        audio.currentTime = 0;
-        audio.src = newSegmentData.audioUrl;
-        audio.load();
-        
-        console.log('Updated audio source to:', audio.src);
-        
-        // Auto-play if it was playing before
-        if (wasPlaying) {
-          console.log('Auto-playing new segment...');
-          // Wait for audio to be ready before playing
-          const tryPlay = () => {
-            audio.play().then(() => {
-              console.log('Auto-play succeeded');
-            }).catch(error => {
-              console.error('Auto-play failed:', error);
-            });
-          };
-          
-          // Try playing when audio is ready
-          if (audio.readyState >= 2) { // HAVE_CURRENT_DATA or higher
-            tryPlay();
-          } else {
-            const handleCanPlay = () => {
-              console.log('Audio ready, starting auto-play');
-              audio.removeEventListener('canplay', handleCanPlay);
-              tryPlay();
-            };
-            audio.addEventListener('canplay', handleCanPlay);
-          }
-        }
+      // Update state first - this will trigger currentSegmentData to update
+      updateAudioState({
+        currentSegment: currentSegment - 1,
+        progress: 0,
+        currentTime: 0,
+        isPlaying: false
+      });
+      
+      onSegmentChange?.(currentSegment - 1);
+      
+      // Now play if it was playing before (currentSegmentData will be updated)
+      if (wasPlaying) {
+        setTimeout(() => handlePlayPause(), 50);
       }
-      
-      onSegmentChange?.(newSegment);
     }
   };
   
-  // Next segment handler - SIMPLE APPROACH (like play button)
+  // Next segment handler - SAME AS PLAY BUTTON
   const handleNextSegment = () => {
     if (segments && currentSegment < segments.length - 1) {
-      const newSegment = currentSegment + 1;
-      const audio = audioRef.current;
-      const newSegmentData = segments?.[newSegment];
+      const wasPlaying = !audioRef.current?.paused;
       
-      if (audio && newSegmentData?.audioUrl) {
-        console.log('Manual next: switching from', audio.src, 'to', newSegmentData.audioUrl);
-        console.log('Manual next: currentSegment state is', currentSegment, 'going to', newSegment);
-        
-        // Remember if audio was playing BEFORE any manipulation
-        const wasPlaying = !audio.paused;
-        console.log('Was playing before navigation:', wasPlaying);
-        
-        // Update state first
-        updateAudioState({
-          currentSegment: newSegment,
-          progress: 0,
-          currentTime: 0,
-          isPlaying: false
-        });
-        
-        // Simple approach like play button: just update the source
-        audio.pause();
-        audio.currentTime = 0;
-        audio.src = newSegmentData.audioUrl;
-        audio.load();
-        
-        console.log('Updated audio source to:', audio.src);
-        
-        // Auto-play if it was playing before
-        if (wasPlaying) {
-          console.log('Auto-playing new segment...');
-          // Wait for audio to be ready before playing
-          const tryPlay = () => {
-            audio.play().then(() => {
-              console.log('Auto-play succeeded');
-            }).catch(error => {
-              console.error('Auto-play failed:', error);
-            });
-          };
-          
-          // Try playing when audio is ready
-          if (audio.readyState >= 2) { // HAVE_CURRENT_DATA or higher
-            tryPlay();
-          } else {
-            const handleCanPlay = () => {
-              console.log('Audio ready, starting auto-play');
-              audio.removeEventListener('canplay', handleCanPlay);
-              tryPlay();
-            };
-            audio.addEventListener('canplay', handleCanPlay);
-          }
-        }
+      // Update state first - this will trigger currentSegmentData to update
+      updateAudioState({
+        currentSegment: currentSegment + 1,
+        progress: 0,
+        currentTime: 0,
+        isPlaying: false
+      });
+      
+      onSegmentChange?.(currentSegment + 1);
+      
+      // Now play if it was playing before (currentSegmentData will be updated)
+      if (wasPlaying) {
+        setTimeout(() => handlePlayPause(), 50);
       }
-      
-      onSegmentChange?.(newSegment);
     }
   };
   
