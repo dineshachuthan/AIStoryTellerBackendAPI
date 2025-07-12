@@ -56,6 +56,20 @@ export default function StoryNarration() {
   
   const audioRefs = useRef<Record<string, HTMLAudioElement>>({});
   
+  // Cleanup all audio when component unmounts
+  useEffect(() => {
+    return () => {
+      Object.values(audioRefs.current).forEach(audio => {
+        if (audio) {
+          audio.pause();
+          audio.src = '';
+          audio.remove();
+        }
+      });
+      audioRefs.current = {};
+    };
+  }, []);
+  
   // Helper function to get narration key
   const getNarrationKey = (style: string, profile: string) => `${style}-${profile}`;
   
