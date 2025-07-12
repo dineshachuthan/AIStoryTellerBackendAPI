@@ -1,7 +1,20 @@
 # Invitation Collaboration Design Document
 
 ## Overview
-This document outlines the design decisions for the invitation collaboration system, specifically focusing on conversation style handling and schema design for relationship-aware narration.
+This document outlines the design decisions for a comprehensive invitation and notification platform. Starting with story collaboration invitations, the system is designed to expand into a multi-purpose notification platform supporting news feeds, roleplay invitations, and other relationship-aware content delivery.
+
+## Platform Vision
+
+### Current Scope: Story Collaboration Invitations
+- Users invite collaborators to experience stories with personalized narration
+- Conversation style determines relationship-aware audio generation
+- Recipients get immediate access to pre-generated narration content
+
+### Future Expansion: Universal Notification Platform
+- **News Feed Invitations**: Share summarized news articles with audio playback based on recipient's conversation style
+- **Roleplay Invitations**: Invite users to participate in specific character roles within collaborative stories
+- **Content Recommendations**: Personalized content delivery based on relationship context and conversation preferences
+- **User Profile Integration**: Historical invitation tracking, preference management, and delivery analytics
 
 ## Current Architecture
 
@@ -155,6 +168,192 @@ Recovery Mechanisms:
 - **notification_templates**: NEW table for email/SMS templates
 - **notification_batch_jobs**: NEW table for batch processing
 - **story_narrations**: Keep existing `conversation_style` column
+
+## Future Platform Extensions
+
+### Universal Invitation System Architecture
+
+#### 1. **Enhanced Invitation Types**
+```sql
+-- Extend story_invitations to support multiple invitation types
+ALTER TABLE story_invitations ADD COLUMN invitation_type VARCHAR(50) DEFAULT 'story_collaboration';
+-- Values: 'story_collaboration', 'news_feed', 'roleplay_character', 'content_recommendation'
+
+-- Add content reference for different invitation types
+ALTER TABLE story_invitations ADD COLUMN content_type VARCHAR(50); -- 'story', 'news_article', 'roleplay_template'
+ALTER TABLE story_invitations ADD COLUMN content_id INTEGER; -- Generic reference to content
+ALTER TABLE story_invitations ADD COLUMN content_metadata JSONB; -- Type-specific data
+```
+
+#### 2. **User Profile Integration - Historical Invitations**
+```sql
+-- User invitation history and preferences
+CREATE TABLE user_invitation_history (
+  id SERIAL PRIMARY KEY,
+  user_id VARCHAR REFERENCES users(id),
+  invitation_id INTEGER REFERENCES story_invitations(id),
+  action VARCHAR(20) NOT NULL, -- 'sent', 'received', 'accepted', 'declined', 'viewed'
+  action_timestamp TIMESTAMP NOT NULL,
+  response_data JSONB, -- User's response or feedback
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- User notification preferences
+CREATE TABLE user_notification_preferences (
+  id SERIAL PRIMARY KEY,
+  user_id VARCHAR REFERENCES users(id),
+  invitation_type VARCHAR(50) NOT NULL,
+  delivery_method VARCHAR(20) NOT NULL, -- 'email', 'sms', 'push', 'in_app'
+  conversation_style VARCHAR(50), -- Default style for this invitation type
+  is_enabled BOOLEAN DEFAULT TRUE,
+  frequency_limit INTEGER, -- Max notifications per day/week
+  quiet_hours_start TIME, -- No notifications during these hours
+  quiet_hours_end TIME,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+#### 3. **News Feed Integration Architecture**
+```sql
+-- News articles table for news feed invitations
+CREATE TABLE news_articles (
+  id SERIAL PRIMARY KEY,
+  title TEXT NOT NULL,
+  summary TEXT NOT NULL,
+  full_content TEXT,
+  source_url TEXT,
+  published_at TIMESTAMP,
+  category VARCHAR(100), -- 'technology', 'politics', 'entertainment', etc.
+  tags JSONB, -- Array of tags for content filtering
+  language VARCHAR(10) DEFAULT 'en',
+  reading_time_minutes INTEGER,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- News narrations (similar to story_narrations but for news)
+CREATE TABLE news_narrations (
+  id SERIAL PRIMARY KEY,
+  news_article_id INTEGER REFERENCES news_articles(id),
+  user_id VARCHAR REFERENCES users(id),
+  conversation_style VARCHAR(50),
+  narrator_profile VARCHAR(50),
+  segments JSONB, -- Narrated segments
+  total_duration INTEGER,
+  audio_file_url TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+#### 4. **Roleplay Character Invitations**
+```sql
+-- Roleplay templates for character-based invitations
+CREATE TABLE roleplay_templates (
+  id SERIAL PRIMARY KEY,
+  story_id INTEGER REFERENCES stories(id),
+  template_name VARCHAR(255) NOT NULL,
+  description TEXT,
+  total_characters INTEGER NOT NULL,
+  estimated_duration_minutes INTEGER,
+  difficulty_level VARCHAR(20), -- 'beginner', 'intermediate', 'advanced'
+  is_public BOOLEAN DEFAULT FALSE,
+  created_by VARCHAR REFERENCES users(id),
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Character roles within roleplay templates
+CREATE TABLE roleplay_character_roles (
+  id SERIAL PRIMARY KEY,
+  roleplay_template_id INTEGER REFERENCES roleplay_templates(id),
+  character_id INTEGER REFERENCES story_characters(id),
+  role_name VARCHAR(100) NOT NULL,
+  role_description TEXT,
+  required_voice_emotions TEXT[], -- Array of required emotions for this role
+  is_protagonist BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Character role assignments for invitations
+ALTER TABLE story_invitations ADD COLUMN roleplay_character_role_id INTEGER REFERENCES roleplay_character_roles(id);
+```
+
+### User Profile Dashboard Features
+
+#### 1. **Invitation History Dashboard**
+```sql
+-- Views for user dashboard
+CREATE VIEW user_invitation_summary AS
+SELECT 
+  u.id as user_id,
+  COUNT(CASE WHEN ih.action = 'sent' THEN 1 END) as invitations_sent,
+  COUNT(CASE WHEN ih.action = 'received' THEN 1 END) as invitations_received,
+  COUNT(CASE WHEN ih.action = 'accepted' THEN 1 END) as invitations_accepted,
+  COUNT(CASE WHEN ih.action = 'declined' THEN 1 END) as invitations_declined,
+  MAX(ih.action_timestamp) as last_activity
+FROM users u
+LEFT JOIN user_invitation_history ih ON u.id = ih.user_id
+GROUP BY u.id;
+```
+
+#### 2. **Delivery Analytics**
+```sql
+-- Notification delivery success rates
+CREATE VIEW user_notification_analytics AS
+SELECT 
+  si.inviter_id as user_id,
+  nd.delivery_type,
+  COUNT(*) as total_sent,
+  COUNT(CASE WHEN nd.status = 'delivered' THEN 1 END) as successful_deliveries,
+  COUNT(CASE WHEN nd.status = 'failed' THEN 1 END) as failed_deliveries,
+  ROUND(COUNT(CASE WHEN nd.status = 'delivered' THEN 1 END)::decimal / COUNT(*) * 100, 2) as success_rate
+FROM story_invitations si
+JOIN notification_deliveries nd ON si.id = nd.invitation_id
+GROUP BY si.inviter_id, nd.delivery_type;
+```
+
+### Platform Scalability Considerations
+
+#### 1. **Content Type Polymorphism**
+- Generic `content_type` and `content_id` fields allow same invitation system to handle stories, news articles, roleplay templates
+- `content_metadata` JSONB field stores type-specific data without schema changes
+
+#### 2. **Notification Preference Management**
+- User-controlled notification preferences per invitation type
+- Granular delivery method control (email, SMS, push, in-app)
+- Conversation style preferences per invitation type
+
+#### 3. **Analytics and Insights**
+- Historical invitation tracking for user engagement analytics
+- Delivery success rate monitoring for provider optimization
+- Content performance metrics for recommendation algorithms
+
+### Implementation Roadmap
+
+#### Phase 1: Current Story Invitations (In Progress)
+- ✅ Conversation style integration
+- ✅ Pre-creation narration strategy
+- ✅ Notification delivery system
+
+#### Phase 2: User Profile Dashboard
+- Historical invitation tracking
+- Delivery analytics dashboard
+- Notification preference management
+
+#### Phase 3: News Feed Integration
+- News article content management
+- News narration system
+- Personalized news delivery
+
+#### Phase 4: Roleplay Character System
+- Roleplay template creation
+- Character role management
+- Multi-user collaborative roleplay
+
+### Technical Benefits
+- **Unified Architecture**: Single notification system handles all content types
+- **Relationship-Aware**: Conversation style applies to all content types
+- **Scalable Design**: Easy to add new content types without schema changes
+- **User-Centric**: Comprehensive preference management and analytics
 
 ## Implementation Algorithm
 
