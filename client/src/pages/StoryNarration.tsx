@@ -436,15 +436,11 @@ export default function StoryNarration() {
                                 
                                 <div className="text-center px-4 min-h-[100px] flex flex-col justify-center">
                                   <div className="space-y-2">
-                                    <p className={`text-sm font-mono transition-all duration-300 ${
-                                      narrationIsPlaying && narration.segments 
-                                        ? 'text-green-400 opacity-100' 
-                                        : 'text-gray-600 opacity-60'
-                                    }`}>
-                                      {narrationIsPlaying && narration.segments 
-                                        ? `NOW PLAYING - SEGMENT ${narrationCurrentSegment + 1}/${narration.segments.length}`
-                                        : `${narration.segments?.length || 0} segments ready`}
-                                    </p>
+                                    {narrationIsPlaying && narration.segments && (
+                                      <p className="text-sm font-mono text-green-400 opacity-100 transition-all duration-300">
+                                        NOW PLAYING - SEGMENT {narrationCurrentSegment + 1}/{narration.segments.length}
+                                      </p>
+                                    )}
                                     <p className={`text-base leading-relaxed font-medium transition-all duration-300 ${
                                       narrationIsPlaying && narration.segments 
                                         ? 'text-white opacity-100' 
@@ -465,11 +461,7 @@ export default function StoryNarration() {
                                   </span>
                                 </div>
                                 
-                                <div className="absolute bottom-4 left-4 right-4">
-                                  <div className="flex justify-between text-xs text-gray-500 font-mono">
-                                    <span>{Math.round(narrationProgress)}% COMPLETE</span>
-                                  </div>
-                                </div>
+
                               </div>
                             </div>
                             
