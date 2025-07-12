@@ -359,25 +359,30 @@ export function UniversalNarrationPlayer({
         </div>
         
         {/* Player Controls */}
-        <div className="mt-2 bg-gray-800 rounded-xl p-3">
-          {/* Conversation Style & Narrator Profile Display */}
-          {formatPlayerInfo() && (
-            <div className="mb-3 text-center">
-              <p className="text-white/80 text-sm font-medium bg-white/10 backdrop-blur-sm rounded-lg px-3 py-1.5 inline-block">
+        <div className="mt-2 bg-gray-800 rounded-xl p-2">
+          {/* Top Row: Metadata and Segment Counter */}
+          <div className="flex items-center justify-between mb-2">
+            {formatPlayerInfo() && (
+              <div className="text-white/80 text-xs font-medium bg-white/10 backdrop-blur-sm rounded px-2 py-0.5">
                 {formatPlayerInfo()}
-              </p>
-            </div>
-          )}
+              </div>
+            )}
+            {showSegmentCounter && (
+              <div className="text-xs text-gray-400 font-mono">
+                {currentSegment + 1}/{segments.length}
+              </div>
+            )}
+          </div>
           
           {/* Progress Bar */}
           {showProgressBar && (
-            <div className="mb-3">
+            <div className="mb-2">
               <div 
-                className="w-full bg-gray-700 rounded-full h-2 overflow-hidden cursor-pointer"
+                className="w-full bg-gray-700 rounded-full h-1.5 overflow-hidden cursor-pointer"
                 onClick={handleProgressClick}
               >
                 <div 
-                  className="bg-gradient-to-r from-green-500 to-blue-500 h-2 rounded-full transition-all duration-300"
+                  className="bg-gradient-to-r from-green-500 to-blue-500 h-1.5 rounded-full transition-all duration-300"
                   style={{ width: `${progress}%` }}
                 />
               </div>
@@ -390,35 +395,26 @@ export function UniversalNarrationPlayer({
             </div>
           )}
           
-          {/* Segment Counter */}
-          {showSegmentCounter && (
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-sm text-gray-400 font-mono">
-                SEGMENT {currentSegment + 1}/{segments.length}
-              </div>
-            </div>
-          )}
-          
           {/* Media Controls */}
-          <div className="flex items-center justify-center gap-3">
+          <div className="flex items-center justify-center gap-2">
             <Button
               variant="ghost"
               size="sm"
               onClick={handlePreviousSegment}
               disabled={currentSegment === 0}
-              className="text-white hover:text-green-400"
+              className="text-white hover:text-green-400 h-8 w-8 p-0"
             >
-              <SkipBack className="w-5 h-5" />
+              <SkipBack className="w-4 h-4" />
             </Button>
             
             <Button
               variant="ghost"
-              size="lg"
+              size="sm"
               onClick={handlePlayPause}
               disabled={!currentSegmentData?.audioUrl}
-              className="text-white hover:text-green-400"
+              className="text-white hover:text-green-400 h-10 w-10 p-0"
             >
-              {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
+              {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
             </Button>
             
             <Button
@@ -426,9 +422,9 @@ export function UniversalNarrationPlayer({
               size="sm"
               onClick={handleNextSegment}
               disabled={currentSegment >= segments.length - 1}
-              className="text-white hover:text-green-400"
+              className="text-white hover:text-green-400 h-8 w-8 p-0"
             >
-              <SkipForward className="w-5 h-5" />
+              <SkipForward className="w-4 h-4" />
             </Button>
           </div>
         </div>
