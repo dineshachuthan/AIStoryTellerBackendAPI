@@ -439,19 +439,7 @@ export function UniversalNarrationPlayer({
           newAudio.play().then(() => {
             console.log('Playback started successfully');
             
-            // BANDAID FIX: Browser plays wrong audio on manual next segment
-            // Issue: Manual next plays first segment audio but shows correct text
-            // Fix: Auto pause/play cycle forces browser to reload correct audio source
-            // This replicates the manual pause/play behavior that fixes the issue
-            setTimeout(() => {
-              console.log('Applying bandaid fix - auto pause/play cycle');
-              newAudio.pause();
-              setTimeout(() => {
-                newAudio.play().then(() => {
-                  console.log('Bandaid fix completed - correct segment should now play');
-                }).catch(console.error);
-              }, 50);
-            }, 100);
+            // Remove old bandaid fix - moving to better location
             
           }).catch(error => {
             console.error('Failed to start playback:', error);
@@ -496,18 +484,22 @@ export function UniversalNarrationPlayer({
       
       onSegmentChange?.(newSegment);
       
-      // BANDAID FIX: Auto pause/play cycle after segment change
-      // This fixes the browser audio caching bug where wrong segment plays
+      // TACTICAL BANDAID FIX: Apply pause/play immediately after segment change
+      // The browser caches wrong audio, this forces re-evaluation at the right time
       setTimeout(() => {
         const audio = audioRef.current;
-        if (audio && !audio.paused) {
-          console.log('Applying end-of-function bandaid fix - pause/play cycle');
+        if (audio) {
+          console.log('TACTICAL FIX: Force pause/play cycle to fix browser caching');
+          const wasPlaying = !audio.paused;
           audio.pause();
-          setTimeout(() => {
-            audio.play().catch(console.error);
-          }, 50);
+          audio.currentTime = 0; // Reset to beginning
+          if (wasPlaying) {
+            setTimeout(() => {
+              audio.play().catch(console.error);
+            }, 100);
+          }
         }
-      }, 300);
+      }, 200); // Apply immediately after navigation
     }
   };
   
