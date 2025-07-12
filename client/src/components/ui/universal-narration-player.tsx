@@ -433,11 +433,26 @@ export function UniversalNarrationPlayer({
         
         console.log('Created new audio element with source:', newAudio.src);
         
-        // Auto-play new segment with multiple fallbacks
+        // Auto-play new segment with bandaid fix for browser audio caching bug
         const startPlayback = () => {
           console.log('Attempting to start playback...');
           newAudio.play().then(() => {
             console.log('Playback started successfully');
+            
+            // BANDAID FIX: Browser plays wrong audio on manual next segment
+            // Issue: Manual next plays first segment audio but shows correct text
+            // Fix: Auto pause/play cycle forces browser to reload correct audio source
+            // This replicates the manual pause/play behavior that fixes the issue
+            setTimeout(() => {
+              console.log('Applying bandaid fix - auto pause/play cycle');
+              newAudio.pause();
+              setTimeout(() => {
+                newAudio.play().then(() => {
+                  console.log('Bandaid fix completed - correct segment should now play');
+                }).catch(console.error);
+              }, 50);
+            }, 100);
+            
           }).catch(error => {
             console.error('Failed to start playback:', error);
             // Force play again after a short delay
@@ -480,6 +495,19 @@ export function UniversalNarrationPlayer({
       }
       
       onSegmentChange?.(newSegment);
+      
+      // BANDAID FIX: Auto pause/play cycle after segment change
+      // This fixes the browser audio caching bug where wrong segment plays
+      setTimeout(() => {
+        const audio = audioRef.current;
+        if (audio && !audio.paused) {
+          console.log('Applying end-of-function bandaid fix - pause/play cycle');
+          audio.pause();
+          setTimeout(() => {
+            audio.play().catch(console.error);
+          }, 50);
+        }
+      }, 300);
     }
   };
   
