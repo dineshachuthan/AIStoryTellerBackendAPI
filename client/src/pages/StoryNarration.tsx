@@ -2,7 +2,7 @@ import { useParams, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Download, AudioLines, Play, Settings, Trash2, SkipBack, SkipForward, Pause } from "lucide-react";
+import { ArrowLeft, Download, AudioLines, Settings, Trash2 } from "lucide-react";
 import StoryNarratorControls from "@/components/ui/story-narrator-controls";
 import { SimpleAudioPlayer } from "@/components/ui/simple-audio-player";
 import { useAuth } from "@/hooks/useAuth";
@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { toast, toastMessages } from "@/lib/toast-utils";
 import { useState, useRef, useEffect, useMemo } from "react";
+import { UniversalNarrationPlayer, type NarrationSegment } from "@/components/ui/universal-narration-player";
 
 const CONVERSATION_STYLES = [
   "respectful",
@@ -45,54 +46,7 @@ export default function StoryNarration() {
   const [conversationStyle, setConversationStyle] = useState("respectful");
   const [narratorProfile, setNarratorProfile] = useState("neutral");
   
-  // Multi-segment audio player state - per narration
-  const [audioStates, setAudioStates] = useState<Record<string, {
-    isPlaying: boolean;
-    currentSegment: number;
-    currentTime: number;
-    duration: number;
-    progress: number;
-  }>>({});
-  
-  const audioRefs = useRef<Record<string, HTMLAudioElement>>({});
-  
-  // Cleanup all audio when component unmounts
-  useEffect(() => {
-    return () => {
-      Object.values(audioRefs.current).forEach(audio => {
-        if (audio) {
-          audio.pause();
-          audio.src = '';
-          audio.remove();
-        }
-      });
-      audioRefs.current = {};
-    };
-  }, []);
-
-
-  
-  // Helper function to get narration key
-  const getNarrationKey = (style: string, profile: string) => `${style}-${profile}`;
-  
-  // Helper function to get or create audio state
-  const getAudioState = (narrationKey: string) => {
-    return audioStates[narrationKey] || {
-      isPlaying: false,
-      currentSegment: 0,
-      currentTime: 0,
-      duration: 0,
-      progress: 0
-    };
-  };
-  
-  // Helper function to update audio state
-  const updateAudioState = (narrationKey: string, updates: Partial<typeof audioStates[string]>) => {
-    setAudioStates(prev => ({
-      ...prev,
-      [narrationKey]: { ...getAudioState(narrationKey), ...updates }
-    }));
-  };
+  // Audio state management now handled by UniversalNarrationPlayer
   
   // Emotion is hardcoded to "neutral" for now (future feature)
   const emotion = "neutral";
@@ -113,57 +67,7 @@ export default function StoryNarration() {
     enabled: !!storyId && !!user
   });
 
-  // Setup audio elements with complete event handlers for all narrations
-  useEffect(() => {
-    if (allNarrations && allNarrations.length > 0) {
-      allNarrations.forEach(narration => {
-        const narrationKey = `${narration.conversationStyle}-${narration.narratorProfile}`;
-        
-        if (narration.segments && narration.segments.length > 0 && !audioRefs.current[narrationKey]) {
-          audioRefs.current[narrationKey] = new Audio();
-          const audio = audioRefs.current[narrationKey];
-          const segment = narration.segments[0]; // Load first segment
-          
-          if (segment?.audioUrl) {
-            audio.src = segment.audioUrl;
-            audio.preload = 'metadata';
-            
-            // Complete event handler setup
-            audio.onloadedmetadata = () => {
-              updateAudioState(narrationKey, { 
-                duration: audio.duration || 0 
-              });
-            };
-            
-            audio.ontimeupdate = () => {
-              const progress = audio.duration > 0 ? (audio.currentTime / audio.duration) * 100 : 0;
-              updateAudioState(narrationKey, {
-                currentTime: audio.currentTime || 0,
-                progress: progress
-              });
-            };
-            
-            // Critical: Set up play/pause state sync
-            audio.onplay = () => {
-              updateAudioState(narrationKey, { isPlaying: true });
-            };
-            
-            audio.onpause = () => {
-              updateAudioState(narrationKey, { isPlaying: false });
-            };
-            
-            audio.onended = () => {
-              updateAudioState(narrationKey, { 
-                isPlaying: false,
-                currentTime: 0,
-                progress: 0
-              });
-            };
-          }
-        }
-      });
-    }
-  }, [allNarrations]);
+  // Audio management now handled by individual UniversalNarrationPlayer components
 
   // Narration generation mutation
   const generateNarrationMutation = useMutation({
@@ -212,94 +116,7 @@ export default function StoryNarration() {
     ) || null;
   }, [allNarrations, conversationStyle, narratorProfile]);
   
-  // Get current narration key and audio state
-  const currentNarrationKey = getNarrationKey(conversationStyle, narratorProfile);
-  const currentAudioState = getAudioState(currentNarrationKey);
-  
-  // Extract current audio state properties for easier access
-  const { isPlaying, currentSegment, currentTime, duration, progress } = currentAudioState;
-
-  // Audio event handlers and progress tracking
-  useEffect(() => {
-    const narrationKey = currentNarrationKey;
-    
-    if (!audioRefs.current[narrationKey]) {
-      audioRefs.current[narrationKey] = new Audio();
-    }
-    
-    const audio = audioRefs.current[narrationKey];
-
-    const handleTimeUpdate = () => {
-      if (audio.duration && audio.currentTime) {
-        updateAudioState(narrationKey, {
-          currentTime: audio.currentTime,
-          duration: audio.duration,
-          progress: (audio.currentTime / audio.duration) * 100
-        });
-      }
-    };
-
-    const handleLoadedMetadata = () => {
-      if (audio.duration) {
-        updateAudioState(narrationKey, {
-          duration: audio.duration
-        });
-      }
-    };
-
-    const handleEnded = () => {
-      const currentNarration = allNarrations.find(n => n.conversationStyle === conversationStyle && n.narratorProfile === narratorProfile);
-      const currentState = getAudioState(narrationKey);
-      
-      if (currentNarration?.segments && currentState.currentSegment < currentNarration.segments.length - 1) {
-        const nextSegment = currentState.currentSegment + 1;
-        updateAudioState(narrationKey, {
-          currentSegment: nextSegment,
-          currentTime: 0,
-          progress: 0
-        });
-        
-        const nextSegmentData = currentNarration.segments[nextSegment];
-        if (nextSegmentData?.audioUrl) {
-          audio.src = nextSegmentData.audioUrl;
-          audio.play().catch(console.error);
-        }
-      } else {
-        updateAudioState(narrationKey, {
-          isPlaying: false,
-          progress: 0,
-          currentTime: 0
-        });
-      }
-    };
-
-    audio.addEventListener('timeupdate', handleTimeUpdate);
-    audio.addEventListener('loadedmetadata', handleLoadedMetadata);
-    audio.addEventListener('ended', handleEnded);
-
-    return () => {
-      audio.removeEventListener('timeupdate', handleTimeUpdate);
-      audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
-      audio.removeEventListener('ended', handleEnded);
-    };
-  }, [currentNarrationKey, allNarrations, conversationStyle, narratorProfile]);
-
-  // Reset segment when switching narrations
-  useEffect(() => {
-    const narrationKey = currentNarrationKey;
-    updateAudioState(narrationKey, {
-      currentSegment: 0,
-      isPlaying: false,
-      progress: 0,
-      currentTime: 0,
-      duration: 0
-    });
-    
-    if (audioRefs.current[narrationKey]) {
-      audioRefs.current[narrationKey].pause();
-      audioRefs.current[narrationKey].currentTime = 0;
-    }
-  }, [conversationStyle, narratorProfile, currentNarrationKey]);
+  // Removed old audio state management - now handled by UniversalNarrationPlayer components
 
   if (isLoading || allNarrationsLoading) {
     return (
@@ -472,189 +289,15 @@ export default function StoryNarration() {
                       </div>
                     </div>
                     
-                    {narration.audioUrl && (() => {
-                      const narrationKey = `${narration.conversationStyle}-${narration.narratorProfile}`;
-                      const audioState = getAudioState(narrationKey);
-                      const { isPlaying: narrationIsPlaying, currentSegment: narrationCurrentSegment, currentTime: narrationCurrentTime, duration: narrationDuration, progress: narrationProgress } = audioState;
-                      
-                      return (
-                        <div className="mt-6">
-                          <div className="bg-gray-900 rounded-3xl p-3 shadow-2xl">
-                            <div className="bg-black rounded-2xl overflow-hidden relative">
-                              <div className="p-6 min-h-[250px] flex flex-col justify-center relative">
-                                <div className="absolute top-4 left-4 flex items-center gap-1 h-8">
-                                  {narrationIsPlaying && (
-                                    <>
-                                      {[...Array(5)].map((_, i) => (
-                                        <div
-                                          key={i}
-                                          className="w-1 bg-green-400 rounded-full"
-                                          style={{
-                                            height: '100%',
-                                            animation: `audioWave ${0.8 + i * 0.1}s ease-in-out infinite`,
-                                            animationDelay: `${i * 0.1}s`,
-                                            opacity: 0.7
-                                          }}
-                                        />
-                                      ))}
-                                      <span className="text-green-400 text-xs ml-2 font-mono">LIVE</span>
-                                    </>
-                                  )}
-                                </div>
-                                
-
-                                
-                                <div className="text-center px-6 flex flex-col justify-center h-full">
-                                  <div className="space-y-2">
-                                    {narrationIsPlaying && narration.segments && (
-                                      <p className="text-sm font-mono text-green-400 opacity-100 transition-all duration-300">
-                                        NOW PLAYING
-                                      </p>
-                                    )}
-                                    <p className={`text-lg leading-relaxed font-medium transition-all duration-300 ${
-                                      narrationIsPlaying && narration.segments 
-                                        ? 'text-white opacity-100' 
-                                        : 'text-gray-400 opacity-80'
-                                    }`}>
-                                      {narration.segments && narration.segments.length > 0 ? (
-                                        `"${narration.segments[narrationCurrentSegment]?.text || 'Loading...'}"`
-                                      ) : (
-                                        'Press play to start narration'
-                                      )}
-                                    </p>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                            
-                            <div className="mt-2 bg-gray-800 rounded-xl p-3">
-                              <div className="mb-3">
-                                <div className="w-full bg-gray-700 rounded-full h-2 overflow-hidden cursor-pointer"
-                                     onClick={(e) => {
-                                       const audio = audioRefs.current[narrationKey];
-                                       if (audio && narrationDuration > 0) {
-                                         const rect = e.currentTarget.getBoundingClientRect();
-                                         const percent = (e.clientX - rect.left) / rect.width;
-                                         const newTime = percent * narrationDuration;
-                                         audio.currentTime = newTime;
-                                         updateAudioState(narrationKey, {
-                                           currentTime: newTime,
-                                           progress: percent * 100
-                                         });
-                                       }
-                                     }}>
-                                  <div 
-                                    className="bg-gradient-to-r from-green-500 to-blue-500 h-2 rounded-full transition-all duration-300"
-                                    style={{ width: `${narrationProgress}%` }}
-                                  />
-                                </div>
-                                <div className="flex justify-between text-xs text-gray-400 mt-1">
-                                  <span>{Math.floor(narrationCurrentTime / 60)}:{Math.floor(narrationCurrentTime % 60).toString().padStart(2, '0')}</span>
-                                  <span>{Math.floor(narrationDuration / 60)}:{Math.floor(narrationDuration % 60).toString().padStart(2, '0')}</span>
-                                </div>
-                              </div>
-                              
-                              <div className="flex items-center justify-between mb-2">
-                                <div className="text-sm text-gray-400 font-mono">
-                                  SEGMENT {narrationCurrentSegment + 1}/{narration.segments?.length || 0}
-                                </div>
-                              </div>
-                              
-                              <div className="flex items-center justify-center gap-3">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    if (narrationCurrentSegment > 0) {
-                                      const newSegment = narrationCurrentSegment - 1;
-                                      const audio = audioRefs.current[narrationKey];
-                                      const newSegmentData = narration.segments?.[newSegment];
-                                      
-                                      if (audio && newSegmentData?.audioUrl) {
-                                        audio.pause();
-                                        audio.src = newSegmentData.audioUrl;
-                                        audio.currentTime = 0;
-                                      }
-                                      
-                                      updateAudioState(narrationKey, {
-                                        currentSegment: newSegment,
-                                        progress: 0,
-                                        currentTime: 0,
-                                        duration: 0,
-                                        isPlaying: false
-                                      });
-                                    }
-                                  }}
-                                  disabled={narrationCurrentSegment === 0}
-                                  className="text-white hover:text-green-400"
-                                >
-                                  <SkipBack className="w-5 h-5" />
-                                </Button>
-                                
-                                <Button
-                                  variant="ghost"
-                                  size="lg"
-                                  onClick={() => {
-                                    const audio = audioRefs.current[narrationKey];
-                                    
-                                    if (!audio) return; // Audio should already be set up in useEffect
-                                    
-                                    if (narrationIsPlaying) {
-                                      audio.pause();
-                                    } else {
-                                      const segment = narration.segments?.[narrationCurrentSegment];
-                                      if (segment?.audioUrl) {
-                                        // Only set src if it's different from current segment
-                                        if (audio.src !== segment.audioUrl) {
-                                          audio.src = segment.audioUrl;
-                                          audio.currentTime = 0;
-                                        }
-                                        
-                                        audio.play().catch(console.error);
-                                      }
-                                    }
-                                  }}
-                                  disabled={!narration.segments?.[narrationCurrentSegment]?.audioUrl}
-                                  className="text-white hover:text-green-400"
-                                >
-                                  {narrationIsPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
-                                </Button>
-                                
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    if (narration.segments && narrationCurrentSegment < narration.segments.length - 1) {
-                                      const newSegment = narrationCurrentSegment + 1;
-                                      const audio = audioRefs.current[narrationKey];
-                                      const newSegmentData = narration.segments?.[newSegment];
-                                      
-                                      if (audio && newSegmentData?.audioUrl) {
-                                        audio.pause();
-                                        audio.src = newSegmentData.audioUrl;
-                                        audio.currentTime = 0;
-                                      }
-                                      
-                                      updateAudioState(narrationKey, {
-                                        currentSegment: newSegment,
-                                        progress: 0,
-                                        currentTime: 0,
-                                        duration: 0,
-                                        isPlaying: false
-                                      });
-                                    }
-                                  }}
-                                  disabled={!narration.segments || narrationCurrentSegment >= narration.segments.length - 1}
-                                  className="text-white hover:text-green-400"
-                                >
-                                  <SkipForward className="w-5 h-5" />
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })()}
+                    {narration.segments && narration.segments.length > 0 && (
+                      <div className="mt-6">
+                        <UniversalNarrationPlayer
+                          segments={narration.segments}
+                          playerKey={`${narration.conversationStyle}-${narration.narratorProfile}`}
+                          title={`${narration.conversationStyle.charAt(0).toUpperCase() + narration.conversationStyle.slice(1)} Style`}
+                        />
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
