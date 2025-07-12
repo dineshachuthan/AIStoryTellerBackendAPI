@@ -231,9 +231,21 @@ export function UniversalNarrationPlayer({
       
       onSegmentChange?.(currentSegment - 1);
       
-      // Now play if it was playing before (currentSegmentData will be updated)
+      // Auto-play if it was playing before
       if (wasPlaying) {
-        setTimeout(() => handlePlayPause(), 50);
+        // Wait for React to update currentSegmentData, then start playing
+        setTimeout(() => {
+          const audio = audioRef.current;
+          if (audio && !audio.paused) return; // Already playing
+          
+          // Use the same logic as play button - get URL from currentSegmentData
+          const segmentData = segments?.[currentSegment - 1];
+          if (segmentData?.audioUrl) {
+            audio.src = segmentData.audioUrl;
+            audio.currentTime = 0;
+            audio.play().catch(console.error);
+          }
+        }, 50);
       }
     }
   };
@@ -253,9 +265,21 @@ export function UniversalNarrationPlayer({
       
       onSegmentChange?.(currentSegment + 1);
       
-      // Now play if it was playing before (currentSegmentData will be updated)
+      // Auto-play if it was playing before
       if (wasPlaying) {
-        setTimeout(() => handlePlayPause(), 50);
+        // Wait for React to update currentSegmentData, then start playing
+        setTimeout(() => {
+          const audio = audioRef.current;
+          if (audio && !audio.paused) return; // Already playing
+          
+          // Use the same logic as play button - get URL from segments
+          const segmentData = segments?.[currentSegment + 1];
+          if (segmentData?.audioUrl) {
+            audio.src = segmentData.audioUrl;
+            audio.currentTime = 0;
+            audio.play().catch(console.error);
+          }
+        }, 50);
       }
     }
   };
