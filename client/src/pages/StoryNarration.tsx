@@ -434,17 +434,23 @@ export default function StoryNarration() {
                                   )}
                                 </div>
                                 
-                                <div className="text-center px-4 min-h-[100px] flex flex-col justify-center">
-                                  <div className="space-y-2">
+                                <div className="absolute top-4 right-4">
+                                  <span className="text-gray-400 text-sm font-mono">
+                                    SEGMENT {narrationCurrentSegment + 1}/{narration.segments?.length || 0}
+                                  </span>
+                                </div>
+                                
+                                <div className="text-center px-8 flex flex-col justify-center h-full">
+                                  <div className="space-y-4">
                                     {narrationIsPlaying && narration.segments && (
                                       <p className="text-sm font-mono text-green-400 opacity-100 transition-all duration-300">
-                                        NOW PLAYING - SEGMENT {narrationCurrentSegment + 1}/{narration.segments.length}
+                                        NOW PLAYING
                                       </p>
                                     )}
-                                    <p className={`text-base leading-relaxed font-medium transition-all duration-300 ${
+                                    <p className={`text-lg leading-relaxed font-medium transition-all duration-300 ${
                                       narrationIsPlaying && narration.segments 
                                         ? 'text-white opacity-100' 
-                                        : 'text-gray-500 opacity-60'
+                                        : 'text-gray-400 opacity-80'
                                     }`}>
                                       {narration.segments && narration.segments.length > 0 ? (
                                         `"${narration.segments[narrationCurrentSegment]?.text || 'Loading...'}"`
@@ -454,14 +460,6 @@ export default function StoryNarration() {
                                     </p>
                                   </div>
                                 </div>
-                                
-                                <div className="absolute top-4 right-4">
-                                  <span className="text-gray-400 text-sm font-mono">
-                                    SEGMENT {narrationCurrentSegment + 1}/{narration.segments?.length || 0}
-                                  </span>
-                                </div>
-                                
-
                               </div>
                             </div>
                             
