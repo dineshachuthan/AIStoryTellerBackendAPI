@@ -4,5 +4,34 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
+
 # Keep persistent cache directory but ignore its contents
 persistent-cache/
+
+# Environment and secrets
+.env
+.env.local
+.env.production
+
+# User data and cache
+user-data/
+temp/
+attached_assets/
+
+# Build and IDE files
+*.log
+npm-debug.log*
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Database files
+*.db
+*.sqlite
+
+# Replit specific
+.replit
+.config/
+.upm/
+.cache/
