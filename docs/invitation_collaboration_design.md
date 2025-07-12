@@ -56,14 +56,28 @@ story_narrations:
 4. **Conversation Style Locked**: Prevents confusion about which style to use
 
 ### User Flow
-1. **Invitation Sent**: Create story_narration row with conversation_style (segments = NULL)
-2. **Recipient Clicks Link**: Find existing narration row → Generate segments → Update row
+1. **Invitation Sent**: 
+   - Process all invitations to identify unique conversation styles
+   - Create one story_narration row per unique conversation style (segments = NULL)
+   - Store invitation records with conversation_style reference
+2. **Recipient Clicks Link**: 
+   - Find existing narration row by storyId + conversation_style
+   - Generate segments if not already cached → Update row
 3. **Subsequent Visits**: Load existing narration from cache
 
-### Implementation Questions
-- Should we create narration rows for ALL invitations sent, or only when recipient first visits?
-- How to handle conversation style changes after invitation is sent?
-- Should invitation table also store conversation_style for reference?
+### Key Design Insight: One-to-Many Relationship
+**Critical Optimization**: 10 invitations may share only 1 narration row if they have the same conversation style.
+
+**Example Scenario**:
+- User invites 10 people: 5 with "respectful" style, 3 with "business" style, 2 with "jovial" style
+- **Result**: Only 3 narration rows created (one per unique conversation style)
+- **Benefit**: Efficient storage and narration generation
+
+## Implementation Questions
+- ✅ **DECIDED**: Create narration rows for ALL invitations sent (pre-creation strategy)
+- ✅ **DECIDED**: One narration row per unique conversation style (not per invitation)
+- ❌ How to handle conversation style changes after invitation is sent?
+- ❌ Should invitation table also store conversation_style for reference?
 
 ## Current Implementation Status
 - ✅ Frontend UI includes conversation style selection
@@ -79,6 +93,32 @@ story_narrations:
 
 ## Decision Log
 - **Date**: 2025-01-12
-- **Decision**: Analyzing pre-creation strategy for story_narrations table
-- **Reasoning**: Enables immediate narration generation when recipient visits invitation page
-- **Status**: Under discussion
+- **Decision**: Pre-creation strategy with one-to-many optimization
+- **Reasoning**: 
+  - Enables immediate narration generation when recipient visits invitation page
+  - Optimizes storage: 10 invitations may share 1 narration row if same conversation style
+  - Reduces ElevenLabs API calls through intelligent caching
+- **Status**: ✅ **FINALIZED**
+
+## Implementation Algorithm
+```
+When sending invitations:
+1. Collect all invitation data with conversation styles
+2. Group invitations by unique conversation style
+3. For each unique conversation style:
+   - Create story_narration row (storyId, userId=null, conversationStyle, segments=null)
+4. Store each invitation record with conversation_style reference
+5. Send emails/SMS with invitation tokens
+
+When recipient visits:
+1. Extract conversation style from invitation
+2. Find existing story_narration row by storyId + conversationStyle
+3. Generate segments if segments=null
+4. Update story_narration row with generated segments
+5. Serve narration to user
+```
+
+## Database Schema Requirements
+- **story_invitations**: Add conversation_style column
+- **story_narrations**: Keep existing conversation_style column (used for cache key)
+- **Relationship**: Many invitations → One narration (grouped by conversation style)
