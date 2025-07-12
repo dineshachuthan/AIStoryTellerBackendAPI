@@ -194,13 +194,16 @@ export function UniversalNarrationPlayer({
     if (isPlaying) {
       audio.pause();
     } else {
-      // Only set src if it's different from current segment
-      if (audio.src !== currentSegmentData.audioUrl) {
-        audio.src = currentSegmentData.audioUrl;
-        audio.currentTime = 0;
-      }
+      // Always set the correct source for current segment to ensure reliability
+      audio.src = currentSegmentData.audioUrl;
+      audio.currentTime = 0;
       
-      audio.play().catch(console.error);
+      // Use promise-based play with better error handling
+      audio.play().catch(error => {
+        console.error('Audio play failed:', error);
+        // Reset playing state if play fails
+        updateAudioState({ isPlaying: false });
+      });
     }
   };
   
