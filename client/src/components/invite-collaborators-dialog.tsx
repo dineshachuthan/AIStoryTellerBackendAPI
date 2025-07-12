@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast, toastMessages } from "@/lib/toast-utils";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
-import { Mail, Phone, Send, Plus, X, Copy, CheckCircle } from "lucide-react";
+import { Mail, Phone, Send, Plus, X, Copy, CheckCircle, Users } from "lucide-react";
 import type { Story, StoryCharacter } from '@shared/schema/schema';
 
 interface InviteCollaboratorsDialogProps {
@@ -200,96 +200,147 @@ export function InviteCollaboratorsDialog({
             </div>
           )}
 
-          {/* Invitations List */}
-          <div className="space-y-3">
-            <Label>Invitations</Label>
-            {invites.map((invite, index) => (
-              <div key={index} className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <div className="flex-1 flex items-center space-x-2">
-                    <select
-                      className="h-10 px-3 rounded-md border border-input bg-background"
-                      value={invite.type}
-                      onChange={(e) => updateInvite(index, { 
-                        type: e.target.value as 'email' | 'phone',
-                        value: '' 
-                      })}
-                    >
-                      <option value="email">Email</option>
-                      <option value="phone">Phone</option>
-                    </select>
-                    
-                    <Input
-                      type={invite.type === 'email' ? 'email' : 'tel'}
-                      placeholder={invite.type === 'email' ? 'email@example.com' : '+1234567890'}
-                      value={invite.value}
-                      onChange={(e) => updateInvite(index, { value: e.target.value })}
-                      className="flex-1"
-                    />
-
-                    {characters.length > 0 && (
-                      <select
-                        className="h-10 px-3 rounded-md border border-input bg-background"
-                        value={invite.characterId || ''}
-                        onChange={(e) => updateInvite(index, { 
-                          characterId: e.target.value ? Number(e.target.value) : undefined 
-                        })}
-                      >
-                        <option value="">Any character</option>
-                        {characters.map(char => (
-                          <option key={char.id} value={char.id}>
-                            {char.name}
-                          </option>
-                        ))}
-                      </select>
-                    )}
-                  </div>
-
-                  {invites.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removeInvite(index)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-                
-                {/* Conversation Style with Label */}
-                <div className="flex items-center space-x-2">
-                  <Label className="text-sm text-gray-600 dark:text-gray-400 min-w-0 whitespace-nowrap">
-                    Your conversation style with this person:
-                  </Label>
-                  <select
-                    className="h-10 px-3 rounded-md border border-input bg-background flex-1"
-                    value={invite.conversationStyle || 'respectful'}
-                    onChange={(e) => updateInvite(index, { 
-                      conversationStyle: e.target.value
-                    })}
-                  >
-                    {conversationStyles.map(style => (
-                      <option key={style.value} value={style.value}>
-                        {style.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            ))}
-            
+          {/* Header with Add Invite Button */}
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-semibold">Invite Collaborators</h3>
+              <p className="text-sm text-muted-foreground">
+                Share your story with friends and family
+              </p>
+            </div>
             {invites.length < 10 && (
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={addInvite}
-                className="w-full"
+                className="flex items-center gap-2"
               >
-                <Plus className="h-4 w-4 mr-2" />
-                Add another invite
+                <Plus className="h-4 w-4" />
+                Add Invite
               </Button>
+            )}
+          </div>
+
+          {/* Character Assignment Info */}
+          {characters.length > 0 && (
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg mb-4">
+              <h4 className="text-sm font-medium mb-2">Available Characters</h4>
+              <div className="grid grid-cols-2 gap-2">
+                {characters.map(char => (
+                  <div key={char.id} className="text-sm">
+                    <span className="font-medium">{char.name}</span>
+                    <span className="text-xs text-muted-foreground ml-1">
+                      ({char.personality})
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Invitations Grid */}
+          <div className="space-y-4">
+            {invites.length > 0 ? (
+              <div className="space-y-3">
+                {invites.map((invite, index) => (
+                  <div key={index} className="border rounded-lg p-4 bg-card">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-medium">
+                          {index + 1}
+                        </div>
+                        <span className="text-sm font-medium">Invitation #{index + 1}</span>
+                      </div>
+                      {invites.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeInvite(index)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {/* Contact Method */}
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">Contact Method</Label>
+                        <div className="flex gap-2">
+                          <select
+                            className="w-20 h-9 px-2 rounded-md border border-input bg-background text-sm"
+                            value={invite.type}
+                            onChange={(e) => updateInvite(index, { 
+                              type: e.target.value as 'email' | 'phone',
+                              value: '' 
+                            })}
+                          >
+                            <option value="email">Email</option>
+                            <option value="phone">Phone</option>
+                          </select>
+                          <Input
+                            type={invite.type === 'email' ? 'email' : 'tel'}
+                            placeholder={invite.type === 'email' ? 'email@example.com' : '+1234567890'}
+                            value={invite.value}
+                            onChange={(e) => updateInvite(index, { value: e.target.value })}
+                            className="flex-1 h-9"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Character Assignment */}
+                      {characters.length > 0 && (
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium">Character Role</Label>
+                          <select
+                            className="w-full h-9 px-3 rounded-md border border-input bg-background text-sm"
+                            value={invite.characterId || ''}
+                            onChange={(e) => updateInvite(index, { 
+                              characterId: e.target.value ? Number(e.target.value) : undefined 
+                            })}
+                          >
+                            <option value="">Any character</option>
+                            {characters.map(char => (
+                              <option key={char.id} value={char.id}>
+                                {char.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Conversation Style */}
+                    <div className="mt-3 space-y-2">
+                      <Label className="text-sm font-medium">
+                        Your conversation style with this person
+                      </Label>
+                      <select
+                        className="w-full h-9 px-3 rounded-md border border-input bg-background text-sm"
+                        value={invite.conversationStyle || 'respectful'}
+                        onChange={(e) => updateInvite(index, { 
+                          conversationStyle: e.target.value
+                        })}
+                      >
+                        {conversationStyles.map(style => (
+                          <option key={style.value} value={style.value}>
+                            {style.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <Users className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                <p className="text-sm">No invitations yet</p>
+                <p className="text-xs">Click "Add Invite" to get started</p>
+              </div>
             )}
           </div>
 
