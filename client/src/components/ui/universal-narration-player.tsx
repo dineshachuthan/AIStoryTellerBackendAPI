@@ -210,11 +210,17 @@ export function UniversalNarrationPlayer({
       const newSegment = currentSegment - 1;
       const audio = audioRef.current;
       const newSegmentData = segments?.[newSegment];
+      const wasPlaying = isPlaying;
       
       if (audio && newSegmentData?.audioUrl) {
         audio.pause();
         audio.src = newSegmentData.audioUrl;
         audio.currentTime = 0;
+        
+        // If was playing, continue playing the new segment
+        if (wasPlaying) {
+          audio.play().catch(console.error);
+        }
       }
       
       updateAudioState({
@@ -222,7 +228,7 @@ export function UniversalNarrationPlayer({
         progress: 0,
         currentTime: 0,
         duration: 0,
-        isPlaying: false
+        isPlaying: wasPlaying // Maintain previous playing state
       });
       
       onSegmentChange?.(newSegment);
@@ -235,11 +241,17 @@ export function UniversalNarrationPlayer({
       const newSegment = currentSegment + 1;
       const audio = audioRef.current;
       const newSegmentData = segments?.[newSegment];
+      const wasPlaying = isPlaying;
       
       if (audio && newSegmentData?.audioUrl) {
         audio.pause();
         audio.src = newSegmentData.audioUrl;
         audio.currentTime = 0;
+        
+        // If was playing, continue playing the new segment
+        if (wasPlaying) {
+          audio.play().catch(console.error);
+        }
       }
       
       updateAudioState({
@@ -247,7 +259,7 @@ export function UniversalNarrationPlayer({
         progress: 0,
         currentTime: 0,
         duration: 0,
-        isPlaying: false
+        isPlaying: wasPlaying // Maintain previous playing state
       });
       
       onSegmentChange?.(newSegment);
