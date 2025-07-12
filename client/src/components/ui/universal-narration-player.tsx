@@ -119,9 +119,11 @@ export function UniversalNarrationPlayer({
       };
       
       const handleEnded = () => {
+        console.log('AUTO-ADVANCE: Audio ended, currentSegment =', currentSegment);
         if (currentSegment < segments.length - 1) {
           // Auto-advance to next segment
           const nextSegment = currentSegment + 1;
+          console.log('AUTO-ADVANCE: Moving from', currentSegment, 'to', nextSegment);
           updateAudioState({
             currentSegment: nextSegment,
             currentTime: 0,
@@ -131,6 +133,7 @@ export function UniversalNarrationPlayer({
           
           const nextSegmentData = segments[nextSegment];
           if (nextSegmentData?.audioUrl) {
+            console.log('AUTO-ADVANCE: Setting audio source to', nextSegmentData.audioUrl);
             audio.src = nextSegmentData.audioUrl;
             audio.play().catch(console.error);
           }
@@ -282,6 +285,7 @@ export function UniversalNarrationPlayer({
       
       if (audio && newSegmentData?.audioUrl) {
         console.log('Manual next: switching from', audio.src, 'to', newSegmentData.audioUrl);
+        console.log('Manual next: currentSegment state is', currentSegment, 'going to', newSegment);
         
         // Remember if audio was playing BEFORE any manipulation
         const wasPlaying = !audio.paused;
