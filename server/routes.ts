@@ -2881,15 +2881,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const storyId = parseInt(req.params.id);
       const userId = (req.user as any)?.id;
-      const { conversationStyle } = req.body; // Accept conversationStyle from request body
+      const { conversationStyle, narratorProfile } = req.body; // Accept conversationStyle and narratorProfile from request body
       
       if (!userId) {
         return res.status(401).json({ message: "User authentication required" });
       }
       
       // Use the proper story narrator flow as specified by user
-      // Pass conversationStyle if provided, otherwise use default 'respectful'
-      const narrationResult = await storyNarrator.generateStoryNarration(storyId, userId, conversationStyle);
+      // Pass conversationStyle and narratorProfile if provided, otherwise use defaults
+      const narrationResult = await storyNarrator.generateStoryNarration(storyId, userId, conversationStyle, narratorProfile);
       
       // Convert to expected format for frontend
       const narration = {
@@ -3075,7 +3075,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         storyTitle,
         conversationStyle: narration.conversationStyle || 'respectful',
         emotion: 'mixed', // Stories have multiple emotions per segment
-        narratorProfile: narration.narratorVoiceType === 'user' ? 'ElevenLabs Cloned' : 'AI Generated',
+        narratorProfile: narration.narratorProfile || 'neutral',
         narratorVoice: narration.narratorVoice,
         narratorVoiceType: narration.narratorVoiceType,
         segments: narration.segments,

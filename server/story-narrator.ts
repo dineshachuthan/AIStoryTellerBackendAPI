@@ -18,6 +18,7 @@ export interface StoryNarrationResult {
   totalDuration: number;
   narratorVoice: string;
   narratorVoiceType: 'ai' | 'user';
+  narratorProfile?: string; // User-friendly narrator profile name
   generatedAt: Date;
 }
 
@@ -148,7 +149,7 @@ export class StoryNarrator {
    * 4. Narrate with stored narrator voice
    * 5. NO new OpenAI analysis during narration
    */
-  async generateStoryNarration(storyId: number, userId: string, conversationStyle: string = 'respectful'): Promise<StoryNarrationResult> {
+  async generateStoryNarration(storyId: number, userId: string, conversationStyle: string = 'respectful', narratorProfile: string = 'neutral'): Promise<StoryNarrationResult> {
     
     // 1. Pull story metadata from database
     const story = await storage.getStory(storyId);
@@ -178,17 +179,17 @@ export class StoryNarrator {
     const extractedEmotions = story.extractedEmotions || [];
     
     // Get user's narrator profile for voice generation
-    const narratorProfile = await this.getUserNarratorProfile(userId);
+    const narratorProfileDetails = await this.getUserNarratorProfile(userId);
     
     // Get conversation style configuration for relationship-aware narration
     const styleConfig = await conversationStylesManager.getStyle(conversationStyle);
     console.log(`[StoryNarrator] Using conversation style: ${conversationStyle} - ${styleConfig?.displayName || 'Unknown'}`);
     
     // CHECK FOR EXISTING CACHE - Prevent duplicate narrations with same cache key
-    const cacheKey = `${conversationStyle}/${narratorProfile.profileId || 'neutral'}`;
+    const cacheKey = `${conversationStyle}/${narratorProfileDetails.profileId || 'neutral'}`;
     console.log(`[StoryNarrator] Checking cache for key: ${cacheKey}`);
     
-    const existingNarration = await this.checkExistingNarration(storyId, userId, conversationStyle, narratorProfile.profileId || 'neutral');
+    const existingNarration = await this.checkExistingNarration(storyId, userId, conversationStyle, narratorProfileDetails.profileId || 'neutral');
     if (existingNarration) {
       console.log(`[StoryNarrator] Found existing narration for cache key: ${cacheKey}, returning cached result`);
       return existingNarration;
@@ -205,7 +206,7 @@ export class StoryNarrator {
       storyId,
       extractedEmotions,
       userLanguage,
-      narratorProfile,
+      narratorProfileDetails,
       conversationStyle,
       styleConfig
     );
@@ -219,11 +220,12 @@ export class StoryNarrator {
       totalDuration,
       narratorVoice,
       narratorVoiceType,
+      narratorProfile, // Include narrator profile in result
       conversationStyle, // Include conversation style in result
       generatedAt: new Date()
     };
     
-    await this.saveNarrationToDatabase(narrationResult, userId, conversationStyle);
+    await this.saveNarrationToDatabase(narrationResult, userId, conversationStyle, narratorProfile);
 
     return narrationResult;
   }
@@ -581,7 +583,7 @@ export class StoryNarrator {
   /**
    * Save narration to database for future access and replay
    */
-  private async saveNarrationToDatabase(narrationResult: StoryNarrationResult, userId: string, conversationStyle: string): Promise<void> {
+  private async saveNarrationToDatabase(narrationResult: StoryNarrationResult, userId: string, conversationStyle: string, narratorProfile: string): Promise<void> {
     const { storage } = await import('./storage');
 
     try {
@@ -590,12 +592,13 @@ export class StoryNarrator {
         userId,
         narratorVoice: narrationResult.narratorVoice,
         narratorVoiceType: narrationResult.narratorVoiceType,
+        narratorProfile, // Store narrator profile in database
         conversationStyle, // Store conversation style in database
         segments: narrationResult.segments,
         totalDuration: narrationResult.totalDuration
       });
       
-      console.log(`Saved narration to database: Story ${narrationResult.storyId}, conversation style: ${conversationStyle}, ${narrationResult.segments.length} segments, ${narrationResult.totalDuration}ms total`);
+      console.log(`Saved narration to database: Story ${narrationResult.storyId}, narrator profile: ${narratorProfile}, conversation style: ${conversationStyle}, ${narrationResult.segments.length} segments, ${narrationResult.totalDuration}ms total`);
     } catch (error) {
       console.error('Failed to save narration to database:', error);
       // Don't throw error - narration generation still worked

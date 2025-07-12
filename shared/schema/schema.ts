@@ -399,6 +399,7 @@ export const storyNarrations = pgTable("story_narrations", {
   userId: text("user_id").notNull(),
   narratorVoice: varchar("narrator_voice").notNull(),
   narratorVoiceType: varchar("narrator_voice_type").notNull(),
+  narratorProfile: varchar("narrator_profile").default('neutral'), // User-friendly narrator profile name (grandma, kid, neutral, etc.)
   conversationStyle: varchar("conversation_style").references(() => conversationStyles.styleKey), // Relationship context for this narration
   relationshipId: integer("relationship_id").references(() => userRelationships.id), // Link to user relationship
   sharedWithIdentifier: text("shared_with_identifier"), // For non-registered recipients (email/phone)
