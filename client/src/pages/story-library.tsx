@@ -359,7 +359,7 @@ export default function StoryLibrary() {
                                 setSelectedStoryForInvite(story);
                                 setInviteDialogOpen(true);
                               }}
-                              className="w-full border-purple-600 text-purple-400 hover:bg-purple-900/20 text-xs"
+                              className="w-full border-purple-600 text-black hover:bg-purple-900/20 text-xs"
                             >
                               <UserPlus className="w-4 h-4 mr-1" />
                               Invite Collaborators
@@ -558,7 +558,7 @@ export default function StoryLibrary() {
                                   setSelectedStoryForInvite(story);
                                   setInviteDialogOpen(true);
                                 }}
-                                className="flex-1 border-purple-600 text-purple-400 hover:bg-purple-900/20 text-xs"
+                                className="flex-1 border-purple-600 text-black hover:bg-purple-900/20 text-xs"
                               >
                                 <UserPlus className="w-4 h-4 mr-1" />
                                 Invite Collaborators
