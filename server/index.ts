@@ -260,6 +260,15 @@ app.use((req, res, next) => {
     console.error('Failed to initialize video adapter:', error);
   }
   
+  // Initialize notification service adapter for microservices migration
+  try {
+    const { notificationAdapter } = await import('./microservices/notification-service-adapter');
+    await notificationAdapter.initialize();
+    console.log('Notification service adapter initialized successfully');
+  } catch (error) {
+    console.error('Failed to initialize notification adapter:', error);
+  }
+  
   // Initialize character archetypes after server starts (optional, with delay)
   setTimeout(() => {
     archetypeService.initializeDefaultArchetypes().catch((error) => {
