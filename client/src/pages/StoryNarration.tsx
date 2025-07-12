@@ -69,6 +69,40 @@ export default function StoryNarration() {
       audioRefs.current = {};
     };
   }, []);
+
+  // Preload audio metadata for all narrations
+  useEffect(() => {
+    if (allNarrations && allNarrations.length > 0) {
+      allNarrations.forEach(narration => {
+        const narrationKey = `${narration.conversationStyle}-${narration.narratorProfile}`;
+        
+        if (narration.segments && narration.segments.length > 0 && !audioRefs.current[narrationKey]) {
+          audioRefs.current[narrationKey] = new Audio();
+          const audio = audioRefs.current[narrationKey];
+          const segment = narration.segments[0]; // Load first segment
+          
+          if (segment?.audioUrl) {
+            audio.src = segment.audioUrl;
+            audio.preload = 'metadata';
+            
+            audio.onloadedmetadata = () => {
+              updateAudioState(narrationKey, { 
+                duration: audio.duration || 0 
+              });
+            };
+            
+            audio.ontimeupdate = () => {
+              const progress = audio.duration > 0 ? (audio.currentTime / audio.duration) * 100 : 0;
+              updateAudioState(narrationKey, {
+                currentTime: audio.currentTime || 0,
+                progress: progress
+              });
+            };
+          }
+        }
+      });
+    }
+  }, [allNarrations]);
   
   // Helper function to get narration key
   const getNarrationKey = (style: string, profile: string) => `${style}-${profile}`;
@@ -422,34 +456,6 @@ export default function StoryNarration() {
                       const narrationKey = `${narration.conversationStyle}-${narration.narratorProfile}`;
                       const audioState = getAudioState(narrationKey);
                       const { isPlaying: narrationIsPlaying, currentSegment: narrationCurrentSegment, currentTime: narrationCurrentTime, duration: narrationDuration, progress: narrationProgress } = audioState;
-                      
-                      // Preload audio metadata when component mounts
-                      useEffect(() => {
-                        if (narration.segments && narration.segments.length > 0 && !audioRefs.current[narrationKey]) {
-                          audioRefs.current[narrationKey] = new Audio();
-                          const audio = audioRefs.current[narrationKey];
-                          const segment = narration.segments[0]; // Load first segment
-                          
-                          if (segment?.audioUrl) {
-                            audio.src = segment.audioUrl;
-                            audio.preload = 'metadata';
-                            
-                            audio.onloadedmetadata = () => {
-                              updateAudioState(narrationKey, { 
-                                duration: audio.duration || 0 
-                              });
-                            };
-                            
-                            audio.ontimeupdate = () => {
-                              const progress = audio.duration > 0 ? (audio.currentTime / audio.duration) * 100 : 0;
-                              updateAudioState(narrationKey, {
-                                currentTime: audio.currentTime || 0,
-                                progress: progress
-                              });
-                            };
-                          }
-                        }
-                      }, [narration.segments, narrationKey]);
                       
                       return (
                         <div className="mt-6">
