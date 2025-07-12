@@ -358,27 +358,6 @@ export function UniversalNarrationPlayer({
       <div className="bg-gray-900 rounded-3xl p-3 shadow-2xl">
         <div className="bg-black rounded-2xl overflow-hidden relative">
           <div className="p-6 min-h-[250px] flex flex-col justify-center relative">
-            {/* Audio Visualizer - Always reserve space */}
-            {showVisualizer && (
-              <div className="absolute top-4 left-4 flex items-center gap-1 h-8">
-                <div className={`flex items-center gap-1 transition-opacity duration-300 ${isPlaying ? 'opacity-100' : 'opacity-0'}`}>
-                  {[...Array(5)].map((_, i) => (
-                    <div
-                      key={i}
-                      className="w-1 bg-green-400 rounded-full"
-                      style={{
-                        height: '100%',
-                        animation: `audioWave ${0.8 + i * 0.1}s ease-in-out infinite`,
-                        animationDelay: `${i * 0.1}s`,
-                        opacity: 0.7
-                      }}
-                    />
-                  ))}
-                  <span className="text-green-400 text-xs ml-2 font-mono">LIVE</span>
-                </div>
-              </div>
-            )}
-            
             {/* Title Display */}
             {title && (
               <div className="absolute top-4 right-4">
@@ -386,30 +365,20 @@ export function UniversalNarrationPlayer({
               </div>
             )}
             
-
-            
-            {/* Main Content Area - Fixed Size */}
+            {/* Main Content Area - Expanded Size */}
             <div className="text-center px-6 flex flex-col justify-center h-full">
-              <div className="space-y-2">
-                {/* NOW PLAYING - Always reserve space */}
-                {showNowPlaying && (
-                  <p className={`text-sm font-mono text-green-400 transition-opacity duration-300 ${isPlaying ? 'opacity-100' : 'opacity-0'}`}>
-                    NOW PLAYING
-                  </p>
-                )}
-                <div className="min-h-[120px] max-h-[120px] overflow-y-auto scrollbar-hide">
-                  <p className="text-base leading-relaxed font-medium text-left">
-                    {currentSegmentData ? (
-                      <>
-                        <span className="text-white/40 mr-1">"</span>
-                        {renderHighlightedText(currentSegmentData.text)}
-                        <span className="text-white/40 ml-1">"</span>
-                      </>
-                    ) : (
-                      <span className="text-gray-400 italic">Press play to start narration</span>
-                    )}
-                  </p>
-                </div>
+              <div className="min-h-[180px] max-h-[180px] overflow-y-auto scrollbar-hide">
+                <p className="text-lg leading-relaxed font-medium text-left">
+                  {currentSegmentData ? (
+                    <>
+                      <span className="text-white/40 mr-1">"</span>
+                      {renderHighlightedText(currentSegmentData.text)}
+                      <span className="text-white/40 ml-1">"</span>
+                    </>
+                  ) : (
+                    <span className="text-gray-400 italic">Press play to start narration</span>
+                  )}
+                </p>
               </div>
             </div>
           </div>
