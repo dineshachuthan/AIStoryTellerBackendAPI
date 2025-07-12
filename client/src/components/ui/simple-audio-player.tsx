@@ -55,7 +55,16 @@ export function SimpleAudioPlayer({
       // Set up event handlers
       audioRef.current.onended = () => {
         setIsPlaying(false);
-        setProgress(0);
+        setProgress(100); // Show full progress when ended
+        setCurrentTime(audioRef.current?.duration || 0); // Show full duration as current time
+      };
+      
+      audioRef.current.onplay = () => {
+        setIsPlaying(true);
+      };
+      
+      audioRef.current.onpause = () => {
+        setIsPlaying(false);
       };
       
       audioRef.current.ontimeupdate = () => {
@@ -94,6 +103,13 @@ export function SimpleAudioPlayer({
         audioRef.current.pause();
         setIsPlaying(false);
       } else {
+        // If audio has ended (currentTime equals duration), restart from beginning
+        if (audioRef.current.currentTime >= (audioRef.current.duration || 0)) {
+          audioRef.current.currentTime = 0;
+          setProgress(0);
+          setCurrentTime(0);
+        }
+        
         console.log('Attempting to play audio:', audioUrl);
         console.log('Audio element src:', audioRef.current.src);
         console.log('Audio ready state:', audioRef.current.readyState);
