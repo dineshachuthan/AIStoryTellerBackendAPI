@@ -56,6 +56,11 @@ export function UniversalNarrationPlayer({
     progress: 0
   });
   
+  const [textHighlight, setTextHighlight] = useState({
+    wordIndex: 0,
+    totalWords: 0
+  });
+  
   const audioRef = useRef<HTMLAudioElement | null>(null);
   
   // Update audio state helper
@@ -267,6 +272,55 @@ export function UniversalNarrationPlayer({
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
   
+  // Word highlighting logic
+  const splitIntoWords = (text: string) => {
+    return text.split(/(\s+)/).filter(word => word.length > 0);
+  };
+  
+  const calculateWordHighlight = (currentTime: number, duration: number, totalWords: number) => {
+    if (duration === 0 || totalWords === 0) return 0;
+    const progress = currentTime / duration;
+    return Math.floor(progress * totalWords);
+  };
+  
+  // Update text highlight based on current time
+  useEffect(() => {
+    if (currentSegmentData?.text) {
+      const words = splitIntoWords(currentSegmentData.text);
+      const highlightedWordIndex = calculateWordHighlight(currentTime, duration, words.length);
+      setTextHighlight({
+        wordIndex: highlightedWordIndex,
+        totalWords: words.length
+      });
+    }
+  }, [currentTime, duration, currentSegmentData?.text]);
+  
+  // Render text with word highlighting
+  const renderHighlightedText = (text: string) => {
+    const words = splitIntoWords(text);
+    const { wordIndex } = textHighlight;
+    
+    return words.map((word, index) => {
+      const isHighlighted = index <= wordIndex && isPlaying;
+      const isSpace = /^\s+$/.test(word);
+      
+      return (
+        <span
+          key={index}
+          className={`transition-colors duration-200 ${
+            isHighlighted 
+              ? 'text-green-400 bg-green-400/20 px-1 rounded' 
+              : isPlaying 
+                ? 'text-white/70' 
+                : 'text-gray-400'
+          }`}
+        >
+          {word}
+        </span>
+      );
+    });
+  };
+  
   // Format conversation style and narrator profile display
   const formatPlayerInfo = () => {
     if (!conversationStyle && !narratorProfile) return null;
@@ -334,7 +388,7 @@ export function UniversalNarrationPlayer({
             
 
             
-            {/* Main Content Area */}
+            {/* Main Content Area - Fixed Size */}
             <div className="text-center px-6 flex flex-col justify-center h-full">
               <div className="space-y-2">
                 {/* NOW PLAYING - Always reserve space */}
@@ -343,17 +397,19 @@ export function UniversalNarrationPlayer({
                     NOW PLAYING
                   </p>
                 )}
-                <p className={`text-lg leading-relaxed font-medium transition-all duration-300 ${
-                  isPlaying 
-                    ? 'text-white opacity-100' 
-                    : 'text-gray-400 opacity-80'
-                }`}>
-                  {currentSegmentData ? (
-                    `"${currentSegmentData.text}"`
-                  ) : (
-                    'Press play to start narration'
-                  )}
-                </p>
+                <div className="min-h-[120px] max-h-[120px] overflow-y-auto">
+                  <p className="text-base leading-relaxed font-medium text-left">
+                    {currentSegmentData ? (
+                      <>
+                        <span className="text-white/40 mr-1">"</span>
+                        {renderHighlightedText(currentSegmentData.text)}
+                        <span className="text-white/40 ml-1">"</span>
+                      </>
+                    ) : (
+                      <span className="text-gray-400 italic">Press play to start narration</span>
+                    )}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
