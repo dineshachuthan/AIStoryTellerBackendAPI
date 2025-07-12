@@ -628,6 +628,18 @@ This is a relationship-aware content sharing platform that enables users to crea
 
 ## Project Milestones
 
+### **MILESTONE 6: GitHub Repository Split Complete - July 12, 2025**
+**Achievement**: Successfully split monolithic application into two independent GitHub repositories
+- ✅ Created standalone backend project: `AIStoryTellerBackendAPI`
+- ✅ Created standalone frontend project: `AIStoryTellerFrontEnd`
+- ✅ Complete database scripts (DDL, DML, reference data) in backend DB_SCRIPTS folder
+- ✅ Both projects initialized with Git and pushed to GitHub successfully
+- ✅ Proper authentication setup using GitHub Personal Access Token
+- ✅ Both repositories now live at:
+  - Backend: https://github.com/dineshachuthan/AIStoryTellerBackendAPI
+  - Frontend: https://github.com/dineshachuthan/AIStoryTellerFrontEnd
+- **Architecture Decision**: Projects are now completely independent, ready for separate deployment and development
+
 ### **MILESTONE 1: ElevenLabs Voice Cloning Integration - January 08, 2025**
 **Achievement**: Successfully integrated ElevenLabs voice cloning system with complete narrator voice generation
 - ✅ Voice cloning with 11 emotion samples creating custom narrator voice
