@@ -1,0 +1,264 @@
+openapi: 3.0.3
+info:
+  title: Identity Service API
+  description: Authentication and user management microservice
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000/api/identity
+    description: Development server
+  - url: https://api.example.com/identity
+    description: Production server
+
+paths:
+  /register:
+    post:
+      tags: [Authentication]
+      summary: Register new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+                name:
+                  type: string
+                language:
+                  type: string
+                  default: en
+      responses:
+        201:
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        409:
+          description: User already exists
+
+  /login:
+    post:
+      tags: [Authentication]
+      summary: Login user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        200:
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        401:
+          description: Invalid credentials
+
+  /oauth/{provider}:
+    get:
+      tags: [OAuth]
+      summary: Initiate OAuth flow
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [google, facebook, microsoft]
+      responses:
+        302:
+          description: Redirect to OAuth provider
+
+  /oauth/{provider}/callback:
+    get:
+      tags: [OAuth]
+      summary: OAuth callback
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [google, facebook, microsoft]
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        302:
+          description: Redirect to app with session
+
+  /profile:
+    get:
+      tags: [Profile]
+      summary: Get user profile
+      security:
+        - sessionAuth: []
+      responses:
+        200:
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+
+    put:
+      tags: [Profile]
+      summary: Update user profile
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                language:
+                  type: string
+                timezone:
+                  type: string
+                avatar:
+                  type: string
+      responses:
+        200:
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+
+  /password/reset:
+    post:
+      tags: [Password]
+      summary: Request password reset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        200:
+          description: Reset email sent
+        404:
+          description: User not found
+
+  /logout:
+    post:
+      tags: [Authentication]
+      summary: Logout user
+      security:
+        - sessionAuth: []
+      responses:
+        200:
+          description: Logged out successfully
+
+components:
+  schemas:
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+        language:
+          type: string
+        role:
+          $ref: '#/components/schemas/Role'
+        createdAt:
+          type: string
+          format: date-time
+
+    LoginResponse:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/UserResponse'
+        sessionId:
+          type: string
+
+    UserProfile:
+      allOf:
+        - $ref: '#/components/schemas/UserResponse'
+        - type: object
+          properties:
+            timezone:
+              type: string
+            avatar:
+              type: string
+            providers:
+              type: array
+              items:
+                type: string
+                enum: [google, facebook, microsoft, local]
+
+    Role:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+          enum: [member, admin, super_admin, customer_support, content_moderator]
+        displayName:
+          type: string
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                default: Unauthorized
+
+  securitySchemes:
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: connect.sid

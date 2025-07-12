@@ -1,0 +1,396 @@
+openapi: 3.0.3
+info:
+  title: Collaboration Service API
+  description: Collaborative storytelling and roleplay microservice
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000/api/collaboration
+    description: Development server
+  - url: https://api.example.com/collaboration
+    description: Production server
+
+paths:
+  /stories/{storyId}/invitations:
+    post:
+      tags: [Invitations]
+      summary: Create collaboration invitation
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: storyId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [type, participants]
+              properties:
+                type:
+                  type: string
+                  enum: [narration, roleplay]
+                participants:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: object
+                    required: [recipientType]
+                    properties:
+                      recipientType:
+                        type: string
+                        enum: [email, phone, userId]
+                      recipientValue:
+                        type: string
+                      role:
+                        type: string
+                      characterName:
+                        type: string
+                message:
+                  type: string
+                expiresIn:
+                  type: integer
+                  default: 432000
+      responses:
+        201:
+          description: Invitations created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invitations:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Invitation'
+
+  /invitations/{token}:
+    get:
+      tags: [Invitations]
+      summary: Get invitation details
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Invitation details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvitationDetail'
+        404:
+          description: Invitation not found
+        410:
+          description: Invitation expired
+
+  /invitations/{token}/accept:
+    post:
+      tags: [Invitations]
+      summary: Accept invitation
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                guestName:
+                  type: string
+                  description: Name for guest users
+      responses:
+        200:
+          description: Invitation accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Participant'
+
+  /invitations/{token}/decline:
+    post:
+      tags: [Invitations]
+      summary: Decline invitation
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        200:
+          description: Invitation declined
+
+  /collaborations/{collaborationId}/submissions:
+    get:
+      tags: [Submissions]
+      summary: List submissions
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: collaborationId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: List of submissions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Submission'
+
+    post:
+      tags: [Submissions]
+      summary: Submit content
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: collaborationId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [type]
+              properties:
+                type:
+                  type: string
+                  enum: [voice, text, media]
+                content:
+                  type: string
+                file:
+                  type: string
+                  format: binary
+                metadata:
+                  type: object
+      responses:
+        201:
+          description: Submission created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Submission'
+
+  /collaborations/{collaborationId}/complete:
+    post:
+      tags: [Collaboration]
+      summary: Mark collaboration as complete
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: collaborationId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Collaboration completed
+
+  /roleplay/templates:
+    get:
+      tags: [Roleplay]
+      summary: List roleplay templates
+      security:
+        - sessionAuth: []
+      responses:
+        200:
+          description: List of templates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RoleplayTemplate'
+
+    post:
+      tags: [Roleplay]
+      summary: Create roleplay template
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [storyId, scenes]
+              properties:
+                storyId:
+                  type: integer
+                title:
+                  type: string
+                description:
+                  type: string
+                scenes:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      description:
+                        type: string
+                      characters:
+                        type: array
+                        items:
+                          type: string
+      responses:
+        201:
+          description: Template created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleplayTemplate'
+
+components:
+  schemas:
+    Invitation:
+      type: object
+      properties:
+        id:
+          type: integer
+        token:
+          type: string
+        type:
+          type: string
+          enum: [narration, roleplay]
+        recipientEmail:
+          type: string
+        recipientPhone:
+          type: string
+        status:
+          type: string
+          enum: [pending, accepted, declined, expired]
+        expiresAt:
+          type: string
+          format: date-time
+        invitationUrl:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    InvitationDetail:
+      allOf:
+        - $ref: '#/components/schemas/Invitation'
+        - type: object
+          properties:
+            story:
+              type: object
+              properties:
+                id:
+                  type: integer
+                title:
+                  type: string
+                author:
+                  type: string
+            role:
+              type: string
+            characterName:
+              type: string
+
+    Participant:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: string
+        guestName:
+          type: string
+        role:
+          type: string
+        characterName:
+          type: string
+        status:
+          type: string
+          enum: [invited, active, completed]
+        joinedAt:
+          type: string
+          format: date-time
+
+    Submission:
+      type: object
+      properties:
+        id:
+          type: integer
+        participantId:
+          type: integer
+        type:
+          type: string
+          enum: [voice, text, media]
+        content:
+          type: string
+        fileUrl:
+          type: string
+        metadata:
+          type: object
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+        createdAt:
+          type: string
+          format: date-time
+
+    RoleplayTemplate:
+      type: object
+      properties:
+        id:
+          type: integer
+        storyId:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        scenes:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              name:
+                type: string
+              description:
+                type: string
+              characters:
+                type: array
+                items:
+                  type: string
+        createdAt:
+          type: string
+          format: date-time
+
+  securitySchemes:
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: connect.sid

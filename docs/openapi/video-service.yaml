@@ -1,0 +1,309 @@
+openapi: 3.0.3
+info:
+  title: Video Service API
+  description: Video generation and management microservice
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000/api/video
+    description: Development server
+  - url: https://api.example.com/video
+    description: Production server
+
+paths:
+  /stories/{storyId}/videos:
+    get:
+      tags: [Videos]
+      summary: List story videos
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: storyId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: List of videos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Video'
+
+    post:
+      tags: [Videos]
+      summary: Generate video
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: storyId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                prompt:
+                  type: string
+                style:
+                  type: string
+                  enum: [cinematic, animated, realistic, artistic]
+                duration:
+                  type: integer
+                  minimum: 5
+                  maximum: 30
+                quality:
+                  type: string
+                  enum: [draft, standard, high]
+                provider:
+                  type: string
+                  enum: [runwayml, pika, luma, kling]
+      responses:
+        201:
+          description: Video generation started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VideoJob'
+        402:
+          description: Subscription limit reached
+
+  /videos/{videoId}:
+    get:
+      tags: [Videos]
+      summary: Get video details
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: videoId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Video details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VideoDetail'
+        404:
+          description: Video not found
+
+    delete:
+      tags: [Videos]
+      summary: Delete video
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: videoId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        204:
+          description: Video deleted
+
+  /videos/jobs/{jobId}:
+    get:
+      tags: [Jobs]
+      summary: Get video job status
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Job status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VideoJob'
+
+  /videos/jobs/{jobId}/cancel:
+    post:
+      tags: [Jobs]
+      summary: Cancel video job
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Job cancelled
+
+  /providers:
+    get:
+      tags: [Providers]
+      summary: List available providers
+      security:
+        - sessionAuth: []
+      responses:
+        200:
+          description: Available providers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/VideoProvider'
+
+  /webhooks/{provider}:
+    post:
+      tags: [Webhooks]
+      summary: Provider webhook
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [runwayml, pika, luma, kling]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        200:
+          description: Webhook processed
+
+components:
+  schemas:
+    Video:
+      type: object
+      properties:
+        id:
+          type: integer
+        storyId:
+          type: integer
+        userId:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        videoUrl:
+          type: string
+        thumbnailUrl:
+          type: string
+        duration:
+          type: integer
+        provider:
+          type: string
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+        createdAt:
+          type: string
+          format: date-time
+
+    VideoDetail:
+      allOf:
+        - $ref: '#/components/schemas/Video'
+        - type: object
+          properties:
+            prompt:
+              type: string
+            style:
+              type: string
+            quality:
+              type: string
+            metadata:
+              type: object
+              properties:
+                width:
+                  type: integer
+                height:
+                  type: integer
+                fps:
+                  type: integer
+                codec:
+                  type: string
+            providerData:
+              type: object
+
+    VideoJob:
+      type: object
+      properties:
+        jobId:
+          type: string
+        videoId:
+          type: integer
+        provider:
+          type: string
+        status:
+          type: string
+          enum: [queued, processing, completed, failed, cancelled]
+        progress:
+          type: number
+          minimum: 0
+          maximum: 100
+        estimatedTime:
+          type: integer
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+        startedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+
+    VideoProvider:
+      type: object
+      properties:
+        name:
+          type: string
+        displayName:
+          type: string
+        isActive:
+          type: boolean
+        capabilities:
+          type: object
+          properties:
+            maxDuration:
+              type: integer
+            supportedStyles:
+              type: array
+              items:
+                type: string
+            supportedQualities:
+              type: array
+              items:
+                type: string
+        pricing:
+          type: object
+          properties:
+            perSecond:
+              type: number
+            minimum:
+              type: number
+
+  securitySchemes:
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: connect.sid

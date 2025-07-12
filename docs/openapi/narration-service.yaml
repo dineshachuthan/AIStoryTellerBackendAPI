@@ -1,0 +1,375 @@
+openapi: 3.0.3
+info:
+  title: Narration Service API
+  description: Voice narration and audio generation microservice
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000/api/narration
+    description: Development server
+  - url: https://api.example.com/narration
+    description: Production server
+
+paths:
+  /stories/{storyId}/narrations:
+    get:
+      tags: [Narrations]
+      summary: List story narrations
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: storyId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: List of narrations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Narration'
+
+    post:
+      tags: [Narrations]
+      summary: Generate narration
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: storyId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                narratorProfile:
+                  type: string
+                  enum: [neutral, grandma, kid, storyteller, dramatic]
+                conversationStyle:
+                  type: string
+                  enum: [formal, casual, friendly, business, intimate, authoritative]
+                voice:
+                  type: string
+                  description: Voice ID or 'user_cloned'
+                segments:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      text:
+                        type: string
+                      emotion:
+                        type: string
+                      intensity:
+                        type: number
+      responses:
+        201:
+          description: Narration generation started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Narration'
+        402:
+          description: Subscription limit reached
+
+  /narrations/{narrationId}:
+    get:
+      tags: [Narrations]
+      summary: Get narration details
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: narrationId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Narration details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NarrationDetail'
+        404:
+          description: Narration not found
+
+    delete:
+      tags: [Narrations]
+      summary: Delete narration
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: narrationId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        204:
+          description: Narration deleted
+
+  /narrations/{narrationId}/segments:
+    get:
+      tags: [Segments]
+      summary: Get narration segments
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: narrationId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Narration segments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/NarrationSegment'
+
+  /voice-cloning/create-narrator:
+    post:
+      tags: [Voice Cloning]
+      summary: Create cloned narrator voice
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [voiceSamples]
+              properties:
+                voiceSamples:
+                  type: array
+                  minItems: 5
+                  items:
+                    type: object
+                    required: [emotion, audioData]
+                    properties:
+                      emotion:
+                        type: string
+                      audioData:
+                        type: string
+                        format: base64
+                name:
+                  type: string
+                description:
+                  type: string
+      responses:
+        201:
+          description: Voice cloning started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  voiceId:
+                    type: string
+                  status:
+                    type: string
+                    enum: [processing, completed, failed]
+                  estimatedTime:
+                    type: integer
+
+  /voice-samples:
+    get:
+      tags: [Voice Samples]
+      summary: List user voice samples
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: voiceType
+          in: query
+          schema:
+            type: string
+            enum: [narrator, character]
+        - name: emotion
+          in: query
+          schema:
+            type: string
+      responses:
+        200:
+          description: List of voice samples
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/VoiceSample'
+
+    post:
+      tags: [Voice Samples]
+      summary: Upload voice sample
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [audio, emotion, voiceType]
+              properties:
+                audio:
+                  type: string
+                  format: binary
+                emotion:
+                  type: string
+                voiceType:
+                  type: string
+                  enum: [narrator, character]
+                metadata:
+                  type: object
+      responses:
+        201:
+          description: Voice sample uploaded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoiceSample'
+
+  /audio/transcribe:
+    post:
+      tags: [Audio]
+      summary: Transcribe audio
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [audio]
+              properties:
+                audio:
+                  type: string
+                  format: binary
+                language:
+                  type: string
+                  default: en
+      responses:
+        200:
+          description: Transcription complete
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  text:
+                    type: string
+                  language:
+                    type: string
+                  confidence:
+                    type: number
+
+components:
+  schemas:
+    Narration:
+      type: object
+      properties:
+        id:
+          type: integer
+        storyId:
+          type: integer
+        userId:
+          type: string
+        narratorProfile:
+          type: string
+        conversationStyle:
+          type: string
+        voice:
+          type: string
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+        segmentCount:
+          type: integer
+        totalDuration:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+
+    NarrationDetail:
+      allOf:
+        - $ref: '#/components/schemas/Narration'
+        - type: object
+          properties:
+            segments:
+              type: array
+              items:
+                $ref: '#/components/schemas/NarrationSegment'
+            voiceSettings:
+              type: object
+              properties:
+                stability:
+                  type: number
+                similarity_boost:
+                  type: number
+                style:
+                  type: number
+
+    NarrationSegment:
+      type: object
+      properties:
+        id:
+          type: integer
+        segmentIndex:
+          type: integer
+        text:
+          type: string
+        emotion:
+          type: string
+        intensity:
+          type: number
+        audioUrl:
+          type: string
+        duration:
+          type: number
+        voiceParameters:
+          type: object
+
+    VoiceSample:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: string
+        emotion:
+          type: string
+        voiceType:
+          type: string
+        audioUrl:
+          type: string
+        duration:
+          type: number
+        status:
+          type: string
+          enum: [active, processing, archived]
+        metadata:
+          type: object
+        createdAt:
+          type: string
+          format: date-time
+
+  securitySchemes:
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: connect.sid

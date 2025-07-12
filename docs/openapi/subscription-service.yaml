@@ -1,0 +1,303 @@
+openapi: 3.0.3
+info:
+  title: Subscription Service API
+  description: Subscription and billing management microservice
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000/api/subscription
+    description: Development server
+  - url: https://api.example.com/subscription
+    description: Production server
+
+paths:
+  /plans:
+    get:
+      tags: [Plans]
+      summary: List subscription plans
+      responses:
+        200:
+          description: List of subscription plans
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SubscriptionPlan'
+
+  /plans/{planId}:
+    get:
+      tags: [Plans]
+      summary: Get plan details
+      parameters:
+        - name: planId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Plan details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionPlan'
+        404:
+          description: Plan not found
+
+  /user/subscription:
+    get:
+      tags: [User Subscription]
+      summary: Get user's current subscription
+      security:
+        - sessionAuth: []
+      responses:
+        200:
+          description: User subscription
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSubscription'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+
+  /user/subscription/upgrade:
+    post:
+      tags: [User Subscription]
+      summary: Upgrade subscription
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [planId]
+              properties:
+                planId:
+                  type: integer
+                paymentMethodId:
+                  type: string
+      responses:
+        200:
+          description: Subscription upgraded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSubscription'
+        400:
+          description: Invalid plan or payment method
+        402:
+          description: Payment required
+
+  /user/subscription/cancel:
+    post:
+      tags: [User Subscription]
+      summary: Cancel subscription
+      security:
+        - sessionAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                feedback:
+                  type: string
+      responses:
+        200:
+          description: Subscription cancelled
+        400:
+          description: Cannot cancel subscription
+
+  /user/usage:
+    get:
+      tags: [Usage]
+      summary: Get current usage
+      security:
+        - sessionAuth: []
+      responses:
+        200:
+          description: Usage statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsageStats'
+
+  /user/usage/feature/{feature}:
+    post:
+      tags: [Usage]
+      summary: Track feature usage
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: feature
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [stories, narrations, videos, collaborations]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [quantity]
+              properties:
+                quantity:
+                  type: integer
+                  minimum: 1
+                metadata:
+                  type: object
+      responses:
+        200:
+          description: Usage tracked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  allowed:
+                    type: boolean
+                  remaining:
+                    type: integer
+                  limit:
+                    type: integer
+
+  /webhooks/stripe:
+    post:
+      tags: [Webhooks]
+      summary: Stripe webhook endpoint
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        200:
+          description: Webhook processed
+
+components:
+  schemas:
+    SubscriptionPlan:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+          enum: [free, silver, gold, platinum]
+        displayName:
+          type: string
+        price:
+          type: number
+          format: float
+        billingPeriod:
+          type: string
+          enum: [monthly, yearly]
+        features:
+          type: object
+          properties:
+            storiesPerMonth:
+              type: integer
+            narrationsPerMonth:
+              type: integer
+            videosPerMonth:
+              type: integer
+            collaboratorsPerStory:
+              type: integer
+            voiceCloning:
+              type: boolean
+            customVoices:
+              type: integer
+            apiAccess:
+              type: boolean
+            prioritySupport:
+              type: boolean
+        stripePriceId:
+          type: string
+
+    UserSubscription:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: string
+        plan:
+          $ref: '#/components/schemas/SubscriptionPlan'
+        status:
+          type: string
+          enum: [active, cancelled, past_due, paused]
+        currentPeriodStart:
+          type: string
+          format: date-time
+        currentPeriodEnd:
+          type: string
+          format: date-time
+        cancelAtPeriodEnd:
+          type: boolean
+        stripeSubscriptionId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    UsageStats:
+      type: object
+      properties:
+        period:
+          type: object
+          properties:
+            start:
+              type: string
+              format: date-time
+            end:
+              type: string
+              format: date-time
+        usage:
+          type: object
+          properties:
+            stories:
+              $ref: '#/components/schemas/FeatureUsage'
+            narrations:
+              $ref: '#/components/schemas/FeatureUsage'
+            videos:
+              $ref: '#/components/schemas/FeatureUsage'
+            collaborations:
+              $ref: '#/components/schemas/FeatureUsage'
+
+    FeatureUsage:
+      type: object
+      properties:
+        used:
+          type: integer
+        limit:
+          type: integer
+        remaining:
+          type: integer
+        percentUsed:
+          type: number
+          format: float
+
+  responses:
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                default: Unauthorized
+
+  securitySchemes:
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: connect.sid

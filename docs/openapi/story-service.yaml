@@ -1,0 +1,370 @@
+openapi: 3.0.3
+info:
+  title: Story Service API
+  description: Story creation and management microservice
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000/api/story
+    description: Development server
+  - url: https://api.example.com/story
+    description: Production server
+
+paths:
+  /stories:
+    get:
+      tags: [Stories]
+      summary: List user stories
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, processing, complete, published, archived]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        200:
+          description: List of stories
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  stories:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Story'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+
+    post:
+      tags: [Stories]
+      summary: Create new story
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title]
+              properties:
+                title:
+                  type: string
+                content:
+                  type: string
+                category:
+                  type: string
+      responses:
+        201:
+          description: Story created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Story'
+        400:
+          description: Invalid input
+        402:
+          description: Subscription limit reached
+
+  /stories/{storyId}:
+    get:
+      tags: [Stories]
+      summary: Get story details
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: storyId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Story details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StoryDetail'
+        404:
+          description: Story not found
+
+    put:
+      tags: [Stories]
+      summary: Update story
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: storyId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                content:
+                  type: string
+                category:
+                  type: string
+      responses:
+        200:
+          description: Story updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Story'
+
+    delete:
+      tags: [Stories]
+      summary: Delete story
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: storyId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        204:
+          description: Story deleted
+        404:
+          description: Story not found
+
+  /stories/{storyId}/analyze:
+    post:
+      tags: [Analysis]
+      summary: Analyze story content
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: storyId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Analysis complete
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StoryAnalysis'
+        402:
+          description: Subscription limit reached
+
+  /stories/{storyId}/publish:
+    post:
+      tags: [Publishing]
+      summary: Publish story
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: storyId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                visibility:
+                  type: string
+                  enum: [private, friends, public]
+      responses:
+        200:
+          description: Story published
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Story'
+
+  /stories/upload-audio:
+    post:
+      tags: [Upload]
+      summary: Upload audio for transcription
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [audio]
+              properties:
+                audio:
+                  type: string
+                  format: binary
+                title:
+                  type: string
+      responses:
+        201:
+          description: Audio uploaded and story created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Story'
+        400:
+          description: Invalid audio format
+
+components:
+  schemas:
+    Story:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: string
+        title:
+          type: string
+        content:
+          type: string
+        category:
+          type: string
+        status:
+          type: string
+          enum: [draft, processing, complete, published, archived]
+        processingStatus:
+          type: string
+          enum: [pending, analyzing, complete, failed]
+        visibility:
+          type: string
+          enum: [private, friends, public]
+        wordCount:
+          type: integer
+        readingTime:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    StoryDetail:
+      allOf:
+        - $ref: '#/components/schemas/Story'
+        - type: object
+          properties:
+            analysis:
+              $ref: '#/components/schemas/StoryAnalysis'
+            narrations:
+              type: array
+              items:
+                $ref: '#/components/schemas/NarrationSummary'
+            collaborations:
+              type: array
+              items:
+                $ref: '#/components/schemas/CollaborationSummary'
+
+    StoryAnalysis:
+      type: object
+      properties:
+        characters:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              role:
+                type: string
+              personality:
+                type: string
+              traits:
+                type: array
+                items:
+                  type: string
+        emotions:
+          type: array
+          items:
+            type: object
+            properties:
+              emotion:
+                type: string
+              intensity:
+                type: number
+              context:
+                type: string
+        themes:
+          type: array
+          items:
+            type: string
+        genre:
+          type: string
+        ageRating:
+          type: string
+          enum: [general, teen, mature]
+        isAdultContent:
+          type: boolean
+
+    NarrationSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+        narratorProfile:
+          type: string
+        voice:
+          type: string
+        status:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    CollaborationSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+        participantCount:
+          type: integer
+        status:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        pages:
+          type: integer
+
+  securitySchemes:
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: connect.sid

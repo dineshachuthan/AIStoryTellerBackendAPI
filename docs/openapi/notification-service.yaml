@@ -1,0 +1,542 @@
+openapi: 3.0.3
+info:
+  title: Notification Service API
+  description: Event-driven notification microservice
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000/api/notification
+    description: Development server
+  - url: https://api.example.com/notification
+    description: Production server
+
+paths:
+  /campaigns:
+    get:
+      tags: [Campaigns]
+      summary: List notification campaigns
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, paused, archived]
+        - name: sourceDomain
+          in: query
+          schema:
+            type: string
+            enum: [identity, story, collaboration, narration, subscription]
+      responses:
+        200:
+          description: List of campaigns
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/NotificationCampaign'
+
+    post:
+      tags: [Campaigns]
+      summary: Create notification campaign
+      security:
+        - sessionAuth: []
+        - adminRole: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [sourceDomain, sourceEventType, campaignName, templateKey]
+              properties:
+                sourceDomain:
+                  type: string
+                  enum: [identity, story, collaboration, narration, subscription]
+                sourceEventType:
+                  type: string
+                campaignName:
+                  type: string
+                description:
+                  type: string
+                templateKey:
+                  type: string
+                deliveryChannels:
+                  type: array
+                  items:
+                    type: string
+                    enum: [email, sms, push, in_app]
+                audienceCriteria:
+                  type: object
+                priority:
+                  type: integer
+                  minimum: 1
+                  maximum: 1000
+      responses:
+        201:
+          description: Campaign created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationCampaign'
+
+  /campaigns/{campaignId}:
+    get:
+      tags: [Campaigns]
+      summary: Get campaign details
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: campaignId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: Campaign details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationCampaignDetail'
+
+    put:
+      tags: [Campaigns]
+      summary: Update campaign
+      security:
+        - sessionAuth: []
+        - adminRole: []
+      parameters:
+        - name: campaignId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [active, paused, archived]
+                priority:
+                  type: integer
+                deliveryRules:
+                  type: object
+                rateLimitPerHour:
+                  type: integer
+      responses:
+        200:
+          description: Campaign updated
+
+  /templates:
+    get:
+      tags: [Templates]
+      summary: List templates
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: campaignId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: channel
+          in: query
+          schema:
+            type: string
+            enum: [email, sms, push, in_app]
+        - name: locale
+          in: query
+          schema:
+            type: string
+      responses:
+        200:
+          description: List of templates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/NotificationTemplate'
+
+    post:
+      tags: [Templates]
+      summary: Create template
+      security:
+        - sessionAuth: []
+        - adminRole: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [templateKey, campaignId, channel, bodyTemplate]
+              properties:
+                templateKey:
+                  type: string
+                campaignId:
+                  type: string
+                  format: uuid
+                channel:
+                  type: string
+                  enum: [email, sms, push, in_app]
+                locale:
+                  type: string
+                  default: en
+                subjectTemplate:
+                  type: string
+                bodyTemplate:
+                  type: string
+                htmlTemplate:
+                  type: string
+                storageType:
+                  type: string
+                  enum: [database, file, s3, cdn, github]
+                storagePath:
+                  type: string
+                requiredVariables:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        201:
+          description: Template created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationTemplate'
+
+  /preferences:
+    get:
+      tags: [Preferences]
+      summary: Get user preferences
+      security:
+        - sessionAuth: []
+      responses:
+        200:
+          description: User preferences
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/NotificationPreference'
+
+    put:
+      tags: [Preferences]
+      summary: Update preferences
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                required: [sourceDomain, channels]
+                properties:
+                  sourceDomain:
+                    type: string
+                  sourceEventType:
+                    type: string
+                  channels:
+                    type: object
+                    properties:
+                      email:
+                        type: boolean
+                      sms:
+                        type: boolean
+                      push:
+                        type: boolean
+                      inApp:
+                        type: boolean
+                  frequency:
+                    type: string
+                    enum: [immediate, daily_digest, weekly_digest, never]
+      responses:
+        200:
+          description: Preferences updated
+
+  /deliveries:
+    get:
+      tags: [Deliveries]
+      summary: List deliveries
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, sent, delivered, failed, bounced, complained]
+        - name: channel
+          in: query
+          schema:
+            type: string
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        200:
+          description: List of deliveries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deliveries:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/NotificationDelivery'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+
+  /unsubscribe/{token}:
+    get:
+      tags: [Unsubscribe]
+      summary: Unsubscribe via token
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: Unsubscribe page
+          content:
+            text/html:
+              schema:
+                type: string
+
+    post:
+      tags: [Unsubscribe]
+      summary: Process unsubscribe
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                campaigns:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        200:
+          description: Unsubscribed successfully
+
+  /webhooks/{provider}:
+    post:
+      tags: [Webhooks]
+      summary: Provider webhook
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [mailgun, sendgrid, twilio, messagebird]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        200:
+          description: Webhook processed
+
+components:
+  schemas:
+    NotificationCampaign:
+      type: object
+      properties:
+        campaignId:
+          type: string
+          format: uuid
+        sourceDomain:
+          type: string
+        sourceEventType:
+          type: string
+        campaignName:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [active, paused, archived]
+        priority:
+          type: integer
+        deliveryChannels:
+          type: array
+          items:
+            type: string
+        analytics:
+          type: object
+          properties:
+            totalSent:
+              type: integer
+            totalDelivered:
+              type: integer
+            totalFailed:
+              type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    NotificationCampaignDetail:
+      allOf:
+        - $ref: '#/components/schemas/NotificationCampaign'
+        - type: object
+          properties:
+            audienceCriteria:
+              type: object
+            deliveryRules:
+              type: object
+            rateLimitPerHour:
+              type: integer
+            templates:
+              type: array
+              items:
+                $ref: '#/components/schemas/NotificationTemplate'
+
+    NotificationTemplate:
+      type: object
+      properties:
+        templateId:
+          type: string
+          format: uuid
+        templateKey:
+          type: string
+        campaignId:
+          type: string
+          format: uuid
+        channel:
+          type: string
+        locale:
+          type: string
+        storageType:
+          type: string
+        subjectTemplate:
+          type: string
+        bodyTemplate:
+          type: string
+        htmlTemplate:
+          type: string
+        requiredVariables:
+          type: array
+          items:
+            type: string
+        version:
+          type: integer
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    NotificationPreference:
+      type: object
+      properties:
+        sourceDomain:
+          type: string
+        sourceEventType:
+          type: string
+        emailEnabled:
+          type: boolean
+        smsEnabled:
+          type: boolean
+        pushEnabled:
+          type: boolean
+        inAppEnabled:
+          type: boolean
+        frequency:
+          type: string
+        quietHoursEnabled:
+          type: boolean
+        quietHoursStart:
+          type: string
+          format: time
+        quietHoursEnd:
+          type: string
+          format: time
+        preferredLocale:
+          type: string
+
+    NotificationDelivery:
+      type: object
+      properties:
+        deliveryId:
+          type: string
+          format: uuid
+        campaignId:
+          type: string
+          format: uuid
+        recipientEmail:
+          type: string
+        recipientPhone:
+          type: string
+        channel:
+          type: string
+        provider:
+          type: string
+        status:
+          type: string
+        sentAt:
+          type: string
+          format: date-time
+        deliveredAt:
+          type: string
+          format: date-time
+        errorMessage:
+          type: string
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        pages:
+          type: integer
+
+  securitySchemes:
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: connect.sid
+    adminRole:
+      type: apiKey
+      in: header
+      name: X-Admin-Role
