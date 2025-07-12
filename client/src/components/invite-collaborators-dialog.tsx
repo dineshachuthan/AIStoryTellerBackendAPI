@@ -204,47 +204,66 @@ export function InviteCollaboratorsDialog({
           <div className="space-y-3">
             <Label>Invitations</Label>
             {invites.map((invite, index) => (
-              <div key={index} className="flex items-center space-x-2">
-                <div className="flex-1 flex items-center space-x-2">
-                  <select
-                    className="h-10 px-3 rounded-md border border-input bg-background"
-                    value={invite.type}
-                    onChange={(e) => updateInvite(index, { 
-                      type: e.target.value as 'email' | 'phone',
-                      value: '' 
-                    })}
-                  >
-                    <option value="email">Email</option>
-                    <option value="phone">Phone</option>
-                  </select>
-                  
-                  <Input
-                    type={invite.type === 'email' ? 'email' : 'tel'}
-                    placeholder={invite.type === 'email' ? 'email@example.com' : '+1234567890'}
-                    value={invite.value}
-                    onChange={(e) => updateInvite(index, { value: e.target.value })}
-                    className="flex-1"
-                  />
-
-                  {characters.length > 0 && (
+              <div key={index} className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <div className="flex-1 flex items-center space-x-2">
                     <select
                       className="h-10 px-3 rounded-md border border-input bg-background"
-                      value={invite.characterId || ''}
+                      value={invite.type}
                       onChange={(e) => updateInvite(index, { 
-                        characterId: e.target.value ? Number(e.target.value) : undefined 
+                        type: e.target.value as 'email' | 'phone',
+                        value: '' 
                       })}
                     >
-                      <option value="">Any character</option>
-                      {characters.map(char => (
-                        <option key={char.id} value={char.id}>
-                          {char.name}
-                        </option>
-                      ))}
+                      <option value="email">Email</option>
+                      <option value="phone">Phone</option>
                     </select>
-                  )}
+                    
+                    <Input
+                      type={invite.type === 'email' ? 'email' : 'tel'}
+                      placeholder={invite.type === 'email' ? 'email@example.com' : '+1234567890'}
+                      value={invite.value}
+                      onChange={(e) => updateInvite(index, { value: e.target.value })}
+                      className="flex-1"
+                    />
 
+                    {characters.length > 0 && (
+                      <select
+                        className="h-10 px-3 rounded-md border border-input bg-background"
+                        value={invite.characterId || ''}
+                        onChange={(e) => updateInvite(index, { 
+                          characterId: e.target.value ? Number(e.target.value) : undefined 
+                        })}
+                      >
+                        <option value="">Any character</option>
+                        {characters.map(char => (
+                          <option key={char.id} value={char.id}>
+                            {char.name}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+
+                  {invites.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeInvite(index)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+                
+                {/* Conversation Style with Label */}
+                <div className="flex items-center space-x-2">
+                  <Label className="text-sm text-gray-600 dark:text-gray-400 min-w-0 whitespace-nowrap">
+                    Your conversation style with this person:
+                  </Label>
                   <select
-                    className="h-10 px-3 rounded-md border border-input bg-background"
+                    className="h-10 px-3 rounded-md border border-input bg-background flex-1"
                     value={invite.conversationStyle || 'respectful'}
                     onChange={(e) => updateInvite(index, { 
                       conversationStyle: e.target.value
@@ -257,17 +276,6 @@ export function InviteCollaboratorsDialog({
                     ))}
                   </select>
                 </div>
-
-                {invites.length > 1 && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => removeInvite(index)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
               </div>
             ))}
             
