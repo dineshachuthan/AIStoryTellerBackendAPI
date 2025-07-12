@@ -125,7 +125,8 @@ export function UniversalNarrationPlayer({
           updateAudioState({
             currentSegment: nextSegment,
             currentTime: 0,
-            progress: 0
+            progress: 0,
+            isPlaying: true // Keep playing state active for auto-advance
           });
           
           const nextSegmentData = segments[nextSegment];
