@@ -485,8 +485,8 @@ export default function StoryNarration() {
                                   />
                                 </div>
                                 <div className="flex justify-between text-xs text-gray-400 mt-1">
-                                  <span>{Math.floor(narrationCurrentTime / 60)}:{(narrationCurrentTime % 60).toFixed(0).padStart(2, '0')}</span>
-                                  <span>{Math.floor(narrationDuration / 60)}:{(narrationDuration % 60).toFixed(0).padStart(2, '0')}</span>
+                                  <span>{Math.floor(narrationCurrentTime / 60)}:{Math.floor(narrationCurrentTime % 60).toString().padStart(2, '0')}</span>
+                                  <span>{Math.floor(narrationDuration / 60)}:{Math.floor(narrationDuration % 60).toString().padStart(2, '0')}</span>
                                 </div>
                               </div>
                               
