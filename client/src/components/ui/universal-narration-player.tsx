@@ -219,28 +219,28 @@ export function UniversalNarrationPlayer({
       const newSegment = currentSegment - 1;
       const audio = audioRef.current;
       const newSegmentData = segments?.[newSegment];
-      const wasPlaying = isPlaying;
       
       if (audio && newSegmentData?.audioUrl) {
+        // Always stop current audio completely
         audio.pause();
-        audio.src = newSegmentData.audioUrl;
         audio.currentTime = 0;
         
-        // Reset state immediately to show correct UI
+        // Load new segment
+        audio.src = newSegmentData.audioUrl;
+        
+        // Update state immediately
         updateAudioState({
           currentSegment: newSegment,
           progress: 0,
           currentTime: 0,
           duration: 0,
-          isPlaying: false // Always reset to false first
+          isPlaying: false
         });
         
-        // If was playing, continue playing the new segment with delay
-        if (wasPlaying) {
-          setTimeout(() => {
-            audio.play().catch(console.error);
-          }, 50);
-        }
+        // ALWAYS auto-play new segment (regardless of previous state)
+        setTimeout(() => {
+          audio.play().catch(console.error);
+        }, 50);
       } else {
         updateAudioState({
           currentSegment: newSegment,
@@ -261,28 +261,28 @@ export function UniversalNarrationPlayer({
       const newSegment = currentSegment + 1;
       const audio = audioRef.current;
       const newSegmentData = segments?.[newSegment];
-      const wasPlaying = isPlaying;
       
       if (audio && newSegmentData?.audioUrl) {
+        // Always stop current audio completely
         audio.pause();
-        audio.src = newSegmentData.audioUrl;
         audio.currentTime = 0;
         
-        // Reset state immediately to show correct UI
+        // Load new segment
+        audio.src = newSegmentData.audioUrl;
+        
+        // Update state immediately
         updateAudioState({
           currentSegment: newSegment,
           progress: 0,
           currentTime: 0,
           duration: 0,
-          isPlaying: false // Always reset to false first
+          isPlaying: false
         });
         
-        // If was playing, continue playing the new segment with delay
-        if (wasPlaying) {
-          setTimeout(() => {
-            audio.play().catch(console.error);
-          }, 50);
-        }
+        // ALWAYS auto-play new segment (regardless of previous state)
+        setTimeout(() => {
+          audio.play().catch(console.error);
+        }, 50);
       } else {
         updateAudioState({
           currentSegment: newSegment,
