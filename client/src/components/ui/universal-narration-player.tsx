@@ -226,21 +226,30 @@ export function UniversalNarrationPlayer({
         audio.src = newSegmentData.audioUrl;
         audio.currentTime = 0;
         
+        // Reset state immediately to show correct UI
+        updateAudioState({
+          currentSegment: newSegment,
+          progress: 0,
+          currentTime: 0,
+          duration: 0,
+          isPlaying: false // Always reset to false first
+        });
+        
         // If was playing, continue playing the new segment with delay
         if (wasPlaying) {
           setTimeout(() => {
             audio.play().catch(console.error);
           }, 50);
         }
+      } else {
+        updateAudioState({
+          currentSegment: newSegment,
+          progress: 0,
+          currentTime: 0,
+          duration: 0,
+          isPlaying: false
+        });
       }
-      
-      updateAudioState({
-        currentSegment: newSegment,
-        progress: 0,
-        currentTime: 0,
-        duration: 0,
-        isPlaying: wasPlaying // Maintain previous playing state
-      });
       
       onSegmentChange?.(newSegment);
     }
@@ -259,21 +268,30 @@ export function UniversalNarrationPlayer({
         audio.src = newSegmentData.audioUrl;
         audio.currentTime = 0;
         
+        // Reset state immediately to show correct UI
+        updateAudioState({
+          currentSegment: newSegment,
+          progress: 0,
+          currentTime: 0,
+          duration: 0,
+          isPlaying: false // Always reset to false first
+        });
+        
         // If was playing, continue playing the new segment with delay
         if (wasPlaying) {
           setTimeout(() => {
             audio.play().catch(console.error);
           }, 50);
         }
+      } else {
+        updateAudioState({
+          currentSegment: newSegment,
+          progress: 0,
+          currentTime: 0,
+          duration: 0,
+          isPlaying: false
+        });
       }
-      
-      updateAudioState({
-        currentSegment: newSegment,
-        progress: 0,
-        currentTime: 0,
-        duration: 0,
-        isPlaying: wasPlaying // Maintain previous playing state
-      });
       
       onSegmentChange?.(newSegment);
     }
