@@ -223,8 +223,9 @@ export function UniversalNarrationPlayer({
       if (audio && newSegmentData?.audioUrl) {
         console.log('Manual previous: switching from', audio.src, 'to', newSegmentData.audioUrl);
         
-        // Remember if audio was playing
+        // Remember if audio was playing BEFORE any manipulation
         const wasPlaying = !audio.paused;
+        console.log('Was playing before navigation:', wasPlaying);
         
         // Update state first
         updateAudioState({
@@ -244,6 +245,7 @@ export function UniversalNarrationPlayer({
         
         // Auto-play if it was playing before
         if (wasPlaying) {
+          console.log('Auto-playing new segment...');
           audio.play().catch(console.error);
         }
       }
@@ -262,8 +264,9 @@ export function UniversalNarrationPlayer({
       if (audio && newSegmentData?.audioUrl) {
         console.log('Manual next: switching from', audio.src, 'to', newSegmentData.audioUrl);
         
-        // Remember if audio was playing
+        // Remember if audio was playing BEFORE any manipulation
         const wasPlaying = !audio.paused;
+        console.log('Was playing before navigation:', wasPlaying);
         
         // Update state first
         updateAudioState({
@@ -283,6 +286,7 @@ export function UniversalNarrationPlayer({
         
         // Auto-play if it was playing before
         if (wasPlaying) {
+          console.log('Auto-playing new segment...');
           audio.play().catch(console.error);
         }
       }
