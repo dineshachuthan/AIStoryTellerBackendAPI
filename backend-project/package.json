@@ -1,5 +1,5 @@
 {
-  "name": "storytelling-backend",
+  "name": "aistoryteller-backend-api",
   "version": "1.0.0",
   "description": "Backend API for collaborative storytelling platform",
   "type": "module",
