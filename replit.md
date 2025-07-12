@@ -28,6 +28,16 @@ This is a relationship-aware content sharing platform that enables users to crea
 
 ## CRITICAL DEVELOPMENT RULES (NEVER VIOLATE)
 
+### Zero Tolerance Unauthorized Changes Policy (MANDATORY ENFORCEMENT)
+**ABSOLUTELY NO DATABASE, API, OR FILE CREATION WITHOUT EXPLICIT USER APPROVAL**
+- NEVER create, modify, or drop database tables without user approval
+- NEVER create new REST API endpoints without user approval  
+- NEVER create new .ts files without user approval
+- NEVER add database columns without user approval
+- BEFORE ANY STRUCTURAL CHANGE: Ask user for explicit permission
+- VIOLATION OF THIS RULE COSTS USER MONEY AND CREATES ARCHITECTURAL DEBT
+- Pattern: Analyze → Ask Permission → Wait for Approval → Implement
+
 ### Zero Tolerance Code Duplication Policy
 **ABSOLUTELY NO DUPLICATE METHODS, FUNCTIONS, OR CODE BLOCKS ANYWHERE IN THE CODEBASE**
 - ALWAYS fix bugs in existing methods - NEVER create new duplicate methods

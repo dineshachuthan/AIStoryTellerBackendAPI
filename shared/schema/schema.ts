@@ -1613,7 +1613,6 @@ export const storyInvitations = pgTable("story_invitations", {
   inviteeEmail: varchar("invitee_email"),
   inviteePhone: varchar("invitee_phone"),
   invitationToken: varchar("invitation_token").unique().notNull(),
-  conversationStyle: varchar("conversation_style").references(() => conversationStyles.styleKey).default("respectful"), // FK to conversation_styles table
   status: varchar("status").default('pending').notNull(), // pending, accepted, completed
   message: text("message"), // Optional personalized message
   characterId: integer("character_id").references(() => storyCharacters.id), // Optional character assignment
