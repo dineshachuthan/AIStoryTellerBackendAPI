@@ -595,6 +595,23 @@ export default function StoryNarration() {
                                             progress: progress
                                           });
                                         };
+                                        
+                                        // Critical: Set up play/pause state sync
+                                        audio.onplay = () => {
+                                          updateAudioState(narrationKey, { isPlaying: true });
+                                        };
+                                        
+                                        audio.onpause = () => {
+                                          updateAudioState(narrationKey, { isPlaying: false });
+                                        };
+                                        
+                                        audio.onended = () => {
+                                          updateAudioState(narrationKey, { 
+                                            isPlaying: false,
+                                            currentTime: 0,
+                                            progress: 0
+                                          });
+                                        };
                                       }
                                     }
                                     
