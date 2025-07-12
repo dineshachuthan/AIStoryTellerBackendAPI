@@ -246,7 +246,26 @@ export function UniversalNarrationPlayer({
         // Auto-play if it was playing before
         if (wasPlaying) {
           console.log('Auto-playing new segment...');
-          audio.play().catch(console.error);
+          // Wait for audio to be ready before playing
+          const tryPlay = () => {
+            audio.play().then(() => {
+              console.log('Auto-play succeeded');
+            }).catch(error => {
+              console.error('Auto-play failed:', error);
+            });
+          };
+          
+          // Try playing when audio is ready
+          if (audio.readyState >= 2) { // HAVE_CURRENT_DATA or higher
+            tryPlay();
+          } else {
+            const handleCanPlay = () => {
+              console.log('Audio ready, starting auto-play');
+              audio.removeEventListener('canplay', handleCanPlay);
+              tryPlay();
+            };
+            audio.addEventListener('canplay', handleCanPlay);
+          }
         }
       }
       
@@ -287,7 +306,26 @@ export function UniversalNarrationPlayer({
         // Auto-play if it was playing before
         if (wasPlaying) {
           console.log('Auto-playing new segment...');
-          audio.play().catch(console.error);
+          // Wait for audio to be ready before playing
+          const tryPlay = () => {
+            audio.play().then(() => {
+              console.log('Auto-play succeeded');
+            }).catch(error => {
+              console.error('Auto-play failed:', error);
+            });
+          };
+          
+          // Try playing when audio is ready
+          if (audio.readyState >= 2) { // HAVE_CURRENT_DATA or higher
+            tryPlay();
+          } else {
+            const handleCanPlay = () => {
+              console.log('Audio ready, starting auto-play');
+              audio.removeEventListener('canplay', handleCanPlay);
+              tryPlay();
+            };
+            audio.addEventListener('canplay', handleCanPlay);
+          }
         }
       }
       
