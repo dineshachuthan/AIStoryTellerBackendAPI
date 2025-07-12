@@ -385,7 +385,7 @@ export default function StoryNarration() {
                           })()}
                         </div>
                         <div className="text-sm text-white/60">
-                          Voice: {narration.narratorVoiceType}
+                          Voice: {narration.narratorVoiceType === 'user' ? 'Your Cloned Voice' : narration.narratorVoiceType}
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
@@ -473,7 +473,7 @@ export default function StoryNarration() {
                               <div className="absolute bottom-4 left-4 right-4">
                                 <div className="flex justify-between text-xs text-gray-500 font-mono">
                                   <span>{Math.round(progress)}% COMPLETE</span>
-                                  <span>ELEVENLABS VOICE</span>
+                                  <span>{narration.narratorVoiceType === 'user' ? 'YOUR CLONED VOICE' : 'ELEVENLABS VOICE'}</span>
                                 </div>
                               </div>
                             </div>
