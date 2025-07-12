@@ -214,7 +214,7 @@ export function UniversalNarrationPlayer({
   };
   
   // Previous segment handler
-  const handlePreviousSegment = () => {
+  const handlePreviousSegment = async () => {
     if (currentSegment > 0) {
       const newSegment = currentSegment - 1;
       const audio = audioRef.current;
@@ -229,6 +229,12 @@ export function UniversalNarrationPlayer({
         audio.src = '';
         audio.removeAttribute('src');
         audio.load(); // Force clear old audio
+        
+        // Completely remove old audio reference immediately
+        audioRef.current = null;
+        
+        // Wait a moment to ensure old audio is fully cleared
+        await new Promise(resolve => setTimeout(resolve, 50));
         
         // Create completely new audio element
         const newAudio = new Audio();
@@ -343,7 +349,7 @@ export function UniversalNarrationPlayer({
   };
   
   // Next segment handler
-  const handleNextSegment = () => {
+  const handleNextSegment = async () => {
     if (segments && currentSegment < segments.length - 1) {
       const newSegment = currentSegment + 1;
       const audio = audioRef.current;
@@ -358,6 +364,12 @@ export function UniversalNarrationPlayer({
         audio.src = '';
         audio.removeAttribute('src');
         audio.load(); // Force clear old audio
+        
+        // Completely remove old audio reference immediately
+        audioRef.current = null;
+        
+        // Wait a moment to ensure old audio is fully cleared
+        await new Promise(resolve => setTimeout(resolve, 50));
         
         // Create completely new audio element
         const newAudio = new Audio();
