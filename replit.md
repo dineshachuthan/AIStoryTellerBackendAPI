@@ -842,6 +842,17 @@ This is a relationship-aware content sharing platform that enables users to crea
 
 ## Changelog
 
+### **NARRATOR PROFILE SYSTEM IMPLEMENTATION - July 12, 2025**
+**Complete Narrator Profile Integration**: Successfully implemented narrator profile system with database storage and frontend display
+- **DATABASE SCHEMA**: Added narrator_profile column to story_narrations table with 'neutral' default
+- **BACKEND INTEGRATION**: Updated story narrator service to accept and store narrator profile parameter
+- **HARDCODING FIX**: Fixed backend routes.ts that was forcing "ElevenLabs Cloned" display - now uses actual profile names
+- **FRONTEND CLEANUP**: Removed redundant "Voice" field that always showed "Your Cloned Voice" - focuses on meaningful data
+- **PROFILE STORAGE**: Narrator profile dropdown selections (grandma, kid, storyteller, etc.) now properly stored in database
+- **DISPLAY ENHANCEMENT**: Narration interface now shows user-friendly profile names with descriptions
+- **ARCHITECTURE BENEFIT**: Clean separation between voice technology (always ElevenLabs) and narrative style (user-configurable)
+- **USER EXPERIENCE**: Eliminates confusion about voice source, focuses on narrative personality selection
+
 ### **UNIFIED SAMPLE TEXT ARCHITECTURE WITH GRACEFUL FAILURE HANDLING - July 11, 2025**
 **Integrated Sample Text Generation Into Story Analysis**: Unified and hardened sample text generation system
 - **ARCHITECTURAL INTEGRATION**: Story analysis now uses SampleTextCore for all ESM reference data population

@@ -384,9 +384,6 @@ export default function StoryNarration() {
                             return profile ? `${profile.name} - ${profile.description}` : narration.narratorProfile;
                           })()}
                         </div>
-                        <div className="text-sm text-white/60">
-                          Voice: {narration.narratorVoiceType === 'user' ? 'Your Cloned Voice' : narration.narratorVoiceType}
-                        </div>
                       </div>
                       <div className="flex items-center gap-3">
                         <div className="text-sm text-white/50">
