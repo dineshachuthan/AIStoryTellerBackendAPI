@@ -70,39 +70,7 @@ export default function StoryNarration() {
     };
   }, []);
 
-  // Preload audio metadata for all narrations
-  useEffect(() => {
-    if (allNarrations && allNarrations.length > 0) {
-      allNarrations.forEach(narration => {
-        const narrationKey = `${narration.conversationStyle}-${narration.narratorProfile}`;
-        
-        if (narration.segments && narration.segments.length > 0 && !audioRefs.current[narrationKey]) {
-          audioRefs.current[narrationKey] = new Audio();
-          const audio = audioRefs.current[narrationKey];
-          const segment = narration.segments[0]; // Load first segment
-          
-          if (segment?.audioUrl) {
-            audio.src = segment.audioUrl;
-            audio.preload = 'metadata';
-            
-            audio.onloadedmetadata = () => {
-              updateAudioState(narrationKey, { 
-                duration: audio.duration || 0 
-              });
-            };
-            
-            audio.ontimeupdate = () => {
-              const progress = audio.duration > 0 ? (audio.currentTime / audio.duration) * 100 : 0;
-              updateAudioState(narrationKey, {
-                currentTime: audio.currentTime || 0,
-                progress: progress
-              });
-            };
-          }
-        }
-      });
-    }
-  }, [allNarrations]);
+
   
   // Helper function to get narration key
   const getNarrationKey = (style: string, profile: string) => `${style}-${profile}`;
@@ -144,6 +112,40 @@ export default function StoryNarration() {
     queryFn: () => apiClient.stories.getAllNarrations(storyId),
     enabled: !!storyId && !!user
   });
+
+  // Preload audio metadata for all narrations
+  useEffect(() => {
+    if (allNarrations && allNarrations.length > 0) {
+      allNarrations.forEach(narration => {
+        const narrationKey = `${narration.conversationStyle}-${narration.narratorProfile}`;
+        
+        if (narration.segments && narration.segments.length > 0 && !audioRefs.current[narrationKey]) {
+          audioRefs.current[narrationKey] = new Audio();
+          const audio = audioRefs.current[narrationKey];
+          const segment = narration.segments[0]; // Load first segment
+          
+          if (segment?.audioUrl) {
+            audio.src = segment.audioUrl;
+            audio.preload = 'metadata';
+            
+            audio.onloadedmetadata = () => {
+              updateAudioState(narrationKey, { 
+                duration: audio.duration || 0 
+              });
+            };
+            
+            audio.ontimeupdate = () => {
+              const progress = audio.duration > 0 ? (audio.currentTime / audio.duration) * 100 : 0;
+              updateAudioState(narrationKey, {
+                currentTime: audio.currentTime || 0,
+                progress: progress
+              });
+            };
+          }
+        }
+      });
+    }
+  }, [allNarrations]);
 
   // Narration generation mutation
   const generateNarrationMutation = useMutation({
