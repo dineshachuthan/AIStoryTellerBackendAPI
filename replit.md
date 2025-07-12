@@ -147,6 +147,7 @@ This is a relationship-aware content sharing platform that enables users to crea
 - **Database-First Operations**: All data operations go to database first, then cache
 - **State-Driven Workflow**: All story states use established state transition system
 - **EnhancedVoiceRecorder**: FINALIZED as single reusable voice recording component - NEVER create copies or alternatives. All voice recording functionality across application uses this component with different props. Features: status icons (unlock/checkmark/lock), horizontal button layout (Record/Play/Save), wide black panel, intensity badges.
+- **UniversalNarrationPlayer**: FINALIZED as the standard narration playback component - MANDATORY for ALL narration functionality. This is separate from voice recording and handles audio playback only. Features: segment-based audio playback, auto-advance between segments, manual next/previous navigation, progress tracking, conversation style support, narrator profile integration. Located at `client/src/components/ui/universal-narration-player.tsx`. Key behaviors: Auto-play continues when audio is playing and segment ends naturally; Auto-advance without auto-play when audio is paused (respects user pause intention); Manual navigation preserves play state; Uses React state for audio URL management. NEVER create alternative narration players - use this component with different props for all narration needs.
 
 ## Key Components
 
