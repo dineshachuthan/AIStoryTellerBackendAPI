@@ -150,7 +150,7 @@ export function SimpleAudioPlayer({
   }
 
   return (
-    <div className={`space-y-4 ${className}`}>
+    <div className={`space-y-2 ${className}`}>
       <div className="flex items-center gap-4">
         <Button
           onClick={handlePlayPause}
