@@ -226,9 +226,11 @@ export function UniversalNarrationPlayer({
         audio.src = newSegmentData.audioUrl;
         audio.currentTime = 0;
         
-        // If was playing, continue playing the new segment
+        // If was playing, continue playing the new segment with delay
         if (wasPlaying) {
-          audio.play().catch(console.error);
+          setTimeout(() => {
+            audio.play().catch(console.error);
+          }, 50);
         }
       }
       
@@ -257,9 +259,11 @@ export function UniversalNarrationPlayer({
         audio.src = newSegmentData.audioUrl;
         audio.currentTime = 0;
         
-        // If was playing, continue playing the new segment
+        // If was playing, continue playing the new segment with delay
         if (wasPlaying) {
-          audio.play().catch(console.error);
+          setTimeout(() => {
+            audio.play().catch(console.error);
+          }, 50);
         }
       }
       
