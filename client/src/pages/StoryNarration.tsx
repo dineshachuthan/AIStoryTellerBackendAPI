@@ -533,6 +533,22 @@ export default function StoryNarration() {
                                       const segment = narration.segments?.[narrationCurrentSegment];
                                       if (segment?.audioUrl) {
                                         audio.src = segment.audioUrl;
+                                        
+                                        // Set up event handlers for this audio instance
+                                        audio.onloadedmetadata = () => {
+                                          updateAudioState(narrationKey, { 
+                                            duration: audio.duration || 0 
+                                          });
+                                        };
+                                        
+                                        audio.ontimeupdate = () => {
+                                          const progress = audio.duration > 0 ? (audio.currentTime / audio.duration) * 100 : 0;
+                                          updateAudioState(narrationKey, {
+                                            currentTime: audio.currentTime || 0,
+                                            progress: progress
+                                          });
+                                        };
+                                        
                                         audio.play().then(() => {
                                           updateAudioState(narrationKey, { isPlaying: true });
                                         }).catch(console.error);
