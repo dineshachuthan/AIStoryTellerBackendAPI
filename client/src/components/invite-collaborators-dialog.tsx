@@ -242,6 +242,20 @@ export function InviteCollaboratorsDialog({
                       ))}
                     </select>
                   )}
+
+                  <select
+                    className="h-10 px-3 rounded-md border border-input bg-background"
+                    value={invite.conversationStyle || 'respectful'}
+                    onChange={(e) => updateInvite(index, { 
+                      conversationStyle: e.target.value
+                    })}
+                  >
+                    {conversationStyles.map(style => (
+                      <option key={style.value} value={style.value}>
+                        {style.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 {invites.length > 1 && (
