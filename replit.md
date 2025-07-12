@@ -854,6 +854,20 @@ This is a relationship-aware content sharing platform that enables users to crea
 
 ## Changelog
 
+### **NOTIFICATION PLATFORM DESIGN - MICROSERVICES PHASE 6 - January 12, 2025**
+**Event-Driven Notification Service as Generic Subdomain**: Comprehensive notification platform with DDD principles
+- **DOMAIN CLASSIFICATION**: Notification Service added as Generic Subdomain supporting all bounded contexts
+- **STORAGE-AGNOSTIC TEMPLATES**: Designed to support file-based, S3, CDN, GitHub, and database storage
+- **INDUSTRY-STANDARD LOCALIZATION**: Full i18n support with locale-specific formatting and template translations
+- **EVENT-DRIVEN ARCHITECTURE**: Subscribes to 15+ events from collaboration, story, narration, identity, and subscription domains
+- **PROVIDER-AGNOSTIC DESIGN**: Works with MailGun, SendGrid, Twilio, MessageBird without code changes
+- **DDD-COMPLIANT SCHEMA**: 4 main aggregates - NotificationCampaign, NotificationTemplate, NotificationDelivery, NotificationPreference
+- **CAMPAIGN MANAGEMENT**: Maps domain events to notification campaigns with targeting and rate limiting
+- **DELIVERY TRACKING**: Complete audit trail with provider-specific metrics and user engagement tracking
+- **USER PREFERENCES**: Respects user notification settings including channels, frequency, and time preferences
+- **DOCUMENTATION UPDATED**: DDD_MICROSERVICES_ARCHITECTURE.md, MICROSERVICES_ARCHITECTURE_DESIGN.md, MICROSERVICES_IMPLEMENTATION_SUMMARY.md
+- **IMPLEMENTATION PLAN**: Safe rollout strategy ensuring no disruption to existing email/SMS functionality
+
 ### **NARRATOR PROFILE SYSTEM IMPLEMENTATION - July 12, 2025**
 **Complete Narrator Profile Integration**: Successfully implemented narrator profile system with database storage and frontend display
 - **DATABASE SCHEMA**: Added narrator_profile column to story_narrations table with 'neutral' default

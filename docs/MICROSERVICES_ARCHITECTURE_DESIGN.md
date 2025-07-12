@@ -140,26 +140,46 @@
 **Database:**
 - collaborations, invitations, participants, collaboration_permissions
 
-### 7. **Notification Service**
+### 7. **Notification Service** (Generic Subdomain - Updated January 12, 2025)
 **Responsibilities:**
-- Email notifications (SendGrid)
-- SMS notifications (Twilio)
-- In-app notifications
-- Notification preferences
+- Multi-channel notification delivery (Email, SMS, Push)
+- Storage-agnostic template management (File, S3, CDN, GitHub)
+- Industry-standard localization support
+- Campaign management and targeting
+- Delivery tracking and analytics
+- User preference management
 
 **Events Published:**
+- `NotificationRequested`
 - `NotificationSent`
+- `NotificationDelivered`
 - `NotificationFailed`
 - `NotificationBounced`
+- `NotificationOpened`
+- `NotificationClicked`
+- `TemplateUpdated`
+- `PreferenceChanged`
 
 **Events Consumed:**
-- `InvitationSent` → Send email/SMS
-- `CollaborationCompleted` → Notify participants
-- `SubscriptionExpired` → Send renewal reminder
-- `UsageLimitReached` → Alert user
+- `collaboration.invitation.sent` → Send personalized invitation
+- `collaboration.invitation.accepted` → Notify host
+- `collaboration.submission.completed` → Alert participants
+- `collaboration.completed` → Final notifications
+- `story.published` → Notify followers
+- `story.shared` → Share notifications
+- `narration.generation.completed` → Ready notifications
+- `user.registered` → Welcome email
+- `subscription.created` → Confirmation email
+- `subscription.expired` → Renewal reminder
+- `subscription.usage.limit.reached` → Usage alerts
 
 **Database:**
-- notification_templates, notification_logs, user_preferences
+- notification_campaigns - Domain event to campaign mapping
+- notification_templates - Storage-agnostic templates with localization
+- notification_deliveries - Delivery tracking and analytics
+- notification_preferences - User notification settings
+- notification_template_localizations - Template translations
+- supported_locales - Available languages and regions
 
 ### 8. **Video Service**
 **Responsibilities:**

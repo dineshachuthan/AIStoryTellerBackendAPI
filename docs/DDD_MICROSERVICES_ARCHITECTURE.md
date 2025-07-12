@@ -11,10 +11,19 @@
 │  Core Domain    │ Supporting      │ Generic Subdomain           │
 ├─────────────────┼─────────────────┼─────────────────────────────┤
 │ • Storytelling  │ • Subscription  │ • Identity Management       │
-│ • Collaboration │ • Analytics     │ • Notification              │
+│ • Collaboration │ • Analytics     │ • Notification (NEW)        │
 │ • Narration     │ • Video Gen     │ • Payment Processing        │
 └─────────────────┴─────────────────┴─────────────────────────────┘
 ```
+
+### Notification Domain Integration (Added January 12, 2025)
+
+The Notification Domain serves as a **Generic Subdomain** providing notification capabilities to all bounded contexts:
+
+- **Storage-Agnostic Templates**: Supports file-based, S3, CDN, GitHub, and database storage
+- **Industry-Standard Localization**: Full i18n support with locale-specific formatting
+- **Provider-Agnostic Design**: Works with MailGun, SendGrid, Twilio, MessageBird, etc.
+- **Event-Driven Integration**: Subscribes to events from all other domains
 
 ## Bounded Contexts
 
@@ -153,6 +162,48 @@
 - VideoJobCreated
 - VideoGenerated
 - VideoFailed
+
+### 7. **Notification Context** (Generic Subdomain)
+**Domain Focus**: Multi-channel notification delivery with localization
+
+**Aggregates:**
+- **NotificationCampaign** (Aggregate Root)
+  - CampaignId (Value Object)
+  - SourceDomain (Value Object)
+  - SourceEventType (Value Object)
+  - TemplateKey (Value Object)
+  - AudienceCriteria (Entity)
+  - DeliveryRules (Entity)
+
+- **NotificationTemplate** (Aggregate Root)
+  - TemplateId (Value Object)
+  - TemplateKey (Value Object)
+  - Language (Value Object)
+  - Locale (Value Object)
+  - StorageConfig (Entity)
+  - RequiredVariables (Value Object Collection)
+
+- **NotificationDelivery** (Aggregate Root)
+  - DeliveryId (Value Object)
+  - SourceEventId (Value Object)
+  - RecipientInfo (Entity)
+  - DeliveryStatus (Value Object)
+  - ProviderResponse (Entity)
+
+- **NotificationPreference** (Aggregate Root)
+  - PreferenceId (Value Object)
+  - UserId (Value Object)
+  - NotificationType (Value Object)
+  - DeliverySettings (Entity)
+  - LocalizationPreferences (Entity)
+
+**Domain Events:**
+- NotificationRequested
+- NotificationSent
+- NotificationDelivered
+- NotificationFailed
+- TemplateUpdated
+- PreferenceChanged
 
 ## Kubernetes-Ready Architecture with Sidecar Pattern
 
