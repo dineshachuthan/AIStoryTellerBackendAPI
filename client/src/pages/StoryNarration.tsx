@@ -404,90 +404,86 @@ export default function StoryNarration() {
                       </div>
                     </div>
                     
-                    {narration.audioUrl && (
-                      <div className="mt-6">
-                        {/* TV-Style Media Player */}
-                        <div className="bg-gray-900 rounded-3xl p-4 shadow-2xl">
-                          {/* TV Screen */}
-                          <div className="bg-black rounded-2xl overflow-hidden relative">
-                            {/* Screen Content */}
-                            <div className="p-8 min-h-[300px] flex flex-col justify-center relative">
-                              {/* Audio Visualizer - Small Corner Indicator */}
-                              <div className="absolute top-4 left-4 flex items-center gap-1 h-8">
-                                {isPlaying && (
-                                  <>
-                                    {[...Array(5)].map((_, i) => (
-                                      <div
-                                        key={i}
-                                        className="w-1 bg-green-400 rounded-full"
-                                        style={{
-                                          height: '100%',
-                                          animation: `audioWave ${0.8 + i * 0.1}s ease-in-out infinite`,
-                                          animationDelay: `${i * 0.1}s`,
-                                          opacity: 0.7
-                                        }}
-                                      />
-                                    ))}
-                                    <span className="text-green-400 text-xs ml-2 font-mono">LIVE</span>
-                                  </>
-                                )}
-                              </div>
-                              
-                              {/* Current Text Display */}
-                              <div className="text-center px-4 min-h-[100px] flex flex-col justify-center">
-                                <div className="space-y-2">
-                                  <p className={`text-sm font-mono transition-all duration-300 ${
-                                    isPlaying && narration.segments 
-                                      ? 'text-green-400 opacity-100' 
-                                      : 'text-gray-600 opacity-60'
-                                  }`}>
-                                    {isPlaying && narration.segments 
-                                      ? `NOW PLAYING - SEGMENT ${currentSegment + 1}/${narration.segments.length}`
-                                      : `${narration.segments?.length || 0} segments ready`}
-                                  </p>
-                                  <p className={`text-base leading-relaxed font-medium transition-all duration-300 ${
-                                    isPlaying && narration.segments 
-                                      ? 'text-white opacity-100' 
-                                      : 'text-gray-500 opacity-60'
-                                  }`}>
-                                    {narration.segments && narration.segments.length > 0 ? (
-                                      `"${narration.segments[currentSegment]?.text || 'Loading...'}"`
-                                    ) : (
-                                      'Press play to start narration'
-                                    )}
-                                  </p>
+                    {narration.audioUrl && (() => {
+                      const narrationKey = `${narration.conversationStyle}-${narration.narratorProfile}`;
+                      const audioState = getAudioState(narrationKey);
+                      const { isPlaying: narrationIsPlaying, currentSegment: narrationCurrentSegment, currentTime: narrationCurrentTime, duration: narrationDuration, progress: narrationProgress } = audioState;
+                      
+                      return (
+                        <div className="mt-6">
+                          <div className="bg-gray-900 rounded-3xl p-4 shadow-2xl">
+                            <div className="bg-black rounded-2xl overflow-hidden relative">
+                              <div className="p-8 min-h-[300px] flex flex-col justify-center relative">
+                                <div className="absolute top-4 left-4 flex items-center gap-1 h-8">
+                                  {narrationIsPlaying && (
+                                    <>
+                                      {[...Array(5)].map((_, i) => (
+                                        <div
+                                          key={i}
+                                          className="w-1 bg-green-400 rounded-full"
+                                          style={{
+                                            height: '100%',
+                                            animation: `audioWave ${0.8 + i * 0.1}s ease-in-out infinite`,
+                                            animationDelay: `${i * 0.1}s`,
+                                            opacity: 0.7
+                                          }}
+                                        />
+                                      ))}
+                                      <span className="text-green-400 text-xs ml-2 font-mono">LIVE</span>
+                                    </>
+                                  )}
                                 </div>
-                              </div>
-                              
-                              {/* Segment Info */}
-                              <div className="absolute top-4 right-4">
-                                <span className="text-gray-400 text-sm font-mono">
-                                  SEGMENT {currentSegment + 1}/{narration.segments?.length || 0}
-                                </span>
-                              </div>
-                              
-                              {/* Progress Info at Bottom */}
-                              <div className="absolute bottom-4 left-4 right-4">
-                                <div className="flex justify-between text-xs text-gray-500 font-mono">
-                                  <span>{Math.round(progress)}% COMPLETE</span>
-                                  <span>{narration.narratorVoiceType === 'user' ? 'YOUR CLONED VOICE' : 'ELEVENLABS VOICE'}</span>
+                                
+                                <div className="text-center px-4 min-h-[100px] flex flex-col justify-center">
+                                  <div className="space-y-2">
+                                    <p className={`text-sm font-mono transition-all duration-300 ${
+                                      narrationIsPlaying && narration.segments 
+                                        ? 'text-green-400 opacity-100' 
+                                        : 'text-gray-600 opacity-60'
+                                    }`}>
+                                      {narrationIsPlaying && narration.segments 
+                                        ? `NOW PLAYING - SEGMENT ${narrationCurrentSegment + 1}/${narration.segments.length}`
+                                        : `${narration.segments?.length || 0} segments ready`}
+                                    </p>
+                                    <p className={`text-base leading-relaxed font-medium transition-all duration-300 ${
+                                      narrationIsPlaying && narration.segments 
+                                        ? 'text-white opacity-100' 
+                                        : 'text-gray-500 opacity-60'
+                                    }`}>
+                                      {narration.segments && narration.segments.length > 0 ? (
+                                        `"${narration.segments[narrationCurrentSegment]?.text || 'Loading...'}"`
+                                      ) : (
+                                        'Press play to start narration'
+                                      )}
+                                    </p>
+                                  </div>
+                                </div>
+                                
+                                <div className="absolute top-4 right-4">
+                                  <span className="text-gray-400 text-sm font-mono">
+                                    SEGMENT {narrationCurrentSegment + 1}/{narration.segments?.length || 0}
+                                  </span>
+                                </div>
+                                
+                                <div className="absolute bottom-4 left-4 right-4">
+                                  <div className="flex justify-between text-xs text-gray-500 font-mono">
+                                    <span>{Math.round(narrationProgress)}% COMPLETE</span>
+                                  </div>
                                 </div>
                               </div>
                             </div>
                             
-                            {/* TV Control Panel */}
                             <div className="mt-4 bg-gray-800 rounded-xl p-4">
-                              {/* Progress Bar */}
                               <div className="mb-4">
                                 <div className="w-full bg-gray-700 rounded-full h-2 overflow-hidden cursor-pointer"
                                      onClick={(e) => {
-                                       const audio = audioRefs.current[currentNarrationKey];
-                                       if (audio && duration > 0) {
+                                       const audio = audioRefs.current[narrationKey];
+                                       if (audio && narrationDuration > 0) {
                                          const rect = e.currentTarget.getBoundingClientRect();
                                          const percent = (e.clientX - rect.left) / rect.width;
-                                         const newTime = percent * duration;
+                                         const newTime = percent * narrationDuration;
                                          audio.currentTime = newTime;
-                                         updateAudioState(currentNarrationKey, {
+                                         updateAudioState(narrationKey, {
                                            currentTime: newTime,
                                            progress: percent * 100
                                          });
@@ -495,24 +491,23 @@ export default function StoryNarration() {
                                      }}>
                                   <div 
                                     className="bg-gradient-to-r from-green-500 to-blue-500 h-2 rounded-full transition-all duration-300"
-                                    style={{ width: `${progress}%` }}
+                                    style={{ width: `${narrationProgress}%` }}
                                   />
                                 </div>
                                 <div className="flex justify-between text-xs text-gray-400 mt-1">
-                                  <span>{Math.floor(currentTime / 60)}:{(currentTime % 60).toFixed(0).padStart(2, '0')}</span>
-                                  <span>{Math.floor(duration / 60)}:{(duration % 60).toFixed(0).padStart(2, '0')}</span>
+                                  <span>{Math.floor(narrationCurrentTime / 60)}:{(narrationCurrentTime % 60).toFixed(0).padStart(2, '0')}</span>
+                                  <span>{Math.floor(narrationDuration / 60)}:{(narrationDuration % 60).toFixed(0).padStart(2, '0')}</span>
                                 </div>
                               </div>
                               
-                              {/* Media Controls */}
                               <div className="flex items-center justify-center gap-4">
                                 <Button
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => {
-                                    if (currentSegment > 0) {
-                                      const newSegment = currentSegment - 1;
-                                      updateAudioState(currentNarrationKey, {
+                                    if (narrationCurrentSegment > 0) {
+                                      const newSegment = narrationCurrentSegment - 1;
+                                      updateAudioState(narrationKey, {
                                         currentSegment: newSegment,
                                         progress: 0,
                                         currentTime: 0,
@@ -520,12 +515,12 @@ export default function StoryNarration() {
                                         isPlaying: false
                                       });
                                       
-                                      if (audioRefs.current[currentNarrationKey]) {
-                                        audioRefs.current[currentNarrationKey].pause();
+                                      if (audioRefs.current[narrationKey]) {
+                                        audioRefs.current[narrationKey].pause();
                                       }
                                     }
                                   }}
-                                  disabled={currentSegment === 0}
+                                  disabled={narrationCurrentSegment === 0}
                                   className="text-white hover:text-green-400"
                                 >
                                   <SkipBack className="w-5 h-5" />
@@ -535,38 +530,38 @@ export default function StoryNarration() {
                                   variant="ghost"
                                   size="lg"
                                   onClick={() => {
-                                    if (!audioRefs.current[currentNarrationKey]) {
-                                      audioRefs.current[currentNarrationKey] = new Audio();
+                                    if (!audioRefs.current[narrationKey]) {
+                                      audioRefs.current[narrationKey] = new Audio();
                                     }
                                     
-                                    const audio = audioRefs.current[currentNarrationKey];
+                                    const audio = audioRefs.current[narrationKey];
                                     
-                                    if (isPlaying) {
+                                    if (narrationIsPlaying) {
                                       audio.pause();
-                                      updateAudioState(currentNarrationKey, { isPlaying: false });
+                                      updateAudioState(narrationKey, { isPlaying: false });
                                     } else {
-                                      const segment = narration.segments?.[currentSegment];
+                                      const segment = narration.segments?.[narrationCurrentSegment];
                                       if (segment?.audioUrl) {
                                         audio.src = segment.audioUrl;
                                         audio.play().then(() => {
-                                          updateAudioState(currentNarrationKey, { isPlaying: true });
+                                          updateAudioState(narrationKey, { isPlaying: true });
                                         }).catch(console.error);
                                       }
                                     }
                                   }}
-                                  disabled={!narration.segments?.[currentSegment]?.audioUrl}
+                                  disabled={!narration.segments?.[narrationCurrentSegment]?.audioUrl}
                                   className="text-white hover:text-green-400"
                                 >
-                                  {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
+                                  {narrationIsPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
                                 </Button>
                                 
                                 <Button
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => {
-                                    if (narration.segments && currentSegment < narration.segments.length - 1) {
-                                      const newSegment = currentSegment + 1;
-                                      updateAudioState(currentNarrationKey, {
+                                    if (narration.segments && narrationCurrentSegment < narration.segments.length - 1) {
+                                      const newSegment = narrationCurrentSegment + 1;
+                                      updateAudioState(narrationKey, {
                                         currentSegment: newSegment,
                                         progress: 0,
                                         currentTime: 0,
@@ -574,12 +569,12 @@ export default function StoryNarration() {
                                         isPlaying: false
                                       });
                                       
-                                      if (audioRefs.current[currentNarrationKey]) {
-                                        audioRefs.current[currentNarrationKey].pause();
+                                      if (audioRefs.current[narrationKey]) {
+                                        audioRefs.current[narrationKey].pause();
                                       }
                                     }
                                   }}
-                                  disabled={!narration.segments || currentSegment >= narration.segments.length - 1}
+                                  disabled={!narration.segments || narrationCurrentSegment >= narration.segments.length - 1}
                                   className="text-white hover:text-green-400"
                                 >
                                   <SkipForward className="w-5 h-5" />
@@ -588,8 +583,8 @@ export default function StoryNarration() {
                             </div>
                           </div>
                         </div>
-                      </div>
-                    )}
+                      );
+                    })()}
                   </div>
                 ))}
               </div>
