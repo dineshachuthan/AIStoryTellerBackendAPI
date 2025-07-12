@@ -11,6 +11,8 @@ export interface UniversalNarrationPlayerProps {
   segments: NarrationSegment[];
   playerKey: string; // Unique identifier for this player instance
   title?: string; // Optional title display
+  conversationStyle?: string; // Conversation style (e.g., "jovial", "respectful")
+  narratorProfile?: string; // Narrator profile (e.g., "storyteller", "neutral")
   showSegmentCounter?: boolean; // Default: true
   showProgressBar?: boolean; // Default: true  
   showTimeDisplay?: boolean; // Default: true
@@ -34,6 +36,8 @@ export function UniversalNarrationPlayer({
   segments,
   playerKey,
   title,
+  conversationStyle,
+  narratorProfile,
   showSegmentCounter = true,
   showProgressBar = true,
   showTimeDisplay = true,
@@ -263,6 +267,30 @@ export function UniversalNarrationPlayer({
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
   
+  // Format conversation style and narrator profile display
+  const formatPlayerInfo = () => {
+    if (!conversationStyle && !narratorProfile) return null;
+    
+    const styleLabel = conversationStyle ? 
+      conversationStyle.replace('_', ' ').charAt(0).toUpperCase() + conversationStyle.replace('_', ' ').slice(1) : '';
+    
+    // Profile name mapping for better display
+    const profileMap: Record<string, string> = {
+      'neutral': 'Neutral',
+      'grandma': 'Grandma',
+      'kid': 'Kid', 
+      'business': 'Business',
+      'storyteller': 'Storyteller'
+    };
+    
+    const profileLabel = narratorProfile ? (profileMap[narratorProfile] || narratorProfile) : '';
+    
+    if (styleLabel && profileLabel) {
+      return `${styleLabel} • ${profileLabel}`;
+    }
+    return styleLabel || profileLabel;
+  };
+  
   if (!segments || segments.length === 0) {
     return (
       <div className={`text-center p-6 text-gray-400 ${className}`}>
@@ -304,6 +332,8 @@ export function UniversalNarrationPlayer({
               </div>
             )}
             
+
+            
             {/* Main Content Area */}
             <div className="text-center px-6 flex flex-col justify-center h-full">
               <div className="space-y-2">
@@ -330,6 +360,15 @@ export function UniversalNarrationPlayer({
         
         {/* Player Controls */}
         <div className="mt-2 bg-gray-800 rounded-xl p-3">
+          {/* Conversation Style & Narrator Profile Display */}
+          {formatPlayerInfo() && (
+            <div className="mb-3 text-center">
+              <p className="text-white/80 text-sm font-medium bg-white/10 backdrop-blur-sm rounded-lg px-3 py-1.5 inline-block">
+                {formatPlayerInfo()}
+              </p>
+            </div>
+          )}
+          
           {/* Progress Bar */}
           {showProgressBar && (
             <div className="mb-3">

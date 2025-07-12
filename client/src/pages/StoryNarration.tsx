@@ -259,31 +259,21 @@ export default function StoryNarration() {
                     className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20"
                   >
                     <div className="flex items-center justify-between mb-3">
-                      <div className="text-sm font-medium text-white/90">
-                        {(() => {
-                          const styleLabel = narration.conversationStyle.replace('_', ' ').charAt(0).toUpperCase() + narration.conversationStyle.replace('_', ' ').slice(1);
-                          const profile = NARRATOR_PROFILES.find(p => p.id === narration.narratorProfile);
-                          const profileLabel = profile ? profile.name : narration.narratorProfile;
-                          return `${styleLabel} • ${profileLabel}`;
-                        })()}
+                      <div className="text-sm text-white/50">
+                        {new Date(narration.timestamp).toLocaleString()}
                       </div>
-                      <div className="flex items-center gap-3">
-                        <div className="text-sm text-white/50">
-                          {new Date(narration.timestamp).toLocaleString()}
-                        </div>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => {
-                            const narrationId = parseInt(narration.id.replace('narration-', ''));
-                            deleteNarrationMutation.mutate(narrationId);
-                          }}
-                          disabled={deleteNarrationMutation.isPending}
-                          className="h-8 w-8 p-0 bg-red-600 hover:bg-red-700"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => {
+                          const narrationId = parseInt(narration.id.replace('narration-', ''));
+                          deleteNarrationMutation.mutate(narrationId);
+                        }}
+                        disabled={deleteNarrationMutation.isPending}
+                        className="h-8 w-8 p-0 bg-red-600 hover:bg-red-700"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
                     </div>
                     
                     {narration.segments && narration.segments.length > 0 && (
@@ -291,7 +281,8 @@ export default function StoryNarration() {
                         <UniversalNarrationPlayer
                           segments={narration.segments}
                           playerKey={`${narration.conversationStyle}-${narration.narratorProfile}`}
-                          title={`${narration.conversationStyle.charAt(0).toUpperCase() + narration.conversationStyle.slice(1)} Style`}
+                          conversationStyle={narration.conversationStyle}
+                          narratorProfile={narration.narratorProfile}
                         />
                       </div>
                     )}
