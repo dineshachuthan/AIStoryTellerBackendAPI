@@ -409,6 +409,34 @@ export default function StoryNarration() {
                       const audioState = getAudioState(narrationKey);
                       const { isPlaying: narrationIsPlaying, currentSegment: narrationCurrentSegment, currentTime: narrationCurrentTime, duration: narrationDuration, progress: narrationProgress } = audioState;
                       
+                      // Preload audio metadata when component mounts
+                      React.useEffect(() => {
+                        if (narration.segments && narration.segments.length > 0 && !audioRefs.current[narrationKey]) {
+                          audioRefs.current[narrationKey] = new Audio();
+                          const audio = audioRefs.current[narrationKey];
+                          const segment = narration.segments[0]; // Load first segment
+                          
+                          if (segment?.audioUrl) {
+                            audio.src = segment.audioUrl;
+                            audio.preload = 'metadata';
+                            
+                            audio.onloadedmetadata = () => {
+                              updateAudioState(narrationKey, { 
+                                duration: audio.duration || 0 
+                              });
+                            };
+                            
+                            audio.ontimeupdate = () => {
+                              const progress = audio.duration > 0 ? (audio.currentTime / audio.duration) * 100 : 0;
+                              updateAudioState(narrationKey, {
+                                currentTime: audio.currentTime || 0,
+                                progress: progress
+                              });
+                            };
+                          }
+                        }
+                      }, [narration.segments, narrationKey]);
+                      
                       return (
                         <div className="mt-6">
                           <div className="bg-gray-900 rounded-3xl p-4 shadow-2xl">
@@ -522,6 +550,28 @@ export default function StoryNarration() {
                                   onClick={() => {
                                     if (!audioRefs.current[narrationKey]) {
                                       audioRefs.current[narrationKey] = new Audio();
+                                      const audio = audioRefs.current[narrationKey];
+                                      const segment = narration.segments?.[narrationCurrentSegment];
+                                      
+                                      if (segment?.audioUrl) {
+                                        audio.src = segment.audioUrl;
+                                        audio.preload = 'metadata';
+                                        
+                                        // Set up event handlers immediately
+                                        audio.onloadedmetadata = () => {
+                                          updateAudioState(narrationKey, { 
+                                            duration: audio.duration || 0 
+                                          });
+                                        };
+                                        
+                                        audio.ontimeupdate = () => {
+                                          const progress = audio.duration > 0 ? (audio.currentTime / audio.duration) * 100 : 0;
+                                          updateAudioState(narrationKey, {
+                                            currentTime: audio.currentTime || 0,
+                                            progress: progress
+                                          });
+                                        };
+                                      }
                                     }
                                     
                                     const audio = audioRefs.current[narrationKey];
