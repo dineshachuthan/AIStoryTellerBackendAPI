@@ -423,10 +423,14 @@ export function UniversalNarrationPlayer({
         newAudio.addEventListener('pause', handlePause);
         newAudio.addEventListener('ended', handleEnded);
         
-        // NOW set the source and load
-        newAudio.src = newSegmentData.audioUrl;
+        // CACHE-BUSTING FIX: Force browser to load fresh audio by adding unique parameters
+        const cacheBuster = `?t=${Date.now()}&r=${Math.random()}`;
+        const audioUrlWithCacheBuster = newSegmentData.audioUrl + cacheBuster;
+        newAudio.src = audioUrlWithCacheBuster;
         newAudio.preload = 'auto';
         newAudio.load();
+        
+        console.log('Cache-busted URL:', audioUrlWithCacheBuster);
         
         // Replace the audio reference
         audioRef.current = newAudio;
