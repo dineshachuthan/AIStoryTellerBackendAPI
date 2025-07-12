@@ -304,10 +304,10 @@ export function UniversalNarrationPlayer({
       <div className="bg-gray-900 rounded-3xl p-3 shadow-2xl">
         <div className="bg-black rounded-2xl overflow-hidden relative">
           <div className="p-6 min-h-[250px] flex flex-col justify-center relative">
-            {/* Audio Visualizer */}
-            <div className="absolute top-4 left-4 flex items-center gap-1 h-8">
-              {showVisualizer && isPlaying && (
-                <>
+            {/* Audio Visualizer - Always reserve space */}
+            {showVisualizer && (
+              <div className="absolute top-4 left-4 flex items-center gap-1 h-8">
+                <div className={`flex items-center gap-1 transition-opacity duration-300 ${isPlaying ? 'opacity-100' : 'opacity-0'}`}>
                   {[...Array(5)].map((_, i) => (
                     <div
                       key={i}
@@ -321,9 +321,9 @@ export function UniversalNarrationPlayer({
                     />
                   ))}
                   <span className="text-green-400 text-xs ml-2 font-mono">LIVE</span>
-                </>
-              )}
-            </div>
+                </div>
+              </div>
+            )}
             
             {/* Title Display */}
             {title && (
@@ -337,8 +337,9 @@ export function UniversalNarrationPlayer({
             {/* Main Content Area */}
             <div className="text-center px-6 flex flex-col justify-center h-full">
               <div className="space-y-2">
-                {showNowPlaying && isPlaying && (
-                  <p className="text-sm font-mono text-green-400 opacity-100 transition-all duration-300">
+                {/* NOW PLAYING - Always reserve space */}
+                {showNowPlaying && (
+                  <p className={`text-sm font-mono text-green-400 transition-opacity duration-300 ${isPlaying ? 'opacity-100' : 'opacity-0'}`}>
                     NOW PLAYING
                   </p>
                 )}
