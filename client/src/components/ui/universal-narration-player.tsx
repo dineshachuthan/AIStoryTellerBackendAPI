@@ -397,7 +397,7 @@ export function UniversalNarrationPlayer({
                     NOW PLAYING
                   </p>
                 )}
-                <div className="min-h-[120px] max-h-[120px] overflow-y-auto">
+                <div className="min-h-[120px] max-h-[120px] overflow-y-auto scrollbar-hide">
                   <p className="text-base leading-relaxed font-medium text-left">
                     {currentSegmentData ? (
                       <>
