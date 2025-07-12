@@ -484,11 +484,7 @@ export default function StoryNarration() {
                                   )}
                                 </div>
                                 
-                                <div className="absolute top-4 right-4">
-                                  <span className="text-gray-400 text-sm font-mono">
-                                    SEGMENT {narrationCurrentSegment + 1}/{narration.segments?.length || 0}
-                                  </span>
-                                </div>
+
                                 
                                 <div className="text-center px-6 flex flex-col justify-center h-full">
                                   <div className="space-y-2">
@@ -537,6 +533,12 @@ export default function StoryNarration() {
                                 <div className="flex justify-between text-xs text-gray-400 mt-1">
                                   <span>{Math.floor(narrationCurrentTime / 60)}:{Math.floor(narrationCurrentTime % 60).toString().padStart(2, '0')}</span>
                                   <span>{Math.floor(narrationDuration / 60)}:{Math.floor(narrationDuration % 60).toString().padStart(2, '0')}</span>
+                                </div>
+                              </div>
+                              
+                              <div className="flex items-center justify-between mb-2">
+                                <div className="text-sm text-gray-400 font-mono">
+                                  SEGMENT {narrationCurrentSegment + 1}/{narration.segments?.length || 0}
                                 </div>
                               </div>
                               
