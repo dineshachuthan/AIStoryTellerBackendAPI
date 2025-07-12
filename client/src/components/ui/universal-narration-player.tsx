@@ -194,9 +194,15 @@ export function UniversalNarrationPlayer({
     if (isPlaying) {
       audio.pause();
     } else {
-      // Always set the correct source for current segment to ensure reliability
-      audio.src = currentSegmentData.audioUrl;
-      audio.currentTime = 0;
+      // Check if we need to load a new audio source
+      const currentUrl = currentSegmentData.audioUrl;
+      const needsNewSource = !audio.src || !audio.src.endsWith(currentUrl);
+      
+      if (needsNewSource) {
+        audio.src = currentUrl;
+        audio.currentTime = 0;
+      }
+      // If same source, preserve current playback position
       
       // Use promise-based play with better error handling
       audio.play().catch(error => {
