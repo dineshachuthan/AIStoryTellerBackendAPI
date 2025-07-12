@@ -213,8 +213,8 @@ export function UniversalNarrationPlayer({
     }
   };
   
-  // Previous segment handler
-  const handlePreviousSegment = async () => {
+  // Previous segment handler - SIMPLE APPROACH (like play button)
+  const handlePreviousSegment = () => {
     if (currentSegment > 0) {
       const newSegment = currentSegment - 1;
       const audio = audioRef.current;
@@ -223,125 +223,29 @@ export function UniversalNarrationPlayer({
       if (audio && newSegmentData?.audioUrl) {
         console.log('Manual previous: switching from', audio.src, 'to', newSegmentData.audioUrl);
         
-        // DESTROY old audio element completely
+        // Remember if audio was playing
+        const wasPlaying = !audio.paused;
+        
+        // Update state first
+        updateAudioState({
+          currentSegment: newSegment,
+          progress: 0,
+          currentTime: 0,
+          isPlaying: false
+        });
+        
+        // Simple approach like play button: just update the source
         audio.pause();
         audio.currentTime = 0;
-        audio.src = '';
-        audio.removeAttribute('src');
-        audio.load(); // Force clear old audio
+        audio.src = newSegmentData.audioUrl;
+        audio.load();
         
-        // Completely remove old audio reference immediately
-        audioRef.current = null;
+        console.log('Updated audio source to:', audio.src);
         
-        // Wait a moment to ensure old audio is fully cleared
-        await new Promise(resolve => setTimeout(resolve, 50));
-        
-        // Create completely new audio element
-        const newAudio = new Audio();
-        
-        // Update state immediately BEFORE setting source
-        updateAudioState({
-          currentSegment: newSegment,
-          progress: 0,
-          currentTime: 0,
-          duration: 0,
-          isPlaying: false
-        });
-        
-        // Set up event listeners BEFORE setting source
-        const handleLoadedMetadata = () => {
-          console.log('New audio metadata loaded, duration:', newAudio.duration);
-          updateAudioState({ duration: newAudio.duration || 0 });
-        };
-        const handleTimeUpdate = () => {
-          const progress = newAudio.duration > 0 ? (newAudio.currentTime / newAudio.duration) * 100 : 0;
-          updateAudioState({
-            currentTime: newAudio.currentTime || 0,
-            progress: progress
-          });
-        };
-        const handlePlay = () => {
-          console.log('New audio playing');
-          updateAudioState({ isPlaying: true });
-          onPlayStateChange?.(true);
-        };
-        const handlePause = () => {
-          console.log('New audio paused');
-          updateAudioState({ isPlaying: false });
-          onPlayStateChange?.(false);
-        };
-        const handleEnded = () => {
-          console.log('New audio ended');
-          // Auto-advance to next segment
-          if (newSegment < segments.length - 1) {
-            handleNextSegment();
-          } else {
-            updateAudioState({ isPlaying: false });
-            onPlayStateChange?.(false);
-            onComplete?.();
-          }
-        };
-        
-        newAudio.addEventListener('loadedmetadata', handleLoadedMetadata);
-        newAudio.addEventListener('timeupdate', handleTimeUpdate);
-        newAudio.addEventListener('play', handlePlay);
-        newAudio.addEventListener('pause', handlePause);
-        newAudio.addEventListener('ended', handleEnded);
-        
-        // NOW set the source and load
-        newAudio.src = newSegmentData.audioUrl;
-        newAudio.preload = 'auto';
-        newAudio.load();
-        
-        // Replace the audio reference
-        audioRef.current = newAudio;
-        
-        console.log('Created new audio element with source:', newAudio.src);
-        
-        // Auto-play new segment with multiple fallbacks
-        const startPlayback = () => {
-          console.log('Attempting to start playback...');
-          newAudio.play().then(() => {
-            console.log('Playback started successfully');
-          }).catch(error => {
-            console.error('Failed to start playback:', error);
-            // Force play again after a short delay
-            setTimeout(() => {
-              newAudio.play().catch(console.error);
-            }, 100);
-          });
-        };
-        
-        // Try multiple events for reliable playback
-        const handleCanPlay = () => {
-          console.log('New audio can play');
-          newAudio.removeEventListener('canplay', handleCanPlay);
-          startPlayback();
-        };
-        const handleLoadedData = () => {
-          console.log('New audio loaded data');
-          newAudio.removeEventListener('loadeddata', handleLoadedData);
-          startPlayback();
-        };
-        
-        newAudio.addEventListener('canplay', handleCanPlay);
-        newAudio.addEventListener('loadeddata', handleLoadedData);
-        
-        // Fallback timeout
-        setTimeout(() => {
-          newAudio.removeEventListener('canplay', handleCanPlay);
-          newAudio.removeEventListener('loadeddata', handleLoadedData);
-          console.log('Fallback timeout - forcing playback');
-          startPlayback();
-        }, 200);
-      } else {
-        updateAudioState({
-          currentSegment: newSegment,
-          progress: 0,
-          currentTime: 0,
-          duration: 0,
-          isPlaying: false
-        });
+        // Auto-play if it was playing before
+        if (wasPlaying) {
+          audio.play().catch(console.error);
+        }
       }
       
       onSegmentChange?.(newSegment);
