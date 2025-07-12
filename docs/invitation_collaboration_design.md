@@ -119,21 +119,124 @@ story_narrations:
 - ✅ Rate limiting compliance with provider APIs
 - ❌ Delayed user feedback
 
-### Provider Failover Strategy
+### Provider-Agnostic Configuration Strategy
+
+#### **Environment-Based Provider Selection**
+```typescript
+// Provider configuration via environment variables
+EMAIL_PROVIDERS=mailgun:1,sendgrid:2,googleworkspace:3,amazonses:4
+SMS_PROVIDERS=twilio:1,messagebird:2,amazonssns:3,plivo:4
+PAYMENT_PROVIDERS=stripe:1,paypal:2,square:3,braintree:4
+
+// Runtime provider initialization
+const emailRegistry = new EmailProviderRegistry();
+emailRegistry.registerProvider('mailgun', new MailgunProvider(), 1);
+emailRegistry.registerProvider('sendgrid', new SendgridProvider(), 2);
+emailRegistry.registerProvider('googleworkspace', new GoogleWorkspaceProvider(), 3);
 ```
-Email Delivery Priority:
-1. MailGun (primary) - sandbox configured, production ready
-2. SendGrid (fallback) - backup provider
 
-SMS Delivery Priority:
-1. Twilio (primary) - industry standard, reliable
-2. MessageBird (fallback) - international SMS support
+#### **Universal Provider Interface**
+```typescript
+// Base interface for all notification providers
+interface BaseNotificationProvider {
+  name: string;
+  priority: number;
+  isHealthy(): Promise<boolean>;
+  getRateLimits(): ProviderRateLimit;
+  getCostPerMessage(): number;
+  getGeographicCoverage(): string[];
+}
 
-Failover Logic:
-- If primary provider fails, automatically attempt secondary
-- Log all attempts in notification_deliveries table
-- Retry failed notifications with exponential backoff
-- Maximum 3 retry attempts per notification
+// Specific provider interfaces
+interface EmailProvider extends BaseNotificationProvider {
+  sendEmail(data: EmailData): Promise<ProviderResponse>;
+  validateEmailAddress(email: string): boolean;
+  getDeliveryStatus(messageId: string): Promise<DeliveryStatus>;
+}
+
+interface SMSProvider extends BaseNotificationProvider {
+  sendSMS(data: SMSData): Promise<ProviderResponse>;
+  validatePhoneNumber(phone: string): boolean;
+  getDeliveryStatus(messageId: string): Promise<DeliveryStatus>;
+}
+
+interface PaymentProvider extends BaseNotificationProvider {
+  processPayment(data: PaymentData): Promise<PaymentResponse>;
+  createSubscription(data: SubscriptionData): Promise<SubscriptionResponse>;
+  handleWebhook(data: WebhookData): Promise<WebhookResponse>;
+}
+```
+
+#### **Intelligent Provider Selection Logic**
+```typescript
+class ProviderSelectionEngine {
+  selectOptimalProvider(criteria: SelectionCriteria): Promise<Provider> {
+    // Factors considered:
+    // 1. Provider health and availability
+    // 2. Cost per message/transaction
+    // 3. Geographic coverage for recipient
+    // 4. Delivery success rate history
+    // 5. Rate limit availability
+    // 6. A/B testing requirements
+  }
+}
+```
+
+#### **Provider Health Monitoring**
+```sql
+-- Provider performance tracking
+CREATE TABLE provider_health_metrics (
+  id SERIAL PRIMARY KEY,
+  provider_name VARCHAR(50) NOT NULL,
+  provider_type VARCHAR(20) NOT NULL, -- 'email', 'sms', 'payment'
+  health_check_timestamp TIMESTAMP NOT NULL,
+  is_healthy BOOLEAN NOT NULL,
+  response_time_ms INTEGER,
+  error_message TEXT,
+  success_rate_24h DECIMAL(5,2), -- Success rate over last 24 hours
+  cost_per_message DECIMAL(10,6), -- Current cost per message
+  rate_limit_remaining INTEGER,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Provider cost optimization
+CREATE TABLE provider_cost_analysis (
+  id SERIAL PRIMARY KEY,
+  provider_name VARCHAR(50) NOT NULL,
+  provider_type VARCHAR(20) NOT NULL,
+  date DATE NOT NULL,
+  total_messages INTEGER,
+  total_cost DECIMAL(10,2),
+  average_cost_per_message DECIMAL(10,6),
+  delivery_success_rate DECIMAL(5,2),
+  cost_per_successful_delivery DECIMAL(10,6),
+  created_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+#### **Provider Failover Strategy**
+```typescript
+class ProviderFailoverManager {
+  async executeWithFailover(operation: ProviderOperation): Promise<ProviderResponse> {
+    const providers = await this.getHealthyProviders(operation.type);
+    
+    for (const provider of providers) {
+      try {
+        const response = await provider.execute(operation);
+        await this.recordSuccess(provider, operation);
+        return response;
+      } catch (error) {
+        await this.recordFailure(provider, operation, error);
+        if (this.isPermanentFailure(error)) {
+          throw error; // Don't retry permanent failures
+        }
+        // Continue to next provider
+      }
+    }
+    
+    throw new Error('All providers failed');
+  }
+}
 ```
 
 ### Error Handling & Recovery
@@ -429,32 +532,38 @@ Polling (for providers without webhooks):
 
 ### New Tables for Notification Delivery System
 
-#### 1. **notification_deliveries** (NEW)
+#### 1. **notification_deliveries** (NEW) - Provider-Agnostic Tracking
 ```sql
--- Tracks individual notification attempts (email/SMS)
+-- Tracks individual notification attempts across all providers
 CREATE TABLE notification_deliveries (
   id SERIAL PRIMARY KEY,
   invitation_id INTEGER REFERENCES story_invitations(id),
-  delivery_type VARCHAR(10) NOT NULL, -- 'email' or 'sms'
-  provider VARCHAR(50) NOT NULL, -- 'mailgun', 'sendgrid', 'twilio', 'messagebird'
-  recipient VARCHAR(255) NOT NULL, -- email address or phone number
+  delivery_type VARCHAR(10) NOT NULL, -- 'email', 'sms', 'push', 'payment'
+  provider_type VARCHAR(20) NOT NULL, -- 'email', 'sms', 'payment'
+  provider_name VARCHAR(50) NOT NULL, -- 'mailgun', 'sendgrid', 'twilio', 'stripe', etc.
+  provider_priority INTEGER NOT NULL, -- Provider priority when selected
+  recipient VARCHAR(255) NOT NULL, -- email address, phone number, or payment token
   status VARCHAR(20) NOT NULL, -- 'pending', 'sent', 'delivered', 'failed', 'bounced'
   provider_message_id VARCHAR(255), -- External provider's message ID
-  provider_response JSONB, -- Full provider response
+  provider_response JSONB, -- Full provider response (provider-agnostic)
   error_message TEXT, -- Error details if failed
+  cost_per_message DECIMAL(10,6), -- Cost charged by provider
   retry_count INTEGER DEFAULT 0,
   max_retries INTEGER DEFAULT 3,
   scheduled_at TIMESTAMP, -- For batch processing
   sent_at TIMESTAMP, -- When actually sent
   delivered_at TIMESTAMP, -- When confirmed delivered
   failed_at TIMESTAMP, -- When permanently failed
+  geographic_region VARCHAR(50), -- For regional optimization
   created_at TIMESTAMP DEFAULT NOW()
 );
 
--- Indexes for efficient queries
+-- Indexes for efficient queries and provider analytics
 CREATE INDEX idx_notification_deliveries_invitation ON notification_deliveries(invitation_id);
 CREATE INDEX idx_notification_deliveries_status ON notification_deliveries(status);
+CREATE INDEX idx_notification_deliveries_provider ON notification_deliveries(provider_name, provider_type);
 CREATE INDEX idx_notification_deliveries_scheduled ON notification_deliveries(scheduled_at);
+CREATE INDEX idx_notification_deliveries_cost_analysis ON notification_deliveries(provider_name, sent_at, cost_per_message);
 ```
 
 #### 2. **notification_templates** (NEW)
@@ -506,8 +615,51 @@ CREATE TABLE notification_batch_jobs (
 - **notification_templates**: Provides email/SMS content templates
 - **notification_batch_jobs**: Manages batch processing workflow
 
-### Provider Integration Strategy
-- **Email Providers**: MailGun (priority 1), SendGrid (priority 2)
-- **SMS Providers**: Twilio (priority 1), MessageBird (priority 2)
-- **Delivery Tracking**: Each provider response stored in `provider_response` JSONB
-- **Retry Logic**: Exponential backoff with max 3 retries per notification
+### Provider-Agnostic Architecture Strategy
+
+#### **Multi-Provider Registry Pattern** (Following Existing Codebase Pattern)
+The platform uses a provider registry system allowing seamless provider switching without code changes:
+
+**Email Providers** (Priority-Based Selection):
+- MailGun, SendGrid, Google Workspace, Amazon SES, Postmark, etc.
+- Provider selection based on availability, health checks, and priority configuration
+
+**SMS Providers** (Priority-Based Selection):
+- Twilio, MessageBird, Amazon SNS, Plivo, Nexmo, etc.
+- Automatic failover to backup providers on failure
+
+**Payment Providers** (Future Extension):
+- Stripe, PayPal, Square, Braintree, Adyen, etc.
+- Same registry pattern for payment processing
+
+#### **Provider Integration Benefits**
+- **Zero Code Changes**: Add new providers via configuration only
+- **Health Monitoring**: Automatic provider health checks and failover
+- **Cost Optimization**: Route traffic to cheapest available provider
+- **Geographic Optimization**: Use regional providers for better deliverability
+- **A/B Testing**: Split traffic between providers for performance comparison
+
+#### **Provider Registry Implementation**
+```typescript
+// Following existing pattern in codebase
+interface NotificationProvider {
+  name: string;
+  priority: number;
+  isHealthy(): Promise<boolean>;
+  sendEmail(data: EmailData): Promise<ProviderResponse>;
+  sendSMS(data: SMSData): Promise<ProviderResponse>;
+}
+
+// Registry manages provider selection and failover
+class NotificationProviderRegistry {
+  private providers: NotificationProvider[] = [];
+  
+  async selectProvider(type: 'email' | 'sms'): Promise<NotificationProvider> {
+    // Select highest priority healthy provider
+  }
+  
+  async sendWithFailover(data: NotificationData): Promise<ProviderResponse> {
+    // Attempt providers in priority order with automatic failover
+  }
+}
+```
