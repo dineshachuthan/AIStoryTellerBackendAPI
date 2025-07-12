@@ -580,6 +580,21 @@ export function UniversalNarrationPlayer({
     }
   }, [textHighlight.wordIndex, isPlaying]);
   
+  // Cleanup effect - Stop audio when component unmounts or navigates away
+  useEffect(() => {
+    return () => {
+      const audio = audioRef.current;
+      if (audio) {
+        console.log('Component unmounting - stopping audio playback');
+        audio.pause();
+        audio.currentTime = 0;
+        audio.src = '';
+        audio.load();
+        audioRef.current = null;
+      }
+    };
+  }, []);
+  
   // Render text with word highlighting
   const renderHighlightedText = (text: string) => {
     const words = splitIntoWords(text);
