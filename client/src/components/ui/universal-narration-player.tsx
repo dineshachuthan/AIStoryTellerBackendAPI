@@ -61,6 +61,9 @@ export function UniversalNarrationPlayer({
     totalWords: 0
   });
   
+  const textContainerRef = useRef<HTMLDivElement>(null);
+  const highlightedWordRef = useRef<HTMLSpanElement>(null);
+  
   const audioRef = useRef<HTMLAudioElement | null>(null);
   
   // Update audio state helper
@@ -295,6 +298,30 @@ export function UniversalNarrationPlayer({
     }
   }, [currentTime, duration, currentSegmentData?.text]);
   
+  // Auto-scroll to keep highlighted word visible
+  useEffect(() => {
+    if (highlightedWordRef.current && textContainerRef.current && isPlaying) {
+      const container = textContainerRef.current;
+      const highlightedElement = highlightedWordRef.current;
+      
+      const containerRect = container.getBoundingClientRect();
+      const highlightedRect = highlightedElement.getBoundingClientRect();
+      
+      // Check if the highlighted word is below the visible area
+      if (highlightedRect.bottom > containerRect.bottom) {
+        // Scroll down to show the highlighted word
+        const scrollAmount = highlightedRect.bottom - containerRect.bottom + 20; // 20px buffer
+        container.scrollTop += scrollAmount;
+      }
+      // Check if the highlighted word is above the visible area
+      else if (highlightedRect.top < containerRect.top) {
+        // Scroll up to show the highlighted word
+        const scrollAmount = containerRect.top - highlightedRect.top + 20; // 20px buffer
+        container.scrollTop -= scrollAmount;
+      }
+    }
+  }, [textHighlight.wordIndex, isPlaying]);
+  
   // Render text with word highlighting
   const renderHighlightedText = (text: string) => {
     const words = splitIntoWords(text);
@@ -302,11 +329,13 @@ export function UniversalNarrationPlayer({
     
     return words.map((word, index) => {
       const isHighlighted = index <= wordIndex && isPlaying;
+      const isCurrentWord = index === wordIndex && isPlaying;
       const isSpace = /^\s+$/.test(word);
       
       return (
         <span
           key={index}
+          ref={isCurrentWord ? highlightedWordRef : null}
           className={`transition-colors duration-200 ${
             isHighlighted 
               ? 'text-green-400 bg-green-400/20 px-1 rounded' 
@@ -367,7 +396,10 @@ export function UniversalNarrationPlayer({
             
             {/* Main Content Area - Expanded Size */}
             <div className="text-center px-6 flex flex-col justify-center h-full">
-              <div className="min-h-[180px] max-h-[180px] overflow-y-auto scrollbar-hide">
+              <div 
+                ref={textContainerRef}
+                className="min-h-[180px] max-h-[180px] overflow-y-auto scrollbar-hide"
+              >
                 <p className="text-lg leading-relaxed font-medium text-left">
                   {currentSegmentData ? (
                     <>
