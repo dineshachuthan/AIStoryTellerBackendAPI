@@ -225,8 +225,9 @@ export function UniversalNarrationPlayer({
         audio.pause();
         audio.currentTime = 0;
         
-        // Load new segment
+        // Force load new segment source immediately
         audio.src = newSegmentData.audioUrl;
+        audio.load(); // Force the audio element to load the new source
         
         // Update state immediately
         updateAudioState({
@@ -238,9 +239,18 @@ export function UniversalNarrationPlayer({
         });
         
         // ALWAYS auto-play new segment (regardless of previous state)
-        setTimeout(() => {
+        // Wait for loadeddata event to ensure source is ready
+        const handleCanPlay = () => {
+          audio.removeEventListener('canplay', handleCanPlay);
           audio.play().catch(console.error);
-        }, 50);
+        };
+        audio.addEventListener('canplay', handleCanPlay);
+        
+        // Fallback timeout in case canplay doesn't fire
+        setTimeout(() => {
+          audio.removeEventListener('canplay', handleCanPlay);
+          audio.play().catch(console.error);
+        }, 100);
       } else {
         updateAudioState({
           currentSegment: newSegment,
@@ -267,8 +277,9 @@ export function UniversalNarrationPlayer({
         audio.pause();
         audio.currentTime = 0;
         
-        // Load new segment
+        // Force load new segment source immediately
         audio.src = newSegmentData.audioUrl;
+        audio.load(); // Force the audio element to load the new source
         
         // Update state immediately
         updateAudioState({
@@ -280,9 +291,18 @@ export function UniversalNarrationPlayer({
         });
         
         // ALWAYS auto-play new segment (regardless of previous state)
-        setTimeout(() => {
+        // Wait for loadeddata event to ensure source is ready
+        const handleCanPlay = () => {
+          audio.removeEventListener('canplay', handleCanPlay);
           audio.play().catch(console.error);
-        }, 50);
+        };
+        audio.addEventListener('canplay', handleCanPlay);
+        
+        // Fallback timeout in case canplay doesn't fire
+        setTimeout(() => {
+          audio.removeEventListener('canplay', handleCanPlay);
+          audio.play().catch(console.error);
+        }, 100);
       } else {
         updateAudioState({
           currentSegment: newSegment,
