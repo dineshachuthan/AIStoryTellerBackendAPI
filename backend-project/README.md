@@ -203,6 +203,16 @@ npm run test:integration # Integration tests
 npm run build
 ```
 
+The build process compiles TypeScript to JavaScript in the `dist/` folder with:
+- Type definitions (.d.ts files)
+- Source maps for debugging
+- Optimized JavaScript output
+
+Available scripts:
+- `npm run build` - Compiles TypeScript to JavaScript
+- `npm run dev` - Development server with hot reloading
+- `npm run start` - Production server from built files
+
 ### Environment Variables
 Ensure all production environment variables are set:
 - Use strong passwords and secrets

@@ -23,9 +23,8 @@
     "types": ["node"]
   },
   "include": [
-    "server/**/*",
-    "shared/**/*",
-    "scripts/**/*"
+    "*.ts",
+    "**/*.ts"
   ],
   "exclude": [
     "node_modules",
