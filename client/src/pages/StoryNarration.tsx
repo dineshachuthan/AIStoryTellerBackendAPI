@@ -410,7 +410,7 @@ export default function StoryNarration() {
                       const { isPlaying: narrationIsPlaying, currentSegment: narrationCurrentSegment, currentTime: narrationCurrentTime, duration: narrationDuration, progress: narrationProgress } = audioState;
                       
                       // Preload audio metadata when component mounts
-                      React.useEffect(() => {
+                      useEffect(() => {
                         if (narration.segments && narration.segments.length > 0 && !audioRefs.current[narrationKey]) {
                           audioRefs.current[narrationKey] = new Audio();
                           const audio = audioRefs.current[narrationKey];
@@ -582,22 +582,10 @@ export default function StoryNarration() {
                                     } else {
                                       const segment = narration.segments?.[narrationCurrentSegment];
                                       if (segment?.audioUrl) {
-                                        audio.src = segment.audioUrl;
-                                        
-                                        // Set up event handlers for this audio instance
-                                        audio.onloadedmetadata = () => {
-                                          updateAudioState(narrationKey, { 
-                                            duration: audio.duration || 0 
-                                          });
-                                        };
-                                        
-                                        audio.ontimeupdate = () => {
-                                          const progress = audio.duration > 0 ? (audio.currentTime / audio.duration) * 100 : 0;
-                                          updateAudioState(narrationKey, {
-                                            currentTime: audio.currentTime || 0,
-                                            progress: progress
-                                          });
-                                        };
+                                        // Only set src if it's different
+                                        if (audio.src !== segment.audioUrl) {
+                                          audio.src = segment.audioUrl;
+                                        }
                                         
                                         audio.play().then(() => {
                                           updateAudioState(narrationKey, { isPlaying: true });
