@@ -29,14 +29,15 @@ This is a relationship-aware content sharing platform that enables users to crea
 ## CRITICAL DEVELOPMENT RULES (NEVER VIOLATE)
 
 ### Zero Tolerance Unauthorized Changes Policy (MANDATORY ENFORCEMENT)
-**ABSOLUTELY NO DATABASE, API, OR FILE CREATION WITHOUT EXPLICIT USER APPROVAL**
+**ANALYSIS ONLY - NO CODE CHANGES WITHOUT EXPLICIT USER AUTHORIZATION**
 - NEVER create, modify, or drop database tables without user approval
 - NEVER create new REST API endpoints without user approval  
 - NEVER create new .ts files without user approval
 - NEVER add database columns without user approval
-- BEFORE ANY STRUCTURAL CHANGE: Ask user for explicit permission
+- NEVER make any code changes without explicit user authorization
+- MANDATORY WORKFLOW: Analysis → Root Cause → Solution Proposal → Wait for Authorization → Implement
 - VIOLATION OF THIS RULE COSTS USER MONEY AND CREATES ARCHITECTURAL DEBT
-- Pattern: Analyze → Ask Permission → Wait for Approval → Implement
+- Pattern: Analyze → Propose Solution → Wait for Authorization → Implement Only When Approved
 
 ### Zero Tolerance Code Duplication Policy
 **ABSOLUTELY NO DUPLICATE METHODS, FUNCTIONS, OR CODE BLOCKS ANYWHERE IN THE CODEBASE**
