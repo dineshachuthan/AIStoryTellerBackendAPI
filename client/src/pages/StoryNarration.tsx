@@ -461,9 +461,9 @@ export default function StoryNarration() {
                       
                       return (
                         <div className="mt-6">
-                          <div className="bg-gray-900 rounded-3xl p-4 shadow-2xl">
+                          <div className="bg-gray-900 rounded-3xl p-3 shadow-2xl">
                             <div className="bg-black rounded-2xl overflow-hidden relative">
-                              <div className="p-8 min-h-[300px] flex flex-col justify-center relative">
+                              <div className="p-8 min-h-[400px] flex flex-col justify-center relative">
                                 <div className="absolute top-4 left-4 flex items-center gap-1 h-8">
                                   {narrationIsPlaying && (
                                     <>
@@ -513,8 +513,8 @@ export default function StoryNarration() {
                               </div>
                             </div>
                             
-                            <div className="mt-4 bg-gray-800 rounded-xl p-4">
-                              <div className="mb-4">
+                            <div className="mt-2 bg-gray-800 rounded-xl p-3">
+                              <div className="mb-3">
                                 <div className="w-full bg-gray-700 rounded-full h-2 overflow-hidden cursor-pointer"
                                      onClick={(e) => {
                                        const audio = audioRefs.current[narrationKey];
@@ -540,7 +540,7 @@ export default function StoryNarration() {
                                 </div>
                               </div>
                               
-                              <div className="flex items-center justify-center gap-4">
+                              <div className="flex items-center justify-center gap-3">
                                 <Button
                                   variant="ghost"
                                   size="sm"
