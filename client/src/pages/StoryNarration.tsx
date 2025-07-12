@@ -463,7 +463,7 @@ export default function StoryNarration() {
                         <div className="mt-6">
                           <div className="bg-gray-900 rounded-3xl p-3 shadow-2xl">
                             <div className="bg-black rounded-2xl overflow-hidden relative">
-                              <div className="p-8 min-h-[400px] flex flex-col justify-center relative">
+                              <div className="p-6 min-h-[250px] flex flex-col justify-center relative">
                                 <div className="absolute top-4 left-4 flex items-center gap-1 h-8">
                                   {narrationIsPlaying && (
                                     <>
@@ -490,8 +490,8 @@ export default function StoryNarration() {
                                   </span>
                                 </div>
                                 
-                                <div className="text-center px-8 flex flex-col justify-center h-full">
-                                  <div className="space-y-4">
+                                <div className="text-center px-6 flex flex-col justify-center h-full">
+                                  <div className="space-y-2">
                                     {narrationIsPlaying && narration.segments && (
                                       <p className="text-sm font-mono text-green-400 opacity-100 transition-all duration-300">
                                         NOW PLAYING
