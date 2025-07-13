@@ -121,7 +121,7 @@ router.get('/auth/google', async (req, res) => {
               window.close();
             } else {
               // Fallback redirect
-              window.location.href = 'http://localhost:5000/';
+              window.location.href = '${process.env.FRONTEND_URL || "http://localhost:5000"}/';
             }
           </script>
         </body>
@@ -149,7 +149,7 @@ router.get('/auth/microsoft', async (req, res) => {
               window.close();
             } else {
               // Fallback redirect
-              window.location.href = 'http://localhost:5000/';
+              window.location.href = '${process.env.FRONTEND_URL || "http://localhost:5000"}/';
             }
           </script>
         </body>
@@ -177,7 +177,7 @@ router.get('/auth/facebook', async (req, res) => {
               window.close();
             } else {
               // Fallback redirect
-              window.location.href = 'http://localhost:5000/';
+              window.location.href = '${process.env.FRONTEND_URL || "http://localhost:5000"}/';
             }
           </script>
         </body>

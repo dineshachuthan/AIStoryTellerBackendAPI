@@ -45,12 +45,12 @@ export default function Login() {
 
   const handleOAuthLogin = (provider: string) => {
     console.log(`[OAuth] Attempting to open popup for ${provider}`);
-    const popup = window.open(`http://localhost:3000/api/auth/${provider}`, 'oauth_popup', 'width=500,height=600,scrollbars=yes,resizable=yes');
+    const popup = window.open(`${import.meta.env.VITE_API_URL}/api/auth/${provider}`, 'oauth_popup', 'width=500,height=600,scrollbars=yes,resizable=yes');
     
     if (!popup) {
       console.log('[OAuth] Popup blocked, redirecting in same tab');
       // Fallback to same-tab if popup blocked
-      window.location.href = `http://localhost:3000/api/auth/${provider}`;
+      window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/${provider}`;
       return;
     }
 
