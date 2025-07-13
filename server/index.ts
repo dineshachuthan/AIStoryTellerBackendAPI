@@ -4,7 +4,7 @@ import { join } from 'path';
 
 console.log('🚀 Full Stack Application Starting...');
 console.log('📦 Backend: http://localhost:5000');
-console.log('🌐 Frontend: http://localhost:3000');
+console.log('🌐 Frontend: http://localhost:5001 (External: port 3000)');
 console.log('=========================================');
 
 const cwd = process.cwd();

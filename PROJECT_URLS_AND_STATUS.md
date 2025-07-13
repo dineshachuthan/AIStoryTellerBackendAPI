@@ -58,7 +58,8 @@ workspace/
 ## 🎯 Current Status - FULLY OPERATIONAL
 
 ### 🌐 Frontend Application
-**URL**: http://localhost:3000
+**Internal URL**: http://localhost:5001
+**External URL**: Use the Replit domain with port 3000
 **Status**: ✅ Running
 **Features**: Login page, storytelling platform interface
 
@@ -69,9 +70,14 @@ workspace/
 **Features**: Interactive API documentation, endpoint testing
 
 ### 🚀 How to Access Both Applications
-1. **Frontend**: Open http://localhost:3000 in one browser tab/window
-2. **Backend**: Open http://localhost:5000 in another browser tab/window
+1. **Frontend**: Click the port 3000 link in Replit (mapped to internal port 5001)
+2. **Backend**: Click the port 80 link in Replit (mapped to internal port 5000)
 3. Both applications run independently with single workflow
+
+### 🔧 Replit Port Configuration
+- **Frontend**: Internal port 5001 → External port 3000
+- **Backend**: Internal port 5000 → External port 80 (main domain)
+- **Access**: Use Replit's generated URLs with the correct port numbers
 
 ### 🎯 API First Development Status
 ✅ **OpenAPI Specification**: Complete YAML specification in `backend-project/openapi.yaml`
