@@ -160,7 +160,7 @@ export default function StoryLibrary() {
   });
 
   // Show all user stories - no filtering needed
-  const narrationCompleteStories = stories;
+  const narrationCompleteStories = Array.isArray(stories) ? stories : [];
 
   // Filter stories based on search query and get most recent 10
   const filteredStories = narrationCompleteStories.filter(story => 

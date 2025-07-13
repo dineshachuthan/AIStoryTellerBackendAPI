@@ -187,7 +187,7 @@ export default function Home() {
                     <div>
                       <p className="text-gray-400 text-sm">Voice Recordings</p>
                       <p className="text-2xl font-bold text-white">
-                        {stories?.filter(s => s.captureMethod === 'voice').length || 0}
+                        {(Array.isArray(stories) ? stories : []).filter(s => s.captureMethod === 'voice').length || 0}
                       </p>
                     </div>
                     <Mic className="w-8 h-8 text-green-500 opacity-50" />
@@ -201,7 +201,7 @@ export default function Home() {
                     <div>
                       <p className="text-gray-400 text-sm">Narrated Stories</p>
                       <p className="text-2xl font-bold text-white">
-                        {stories?.filter(s => s.narratorVoice || s.narratorVoiceType).length || 0}
+                        {(Array.isArray(stories) ? stories : []).filter(s => s.narratorVoice || s.narratorVoiceType).length || 0}
                       </p>
                     </div>
                     <Sparkles className="w-8 h-8 text-purple-500 opacity-50" />
@@ -215,7 +215,7 @@ export default function Home() {
                     <div>
                       <p className="text-gray-400 text-sm">This Week</p>
                       <p className="text-2xl font-bold text-white">
-                        {stories?.filter(s => {
+                        {(Array.isArray(stories) ? stories : []).filter(s => {
                           const created = new Date(s.createdAt);
                           const weekAgo = new Date();
                           weekAgo.setDate(weekAgo.getDate() - 7);
@@ -334,11 +334,11 @@ export default function Home() {
                             </p>
                           </div>
                           
-                          {stories.filter(s => s.narratorVoice || s.narratorVoiceType).length > 0 && (
+                          {(Array.isArray(stories) ? stories : []).filter(s => s.narratorVoice || s.narratorVoiceType).length > 0 && (
                             <div className="p-3 rounded-lg bg-purple-900/20 border border-purple-700/50">
                               <p className="text-xs text-purple-400">Narrated</p>
                               <p className="text-sm font-medium text-white truncate">
-                                {stories.find(s => s.narratorVoice || s.narratorVoiceType)?.title}
+                                {(Array.isArray(stories) ? stories : []).find(s => s.narratorVoice || s.narratorVoiceType)?.title}
                               </p>
                             </div>
                           )}

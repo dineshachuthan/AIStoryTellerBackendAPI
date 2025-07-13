@@ -95,7 +95,7 @@ export function DraftStoriesPanel({
   });
 
   // Filter stories based on search query AND draft status (no narrator voice)
-  const draftStories = stories.filter(story => {
+  const draftStories = (Array.isArray(stories) ? stories : []).filter(story => {
     // Only show draft stories (stories without narrator voice)
     return !story.narratorVoice && !story.narratorVoiceType;
   });
