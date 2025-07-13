@@ -36,7 +36,7 @@ export default function Home() {
   });
 
   // All stories are considered draft stories now
-  const draftStories = stories;
+  const draftStories = Array.isArray(stories) ? stories : [];
 
   // Set initial collapsed state based on draft stories
   useEffect(() => {
