@@ -13,9 +13,14 @@ const __dirname = dirname(__filename);
 const app = express();
 const PORT = process.env.PORT;
 
+// Dynamic URL configuration using REPLIT_DOMAINS
+const REPLIT_DOMAIN = process.env.REPLIT_DOMAINS;
+const FRONTEND_URL = REPLIT_DOMAIN ? `https://${REPLIT_DOMAIN}` : process.env.FRONTEND_URL;
+const BACKEND_URL = REPLIT_DOMAIN ? `https://${REPLIT_DOMAIN}` : process.env.BACKEND_URL;
+
 // CORS middleware - allow frontend to access backend
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', process.env.FRONTEND_URL);
+  res.header('Access-Control-Allow-Origin', FRONTEND_URL);
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
   res.header('Access-Control-Allow-Credentials', 'true');
@@ -85,8 +90,9 @@ app.use('*', (req: Request, res: Response) => {
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 Backend server running on port ${PORT}`);
-  console.log(`📊 Health check: ${process.env.BACKEND_URL}/health`);
-  console.log(`📖 API docs: ${process.env.BACKEND_URL}/api-docs`);
+  console.log(`📊 Health check: ${BACKEND_URL}/health`);
+  console.log(`📖 API docs: ${BACKEND_URL}/api-docs`);
+  console.log(`🌐 Dynamic domain: ${REPLIT_DOMAIN || 'localhost'}`);
 });
 
 export default app;

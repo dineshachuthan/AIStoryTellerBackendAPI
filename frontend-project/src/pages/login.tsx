@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { config } from "@/config/runtime";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -45,12 +46,12 @@ export default function Login() {
 
   const handleOAuthLogin = (provider: string) => {
     console.log(`[OAuth] Attempting to open popup for ${provider}`);
-    const popup = window.open(`${import.meta.env.VITE_API_URL}/api/auth/${provider}`, 'oauth_popup', 'width=500,height=600,scrollbars=yes,resizable=yes');
+    const popup = window.open(`${config.API_URL}/api/auth/${provider}`, 'oauth_popup', 'width=500,height=600,scrollbars=yes,resizable=yes');
     
     if (!popup) {
       console.log('[OAuth] Popup blocked, redirecting in same tab');
       // Fallback to same-tab if popup blocked
-      window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/${provider}`;
+      window.location.href = `${config.API_URL}/api/auth/${provider}`;
       return;
     }
 

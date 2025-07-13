@@ -8,6 +8,18 @@ This is a collaborative storytelling platform that enables users to create AI-po
 
 Preferred communication style: Simple, everyday language.
 
+## Dynamic Host Configuration
+
+**Current Replit Domain**: `317873c7-d975-4993-b88a-1b45d18b4311-00-2zlumfvl3ydq0.worf.replit.dev`
+- Frontend URL: `https://317873c7-d975-4993-b88a-1b45d18b4311-00-2zlumfvl3ydq0.worf.replit.dev`
+- Backend URL: `https://317873c7-d975-4993-b88a-1b45d18b4311-00-2zlumfvl3ydq0.worf.replit.dev`
+- Both frontend and backend run on the same domain with different ports (5000 for frontend, 3000 for backend)
+
+**Environment Configuration**:
+- Uses `REPLIT_DOMAINS` environment variable for dynamic domain detection
+- No hardcoded localhost references allowed
+- Application adapts to Replit's unique domain generation
+
 ## Development Philosophy
 
 ### API First Development - STRICTLY ENFORCED
@@ -146,18 +158,20 @@ The application uses a microservices-ready architecture with adapter patterns fo
 
 ## Recent Changes
 
-### January 2025 - Environment Variable Configuration ✅
+### January 2025 - Dynamic Runtime Configuration ✅
 - **Date**: January 13, 2025
 - **Status**: Successfully implemented
 - **Changes Made**:
   - Removed ALL hardcoded domain references from frontend and backend
-  - Removed ALL fallback values - application now strictly uses environment variables
-  - Updated OAuth popup authentication system to use environment variables
-  - Fixed CORS configuration to use environment variables
-  - Added proper .env configuration for both development and production environments
-  - Application will show undefined/broken rather than use hardcoded fallbacks
+  - Implemented dynamic runtime configuration using REPLIT_DOMAINS environment variable
+  - Created runtime config system that automatically detects Replit domains
+  - Updated OAuth popup authentication system to use dynamic URLs
+  - Fixed CORS configuration to use dynamic domain detection
+  - Backend automatically constructs URLs from REPLIT_DOMAINS environment variable
+  - Frontend uses runtime config that detects current domain dynamically
+  - Application adapts to any Replit domain automatically without hardcoded values
 - **Impact**: Application now properly adapts to different environments (localhost, .replit.dev, production)
-- **User Confirmation**: ✅ Zero tolerance for hardcoded values - broken pages preferred over cheating with fallbacks
+- **User Confirmation**: ✅ Zero tolerance for hardcoded values - dynamic configuration preferred over static fallbacks
 
 ### January 2025 - API First Development Implementation ✅
 - **Date**: January 13, 2025

@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { config } from '@/config/runtime';
 
 export function useAuth() {
   const queryClient = useQueryClient();
@@ -8,7 +9,7 @@ export function useAuth() {
     queryKey: ['/api/auth/user'],
     queryFn: async () => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/user`, { credentials: 'include' });
+        const res = await fetch(`${config.API_URL}/api/auth/user`, { credentials: 'include' });
         if (res.status === 401) {
           return null; // Not authenticated
         }
@@ -27,7 +28,7 @@ export function useAuth() {
   // Login mutation
   const loginMutation = useMutation({
     mutationFn: async ({ email, password }: { email: string; password: string }) => {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
+      const res = await fetch(`${config.API_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -52,7 +53,7 @@ export function useAuth() {
       lastName?: string;
       displayName?: string;
     }) => {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/register`, {
+      const res = await fetch(`${config.API_URL}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(userData),
@@ -71,7 +72,7 @@ export function useAuth() {
   // Logout mutation
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/logout`, {
+      const res = await fetch(`${config.API_URL}/api/auth/logout`, {
         method: 'POST',
         credentials: 'include',
       });
