@@ -6,7 +6,7 @@ import { HomePage } from '@/pages/home';
 import { StoriesPage } from '@/pages/stories';
 import { StoryDetailPage } from '@/pages/story-detail';
 import { ProfilePage } from '@/pages/profile';
-import { LoginPage } from '@/pages/login';
+import Login from '@/pages/login';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 function App() {
@@ -28,7 +28,7 @@ function App() {
         <main className={isAuthenticated ? "pt-16" : ""}>
           <Switch>
             <Route path="/" component={isAuthenticated ? HomePage : LandingPage} />
-            <Route path="/login" component={LoginPage} />
+            <Route path="/login" component={Login} />
             <Route path="/stories" component={StoriesPage} />
             <Route path="/stories/:id" component={StoryDetailPage} />
             <Route path="/profile" component={ProfilePage} />

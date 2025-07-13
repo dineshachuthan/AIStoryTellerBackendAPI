@@ -104,6 +104,52 @@ router.post('/auth/logout', async (req, res) => {
   }
 });
 
+// OAuth routes
+router.get('/auth/google', (req, res) => {
+  // Google OAuth initialization
+  res.redirect('https://accounts.google.com/oauth/authorize?client_id=demo&redirect_uri=demo&response_type=code&scope=profile email');
+});
+
+router.get('/auth/google/callback', (req, res) => {
+  // Handle OAuth callback and send success message to parent window
+  res.send(`
+    <script>
+      window.opener.postMessage({ type: 'OAUTH_SUCCESS', provider: 'google' }, window.location.origin);
+      window.close();
+    </script>
+  `);
+});
+
+router.get('/auth/facebook', (req, res) => {
+  // Facebook OAuth initialization
+  res.redirect('https://www.facebook.com/v18.0/dialog/oauth?client_id=demo&redirect_uri=demo&response_type=code&scope=email');
+});
+
+router.get('/auth/facebook/callback', (req, res) => {
+  // Handle OAuth callback and send success message to parent window
+  res.send(`
+    <script>
+      window.opener.postMessage({ type: 'OAUTH_SUCCESS', provider: 'facebook' }, window.location.origin);
+      window.close();
+    </script>
+  `);
+});
+
+router.get('/auth/microsoft', (req, res) => {
+  // Microsoft OAuth initialization
+  res.redirect('https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=demo&redirect_uri=demo&response_type=code&scope=user.read');
+});
+
+router.get('/auth/microsoft/callback', (req, res) => {
+  // Handle OAuth callback and send success message to parent window
+  res.send(`
+    <script>
+      window.opener.postMessage({ type: 'OAUTH_SUCCESS', provider: 'microsoft' }, window.location.origin);
+      window.close();
+    </script>
+  `);
+});
+
 // Story routes (add missing CRUD operations)
 router.put('/stories/:id', async (req, res) => {
   try {
