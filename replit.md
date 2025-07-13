@@ -10,15 +10,17 @@ Preferred communication style: Simple, everyday language.
 
 ## Dynamic Host Configuration
 
-**Current Replit Domain**: `317873c7-d975-4993-b88a-1b45d18b4311-00-2zlumfvl3ydq0.worf.replit.dev`
-- Frontend URL: `https://317873c7-d975-4993-b88a-1b45d18b4311-00-2zlumfvl3ydq0.worf.replit.dev`
-- Backend URL: `https://317873c7-d975-4993-b88a-1b45d18b4311-00-2zlumfvl3ydq0.worf.replit.dev`
-- Both frontend and backend run on the same domain with different ports (5000 for frontend, 3000 for backend)
+**Runtime Domain Detection**: Application dynamically detects its domain at startup
+- Frontend: Uses `window.location.hostname` to determine current domain
+- Backend: Uses `REPLIT_DOMAINS` environment variable when available
+- Both frontend and backend construct URLs dynamically at runtime
+- No hardcoded domains anywhere in the codebase
 
 **Environment Configuration**:
 - Uses `REPLIT_DOMAINS` environment variable for dynamic domain detection
-- No hardcoded localhost references allowed
-- Application adapts to Replit's unique domain generation
+- Frontend adapts to current browser domain automatically
+- Backend constructs URLs from environment variables only
+- Application adapts to any domain without code changes
 
 ## Development Philosophy
 
@@ -160,7 +162,7 @@ The application uses a microservices-ready architecture with adapter patterns fo
 
 ### January 2025 - Dynamic Runtime Configuration ✅
 - **Date**: January 13, 2025
-- **Status**: Successfully implemented
+- **Status**: Successfully implemented and tested
 - **Changes Made**:
   - Removed ALL hardcoded domain references from frontend and backend
   - Implemented dynamic runtime configuration using REPLIT_DOMAINS environment variable
@@ -169,9 +171,10 @@ The application uses a microservices-ready architecture with adapter patterns fo
   - Fixed CORS configuration to use dynamic domain detection
   - Backend automatically constructs URLs from REPLIT_DOMAINS environment variable
   - Frontend uses runtime config that detects current domain dynamically
+  - Fixed vite proxy configuration to properly route API calls to backend
   - Application adapts to any Replit domain automatically without hardcoded values
 - **Impact**: Application now properly adapts to different environments (localhost, .replit.dev, production)
-- **User Confirmation**: ✅ Zero tolerance for hardcoded values - dynamic configuration preferred over static fallbacks
+- **User Confirmation**: ✅ Zero tolerance for hardcoded values - dynamic configuration working correctly with OAuth popup functionality
 
 ### January 2025 - API First Development Implementation ✅
 - **Date**: January 13, 2025

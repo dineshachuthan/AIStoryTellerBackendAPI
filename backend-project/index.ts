@@ -13,10 +13,18 @@ const __dirname = dirname(__filename);
 const app = express();
 const PORT = process.env.PORT;
 
-// Dynamic URL configuration using REPLIT_DOMAINS
+// Dynamic URL configuration - no hardcoded domains
 const REPLIT_DOMAIN = process.env.REPLIT_DOMAINS;
 const FRONTEND_URL = REPLIT_DOMAIN ? `https://${REPLIT_DOMAIN}` : process.env.FRONTEND_URL;
 const BACKEND_URL = REPLIT_DOMAIN ? `https://${REPLIT_DOMAIN}` : process.env.BACKEND_URL;
+
+// Store dynamic URLs in memory for use across the application
+global.DYNAMIC_CONFIG = {
+  REPLIT_DOMAIN,
+  FRONTEND_URL,
+  BACKEND_URL,
+  IS_REPLIT: !!REPLIT_DOMAIN
+};
 
 // CORS middleware - allow frontend to access backend
 app.use((req, res, next) => {
@@ -92,7 +100,8 @@ app.listen(PORT, () => {
   console.log(`🚀 Backend server running on port ${PORT}`);
   console.log(`📊 Health check: ${BACKEND_URL}/health`);
   console.log(`📖 API docs: ${BACKEND_URL}/api-docs`);
-  console.log(`🌐 Dynamic domain: ${REPLIT_DOMAIN || 'localhost'}`);
+  console.log(`🌐 Dynamic domain: ${REPLIT_DOMAIN || 'localhost (development)'}`);
+  console.log(`🔧 Runtime config stored in memory`);
 });
 
 export default app;
