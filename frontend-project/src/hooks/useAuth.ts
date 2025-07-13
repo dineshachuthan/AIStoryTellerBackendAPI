@@ -12,8 +12,11 @@ export function useAuth() {
     queryFn: async () => {
       try {
         const response = await apiClient.auth.getUser();
-        return response.data || response;
+        console.log('Auth API response:', response);
+        // The API client already handles the response unwrapping
+        return response;
       } catch (error: any) {
+        console.log('Auth API error:', error);
         if (error.message?.includes('401')) {
           return null; // Not authenticated
         }

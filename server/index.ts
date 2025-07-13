@@ -42,7 +42,13 @@ async function waitForPortAvailable(port: number, maxAttempts = 30) {
 async function startApplication() {
   console.log('🚀 Full Stack Application Starting...');
   console.log('📦 Backend: http://localhost:3000');
-  console.log('🌐 Frontend: http://localhost:5000 (Main Domain)');
+  console.log('🌐 Frontend: http://localhost:5000');
+  
+  // Check if we have the required environment
+  const replitDomain = process.env.REPLIT_DOMAINS;
+  if (replitDomain) {
+    console.log(`🔗 External URL: https://${replitDomain}`);
+  }
   console.log('=========================================');
 
   // Kill existing processes on both ports

@@ -99,8 +99,8 @@ app.use('*', (req: Request, res: Response) => {
   });
 });
 
-// Start server
-app.listen(PORT, () => {
+// Start server - bind to all interfaces for external access
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Backend server running on port ${PORT}`);
   console.log(`📊 Health check: ${BACKEND_URL}/health`);
   console.log(`📖 API docs: ${BACKEND_URL}/api-docs`);

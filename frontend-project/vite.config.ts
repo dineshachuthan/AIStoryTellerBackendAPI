@@ -20,7 +20,7 @@ export default defineConfig({
     port: 5000,
     host: '0.0.0.0',
     strictPort: true,
-    allowedHosts: ['localhost', '.replit.dev'],
+    allowedHosts: ['localhost', '.replit.dev', '.replit.app'],
     proxy: {
       '/api': {
         target: 'http://localhost:3000',
