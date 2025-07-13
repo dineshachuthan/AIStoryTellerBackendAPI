@@ -1,6 +1,7 @@
 import { Router, Route, Switch } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
 import { Navbar } from '@/components/navbar';
+import { LandingPage } from '@/pages/landing';
 import { HomePage } from '@/pages/home';
 import { StoriesPage } from '@/pages/stories';
 import { StoryDetailPage } from '@/pages/story-detail';
@@ -26,7 +27,7 @@ function App() {
         
         <main className={isAuthenticated ? "pt-16" : ""}>
           <Switch>
-            <Route path="/" component={isAuthenticated ? HomePage : LoginPage} />
+            <Route path="/" component={isAuthenticated ? HomePage : LandingPage} />
             <Route path="/login" component={LoginPage} />
             <Route path="/stories" component={StoriesPage} />
             <Route path="/stories/:id" component={StoryDetailPage} />
