@@ -76,6 +76,121 @@ router.get('/auth/user', async (req, res) => {
 
 router.post('/auth/login', async (req, res) => {
   try {
+    // TODO: Implement proper login
+    res.json({ data: { message: 'Login endpoint not implemented' } });
+  } catch (error) {
+    console.error('Error during login:', error);
+    res.status(500).json({ error: 'Failed to login' });
+  }
+});
+
+router.post('/auth/register', async (req, res) => {
+  try {
+    // TODO: Implement proper registration
+    res.json({ data: { message: 'Register endpoint not implemented' } });
+  } catch (error) {
+    console.error('Error during registration:', error);
+    res.status(500).json({ error: 'Failed to register' });
+  }
+});
+
+router.post('/auth/logout', async (req, res) => {
+  try {
+    // TODO: Implement proper logout
+    res.json({ data: { message: 'Logout successful' } });
+  } catch (error) {
+    console.error('Error during logout:', error);
+    res.status(500).json({ error: 'Failed to logout' });
+  }
+});
+
+// OAuth routes
+router.get('/auth/google', async (req, res) => {
+  try {
+    // TODO: Implement Google OAuth
+    res.send(`
+      <html>
+        <head><title>OAuth Success</title></head>
+        <body>
+          <h2>OAuth Success</h2>
+          <p>Authentication successful! This window will close automatically.</p>
+          <script>
+            // Send success message to parent window
+            if (window.opener) {
+              window.opener.postMessage({ type: 'OAUTH_SUCCESS', provider: 'google' }, '*');
+              window.close();
+            } else {
+              // Fallback redirect
+              window.location.href = 'http://localhost:5000/';
+            }
+          </script>
+        </body>
+      </html>
+    `);
+  } catch (error) {
+    console.error('Error in Google OAuth:', error);
+    res.status(500).json({ error: 'OAuth failed' });
+  }
+});
+
+router.get('/auth/microsoft', async (req, res) => {
+  try {
+    // TODO: Implement Microsoft OAuth
+    res.send(`
+      <html>
+        <head><title>OAuth Success</title></head>
+        <body>
+          <h2>OAuth Success</h2>
+          <p>Authentication successful! This window will close automatically.</p>
+          <script>
+            // Send success message to parent window
+            if (window.opener) {
+              window.opener.postMessage({ type: 'OAUTH_SUCCESS', provider: 'microsoft' }, '*');
+              window.close();
+            } else {
+              // Fallback redirect
+              window.location.href = 'http://localhost:5000/';
+            }
+          </script>
+        </body>
+      </html>
+    `);
+  } catch (error) {
+    console.error('Error in Microsoft OAuth:', error);
+    res.status(500).json({ error: 'OAuth failed' });
+  }
+});
+
+router.get('/auth/facebook', async (req, res) => {
+  try {
+    // TODO: Implement Facebook OAuth
+    res.send(`
+      <html>
+        <head><title>OAuth Success</title></head>
+        <body>
+          <h2>OAuth Success</h2>
+          <p>Authentication successful! This window will close automatically.</p>
+          <script>
+            // Send success message to parent window
+            if (window.opener) {
+              window.opener.postMessage({ type: 'OAUTH_SUCCESS', provider: 'facebook' }, '*');
+              window.close();
+            } else {
+              // Fallback redirect
+              window.location.href = 'http://localhost:5000/';
+            }
+          </script>
+        </body>
+      </html>
+    `);
+  } catch (error) {
+    console.error('Error in Facebook OAuth:', error);
+    res.status(500).json({ error: 'OAuth failed' });
+  }
+});
+
+router.post('/auth/login', async (req, res) => {
+  try {
     // TODO: Implement proper authentication
     res.json({ data: { id: 1, name: 'Demo User', email: 'demo@example.com' } });
   } catch (error) {
