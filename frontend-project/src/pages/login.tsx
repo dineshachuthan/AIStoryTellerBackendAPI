@@ -47,13 +47,18 @@ export default function Login() {
         }
         
         // Refresh authentication state and force refetch
+        console.log('Invalidating auth queries...');
         queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-        queryClient.refetchQueries({ queryKey: ["/api/auth/user"] });
         
-        // Navigate to home page after a brief delay to allow auth refresh
-        setTimeout(() => {
+        // Force an immediate refetch
+        queryClient.refetchQueries({ queryKey: ["/api/auth/user"] }).then(() => {
+          console.log('Auth queries refetched, navigating to home...');
           setLocation('/');
-        }, 200);
+        }).catch(error => {
+          console.error('Error refetching auth queries:', error);
+          // Navigate anyway
+          setLocation('/');
+        });
       }
     };
 

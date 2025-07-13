@@ -9,11 +9,23 @@ export function useAuth() {
     queryKey: ['/api/auth/user'],
     queryFn: async () => {
       try {
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+          return null; // No token, not authenticated
+        }
+        
         const apiUrl = config.API_URL ? `${config.API_URL}/api/auth/user` : '/api/auth/user';
-        const res = await fetch(apiUrl, { credentials: 'include' });
+        const res = await fetch(apiUrl, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
         
         if (res.status === 401) {
-          return null; // Not authenticated
+          // Token expired or invalid, clear it
+          localStorage.removeItem('auth_token');
+          return null;
         }
         
         if (!res.ok) {
