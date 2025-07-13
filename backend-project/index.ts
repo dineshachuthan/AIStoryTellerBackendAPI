@@ -1,6 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes";
-import { db } from "./db";
+import { registerRoutes } from "./routes.js";
+import { db } from "./db.js";
 
 const app = express();
 const PORT = process.env.PORT || 5000;

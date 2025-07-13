@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { db } from "./db";
-import { stories, users, userEsmRecordings } from "./schema";
+import { db } from "./db.js";
+import { stories, users, userEsmRecordings } from "./schema.js";
 import { eq, desc } from "drizzle-orm";
 import { z } from "zod";
 import { createInsertSchema } from "drizzle-zod";
