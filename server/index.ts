@@ -1,11 +1,14 @@
-console.log('🚀 Starting Backend API from backend-project...');
-console.log('Note: The monolithic project has been archived.');
-console.log('Backend API is now running from: backend-project/');
-console.log('===============================================');
+// Backend API Redirect Script
+// This script redirects the root workflow to the independent backend project
 
 import { spawn } from 'child_process';
 import { join } from 'path';
 
+console.log('🚀 Backend API is running from: backend-project/');
+console.log('📊 Health check: http://localhost:5000/health');
+console.log('📖 API docs: http://localhost:5000/api/docs');
+
+// Start the backend from the independent project
 const backendPath = join(process.cwd(), 'backend-project');
 const backend = spawn('npm', ['run', 'dev'], { 
   cwd: backendPath,
@@ -13,9 +16,11 @@ const backend = spawn('npm', ['run', 'dev'], {
 });
 
 backend.on('error', (err) => {
-  console.error('Failed to start backend:', err);
+  console.error('Backend startup error:', err);
+  process.exit(1);
 });
 
 backend.on('exit', (code) => {
-  console.log(`Backend process exited with code ${code}`);
+  console.log(`Backend exited with code: ${code}`);
+  process.exit(code || 0);
 });

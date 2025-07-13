@@ -35,10 +35,20 @@ workspace/
 │   ├── package.json         # Frontend dependencies
 │   ├── .env                 # Frontend environment (VITE_API_URL)
 │   └── src/main.tsx         # Frontend entry point
-└── archive/                  # 📦 Original monolithic project
-    └── original-monolithic-project/
-        └── [all original files]
+├── archive/                  # 📦 Original monolithic project
+│   └── original-monolithic-project/
+│       └── [all original files moved here]
+├── server/                   # 🔄 Minimal redirect (workflow compatibility)
+│   └── index.ts             # Redirects to backend-project
+└── package.json             # 🔄 Minimal launcher (workflow compatibility)
 ```
+
+## 🧹 Clean Separation Status
+- ✅ **server/** and **shared/** directories moved to archive
+- ✅ **node_modules/** moved to archive  
+- ✅ **All root config files** moved to archive
+- ✅ **Only two independent projects** remain in workspace
+- 🔄 **Minimal workflow compatibility** maintained with redirect script
 
 ## 🔗 Communication
 - Frontend connects to backend via: http://localhost:5000
