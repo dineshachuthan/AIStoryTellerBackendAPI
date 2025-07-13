@@ -71,9 +71,9 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   }
 }));
 
-// Setup authentication (temporarily disabled for testing)
-// import { setupAuth } from './replitAuth';
-// await setupAuth(app);
+// Setup authentication
+import { setupAuth } from './replitAuth';
+await setupAuth(app);
 
 // API routes
 app.use('/api', registerRoutes());

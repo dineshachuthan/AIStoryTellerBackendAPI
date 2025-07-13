@@ -66,41 +66,14 @@ router.get('/stories/:id', async (req, res) => {
 // Authentication routes
 router.get('/auth/user', async (req, res) => {
   try {
-    // TODO: Implement proper authentication
-    res.json({ data: null });
+    if (req.isAuthenticated() && req.user) {
+      res.json({ data: req.user });
+    } else {
+      res.json({ data: null });
+    }
   } catch (error) {
     console.error('Error fetching current user:', error);
     res.status(500).json({ error: 'Failed to fetch current user' });
-  }
-});
-
-// OAuth routes
-router.get('/auth/google', async (req, res) => {
-  try {
-    // TODO: Implement Google OAuth
-    const frontendUrl = process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS}` : process.env.FRONTEND_URL;
-    res.send(`
-      <html>
-        <head><title>OAuth Success</title></head>
-        <body>
-          <h2>OAuth Success</h2>
-          <p>Authentication successful! This window will close automatically.</p>
-          <script>
-            // Send success message to parent window
-            if (window.opener) {
-              window.opener.postMessage({ type: 'OAUTH_SUCCESS', provider: 'google' }, '*');
-              window.close();
-            } else {
-              // Fallback redirect
-              window.location.href = '${frontendUrl}/';
-            }
-          </script>
-        </body>
-      </html>
-    `);
-  } catch (error) {
-    console.error('Error in Google OAuth:', error);
-    res.status(500).json({ error: 'OAuth failed' });
   }
 });
 
