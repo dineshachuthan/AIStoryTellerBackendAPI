@@ -3,8 +3,8 @@ import { spawn } from 'child_process';
 import { join } from 'path';
 
 console.log('🚀 Full Stack Application Starting...');
-console.log('📦 Backend: http://localhost:5000');
-console.log('🌐 Frontend: http://localhost:3000');
+console.log('📦 Backend: http://localhost:3000');
+console.log('🌐 Frontend: http://localhost:5000 (Main Domain)');
 console.log('=========================================');
 
 const cwd = process.cwd();

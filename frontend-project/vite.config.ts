@@ -17,13 +17,13 @@ export default defineConfig({
     },
   },
   server: {
-    port: 3000,
+    port: 5000,
     host: '0.0.0.0',
     strictPort: true,
     allowedHosts: ['localhost', '.replit.dev'],
     proxy: {
       '/api': {
-        target: process.env.VITE_API_URL || 'http://localhost:5000',
+        target: process.env.VITE_API_URL || 'http://localhost:3000',
         changeOrigin: true,
         secure: false,
       },

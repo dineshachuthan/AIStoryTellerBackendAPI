@@ -51,32 +51,32 @@ workspace/
 - 🔄 **Minimal workflow compatibility** maintained with redirect script
 
 ## 🔗 Communication
-- Frontend connects to backend via: http://localhost:5000
+- Frontend connects to backend via: http://localhost:3000
 - Backend serves API endpoints: /api/*
 - Both projects are completely independent
 
 ## 🎯 Current Status - FULLY OPERATIONAL
 
 ### 🌐 Frontend Application
-**URL**: http://localhost:3000
+**URL**: http://localhost:5000 (Main domain)
 **Status**: ✅ Running
 **Features**: Login page, storytelling platform interface
 
 ### 🔧 Backend API Documentation  
-**URL**: http://localhost:5000 (redirects to Swagger UI)
-**Direct URL**: http://localhost:5000/api-docs
+**URL**: http://localhost:3000 (redirects to Swagger UI)
+**Direct URL**: http://localhost:3000/api-docs
 **Status**: ✅ Running
 **Features**: Interactive API documentation, endpoint testing
 
 ### 🚀 How to Access Both Applications
-1. **Frontend**: Click the port 3000 link in Replit (mapped to internal port 5001)
-2. **Backend**: Click the port 80 link in Replit (mapped to internal port 5000)
+1. **Frontend**: Main Replit domain (no port needed)
+2. **Backend**: Replit domain with :3000 port
 3. Both applications run independently with single workflow
 
 ### 🔧 Replit Port Configuration
-- **Frontend**: Internal port 5001 → External port 3000
-- **Backend**: Internal port 5000 → External port 80 (main domain)
-- **Access**: Use Replit's generated URLs with the correct port numbers
+- **Frontend**: Port 5000 → Main domain (no port needed)
+- **Backend**: Port 3000 → Accessible via :3000
+- **Access**: Frontend is now on the main domain for easier access
 
 ### 🎯 API First Development Status
 ✅ **OpenAPI Specification**: Complete YAML specification in `backend-project/openapi.yaml`
