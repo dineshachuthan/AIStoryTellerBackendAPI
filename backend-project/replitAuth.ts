@@ -5,6 +5,7 @@ import session from "express-session";
 import type { Express, RequestHandler } from "express";
 import connectPg from "connect-pg-simple";
 import { DatabaseStorage } from "./storage";
+import jwt from 'jsonwebtoken';
 
 if (!process.env.REPLIT_DOMAINS) {
   throw new Error("Environment variable REPLIT_DOMAINS not provided");
@@ -82,7 +83,19 @@ export async function setupAuth(app: Express) {
   app.get("/api/auth/google/callback", 
     passport.authenticate("google", { failureRedirect: "/login" }),
     (req, res) => {
-      // Send success message to popup and close it
+      // Generate JWT token for the authenticated user
+      const user = req.user as any;
+      const tokenPayload = {
+        sub: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        profileImageUrl: user.profileImageUrl
+      };
+      
+      const token = jwt.sign(tokenPayload, 'dev-secret', { expiresIn: '24h' });
+      
+      // Send success message with token to popup and close it
       res.send(`
         <html>
           <head><title>Login Success</title></head>
@@ -92,7 +105,12 @@ export async function setupAuth(app: Express) {
             <script>
               try {
                 if (window.opener) {
-                  window.opener.postMessage({ type: 'OAUTH_SUCCESS', provider: 'google' }, '*');
+                  window.opener.postMessage({ 
+                    type: 'OAUTH_SUCCESS', 
+                    provider: 'google',
+                    token: '${token}',
+                    user: ${JSON.stringify(user)}
+                  }, window.location.origin);
                   window.close();
                 } else {
                   window.location.href = '/';

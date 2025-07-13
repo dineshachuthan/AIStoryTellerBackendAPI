@@ -149,67 +149,8 @@ router.post('/auth/logout', async (req, res) => {
   }
 });
 
-// OAuth routes
-router.get('/auth/google', (req, res) => {
-  // Google OAuth initialization
-  res.redirect('https://accounts.google.com/oauth/authorize?client_id=demo&redirect_uri=demo&response_type=code&scope=profile email');
-});
-
-router.get('/auth/google/callback', async (req, res) => {
-  // For now, mock a successful OAuth user
-  const mockUser = {
-    id: '1',
-    email: 'user@example.com',
-    firstName: 'Demo',
-    lastName: 'User',
-    profileImageUrl: null
-  };
-  
-  try {
-    // Ensure the user exists in the database
-    const [existingUser] = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, mockUser.id))
-      .limit(1);
-    
-    if (!existingUser) {
-      // Create the user if it doesn't exist
-      await db.insert(users).values({
-        id: mockUser.id,
-        email: mockUser.email,
-        firstName: mockUser.firstName,
-        lastName: mockUser.lastName,
-        profileImageUrl: mockUser.profileImageUrl
-      });
-    }
-  } catch (error) {
-    console.error('Error creating/finding user:', error);
-  }
-  
-  // Generate JWT token with proper payload structure
-  const tokenPayload = {
-    sub: mockUser.id,
-    email: mockUser.email,
-    firstName: mockUser.firstName,
-    lastName: mockUser.lastName,
-    profileImageUrl: mockUser.profileImageUrl
-  };
-  const token = jwt.sign(tokenPayload, 'dev-secret', { expiresIn: '24h' });
-  
-  // Send success message with token to parent window
-  res.send(`
-    <script>
-      window.opener.postMessage({ 
-        type: 'OAUTH_SUCCESS', 
-        provider: 'google',
-        token: '${token}',
-        user: ${JSON.stringify(mockUser)}
-      }, window.location.origin);
-      window.close();
-    </script>
-  `);
-});
+// OAuth routes - these will use the existing Google OAuth setup from replitAuth.ts
+// We'll add JWT token generation to the callback
 
 router.get('/auth/facebook', (req, res) => {
   // Facebook OAuth initialization
