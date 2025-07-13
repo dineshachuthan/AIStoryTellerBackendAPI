@@ -27,7 +27,7 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "cd frontend-project && npm run dev"
-waitForPort = 5173
+waitForPort = 3000
 ```
 
 ### Combined Workflow (Run Both)

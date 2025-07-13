@@ -14,6 +14,20 @@ app.get('/health', (req: Request, res: Response) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
+// Root route
+app.get('/', (req: Request, res: Response) => {
+  res.json({ 
+    message: 'AI Storytelling Backend API',
+    version: '1.0.0',
+    status: 'running',
+    endpoints: {
+      health: '/health',
+      api: '/api',
+      docs: '/api/docs'
+    }
+  });
+});
+
 // API routes
 app.use('/api', registerRoutes());
 

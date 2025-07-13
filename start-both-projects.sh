@@ -2,7 +2,7 @@
 
 echo "🚀 Starting Full Stack Application..."
 echo "📦 Backend: http://localhost:5000"
-echo "🌐 Frontend: http://localhost:5173"
+echo "🌐 Frontend: http://localhost:3000"
 echo "=================================="
 
 # Start backend in background

@@ -6,18 +6,12 @@ export function useAuth() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const queryClient = useQueryClient();
 
-  // Query to get current user
+  // For now, simulate authentication since we don't have proper auth endpoints
   const { data: user, isLoading, error } = useQuery({
     queryKey: ['auth', 'user'],
     queryFn: async () => {
-      try {
-        const response = await apiClient.auth.getCurrentUser();
-        setIsAuthenticated(true);
-        return response.data;
-      } catch (error) {
-        setIsAuthenticated(false);
-        throw error;
-      }
+      // Simulate checking auth - for now just return false to show login page
+      return null;
     },
     retry: false,
     staleTime: 5 * 60 * 1000, // 5 minutes
