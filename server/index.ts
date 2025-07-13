@@ -54,6 +54,41 @@ async function startApplication() {
   await waitForPortAvailable(5000);
   
   console.log('✅ Ports cleaned up and ready');
+  
+  // Add health check monitoring
+  const checkHealth = async () => {
+    try {
+      const frontendHealth = await execAsync('curl -s -o /dev/null -w "%{http_code}" http://localhost:5000');
+      const backendHealth = await execAsync('curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/health');
+      
+      if (frontendHealth.stdout.trim() === '200' && backendHealth.stdout.trim() === '200') {
+        console.log('🚀 APPLICATION READY FOR HTTP TRAFFIC');
+        console.log('📱 Frontend: http://localhost:5000 (Status: Ready)');
+        console.log('⚡ Backend: http://localhost:3000 (Status: Ready)');
+        console.log('🔗 Health Check: http://localhost:3000/health');
+        console.log('📚 API Docs: http://localhost:3000/api-docs');
+        console.log('=========================================');
+        return true;
+      }
+    } catch (error) {
+      // Services not ready yet
+    }
+    return false;
+  };
+  
+  // Monitor health every 2 seconds for first 30 seconds
+  let healthCheckAttempts = 0;
+  const healthCheckInterval = setInterval(async () => {
+    healthCheckAttempts++;
+    const isHealthy = await checkHealth();
+    
+    if (isHealthy) {
+      clearInterval(healthCheckInterval);
+    } else if (healthCheckAttempts >= 15) {
+      console.log('⚠️  Services taking longer than expected to start');
+      clearInterval(healthCheckInterval);
+    }
+  }, 2000);
 
   const cwd = process.cwd();
 
