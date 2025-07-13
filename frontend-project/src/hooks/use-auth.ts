@@ -8,7 +8,7 @@ export function useAuth() {
     queryKey: ['/api/auth/user'],
     queryFn: async () => {
       try {
-        const res = await fetch('/api/auth/user', { credentials: 'include' });
+        const res = await fetch('http://localhost:3000/api/auth/user', { credentials: 'include' });
         if (res.status === 401) {
           return null; // Not authenticated
         }
@@ -27,7 +27,7 @@ export function useAuth() {
   // Login mutation
   const loginMutation = useMutation({
     mutationFn: async ({ email, password }: { email: string; password: string }) => {
-      const res = await fetch('/api/auth/login', {
+      const res = await fetch('http://localhost:3000/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -52,7 +52,7 @@ export function useAuth() {
       lastName?: string;
       displayName?: string;
     }) => {
-      const res = await fetch('/api/auth/register', {
+      const res = await fetch('http://localhost:3000/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(userData),
@@ -71,7 +71,7 @@ export function useAuth() {
   // Logout mutation
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch('/api/auth/logout', {
+      const res = await fetch('http://localhost:3000/api/auth/logout', {
         method: 'POST',
         credentials: 'include',
       });
