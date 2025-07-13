@@ -8,6 +8,35 @@ This is a collaborative storytelling platform that enables users to create AI-po
 
 Preferred communication style: Simple, everyday language.
 
+### Git Repository Configuration
+- **GitHub Username**: dineshachuthan
+- **Backend Repository**: AIStoryTellerBackendAPI
+- **Frontend Repository**: AIStoryTellerFrontEnd
+- **Default Branch**: main
+- **Authentication**: Uses GITHUB_TOKEN from Replit secrets
+
+### Git Push Commands
+When user requests "push to git", execute these commands:
+
+**Backend Push (from root directory):**
+```bash
+git push https://${GITHUB_TOKEN}@github.com/dineshachuthan/AIStoryTellerBackendAPI.git main
+```
+
+**Frontend Push (from frontend-project directory):**
+```bash
+cd frontend-project && git push https://${GITHUB_TOKEN}@github.com/dineshachuthan/AIStoryTellerFrontEnd.git main
+```
+
+**Push Both Projects:**
+```bash
+# Push backend
+git push https://${GITHUB_TOKEN}@github.com/dineshachuthan/AIStoryTellerBackendAPI.git main
+
+# Push frontend
+cd frontend-project && git push https://${GITHUB_TOKEN}@github.com/dineshachuthan/AIStoryTellerFrontEnd.git main
+```
+
 ## Dynamic Host Configuration
 
 **Runtime Domain Detection**: Application dynamically detects its domain at startup
