@@ -1,0 +1,932 @@
+openapi: 3.0.0
+info:
+  title: AI Storytelling Backend API
+  version: 1.0.0
+  description: RESTful API for collaborative storytelling platform with AI-powered features
+  contact:
+    name: API Support
+    url: https://example.com/support
+    email: support@example.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:5000
+    description: Local development server
+  - url: https://api.storytelling.example.com
+    description: Production server
+
+paths:
+  /api/health:
+    get:
+      summary: Health check
+      description: Check if the API is running and responsive
+      tags:
+        - System
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "OK"
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: "2024-01-15T10:30:00Z"
+
+  /api/auth/user:
+    get:
+      summary: Get current user
+      description: Retrieve the currently authenticated user
+      tags:
+        - Authentication
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Current user data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/auth/login:
+    post:
+      summary: User login
+      description: Authenticate user with email and password
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "user@example.com"
+                password:
+                  type: string
+                  format: password
+                  example: "password123"
+                  minLength: 8
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      name:
+                        type: string
+                        example: "John Doe"
+                      email:
+                        type: string
+                        format: email
+                        example: "john@example.com"
+                      token:
+                        type: string
+                        example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        '400':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/auth/register:
+    post:
+      summary: User registration
+      description: Create a new user account
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - email
+                - password
+              properties:
+                name:
+                  type: string
+                  example: "John Doe"
+                  minLength: 2
+                  maxLength: 100
+                email:
+                  type: string
+                  format: email
+                  example: "john@example.com"
+                password:
+                  type: string
+                  format: password
+                  example: "password123"
+                  minLength: 8
+                avatarUrl:
+                  type: string
+                  format: uri
+                  example: "https://example.com/avatar.jpg"
+                language:
+                  type: string
+                  example: "en"
+                  default: "en"
+                locale:
+                  type: string
+                  example: "en-US"
+                  default: "en-US"
+                nativeLanguage:
+                  type: string
+                  example: "en"
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/User'
+        '400':
+          description: Invalid input data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: User already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/auth/logout:
+    post:
+      summary: User logout
+      description: Log out the current user
+      tags:
+        - Authentication
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Logged out successfully"
+
+  /api/users:
+    get:
+      summary: Get all users
+      description: Retrieve a list of all users
+      tags:
+        - Users
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          description: Number of users to return
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          description: Number of users to skip
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+    post:
+      summary: Create new user
+      description: Create a new user (admin only)
+      tags:
+        - Users
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/User'
+        '400':
+          description: Invalid input data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden - admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/users/{id}:
+    get:
+      summary: Get user by ID
+      description: Retrieve a specific user by their ID
+      tags:
+        - Users
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: User ID
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/stories:
+    get:
+      summary: Get all stories
+      description: Retrieve a list of all stories
+      tags:
+        - Stories
+      parameters:
+        - name: limit
+          in: query
+          description: Number of stories to return
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          description: Number of stories to skip
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: status
+          in: query
+          description: Filter by story status
+          required: false
+          schema:
+            type: string
+            enum: [draft, published, archived]
+        - name: genre
+          in: query
+          description: Filter by genre
+          required: false
+          schema:
+            type: string
+        - name: authorId
+          in: query
+          description: Filter by author ID
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of stories
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Story'
+    post:
+      summary: Create new story
+      description: Create a new story
+      tags:
+        - Stories
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateStoryRequest'
+      responses:
+        '201':
+          description: Story created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Story'
+        '400':
+          description: Invalid input data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/stories/{id}:
+    get:
+      summary: Get story by ID
+      description: Retrieve a specific story by its ID
+      tags:
+        - Stories
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Story ID
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        '200':
+          description: Story details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Story'
+        '404':
+          description: Story not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      summary: Update story
+      description: Update an existing story by ID
+      tags:
+        - Stories
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Story ID
+          schema:
+            type: integer
+            minimum: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateStoryRequest'
+      responses:
+        '200':
+          description: Story updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Story'
+        '400':
+          description: Invalid input data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Story not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden - not story owner
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Delete story
+      description: Delete a story by ID
+      tags:
+        - Stories
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Story ID
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        '200':
+          description: Story deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Story deleted successfully"
+        '404':
+          description: Story not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden - not story owner
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/user/{userId}/voice-recordings:
+    get:
+      summary: Get user voice recordings
+      description: Retrieve all voice recordings for a specific user
+      tags:
+        - Voice Recordings
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: User ID
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        '200':
+          description: List of voice recordings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/VoiceRecording'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/user/voice-recordings:
+    post:
+      summary: Upload voice recording
+      description: Create a new voice recording for a user
+      tags:
+        - Voice Recordings
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateVoiceRecordingRequest'
+      responses:
+        '201':
+          description: Voice recording created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/VoiceRecording'
+        '400':
+          description: Invalid input data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/user/voice-recordings/{id}:
+    delete:
+      summary: Delete voice recording
+      description: Delete a voice recording by ID
+      tags:
+        - Voice Recordings
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Voice recording ID
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        '200':
+          description: Voice recording deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Voice recording deleted successfully"
+        '404':
+          description: Voice recording not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden - not recording owner
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "John Doe"
+        email:
+          type: string
+          format: email
+          example: "john@example.com"
+        avatarUrl:
+          type: string
+          format: uri
+          nullable: true
+          example: "https://example.com/avatar.jpg"
+        language:
+          type: string
+          example: "en"
+          default: "en"
+        locale:
+          type: string
+          example: "en-US"
+          default: "en-US"
+        nativeLanguage:
+          type: string
+          nullable: true
+          example: "es"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00Z"
+
+    Story:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: "The Adventure Begins"
+        content:
+          type: string
+          nullable: true
+          example: "Once upon a time in a land far away..."
+        authorId:
+          type: integer
+          example: 1
+        status:
+          type: string
+          enum: [draft, published, archived]
+          default: "draft"
+          example: "draft"
+        processingStatus:
+          type: string
+          enum: [pending, processing, completed, failed]
+          default: "pending"
+          example: "pending"
+        category:
+          type: string
+          nullable: true
+          example: "Fantasy"
+        genre:
+          type: string
+          nullable: true
+          example: "Adventure"
+        summary:
+          type: string
+          nullable: true
+          example: "A thrilling adventure story about courage and friendship."
+        isPublic:
+          type: boolean
+          default: false
+          example: false
+        createdAt:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00Z"
+
+    VoiceRecording:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        userId:
+          type: integer
+          example: 1
+        esmId:
+          type: integer
+          example: 1
+        voiceType:
+          type: string
+          default: "narrator"
+          example: "narrator"
+        audioUrl:
+          type: string
+          format: uri
+          nullable: true
+          example: "https://example.com/audio.mp3"
+        duration:
+          type: number
+          format: decimal
+          nullable: true
+          example: 120.5
+        status:
+          type: string
+          enum: [active, inactive, processing]
+          default: "active"
+          example: "active"
+        narratorVoiceId:
+          type: string
+          nullable: true
+          example: "voice_123"
+        isLocked:
+          type: boolean
+          default: false
+          example: false
+        createdAt:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00Z"
+
+    CreateUserRequest:
+      type: object
+      required:
+        - name
+        - email
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 100
+          example: "John Doe"
+        email:
+          type: string
+          format: email
+          example: "john@example.com"
+        avatarUrl:
+          type: string
+          format: uri
+          example: "https://example.com/avatar.jpg"
+        language:
+          type: string
+          default: "en"
+          example: "en"
+        locale:
+          type: string
+          default: "en-US"
+          example: "en-US"
+        nativeLanguage:
+          type: string
+          example: "es"
+
+    CreateStoryRequest:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          example: "The Adventure Begins"
+        content:
+          type: string
+          example: "Once upon a time in a land far away..."
+        category:
+          type: string
+          example: "Fantasy"
+        genre:
+          type: string
+          example: "Adventure"
+        summary:
+          type: string
+          example: "A thrilling adventure story about courage and friendship."
+        isPublic:
+          type: boolean
+          default: false
+          example: false
+
+    UpdateStoryRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          example: "The Adventure Begins - Updated"
+        content:
+          type: string
+          example: "Once upon a time in a land far away... (updated content)"
+        status:
+          type: string
+          enum: [draft, published, archived]
+          example: "published"
+        category:
+          type: string
+          example: "Fantasy"
+        genre:
+          type: string
+          example: "Adventure"
+        summary:
+          type: string
+          example: "A thrilling adventure story about courage and friendship."
+        isPublic:
+          type: boolean
+          example: true
+
+    CreateVoiceRecordingRequest:
+      type: object
+      required:
+        - userId
+        - esmId
+        - audioUrl
+      properties:
+        userId:
+          type: integer
+          example: 1
+        esmId:
+          type: integer
+          example: 1
+        voiceType:
+          type: string
+          default: "narrator"
+          example: "narrator"
+        audioUrl:
+          type: string
+          format: uri
+          example: "https://example.com/audio.mp3"
+        duration:
+          type: number
+          format: decimal
+          example: 120.5
+        narratorVoiceId:
+          type: string
+          example: "voice_123"
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Resource not found"
+        message:
+          type: string
+          example: "The requested resource could not be found"
+        code:
+          type: string
+          example: "RESOURCE_NOT_FOUND"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00Z"
+
+tags:
+  - name: System
+    description: System health and status endpoints
+  - name: Authentication
+    description: User authentication and authorization
+  - name: Users
+    description: User management operations
+  - name: Stories
+    description: Story creation and management
+  - name: Voice Recordings
+    description: Voice recording management

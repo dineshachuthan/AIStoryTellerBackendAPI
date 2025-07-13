@@ -8,6 +8,32 @@ This is a collaborative storytelling platform that enables users to create AI-po
 
 Preferred communication style: Simple, everyday language.
 
+## Development Philosophy
+
+### API First Development - STRICTLY ENFORCED
+
+**Core Principle**: The API specification is the single source of truth for all development.
+
+**Mandatory Workflow**:
+1. **API Design First**: All new features must start with OpenAPI/Swagger specification
+2. **Specification Completeness**: Every endpoint must have complete request/response schemas before implementation
+3. **Implementation Follows Spec**: Backend routes must match the API specification exactly
+4. **Frontend Contracts**: Frontend development uses the API specification as the contract
+5. **No Divergence**: Any changes to APIs must update the specification first, then implementation
+
+**Quality Standards**:
+- All endpoints must have complete Swagger documentation
+- Request/response schemas must be detailed and accurate
+- Parameter validation must match specification exactly
+- Error responses must be documented and consistent
+- Interactive testing must be available through Swagger UI
+
+**Enforcement Rules**:
+- Never implement endpoints without updating Swagger documentation first
+- Never add functionality that isn't reflected in the API specification
+- Always maintain specification-implementation synchronization
+- All API changes require specification review and approval
+
 ## System Architecture
 
 ### Frontend Architecture
@@ -25,7 +51,8 @@ Preferred communication style: Simple, everyday language.
 - **Database**: PostgreSQL with Drizzle ORM for type-safe database operations
 - **Authentication**: JWT-based authentication with bcrypt for password hashing
 - **API Design**: RESTful endpoints with comprehensive error handling and validation
-- **Development**: Runs on port 5000 with health check endpoints
+- **API Documentation**: OpenAPI/Swagger specification as single source of truth
+- **Development**: Runs on port 5000 with health check endpoints and interactive API docs
 
 ### Database Design
 - **ORM**: Drizzle ORM with Neon serverless PostgreSQL connection
