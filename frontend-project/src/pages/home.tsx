@@ -32,6 +32,7 @@ export default function Home() {
 
   // Fetch stories to check for drafts
   const { data: stories = [] } = useStories({
+    userId: user?.id,
     enabled: !!user?.id,
   });
 

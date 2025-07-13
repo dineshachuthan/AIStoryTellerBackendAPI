@@ -8,11 +8,19 @@ import { apiClient, ApiError } from '@/lib/api-client';
 import { queryClient } from '@/lib/queryClient';
 
 // Story hooks
-export const useStories = (options?: UseQueryOptions<any[], ApiError>) => {
+export const useStories = (options?: UseQueryOptions<any[], ApiError> & { userId?: string }) => {
+  const { userId, ...queryOptions } = options || {};
+  
   return useQuery({
-    queryKey: ['/api/stories'],
-    queryFn: () => apiClient.stories.list(),
-    ...options
+    queryKey: ['/api/stories', userId],
+    queryFn: () => {
+      if (userId) {
+        return apiClient.get(`/api/stories/user/${userId}`);
+      }
+      return apiClient.stories.list();
+    },
+    enabled: !!userId,
+    ...queryOptions
   });
 };
 

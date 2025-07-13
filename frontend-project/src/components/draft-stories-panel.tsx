@@ -27,6 +27,7 @@ import { MAX_DRAFT_STORIES } from '@/config/draft-config';
 import { toast, toastMessages } from "@/lib/toast-utils";
 import { useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
+import { useStories } from "@/hooks/use-api";
 
 interface Story {
   id: number;
@@ -89,8 +90,8 @@ export function DraftStoriesPanel({
     }
   });
   
-  const { data: stories = [], isLoading } = useQuery<Story[]>({
-    queryKey: ["/api/stories", user?.id],
+  const { data: stories = [], isLoading } = useStories({
+    userId: user?.id,
     enabled: !!user?.id,
   });
 

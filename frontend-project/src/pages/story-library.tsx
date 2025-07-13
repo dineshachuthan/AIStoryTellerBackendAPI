@@ -156,6 +156,7 @@ export default function StoryLibrary() {
   };
   
   const { data: stories = [], isLoading } = useStories({
+    userId: user?.id,
     enabled: !!user?.id,
   });
 
