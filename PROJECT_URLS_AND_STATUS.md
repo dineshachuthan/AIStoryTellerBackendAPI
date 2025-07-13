@@ -58,8 +58,7 @@ workspace/
 ## 🎯 Current Status - FULLY OPERATIONAL
 
 ### 🌐 Frontend Application
-**Internal URL**: http://localhost:5001
-**External URL**: Use the Replit domain with port 3000
+**URL**: http://localhost:3000
 **Status**: ✅ Running
 **Features**: Login page, storytelling platform interface
 
