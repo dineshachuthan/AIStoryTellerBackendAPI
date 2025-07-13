@@ -71,6 +71,10 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   }
 }));
 
+// Setup authentication
+import { setupAuth } from './replitAuth';
+await setupAuth(app);
+
 // API routes
 app.use('/api', registerRoutes());
 

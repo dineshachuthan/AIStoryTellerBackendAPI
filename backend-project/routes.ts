@@ -66,100 +66,14 @@ router.get('/stories/:id', async (req, res) => {
 // Authentication routes
 router.get('/auth/user', async (req, res) => {
   try {
-    // TODO: Implement proper authentication
-    res.json({ data: null });
+    if (req.isAuthenticated() && req.user) {
+      res.json({ data: req.user });
+    } else {
+      res.json({ data: null });
+    }
   } catch (error) {
     console.error('Error fetching current user:', error);
     res.status(500).json({ error: 'Failed to fetch current user' });
-  }
-});
-
-router.post('/auth/login', async (req, res) => {
-  try {
-    // TODO: Implement proper login
-    res.json({ data: { message: 'Login endpoint not implemented' } });
-  } catch (error) {
-    console.error('Error during login:', error);
-    res.status(500).json({ error: 'Failed to login' });
-  }
-});
-
-router.post('/auth/register', async (req, res) => {
-  try {
-    // TODO: Implement proper registration
-    res.json({ data: { message: 'Register endpoint not implemented' } });
-  } catch (error) {
-    console.error('Error during registration:', error);
-    res.status(500).json({ error: 'Failed to register' });
-  }
-});
-
-router.post('/auth/logout', async (req, res) => {
-  try {
-    // TODO: Implement proper logout
-    res.json({ data: { message: 'Logout successful' } });
-  } catch (error) {
-    console.error('Error during logout:', error);
-    res.status(500).json({ error: 'Failed to logout' });
-  }
-});
-
-// OAuth routes
-router.get('/auth/google', async (req, res) => {
-  try {
-    // TODO: Implement Google OAuth
-    const frontendUrl = process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS}` : process.env.FRONTEND_URL;
-    res.send(`
-      <html>
-        <head><title>OAuth Success</title></head>
-        <body>
-          <h2>OAuth Success</h2>
-          <p>Authentication successful! This window will close automatically.</p>
-          <script>
-            // Send success message to parent window
-            if (window.opener) {
-              window.opener.postMessage({ type: 'OAUTH_SUCCESS', provider: 'google' }, '*');
-              window.close();
-            } else {
-              // Fallback redirect
-              window.location.href = '${frontendUrl}/';
-            }
-          </script>
-        </body>
-      </html>
-    `);
-  } catch (error) {
-    console.error('Error in Google OAuth:', error);
-    res.status(500).json({ error: 'OAuth failed' });
-  }
-});
-
-router.get('/auth/microsoft', async (req, res) => {
-  try {
-    // TODO: Implement Microsoft OAuth
-    const frontendUrl = process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS}` : process.env.FRONTEND_URL;
-    res.send(`
-      <html>
-        <head><title>OAuth Success</title></head>
-        <body>
-          <h2>OAuth Success</h2>
-          <p>Authentication successful! This window will close automatically.</p>
-          <script>
-            // Send success message to parent window
-            if (window.opener) {
-              window.opener.postMessage({ type: 'OAUTH_SUCCESS', provider: 'microsoft' }, '*');
-              window.close();
-            } else {
-              // Fallback redirect
-              window.location.href = '${frontendUrl}/';
-            }
-          </script>
-        </body>
-      </html>
-    `);
-  } catch (error) {
-    console.error('Error in Microsoft OAuth:', error);
-    res.status(500).json({ error: 'OAuth failed' });
   }
 });
 

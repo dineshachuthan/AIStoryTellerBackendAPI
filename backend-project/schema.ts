@@ -1,18 +1,27 @@
-import { pgTable, text, integer, timestamp, boolean, jsonb, serial, decimal } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, timestamp, boolean, jsonb, serial, decimal, varchar, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Users table
+// Session storage table for Replit Auth
+export const sessions = pgTable(
+  "sessions",
+  {
+    sid: varchar("sid").primaryKey(),
+    sess: jsonb("sess").notNull(),
+    expire: timestamp("expire").notNull(),
+  },
+  (table) => [index("IDX_session_expire").on(table.expire)],
+);
+
+// Users table for Replit Auth
 export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  email: text("email").notNull().unique(),
-  avatarUrl: text("avatar_url"),
-  language: text("language").default("en"),
-  locale: text("locale").default("en-US"),
-  nativeLanguage: text("native_language"),
+  id: varchar("id").primaryKey().notNull(), // Replit Auth uses string IDs
+  email: varchar("email").unique(),
+  firstName: varchar("first_name"),
+  lastName: varchar("last_name"),
+  profileImageUrl: varchar("profile_image_url"),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow()
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 // Stories table
@@ -20,7 +29,7 @@ export const stories = pgTable("stories", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   content: text("content"),
-  authorId: integer("author_id").references(() => users.id),
+  authorId: varchar("author_id").references(() => users.id),
   status: text("status").default("draft"),
   processingStatus: text("processing_status").default("pending"),
   category: text("category"),
@@ -46,7 +55,7 @@ export const esmRef = pgTable("esm_ref", {
 // User ESM recordings
 export const userEsmRecordings = pgTable("user_esm_recordings", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id),
+  userId: varchar("user_id").references(() => users.id),
   esmId: integer("esm_id").references(() => esmRef.id),
   voiceType: text("voice_type").default("narrator"),
   audioUrl: text("audio_url"),
@@ -62,7 +71,7 @@ export const userEsmRecordings = pgTable("user_esm_recordings", {
 export const storyNarrations = pgTable("story_narrations", {
   id: serial("id").primaryKey(),
   storyId: integer("story_id").references(() => stories.id),
-  userId: integer("user_id").references(() => users.id),
+  userId: varchar("user_id").references(() => users.id),
   segments: jsonb("segments"),
   conversationStyle: text("conversation_style").default("neutral"),
   narratorProfile: text("narrator_profile").default("neutral"),
@@ -86,6 +95,7 @@ export const storyInvitations = pgTable("story_invitations", {
 
 // Type exports
 export type User = typeof users.$inferSelect;
+export type UpsertUser = typeof users.$inferInsert;
 export type Story = typeof stories.$inferSelect;
 export type ESMRef = typeof esmRef.$inferSelect;
 export type UserEsmRecording = typeof userEsmRecordings.$inferSelect;
