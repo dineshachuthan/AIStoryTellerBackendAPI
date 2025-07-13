@@ -51,10 +51,13 @@ export async function setupAuth(app: Express) {
 
   // Google OAuth strategy
   if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+    const currentDomain = process.env.REPLIT_DOMAINS || 'localhost:3000';
+    const protocol = process.env.REPLIT_DOMAINS ? 'https' : 'http';
+    
     passport.use(new GoogleStrategy({
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: "/api/auth/google/callback"
+      callbackURL: `${protocol}://${currentDomain}/api/auth/google/callback`
     }, async (accessToken, refreshToken, profile, done) => {
       try {
         const user = await storage.upsertUser({
@@ -66,6 +69,7 @@ export async function setupAuth(app: Express) {
         });
         done(null, user);
       } catch (error) {
+        console.error('OAuth user creation error:', error);
         done(error, null);
       }
     }));
