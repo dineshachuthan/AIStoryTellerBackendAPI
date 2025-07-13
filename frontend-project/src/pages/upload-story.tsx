@@ -71,7 +71,7 @@ export default function UploadStory() {
       
       // Extract meaningful error message from server response
       let errorMessage = getMessage('upload_story.errors.audio_conversion_failed');
-      let errorDetails = ";
+      let errorDetails = "";
       
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;

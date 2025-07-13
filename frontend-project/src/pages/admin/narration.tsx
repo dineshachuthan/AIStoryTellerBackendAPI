@@ -76,7 +76,7 @@ export default function AdminNarration() {
   
   // Get the selected story content
   const selectedStory = stories.find(s => s.id.toString() === selectedStoryId);
-  const storyContent = selectedStory?.content || ";
+  const storyContent = selectedStory?.content || "";
 
   // Admin check removed - page accessible to all authenticated users for testing
 
