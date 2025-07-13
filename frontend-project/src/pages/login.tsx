@@ -91,12 +91,12 @@ export function LoginPage() {
               />
             </div>
             
-            <Button
-              type="submit"
+            <Button 
+              type="submit" 
               className="w-full"
               disabled={isLoginLoading}
             >
-              {isLoginLoading ? 'Loading...' : (isRegisterMode ? 'Sign Up' : 'Sign In')}
+              {isRegisterMode ? 'Sign Up' : 'Sign In'}
             </Button>
           </form>
           
@@ -104,7 +104,7 @@ export function LoginPage() {
             <button
               type="button"
               onClick={() => setIsRegisterMode(!isRegisterMode)}
-              className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"
+              className="text-sm text-blue-600 hover:underline"
             >
               {isRegisterMode 
                 ? 'Already have an account? Sign in' 
