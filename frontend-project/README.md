@@ -52,11 +52,17 @@ npm run dev
 ## Building for Production
 
 ```bash
-# Build for production
+# Build for production (full build with TypeScript check)
 npm run build
+
+# Fast build for development (skips TypeScript check)
+npm run build:fast
 
 # Preview production build
 npm run preview
+
+# Start production server (alias for preview)
+npm start
 ```
 
 ## Project Structure
