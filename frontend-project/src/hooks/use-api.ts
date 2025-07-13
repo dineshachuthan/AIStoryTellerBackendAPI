@@ -19,7 +19,7 @@ export const useStories = (options?: UseQueryOptions<any[], ApiError> & { userId
       }
       return apiClient.stories.list();
     },
-    enabled: !!userId,
+    enabled: !!userId, // Only run when userId is provided
     ...queryOptions
   });
 };
