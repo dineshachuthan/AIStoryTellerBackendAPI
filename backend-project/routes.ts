@@ -108,7 +108,7 @@ router.post('/auth/logout', async (req, res) => {
 router.get('/auth/google', async (req, res) => {
   try {
     // TODO: Implement Google OAuth
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5000';
+    const frontendUrl = process.env.FRONTEND_URL;
     res.send(`
       <html>
         <head><title>OAuth Success</title></head>
@@ -137,7 +137,7 @@ router.get('/auth/google', async (req, res) => {
 router.get('/auth/microsoft', async (req, res) => {
   try {
     // TODO: Implement Microsoft OAuth
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5000';
+    const frontendUrl = process.env.FRONTEND_URL;
     res.send(`
       <html>
         <head><title>OAuth Success</title></head>
@@ -166,7 +166,7 @@ router.get('/auth/microsoft', async (req, res) => {
 router.get('/auth/facebook', async (req, res) => {
   try {
     // TODO: Implement Facebook OAuth
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5000';
+    const frontendUrl = process.env.FRONTEND_URL;
     res.send(`
       <html>
         <head><title>OAuth Success</title></head>
