@@ -15,7 +15,7 @@ export const useStories = (options?: UseQueryOptions<any[], ApiError> & { userId
     queryKey: ['/api/stories', userId],
     queryFn: () => {
       if (userId) {
-        return apiClient.get(`/api/stories/user/${userId}`);
+        return apiClient.stories.getUserStories(userId);
       }
       return apiClient.stories.list();
     },

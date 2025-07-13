@@ -139,6 +139,7 @@ export class ApiClient {
       const queryString = params.toString();
       return this.request<any[]>('GET', `/api/stories${queryString ? `?${queryString}` : ''}`);
     },
+    getUserStories: (userId: string) => this.request<any[]>('GET', `/api/stories/user/${userId}`),
     get: (id: number) => this.request<any>('GET', `/api/stories/${id}`),
     create: (data: any) => this.request<any>('POST', '/api/stories', data),
     createDraft: (data: { title: string; storyType?: string; content?: string; uploadType?: string; originalAudioUrl?: string }) => 
