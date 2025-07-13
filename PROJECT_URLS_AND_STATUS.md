@@ -56,7 +56,19 @@ workspace/
 - Both projects are completely independent
 
 ## 🎯 Current Status - FULLY OPERATIONAL
-✅ Backend API: http://localhost:5000
-✅ Frontend App: http://localhost:3000
-✅ Both projects running independently
-✅ Single workflow managing both projects
+
+### 🌐 Frontend Application
+**URL**: http://localhost:3000
+**Status**: ✅ Running
+**Features**: Login page, storytelling platform interface
+
+### 🔧 Backend API Documentation  
+**URL**: http://localhost:5000 (redirects to Swagger UI)
+**Direct URL**: http://localhost:5000/api-docs
+**Status**: ✅ Running
+**Features**: Interactive API documentation, endpoint testing
+
+### 🚀 How to Access Both Applications
+1. **Frontend**: Open http://localhost:3000 in one browser tab/window
+2. **Backend**: Open http://localhost:5000 in another browser tab/window
+3. Both applications run independently with single workflow
