@@ -46,12 +46,14 @@ export default function Login() {
           console.log('No token provided in OAuth success message');
         }
         
-        // Refresh authentication state
+        // Refresh authentication state and force refetch
         queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+        queryClient.refetchQueries({ queryKey: ["/api/auth/user"] });
+        
         // Navigate to home page after a brief delay to allow auth refresh
         setTimeout(() => {
           setLocation('/');
-        }, 100);
+        }, 200);
       }
     };
 
