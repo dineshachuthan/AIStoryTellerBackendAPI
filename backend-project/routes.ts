@@ -47,6 +47,21 @@ router.post('/stories', async (req, res) => {
   }
 });
 
+// Get stories for a specific user
+router.get('/stories/user/:userId', async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const userStories = await db.select().from(stories)
+      .where(eq(stories.authorId, userId))
+      .orderBy(desc(stories.createdAt));
+    
+    res.json({ data: userStories });
+  } catch (error) {
+    console.error('Error fetching user stories:', error);
+    res.status(500).json({ error: 'Failed to fetch user stories' });
+  }
+});
+
 router.get('/stories/:id', async (req, res) => {
   try {
     const id = parseInt(req.params.id);
