@@ -36,7 +36,7 @@ class ApiClient {
   // Auth endpoints
   auth = {
     getCurrentUser: async () => {
-      return this.request('/api/auth/me');
+      return this.request('/api/auth/user');
     },
     login: async (credentials: { email: string; password: string }) => {
       return this.request('/api/auth/login', {
