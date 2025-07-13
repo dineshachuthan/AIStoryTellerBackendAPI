@@ -12,7 +12,7 @@ info:
     url: https://opensource.org/licenses/MIT
 
 servers:
-  - url: http://localhost:5000
+  - url: http://localhost:3000
     description: Local development server
   - url: https://api.storytelling.example.com
     description: Production server
@@ -527,6 +527,46 @@ paths:
                 $ref: '#/components/schemas/Error'
         '403':
           description: Forbidden - not story owner
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/stories/user/{userId}:
+    get:
+      summary: Get user stories
+      description: Retrieve all stories for a specific user
+      tags:
+        - Stories
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: User ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of user stories
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Story'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: User not found
           content:
             application/json:
               schema:

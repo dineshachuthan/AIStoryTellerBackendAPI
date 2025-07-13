@@ -3,9 +3,45 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { BookOpen, Mic, Users, Sparkles, Play, ArrowRight, Star } from "lucide-react";
 import { useLocation } from "wouter";
+import { useQueryClient } from "@tanstack/react-query";
+import { apiClient } from "@/lib/api-client";
+import { useEffect } from "react";
 
 export default function Landing() {
   const [, setLocation] = useLocation();
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    // Listen for OAuth popup messages
+    const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      
+      if (event.data.type === 'OAUTH_SUCCESS') {
+        console.log('OAuth success received from popup:', event.data);
+        
+        // Store the token if provided
+        if (event.data.token) {
+          console.log('Storing token:', event.data.token);
+          apiClient.setAuthToken(event.data.token);
+          
+          // Verify token was stored
+          console.log('Token verification - stored token:', apiClient.getAuthToken());
+        } else {
+          console.log('No token provided in OAuth success message');
+        }
+        
+        // Refresh authentication state
+        queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+        // Navigate to home page after a brief delay to allow auth refresh
+        setTimeout(() => {
+          setLocation('/');
+        }, 100);
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [setLocation, queryClient]);
 
   const handleGetStarted = () => {
     setLocation("/login");

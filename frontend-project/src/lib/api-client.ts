@@ -7,6 +7,45 @@
 import { ApiResponse, ApiSuccessResponse, ApiErrorResponse, ErrorObject } from '@shared/types/api-response';
 import { queryClient } from './queryClient';
 
+// Token management - centralized cross-cutting concern
+class TokenManager {
+  private static instance: TokenManager;
+  private token: string | null = null;
+
+  private constructor() {
+    // Try to get token from localStorage on init
+    this.token = localStorage.getItem('auth_token');
+  }
+
+  static getInstance(): TokenManager {
+    if (!TokenManager.instance) {
+      TokenManager.instance = new TokenManager();
+    }
+    return TokenManager.instance;
+  }
+
+  setToken(token: string): void {
+    this.token = token;
+    localStorage.setItem('auth_token', token);
+  }
+
+  getToken(): string | null {
+    return this.token;
+  }
+
+  clearToken(): void {
+    this.token = null;
+    localStorage.removeItem('auth_token');
+  }
+
+  getAuthHeaders(): Record<string, string> {
+    if (!this.token) return {};
+    return {
+      'Authorization': `Bearer ${this.token}`
+    };
+  }
+}
+
 export class ApiError extends Error {
   code: number;
   messageKey: string;
@@ -33,10 +72,12 @@ export class ApiClient {
     options?: RequestInit
   ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
+    const tokenManager = TokenManager.getInstance();
     
     const config: RequestInit = {
       method,
       headers: {
+        ...tokenManager.getAuthHeaders(),
         ...options?.headers,
       },
       credentials: 'include',
@@ -60,6 +101,14 @@ export class ApiClient {
     const response = await fetch(url, config);
     
     if (!response.ok) {
+      // Handle 401 Unauthorized - token expired or invalid
+      if (response.status === 401) {
+        const tokenManager = TokenManager.getInstance();
+        tokenManager.clearToken();
+        // Dispatch event to trigger re-authentication
+        window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+      }
+      
       const errorData = await response.json();
       throw new ApiError(errorData.message || errorData.error || 'Request failed');
     }
@@ -457,6 +506,22 @@ export class ApiClient {
   // Helper method to invalidate queries
   invalidateQueries(keys: string[]) {
     keys.forEach(key => queryClient.invalidateQueries({ queryKey: [key] }));
+  }
+
+  // Token management methods - exposed for authentication system
+  setAuthToken(token: string): void {
+    const tokenManager = TokenManager.getInstance();
+    tokenManager.setToken(token);
+  }
+
+  getAuthToken(): string | null {
+    const tokenManager = TokenManager.getInstance();
+    return tokenManager.getToken();
+  }
+
+  clearAuthToken(): void {
+    const tokenManager = TokenManager.getInstance();
+    tokenManager.clearToken();
   }
 }
 

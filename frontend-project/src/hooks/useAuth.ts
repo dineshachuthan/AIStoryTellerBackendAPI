@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { apiRequest } from "@/lib/queryClient";
+import { apiClient } from "@/lib/api-client";
 import type { User } from '@shared/schema';
 
 export function useAuth() {
@@ -9,14 +10,15 @@ export function useAuth() {
   const { data: user, isLoading, error } = useQuery<User>({
     queryKey: ["/api/auth/user"],
     queryFn: async () => {
-      const res = await fetch("/api/auth/user", { credentials: "include" });
-      if (res.status === 401) {
-        return null; // Not authenticated
+      try {
+        const response = await apiClient.auth.getUser();
+        return response.data || response;
+      } catch (error: any) {
+        if (error.message?.includes('401')) {
+          return null; // Not authenticated
+        }
+        throw error;
       }
-      if (!res.ok) {
-        throw new Error(`${res.status}: ${res.statusText}`);
-      }
-      return res.json();
     },
     retry: false,
     staleTime: 30 * 60 * 1000, // 30 minutes

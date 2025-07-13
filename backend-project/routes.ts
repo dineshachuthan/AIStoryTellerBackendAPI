@@ -4,6 +4,8 @@ import { stories, users, userEsmRecordings } from "./schema.js";
 import { eq, desc } from "drizzle-orm";
 import { z } from "zod";
 import { createInsertSchema } from "drizzle-zod";
+import { authenticateToken, optionalAuth, type AuthenticatedRequest } from "./middleware/auth.js";
+import jwt from 'jsonwebtoken';
 
 const router = Router();
 
@@ -34,7 +36,7 @@ router.get('/stories', async (req, res) => {
   }
 });
 
-router.post('/stories', async (req, res) => {
+router.post('/stories', authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
     const insertSchema = createInsertSchema(stories).omit({ id: true, createdAt: true });
     const validatedData = insertSchema.parse(req.body);
@@ -48,7 +50,7 @@ router.post('/stories', async (req, res) => {
 });
 
 // Get stories for a specific user
-router.get('/stories/user/:userId', async (req, res) => {
+router.get('/stories/user/:userId', authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
     const userId = req.params.userId;
     const userStories = await db.select().from(stories)
@@ -79,13 +81,9 @@ router.get('/stories/:id', async (req, res) => {
 });
 
 // Authentication routes
-router.get('/auth/user', async (req, res) => {
+router.get('/auth/user', authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
-    if (req.isAuthenticated() && req.user) {
-      res.json({ data: req.user });
-    } else {
-      res.json({ data: null });
-    }
+    res.json({ data: req.user });
   } catch (error) {
     console.error('Error fetching current user:', error);
     res.status(500).json({ error: 'Failed to fetch current user' });
@@ -157,11 +155,57 @@ router.get('/auth/google', (req, res) => {
   res.redirect('https://accounts.google.com/oauth/authorize?client_id=demo&redirect_uri=demo&response_type=code&scope=profile email');
 });
 
-router.get('/auth/google/callback', (req, res) => {
-  // Handle OAuth callback and send success message to parent window
+router.get('/auth/google/callback', async (req, res) => {
+  // For now, mock a successful OAuth user
+  const mockUser = {
+    id: '1',
+    email: 'user@example.com',
+    firstName: 'Demo',
+    lastName: 'User',
+    profileImageUrl: null
+  };
+  
+  try {
+    // Ensure the user exists in the database
+    const [existingUser] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, mockUser.id))
+      .limit(1);
+    
+    if (!existingUser) {
+      // Create the user if it doesn't exist
+      await db.insert(users).values({
+        id: mockUser.id,
+        email: mockUser.email,
+        firstName: mockUser.firstName,
+        lastName: mockUser.lastName,
+        profileImageUrl: mockUser.profileImageUrl
+      });
+    }
+  } catch (error) {
+    console.error('Error creating/finding user:', error);
+  }
+  
+  // Generate JWT token with proper payload structure
+  const tokenPayload = {
+    sub: mockUser.id,
+    email: mockUser.email,
+    firstName: mockUser.firstName,
+    lastName: mockUser.lastName,
+    profileImageUrl: mockUser.profileImageUrl
+  };
+  const token = jwt.sign(tokenPayload, 'dev-secret', { expiresIn: '24h' });
+  
+  // Send success message with token to parent window
   res.send(`
     <script>
-      window.opener.postMessage({ type: 'OAUTH_SUCCESS', provider: 'google' }, window.location.origin);
+      window.opener.postMessage({ 
+        type: 'OAUTH_SUCCESS', 
+        provider: 'google',
+        token: '${token}',
+        user: ${JSON.stringify(mockUser)}
+      }, window.location.origin);
       window.close();
     </script>
   `);
