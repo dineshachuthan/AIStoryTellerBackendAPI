@@ -220,6 +220,290 @@ const swaggerSpec = {
         }
       }
     },
+    '/api/stories/{id}': {
+      put: {
+        summary: 'Update story',
+        description: 'Update an existing story by ID',
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'integer' },
+            description: 'Story ID'
+          }
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  title: { type: 'string' },
+                  content: { type: 'string' },
+                  summary: { type: 'string' },
+                  genre: { type: 'string' },
+                  category: { type: 'string' },
+                  status: { type: 'string', enum: ['draft', 'published'] }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          '200': {
+            description: 'Story updated successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: {
+                      type: 'object',
+                      properties: {
+                        id: { type: 'integer' },
+                        title: { type: 'string' },
+                        content: { type: 'string' },
+                        updatedAt: { type: 'string', format: 'date-time' }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          '404': {
+            description: 'Story not found'
+          }
+        }
+      },
+      delete: {
+        summary: 'Delete story',
+        description: 'Delete a story by ID',
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'integer' },
+            description: 'Story ID'
+          }
+        ],
+        responses: {
+          '200': {
+            description: 'Story deleted successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: {
+                      type: 'object',
+                      properties: {
+                        message: { type: 'string' }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          '404': {
+            description: 'Story not found'
+          }
+        }
+      }
+    },
+    '/api/auth/user': {
+      get: {
+        summary: 'Get current user',
+        description: 'Retrieve the currently authenticated user',
+        responses: {
+          '200': {
+            description: 'Current user data',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: {
+                      type: 'object',
+                      properties: {
+                        id: { type: 'integer' },
+                        name: { type: 'string' },
+                        email: { type: 'string' },
+                        avatarUrl: { type: 'string' },
+                        language: { type: 'string' },
+                        createdAt: { type: 'string', format: 'date-time' }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    '/api/auth/login': {
+      post: {
+        summary: 'User login',
+        description: 'Authenticate user with email and password',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['email', 'password'],
+                properties: {
+                  email: { type: 'string', example: 'user@example.com' },
+                  password: { type: 'string', example: 'password123' }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          '200': {
+            description: 'Login successful',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: {
+                      type: 'object',
+                      properties: {
+                        id: { type: 'integer' },
+                        name: { type: 'string' },
+                        email: { type: 'string' },
+                        token: { type: 'string' }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    '/api/auth/register': {
+      post: {
+        summary: 'User registration',
+        description: 'Create a new user account',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['name', 'email', 'password'],
+                properties: {
+                  name: { type: 'string', example: 'John Doe' },
+                  email: { type: 'string', example: 'john@example.com' },
+                  password: { type: 'string', example: 'password123' }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          '201': {
+            description: 'User created successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: {
+                      type: 'object',
+                      properties: {
+                        id: { type: 'integer' },
+                        name: { type: 'string' },
+                        email: { type: 'string' },
+                        createdAt: { type: 'string', format: 'date-time' }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    '/api/auth/logout': {
+      post: {
+        summary: 'User logout',
+        description: 'Log out the current user',
+        responses: {
+          '200': {
+            description: 'Logout successful',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: {
+                      type: 'object',
+                      properties: {
+                        message: { type: 'string' }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    '/api/users/{id}': {
+      get: {
+        summary: 'Get user by ID',
+        description: 'Retrieve a specific user by their ID',
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'integer' },
+            description: 'User ID'
+          }
+        ],
+        responses: {
+          '200': {
+            description: 'User details',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: {
+                      type: 'object',
+                      properties: {
+                        id: { type: 'integer' },
+                        name: { type: 'string' },
+                        email: { type: 'string' },
+                        avatarUrl: { type: 'string' },
+                        language: { type: 'string' },
+                        createdAt: { type: 'string', format: 'date-time' }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          '404': {
+            description: 'User not found'
+          }
+        }
+      }
+    },
     '/api/user/{userId}/voice-recordings': {
       get: {
         summary: 'Get user voice recordings',
@@ -248,8 +532,11 @@ const swaggerSpec = {
                         properties: {
                           id: { type: 'integer' },
                           userId: { type: 'integer' },
-                          emotion: { type: 'string' },
+                          esmId: { type: 'integer' },
+                          voiceType: { type: 'string' },
                           audioUrl: { type: 'string' },
+                          duration: { type: 'number' },
+                          status: { type: 'string' },
                           createdAt: { type: 'string', format: 'date-time' }
                         }
                       }
@@ -258,6 +545,92 @@ const swaggerSpec = {
                 }
               }
             }
+          }
+        }
+      }
+    },
+    '/api/user/voice-recordings': {
+      post: {
+        summary: 'Upload voice recording',
+        description: 'Create a new voice recording for a user',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['userId', 'esmId', 'audioUrl'],
+                properties: {
+                  userId: { type: 'integer' },
+                  esmId: { type: 'integer' },
+                  voiceType: { type: 'string', default: 'narrator' },
+                  audioUrl: { type: 'string' },
+                  duration: { type: 'number' },
+                  narratorVoiceId: { type: 'string' }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          '201': {
+            description: 'Voice recording created successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: {
+                      type: 'object',
+                      properties: {
+                        id: { type: 'integer' },
+                        userId: { type: 'integer' },
+                        audioUrl: { type: 'string' },
+                        createdAt: { type: 'string', format: 'date-time' }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    '/api/user/voice-recordings/{id}': {
+      delete: {
+        summary: 'Delete voice recording',
+        description: 'Delete a voice recording by ID',
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'integer' },
+            description: 'Voice recording ID'
+          }
+        ],
+        responses: {
+          '200': {
+            description: 'Voice recording deleted successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: {
+                      type: 'object',
+                      properties: {
+                        message: { type: 'string' }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          '404': {
+            description: 'Voice recording not found'
           }
         }
       }
