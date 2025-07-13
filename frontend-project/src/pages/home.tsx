@@ -31,10 +31,16 @@ export default function Home() {
   });
 
   // Fetch stories to check for drafts
-  const { data: stories = [] } = useStories({
+  const { data: stories = [], isLoading: storiesLoading, error: storiesError } = useStories({
     userId: user?.id,
     enabled: !!user?.id,
   });
+
+  // Debug logs
+  console.log('Home page - user:', user);
+  console.log('Home page - stories:', stories);
+  console.log('Home page - stories loading:', storiesLoading);
+  console.log('Home page - stories error:', storiesError);
 
   // All stories are considered draft stories now
   const draftStories = Array.isArray(stories) ? stories : [];
