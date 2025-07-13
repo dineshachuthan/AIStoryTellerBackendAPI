@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { apiClient } from '@/lib/api-client';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from "@/hooks/use-auth"';
 import { useToast } from '@/hooks/use-toast';
 import { formatDate } from '@/lib/utils';
 

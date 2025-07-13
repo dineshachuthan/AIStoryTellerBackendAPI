@@ -4,12 +4,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/hooks/use-auth";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast, toastMessages } from "@/lib/toast-utils";
 import { useQueryClient } from "@tanstack/react-query";
-import { config } from "@/config/runtime";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -21,7 +23,7 @@ type LoginForm = z.infer<typeof loginSchema>;
 export default function Login() {
   const [, setLocation] = useLocation();
   const [showPassword, setShowPassword] = useState(false);
-  const { login, isLoginLoading, loginError } = useAuth();
+  const { login, loginLoading, loginError } = useAuth();
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -46,14 +48,12 @@ export default function Login() {
 
   const handleOAuthLogin = (provider: string) => {
     console.log(`[OAuth] Attempting to open popup for ${provider}`);
-    const apiUrl = config.API_URL ? `${config.API_URL}/api/auth/${provider}` : `/api/auth/${provider}`;
-    const popup = window.open(apiUrl, 'oauth_popup', 'width=500,height=600,scrollbars=yes,resizable=yes');
+    const popup = window.open(`/api/auth/${provider}`, 'oauth_popup', 'width=500,height=600,scrollbars=yes,resizable=yes');
     
     if (!popup) {
       console.log('[OAuth] Popup blocked, redirecting in same tab');
       // Fallback to same-tab if popup blocked
-      const apiUrl = config.API_URL ? `${config.API_URL}/api/auth/${provider}` : `/api/auth/${provider}`;
-      window.location.href = apiUrl;
+      window.location.href = `/api/auth/${provider}`;
       return;
     }
 
@@ -107,22 +107,22 @@ export default function Login() {
           <CardContent>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               {loginError && (
-                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-3">
-                  <p className="text-sm text-red-600 dark:text-red-400">
+                <Alert variant="destructive">
+                  <AlertDescription>
                     {loginError.message || "Login failed. Please check your credentials."}
-                  </p>
-                </div>
+                  </AlertDescription>
+                </Alert>
               )}
 
               <div className="space-y-2">
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+                <Label htmlFor="email">Email</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                  <input
+                  <Input
                     id="email"
                     type="email"
                     placeholder="Enter your email"
-                    className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="pl-10"
                     {...form.register("email")}
                   />
                 </div>
@@ -134,14 +134,14 @@ export default function Login() {
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+                <Label htmlFor="password">Password</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                  <input
+                  <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="Enter your password"
-                    className="w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="pl-10 pr-10"
                     {...form.register("password")}
                   />
                   <button
@@ -162,9 +162,9 @@ export default function Login() {
               <Button
                 type="submit"
                 className="w-full"
-                disabled={isLoginLoading}
+                disabled={loginLoading}
               >
-                {isLoginLoading ? "Signing In..." : "Sign In"}
+                {loginLoading ? "Signing In..." : "Sign In"}
               </Button>
             </form>
 
