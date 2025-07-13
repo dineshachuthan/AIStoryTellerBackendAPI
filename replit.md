@@ -48,6 +48,36 @@ Preferred communication style: Simple, everyday language.
 - Always maintain specification-implementation synchronization
 - All API changes require specification review and approval
 
+### API Development Protocol - MANDATORY PROCESS
+
+**When any API issue is found in the frontend project, follow this STRICT sequence:**
+
+1. **Backend Project (`backend-project/`)**: 
+   - Update OpenAPI specification in `openapi.yaml` first
+   - Implement/fix the backend route in `routes.ts`
+   - Ensure response format matches specification exactly
+
+2. **Frontend Project (`frontend-project/`)**: 
+   - Update client-api library in `src/lib/api-client.ts`
+   - Add/fix the specific method in appropriate API client section
+   - Ensure method signature matches OpenAPI specification
+
+3. **UI Code Isolation**: 
+   - UI components should be completely agnostic of backend/database
+   - All backend communication goes through client-api library only
+   - No direct API calls, database references, or backend logic in UI components
+
+**Architecture Boundaries**:
+- **UI Layer**: React components, pages, hooks - no backend awareness
+- **API Layer**: `api-client.ts` - single point of backend communication
+- **Backend Layer**: Express routes, database operations - serves API specification
+
+**Violation Prevention**:
+- UI code should never contain endpoint URLs, database queries, or backend logic
+- All data fetching must go through `api-client.ts` methods
+- Any backend changes require OpenAPI spec update first
+- Client-api library acts as the contract enforcement layer
+
 ## System Architecture
 
 ### Frontend Architecture
