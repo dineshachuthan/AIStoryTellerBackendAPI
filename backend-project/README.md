@@ -77,13 +77,30 @@ Copy `.env.example` to `.env` and configure:
 cp .env.example .env
 ```
 
-Required environment variables:
-- `DATABASE_URL`: PostgreSQL connection string
-- `SESSION_SECRET`: Secure session secret
-- `OPENAI_API_KEY`: OpenAI API key
-- `ELEVENLABS_API_KEY`: ElevenLabs API key
-- OAuth credentials for authentication providers
-- Email/SMS provider credentials
+**⚠️ CRITICAL: The application will fail to start without these environment variables:**
+
+**Required (application won't start):**
+- `DATABASE_URL`: PostgreSQL connection string (e.g., `postgresql://user:pass@host:5432/dbname`)
+- `JWT_SECRET`: Secure session secret for authentication tokens
+
+**Optional (for full functionality):**
+- `OPENAI_API_KEY`: OpenAI API key for AI story analysis
+- `ELEVENLABS_API_KEY`: ElevenLabs API key for voice generation
+- `MAILGUN_API_KEY`: Email service for notifications
+- OAuth credentials for social login (Google, Facebook, Microsoft)
+- SMS provider credentials (Twilio, MessageBird)
+
+**Example DATABASE_URL formats:**
+```bash
+# Local PostgreSQL
+DATABASE_URL=postgresql://username:password@localhost:5432/storytelling_app
+
+# Neon (recommended)
+DATABASE_URL=postgresql://user:pass@ep-example.us-east-2.aws.neon.tech/neondb?sslmode=require
+
+# Other cloud providers
+DATABASE_URL=postgresql://user:pass@your-db-host.com:5432/dbname
+```
 
 ### 3. Database Setup
 
