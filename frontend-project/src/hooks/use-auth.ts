@@ -9,14 +9,19 @@ export function useAuth() {
     queryKey: ['/api/auth/user'],
     queryFn: async () => {
       try {
-        const res = await fetch(`${config.API_URL}/api/auth/user`, { credentials: 'include' });
+        const apiUrl = config.API_URL ? `${config.API_URL}/api/auth/user` : '/api/auth/user';
+        const res = await fetch(apiUrl, { credentials: 'include' });
+        
         if (res.status === 401) {
           return null; // Not authenticated
         }
+        
         if (!res.ok) {
           throw new Error(`${res.status}: ${res.statusText}`);
         }
-        return res.json();
+        
+        const data = await res.json();
+        return data?.data || null;
       } catch (error) {
         return null;
       }
@@ -28,7 +33,8 @@ export function useAuth() {
   // Login mutation
   const loginMutation = useMutation({
     mutationFn: async ({ email, password }: { email: string; password: string }) => {
-      const res = await fetch(`${config.API_URL}/api/auth/login`, {
+      const apiUrl = config.API_URL ? `${config.API_URL}/api/auth/login` : '/api/auth/login';
+      const res = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -53,7 +59,8 @@ export function useAuth() {
       lastName?: string;
       displayName?: string;
     }) => {
-      const res = await fetch(`${config.API_URL}/api/auth/register`, {
+      const apiUrl = config.API_URL ? `${config.API_URL}/api/auth/register` : '/api/auth/register';
+      const res = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(userData),
@@ -72,7 +79,8 @@ export function useAuth() {
   // Logout mutation
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`${config.API_URL}/api/auth/logout`, {
+      const apiUrl = config.API_URL ? `${config.API_URL}/api/auth/logout` : '/api/auth/logout';
+      const res = await fetch(apiUrl, {
         method: 'POST',
         credentials: 'include',
       });

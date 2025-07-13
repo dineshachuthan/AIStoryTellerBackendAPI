@@ -46,12 +46,14 @@ export default function Login() {
 
   const handleOAuthLogin = (provider: string) => {
     console.log(`[OAuth] Attempting to open popup for ${provider}`);
-    const popup = window.open(`${config.API_URL}/api/auth/${provider}`, 'oauth_popup', 'width=500,height=600,scrollbars=yes,resizable=yes');
+    const apiUrl = config.API_URL ? `${config.API_URL}/api/auth/${provider}` : `/api/auth/${provider}`;
+    const popup = window.open(apiUrl, 'oauth_popup', 'width=500,height=600,scrollbars=yes,resizable=yes');
     
     if (!popup) {
       console.log('[OAuth] Popup blocked, redirecting in same tab');
       // Fallback to same-tab if popup blocked
-      window.location.href = `${config.API_URL}/api/auth/${provider}`;
+      const apiUrl = config.API_URL ? `${config.API_URL}/api/auth/${provider}` : `/api/auth/${provider}`;
+      window.location.href = apiUrl;
       return;
     }
 

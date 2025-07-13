@@ -4,13 +4,7 @@ export const getRuntimeConfig = () => {
   const currentHost = window.location.hostname;
   const isReplit = currentHost.includes('.replit.dev');
   
-  console.log('🔧 Runtime config debug:', {
-    currentHost,
-    isReplit,
-    protocol: window.location.protocol,
-    port: window.location.port,
-    href: window.location.href
-  });
+  // Dynamic configuration based on environment
   
   if (isReplit) {
     // Use current domain for Replit environments
@@ -24,7 +18,6 @@ export const getRuntimeConfig = () => {
       DOMAIN: currentHost
     };
     
-    console.log('🔧 Replit config:', config);
     return config;
   }
   
@@ -36,7 +29,6 @@ export const getRuntimeConfig = () => {
     DOMAIN: currentHost
   };
   
-  console.log('🔧 Local config:', config);
   return config;
 };
 
