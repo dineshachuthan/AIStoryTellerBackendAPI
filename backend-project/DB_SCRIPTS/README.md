@@ -7,17 +7,11 @@ This directory contains all database scripts for the storytelling platform.
 ```
 DB_SCRIPTS/
 ├── DDL/                    # Data Definition Language (table creation)
-│   ├── 00-database-setup.sql
-│   ├── create-admin-and-notification-tables.sql
-│   ├── proposed_esm_schema.sql
-│   ├── add-soft-delete-columns.sql
-│   ├── add-stripe-columns.sql
-│   └── alter-story-content-nullable.sql
+│   ├── 00-core-tables.sql                 # Core database tables
+│   └── 01-additional-tables.sql           # Supporting tables and constraints
 ├── DML/                    # Data Manipulation Language (updates)
 ├── REFERENCE_DATA/         # Initial reference data
-│   ├── 01-app-states.sql
-│   ├── 02-esm-reference.sql
-│   └── 03-notification-campaigns.sql
+│   └── 01-esm-reference-data.sql          # ESM data (emotions, sounds, modulations)
 ├── run-all-ddl.sql        # Execute all DDL scripts
 └── run-all-reference-data.sql  # Execute all reference data scripts
 ```
@@ -43,37 +37,29 @@ psql -U your_username -d storytelling_app -f run-all-reference-data.sql
 ## Script Execution Order
 
 ### DDL Scripts (Must run in order)
-1. `00-database-setup.sql` - Core tables (users, stories, etc.)
-2. `create-admin-and-notification-tables.sql` - Admin and notification system
-3. `proposed_esm_schema.sql` - ESM (Emotion/Sound/Modulation) tables
-4. `add-soft-delete-columns.sql` - Soft delete functionality
-5. `add-stripe-columns.sql` - Payment integration columns
-6. `alter-story-content-nullable.sql` - Allow draft stories
+1. `00-core-tables.sql` - Core database tables (users, stories, sessions, esm_ref, etc.)
+2. `01-additional-tables.sql` - Supporting tables (user_esm, story_characters, roles) and constraints
 
 ### Reference Data Scripts
-1. `01-app-states.sql` - Application state machine configuration
-2. `02-esm-reference.sql` - Emotions, sounds, and modulations
-3. `03-notification-campaigns.sql` - Notification templates
+1. `01-esm-reference-data.sql` - ESM data (30 emotions, sounds, and voice modulations)
 
 ## Important Notes
 
 ### Schema Compatibility
-These DDL scripts are generated from the actual production database to ensure 100% compatibility with Drizzle ORM schemas. Key differences from standard conventions:
+These DDL scripts are generated from the actual database schema on January 13, 2025 to ensure 100% compatibility with Drizzle ORM schemas. Key features:
 
-- `user_esm` table uses `user_esm_id` instead of `id`
-- `user_esm_recordings` table uses `user_esm_recording_id` instead of `id`
-- Timestamp columns use `created_date`/`updated_date` instead of `created_at`/`updated_at`
-
-### Soft Deletes
-Most tables support soft deletes with:
-- `deleted_at` timestamp
-- `deleted_by` user reference
+- All primary keys and sequences properly configured
+- Foreign key constraints for data integrity
+- Proper indexes for performance optimization
+- Mixed timestamp column naming (`created_at`/`updated_at` and `created_date`)
+- JSONB columns for flexible data storage (character/emotion extraction)
+- Array columns for tags and permissions
 
 ### Reference Data
 Reference data includes:
-- 30+ application states for workflow management
 - 30 ESM entries (10 emotions, 10 sounds, 10 voice modulations)
-- 17 notification campaigns with templates
+- Each entry includes sample text, intensity levels, and AI variations
+- All data taken from actual production database content
 
 ## Maintenance
 

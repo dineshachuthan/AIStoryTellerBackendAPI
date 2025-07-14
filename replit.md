@@ -219,6 +219,21 @@ The application uses a microservices-ready architecture with adapter patterns fo
 
 ## Recent Changes
 
+### January 2025 - Database Schema Synchronization ✅
+- **Date**: January 13, 2025
+- **Status**: Successfully completed
+- **Changes Made**:
+  - Analyzed actual database schema using direct SQL queries
+  - Created new DDL scripts based on live database structure
+  - Updated `00-core-tables.sql` with accurate schema for all core tables
+  - Created `01-additional-tables.sql` for supporting tables and constraints
+  - Updated reference data scripts with actual ESM data from database
+  - Archived outdated scripts to maintain clean file structure
+  - Created validation script for schema verification
+  - Updated README.md with current database structure documentation
+- **Impact**: DB_SCRIPTS folder now accurately reflects actual database schema
+- **User Confirmation**: ✅ Database scripts synchronized with current schema structure
+
 ### January 2025 - Dynamic Runtime Configuration ✅
 - **Date**: January 13, 2025
 - **Status**: Successfully implemented and tested

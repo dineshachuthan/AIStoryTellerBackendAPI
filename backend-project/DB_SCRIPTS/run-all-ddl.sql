@@ -1,26 +1,16 @@
 -- ================================================
 -- Run all DDL scripts in order
+-- Updated January 13, 2025 to match actual database schema
 -- ================================================
 
 -- Run this script to create all database tables
 -- Usage: psql -U username -d storytelling_app -f run-all-ddl.sql
 
-\echo 'Creating database schema...'
-\i DDL/00-database-setup.sql
+\echo 'Creating core database tables...'
+\i DDL/00-core-tables.sql
 
-\echo 'Creating admin and notification tables...'
-\i DDL/create-admin-and-notification-tables.sql
-
-\echo 'Creating ESM schema...'
-\i DDL/proposed_esm_schema.sql
-
-\echo 'Adding soft delete columns...'
-\i DDL/add-soft-delete-columns.sql
-
-\echo 'Adding Stripe columns...'
-\i DDL/add-stripe-columns.sql
-
-\echo 'Altering story content to nullable...'
-\i DDL/alter-story-content-nullable.sql
+\echo 'Creating additional support tables...'
+\i DDL/01-additional-tables.sql
 
 \echo 'Database schema creation complete!'
+\echo 'Next step: Run run-all-reference-data.sql to populate reference data'
